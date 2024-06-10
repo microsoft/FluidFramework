@@ -232,7 +232,7 @@ describe("TaskManager fuzz testing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 
@@ -273,7 +273,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 

@@ -19,8 +19,8 @@ import {
 	createOverlappingSequenceIntervalsIndex,
 } from "../intervalIndex/index.js";
 import { SequenceInterval } from "../intervals/index.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
 
 import { RandomIntervalOptions } from "./intervalIndexTestUtils.js";
 
@@ -85,7 +85,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
 		dataStoreRuntime.options = { intervalStickinessEnabled: true };
-		testSharedString = new SharedString(
+		testSharedString = new SharedStringClass(
 			dataStoreRuntime,
 			"test-shared-string",
 			SharedStringFactory.Attributes,
@@ -144,7 +144,6 @@ describe("findOverlappingIntervalsBySegoff", () => {
 	describe("find correct results", () => {
 		let interval1;
 		let interval2;
-		let interval3;
 
 		beforeEach(() => {
 			testSharedString.insertText(0, "ab");
@@ -152,7 +151,7 @@ describe("findOverlappingIntervalsBySegoff", () => {
 			testSharedString.insertText(5, "fg");
 			interval1 = collection.add({ start: 1, end: 1 }).getIntervalId();
 			interval2 = collection.add({ start: 2, end: 3 }).getIntervalId();
-			interval3 = collection.add({ start: 5, end: 6 }).getIntervalId();
+			collection.add({ start: 5, end: 6 });
 		});
 
 		it("when each interval is within a single segment", () => {

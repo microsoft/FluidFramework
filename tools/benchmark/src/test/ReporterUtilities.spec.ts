@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
 import { expect } from "chai";
+
 import { getArrayStatistics } from "../ReporterUtilities";
 
 describe("getArrayStatistics() function", () => {

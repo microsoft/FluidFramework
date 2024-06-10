@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
 import { generateToken } from "./generateToken.js";

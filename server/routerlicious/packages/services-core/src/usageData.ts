@@ -25,3 +25,8 @@ export const signalUsageStorageId: string = "signalUsage";
  * @internal
  */
 export const clientConnectivityStorageId: string = "clientConnectivityUsage";
+
+/**
+ * @internal
+ */
+export const httpUsageStorageId: string = "httpUsage";

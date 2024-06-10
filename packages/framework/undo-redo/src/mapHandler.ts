@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap, IValueChanged } from "@fluidframework/map";
+import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 

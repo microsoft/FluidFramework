@@ -9,9 +9,10 @@ import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schem
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { snapshotSessionId } from "../../snapshots/testTrees.js";
-import { brand } from "../../../index.js";
+import { brand } from "../../../util/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
+import { testIdCompressor } from "../../utils.js";
 
 const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 const testChangesets: { name: string; change: GenericChangeset }[] = [
@@ -57,4 +58,6 @@ export function testSnapshots() {
 
 const baseContext = {
 	originatorId: snapshotSessionId,
+	revision: undefined,
+	idCompressor: testIdCompressor,
 };

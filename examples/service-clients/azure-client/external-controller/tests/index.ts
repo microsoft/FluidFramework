@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { type ISharedMap, SharedMap } from "fluid-framework";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
@@ -129,7 +129,10 @@ export async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		documentId,
-		createDOProviderContainerRuntimeFactory({ schema: containerConfig }),
+		createDOProviderContainerRuntimeFactory({
+			schema: containerConfig,
+			compatibilityMode: "2",
+		}),
 		createNewFlag,
 	);
 

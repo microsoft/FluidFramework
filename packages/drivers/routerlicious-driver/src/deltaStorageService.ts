@@ -10,6 +10,7 @@ import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,
@@ -17,9 +18,7 @@ import {
 	requestOps,
 	streamObserver,
 } from "@fluidframework/driver-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { DocumentStorageService } from "./documentStorageService.js";
 import { RestWrapper } from "./restWrapperBase.js";
@@ -43,9 +42,11 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
 		private readonly logger: ITelemetryLoggerExt,
-	) {}
+	) {
+		this.logtailSha = documentStorageService.logTailSha;
+	}
 
-	private logtailSha: string | undefined = this.documentStorageService.logTailSha;
+	private logtailSha: string | undefined;
 	private snapshotOps: ISequencedDocumentMessage[] | undefined;
 
 	fetchMessages(

@@ -4,7 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 import { StablePlace } from './ChangeTypes.js';
 import { fail } from './Common.js';

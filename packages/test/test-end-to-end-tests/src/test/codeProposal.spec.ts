@@ -13,7 +13,7 @@ import {
 	IFluidPackage,
 	isFluidPackage,
 } from "@fluidframework/container-definitions/internal";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

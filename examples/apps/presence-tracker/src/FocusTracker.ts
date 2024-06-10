@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Signaler } from "@fluid-experimental/data-objects";
+import { ISignaler } from "@fluid-experimental/data-objects";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IAzureAudience } from "@fluidframework/azure-client";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { ITinyliciousAudience } from "@fluidframework/tinylicious-client/internal";
 import { IMember } from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
@@ -49,17 +49,17 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
 	constructor(
 		container: IContainer,
-		public readonly audience: ITinyliciousAudience,
-		private readonly signaler: Signaler,
+		public readonly audience: IAzureAudience,
+		private readonly signaler: ISignaler,
 	) {
 		super();
 
 		this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-			const focusClientIdMap = this.focusMap.get(member.userId);
+			const focusClientIdMap = this.focusMap.get(member.id);
 			if (focusClientIdMap !== undefined) {
 				focusClientIdMap.delete(clientId);
 				if (focusClientIdMap.size === 0) {
-					this.focusMap.delete(member.userId);
+					this.focusMap.delete(member.id);
 				}
 			}
 			this.emit("focusChanged");
@@ -95,7 +95,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	 */
 	private sendFocusSignal(hasFocus: boolean) {
 		this.signaler.submitSignal(FocusTracker.focusSignalType, {
-			userId: this.audience.getMyself()?.userId,
+			userId: this.audience.getMyself()?.id,
 			focus: hasFocus,
 		});
 	}
@@ -106,7 +106,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			member.connections.forEach((connection) => {
 				const focus = this.getFocusPresenceForUser(userId, connection.id);
 				if (focus !== undefined) {
-					statuses.set((member as any).userName, focus);
+					statuses.set(member.name, focus);
 				}
 			});
 		});

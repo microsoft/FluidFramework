@@ -9,9 +9,9 @@ import {
 	ChangeAtomId,
 	RevisionMetadataSource,
 	RevisionTag,
-	TaggedChange,
+	offsetChangeAtomId,
 } from "../../core/index.js";
-import { IdAllocator, brand, fail } from "../../util/index.js";
+import { IdAllocator, fail } from "../../util/index.js";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
@@ -19,8 +19,7 @@ import {
 	NodeId,
 } from "../modular-schema/index.js";
 
-import { CellOrderingMethod, sequenceConfig } from "./config.js";
-import { EmptyInputCellMark, MoveMarkEffect } from "./helperTypes.js";
+import { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
@@ -35,7 +34,6 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	CellId,
 	CellMark,
 	Changeset,
 	Detach,
@@ -54,12 +52,9 @@ import {
 	asAttachAndDetach,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
-	compareCellsFromSameRevision,
-	compareLineages,
 	extractMarkEffect,
 	getEndpoint,
 	getInputCellId,
-	getOffsetInCellRange,
 	getOutputCellId,
 	isAttach,
 	isAttachAndDetachEffect,
@@ -89,8 +84,8 @@ import {
  * - Support for slices is not implemented.
  */
 export function compose(
-	change1: TaggedChange<Changeset>,
-	change2: TaggedChange<Changeset>,
+	change1: Changeset,
+	change2: Changeset,
 	composeChild: NodeChangeComposer,
 	_genId: IdAllocator,
 	manager: CrossFieldManager,
@@ -106,21 +101,14 @@ export function compose(
 }
 
 function composeMarkLists(
-	{ change: baseMarkList, revision: baseRev }: TaggedChange<MarkList>,
-	{ change: newMarkList, revision: newRev }: TaggedChange<MarkList>,
+	baseMarkList: MarkList,
+	newMarkList: MarkList,
 	composeChild: NodeChangeComposer,
 	moveEffects: MoveEffectTable,
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList {
 	const factory = new MarkListFactory();
-	const queue = new ComposeQueue(
-		baseRev,
-		baseMarkList,
-		newRev,
-		newMarkList,
-		moveEffects,
-		revisionMetadata,
-	);
+	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
 		if (newMark === undefined) {
@@ -129,17 +117,17 @@ function composeMarkLists(
 				0x4db /* Non-empty queue should not return two undefined marks */,
 			);
 			factory.push(
-				composeMark(baseMark, baseRev, moveEffects, (node: NodeId) =>
+				composeMark(baseMark, moveEffects, (node: NodeId) =>
 					composeChildChanges(node, undefined, composeChild),
 				),
 			);
 		} else {
 			// We only compose changesets that will not be further rebased.
 			// It is therefore safe to remove any intentions that have no impact in the context they apply to.
-			const settledNewMark = settleMark(newMark, newRev, revisionMetadata);
+			const settledNewMark = settleMark(newMark);
 			if (baseMark === undefined) {
 				factory.push(
-					composeMark(settledNewMark, newRev, moveEffects, (node: NodeId) =>
+					composeMark(settledNewMark, moveEffects, (node: NodeId) =>
 						composeChildChanges(undefined, node, composeChild),
 					),
 				);
@@ -147,15 +135,12 @@ function composeMarkLists(
 				// Past this point, we are guaranteed that `settledNewMark` and `baseMark` have the same length and
 				// start at the same location in the revision after the base changes.
 				// They therefore refer to the same range for that revision.
-				const settledBaseMark = settleMark(baseMark, baseRev, revisionMetadata);
+				const settledBaseMark = settleMark(baseMark);
 				const composedMark = composeMarks(
-					baseRev,
 					settledBaseMark,
-					newRev,
 					settledNewMark,
 					composeChild,
 					moveEffects,
-					revisionMetadata,
 				);
 				factory.push(composedMark);
 			}
@@ -175,31 +160,17 @@ function composeMarkLists(
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
 function composeMarks(
-	baseRev: RevisionTag | undefined,
 	baseMark: Mark,
-	newRev: RevisionTag | undefined,
 	newMark: Mark,
 	composeChild: NodeChangeComposer,
 	moveEffects: MoveEffectTable,
-	revisionMetadata: RevisionMetadataSource,
 ): Mark {
-	const nodeChange = handleNodeChanges(baseMark, baseRev, newMark, composeChild, moveEffects);
+	const nodeChange = handleNodeChanges(baseMark, newMark, composeChild, moveEffects);
 
-	// We apply endpoint updates after handling node changes because moved nodes should be sent to the endpoint in the base changeset,
-	// not the endpoint in the composed changeset.
-	return withNodeChange(
-		composeMarksIgnoreChild(
-			withUpdatedEndpoint(
-				withRevision(baseMark, baseRev),
-				baseMark.count,
-				baseRev,
-				moveEffects,
-			),
-			withUpdatedEndpoint(withRevision(newMark, newRev), newMark.count, newRev, moveEffects),
-			moveEffects,
-			revisionMetadata,
-		),
-		nodeChange,
+	return withUpdatedEndpoint(
+		withNodeChange(composeMarksIgnoreChild(baseMark, newMark, moveEffects), nodeChange),
+		baseMark.count,
+		moveEffects,
 	);
 }
 
@@ -207,9 +178,8 @@ function composeMarksIgnoreChild(
 	baseMark: Mark,
 	newMark: Mark,
 	moveEffects: MoveEffectTable,
-	revisionMetadata: RevisionMetadataSource,
 ): Mark {
-	if (isImpactfulCellRename(newMark, undefined, revisionMetadata)) {
+	if (isImpactfulCellRename(newMark)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
@@ -234,15 +204,20 @@ function composeMarksIgnoreChild(
 				// with the end of the new move (B to C).
 				// Because we are replacing the mark representing the start of the move with the new changeset's
 				// move-out from A, we update the base move-in at B to consider that its start point.
-				setEndpoint(
+				const newDetachId = {
+					revision: newDetachRevision,
+					localId: newAttachAndDetach.detach.id,
+				};
+
+				setTruncatedEndpointForInner(
 					moveEffects,
 					CrossFieldTarget.Destination,
-					getEndpoint(baseMark, undefined),
+					getEndpoint(baseMark),
 					baseMark.count,
-					{ revision: newDetachRevision, localId: newAttachAndDetach.detach.id },
+					newDetachId,
 				);
 
-				const newEndpoint = getNewEndpoint(
+				const newEndpoint = getComposedEndpoint(
 					moveEffects,
 					CrossFieldTarget.Source,
 					baseMark.revision,
@@ -252,35 +227,22 @@ function composeMarksIgnoreChild(
 
 				if (newEndpoint !== undefined) {
 					changeFinalEndpoint(newDetach as MoveMarkEffect, newEndpoint);
+					setTruncatedEndpoint(
+						moveEffects,
+						CrossFieldTarget.Destination,
+						newEndpoint,
+						baseMark.count,
+						newDetachId,
+					);
 				}
 			}
 
 			return newDetach;
 		}
 
-		if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
+		if (isImpactfulCellRename(baseMark)) {
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
-			const newOutputId = getOutputCellId(newAttachAndDetach, undefined, revisionMetadata);
-
-			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
-				const moveStartId = getEndpoint(baseAttachAndDetach.attach, undefined);
-				const moveEndId = getEndpoint(newAttachAndDetach.detach, undefined);
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					moveStartId,
-					baseMark.count,
-					moveEndId,
-				);
-
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					moveEndId,
-					baseMark.count,
-					moveStartId,
-				);
-			}
+			const newOutputId = getOutputCellId(newAttachAndDetach);
 
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
@@ -305,23 +267,9 @@ function composeMarksIgnoreChild(
 
 		return normalizeCellRename(newAttachAndDetach);
 	}
-	if (isImpactfulCellRename(baseMark, undefined, revisionMetadata)) {
+	if (isImpactfulCellRename(baseMark)) {
 		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
-				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					getEndpoint(newMark, undefined),
-					baseAttachAndDetach.count,
-					{
-						revision: baseAttachAndDetach.attach.revision,
-						localId: baseAttachAndDetach.attach.id,
-					},
-				);
-			}
-
 			const originalAttach = withRevision(
 				{
 					...baseAttachAndDetach.attach,
@@ -330,6 +278,43 @@ function composeMarksIgnoreChild(
 				},
 				baseAttachAndDetach.attach.revision,
 			);
+
+			if (isMoveIn(baseAttachAndDetach.attach) && isMoveOut(baseAttachAndDetach.detach)) {
+				assert(isMoveIn(newMark), 0x809 /* Unexpected mark type */);
+
+				const originalAttachId = {
+					revision: baseAttachAndDetach.attach.revision,
+					localId: baseAttachAndDetach.attach.id,
+				};
+
+				setTruncatedEndpointForInner(
+					moveEffects,
+					CrossFieldTarget.Source,
+					getEndpoint(newMark),
+					baseAttachAndDetach.count,
+					originalAttachId,
+				);
+
+				const newEndpoint = getComposedEndpoint(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					newMark.revision,
+					newMark.id,
+					newMark.count,
+				);
+
+				if (newEndpoint !== undefined) {
+					changeFinalEndpoint(originalAttach as MoveMarkEffect, newEndpoint);
+					setTruncatedEndpoint(
+						moveEffects,
+						CrossFieldTarget.Source,
+						newEndpoint,
+						baseMark.count,
+						originalAttachId,
+					);
+				}
+			}
+
 			return originalAttach;
 		} else {
 			// Other mark types have been handled by previous conditional branches.
@@ -344,11 +329,7 @@ function composeMarksIgnoreChild(
 		} else if (isNoopMark(newMark)) {
 			return baseMark;
 		}
-		return createNoopMark(
-			newMark.count,
-			undefined,
-			getInputCellId(baseMark, undefined, undefined),
-		);
+		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
 	} else if (!markHasCellEffect(baseMark)) {
 		return newMark;
 	} else if (!markHasCellEffect(newMark)) {
@@ -361,8 +342,8 @@ function composeMarksIgnoreChild(
 		const detach = extractMarkEffect(newMark);
 
 		if (isMoveIn(attach) && isMoveOut(detach)) {
-			const finalSource = getEndpoint(attach, undefined);
-			const finalDest = getEndpoint(detach, undefined);
+			const finalSource = getEndpoint(attach);
+			const finalDest = getEndpoint(detach);
 
 			setEndpoint(
 				moveEffects,
@@ -372,6 +353,24 @@ function composeMarksIgnoreChild(
 				finalDest,
 			);
 
+			const truncatedEndpoint1 = getTruncatedEndpointForInner(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				attach.revision,
+				attach.id,
+				baseMark.count,
+			);
+
+			if (truncatedEndpoint1 !== undefined) {
+				setTruncatedEndpoint(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					finalDest,
+					baseMark.count,
+					truncatedEndpoint1,
+				);
+			}
+
 			setEndpoint(
 				moveEffects,
 				CrossFieldTarget.Destination,
@@ -380,15 +379,31 @@ function composeMarksIgnoreChild(
 				finalSource,
 			);
 
+			const truncatedEndpoint2 = getTruncatedEndpointForInner(
+				moveEffects,
+				CrossFieldTarget.Source,
+				detach.revision,
+				detach.id,
+				baseMark.count,
+			);
+
+			if (truncatedEndpoint2 !== undefined) {
+				setTruncatedEndpoint(
+					moveEffects,
+					CrossFieldTarget.Source,
+					finalSource,
+					baseMark.count,
+					truncatedEndpoint2,
+				);
+			}
+
 			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
 			// so we remove it as a normalization.
 			delete attach.finalEndpoint;
 			delete detach.finalEndpoint;
 		}
 
-		if (
-			areEqualCellIds(getOutputCellId(newMark, undefined, revisionMetadata), baseMark.cellId)
-		) {
+		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
 			return { count: baseMark.count, cellId: baseMark.cellId };
 		}
@@ -423,7 +438,6 @@ function createNoopMark(
 
 function handleNodeChanges(
 	baseMark: Mark,
-	baseRev: RevisionTag | undefined,
 	newMark: Mark,
 	composeChild: NodeChangeComposer,
 	moveEffects: MoveEffectTable,
@@ -433,7 +447,7 @@ function handleNodeChanges(
 
 		// TODO: Make sure composeChild is not called twice on the node changes.
 		if (baseSource !== undefined) {
-			setModifyAfter(moveEffects, getEndpoint(baseSource, baseRev), newMark.changes);
+			setModifyAfter(moveEffects, getEndpoint(baseSource), newMark.changes);
 			return undefined;
 		}
 	}
@@ -455,13 +469,12 @@ function composeChildChanges(
 
 function composeMark<TMark extends Mark>(
 	mark: TMark,
-	revision: RevisionTag | undefined,
 	moveEffects: MoveEffectTable,
 	composeChild: (node: NodeId) => NodeId | undefined,
 ): TMark {
 	const nodeChanges = mark.changes !== undefined ? composeChild(mark.changes) : undefined;
-	const updatedMark = withUpdatedEndpoint(mark, mark.count, revision, moveEffects);
-	return withNodeChange(withRevision(updatedMark, revision), nodeChanges);
+	const updatedMark = withUpdatedEndpoint(mark, mark.count, moveEffects);
+	return withNodeChange(updatedMark, nodeChanges);
 }
 
 export class ComposeQueue {
@@ -471,27 +484,15 @@ export class ComposeQueue {
 	private readonly newMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 
 	public constructor(
-		baseRevision: RevisionTag | undefined,
 		baseMarks: Changeset,
-		private readonly newRevision: RevisionTag | undefined,
 		newMarks: Changeset,
 		private readonly moveEffects: MoveEffectTable,
 		private readonly revisionMetadata: RevisionMetadataSource,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects);
-		this.newMarks = new MarkQueue(newMarks, newRevision, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(
-			baseMarks,
-			baseRevision,
-			revisionMetadata,
-			getOutputCellId,
-		);
-		this.newMarksCellSources = cellSourcesFromMarks(
-			newMarks,
-			undefined,
-			revisionMetadata,
-			getInputCellId,
-		);
+		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
+		this.newMarks = new MarkQueue(newMarks, moveEffects);
+		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getOutputCellId);
+		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
 
 	public isEmpty(): boolean {
@@ -509,14 +510,12 @@ export class ComposeQueue {
 			return this.dequeueBase();
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const baseCellId: ChangeAtomId =
-				getOutputCellId(baseMark, this.baseMarks.revision, this.revisionMetadata) ??
-				fail("Expected defined output ID");
+				getOutputCellId(baseMark) ?? fail("Expected defined output ID");
 
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
 				// The base revision should always be defined except when squashing changes into a transaction.
 				// In the future, we want to support reattaches in the new change here.
-				// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
-				// (which will be obtained by rebasing the reattach over interim changes
+				// We will need to be able to order the base mark relative to the new mark
 				// (which requires the local changes to have a revision tag))
 				assert(
 					isNewAttach(newMark),
@@ -525,50 +524,24 @@ export class ComposeQueue {
 				return this.dequeueNew();
 			}
 
-			switch (sequenceConfig.cellOrdering) {
-				case CellOrderingMethod.Tombstone: {
-					const newCellId = getInputCellId(
-						newMark,
-						this.newRevision,
-						this.revisionMetadata,
-					);
-					assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
-					const comparison = compareCellPositionsUsingTombstones(
-						baseCellId,
-						newCellId,
-						this.baseMarksCellSources,
-						this.newMarksCellSources,
-						this.revisionMetadata,
-					);
-					switch (comparison) {
-						case CellOrder.SameCell:
-							return this.dequeueBoth();
-						case CellOrder.OldThenNew:
-							return this.dequeueBase();
-						case CellOrder.NewThenOld:
-							return this.dequeueNew();
-						default:
-							unreachableCase(comparison);
-					}
-				}
-				case CellOrderingMethod.Lineage: {
-					const cmp = compareCellPositions(
-						baseCellId,
-						baseMark.count,
-						newMark,
-						this.newRevision,
-						this.revisionMetadata,
-					);
-					if (cmp < 0) {
-						return this.dequeueBase(-cmp);
-					} else if (cmp > 0) {
-						return this.dequeueNew(cmp);
-					} else {
-						return this.dequeueBoth();
-					}
-				}
+			const newCellId = getInputCellId(newMark);
+			assert(newCellId !== undefined, 0x89d /* Both marks should have cell IDs */);
+			const comparison = compareCellPositionsUsingTombstones(
+				baseCellId,
+				newCellId,
+				this.baseMarksCellSources,
+				this.newMarksCellSources,
+				this.revisionMetadata,
+			);
+			switch (comparison) {
+				case CellOrder.SameCell:
+					return this.dequeueBoth();
+				case CellOrder.OldThenNew:
+					return this.dequeueBase();
+				case CellOrder.NewThenOld:
+					return this.dequeueNew();
 				default:
-					unreachableCase(sequenceConfig.cellOrdering);
+					unreachableCase(comparison);
 			}
 		} else if (areOutputCellsEmpty(baseMark)) {
 			return this.dequeueBase();
@@ -581,27 +554,15 @@ export class ComposeQueue {
 
 	private dequeueBase(length: number = Infinity): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
-		const movedChanges = getMovedChangesFromMark(
-			this.moveEffects,
-			baseMark,
-			this.baseMarks.revision,
-		);
+		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
 
-		const newMark = createNoopMark(
-			baseMark.count,
-			movedChanges,
-			getOutputCellId(baseMark, this.baseMarks.revision, this.revisionMetadata),
-		);
+		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}
 
 	private dequeueNew(length: number = Infinity): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
-		const baseMark = createNoopMark(
-			newMark.count,
-			undefined,
-			getInputCellId(newMark, this.newMarks.revision, this.revisionMetadata),
-		);
+		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
 
 		return {
 			baseMark,
@@ -613,11 +574,7 @@ export class ComposeQueue {
 		const length = this.peekMinLength();
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		let newMark = this.newMarks.dequeueUpTo(length);
-		const movedChanges = getMovedChangesFromMark(
-			this.moveEffects,
-			baseMark,
-			this.baseMarks.revision,
-		);
+		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
 
 		if (movedChanges !== undefined) {
 			assert(newMark.changes === undefined, 0x8da /* Unexpected node changeset collision */);
@@ -647,106 +604,18 @@ interface ComposeMarks {
 	newMark?: Mark;
 }
 
-// TODO: Try to share more logic with the version in rebase.ts.
-/**
- * Returns a number N which encodes how the cells of the two marks are aligned.
- * - If N is zero, then the first cell of `baseMark` is the same as the first cell of `newMark`.
- * - If N is positive, then the first N cells of `newMark` (or all its cells if N is greater than its length)
- * are before the first cell of `baseMark`.
- * - If N is negative, then the first N cells of `baseMark` (or all its cells if N is greater than its length)
- * are before the first cell of `newMark`.
- */
-function compareCellPositions(
-	baseCellId: CellId,
-	baseCellCount: number,
-	newMark: EmptyInputCellMark,
-	newIntention: RevisionTag | undefined,
-	metadata: RevisionMetadataSource,
-): number {
-	const newCellId = getInputCellId(newMark, newIntention, metadata);
-	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
-	if (baseCellId.revision === newCellId.revision) {
-		const comparison = compareCellsFromSameRevision(
-			baseCellId,
-			baseCellCount,
-			newCellId,
-			newMark.count,
-		);
-
-		if (comparison !== undefined) {
-			return comparison;
-		}
-	}
-
-	const offsetInBase = getOffsetInCellRange(
-		baseCellId.lineage,
-		newCellId.revision,
-		newCellId.localId,
-		newMark.count,
-	);
-	if (offsetInBase !== undefined) {
-		return offsetInBase > 0 ? offsetInBase : -Infinity;
-	}
-
-	const offsetInNew = getOffsetInCellRange(
-		newCellId.lineage,
-		baseCellId.revision,
-		baseCellId.localId,
-		baseCellCount,
-	);
-	if (offsetInNew !== undefined) {
-		return offsetInNew > 0 ? -offsetInNew : Infinity;
-	}
-
-	const cmp = compareLineages(baseCellId, newCellId);
-	if (cmp !== 0) {
-		return Math.sign(cmp) * Infinity;
-	}
-
-	assert(
-		baseCellId.revision !== undefined && newCellId.revision !== undefined,
-		0x858 /* Cells should have defined revisions */,
-	);
-
-	if (!isNewAttach(newMark)) {
-		// If `newMark` were targeting a cell older than the composition window
-		// there would be lineage determining the relative order of `newCell` and `baseCell`.
-
-		// TODO:6127: Enable this assert
-		// assert(
-		// 	newRevisionIndex !== undefined,
-		// 	"Expected lineage to determine cell order",
-		// );
-
-		// `newCell` was detached by a change in this composition, so there will be a corresponding mark
-		// later in the base changeset.
-		return -Infinity;
-	}
-
-	const newRevisionIndex = metadata.getIndex(newCellId.revision);
-	const baseRevisionIndex = metadata.getIndex(baseCellId.revision);
-	assert(
-		newRevisionIndex !== undefined,
-		0x859 /* A cell from a new attach should have a defined revision index */,
-	);
-
-	// We use the tiebreaking policy of the newer cell.
-	return (baseRevisionIndex ?? -Infinity) > newRevisionIndex ? -Infinity : Infinity;
-}
-
 function getMovedChangesFromMark(
 	moveEffects: MoveEffectTable,
 	markEffect: MarkEffect,
-	revision: RevisionTag | undefined,
 ): NodeId | undefined {
 	if (isAttachAndDetachEffect(markEffect)) {
-		return getMovedChangesFromMark(moveEffects, markEffect.detach, revision);
+		return getMovedChangesFromMark(moveEffects, markEffect.detach);
 	}
 	if (!isMoveOut(markEffect)) {
 		return undefined;
 	}
 
-	return getModifyAfter(moveEffects, markEffect.revision ?? revision, markEffect.id);
+	return getModifyAfter(moveEffects, markEffect.revision, markEffect.id);
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
@@ -773,7 +642,7 @@ function setModifyAfter(
 	moveEffects: MoveEffectTable,
 	{ revision, localId: id }: ChangeAtomId,
 	modifyAfter: NodeId,
-) {
+): void {
 	const target = CrossFieldTarget.Source;
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
@@ -788,8 +657,8 @@ function setEndpoint(
 	id: ChangeAtomId,
 	count: number,
 	endpoint: ChangeAtomId,
-) {
-	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+): void {
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count, false);
 	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 
@@ -805,29 +674,77 @@ function setEndpoint(
 	}
 }
 
+function setTruncatedEndpoint(
+	moveEffects: MoveEffectTable,
+	target: CrossFieldTarget,
+	id: ChangeAtomId,
+	count: number,
+	truncatedEndpoint: ChangeAtomId,
+): void {
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const newEffect =
+		effect.value !== undefined ? { ...effect.value, truncatedEndpoint } : { truncatedEndpoint };
+
+	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+
+	const remainingCount = count - effect.length;
+	if (remainingCount > 0) {
+		setTruncatedEndpoint(
+			moveEffects,
+			target,
+			offsetChangeAtomId(id, effect.length),
+			remainingCount,
+			offsetChangeAtomId(truncatedEndpoint, effect.length),
+		);
+	}
+}
+
+function setTruncatedEndpointForInner(
+	moveEffects: MoveEffectTable,
+	target: CrossFieldTarget,
+	id: ChangeAtomId,
+	count: number,
+	truncatedEndpointForInner: ChangeAtomId,
+): void {
+	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
+	const newEffect =
+		effect.value !== undefined
+			? { ...effect.value, truncatedEndpointForInner }
+			: { truncatedEndpointForInner };
+	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
+
+	const remainingCount = count - effect.length;
+	if (remainingCount > 0) {
+		setTruncatedEndpointForInner(
+			moveEffects,
+			target,
+			offsetChangeAtomId(id, effect.length),
+			remainingCount,
+			offsetChangeAtomId(truncatedEndpointForInner, effect.length),
+		);
+	}
+}
+
 function withUpdatedEndpoint<TMark extends MarkEffect>(
 	mark: TMark,
 	count: number,
-	revision: RevisionTag | undefined,
 	effects: MoveEffectTable,
 ): TMark {
 	if (isAttachAndDetachEffect(mark)) {
 		return {
 			...mark,
-			attach: withUpdatedEndpoint(mark.attach, count, revision, effects),
-			detach: withUpdatedEndpoint(mark.detach, count, revision, effects),
+			attach: withUpdatedEndpoint(mark.attach, count, effects),
+			detach: withUpdatedEndpoint(mark.detach, count, effects),
 		};
 	}
 
 	if (!isMoveMark(mark)) {
 		return mark;
 	}
-
-	const markRevision = mark.revision ?? revision;
-	const finalDest = getNewEndpoint(
+	const finalDest = getComposedEndpoint(
 		effects,
 		getCrossFieldTargetFromMove(mark),
-		markRevision,
+		mark.revision,
 		mark.id,
 		count,
 	);
@@ -842,7 +759,7 @@ function withUpdatedEndpoint<TMark extends MarkEffect>(
 	return output;
 }
 
-function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId) {
+function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId): void {
 	if (areEqualCellIds(endpoint, { revision: mark.revision, localId: mark.id })) {
 		delete mark.finalEndpoint;
 	} else {
@@ -850,7 +767,7 @@ function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId) {
 	}
 }
 
-function getNewEndpoint(
+function getComposedEndpoint(
 	moveEffects: MoveEffectTable,
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
@@ -859,13 +776,17 @@ function getNewEndpoint(
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
-	if (effect.value?.endpoint === undefined) {
-		return undefined;
-	}
-
-	return effect.value.endpoint;
+	return effect.value?.truncatedEndpoint ?? effect.value?.endpoint;
 }
 
-function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
-	return { ...id, localId: brand(id.localId + offset) };
+function getTruncatedEndpointForInner(
+	moveEffects: MoveEffectTable,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: MoveId,
+	count: number,
+): ChangeAtomId | undefined {
+	const effect = getMoveEffect(moveEffects, target, revision, id, count);
+	assert(effect.length === count, 0x934 /* Expected effect to cover entire mark */);
+	return effect.value?.truncatedEndpointForInner;
 }

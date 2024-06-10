@@ -5,15 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, type IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import type { IClient } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { type SinonStub, stub } from "sinon";
+import { stub, type SinonStub } from "sinon";
 import { Socket } from "socket.io-client";
 
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -117,10 +116,16 @@ describe("expose joinSessionInfo Tests", () => {
 			odspResolvedUrl,
 			new MockLogger().toTelemetryLogger(),
 		);
-		const errorToThrow = createOdspNetworkError("TestError", 429);
-		const errorFromEvent = "connect_document_error";
+		const errorToThrow = {
+			code: 404,
+			message: "TestError",
+			retryAfter: 5,
+			errorType: "ThrottlingError",
+			canRetry: true,
+		};
+		const errorEventName = "connect_document_error";
 		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorFromEvent, errorToThrow },
+			connect_document: { eventToEmit: errorEventName, errorToThrow },
 		});
 		const client: IClient = {
 			mode: "read",
@@ -146,16 +151,15 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 		} catch (error) {
 			assert(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(error as any).errorFrom === errorFromEvent,
-				`errorFrom param with value as '${errorFromEvent}' should be available`,
+				(error as IAnyDriverError).scenarioName === errorEventName,
+				`scenarioName param with value as '${errorEventName}' should be available`,
 			);
 
 			const info =
 				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
 			assert(
 				info === undefined,
-				`joinSession cache should get cleared when '${errorFromEvent}' occurs`,
+				`joinSession cache should get cleared when '${errorEventName}' occurs`,
 			);
 		} finally {
 			// reset nonPersistenCache changes from the test
@@ -178,10 +182,16 @@ describe("expose joinSessionInfo Tests", () => {
 			odspResolvedUrl,
 			new MockLogger().toTelemetryLogger(),
 		);
-		const errorToThrow = createOdspNetworkError("TestSocketError", 401);
-		const errorFromEvent = "connect_error";
+		const errorToThrow = {
+			code: 404,
+			message: "TestError",
+			retryAfter: 5,
+			errorType: "ThrottlingError",
+			canRetry: true,
+		};
+		const errorEventName = "connect_error";
 		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorFromEvent, errorToThrow },
+			connect_document: { eventToEmit: errorEventName, errorToThrow },
 		});
 		const client: IClient = {
 			mode: "read",
@@ -207,16 +217,15 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 		} catch (error) {
 			assert(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(error as any).errorFrom === errorFromEvent,
-				`errorFrom param with value as ${errorFromEvent} should be present`,
+				(error as IAnyDriverError).scenarioName === errorEventName,
+				`scenarioName param with value as ${errorEventName} should be present`,
 			);
 
 			const info =
 				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
 			assert(
 				info === joinSessionResponse,
-				`joinSession cache should not get cleared when '${errorFromEvent}' occurs`,
+				`joinSession cache should not get cleared when '${errorEventName}' occurs`,
 			);
 		} finally {
 			// reset nonPersistenCache changes from the test

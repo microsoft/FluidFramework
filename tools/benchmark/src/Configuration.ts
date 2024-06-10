@@ -4,6 +4,7 @@
  */
 
 import { assert } from "chai";
+
 import { Phase } from "./runBenchmark";
 import { Timer } from "./timer";
 

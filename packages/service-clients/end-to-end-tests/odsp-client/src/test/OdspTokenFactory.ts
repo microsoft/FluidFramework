@@ -6,9 +6,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
+import { IOdspTokenProvider } from "@fluidframework/odsp-client";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
@@ -53,9 +53,8 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		refreshToken: string;
 	}> {
 		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
+		const clientConfig: IPublicClientConfig = {
 			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
@@ -65,7 +64,6 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const body = {
 			scope,
 			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
 			...credentials,
 		};
 		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));

@@ -8,16 +8,14 @@ import { strict as assert } from "assert";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import {
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 // This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
@@ -31,13 +29,9 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * An IFluidHandle implementation that has a random path / url. This is used to test that adding this handle to
  * a DDS doesn't yield unexpected results for GC.
  */
-export class TestFluidHandle implements IFluidHandle {
+export class TestFluidHandle extends FluidHandleBase<unknown> {
 	public absolutePath: string = "/randomPath";
 	public isAttached: boolean = false;
-
-	public get IFluidHandle(): IFluidHandle {
-		return this;
-	}
 
 	public async get(): Promise<any> {
 		throw new Error("Method not implemented.");
@@ -61,13 +55,10 @@ export class TestFluidHandle implements IFluidHandle {
  * in the data store.
  */
 class TestSubDataStoreObject {
-	private readonly _handle: IFluidHandle;
-	public get handle() {
-		return this._handle;
-	}
+	public readonly handle: IFluidHandleInternal;
 
 	constructor(path: string, handleContext: IFluidHandleContext) {
-		this._handle = new FluidObjectHandle(this, path, handleContext);
+		this.handle = new FluidObjectHandle(this, path, handleContext);
 	}
 }
 
@@ -87,7 +78,11 @@ describeCompat("GC unknown handles", "FullCompat", (getTestObjectProvider) => {
 	 */
 	async function getGCNodesFromSummary() {
 		await provider.ensureSynchronized();
-		const { summary } = await summarizerRuntime.summarize({ runGC: true, trackState: false });
+		const { summary } = await summarizerRuntime.summarize({
+			runGC: true,
+			trackState: false,
+			fullTree: true,
+		});
 		const gcState = getGCStateFromSummary(summary);
 		assert(gcState !== undefined, "GC tree is not available in the summary");
 		return new Set(Object.keys(gcState));

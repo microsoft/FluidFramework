@@ -5,12 +5,12 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
+	ISnapshot,
 	IBlob,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
@@ -82,12 +82,8 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree):
 			const childNode = treeNode.addNode("list");
 			writeTreeSectionCore(childNode, value);
 		}
-		if (snapshotTree.groupId !== undefined) {
-			addDictionaryStringProperty(treeNode, "groupId", snapshotTree.groupId);
-		}
-
-		if (snapshotTree.omitted !== undefined) {
-			addBoolProperty(treeNode, "omitted", snapshotTree.omitted);
+		if (value.groupId !== undefined) {
+			addDictionaryStringProperty(treeNode, "groupId", value.groupId);
 		}
 	}
 

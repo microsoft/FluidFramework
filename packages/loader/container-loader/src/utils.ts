@@ -5,7 +5,12 @@
 
 import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IDocumentAttributes,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
@@ -16,17 +21,12 @@ import {
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import {
-	IDocumentAttributes,
-	ISnapshotTree,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
+	IPendingContainerState,
 	IPendingDetachedContainerState,
 	ISnapshotInfo,
 	SnapshotWithBlobs,
@@ -43,7 +43,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
  * May not be compatible or relevant for any Url Resolver
- * @internal
+ * @alpha
  */
 export interface IParsedUrl {
 	/**
@@ -72,7 +72,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
- * @internal
+ * @alpha
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = new URL(url);
@@ -163,7 +163,6 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				throw new LoggingError(
 					"No handles should be there in summary in detached container!!",
 				);
-				break;
 			default: {
 				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
 			}
@@ -181,7 +180,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
-	assert(snapshot.sequenceNumber !== undefined, "Snapshot sequence number is missing");
+	assert(snapshot.sequenceNumber !== undefined, 0x93a /* Snapshot sequence number is missing */);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
@@ -314,6 +313,11 @@ function isPendingDetachedContainerState(
 	return true;
 }
 
+/**
+ * Parses the given string into {@link IPendingDetachedContainerState} format,
+ * with validation (if invalid, throws a UsageError).
+ * This is the inverse of the JSON.stringify call in {@link Container.serialize}
+ */
 export function getDetachedContainerStateFromSerializedContainer(
 	serializedContainer: string,
 ): IPendingDetachedContainerState {
@@ -334,6 +338,18 @@ export function getDetachedContainerStateFromSerializedContainer(
 	} else {
 		throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 	}
+}
+
+/**
+ * Blindly parses the given string into {@link IPendingContainerState} format.
+ * This is the inverse of the JSON.stringify call in {@link SerializedStateManager.getPendingLocalState}
+ */
+export function getAttachedContainerStateFromSerializedContainer(
+	serializedContainer: string | undefined,
+): IPendingContainerState | undefined {
+	return serializedContainer !== undefined
+		? (JSON.parse(serializedContainer) as IPendingContainerState)
+		: undefined;
 }
 
 /**

@@ -4,8 +4,8 @@
  */
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap } from "@fluidframework/map";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
 	InterdependencyRange,
@@ -16,15 +17,21 @@ import {
 	isRangeOperator,
 	isWorkspaceRange,
 } from "@fluid-tools/version-tools";
-import { Logger, MonoRepo, Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import {
+	Logger,
+	MonoRepo,
+	Package,
+	type PackageJson,
+	updatePackageJsonFile,
+} from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
-import { readJson, readJsonSync, writeFile } from "fs-extra";
+import { readJson, readJsonSync } from "fs-extra/esm";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
-import type { Index } from "npm-check-updates/build/src/types/IndexType";
-import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
+import type { Index } from "npm-check-updates/build/src/types/IndexType.js";
+import type { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec.js";
 import * as semver from "semver";
 
 import {
@@ -32,12 +39,12 @@ import {
 	PackageSelectionCriteria,
 	PackageWithKind,
 	selectAndFilterPackages,
-} from "../filter";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
-import { DependencyUpdateType } from "./bump";
-import { zip } from "./collections";
-import { Context, VersionDetails } from "./context";
-import { indentString } from "./text";
+} from "../filter.js";
+import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import { DependencyUpdateType } from "./bump.js";
+import { zip } from "./collections.js";
+import { Context, VersionDetails } from "./context.js";
+import { indentString } from "./text.js";
 
 /**
  * An object that maps package names to version strings or range strings.
@@ -143,7 +150,7 @@ export async function npmCheckUpdates(
 		log?.verbose(`Checking packages in ${path.join(repoPath, glob)}`);
 
 		// eslint-disable-next-line no-await-in-loop
-		const result = (await ncu({
+		const result = (await ncu.run({
 			filter: depsToUpdate,
 			cwd: repoPath,
 			packageFile: glob === "" ? "package.json" : `${glob}/package.json`,
@@ -785,7 +792,10 @@ export async function npmCheckUpdatesHomegrown(
 		}
 	}
 
-	const { filtered: packagesToUpdate } = selectAndFilterPackages(context, selectionCriteria);
+	const { filtered: packagesToUpdate } = await selectAndFilterPackages(
+		context,
+		selectionCriteria,
+	);
 	log?.info(
 		`Found ${Object.keys(dependencyVersionMap).length} dependencies to update across ${
 			packagesToUpdate.length
@@ -841,4 +851,50 @@ export async function npmCheckUpdatesHomegrown(
 		updatedDependencies: dependencyVersionMap,
 		updatedPackages,
 	};
+}
+
+/**
+ * Checks the package object to verify that the specified devDependency exists.
+ *
+ * @param packageObject - the package.json object to check for the dependency
+ * @param dependencyName - the dependency to check for in the package object
+ * @returns The version of the dependency in package.json.
+ */
+export function ensureDevDependencyExists(
+	packageObject: PackageJson,
+	dependencyName: string,
+): string {
+	const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
+	if (dependencyVersion === undefined) {
+		throw new Error(`Did not find devDependency '${dependencyName}' in package.json`);
+	}
+	return dependencyVersion;
+}
+
+/**
+ * Returns the "tarball name" for a package. This is the name that 'npm pack' uses for the tarball it creates when run,
+ * NOT including version or file extension.
+ *
+ * @param pkg - The package.json for the package.
+ * @returns The package name portion of the full package tarball name.
+ *
+ * @see {@link getFullTarballName} for a version of this function that includes the package version and file extension.
+ */
+export function getTarballName(pkg: PackageJson | string): string {
+	const pkgName = typeof pkg === "string" ? pkg : pkg.name;
+	const name = pkgName.replaceAll("@", "").replaceAll("/", "-");
+	return name;
+}
+
+/**
+ * Returns the "tarball name" for a package. This is the name that 'npm pack' uses for the tarball it creates when run,
+ * including the version and file extension.
+ *
+ * @param pkg - The package.json for the package.
+ * @returns The full tarball name including version and file extension.
+ *
+ * @see {@link getTarballName} for a version of this function that does not include the package version and file extension.
+ */
+export function getFullTarballName(pkg: PackageJson): string {
+	return `${getTarballName(pkg)}-${pkg?.version ?? 0}.tgz`;
 }

@@ -87,7 +87,7 @@ describe("SchemaIndex", () => {
 	});
 
 	describe("codec", () => {
-		makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases, (a, b) => {
+		makeEncodingTestSuite(makeCodecFamily([[1, codec]]), testCases, (a, b) => {
 			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
 		});

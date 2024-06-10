@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -288,7 +288,7 @@ describe("Reconnection", () => {
 				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) === undefined,
 				"/subDir/subDir should not exist",
 			);
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 
 		it("avoids sending setValue ops on recreated directories", async () => {
@@ -315,7 +315,7 @@ describe("Reconnection", () => {
 				directory1.getSubDirectory(subDirName)?.get(subDirKey) === undefined,
 				"/subDir(testSubDirKey) should not exist",
 			);
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 
 		it("does not delete pending create subDirs on reconnection", async () => {
@@ -348,7 +348,7 @@ describe("Reconnection", () => {
 				"/subDir/subDir2 should not exist",
 			);
 
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 
 		it("does not delete pending keys within pending subDirs on reconnection", async () => {
@@ -383,7 +383,7 @@ describe("Reconnection", () => {
 					?.get(subDirKey) === subDirValue,
 				"/subDir/subDir(subDirKey) should exist",
 			);
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 
 		it("multiple create/delete subDirs on disconnection/reconnection 1", async () => {
@@ -410,7 +410,7 @@ describe("Reconnection", () => {
 				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) !== undefined,
 				"/subDir/subDir should exist",
 			);
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 
 		it("multiple create/delete subDirs on disconnection/reconnection 2", async () => {
@@ -435,7 +435,7 @@ describe("Reconnection", () => {
 				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) === undefined,
 				"/subDir/subDir should not exist",
 			);
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 
 		it("multiple create/delete subDirs on disconnection/reconnection 3", async () => {
@@ -458,7 +458,7 @@ describe("Reconnection", () => {
 				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) === undefined,
 				"/subDir/subDir should not exist",
 			);
-			assertEquivalentDirectories(directory1, directory2);
+			await assertEquivalentDirectories(directory1, directory2);
 		});
 	});
 });

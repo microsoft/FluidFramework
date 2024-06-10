@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, isReadonlyArray } from "../util/index.js";
-
-import { Unhydrated } from "./types.js";
+import { FlexListToUnion, LazyItem, NodeKeyManager, isLazy } from "../feature-libraries/index.js";
+import { MakeNominal, brand, isReadonlyArray } from "../util/index.js";
+import { InternalTreeNode, Unhydrated } from "./types.js";
+import { FieldKey } from "../core/index.js";
+import { InsertableContent } from "./proxies.js";
 
 /**
  * Schema for a tree node.
@@ -78,7 +79,7 @@ export interface TreeNodeSchemaClass<
 	 * Therefor overriding this constructor is not type-safe and is not supported.
 	 * @sealed
 	 */
-	new (data: TInsertable): Unhydrated<TNode>;
+	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
 /**
@@ -180,8 +181,8 @@ export enum NodeKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the view key.
  */
-export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): string {
-	return getExplicitStoredKey(fieldSchema) ?? viewKey;
+export function getStoredKey(viewKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+	return brand(getExplicitStoredKey(fieldSchema) ?? viewKey);
 }
 
 /**
@@ -249,19 +250,86 @@ export interface FieldProps {
 	 * @defaultValue If not specified, the key that is persisted is the property key that was specified in the schema.
 	 */
 	readonly key?: string;
+	/**
+	 * A default provider used for fields which were not provided any values.
+	 * @privateRemarks
+	 * We are using an erased type here, as we want to expose this API but `InsertableContent` and `NodeKeyManager` are not public.
+	 */
+	readonly defaultProvider?: DefaultProvider;
 }
+
+/**
+ * A {@link FieldProvider} which requires additional context in order to produce its content
+ */
+export type ContextualFieldProvider = (context: NodeKeyManager) => InsertableContent | undefined;
+/**
+ * A {@link FieldProvider} which can produce its content in a vacuum
+ */
+export type ConstantFieldProvider = () => InsertableContent | undefined;
+/**
+ * A function which produces content for a field every time that it is called
+ */
+export type FieldProvider = ContextualFieldProvider | ConstantFieldProvider;
+/**
+ * Returns true if the given {@link FieldProvider} is a {@link ConstantFieldProvider}
+ */
+export function isConstant(fieldProvider: FieldProvider): fieldProvider is ConstantFieldProvider {
+	return fieldProvider.length === 0;
+}
+
+/**
+ * Provides a default value for a field.
+ * @remarks
+ * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
+ * @public
+ */
+export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
+
+export function extractFieldProvider(input: DefaultProvider): FieldProvider {
+	return input as unknown as FieldProvider;
+}
+
+export function getDefaultProvider(input: FieldProvider): DefaultProvider {
+	return input as unknown as DefaultProvider;
+}
+
+/**
+ * Package internal construction API.
+ */
+export let createFieldSchema: <
+	Kind extends FieldKind = FieldKind,
+	Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+>(
+	kind: Kind,
+	allowedTypes: Types,
+	props?: FieldProps,
+) => FieldSchema<Kind, Types>;
 
 /**
  * All policy for a specific field,
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ * Use {@link SchemaFactory} to create the FieldSchema instances, for example {@link SchemaFactory.optional}.
+ * @privateRemarks
+ * Public access to the constructor is removed to prevent creating expressible but unsupported (or not stable) configurations.
+ * {@link createFieldSchema} can be used internally to create instances.
  * @sealed @public
  */
 export class FieldSchema<
 	out Kind extends FieldKind = FieldKind,
 	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > {
+	static {
+		createFieldSchema = <
+			Kind2 extends FieldKind = FieldKind,
+			Types2 extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+		>(
+			kind: Kind2,
+			allowedTypes: Types2,
+			props?: FieldProps,
+		) => new FieldSchema(kind, allowedTypes, props);
+	}
 	/**
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
@@ -278,7 +346,7 @@ export class FieldSchema<
 		return this.lazyTypes.value;
 	}
 
-	public constructor(
+	private constructor(
 		/**
 		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
 		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
@@ -301,7 +369,7 @@ export class FieldSchema<
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
-	return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
+	return schema instanceof FieldSchema ? schema : createFieldSchema(FieldKind.Required, schema);
 }
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
@@ -354,7 +422,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =
 	TSchema extends FieldSchema<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
 		? TreeNodeFromImplicitAllowedTypes<TSchema>
 		: unknown;
@@ -366,7 +434,7 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type InsertableTreeFieldFromImplicitField<
 	TSchema extends ImplicitFieldSchema = FieldSchema,
 > = TSchema extends FieldSchema<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind>
+	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: TSchema extends ImplicitAllowedTypes
 	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 	: unknown;
@@ -376,12 +444,14 @@ export type InsertableTreeFieldFromImplicitField<
  * For input must error on side of excluding undefined instead.
  * @public
  */
-export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required
-	? T
-	: undefined | T;
+export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+	[FieldKind.Required]: T;
+	[FieldKind.Optional]: T | undefined;
+	[FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
+}[Kind];
 
 /**
- * Type of of tree node for a field of the given schema.
+ * Type of tree node for a field of the given schema.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypes<

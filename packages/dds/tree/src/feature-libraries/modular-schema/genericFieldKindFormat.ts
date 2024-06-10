@@ -5,6 +5,9 @@
 
 import { Static, TAnySchema, TSchema, Type } from "@sinclair/typebox";
 
+// Many of the return types in this module are intentionally derived, rather than explicitly specified.
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 /**
  * Note: TS doesn't easily support extracting a generic function's return type until 4.7:
  * https://github.com/microsoft/TypeScript/pull/47607
@@ -36,3 +39,5 @@ export const EncodedGenericChangeset = <NodeChangesetSchema extends TSchema>(
 export type EncodedGenericChangeset<Schema extends TSchema = TAnySchema> = Static<
 	ReturnType<Wrapper<Schema>["encodedGenericChangeset"]>
 >;
+
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

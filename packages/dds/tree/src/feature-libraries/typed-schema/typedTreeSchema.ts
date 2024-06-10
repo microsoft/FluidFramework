@@ -55,7 +55,7 @@ export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
  * Therefore the type safety is the responsibility of the user of the API.
- * @beta
+ * @public
  */
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 

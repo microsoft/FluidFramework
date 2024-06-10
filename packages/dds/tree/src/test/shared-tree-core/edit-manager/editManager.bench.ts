@@ -7,7 +7,12 @@ import { strict as assert } from "assert";
 
 import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
+import {
+	ChangeFamily,
+	RevisionTag,
+	rootFieldKey,
+	type ChangeFamilyEditor,
+} from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
 import { Commit } from "../../../shared-tree-core/index.js";
@@ -44,8 +49,8 @@ describe("EditManager - Bench", () => {
 
 	interface Family<TChange> {
 		readonly name: string;
-		readonly changeFamily: ChangeFamily<any, TChange>;
-		readonly mintChange: () => TChange;
+		readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+		readonly mintChange: (revision: RevisionTag | undefined) => TChange;
 		readonly maxEditCount: number;
 	}
 
@@ -56,6 +61,8 @@ describe("EditManager - Bench", () => {
 			.insert(0, singleJsonCursor(1));
 	};
 
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const families: Family<any>[] = [
 		{
 			name: "TestChange",
@@ -66,7 +73,12 @@ describe("EditManager - Bench", () => {
 		{
 			name: "Default - Sequence Insert",
 			changeFamily: defaultFamily,
-			mintChange: makeEditMinter(defaultFamily, sequencePrepend),
+			mintChange: (revision) => {
+				const change = makeEditMinter(defaultFamily, sequencePrepend)();
+				return revision !== undefined
+					? defaultFamily.rebaser.changeRevision(change, revision)
+					: change;
+			},
 			maxEditCount: 350,
 		},
 	];

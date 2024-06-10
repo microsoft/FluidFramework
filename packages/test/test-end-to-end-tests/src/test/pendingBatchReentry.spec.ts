@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { SharedCounter } from "@fluidframework/counter/internal";
-import type { ISharedMap } from "@fluidframework/map";
-import type { SharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -53,7 +52,7 @@ describeCompat(
 		let sharedMap: ISharedMap;
 		let sharedString: SharedString;
 		let sharedDirectory: SharedDirectory;
-		let sharedCell: SharedCell;
+		let sharedCell: ISharedCell;
 		let sharedCounter: SharedCounter;
 		let sharedMatrix: SharedMatrix;
 
@@ -71,7 +70,7 @@ describeCompat(
 			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
 			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
 			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
-			sharedCell = await dataObject.getSharedObject<SharedCell>("sharedCell");
+			sharedCell = await dataObject.getSharedObject<ISharedCell>("sharedCell");
 			sharedCounter = await dataObject.getSharedObject<SharedCounter>("sharedCounter");
 			sharedMatrix = await dataObject.getSharedObject<SharedMatrix>("sharedMatrix");
 

@@ -3,17 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	brand,
-	Brand,
-	BrandedType,
-	fromErased,
-	Erased,
-	ErasedType,
-	NameFromBranded,
-	ValueFromBranded,
-	brandErased,
-} from "./brand.js";
+export { brand, Brand, BrandedType, NameFromBranded, ValueFromBranded } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export { brandOpaque, extractFromOpaque, ExtractFromOpaque, Opaque } from "./opaque.js";
 export {
@@ -62,13 +52,13 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
 	Mutable,
 	Populated,
 	RecursiveReadonly,
-	zipIterables,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
@@ -83,6 +73,7 @@ export {
 	assertValidRangeIndices,
 	transformObjectMap,
 	compareStrings,
+	find,
 } from "./utils.js";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
 

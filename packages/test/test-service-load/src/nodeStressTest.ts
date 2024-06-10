@@ -11,7 +11,7 @@ import {
 	ITestDriver,
 	TestDriverTypes,
 } from "@fluid-internal/test-driver-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import commander from "commander";
 import ps from "ps-node";
 

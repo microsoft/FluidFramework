@@ -7,21 +7,23 @@ import { strict as assert } from "node:assert";
 import * as dirPath from "node:path";
 
 import {
-	AsyncGenerator,
-	AsyncReducer,
+	type AsyncGenerator,
+	type AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	Client,
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type Client,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { DirectoryFactory, IDirectory } from "../../index.js";
+import { DirectoryFactory, type IDirectory } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
@@ -32,7 +34,7 @@ interface SetKey {
 	type: "set";
 	path: string;
 	key: string;
-	value: string;
+	value: Serializable<unknown>;
 }
 
 interface ClearKeys {
@@ -87,6 +89,25 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	createSubDirWeight: 2,
 	deleteSubDirWeight: 1,
 };
+
+function pickAbsolutePathForKeyOps(state: FuzzTestState, shouldHaveKey: boolean): string {
+	const { random, client } = state;
+	let parentDir: IDirectory = client.channel;
+	for (;;) {
+		assert(parentDir !== undefined, "Directory should be defined");
+		const subDirs: IDirectory[] = [];
+		for (const [_, b] of parentDir.subdirectories()) {
+			subDirs.push(b);
+		}
+		const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
+		if (subDir !== undefined && (!shouldHaveKey || subDir.size > 0)) {
+			parentDir = subDir;
+		} else {
+			break;
+		}
+	}
+	return parentDir.absolutePath;
+}
 
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
@@ -146,25 +167,6 @@ function makeOperationGenerator(
 		return parentDir.absolutePath;
 	}
 
-	function pickAbsolutePathForKeyOps(state: FuzzTestState, shouldHaveKey: boolean): string {
-		const { random, client } = state;
-		let parentDir: IDirectory = client.channel;
-		for (;;) {
-			assert(parentDir !== undefined, "Directory should be defined");
-			const subDirs: IDirectory[] = [];
-			for (const [_, b] of parentDir.subdirectories()) {
-				subDirs.push(b);
-			}
-			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-			if (subDir !== undefined && (!shouldHaveKey || subDir.size > 0)) {
-				parentDir = subDir;
-			} else {
-				break;
-			}
-		}
-		return parentDir.absolutePath;
-	}
-
 	async function createSubDirectory(state: FuzzTestState): Promise<CreateSubDirectory> {
 		return {
 			type: "createSubDirectory",
@@ -199,7 +201,10 @@ function makeOperationGenerator(
 			type: "set",
 			key: random.pick(options.keyNamePool),
 			path: pickAbsolutePathForKeyOps(state, false),
-			value: random.string(random.integer(0, 4)),
+			value: random.pick([
+				(): string => random.string(random.integer(0, 4)),
+				(): IFluidHandle => random.handle(),
+			])(),
 		};
 	}
 
@@ -331,7 +336,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		workloadName: "default directory 1",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator(options)),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: assertEquivalentDirectories,
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 
@@ -339,6 +344,8 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
+		// We prevent handles from being generated on the creation/deletion tests since the set operations are disabled.
+		handleGenerationDisabled: true,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
@@ -359,6 +366,8 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			},
 			rebaseProbability: 0.2,
 			reconnectProbability: 0.5,
+			// We prevent handles from being generated on the creation/deletion tests since the set operations are disabled.
+			handleGenerationDisabled: true,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
@@ -384,7 +393,7 @@ describe("SharedDirectory fuzz", () => {
 		workloadName: "default directory 2",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator()),
 		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: assertEquivalentDirectories,
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 		factory: new DirectoryFactory(),
 	};
 

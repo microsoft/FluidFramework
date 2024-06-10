@@ -6,19 +6,22 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
-	type IChannelFactory,
-	type IChannelStorageService,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { type Serializable } from "@fluidframework/datastore-definitions/internal";
+	type Serializable,
+	type IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { type AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base";
+import {
+	type ISummaryTreeWithStats,
+	type AttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
+import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { CellFactory } from "./cellFactory.js";
 import {
 	type ICellLocalOpMetadata,
 	type ICellOptions,
@@ -55,7 +58,6 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCell}
- * @internal
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,27 +65,6 @@ export class SharedCell<T = any>
 	extends SharedObject<ISharedCellEvents<T>>
 	implements ISharedCell<T>
 {
-	/**
-	 * Create a new `SharedCell`.
-	 *
-	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
-	 * @param id - Unique identifier for the `SharedCell`.
-	 *
-	 * @returns The newly create `SharedCell`. Note that it will not yet be attached.
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell {
-		return runtime.createChannel(id, CellFactory.Type) as SharedCell;
-	}
-
-	/**
-	 * Gets the factory for the `SharedCell` to register with the data store.
-	 *
-	 * @returns A factory that creates and loads `SharedCell`s.
-	 */
-	public static getFactory(): IChannelFactory {
-		return new CellFactory();
-	}
-
 	/**
 	 * The data held by this cell.
 	 */

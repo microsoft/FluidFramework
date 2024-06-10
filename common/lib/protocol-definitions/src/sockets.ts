@@ -10,7 +10,7 @@ import { ITokenClaims } from "./tokens.js";
 
 /**
  * Message sent to connect to the given document.
- * @internal
+ * @alpha
  */
 export interface IConnect {
 	/**

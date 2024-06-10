@@ -33,9 +33,13 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import type {
+	IChannelFactory,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -44,7 +48,6 @@ import {
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	type Client,
 	type ClientLoadData,
@@ -234,7 +237,7 @@ function getSaveInfo(model: HasWorkloadName, options: DDSFuzzSuiteOptions, seed:
  *     reducer: myReducer,
  *     // A non-toy implementation would typically give a more informative assertion error (e.g. including
  *     // the IDs for `a` and `b`).
- *     validateConsistency: (a, b) => { assert.equal(a.getText(), b.getText()); }
+ *     validateConsistency: (a, b) => { assert.equal(a.channel.getText(), b.channel.getText()); }
  * }
  * ```
  * This model can be used directly to create a suite of fuzz tests with {@link (createDDSFuzzSuite:function)}
@@ -280,8 +283,8 @@ export interface DDSFuzzModel<
 	 * @throws - An informative error if the channels don't have equivalent data.
 	 */
 	validateConsistency: (
-		channelA: ReturnType<TChannelFactory["create"]>,
-		channelB: ReturnType<TChannelFactory["create"]>,
+		channelA: Client<TChannelFactory>,
+		channelB: Client<TChannelFactory>,
 	) => void | Promise<void>;
 
 	/**
@@ -814,7 +817,7 @@ export function mixinAttach<
 				options,
 			);
 
-			await model.validateConsistency(clientA.channel, summarizerClient.channel);
+			await model.validateConsistency(clientA, summarizerClient);
 
 			return {
 				...state,
@@ -1012,9 +1015,16 @@ export function mixinSynchronization<
 
 			state.containerRuntimeFactory.processAllMessages();
 			if (connectedClients.length > 0) {
-				const readonlyChannel = state.summarizerClient.channel;
-				for (const { channel } of connectedClients) {
-					await model.validateConsistency(readonlyChannel, channel);
+				const readonlyChannel = state.summarizerClient;
+				for (const client of connectedClients) {
+					try {
+						await model.validateConsistency(readonlyChannel, client);
+					} catch (error: unknown) {
+						if (error instanceof Error) {
+							error.message = `Comparing client ${readonlyChannel.channel.id} vs client ${client.channel.id}\n${error.message}`;
+						}
+						throw error;
+					}
 				}
 			}
 
@@ -1499,7 +1509,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		//
 		// it should be noted that if a timeout occurs during minimization, the
 		// intermediate results are not lost and will still be written to the file.
-		const noMinimizationTimeout = Math.max(2000, this.timeout());
+		const noMinimizationTimeout = this.timeout() === 0 ? 0 : Math.max(2000, this.timeout());
 		this.timeout(shouldMinimize ? 5 * noMinimizationTimeout : noMinimizationTimeout);
 
 		try {

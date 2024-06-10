@@ -51,8 +51,8 @@ describe("Idle task scheduler", () => {
 						someTask(5);
 					}, 1000);
 				});
-			} catch (e) {
-				reject(e);
+			} catch (error) {
+				reject(error);
 			}
 		}).then(() => {
 			success = true;

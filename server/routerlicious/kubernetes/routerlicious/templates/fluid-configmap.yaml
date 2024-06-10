@@ -201,7 +201,8 @@ data:
         },
         "usage": {
             "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
-            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
+            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }},
+            "httpUsageCountingEnabled": {{ .Values.usage.httpUsageCountingEnabled }}
         },
         "shared": {
             "transientTenants": {{ toJson .Values.shared.transientTenants }},

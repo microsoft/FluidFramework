@@ -6,7 +6,6 @@
 import {
 	Brand,
 	BrandedType,
-	Erased,
 	areSafelyAssignable,
 	isAny,
 	isAssignableTo,
@@ -42,11 +41,6 @@ const _opaque: O1 = brandOpaque<O1>(0);
 const untypedOpaque = brandOpaque(0);
 
 // If somehow an untyped opaque handle is produced, make sure any does not leak out:
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const extracted = extractFromOpaque(0 as any as BrandedType<any, string>);
 type _check2 = requireFalse<isAny<typeof extracted>>;
-
-// Erased
-interface E4 extends Erased<"4"> {}
-interface E5 extends Erased<"5"> {}
-export type T4 = Brand<{ test: number }, E4>;
-export type T5 = Brand<{ test: number }, E5>;

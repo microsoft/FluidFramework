@@ -16,6 +16,7 @@ import {
 import * as riddlerApp from "../../riddler/app";
 import Sinon from "sinon";
 import { ITenantDocument } from "../../riddler";
+import { TenantKeyGenerator } from "@fluidframework/server-services-utils";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
@@ -89,6 +90,7 @@ describe("Routerlicious", () => {
 					Sinon.useFakeTimers();
 					const testFetchTenantKeyMetricIntervalMs = 60000;
 					const testRiddlerStorageRequestMetricIntervalMs = 60000;
+					const tenantKeyGenerator = new TenantKeyGenerator();
 
 					app = riddlerApp.create(
 						defaultTenantsCollection,
@@ -99,6 +101,7 @@ describe("Routerlicious", () => {
 						testSecretManager,
 						testFetchTenantKeyMetricIntervalMs,
 						testRiddlerStorageRequestMetricIntervalMs,
+						tenantKeyGenerator,
 					);
 					supertest = request(app);
 				});

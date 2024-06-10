@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import type {
 	FieldMapObject,
 	JsonableTree,
@@ -15,6 +16,8 @@ import {
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 } from "@fluidframework/tree/internal";
+
+import type { VisualizeChildData } from "./DataVisualization.js";
 import type {
 	SharedTreeLeafNode,
 	VisualSharedTreeNode,
@@ -26,7 +29,27 @@ import {
 	VisualNodeKind,
 	type VisualValueNode,
 	type VisualTreeNode,
+	type FluidHandleNode,
+	type UnknownObjectNode,
 } from "./VisualTree.js";
+
+/**
+ * Returns VisualNodeKind that is compatible to {@link FluidObjectNode} based on the `visualTree`'s node kind.
+ */
+export function determineNodeKind(nodeKind: VisualNodeKind): VisualNodeKind {
+	switch (nodeKind) {
+		case VisualNodeKind.TreeNode:
+		case VisualNodeKind.FluidHandleNode: {
+			return VisualNodeKind.FluidTreeNode;
+		}
+		case VisualNodeKind.ValueNode: {
+			return VisualNodeKind.FluidValueNode;
+		}
+		default: {
+			return VisualNodeKind.FluidUnknownObjectNode;
+		}
+	}
+}
 
 /**
  * Returns allowed types of the non-leaf nodes in the tree.
@@ -77,18 +100,44 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Constructs a VisualTree of the input tree's schema fields in {@link VisualTreeNode} or {@link VisualValueNode}.
+ * Converts the visual representation from {@link visualizeSharedTreeNodeBySchema} to a visual tree compatible with the devtools-view.
+ * @param tree - the visual representation of the SharedTree.
+ * @returns - the visual representation of type {@link VisualChildNode}
  */
-export function toVisualTree(tree: VisualSharedTreeNode): VisualValueNode | VisualTreeNode {
+export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
-		const result: VisualValueNode = {
-			value: tree.value,
-			nodeKind: VisualNodeKind.ValueNode,
-			tooltipContents: {
-				schema: createToolTipContents(tree.schema),
-			},
-		};
-		return result;
+		switch (tree.value.nodeKind) {
+			case VisualNodeKind.ValueNode: {
+				const result: VisualValueNode = {
+					value: tree.value.value,
+					nodeKind: VisualNodeKind.ValueNode,
+					tooltipContents: {
+						schema: createToolTipContents(tree.schema),
+					},
+				};
+				return result;
+			}
+			case VisualNodeKind.FluidHandleNode: {
+				const result: FluidHandleNode = {
+					fluidObjectId: tree.value.fluidObjectId,
+					nodeKind: VisualNodeKind.FluidHandleNode,
+					tooltipContents: {
+						schema: createToolTipContents(tree.schema),
+					},
+				};
+				return result;
+			}
+			default: {
+				console.error(`Unknown node kind: ${tree.value.nodeKind}`);
+				const result: UnknownObjectNode = {
+					nodeKind: VisualNodeKind.UnknownObjectNode,
+					tooltipContents: {
+						schema: createToolTipContents(tree.schema),
+					},
+				};
+				return result;
+			}
+		}
 	} else {
 		const children: Record<string, VisualChildNode> = {};
 
@@ -170,12 +219,15 @@ function getMapAllowedTypes(
 /**
  * Returns the schema & leaf value of the node with type {@link LeafNodeStoredSchema}.
  */
-function visualizeLeafNode(tree: JsonableTree): SharedTreeLeafNode {
+async function visualizeLeafNode(
+	tree: JsonableTree,
+	visualizeChildData: VisualizeChildData,
+): Promise<SharedTreeLeafNode> {
 	return {
 		schema: {
 			schemaName: tree.type,
 		},
-		value: JSON.stringify(tree.value), // TODO: Change to VisualizeChildData.
+		value: await visualizeChildData(tree.value),
 		kind: VisualSharedTreeNodeKind.LeafNode,
 	};
 }
@@ -183,11 +235,12 @@ function visualizeLeafNode(tree: JsonableTree): SharedTreeLeafNode {
 /**
  * Returns the schema & fields of the node with type {@link ObjectNodeStoredSchema}.
  */
-function visualizeObjectNode(
+async function visualizeObjectNode(
 	tree: JsonableTree,
 	schema: ObjectNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
-): VisualSharedTreeNode {
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
 	const treeFields = tree.fields;
 
 	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
@@ -213,16 +266,22 @@ function visualizeObjectNode(
 
 		for (let i = 0; i < children.length; i++) {
 			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
-			fields[i] = visualizeSharedTreeNodeBySchema(children[i], childSchema, contentSnapshot);
+			fields[i] = await visualizeSharedTreeNodeBySchema(
+				children[i],
+				childSchema,
+				contentSnapshot,
+				visualizeChildData,
+			);
 		}
 	} else {
 		for (const [fieldKey, childField] of Object.entries(treeFields)) {
 			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
 
-			fields[fieldKey] = visualizeSharedTreeNodeBySchema(
+			fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
 				childField[0],
 				childSchema,
 				contentSnapshot,
+				visualizeChildData,
 			);
 		}
 	}
@@ -240,11 +299,12 @@ function visualizeObjectNode(
 /**
  * Returns the schema & fields of the node with type {@link MapNodeStoredSchema}.
  */
-function visualizeMapNode(
+async function visualizeMapNode(
 	tree: JsonableTree,
 	schema: MapNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
-): VisualSharedTreeNode {
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
 	const treeFields = tree.fields;
 
 	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
@@ -263,10 +323,11 @@ function visualizeMapNode(
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
 		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
 
-		fields[fieldKey] = visualizeSharedTreeNodeBySchema(
+		fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
 			childField[0],
 			fieldSchema,
 			contentSnapshot,
+			visualizeChildData,
 		);
 	}
 
@@ -282,19 +343,32 @@ function visualizeMapNode(
 
 /**
  * Main recursive helper function to create the visual representation of the SharedTree.
- * Filters tree nodes based on their schema type.
+ * Processes tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, LeafNodeStoredSchema), producing the visual representation for each type.
+ *
+ * @see {@link https://fluidframework.com/docs/data-structures/tree/} for more information on the SharedTree schema.
+ *
+ * @remarks
  */
-export function visualizeSharedTreeNodeBySchema(
+export async function visualizeSharedTreeNodeBySchema(
 	tree: JsonableTree,
 	schema: TreeNodeStoredSchema | undefined,
 	contentSnapshot: SharedTreeContentSnapshot,
-): VisualSharedTreeNode {
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
 	if (schema instanceof LeafNodeStoredSchema) {
-		return visualizeLeafNode(tree);
+		const leafVisualized = await visualizeLeafNode(tree, visualizeChildData);
+		return leafVisualized;
 	} else if (schema instanceof ObjectNodeStoredSchema) {
-		return visualizeObjectNode(tree, schema, contentSnapshot);
+		const objectVisualized = visualizeObjectNode(
+			tree,
+			schema,
+			contentSnapshot,
+			visualizeChildData,
+		);
+		return objectVisualized;
 	} else if (schema instanceof MapNodeStoredSchema) {
-		return visualizeMapNode(tree, schema, contentSnapshot);
+		const mapVisualized = visualizeMapNode(tree, schema, contentSnapshot, visualizeChildData);
+		return mapVisualized;
 	} else {
 		throw new TypeError("Unrecognized schema type.");
 	}

@@ -18,6 +18,8 @@ import {
 	type HeritageType,
 	type IResolveDeclarationReferenceResult,
 	type TypeParameter,
+	ApiPropertyItem,
+	ApiVariable,
 } from "@microsoft/api-extractor-model";
 import {
 	type DocNode,
@@ -198,6 +200,17 @@ export function createHeritageTypesParagraph(
 		}
 	}
 
+	// Render type information for properties and variables
+	let renderedTypeSpan: SpanNode | undefined;
+	if (apiItem instanceof ApiPropertyItem) {
+		renderedTypeSpan = createTypeSpan(apiItem.propertyTypeExcerpt, config);
+	} else if (apiItem instanceof ApiVariable) {
+		renderedTypeSpan = createTypeSpan(apiItem.variableTypeExcerpt, config);
+	}
+	if (renderedTypeSpan !== undefined) {
+		contents.push(new ParagraphNode([renderedTypeSpan]));
+	}
+
 	// Render type parameters if there are any.
 	if (ApiTypeParameterListMixin.isBaseClassOf(apiItem) && apiItem.typeParameters.length > 0) {
 		const renderedTypeParameters = createTypeParametersSection(
@@ -218,6 +231,28 @@ export function createHeritageTypesParagraph(
 	}
 
 	return new ParagraphNode(contents);
+}
+
+/**
+ * Renders a labeled type-information entry.
+ *
+ * @remarks Displayed as `Type: <type>`. Type excerpt will be rendered with the appropriate hyperlinks for other types in the API model.
+ *
+ * @param excerpt - The type excerpt to be displayed.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+function createTypeSpan(
+	excerpt: Excerpt,
+	config: Required<ApiItemTransformationConfiguration>,
+): SpanNode | undefined {
+	if (!excerpt.isEmpty) {
+		const renderedLabel = SpanNode.createFromPlainText(`Type: `, { bold: true });
+		const renderedExcerpt = createExcerptSpanWithHyperlinks(excerpt, config);
+		if (renderedExcerpt !== undefined) {
+			return new SpanNode([renderedLabel, renderedExcerpt]);
+		}
+	}
+	return undefined;
 }
 
 /**

@@ -10,8 +10,11 @@ import {
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -72,7 +75,7 @@ export class TestFluidObject implements ITestFluidObject {
 		for (const key of this.factoryEntriesMap.keys()) {
 			if (key === id) {
 				const handle = this.root.get<IFluidHandle>(id);
-				return handle?.get() as unknown as T;
+				return handle?.get() as Promise<T>;
 			}
 		}
 

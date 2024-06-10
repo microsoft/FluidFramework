@@ -18,7 +18,7 @@ import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import { SchemaChange } from "./schemaChangeTypes.js";
 
 export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
-	return makeCodecFamily([[0, makeSchemaChangeCodec(options)]]);
+	return makeCodecFamily([[1, makeSchemaChangeCodec(options)]]);
 }
 
 function makeSchemaChangeCodec({
@@ -27,7 +27,10 @@ function makeSchemaChangeCodec({
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
 	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
-			assert(!schemaChange.isInverse, "Inverse schema changes should never be transmitted");
+			assert(
+				!schemaChange.isInverse,
+				0x933 /* Inverse schema changes should never be transmitted */,
+			);
 			return {
 				new: schemaCodec.encode(schemaChange.schema.new),
 				old: schemaCodec.encode(schemaChange.schema.old),

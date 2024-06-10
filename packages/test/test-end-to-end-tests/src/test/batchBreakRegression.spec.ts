@@ -17,12 +17,10 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,

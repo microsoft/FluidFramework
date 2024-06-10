@@ -6,7 +6,11 @@
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+	type SchemaAndPolicy,
+} from "../core/index.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -17,6 +21,7 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
+	NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
 	schemaIsLeaf,
@@ -25,7 +30,7 @@ import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexLi
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
-import { InsertableContent, extractFactoryContent } from "./proxies.js";
+import { InsertableContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
@@ -56,21 +61,50 @@ import { TreeConfiguration } from "./tree.js";
 function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
+	const data = tree as InsertableContent;
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
-		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
-		fail("failed to decode tree")
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			schemaValidationPolicy,
+		) ?? fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
+/**
+ * Generates a configuration object (schema + initial tree) for a FlexTree.
+ * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - Stored schema and policy for the tree. If the policy specifies
+ * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
+ * object.
+ * @returns A configuration object for a FlexTree.
+ *
+ * @privateremarks
+ * I wrote these docs without a ton of context, they can probably be improved.
+ */
+export function toFlexConfig(
+	config: TreeConfiguration,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+): TreeContent {
 	const unhydrated = config.initialTree();
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [cursorFromUnhydratedRoot(config.schema, unhydrated)];
+			: [
+					cursorFromUnhydratedRoot(
+						config.schema,
+						unhydrated,
+						nodeKeyManager,
+						schemaValidationPolicy,
+					),
+			  ];
 	return {
 		schema: toFlexSchema(config.schema),
 		initialTree,
@@ -190,7 +224,7 @@ export function convertNodeSchema(
 		return fromMap.toFlex;
 	}
 
-	const toFlex = () => {
+	const toFlex = (): FlexTreeNodeSchema => {
 		let out: FlexTreeNodeSchema;
 		const kind = schema.kind;
 		switch (kind) {

@@ -1,7 +1,9 @@
 # Undo
 
 This document offers a high-level description of the undo system.
-It should be updated once more progress is made on the implementation.
+This is largely a theoretical discussion,
+for a more concrete description of the currently implemented system,
+[V1 Undo](./v1-undo.md).
 
 ## Undo Model and Semantics
 
@@ -35,7 +37,7 @@ and which part should happen on peers upon receiving the undo (i.e, post broadca
 
 This choice is subject to many tradeoffs:
 
--   Access to historical data (original change, [repair data](./repair-data.md), [interim changes](#interim-change))
+-   Access to historical data (original change, [detached trees](./detached-trees.md), [interim changes](#interim-change))
     -   Pre-broadcast computation puts the burden of providing historical data on the issuing client.
     -   Post-broadcast computation puts the burden of providing historical data on all peers
         (which means that this data must be included in summaries).
@@ -58,7 +60,7 @@ We accomplish that by introducing the concept of an "undo window".
 ## The Undo Window
 
 The undo window defines how far back, in terms of the edit history,
-peers are expected to retain information about past edits and their associated repair data.
+peers are expected to retain information about past edits and their associated detached trees
 Applications can decide to support an undo window of arbitrary size.
 The longer the undo window, the more edits are undone using the post-broadcast approach.
 The shorter the undo window, the more edits are undone using the pre-broadcast approach.
@@ -68,11 +70,11 @@ This happens in two ways:
 
 -   When a peer joins a session, the relevant historical information is included in the summary.\*
 -   When a peer receives a new edit from the sequencing service,
-    it computes the corresponding repair data and stores it alongside the edit.
+    it computes the corresponding detached trees and stores them in the forest.
 
 \* Technically, the historical data needed for undo could be loaded separately in an effort to reduce startup time.
 
-As older edits fall outside of the undo window, the edit information, including its repair data,
+As older edits fall outside of the undo window, their edit information, including their detached trees,
 can be deleted from the peer's memory.
 
 When issuing an undo,
@@ -139,9 +141,6 @@ the only difference between the message sent when undoing an edit that lies with
 and undoing an edit that lies outside it,
 would be that the latter includes additional historical data.
 
-This is the approach we currently intend to implement long term.
-(See [V1 Undo](./v1-undo.md) for short-term horizon)
-
 One challenge with this approach is that it could result in attempting to send prohibitively large amounts of historical data.
 That's because applying the undo _may_ require historical data not only from the edit to be undone,
 but from all edits that occurred after it also.
@@ -154,6 +153,9 @@ In this approach,
 the issuing client computes the net change to the tip state and sends that as a normal changeset.
 Such a changeset would be rebased over any concurrent edits as changesets normally are.
 Note that this precludes having undo-specific logic for rebasing the change over concurrent edits.
+
+This is the approach currently implemented.
+(See [V1 Undo](./v1-undo.md))
 
 #### Undo as a Special Changeset
 
