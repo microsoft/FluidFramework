@@ -70,12 +70,13 @@ export function onNodeChanged(
 	anchorNode: AnchorNode,
 	listener: FlexTreeNodeEvents["nodeChanged"],
 ): Off {
+	// Debounce "childrenChanged" (which fires separately for each field that changed in the node)
+	// by waiting for "subtreeChanged" (which only fires once regardless of how many fields changed).
 	let unsubscribeFromTreeChanged: (() => void) | undefined;
+	// Every time that "childrenChanged" fires...
 	return anchorNode.on("childrenChanged", () => {
-		// "childrenChanged" can be fired many times per node for a single change (if multiple fields under the node change).
-		// So, only acknowledge it once...
+		// ...subscribe to "subtreeChanged", but only if we haven't subscribed already already since the last time it fired
 		if (unsubscribeFromTreeChanged === undefined) {
-			// ...per invocation of "subtreeChanged", which only fires one time per change per node
 			unsubscribeFromTreeChanged = anchorNode.on("subtreeChanged", () => {
 				listener();
 				unsubscribeFromTreeChanged?.();
