@@ -62,6 +62,10 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
+export function getNestedChanges(change: Changeset): NodeId[] {
+	return change.flatMap(({ changes }) => changes ?? []);
+}
+
 export function isNewAttach(mark: Mark, revision?: RevisionTag): boolean {
 	return isNewAttachEffect(mark, mark.cellId, revision);
 }

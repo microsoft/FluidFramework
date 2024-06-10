@@ -71,6 +71,14 @@ export interface FieldChangeHandler<
 	 */
 	isEmpty(change: TChangeset): boolean;
 
+	/**
+	 * @param change - The field change to get the child changes from.
+	 *
+	 * @returns The set of children nodes for which the given `change` has nested changes.
+	 * The returned array is owned by the caller.
+	 */
+	getNestedChanges(change: TChangeset): NodeId[];
+
 	createEmpty(): TChangeset;
 }
 
