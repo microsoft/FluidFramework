@@ -672,6 +672,15 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
 			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
+
+			// A stack of booleans to keep track of when we should be enqueuing treeChanged events during tree traversal
+			// as a delta visit drives this visitor.
+			// As we go deeper into the tree we add entries to the stack, defaulting to false, and when a node actually changes
+			// we set the top of the stack to true.
+			// As we exit nodes, we pop the stack and if the popped value is true, that's an indication that we should enqueue
+			// a treeChanged event; it's also an indication that we should enqueue treeChanged events for all ancestors of the
+			// node, so we need to also update the top of the stack to ensure that keeps happening as we go up the tree.
+			actualChangeStack: [] as boolean[],
 			free() {
 				assert(
 					this.anchorSet.activeVisitor !== undefined,
@@ -771,6 +780,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					parentIndex: destination,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
+				this.actualChangeStack[this.actualChangeStack.length - 1] = true;
 			},
 			beforeDetach(source: Range, destination: FieldKey): void {
 				assert(
@@ -834,6 +844,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					parentIndex: 0,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
+				this.actualChangeStack[this.actualChangeStack.length - 1] = true;
 			},
 			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
 				assert(
@@ -972,12 +983,18 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						}
 					}
 				});
+				this.actualChangeStack.push(false);
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
 					p.events.emit("subtreeChanged", p);
-					this.bufferedEvents.push({ node: p, event: "subtreeChangedBatched" });
+					const nodeChangeHappened = this.actualChangeStack.pop() ?? false;
+					if (nodeChangeHappened) {
+						this.bufferedEvents.push({ node: p, event: "subtreeChangedBatched" });
+						const lastIndex = this.actualChangeStack.length - 1;
+						this.actualChangeStack[lastIndex] = nodeChangeHappened;
+					}
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});

@@ -682,6 +682,7 @@ describe("treeNodeApi", () => {
 			assert.equal(deepChanges, 6);
 		});
 
+		// TODO: should this be the case? Or deeper array node first?
 		it(`moves between array nodes at different depths fire on the source array node first`, () => {
 			const sb = new SchemaFactory("array-nodes-different-depths");
 			const list = sb.array("list", sb.number);
@@ -717,14 +718,6 @@ describe("treeNodeApi", () => {
 			Tree.on(root.deeper.list2, "treeChanged", () => {
 				assert.equal(list1ShallowChanges, 1, "list1 should have fire nodeChanged already");
 				assert.equal(list1DeepChanges, 1, "list1 should have fired treeChanged already");
-				// Test fails the next assert. I think it's because the delta visit still traverses the tree up to the
-				// array node that serves as target for the move, as it exitNode()'s back to the root, that currently enqueues
-				// subtreeChangedBatched event in anchorSet.ts, and only during the second pass of the delta visit we eventually
-				// enqueue the childrenChangedBatched event in anchorSet.ts, so we end up emitting a treeChanged event for the
-				// move-target node before we emit a nodeChanged event for it. This might be fixable by preprocessing the buffered
-				// events before emitting them but couldn't immediately come up with a solution. Discarding all subtreeChangedBatched
-				// events until we see a childrenChangedBatched for the same node doesn't work, because nodes that didn't have
-				// their own fields changed but are parents of other nodes which did, legitimately will only ever emit subtreeChangedBatched.
 				assert.equal(list2ShallowChanges, 1, "list2 should have fire nodeChanged already");
 				assert.equal(list2DeepChanges, 0, "list2 should not have fired treeChanged yet");
 				list2DeepChanges++;
@@ -737,7 +730,6 @@ describe("treeNodeApi", () => {
 			assert.equal(list2ShallowChanges, 1);
 			assert.equal(list2DeepChanges, 1);
 		});
-
 
 		it(`batched changes to several direct fields trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
 			const rootNode: UpPath = {
