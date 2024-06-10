@@ -333,6 +333,10 @@ function rebaseMarkIgnoreChild(
 			baseMark.cellId !== undefined,
 			0x81a /* AttachAndDetach mark should target an empty cell */,
 		);
+		if (isMoveIn(baseMark.attach) && isMoveOut(baseMark.detach)) {
+			// Orphaned moves are effectively cell renames.
+			return withCellId(currMark, getDetachOutputCellId(baseMark.detach));
+		}
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
