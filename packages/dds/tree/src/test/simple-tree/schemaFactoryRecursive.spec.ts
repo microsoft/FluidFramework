@@ -21,6 +21,9 @@ import {
 	TreeView,
 	SchemaFactory,
 	InternalTreeNode,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaNonClass,
+	type NodeKind,
 } from "../../simple-tree/index.js";
 import {
 	ValidateRecursiveSchema,
@@ -173,7 +176,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("object with required recursive field", () => {
 			class ObjectRecursive extends sf.objectRecursive("Object", {
-				x: sf.requiredRecursive([() => ObjectRecursive]),
+				x: sf.requiredRecursive([() => ObjectRecursive, sf.number]),
 			}) {}
 			{
 				type _check = ValidateRecursiveSchema<typeof ObjectRecursive>;
@@ -186,8 +189,25 @@ describe("SchemaFactory Recursive methods", () => {
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
-			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
-			type _check2 = requireTrue<areSafelyAssignable<Field4, typeof ObjectRecursive>>;
+			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive | number>>;
+			type _check2 = requireTrue<
+				areSafelyAssignable<
+					Field4,
+					| TreeNodeSchemaClass<
+							"com.fluidframework.leaf.number",
+							NodeKind.Leaf,
+							number,
+							number
+					  >
+					| TreeNodeSchemaNonClass<
+							"com.fluidframework.leaf.number",
+							NodeKind.Leaf,
+							number,
+							number
+					  >
+					| typeof ObjectRecursive
+				>
+			>;
 
 			type Insertable = InsertableTreeNodeFromImplicitAllowedTypes<typeof ObjectRecursive>;
 			type _checkInsertable = requireTrue<areSafelyAssignable<Insertable, ObjectRecursive>>;
@@ -196,31 +216,21 @@ describe("SchemaFactory Recursive methods", () => {
 				areSafelyAssignable<Constructable, ObjectRecursive>
 			>;
 			type Child = ObjectRecursive["x"];
-			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive>>;
+			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive | number>>;
 			type Constructor = ConstructorParameters<typeof ObjectRecursive>;
-			type _checkConstructor = requireFalse<
+			type _checkConstructor = requireTrue<
+				// @ts-expect-error TODO: fix this
 				areSafelyAssignable<
 					Constructor,
 					[
 						| {
-								readonly x: undefined | ObjectRecursive;
+								readonly x: ObjectRecursive | number;
 						  }
 						| InternalTreeNode,
 					]
 				>
 			>;
 			type _checkConstructor2 = requireFalse<
-				areSafelyAssignable<
-					Constructor,
-					[
-						| {
-								readonly x: undefined | ObjectRecursive;
-						  }
-						| InternalTreeNode,
-					]
-				>
-			>;
-			type _checkConstructor3 = requireFalse<
 				// @ts-expect-error TODO: fix this
 				areSafelyAssignable<
 					Constructor,
