@@ -8,6 +8,7 @@ export {
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	allowsDocumentConcepts,
 } from "./comparison.js";
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
@@ -71,3 +72,4 @@ export {
 } from "./modularChangeFamily.js";
 export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
 export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";
+export { Incompatibility } from "./discrepancies.js";
