@@ -48,7 +48,11 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
+import {
+	ChannelCollection,
+	getLocalDataStoreType,
+	wrapContextForInnerChannel,
+} from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { channelToDataStore } from "../dataStore.js";
 import {
@@ -241,9 +245,11 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				const type =
-					localDataStoreContext.packagePath[localDataStoreContext.packagePath.length - 1];
-				assert.strictEqual(type, "TestDataStore1", "Attach message type does not match.");
+				assert.strictEqual(
+					getLocalDataStoreType(localDataStoreContext),
+					"TestDataStore1",
+					"Attach message type does not match.",
+				);
 			});
 
 			it("should generate exception when incorrectly created with array of packages", async () => {
@@ -327,9 +333,11 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				const type =
-					localDataStoreContext.packagePath[localDataStoreContext.packagePath.length - 1];
-				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
+				assert.strictEqual(
+					getLocalDataStoreType(localDataStoreContext),
+					"SubComp",
+					"Attach message type does not match.",
+				);
 			});
 
 			it("can correctly initialize non-root context", async () => {

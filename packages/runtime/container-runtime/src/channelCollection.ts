@@ -244,6 +244,13 @@ export function wrapContextForInnerChannel(
 }
 
 /**
+ * Returns the type of the given local data store from its package path.
+ */
+export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext) {
+	return localDataStore.packagePath[localDataStore.packagePath.length - 1];
+}
+
+/**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
@@ -527,10 +534,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/** Package up the context's attach summary etc into an IAttachMessage */
-	private generateAttachMessage(localContext: IFluidDataStoreContextInternal): IAttachMessage {
+	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
 		// Get the attach summary.
 		const attachSummary = localContext.getAttachSummary();
-		const type = localContext.packagePath[localContext.packagePath.length - 1];
 
 		// Get the GC data and add it to the attach summary.
 		const attachGCData = localContext.getAttachGCData();
@@ -542,7 +548,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return {
 			id: localContext.id,
 			snapshot,
-			type,
+			type: getLocalDataStoreType(localContext),
 		} satisfies IAttachMessage;
 	}
 
