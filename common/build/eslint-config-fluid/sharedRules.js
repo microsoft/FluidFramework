@@ -8,7 +8,7 @@ module.exports = {
 	namingConventionRules: [
 		{
 			selector: "default",
-			format: ["camelCase", "PascalCase"],
+			format: ["camelCase", "PascalCase"], // "camelCase" and "PascalCase" are the only formats we prescribe.
 			leadingUnderscore: "forbid", // We have no global convention for trailing underscores
 			trailingUnderscore: "forbid", // We have no global convention for trailing underscores
 		},
@@ -24,7 +24,11 @@ module.exports = {
 			leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
 		},
 		{
-			selector: ["typeLike", "class"],
+			selector: ["typeLike", "class", "enum"],
+			format: ["PascalCase"],
+		},
+		{
+			selector: "enumMember",
 			format: ["PascalCase"],
 		},
 		{

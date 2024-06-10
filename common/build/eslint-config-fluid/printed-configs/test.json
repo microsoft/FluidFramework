@@ -193,8 +193,15 @@
             {
                 "selector": [
                     "typeLike",
-                    "class"
+                    "class",
+                    "enum"
                 ],
+                "format": [
+                    "PascalCase"
+                ]
+            },
+            {
+                "selector": "enumMember",
                 "format": [
                     "PascalCase"
                 ]
