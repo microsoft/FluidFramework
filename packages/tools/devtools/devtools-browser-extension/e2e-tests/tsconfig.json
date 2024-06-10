@@ -5,6 +5,7 @@
 		"types": ["expect-puppeteer", "jest", "jest-environment-puppeteer", "puppeteer"],
 		"forceConsistentCasingInFileNames": true,
 		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 }

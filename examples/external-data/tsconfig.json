@@ -4,6 +4,7 @@
 		"outDir": "./lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react"],
 		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*", "tests/**/*"],
 	"lib": ["dom"],
