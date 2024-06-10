@@ -4,9 +4,9 @@
 
 Implement compatibility-based schema evolution API
 
-This change adjusts some top-level APIs for using SharedTree in a context that may necessitate changing a document's schema.
-The motivation for these changes is to allow future relaxation of `SharedTree`'s restrictions around view schema and stored schema compatibility,
-which will enable more flexible policies around how applications can update their documents' schemas over time.
+This change adjusts some top-level APIs for using SharedTree to better accommodate applications that need to change their schema.
+These changes enable forwards compatibility with future work to relax `SharedTree`'s restrictions around view schema and stored schema compatibility.
+That future work will enable more flexible policies around how applications can update their documents' schemas over time.
 
 Application authors are encouraged to develop a compatibility policy which they are comfortable with using the guidance in the
 "Schema Evolvability" section of `@fluidframework/tree`'s readme.
@@ -18,21 +18,41 @@ Users desiring the previous strict behavior should use `view.compatibility.isEqu
 # `ITree.schematize` deprecation
 
 `ITree.schematize` has been deprecated in favor of `ITree.viewWith`.
-Unlike `schematize`, `viewWith` does not implicitly initialize the document. As such, it doesn't take an `initialTree` property.
+Unlike `schematize`, `viewWith` does not implicitly initialize the document.
+As such, it doesn't take an `initialTree` property.
 Instead, applications should initialize their trees in document creation codepaths using the added `TreeView.initialize` API.
+
+## Old
 
 As an example, something like the following code may have been used before for both the document create and document load codepaths:
 
 ```typescript
+// -- first-party API --
 const tree = SharedTree.create(runtime, "foo");
 const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
 ```
 
-Now, that code would look like this on the create codepath:
+When using the third-party API, creating a tree looks a bit different but the call to `schematize` is the same:
+
+```typescript
+// -- third-party API for statically defined objects in container schema --
+const tree = container.initialObjects.myTree;
+const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+
+// -- third-party API for dynamically created objects --
+const tree = await container.create(SharedTree);
+const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+```
+
+## New
+
+After migrating this code away from `schematize` and onto `viewWith`, it would look like this on the create codepath:
 
 ```typescript
 const treeConfig = new TreeViewConfiguration({ schema: Point });
 
+// The following line reflects the first-party API (e.g. @fluidframework/aqueduct). If using the third-party API, obtaining
+// a SharedTree is unaffected by this changeset.
 const tree = SharedTree.create(runtime, "foo");
 const view = tree.viewWith(treeConfig);
 view.initialize(new Point({ x: 0, y: 0 }));
