@@ -343,27 +343,6 @@ export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./c
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
-// TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
-export {
-	Invariant,
-	Contravariant,
-	Covariant,
-	BrandedType,
-	ExtractFromOpaque,
-	Assume,
-	AllowOptional,
-	RequiredFields,
-	OptionalFields,
-	_InlineTrick,
-	_RecursiveTrick,
-	FlattenKeys,
-	AllowOptionalNotFlattened,
-	isAny,
-	BrandedKeyContent,
-	RestrictiveReadonlyRecord,
-	MakeNominal,
-} from "./util/index.js";
-
 export {
 	NormalizeField,
 	NormalizeAllowedTypes,
@@ -394,3 +373,7 @@ export {
 	Forbidden,
 	Sequence,
 } from "./feature-libraries/index.js";
+
+// Below here are things that are used by the above, but not part of the desired API surface.
+import * as InternalTypes from "./internalTypes.js";
+export { InternalTypes };

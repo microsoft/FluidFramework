@@ -445,6 +445,29 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Un
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
 
+declare namespace InternalTypes {
+    export {
+        Invariant,
+        Contravariant,
+        Covariant,
+        BrandedType,
+        ExtractFromOpaque,
+        Assume,
+        AllowOptional,
+        RequiredFields,
+        OptionalFields,
+        _InlineTrick,
+        _RecursiveTrick,
+        FlattenKeys,
+        AllowOptionalNotFlattened,
+        isAny,
+        BrandedKeyContent,
+        RestrictiveReadonlyRecord,
+        MakeNominal
+    }
+}
+export { InternalTypes }
+
 // @public (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)
@@ -504,7 +527,7 @@ export type Listeners<T extends object> = {
 };
 
 // @public
-export interface MakeNominal {
+interface MakeNominal {
 }
 
 // @public
@@ -562,7 +585,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 } : L;
 
 // @public
-export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
+type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
