@@ -23,5 +23,4 @@ export class App extends sb.object("App", {
 	word: sb.array(Letter),
 }) {}
 
-// eslint-disable-next-line import/no-deprecated
 export const treeConfiguration = new TreeViewConfiguration({ schema: App });

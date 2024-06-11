@@ -37,7 +37,6 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
-// eslint-disable-next-line import/no-deprecated
 export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
 
 const sharedTreeKey = "sharedTree";
