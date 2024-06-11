@@ -166,46 +166,14 @@
         "@typescript-eslint/naming-convention": [
             "error",
             {
-                "selector": "default",
-                "format": [
-                    "camelCase",
-                    "PascalCase"
-                ],
-                "leadingUnderscore": "forbid",
-                "trailingUnderscore": "forbid"
-            },
-            {
-                "selector": [
-                    "accessor",
-                    "method",
-                    "memberLike",
-                    "property"
+                "selector": "accessor",
+                "modifiers": [
+                    "private"
                 ],
                 "format": [
                     "camelCase"
-                ]
-            },
-            {
-                "selector": "variableLike",
-                "format": [
-                    "camelCase",
-                    "PascalCase"
                 ],
                 "leadingUnderscore": "allow"
-            },
-            {
-                "selector": [
-                    "typeLike"
-                ],
-                "format": [
-                    "PascalCase"
-                ]
-            },
-            {
-                "selector": "enumMember",
-                "format": [
-                    "PascalCase"
-                ]
             },
             {
                 "selector": "typeParameter",

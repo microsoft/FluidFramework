@@ -12,32 +12,10 @@ module.exports = {
 	 */
 	namingConventionRules: [
 		{
-			selector: "default",
-			format: ["camelCase", "PascalCase"], // "camelCase" and "PascalCase" are the only formats we prescribe.
-			leadingUnderscore: "forbid", // We have no global convention for leading underscores
-			trailingUnderscore: "forbid", // We have no global convention for trailing underscores
-		},
-		{
-			selector: ["method", "memberLike", "property"],
+			selector: "accessor",
+			modifiers: ["private"],
 			format: ["camelCase"],
-		},
-		{
-			selector: ["accessor", "classMethod", "classProperty"],
-			format: ["camelCase"],
-			leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
-		},
-		{
-			selector: "variableLike",
-			format: ["camelCase", "PascalCase"], // PascalCase required for cases where we use variables like class / enum objects.
-			leadingUnderscore: "allow", // Allowed to avoid shadowing existing properties / variables in some cases
-		},
-		{
-			selector: ["typeLike"],
-			format: ["PascalCase"],
-		},
-		{
-			selector: "enumMember",
-			format: ["PascalCase"],
+			leadingUnderscore: "allow",
 		},
 		{
 			selector: "typeParameter",
