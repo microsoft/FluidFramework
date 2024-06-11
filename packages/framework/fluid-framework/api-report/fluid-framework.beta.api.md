@@ -94,9 +94,9 @@ export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldP
 }
 
 // @public @sealed
-export abstract class ErasedType<out Name = unknown> {
+export abstract class ErasedType<out TName = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
-    protected abstract brand(dummy: never): Name;
+    protected abstract brand(dummy: never): TName;
 }
 
 // @public
@@ -508,10 +508,10 @@ export interface MakeNominal {
 }
 
 // @public
-export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+export type MemberChangedListener<TMember extends IMember> = (clientId: string, member: TMember) => void;
 
 // @public
-export type Myself<M extends IMember = IMember> = M & {
+export type Myself<TMember extends IMember = IMember> = TMember & {
     readonly currentConnection: string;
 };
 
@@ -557,9 +557,9 @@ export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonl
 export type Off = () => void;
 
 // @public
-export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
-    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
-} : L;
+export type ReplaceIEventThisPlaceHolder<T extends any[], TThis> = T extends any[] ? {
+    [K in keyof T]: T[K] extends IEventThisPlaceHolder ? TThis : T[K];
+} : T;
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -651,11 +651,11 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @public
-export interface Tagged<V, T extends string = string> {
+export interface Tagged<TValue, TTag extends string = string> {
     // (undocumented)
-    tag: T;
+    tag: TTag;
     // (undocumented)
-    value: V;
+    value: TValue;
 }
 
 // @public
@@ -665,7 +665,7 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @public
-export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
+export type TransformedEvent<TThis, TEvent, TArguments extends any[]> = (event: TEvent, listener: (...args: ReplaceIEventThisPlaceHolder<TArguments, TThis>) => void) => TThis;
 
 // @public
 export const Tree: TreeApi;
