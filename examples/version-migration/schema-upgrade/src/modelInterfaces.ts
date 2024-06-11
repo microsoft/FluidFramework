@@ -11,6 +11,7 @@ import {
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence/internal";
 
+// TODO: Consider property-events rather than extending an emitter.
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IInventoryListAppModelEvents extends IMigratableModelEvents {}
 

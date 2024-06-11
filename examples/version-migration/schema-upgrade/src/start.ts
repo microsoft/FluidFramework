@@ -97,9 +97,9 @@ async function start(): Promise<void> {
 	);
 	migrator.on("migrated", () => {
 		model.close();
+		model = migrator.currentModel;
 		render(migrator.currentModel);
 		updateTabForId(migrator.currentModelId);
-		model = migrator.currentModel;
 	});
 	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
 	// For example, this might be hit if another client has a newer ModelLoader and proposes a version our
