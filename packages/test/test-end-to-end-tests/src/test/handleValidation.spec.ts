@@ -36,9 +36,10 @@ import {
 import {
 	SharedTree,
 	SchemaFactory,
-	TreeConfiguration,
 	type TreeView,
 	type ISharedTree,
+	TreeViewConfiguration,
+	type ITree,
 } from "@fluidframework/tree/internal";
 
 const mapId = "map";
@@ -53,18 +54,19 @@ const registerId = "registerCollection";
 const queueId = "consensusQueue";
 const migrationShimId = "migrationShim";
 
-function treeSetup(dds) {
-	const builder = new SchemaFactory("test");
-	class Bar extends builder.object("bar", {
-		h: builder.optional(builder.handle),
-	}) {}
+const builder = new SchemaFactory("test");
+class Bar extends builder.object("bar", {
+	h: builder.optional(builder.handle),
+}) {}
+async function treeSetup(dds: ITree) {
+	const config = new TreeViewConfiguration({ schema: Bar });
 
-	const config = new TreeConfiguration(Bar, () => ({
-		h: undefined,
-	}));
+	const view = await dds.viewWith(config);
+	if (view.compatibility.canInitialize) {
+		view.initialize({ h: undefined });
+	}
 
-	const treeView: TreeView<typeof Bar> = dds.schematize(config);
-	return treeView;
+	return view;
 }
 
 async function setup(
@@ -288,18 +290,24 @@ const ddsTypes: aDDSFactory[] = [
 			return this.downCast(tree);
 		},
 		downCast(channel): aDDSType {
-			const tree = channel as ISharedTree;
-			const treeView = treeSetup(tree);
-
+			let treeView: TreeView<typeof Bar>;
+			async function getTreeView() {
+				if (!treeView) {
+					treeView = await treeSetup(channel as ISharedTree);
+				}
+				return treeView;
+			}
 			return {
-				id: tree.id,
+				id: channel.id,
 				async storeHandle(handle: IFluidHandle) {
-					treeView.root.h = handle;
+					const view = await getTreeView();
+					view.root.h = handle;
 				},
 				async readHandle(): Promise<unknown> {
-					return treeView.root.h;
+					const view = await getTreeView();
+					return view.root.h;
 				},
-				handle: tree.handle,
+				handle: channel.handle,
 			};
 		},
 		async getDDS(dataStore) {

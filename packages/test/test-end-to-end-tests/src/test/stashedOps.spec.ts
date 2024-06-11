@@ -58,8 +58,8 @@ import {
 	createDocumentId,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
-import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
+import { SchemaFactory } from "@fluidframework/tree";
+import { ISharedTree, SharedTree, TreeViewConfiguration } from "@fluidframework/tree/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 
@@ -294,9 +294,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map: sf.map(sf.string),
 	}) {}
 
-	const treeConfig = new TreeConfiguration(Root, () => ({
-		map: new Map<string, string>(),
-	}));
+	const treeConfig = new TreeViewConfiguration({ schema: Root });
 
 	interface MinimalMap {
 		get(key: string): string | undefined;
@@ -311,8 +309,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
 		const tree = await d.getSharedObject<ISharedTree>(treeId);
-		const root = tree.schematize(treeConfig);
-		return root.root.map;
+		const view = await tree.viewWith(treeConfig);
+		if (view.compatibility.canInitialize) {
+			view.initialize({ map: new Map<string, string>() });
+		}
+		return view.root.map;
 	}
 
 	async function getMapFromProvider(

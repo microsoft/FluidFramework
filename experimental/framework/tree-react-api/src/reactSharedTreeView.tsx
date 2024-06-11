@@ -22,7 +22,11 @@ import {
 	type TreeView,
 	type ImplicitFieldSchema,
 } from "@fluidframework/tree";
-import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
+import {
+	configuredSharedTree,
+	typeboxValidator,
+	type TreeViewConfiguration,
+} from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
@@ -101,8 +105,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly config: TreeConfiguration<TSchema>;
+	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
 	 * The TreeView.

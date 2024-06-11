@@ -9,8 +9,7 @@ import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-int
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-// eslint-disable-next-line import/no-deprecated
-import { type ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -115,6 +114,7 @@ export class AppData extends DataObject {
 				emojiMatrix.setCell(row, col, emojiCell.handle);
 			}
 		}
+		await this.populateSharedTree(sharedTree);
 
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
@@ -150,7 +150,6 @@ export class AppData extends DataObject {
 		if (sharedTree === undefined) {
 			throw new Error("SharedTree was not initialized");
 		} else {
-			this.populateSharedTree(sharedTree);
 			this._sharedTree = sharedTree;
 
 			// We will always load the initial objects so they are available to the developer
@@ -175,7 +174,7 @@ export class AppData extends DataObject {
 		}
 	}
 
-	private populateSharedTree(sharedTree: ITree): void {
+	private async populateSharedTree(sharedTree: ITree): Promise<void> {
 		// Set up SharedTree for visualization
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
@@ -195,8 +194,9 @@ export class AppData extends DataObject {
 			childrenTwo: builder.number,
 		}) {}
 
-		// eslint-disable-next-line import/no-deprecated
-		const config = new TreeConfiguration(RootNodeSchema, () => ({
+		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
+		const view = await sharedTree.viewWith(config);
+		view.initialize({
 			childrenOne: [
 				{
 					childField: "Hello world!",
@@ -212,8 +212,6 @@ export class AppData extends DataObject {
 				},
 			],
 			childrenTwo: 32,
-		}));
-
-		sharedTree.schematize(config);
+		});
 	}
 }
