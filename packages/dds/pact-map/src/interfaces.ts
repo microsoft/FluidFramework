@@ -12,6 +12,8 @@ import {
  * Events emitted by {@link IPactMap}.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPactMapEvents extends ISharedObjectEvents {
 	/**
 	 * Notifies when a new value goes pending or has been accepted.
@@ -23,6 +25,8 @@ export interface IPactMapEvents extends ISharedObjectEvents {
  * Details of the accepted pact.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAcceptedPact<T> {
 	/**
 	 * The accepted value of the given type or undefined (typically in case of delete).
@@ -47,6 +51,8 @@ export interface IAcceptedPact<T> {
  * or disconnected.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	/**
 	 * Gets the accepted value for the given key.

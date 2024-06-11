@@ -24,7 +24,7 @@ import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interf
 /**
  * The accepted pact information, if any.
  */
-interface IAcceptedPactInternal<T> {
+interface AcceptedPactInternal<T> {
 	/**
 	 * The accepted value of the given type or undefined (typically in case of delete).
 	 */
@@ -43,7 +43,7 @@ interface IAcceptedPactInternal<T> {
 /**
  * The pending pact information, if any.
  */
-interface IPendingPact<T> {
+interface PendingPact<T> {
 	/**
 	 * The pending value of the given type or undefined (typically in case of delete).
 	 */
@@ -59,14 +59,14 @@ interface IPendingPact<T> {
  * Internal format of the values stored in the PactMap.
  */
 type Pact<T> =
-	| { accepted: IAcceptedPactInternal<T>; pending: undefined }
-	| { accepted: undefined; pending: IPendingPact<T> }
-	| { accepted: IAcceptedPactInternal<T>; pending: IPendingPact<T> };
+	| { accepted: AcceptedPactInternal<T>; pending: undefined }
+	| { accepted: undefined; pending: PendingPact<T> }
+	| { accepted: AcceptedPactInternal<T>; pending: PendingPact<T> };
 
 /**
  * PactMap operation formats
  */
-interface IPactMapSetOperation<T> {
+interface PactMapSetOperation<T> {
 	type: "set";
 	key: string;
 	value: T | undefined;
@@ -83,12 +83,12 @@ interface IPactMapSetOperation<T> {
 	refSeq: number;
 }
 
-interface IPactMapAcceptOperation {
+interface PactMapAcceptOperation {
 	type: "accept";
 	key: string;
 }
 
-type IPactMapOperation<T> = IPactMapSetOperation<T> | IPactMapAcceptOperation;
+type PactMapOperation<T> = PactMapSetOperation<T> | PactMapAcceptOperation;
 
 const snapshotFileName = "header";
 
@@ -178,7 +178,7 @@ export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> impl
 			return;
 		}
 
-		const setOp: IPactMapSetOperation<T> = {
+		const setOp: PactMapSetOperation<T> = {
 			type: "set",
 			key,
 			value,
@@ -267,7 +267,7 @@ export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> impl
 			expectedSignoffs.includes(this.runtime.clientId)
 		) {
 			// Emit an accept upon a new key entering pending state if our accept is expected.
-			const acceptOp: IPactMapAcceptOperation = {
+			const acceptOp: PactMapAcceptOperation = {
 				type: "accept",
 				key,
 			};
@@ -361,7 +361,7 @@ export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> impl
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-		const pactMapOp = content as IPactMapOperation<T>;
+		const pactMapOp = content as PactMapOperation<T>;
 		// Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
 		// because we're implicitly removed from the list of expected accepts.
 		if (pactMapOp.type === "accept") {
@@ -398,7 +398,7 @@ export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> impl
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
-			const op = message.contents as IPactMapOperation<T>;
+			const op = message.contents as PactMapOperation<T>;
 
 			switch (op.type) {
 				case "set": {
