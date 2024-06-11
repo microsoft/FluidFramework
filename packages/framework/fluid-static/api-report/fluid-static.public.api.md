@@ -87,7 +87,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
-export type Myself<M extends IMember = IMember> = M & {
+export type Myself<TMember extends IMember = IMember> = TMember & {
     readonly currentConnection: string;
 };
 
