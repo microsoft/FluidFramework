@@ -9,7 +9,10 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	createSharedObjectKind,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap } from "./interfaces.js";
 import { SharedMap as SharedMapInternal } from "./map.js";
@@ -17,11 +20,8 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- *
- * @sealed
- * @alpha
  */
-export class MapFactory implements IChannelFactory<ISharedMap> {
+export class MapFactory implements IChannelFactory<ISharedMap & ISharedObject> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -58,7 +58,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<ISharedMap> {
+	): Promise<SharedMapInternal> {
 		const map = new SharedMapInternal(id, runtime, attributes);
 		await map.load(services);
 
@@ -68,7 +68,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedMapInternal {
 		const map = new SharedMapInternal(id, runtime, MapFactory.Attributes);
 		map.initializeLocal();
 
@@ -80,7 +80,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
  * Entrypoint for {@link ISharedMap} creation.
  * @alpha
  */
-export const SharedMap = createSharedObjectKind<ISharedMap>(MapFactory);
+export const SharedMap = createSharedObjectKind<ISharedMap & ISharedObject>(MapFactory);
 
 /**
  * Entrypoint for {@link ISharedMap} creation.

@@ -10,6 +10,7 @@ import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
  * @alpha
@@ -26,5 +27,5 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 	readonly runtime: IFluidDataStoreRuntime;
 	readonly channel: IFluidDataStoreChannel;
 	readonly context: IFluidDataStoreContext;
-	getSharedObject<T = any>(id: string): Promise<T>;
+	getSharedObject<T = any>(id: string): Promise<T & ISharedObject>;
 }

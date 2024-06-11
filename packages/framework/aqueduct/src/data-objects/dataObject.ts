@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import { type ISharedDirectory, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
@@ -53,7 +53,7 @@ export abstract class DataObject<
 			// This will actually be an ISharedMap if the channel was previously created by the older version of
 			// DataObject which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
 			// SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
-			if (this.internalRoot.attributes.type === MapFactory.Type) {
+			if (this.internalRoot.attributes.type === SharedMap.getFactory().type) {
 				this.runtime.logger.send({
 					category: "generic",
 					eventName: "MapDataObject",

@@ -21,6 +21,8 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/in
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
 import { ISharedDirectory } from '@fluidframework/map/internal';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils/internal';
 import { ITestContainerConfig } from '@fluidframework/test-utils/internal';

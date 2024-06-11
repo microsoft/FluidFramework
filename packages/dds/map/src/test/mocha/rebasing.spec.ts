@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -42,8 +43,8 @@ describe("Rebasing", () => {
 		},
 	]) {
 		describe(`SharedMap - ${testConfig.name}`, () => {
-			let map1: ISharedMap;
-			let map2: ISharedMap;
+			let map1: ISharedMap & ISharedObject;
+			let map2: ISharedMap & ISharedObject;
 
 			beforeEach("createMaps", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);

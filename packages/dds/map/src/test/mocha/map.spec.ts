@@ -9,6 +9,7 @@ import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils"
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISummaryBlob } from "@fluidframework/driver-definitions";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -16,7 +17,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
+import { type ISharedMap, type IValueChanged, SharedMap } from "../../index.js";
 import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
@@ -27,6 +28,7 @@ import type {
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
+import { MapFactory } from "../../mapFactory.js";
 import type { IMapOperation } from "../../mapKernel.js";
 
 /**
@@ -35,7 +37,7 @@ import type { IMapOperation } from "../../mapKernel.js";
 export function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): ISharedMap {
+): ISharedMap & ISharedObject {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ registry: [SharedMap.getFactory()] });
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -69,7 +71,7 @@ class TestSharedMap extends SharedMapInternal {
 
 describe("Map", () => {
 	describe("Local state", () => {
-		let map: SharedMap;
+		let map: SharedMapInternal;
 
 		beforeEach("createLocalMap", async () => {
 			map = createLocalMap("testMap");
@@ -909,8 +911,8 @@ describe("Map", () => {
 		class GCSharedMapProvider implements IGCTestProvider {
 			private subMapCount = 0;
 			private _expectedRoutes: string[] = [];
-			private readonly map1: SharedMap;
-			private readonly map2: SharedMap;
+			private readonly map1: SharedMap & ISharedObject;
+			private readonly map2: SharedMap & ISharedObject;
 			private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
 			public constructor() {
@@ -922,7 +924,7 @@ describe("Map", () => {
 			/**
 			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
-			public get sharedObject(): SharedMap {
+			public get sharedObject(): SharedMap & ISharedObject {
 				// Return the remote SharedMap because we want to verify its summary data.
 				return this.map2;
 			}

@@ -13,6 +13,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -205,7 +206,8 @@ describeCompat(
 					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rootOfDds2 =
 					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
-				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
+				const dds2Handle: IFluidHandle<ISharedMap & ISharedObject> | undefined =
+					rootOfDds2.get(dds2Key);
 
 				// validate dds
 				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
@@ -261,7 +263,7 @@ describeCompat(
 					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
 					rehydratedRoot.get(dataStore2Key);
-				const dds2Handle: IFluidHandle<ISharedMap> | undefined =
+				const dds2Handle: IFluidHandle<ISharedMap & ISharedObject> | undefined =
 					rehydratedRoot.get(dds2Key);
 
 				// validate data store

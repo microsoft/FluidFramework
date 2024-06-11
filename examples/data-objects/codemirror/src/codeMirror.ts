@@ -22,6 +22,7 @@ import {
 	SharedString,
 	reservedTileLabelsKey,
 } from "@fluidframework/sequence/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { PresenceManager } from "./presence.js";
 
@@ -54,7 +55,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 		}
 		return this._text;
 	}
-	private root: ISharedMap | undefined;
+	private root: (ISharedMap & ISharedObject) | undefined;
 	private readonly innerHandle: IFluidHandle<this>;
 
 	public readonly presenceManager: PresenceManager;
@@ -77,7 +78,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 			this.root.bindToContext();
 		}
 
-		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		this.root = (await this.runtime.getChannel("root")) as ISharedMap & ISharedObject;
 		this._text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
 	}
 

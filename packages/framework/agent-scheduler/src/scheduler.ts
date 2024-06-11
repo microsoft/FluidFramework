@@ -23,6 +23,7 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	type ITelemetryLoggerExt,
 	UsageError,
@@ -68,7 +69,7 @@ export class AgentScheduler
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	) {
-		let root: ISharedMap;
+		let root: ISharedMap & ISharedObject;
 		let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
 		if (!existing) {
 			root = SharedMap.create(runtime, "root");
@@ -77,7 +78,7 @@ export class AgentScheduler
 			consensusRegisterCollection.bindToContext();
 			root.set(schedulerId, consensusRegisterCollection.handle);
 		} else {
-			root = (await runtime.getChannel("root")) as ISharedMap;
+			root = (await runtime.getChannel("root")) as ISharedMap & ISharedObject;
 			const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(
 				root,
 				schedulerId,

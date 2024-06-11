@@ -8,7 +8,6 @@ import { type IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import {
 	SharedMap,
 	DirectoryFactory,
-	MapFactory,
 	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
@@ -53,7 +52,7 @@ export class DataObjectFactory<
 		}
 
 		// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
+		if (!sharedObjects.some((factory) => factory.type === SharedMap.getFactory().type)) {
 			// User did not register for map
 			mergedObjects.push(SharedMap.getFactory());
 		}

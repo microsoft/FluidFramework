@@ -24,6 +24,7 @@ import {
 	SharedString,
 	reservedRangeLabelsKey,
 } from "@fluidframework/sequence/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
 
@@ -76,7 +77,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 	}
 
 	public text: SharedString | undefined;
-	private root: ISharedMap | undefined;
+	private root: (ISharedMap & ISharedObject) | undefined;
 	private _collabManager: FluidCollabManager | undefined;
 	public get collabManager(): FluidCollabManager {
 		if (this._collabManager === undefined) {
@@ -104,7 +105,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 			this.root.bindToContext();
 		}
 
-		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
+		this.root = (await this.runtime.getChannel("root")) as ISharedMap & ISharedObject;
 		this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
 
 		this._collabManager = new FluidCollabManager(this.text);

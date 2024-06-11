@@ -347,6 +347,7 @@ declare function get_current_InterfaceDeclaration_ISharedMap():
 declare function use_old_InterfaceDeclaration_ISharedMap(
     use: TypeOnly<old.ISharedMap>): void;
 use_old_InterfaceDeclaration_ISharedMap(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedMap());
 
 /*
@@ -410,28 +411,16 @@ use_old_InterfaceDeclaration_IValueChanged(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_MapFactory": {"forwardCompat": false}
+ * "RemovedClassDeclaration_MapFactory": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_MapFactory():
-    TypeOnly<old.MapFactory>;
-declare function use_current_ClassDeclaration_MapFactory(
-    use: TypeOnly<current.MapFactory>): void;
-use_current_ClassDeclaration_MapFactory(
-    get_old_ClassDeclaration_MapFactory());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_MapFactory": {"backCompat": false}
+ * "RemovedClassDeclaration_MapFactory": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_MapFactory():
-    TypeOnly<current.MapFactory>;
-declare function use_old_ClassDeclaration_MapFactory(
-    use: TypeOnly<old.MapFactory>): void;
-use_old_ClassDeclaration_MapFactory(
-    get_current_ClassDeclaration_MapFactory());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -543,4 +532,5 @@ declare function get_current_TypeAliasDeclaration_SharedMap():
 declare function use_old_TypeAliasDeclaration_SharedMap(
     use: TypeOnly<old.SharedMap>): void;
 use_old_TypeAliasDeclaration_SharedMap(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedMap());

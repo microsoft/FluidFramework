@@ -8,12 +8,14 @@ import type { IChannelAttributes } from '@fluidframework/datastore-definitions/i
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import type { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
@@ -96,32 +98,22 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+// @beta @sealed
+export interface ISharedMap extends IEventProvider<ISharedMapEvents>, Map<string, any>, IFluidLoadable {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @alpha @sealed
-export interface ISharedMapEvents extends ISharedObjectEvents {
+// @beta @sealed
+export interface ISharedMapEvents extends IErrorEvent {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;
-}
-
-// @alpha @sealed
-export class MapFactory implements IChannelFactory<ISharedMap> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    static readonly Type = "https://graph.microsoft.com/types/map";
-    get type(): string;
 }
 
 // @alpha
@@ -131,7 +123,7 @@ export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObject
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
-export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind<ISharedMap>;
+export const SharedMap: ISharedObjectKind<ISharedMap & ISharedObject<ISharedObjectEvents>> & SharedObjectKind<ISharedMap & ISharedObject<ISharedObjectEvents>>;
 
 // @alpha
 export type SharedMap = ISharedMap;

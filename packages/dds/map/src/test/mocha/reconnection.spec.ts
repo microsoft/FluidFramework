@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -21,8 +22,8 @@ describe("Reconnection", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let map1: ISharedMap;
-		let map2: ISharedMap;
+		let map1: ISharedMap & ISharedObject;
+		let map2: ISharedMap & ISharedObject;
 
 		beforeEach("createMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
