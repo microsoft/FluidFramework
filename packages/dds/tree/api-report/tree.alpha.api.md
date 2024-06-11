@@ -128,8 +128,6 @@ declare namespace InternalTypes {
         Invariant,
         Contravariant,
         Covariant,
-        BrandedType,
-        ExtractFromOpaque,
         Assume,
         AllowOptional,
         RequiredFields,
@@ -139,7 +137,6 @@ declare namespace InternalTypes {
         FlattenKeys,
         AllowOptionalNotFlattened,
         isAny,
-        BrandedKeyContent,
         RestrictiveReadonlyRecord,
         MakeNominal
     }

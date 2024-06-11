@@ -343,6 +343,9 @@ export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./c
 export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
+// TODO: When previously tagged '@internal', these types could not be included in `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
+export { BrandedType, ExtractFromOpaque, BrandedKeyContent } from "./util/index.js";
+
 export {
 	NormalizeField,
 	NormalizeAllowedTypes,

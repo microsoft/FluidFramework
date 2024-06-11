@@ -7,8 +7,6 @@ export {
 	Invariant,
 	Contravariant,
 	Covariant,
-	BrandedType,
-	ExtractFromOpaque,
 	Assume,
 	AllowOptional,
 	RequiredFields,
@@ -18,7 +16,6 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 	isAny,
-	BrandedKeyContent,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
 } from "./util/index.js";
