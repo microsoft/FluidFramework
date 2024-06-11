@@ -131,19 +131,6 @@ export class SerializedStateManager {
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private refreshSnapshotP: Promise<void> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
-	private _supportGetSnapshotApi: boolean | undefined;
-
-	private set supportGetSnapshotApi(value: boolean | undefined) {
-		assert(
-			this._supportGetSnapshotApi === undefined,
-			"supportGetSnapshotApi should be declared just once",
-		);
-		this._supportGetSnapshotApi = value;
-	}
-
-	private get supportGetSnapshotApi(): boolean | undefined {
-		return this._supportGetSnapshotApi;
-	}
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -368,10 +355,7 @@ export class SerializedStateManager {
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(
-		snapshot: SnapshotWithBlobs | undefined,
-		supportGetSnapshotApi: boolean,
-	) {
-		this.supportGetSnapshotApi = supportGetSnapshotApi;
+		snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,
