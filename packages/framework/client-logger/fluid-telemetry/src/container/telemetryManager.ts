@@ -22,7 +22,6 @@ import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
  * to be transformed into {@link IContainerTelemetry} and finally sending them to the provided {@link ITelemetryConsumer}
  */
 export class ContainerTelemetryManager {
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	private static readonly HEARTBEAT_EMISSION_INTERNAL_MS = 60000;
 
 	public constructor(
