@@ -1468,9 +1468,16 @@ describe("SharedTree", () => {
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
 				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
 				assert.equal(repairCursor2.firstNode(), true);
-				assert.equal(repairCursor1.value, "A");
+				assert.equal(repairCursor2.value, "A");
 				repairCursor2.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 3);
+
+				// check that the repair data on the second tree is destroyed
+				const repairCursor3 = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, repairCursor3, brand("repair-4"));
+				assert.equal(repairCursor3.firstNode(), false);
+				repairCursor3.free();
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
