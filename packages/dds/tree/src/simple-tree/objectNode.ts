@@ -270,7 +270,7 @@ export function objectSchema<
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> {
+): TreeObjectNodeSchema<TName, T, ImplicitlyConstructable> {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
 	assertUniqueKeys(identifier, info);
@@ -429,10 +429,19 @@ function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, conte
 
 /**
  * A schema for {@link TreeObjectNode}s.
- * @privateRemarks
- * This is a candidate for being promoted to the public package API.
+ * @remarks
+ * Can be used to narrow schema.
+ * @example
+ * ```TypeScript
+ * if (schema instanceof ObjectNodeSchema) {
+ * 	for (const [key, filedSchema] of schema.fields) {
+ * 		...
+ * 	}
+ * }
+ * ```
+ * @public
  */
-export interface ObjectNodeSchema<
+export interface TreeObjectNodeSchema<
 	TName extends string = string,
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
 		string,
@@ -450,13 +459,12 @@ export interface ObjectNodeSchema<
 	readonly fields: ReadonlyMap<string, FieldSchema>;
 }
 
-export const ObjectNodeSchema = {
+/**
+ * @public
+ */
+export const TreeObjectNodeSchema = {
 	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
-	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
-		return isObjectNodeSchema(value);
+	[Symbol.hasInstance](schema: TreeNodeSchema): schema is TreeObjectNodeSchema {
+		return schema.kind === NodeKind.Object;
 	},
 } as const;
-
-export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchema {
-	return schema.kind === NodeKind.Object;
-}

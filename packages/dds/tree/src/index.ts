@@ -309,6 +309,7 @@ export {
 	DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
+	TreeObjectNodeSchema,
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,

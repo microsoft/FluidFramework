@@ -83,5 +83,6 @@ export {
 	ObjectFromSchemaRecord,
 	TreeObjectNode,
 	setField,
+	TreeObjectNodeSchema,
 } from "./objectNode.js";
 export { TreeMapNode } from "./mapNode.js";

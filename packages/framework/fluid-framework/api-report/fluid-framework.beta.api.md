@@ -554,6 +554,17 @@ export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonl
 };
 
 // @public
+export interface ObjectNodeSchema<TName extends string = string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, object & InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T> {
+    // (undocumented)
+    readonly fields: ReadonlyMap<string, FieldSchema>;
+}
+
+// @public (undocumented)
+export const ObjectNodeSchema: {
+    readonly [Symbol.hasInstance]: (schema: TreeNodeSchema) => schema is ObjectNodeSchema<string, RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, boolean>;
+};
+
+// @public
 export type Off = () => void;
 
 // @public
@@ -624,7 +635,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     }, false, T>;
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
