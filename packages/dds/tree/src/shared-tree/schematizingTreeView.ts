@@ -230,12 +230,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 
-		setField(
-			view.context.root,
-			this.rootFieldSchema,
-			newRoot as InsertableContent,
-			view.context.nodeKeyManager,
-		);
+		setField(view.context.root, this.rootFieldSchema, newRoot as InsertableContent);
 	}
 }
 

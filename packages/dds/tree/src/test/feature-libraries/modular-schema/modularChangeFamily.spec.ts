@@ -63,6 +63,7 @@ import {
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
@@ -1404,7 +1405,11 @@ describe("ModularChangeFamily", () => {
 		}
 
 		const sessionId = "session1" as SessionId;
-		const context: ChangeEncodingContext = { originatorId: sessionId, revision: tag1 };
+		const context: ChangeEncodingContext = {
+			originatorId: sessionId,
+			revision: tag1,
+			idCompressor: testIdCompressor,
+		};
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
