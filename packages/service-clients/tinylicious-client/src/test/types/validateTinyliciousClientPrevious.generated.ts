@@ -46,56 +46,32 @@ type TypeOnly<T> = T extends number
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
-    TypeOnly<old.ITelemetryBaseEvent>;
-declare function use_current_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<current.ITelemetryBaseEvent>): void;
-use_current_InterfaceDeclaration_ITelemetryBaseEvent(
-    get_old_InterfaceDeclaration_ITelemetryBaseEvent());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
-    TypeOnly<current.ITelemetryBaseEvent>;
-declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<old.ITelemetryBaseEvent>): void;
-use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    get_current_InterfaceDeclaration_ITelemetryBaseEvent());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryBaseLogger": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryBaseLogger": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITelemetryBaseLogger():
-    TypeOnly<old.ITelemetryBaseLogger>;
-declare function use_current_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<current.ITelemetryBaseLogger>): void;
-use_current_InterfaceDeclaration_ITelemetryBaseLogger(
-    get_old_InterfaceDeclaration_ITelemetryBaseLogger());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryBaseLogger": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryBaseLogger": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITelemetryBaseLogger():
-    TypeOnly<current.ITelemetryBaseLogger>;
-declare function use_old_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<old.ITelemetryBaseLogger>): void;
-use_old_InterfaceDeclaration_ITelemetryBaseLogger(
-    get_current_InterfaceDeclaration_ITelemetryBaseLogger());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
