@@ -15,6 +15,7 @@ export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHand
  * @alpha
  */
 export interface IProvideFluidHandleContext {
+	// eslint-disable-next-line @typescript-eslint/naming-convention
 	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
