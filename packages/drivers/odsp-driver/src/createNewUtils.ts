@@ -14,10 +14,10 @@ import {
 import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
+	getGitType,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

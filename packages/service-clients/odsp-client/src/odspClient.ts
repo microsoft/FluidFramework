@@ -234,7 +234,7 @@ export class OdspClient {
 			}
 
 			/**
-			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * A unique identifier for the file within the provided SharePoint Embedded container ID. When you attach a container,
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */

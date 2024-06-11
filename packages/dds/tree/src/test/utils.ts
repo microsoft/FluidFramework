@@ -18,7 +18,7 @@ import {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -713,7 +713,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
-	initializeForest(forest, nodeCursors, testRevisionTagCodec);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec, testIdCompressor);
 	return forest;
 }
 
@@ -1029,7 +1029,8 @@ export function applyTestDelta(
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
+		detachedFieldIndex ??
+			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
 	);
 }
 
@@ -1044,7 +1045,8 @@ export function announceTestDelta(
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
+		detachedFieldIndex ??
+			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
 	);
 }
 
@@ -1107,8 +1109,13 @@ export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
 	return { undoStack, redoStack, unsubscribe };
 }
 
+export function assertIsSessionId(sessionId: string): SessionId {
+	assertIsStableId(sessionId);
+	return sessionId as SessionId;
+}
+
 export const testIdCompressor = createAlwaysFinalizedIdCompressor(
-	"00000000-0000-4000-b000-000000000000" as SessionId,
+	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
 );
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();

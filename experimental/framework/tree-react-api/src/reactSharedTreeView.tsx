@@ -166,7 +166,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	protected override async initializingFirstTime(): Promise<void> {
 		const tree = SharedTree.create(this.runtime);
-		this.#tree = await tree.viewWith(this.config);
+		this.#tree = tree.viewWith(this.config);
 		// Initialize the tree content and schema.
 		this.#tree.initialize(this.config.initialTree());
 		this.root.set(this.key, tree.handle);
@@ -179,7 +179,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 		// the TreeView exposes this via `compatibility` which is explicitly handled by TreeViewComponent.
 		const iTree = await handle.get();
-		this.#tree = await iTree.viewWith(this.config);
+		this.#tree = iTree.viewWith(this.config);
 	}
 
 	protected override async hasInitialized(): Promise<void> {

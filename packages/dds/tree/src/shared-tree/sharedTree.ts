@@ -181,7 +181,12 @@ export class SharedTree
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
-		const removedRoots = makeDetachedFieldIndex("repair", revisionTagCodec, options);
+		const removedRoots = makeDetachedFieldIndex(
+			"repair",
+			revisionTagCodec,
+			runtime.idCompressor,
+			options,
+		);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
 		});
@@ -193,6 +198,7 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
+			idCompressor: runtime.idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -200,6 +206,7 @@ export class SharedTree
 			fieldBatchCodec,
 			encoderContext,
 			options,
+			runtime.idCompressor,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -314,9 +321,9 @@ export class SharedTree
 		return view;
 	}
 
-	public async viewWith<TRoot extends ImplicitFieldSchema>(
+	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): Promise<TreeView<TRoot>> {
+	): TreeView<TRoot> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,

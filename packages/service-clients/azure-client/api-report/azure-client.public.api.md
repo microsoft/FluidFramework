@@ -4,7 +4,7 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static/internal';
+import { CompatibilityMode } from '@fluidframework/fluid-static';
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';

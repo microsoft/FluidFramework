@@ -30,7 +30,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
-		"tinylicious": "^4.0.1"
+		"tinylicious": "^5.0.0-265463"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

@@ -16,6 +16,7 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 		],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

@@ -10,16 +10,14 @@ import type {
 	IEvent,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
-import type {
-	IClientDetails,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
 	ITokenClaims,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
