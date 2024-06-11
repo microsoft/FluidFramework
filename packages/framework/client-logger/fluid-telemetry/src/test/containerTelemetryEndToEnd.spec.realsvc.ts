@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { ContainerSchema } from "@fluidframework/fluid-static";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
-import { SharedTree } from "@fluid-experimental/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
+import { expect } from "chai";
 import type Sinon from "sinon";
 import { spy } from "sinon";
-import { expect } from "chai";
-import { timeoutPromise } from "@fluidframework/test-utils/internal";
+
 import { startTelemetry } from "../factory/index.js";
 import {
 	ContainerTelemetryEventNames,
@@ -22,7 +24,7 @@ import {
 // This test suite creates an actual IFluidContainer and confirms events are fired with the expected names during the expected events
 
 describe("container telemetry E2E", () => {
-	let schema;
+	let schema: ContainerSchema;
 	let tinyliciousClient: TinyliciousClient;
 	let telemetryConsumerConsumeSpy: Sinon.SinonSpy;
 	let testTelemetryConsumer: ITelemetryConsumer;
@@ -38,7 +40,7 @@ describe("container telemetry E2E", () => {
 		tinyliciousClient = new TinyliciousClient({ connection: { port: 7070 } });
 		schema = {
 			initialObjects: {
-				sharedMap1: SharedTree,
+				sharedTree1: SharedTree,
 			},
 		};
 
@@ -53,7 +55,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'connected' system event produces expected ContainerConnectedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema);
+		const { container } = await tinyliciousClient.createContainer(schema, "2");
 
 		const containerId = await container.attach();
 		startTelemetry({
@@ -93,7 +95,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema);
+		const { container } = await tinyliciousClient.createContainer(schema, "2");
 
 		const containerId = await container.attach();
 		startTelemetry({
@@ -142,7 +144,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema);
+		const { container } = await tinyliciousClient.createContainer(schema, "2");
 
 		const containerId = await container.attach();
 		startTelemetry({

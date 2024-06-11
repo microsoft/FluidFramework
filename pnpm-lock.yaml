@@ -11477,9 +11477,6 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
         version: 0.15.2
-      '@fluid-experimental/tree':
-        specifier: workspace:~
-        version: link:../../../../experimental/dds/tree
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
@@ -11488,19 +11485,22 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.39.0-264124
-        version: 0.39.0-264124(@types/node@18.19.1)
+        version: 0.39.0-264124
       '@fluidframework/build-tools':
         specifier: ^0.39.0-264124
-        version: 0.39.0-264124(@types/node@18.19.1)
+        version: 0.39.0-264124
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../service-clients/tinylicious-client
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../dds/tree
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.11
@@ -21485,6 +21485,67 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluid-tools/build-cli@0.39.0-264124:
+    resolution: {integrity: sha512-KOPn6+tXwkV2Ggn0YwGBHNtz4i+16HC8mmA2/nUY0gt2jDNI3sPhmx3wXlGwFdHkbsI3T7fPqbsOpuSr44fgEg==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/build-tools': 0.39.0-264124
+      '@fluidframework/bundle-size-tools': 0.39.0-264124
+      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 3.0.17
+      '@oclif/plugin-commands': 3.3.2
+      '@oclif/plugin-help': 6.0.21
+      '@oclif/plugin-not-found': 3.1.8
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0
+      async: 3.2.5
+      chalk: 2.4.2
+      change-case: 3.1.0
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.4(supports-color@8.1.1)
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.0
+      inquirer: 8.2.6
+      json5: 2.2.3
+      jssm: 5.90.1
+      latest-version: 5.1.0
+      minimatch: 7.4.6
+      node-fetch: 2.7.0
+      npm-check-updates: 16.14.20
+      oclif: 4.10.4
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      replace-in-file: 7.1.0
+      resolve.exports: 2.0.2
+      semver: 7.6.0
+      semver-utils: 1.1.4
+      simple-git: 3.21.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - aws-crt
+      - bluebird
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
   /@fluid-tools/build-cli@0.39.0-264124(@types/node@18.19.1):
     resolution: {integrity: sha512-KOPn6+tXwkV2Ggn0YwGBHNtz4i+16HC8mmA2/nUY0gt2jDNI3sPhmx3wXlGwFdHkbsI3T7fPqbsOpuSr44fgEg==}
     engines: {node: '>=14.17.0'}
@@ -21800,6 +21861,48 @@ packages:
     hasBin: true
     dev: true
 
+  /@fluidframework/build-tools@0.39.0-264124:
+    resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/bundle-size-tools': 0.39.0-264124
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0
+      async: 3.2.5
+      chalk: 2.4.2
+      cosmiconfig: 8.3.6(typescript@5.1.6)
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.4(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      ignore: 5.3.0
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      picomatch: 2.3.1
+      rimraf: 4.4.1
+      semver: 7.6.0
+      sort-package-json: 1.57.0
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      typescript: 5.1.6
+      yaml: 2.3.4
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
   /@fluidframework/build-tools@0.39.0-264124(@types/node@18.19.1):
     resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
     engines: {node: '>=14.17.0'}
@@ -21893,6 +21996,22 @@ packages:
       pako: 2.1.0
       typescript: 5.1.6
       webpack: 5.89.0(webpack-cli@4.10.0)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/bundle-size-tools@0.39.0-264124:
+    resolution: {integrity: sha512-nVRbK5X1SnRoZRA6jkxKYtDQ5cRZ1oH6XBJxkvwoPEUsjPNHaco+juwsMDucu0oBA/FnMhOZEz5DtiQz4sBbgQ==}
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 5.1.6
+      webpack: 5.89.0
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -24503,6 +24622,16 @@ packages:
       - '@types/node'
     dev: true
 
+  /@microsoft/api-extractor-model@7.28.21:
+    resolution: {integrity: sha512-AZSdhK/vO4ddukfheXZmrkI5180XLeAqwzu/5pTsJHsXYSyNt3H3VJyynUYKMeNcveG9QLgljH3XRr/LqEfC0Q==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@microsoft/tsdoc-config': 0.16.2
+      '@rushstack/node-core-library': 5.3.0
+    transitivePeerDependencies:
+      - '@types/node'
+    dev: true
+
   /@microsoft/api-extractor-model@7.28.21(@types/node@18.19.1):
     resolution: {integrity: sha512-AZSdhK/vO4ddukfheXZmrkI5180XLeAqwzu/5pTsJHsXYSyNt3H3VJyynUYKMeNcveG9QLgljH3XRr/LqEfC0Q==}
     dependencies:
@@ -24512,6 +24641,28 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
+
+  /@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y):
+    resolution: {integrity: sha512-FZgcJxEmHA15gxTb1PpXHTforRcyIOLp6GKMqqk+ok8M58QJ0y54Bk+dcTcBC92nmanZppKn5/VRXPP4XvzB3Q==}
+    hasBin: true
+    dependencies:
+      '@microsoft/api-extractor-model': 7.28.21
+      '@microsoft/tsdoc': 0.14.2
+      '@microsoft/tsdoc-config': 0.16.2
+      '@rushstack/node-core-library': 5.3.0
+      '@rushstack/rig-package': 0.5.2
+      '@rushstack/terminal': 0.12.2
+      '@rushstack/ts-command-line': 4.21.4
+      lodash: 4.17.21
+      minimatch: 3.0.8
+      resolve: 1.22.8
+      semver: 7.5.4
+      source-map: 0.6.1
+      typescript: 5.4.2
+    transitivePeerDependencies:
+      - '@types/node'
+    dev: true
+    patched: true
 
   /@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1):
     resolution: {integrity: sha512-FZgcJxEmHA15gxTb1PpXHTforRcyIOLp6GKMqqk+ok8M58QJ0y54Bk+dcTcBC92nmanZppKn5/VRXPP4XvzB3Q==}
@@ -24772,7 +24923,7 @@ packages:
       lru-cache: 7.18.3
       npm-pick-manifest: 8.0.2
       proc-log: 3.0.0
-      promise-inflight: 1.0.1(bluebird@3.7.2)
+      promise-inflight: 1.0.1
       promise-retry: 2.0.1
       semver: 7.6.0
       which: 3.0.1
@@ -25559,6 +25710,23 @@ packages:
       z-schema: 5.0.5
     dev: true
 
+  /@rushstack/node-core-library@3.63.0:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
+    peerDependencies:
+      '@types/node': ^18.19.0
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
+      z-schema: 5.0.5
+    dev: true
+
   /@rushstack/node-core-library@3.63.0(@types/node@18.19.1):
     resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
     peerDependencies:
@@ -25575,6 +25743,24 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       z-schema: 5.0.5
+    dev: true
+
+  /@rushstack/node-core-library@5.3.0:
+    resolution: {integrity: sha512-t23gjdZV6aWkbwXSE3TkKr1UXJFbXICvAOJ0MRQEB/ZYGhfSJqqrQFaGd20I1a/nIIHJEkNO0xzycHixjcbCPw==}
+    peerDependencies:
+      '@types/node': ^18.19.0
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      ajv: 8.13.0
+      ajv-draft-04: 1.0.0(ajv@8.13.0)
+      ajv-formats: 3.0.1(ajv@8.13.0)
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
     dev: true
 
   /@rushstack/node-core-library@5.3.0(@types/node@18.19.1):
@@ -25603,6 +25789,18 @@ packages:
       strip-json-comments: 3.1.1
     dev: true
 
+  /@rushstack/terminal@0.12.2:
+    resolution: {integrity: sha512-yaHKyD/l6Zg34pC5zzc/KdiRBHy8zAH7ZbL3umpDLnvTrZ0SP8MVYZu9xA2lRsGkKfGbv/6gQhyNq4/tRzXH4A==}
+    peerDependencies:
+      '@types/node': ^18.19.0
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@rushstack/node-core-library': 5.3.0
+      supports-color: 8.1.1
+    dev: true
+
   /@rushstack/terminal@0.12.2(@types/node@18.19.1):
     resolution: {integrity: sha512-yaHKyD/l6Zg34pC5zzc/KdiRBHy8zAH7ZbL3umpDLnvTrZ0SP8MVYZu9xA2lRsGkKfGbv/6gQhyNq4/tRzXH4A==}
     peerDependencies:
@@ -25627,6 +25825,17 @@ packages:
       argparse: 1.0.10
       colors: 1.2.5
       string-argv: 0.3.2
+    dev: true
+
+  /@rushstack/ts-command-line@4.21.4:
+    resolution: {integrity: sha512-3ZjQ11kpQwk/lDQqbmxC8UuU6yD20Sy4uNTWIaBEJ5474hEFEE4cbDOS4F9R4zcyCkkaQYv674K2QTunDF5dsQ==}
+    dependencies:
+      '@rushstack/terminal': 0.12.2
+      '@types/argparse': 1.0.38
+      argparse: 1.0.10
+      string-argv: 0.3.2
+    transitivePeerDependencies:
+      - '@types/node'
     dev: true
 
   /@rushstack/ts-command-line@4.21.4(@types/node@18.19.1):
@@ -30971,7 +31180,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1(bluebird@3.7.2)
+      promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 9.0.1
       tar: 6.2.0
@@ -36621,6 +36830,7 @@ packages:
   /iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dependencies:
       safer-buffer: 2.1.2
 
@@ -42289,6 +42499,15 @@ packages:
     engines: {node: '>=0.4.0'}
     dev: true
 
+  /promise-inflight@1.0.1:
+    resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
+    peerDependencies:
+      bluebird: '*'
+    peerDependenciesMeta:
+      bluebird:
+        optional: true
+    dev: true
+
   /promise-inflight@1.0.1(bluebird@3.7.2):
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
     peerDependencies:
@@ -45868,7 +46087,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.24.0
-      webpack: 5.89.0(webpack-cli@4.10.0)
+      webpack: 5.89.0
 
   /terser@4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -47868,6 +48087,45 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /webpack@5.89.0:
+    resolution: {integrity: sha512-qyfIC10pOr70V+jkmud8tMfajraGCZMBWJtrmuBymQKCrLTRejBI8STDp1MCyZu/QTdZSeacCQYpYNQVOzX5kw==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    peerDependencies:
+      webpack-cli: '*'
+    peerDependenciesMeta:
+      webpack-cli:
+        optional: true
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.5
+      '@webassemblyjs/ast': 1.11.6
+      '@webassemblyjs/wasm-edit': 1.11.6
+      '@webassemblyjs/wasm-parser': 1.11.6
+      acorn: 8.11.2
+      acorn-import-assertions: 1.9.0(acorn@8.11.2)
+      browserslist: 4.23.0
+      chrome-trace-event: 1.0.3
+      enhanced-resolve: 5.15.0
+      es-module-lexer: 1.4.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.3.0
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.9(webpack@5.89.0)
+      watchpack: 2.4.0
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
 
   /webpack@5.89.0(webpack-cli@4.10.0):
     resolution: {integrity: sha512-qyfIC10pOr70V+jkmud8tMfajraGCZMBWJtrmuBymQKCrLTRejBI8STDp1MCyZu/QTdZSeacCQYpYNQVOzX5kw==}
