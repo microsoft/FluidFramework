@@ -21,7 +21,7 @@ import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory
 /**
  * @internal
  */
-export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
+export class ModelLoader<TModelType> implements IModelLoader<TModelType> {
 	private readonly loader: IHostLoader;
 	private readonly generateCreateNewRequest: () => IRequest;
 
@@ -63,13 +63,13 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 	 */
 	private async getModelFromContainer(container: IContainer) {
 		const entryPoint =
-			(await container.getEntryPoint()) as IModelContainerRuntimeEntryPoint<ModelType>;
+			(await container.getEntryPoint()) as IModelContainerRuntimeEntryPoint<TModelType>;
 		return entryPoint.getModel(container);
 	}
 
 	// It would be preferable for attaching to look more like service.attach(model) rather than returning an attach
 	// callback here, but this callback at least allows us to keep the method off the model interface.
-	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
+	public async createDetached(version: string): Promise<IDetachedModel<TModelType>> {
 		const container = await this.loader.createDetachedContainer({ package: version });
 		const model = await this.getModelFromContainer(container);
 		// The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
@@ -85,7 +85,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		return { model, attach };
 	}
 
-	public async loadExisting(id: string): Promise<ModelType> {
+	public async loadExisting(id: string): Promise<TModelType> {
 		const container = await this.loader.resolve({
 			url: id,
 			headers: {
@@ -102,7 +102,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		return model;
 	}
 
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
+	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<TModelType> {
 		const container = await loadContainerPaused(
 			this.loader,
 			{

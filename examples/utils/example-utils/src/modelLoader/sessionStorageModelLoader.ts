@@ -36,7 +36,7 @@ const getDocumentServiceFactory = (documentId: string) => {
 /**
  * @internal
  */
-export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelType> {
+export class SessionStorageModelLoader<TModelType> implements IModelLoader<TModelType> {
 	public constructor(
 		private readonly codeLoader: ICodeDetailsLoader,
 		private readonly logger?: ITelemetryBaseLogger,
@@ -46,9 +46,9 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		return true;
 	}
 
-	public async createDetached(version: string): Promise<IDetachedModel<ModelType>> {
+	public async createDetached(version: string): Promise<IDetachedModel<TModelType>> {
 		const documentId = uuid();
-		const modelLoader = new ModelLoader<ModelType>({
+		const modelLoader = new ModelLoader<TModelType>({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
@@ -57,9 +57,9 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		});
 		return modelLoader.createDetached(version);
 	}
-	public async loadExisting(id: string): Promise<ModelType> {
+	public async loadExisting(id: string): Promise<TModelType> {
 		const documentId = id;
-		const modelLoader = new ModelLoader<ModelType>({
+		const modelLoader = new ModelLoader<TModelType>({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
@@ -68,8 +68,8 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
 	}
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType> {
-		const modelLoader = new ModelLoader<ModelType>({
+	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<TModelType> {
+		const modelLoader = new ModelLoader<TModelType>({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(id),
 			codeLoader: this.codeLoader,

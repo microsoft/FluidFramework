@@ -86,15 +86,15 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 }
 
 // @alpha
-export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
+export abstract class DataObject<TTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TTypes> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
     protected get root(): ISharedDirectory;
 }
 
 // @alpha
-export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<unknown>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
+export class DataObjectFactory<TObj extends DataObject<TTypes>, TTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, TTypes> {
+    constructor(type: string, ctor: new (props: IDataObjectProps<TTypes>) => TObj, sharedObjects: readonly IChannelFactory<unknown>[] | undefined, optionalProviders: FluidObjectSymbolProvider<TTypes["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
 }
 
 // @alpha
@@ -105,20 +105,20 @@ export interface DataObjectTypes {
 }
 
 // @alpha (undocumented)
-export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
+export interface IDataObjectProps<TTypes extends DataObjectTypes = DataObjectTypes> {
     // (undocumented)
     readonly context: IFluidDataStoreContext;
     // (undocumented)
-    readonly initProps?: I["InitialState"];
+    readonly initProps?: TTypes["InitialState"];
     // (undocumented)
-    readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
+    readonly providers: AsyncFluidObjectProvider<TTypes["OptionalProviders"]>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
 }
 
 // @alpha
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
-    constructor(props: IDataObjectProps<I>);
+export abstract class PureDataObject<TTypes extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<TTypes["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
+    constructor(props: IDataObjectProps<TTypes>);
     protected readonly context: IFluidDataStoreContext;
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
@@ -132,30 +132,30 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     protected initializeP: Promise<void> | undefined;
-    protected initializingFirstTime(props?: I["InitialState"]): Promise<void>;
+    protected initializingFirstTime(props?: TTypes["InitialState"]): Promise<void>;
     protected initializingFromExisting(): Promise<void>;
     // (undocumented)
-    protected initProps?: I["InitialState"];
+    protected initProps?: TTypes["InitialState"];
     protected preInitialize(): Promise<void>;
-    protected readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
+    protected readonly providers: AsyncFluidObjectProvider<TTypes["OptionalProviders"]>;
     request(req: IRequest): Promise<IResponse>;
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 
 // @alpha
-export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
+export class PureDataObjectFactory<TObj extends PureDataObject<TTypes>, TTypes extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(
-    type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
-    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
-    createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
+    type: string, ctor: new (props: IDataObjectProps<TTypes>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<TTypes["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
+    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: TTypes["InitialState"], loadingGroupId?: string): Promise<TObj>;
+    createInstance(runtime: IContainerRuntimeBase, initialState?: TTypes["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // (undocumented)
-    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
-    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: Readonly<string[]>, loadingGroupId?: string): Promise<[TObj, IDataStore]>;
+    protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: TTypes["InitialState"]): Promise<TObj>;
+    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: TTypes["InitialState"], packagePath?: Readonly<string[]>, loadingGroupId?: string): Promise<[TObj, IDataStore]>;
     // (undocumented)
-    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
-    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
+    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: TTypes["InitialState"], loadingGroupId?: string): Promise<TObj>;
+    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: TTypes["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // @deprecated
-    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
+    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: TTypes["InitialState"]): Promise<TObj>;
     get IFluidDataStoreFactory(): this;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;

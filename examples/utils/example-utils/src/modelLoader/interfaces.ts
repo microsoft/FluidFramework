@@ -7,11 +7,11 @@
  * Object returned from calling IModelLoader.createDetached().
  * @internal
  */
-export interface IDetachedModel<ModelType> {
+export interface IDetachedModel<TModelType> {
 	/**
 	 * The newly created, detached model object.
 	 */
-	model: ModelType;
+	model: TModelType;
 	/**
 	 * A function that will attach the model object to the service when called.
 	 * @returns a Promise that will resolve after attach completes with the container ID of the newly attached
@@ -23,7 +23,7 @@ export interface IDetachedModel<ModelType> {
 /**
  * @internal
  */
-export interface IModelLoader<ModelType> {
+export interface IModelLoader<TModelType> {
 	/**
 	 * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
 	 * It is async to permit dynamic model loading - e.g. referring to a remote service to determine if the requested
@@ -38,18 +38,18 @@ export interface IModelLoader<ModelType> {
 	 * returns a promise that will resolve after attach has completed with the id of the container.
 	 * @param version - the container code version to create a model for
 	 */
-	createDetached(version: string): Promise<IDetachedModel<ModelType>>;
+	createDetached(version: string): Promise<IDetachedModel<TModelType>>;
 
 	/**
 	 * Load a model for the container with the given id.
 	 * @param id - the id of the container to load
 	 */
-	loadExisting(id: string): Promise<ModelType>;
+	loadExisting(id: string): Promise<TModelType>;
 
 	/**
 	 * Load a model for the container with the given id.
 	 * @param id - the id of the container to load
 	 * @param sequenceNumber - the sequence number we want to load to and pause at
 	 */
-	loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
+	loadExistingPaused(id: string, sequenceNumber: number): Promise<TModelType>;
 }

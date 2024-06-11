@@ -28,7 +28,7 @@ export interface IModelContainerRuntimeEntryPoint<T> {
  * It also requires a createModel method to returns the expected model type.
  * @internal
  */
-export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
+export abstract class ModelContainerRuntimeFactory<TModelType> implements IRuntimeFactory {
 	public get IRuntimeFactory() {
 		return this;
 	}
@@ -51,7 +51,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 			registryEntries: this.registryEntries,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
-			): Promise<IModelContainerRuntimeEntryPoint<ModelType>> => ({
+			): Promise<IModelContainerRuntimeEntryPoint<TModelType>> => ({
 				getModel: async (container: IContainer) =>
 					this.createModel(containerRuntime, container),
 			}),
@@ -90,5 +90,5 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 	protected abstract createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,
-	): Promise<ModelType>;
+	): Promise<TModelType>;
 }

@@ -22,8 +22,8 @@ import { type DataObjectTypes } from "./types.js";
  * @alpha
  */
 export abstract class DataObject<
-	I extends DataObjectTypes = DataObjectTypes,
-> extends PureDataObject<I> {
+	TTypes extends DataObjectTypes = DataObjectTypes,
+> extends PureDataObject<TTypes> {
 	private internalRoot: ISharedDirectory | undefined;
 	private readonly rootDirectoryId = "root";
 

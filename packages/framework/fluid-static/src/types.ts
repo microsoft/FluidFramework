@@ -150,7 +150,10 @@ export interface IRootDataObject extends IProvideRootDataObject {
  * @see See {@link IServiceAudienceEvents} for usage details.
  * @public
  */
-export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+export type MemberChangedListener<TMember extends IMember> = (
+	clientId: string,
+	member: TMember,
+) => void;
 
 /**
  * Events that trigger when the roster of members in the Fluid session change.

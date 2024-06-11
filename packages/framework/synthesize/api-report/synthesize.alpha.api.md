@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
+export type AsyncFluidObjectProvider<TOptional, TRequired = undefined> = AsyncOptionalFluidObjectProvider<TOptional> & AsyncRequiredFluidObjectProvider<TRequired>;
 
 // @alpha
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
@@ -24,7 +24,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     // (undocumented)
     get IFluidDependencySynthesizer(): this;
     register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void;
-    synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
+    synthesize<TOptional, TRequired = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<TOptional>, requiredTypes: Required<FluidObjectSymbolProvider<TRequired>>): AsyncFluidObjectProvider<TOptional, TRequired>;
     unregister(type: keyof TMap): void;
 }
 
@@ -42,7 +42,7 @@ export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesiz
 // @alpha
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     has(type: string): boolean;
-    synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
+    synthesize<TOptional, TRequired = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<TOptional>, requiredTypes: Required<FluidObjectSymbolProvider<TRequired>>): AsyncFluidObjectProvider<TOptional, TRequired>;
 }
 
 // @alpha (undocumented)

@@ -60,11 +60,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Add a loader to start to track any container created from them
 	 * @param loader - loader to start tracking any container created.
 	 */
-	public add<LoaderType extends IHostLoader>(loader: LoaderType) {
+	public add<TLoaderType extends IHostLoader>(loader: TLoaderType) {
 		// TODO: Expose Loader API to able to intercept container creation (See issue #5114)
-		const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
+		const patch = <TArguments, TContainer extends IContainer>(
+			fn: (...args) => Promise<TContainer>,
+		) => {
 			const boundFn = fn.bind(loader);
-			return async (...args: T[]) => {
+			return async (...args: TArguments[]) => {
 				const container = await boundFn(...args);
 				this.addContainer(container);
 				return container;
@@ -104,9 +106,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
 
 		// back-compat: Check for undefined because this function was added recently and older containers won't have it.
 		if (containerWithClone.clone !== undefined) {
-			const patch = <T, C extends IContainer>(fn: (...args) => Promise<C>) => {
+			const patch = <TArguments, TContainer extends IContainer>(
+				fn: (...args) => Promise<TContainer>,
+			) => {
 				const boundFn = fn.bind(containerWithClone);
-				return async (...args: T[]) => {
+				return async (...args: TArguments[]) => {
 					const newContainer = await boundFn(...args);
 					this.addContainer(newContainer);
 					return newContainer;
@@ -609,12 +613,12 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Implementation of processIncoming and processOutgoing
 	 */
-	private async processQueue<U>(
+	private async processQueue<T>(
 		containers: IContainer[],
-		getQueue: (container: IContainer) => IDeltaQueue<U>,
+		getQueue: (container: IContainer) => IDeltaQueue<T>,
 	) {
 		await this.pauseProcessing(...containers);
-		const resumed: IDeltaQueue<U>[] = [];
+		const resumed: IDeltaQueue<T>[] = [];
 
 		const containersToApply = this.getContainers(containers);
 

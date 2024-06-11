@@ -33,14 +33,14 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
  * @alpha
  */
 export class DataObjectFactory<
-	TObj extends DataObject<I>,
-	I extends DataObjectTypes = DataObjectTypes,
-> extends PureDataObjectFactory<TObj, I> {
+	TObj extends DataObject<TTypes>,
+	TTypes extends DataObjectTypes = DataObjectTypes,
+> extends PureDataObjectFactory<TObj, TTypes> {
 	public constructor(
 		type: string,
-		ctor: new (props: IDataObjectProps<I>) => TObj,
+		ctor: new (props: IDataObjectProps<TTypes>) => TObj,
 		sharedObjects: readonly IChannelFactory[] = [],
-		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
+		optionalProviders: FluidObjectSymbolProvider<TTypes["OptionalProviders"]>,
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
 		runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 	) {
