@@ -73,7 +73,8 @@ describe("container telemetry E2E", () => {
 			(resolve) => {
 				container.on("connected", () => {
 					// We are making an assumption here that the 'connected' event is the first and only event sent to the ITelemetryConsumer.
-					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[0]
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[0]!
 						.args[0] as ContainerConnectedTelemetry;
 
 					resolve({
@@ -120,7 +121,8 @@ describe("container telemetry E2E", () => {
 
 				container.on("disconnected", () => {
 					// We are making an assumption here that the 'disconnected' event is the second sent to the ITelemetryConsumer.
-					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[1]
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[1]!
 						.args[0] as ContainerDisconnectedTelemetry;
 
 					resolve({
@@ -176,7 +178,8 @@ describe("container telemetry E2E", () => {
 
 				container.on("disposed", () => {
 					// We are making an assumption here that the 'disposed' event is the third sent to the ITelemetryConsumer.
-					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[2]
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[2]!
 						.args[0] as ContainerDisposedTelemetry;
 
 					resolve({
