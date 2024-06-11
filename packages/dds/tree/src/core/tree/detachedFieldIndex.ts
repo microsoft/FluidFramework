@@ -178,8 +178,8 @@ export class DetachedFieldIndex {
 	/**
 	 * Returns all entries last created or used by the given revision.
 	 */
-	public getLatestRelevantRoots(revision: RevisionTag): [ForestRootId, Delta.DetachedNodeId][] {
-		return Array.from(this.latestRelevantRevisionToFields.get(revision)?.entries() ?? []);
+	public getLatestRelevantRoots(revision: RevisionTag): ForestRootId[] {
+		return Array.from(this.latestRelevantRevisionToFields.get(revision)?.keys() ?? []);
 	}
 
 	/**
@@ -202,6 +202,26 @@ export class DetachedFieldIndex {
 			this.deleteRootFromLatestRelevantRevisionsMap(root, latestRelevantRevision);
 		}
 		this.detachedNodeToField.delete(revision);
+	}
+
+	/**
+	 * Removes all entries last created or used by the given revision.
+	 */
+	public deleteLatestRelevantRoots(revision: RevisionTag): void {
+		const entries = this.latestRelevantRevisionToFields.get(revision);
+		if (entries === undefined) {
+			return;
+		}
+
+		this.latestRelevantRevisionToFields.delete(revision);
+		for (const detachedNodeId of entries.values()) {
+			const found = deleteFromNestedMap(
+				this.detachedNodeToField,
+				detachedNodeId.major,
+				detachedNodeId.minor,
+			);
+			assert(found, "Unable to delete unknown entry");
+		}
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
