@@ -129,7 +129,6 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 		callCount = 0;
-		clearCacheIfOdsp(provider, persistedCache);
 		const { container, summarizer } = await loadSummarizer(mainContainer);
 		assert(callCount === 1, "Expected one snapshot call");
 
@@ -158,6 +157,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		// Summarize and verify datastore A is unreferenced
 		await provider.ensureSynchronized();
 		callCount = 0;
+		clearCacheIfOdsp(provider, persistedCache);
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 
 		// Validate GC state datastoreA should be unreferenced

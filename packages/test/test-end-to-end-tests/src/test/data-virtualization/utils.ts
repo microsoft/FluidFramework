@@ -11,7 +11,6 @@ export function supportsDataVirtualization(provider: ITestObjectProvider) {
 	return provider.driver.type === "local" || provider.driver.type === "odsp";
 }
 
-// TODO: enable for Odsp Prod endpoint
 export function clearCacheIfOdsp(provider: ITestObjectProvider, persistedCache: TestSnapshotCache) {
 	if (provider.driver.type === "odsp") {
 		persistedCache.clearCache();
