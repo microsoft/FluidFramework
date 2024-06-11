@@ -131,6 +131,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 				],
 			}),
 		);
+		view.dispose();
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 	}
 
