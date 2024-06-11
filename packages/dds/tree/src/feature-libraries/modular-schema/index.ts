@@ -4,13 +4,12 @@
  */
 
 export {
-	isNeverField,
-	isNeverTree,
 	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
 } from "./comparison.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,
 	CrossFieldManager,
@@ -24,13 +23,14 @@ export {
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
+	EncodedNodeChangeset,
 } from "./modularChangeFormat.js";
-export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind.js";
+export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
-	getIntention,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -40,6 +40,7 @@ export {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 	NodeExistenceState,
+	FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
 export {
 	FieldChange,
@@ -47,8 +48,8 @@ export {
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
-	NodeChangeset,
 	NodeExistsConstraint,
+	NodeId,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,
@@ -65,5 +66,7 @@ export {
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 	relevantRemovedRoots,
+	updateRefreshers,
 } from "./modularChangeFamily.js";
-export { makeV0Codec } from "./modularChangeCodecs.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";

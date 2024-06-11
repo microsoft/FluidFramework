@@ -4,47 +4,42 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
+	ITestContainerConfig,
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
+
+import { pkgVersion } from "../packageVersion.js";
 
 describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends apis.dataRuntime.DataObject {
 		public get _root() {
 			return this.root;
 		}
+
+		public get _context() {
+			return this.context;
+		}
 	}
 
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new apis.dataRuntime.DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[],
-		[],
-	);
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: dataObjectFactory,
-			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			// Disable summaries so the summarizer client doesn't interfere with the audience
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: { state: "disabled" },
-				},
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: { state: "disabled" },
 			},
 		},
-	);
-
+	};
 	const createContainer = async (): Promise<IContainer> =>
-		provider.createContainer(runtimeFactory);
-	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
+		provider.makeTestContainer(testContainerConfig);
+	const loadContainer = async (): Promise<IContainer> =>
+		provider.loadTestContainer(testContainerConfig);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
 	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
@@ -90,7 +85,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		}
 	}
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -140,7 +135,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		);
 	});
 
-	it("should add clients in audience as expected in write mode", async () => {
+	it("should add clients in audience as expected in write mode", async function () {
 		// Create a client - client1.
 		const client1Container = await createContainer();
 		const client1DataStore =
@@ -222,5 +217,44 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 			client2Container.clientId,
 			"client2's audience should be removed",
 		);
+	});
+
+	it("getSelf() & 'selfChanged' event", async function () {
+		assert(apis.containerRuntime !== undefined);
+		if (apis.containerRuntime.version !== pkgVersion) {
+			// Only verify latest version of runtime - this functionality did not exist prior to RC3.
+			// Given that every version (from now on) tests this functionality, there is no reason to test old versions.
+			// This test does not use second container, so there is no need for cross-version tests.
+			this.skip();
+			return;
+		}
+
+		const container = await provider.makeTestContainer();
+		const entry = await getContainerEntryPointBackCompat<TestDataObject>(container);
+		await waitForContainerConnection(container);
+		const audience = entry._context.containerRuntime.getAudience();
+
+		container.disconnect();
+		const oldId = audience.getSelf()?.clientId;
+		assert(oldId !== undefined);
+		assert(oldId === container.clientId);
+
+		let newClientId: string | undefined;
+		audience.on("selfChanged", (_old, newValue) => {
+			newClientId = newValue.clientId;
+			assert(newClientId !== undefined);
+			assert(newValue.client === audience.getMember(newClientId));
+			// This assert could fire if one "Fluid.Container.DisableJoinSignalWait" feature gate is triggered.
+			// Code should not rely on such behavior while IAudience.getSelf() is experimental
+			// It also will fire if new runtime is used with old loader (that has exactly same effect as previous case)
+			// assert(newValue.client !== undefined);
+		});
+
+		container.connect();
+		await waitForContainerConnection(container);
+
+		assert(newClientId !== undefined);
+		assert(newClientId === container.clientId);
+		assert(audience.getSelf()?.clientId === container.clientId);
 	});
 });

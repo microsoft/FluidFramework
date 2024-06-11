@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { SharedString } from "../../sharedString";
-import { SharedStringFactory } from "../../sequenceFactory";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedStringFactory } from "../../sequenceFactory.js";
+import { SharedStringClass } from "../../sharedString.js";
 
 function createLocalSharedString(id: string) {
-	return new SharedString(new MockFluidDataStoreRuntime(), id, SharedStringFactory.Attributes);
+	return new SharedStringClass(
+		new MockFluidDataStoreRuntime(),
+		id,
+		SharedStringFactory.Attributes,
+	);
 }
 
 describe("SharedString memory usage", () => {
@@ -37,7 +42,7 @@ describe("SharedString memory usage", () => {
 			title = "Create empty SharedString";
 			minSampleCount = 500;
 
-			private sharedString = createLocalSharedString("testSharedString");
+			sharedString = createLocalSharedString("testSharedString");
 
 			async run() {
 				this.sharedString = createLocalSharedString("testSharedString");

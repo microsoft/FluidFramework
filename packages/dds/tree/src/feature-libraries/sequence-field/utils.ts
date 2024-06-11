@@ -3,71 +3,66 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
 	RevisionMetadataSource,
 	RevisionTag,
-	TaggedChange,
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
 } from "../../core/index.js";
+import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
-	brand,
-	fail,
-	getFromRangeMap,
-	getOrAddEmptyToMap,
-	Mutable,
-	RangeMap,
-} from "../../util/index.js";
-import {
-	addCrossFieldQuery,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
-	getIntention,
+	NodeId,
+	addCrossFieldQuery,
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
+
+import {
+	CellRename,
+	DetachOfRemovedNodes,
+	EmptyInputCellMark,
+	MoveMarkEffect,
+} from "./helperTypes.js";
 import {
 	Attach,
+	AttachAndDetach,
+	CellId,
+	CellMark,
+	Changeset,
 	Detach,
+	DetachFields,
 	HasRevisionTag,
 	Insert,
-	LineageEvent,
 	Mark,
+	MarkEffect,
+	MoveId,
 	MoveIn,
 	MoveOut,
 	NoopMark,
-	Changeset,
-	MoveId,
-	Remove,
 	NoopMarkType,
-	HasMarkFields,
-	CellId,
-	CellMark,
-	AttachAndDetach,
-	MarkEffect,
-	DetachFields,
-	IdRange,
+	Remove,
 } from "./types.js";
-import { MarkListFactory } from "./markListFactory.js";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable.js";
-import {
-	EmptyInputCellMark,
-	DetachedCellMark,
-	MoveMarkEffect,
-	DetachOfRemovedNodes,
-	CellRename,
-	VestigialEndpoint,
-	isVestigialEndpoint,
-} from "./helperTypes.js";
-import { DetachIdOverrideType } from "./format.js";
 
-export function isEmpty<T>(change: Changeset<T>): boolean {
-	return change.length === 0;
+export function isEmpty(change: Changeset): boolean {
+	for (const mark of change) {
+		if (mark.changes !== undefined || mark.type !== undefined) {
+			return false;
+		}
+	}
+	return true;
 }
 
-export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
+export function createEmpty(): Changeset {
+	return [];
+}
+
+export function isNewAttach(mark: Mark, revision?: RevisionTag): boolean {
 	return isNewAttachEffect(mark, mark.cellId, revision);
 }
 
@@ -92,7 +87,7 @@ export function isAttach(effect: MarkEffect): effect is Attach {
 	return effect.type === "Insert" || effect.type === "MoveIn";
 }
 
-export function isReattach(mark: Mark<unknown>): boolean {
+export function isReattach(mark: Mark): boolean {
 	return isReattachEffect(mark, mark.cellId);
 }
 
@@ -100,9 +95,9 @@ export function isReattachEffect(effect: MarkEffect, cellId: CellId | undefined)
 	return isAttach(effect) && !isNewAttachEffect(effect, cellId);
 }
 
-export function isActiveReattach<T>(
-	mark: Mark<T>,
-): mark is CellMark<Insert, T> & { conflictsWith?: undefined } {
+export function isActiveReattach(
+	mark: Mark,
+): mark is CellMark<Insert> & { conflictsWith?: undefined } {
 	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
 }
 
@@ -110,14 +105,10 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	if (a === undefined || b === undefined) {
 		return a === b;
 	}
-	return areEqualChangeAtomIds(a, b) && areSameLineage(a.lineage, b.lineage);
+	return areEqualChangeAtomIds(a, b);
 }
 
-export function getInputCellId(
-	mark: Mark<unknown>,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): CellId | undefined {
+export function getInputCellId(mark: Mark): CellId | undefined {
 	const cellId = mark.cellId;
 	if (cellId === undefined) {
 		return undefined;
@@ -136,35 +127,29 @@ export function getInputCellId(
 
 	return {
 		...cellId,
-		revision: getIntentionIfMetadataProvided(markRevision ?? revision, metadata),
+		revision: markRevision,
 	};
 }
 
-export function getOutputCellId(
-	mark: Mark<unknown>,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): CellId | undefined {
+export function getOutputCellId(mark: Mark): CellId | undefined {
 	if (isDetach(mark)) {
-		return getDetachOutputId(mark, revision, metadata);
+		return getDetachOutputCellId(mark);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isAttachAndDetachEffect(mark)) {
-		return getDetachOutputId(mark.detach, revision, metadata);
+		return getDetachOutputCellId(mark.detach);
 	}
 
-	return getInputCellId(mark, revision, metadata);
+	return getInputCellId(mark);
 }
 
 export function cellSourcesFromMarks(
-	marks: readonly Mark<unknown>[],
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
+	marks: readonly Mark[],
 	contextGetter: typeof getInputCellId | typeof getOutputCellId,
 ): Set<RevisionTag | undefined> {
 	const set = new Set<RevisionTag | undefined>();
 	for (const mark of marks) {
-		const cell = contextGetter(mark, revision, metadata);
+		const cell = contextGetter(mark);
 		if (cell !== undefined) {
 			set.add(cell.revision);
 		}
@@ -217,7 +202,16 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		assert(false, "Inconsistent cell ordering");
+		// The only exception to this is when we're composing anonymous changesets in a transaction.
+		assert(
+			oldMarkCell.revision === undefined && newMarkCell.revision === undefined,
+			0x8a0 /* Inconsistent cell ordering */,
+		);
+		// We are composing anonymous changesets in a transaction. The new changeset is creating a cell in a gap
+		// where the old changeset knows of some now empty cell. We order the new cell relative to the old cell in a
+		// way that is consistent with its tie-breaking behavior should the old cell be concurrently re-filled.
+		// Since only tie-break left is supported at the moment, the new cell comes first.
+		return CellOrder.NewThenOld;
 	}
 	if (newChangeKnowsOfOldMarkCellRevision) {
 		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
@@ -231,18 +225,18 @@ export function compareCellPositionsUsingTombstones(
 		// These cells are only ordered through tie-breaking.
 		// Since tie-breaking is hard-coded to "merge left", the younger cell comes first.
 
-		// In the context of rebase, an undefined revision means that the cell was created on the branch that
-		// is undergoing rebasing.
 		// In the context of compose, an undefined revision means we are composing anonymous changesets into
-		// a transaction.
-		// In both cases, it means the cell from the newer changeset is younger.
+		// a transaction, which means the cell from the newer changeset is younger.
 		if (newMarkCell.revision === undefined) {
 			return CellOrder.NewThenOld;
 		}
 		// The only case where the old mark cell should have no revision is when composing anonymous changesets
 		// into a transaction, in which case the new mark cell should also have no revision, which is handled above.
 		// In all other cases, the old mark cell should have a revision.
-		assert(oldMarkCell.revision !== undefined, "Old mark cell should have a revision");
+		assert(
+			oldMarkCell.revision !== undefined,
+			0x8a1 /* Old mark cell should have a revision */,
+		);
 
 		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
 		// of the changesets in which the marks targeting these cells appear.
@@ -278,7 +272,7 @@ export function compareCellPositionsUsingTombstones(
 			//
 			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
 			// the examples above) with the same resolution.
-			assert(false, "Invalid cell ordering scenario");
+			assert(false, 0x8a2 /* Invalid cell ordering scenario */);
 		}
 
 		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that
@@ -288,36 +282,41 @@ export function compareCellPositionsUsingTombstones(
 	}
 }
 
-export function getDetachOutputId(
-	mark: Detach,
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): ChangeAtomId {
-	return (
-		mark.idOverride?.id ?? {
-			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
-			localId: mark.id,
-		}
-	);
+/**
+ * @returns the ID of the cell in the output context of the given detach `mark`.
+ */
+export function getDetachOutputCellId(mark: Detach): ChangeAtomId {
+	return mark.idOverride ?? { revision: mark.revision, localId: mark.id };
 }
 
-function getIntentionIfMetadataProvided(
-	revision: RevisionTag | undefined,
-	metadata: RevisionMetadataSource | undefined,
-): RevisionTag | undefined {
-	return metadata === undefined ? revision : getIntention(revision, metadata);
+/**
+ * @returns the ID of the detached node in the output context of the given detach `mark`.
+ */
+export function getDetachedNodeId(mark: Detach): ChangeAtomId {
+	switch (mark.type) {
+		case "Remove": {
+			return getDetachOutputCellId(mark);
+		}
+		case "MoveOut": {
+			return makeChangeAtomId(mark.id, mark.revision);
+		}
+		default:
+			unreachableCase(mark);
+	}
 }
 
 /**
  * Preserves the semantics of the given `mark` but repackages it into a `DetachOfRemovedNodes` when possible.
  */
-export function normalizeCellRename<TNodeChange>(
-	mark: CellMark<AttachAndDetach, TNodeChange>,
-	nodeChange?: TNodeChange,
-): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
+export function normalizeCellRename(
+	mark: CellMark<AttachAndDetach>,
+): CellMark<AttachAndDetach | DetachOfRemovedNodes> {
 	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
+	// We must keep the attach information when the attach is a move-in because the input-context cell ID may not be
+	// enough to identify the move ID.
+	// TODO: revisit if we still need the attach information for new inserts.
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
-		return withNodeChange(mark, nodeChange);
+		return mark;
 	}
 	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
 	// detach instead of using an explicit revive effect in an AttachAndDetach mark.
@@ -327,21 +326,19 @@ export function normalizeCellRename<TNodeChange>(
 			count: mark.count,
 			cellId: mark.cellId,
 		},
-		nodeChange ?? mark.changes,
+		mark.changes,
 	);
 }
 
 /**
  * Preserves the semantics of the given `mark` but repackages it into an `AttachAndDetach` mark if it is not already one.
  */
-export function asAttachAndDetach<TNodeChange>(
-	mark: CellMark<CellRename, TNodeChange>,
-): CellMark<AttachAndDetach, TNodeChange> {
+export function asAttachAndDetach(mark: CellMark<CellRename>): CellMark<AttachAndDetach> {
 	if (mark.type === "AttachAndDetach") {
 		return mark;
 	}
 	const { cellId, count, changes, revision, ...effect } = mark;
-	const attachAndDetach: CellMark<AttachAndDetach | Detach, TNodeChange> = {
+	const attachAndDetach: CellMark<AttachAndDetach | Detach> = {
 		type: "AttachAndDetach",
 		count,
 		cellId,
@@ -361,7 +358,7 @@ export function asAttachAndDetach<TNodeChange>(
 	return attachAndDetach;
 }
 
-export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
+export function cloneMark<TMark extends Mark>(mark: TMark): TMark {
 	const clone: TMark = { ...cloneMarkEffect(mark), count: mark.count };
 
 	if (mark.cellId !== undefined) {
@@ -381,37 +378,7 @@ export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TE
 
 export function cloneCellId(id: CellId): CellId {
 	const cloned = { ...id };
-	if (cloned.lineage !== undefined) {
-		cloned.lineage = [...cloned.lineage];
-	}
 	return cloned;
-}
-
-function areSameLineage(
-	lineage1: LineageEvent[] | undefined,
-	lineage2: LineageEvent[] | undefined,
-): boolean {
-	if (lineage1 === undefined && lineage2 === undefined) {
-		return true;
-	}
-
-	if (lineage1 === undefined || lineage2 === undefined) {
-		return false;
-	}
-
-	if (lineage1.length !== lineage2.length) {
-		return false;
-	}
-
-	for (let i = 0; i < lineage1.length; i++) {
-		const event1 = lineage1[i];
-		const event2 = lineage2[i];
-		if (event1.revision !== event2.revision || event1.offset !== event2.offset) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -420,7 +387,7 @@ function areSameLineage(
  * will be treated the same as if the matching mark were active.
  * @returns The number of nodes within the output context of the mark.
  */
-export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = false): number {
+export function getOutputLength(mark: Mark, ignorePairing: boolean = false): number {
 	return areOutputCellsEmpty(mark) ? 0 : mark.count;
 }
 
@@ -428,19 +395,19 @@ export function getOutputLength(mark: Mark<unknown>, ignorePairing: boolean = fa
  * @param mark - The mark to get the length of.
  * @returns The number of nodes within the input context of the mark.
  */
-export function getInputLength(mark: Mark<unknown>): number {
+export function getInputLength(mark: Mark): number {
 	return areInputCellsEmpty(mark) ? 0 : mark.count;
 }
 
-export function markEmptiesCells(mark: Mark<unknown>): boolean {
+export function markEmptiesCells(mark: Mark): boolean {
 	return !areInputCellsEmpty(mark) && areOutputCellsEmpty(mark);
 }
 
-export function markFillsCells(mark: Mark<unknown>): boolean {
+export function markFillsCells(mark: Mark): boolean {
 	return areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark);
 }
 
-export function markHasCellEffect(mark: Mark<unknown>): boolean {
+export function markHasCellEffect(mark: Mark): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
@@ -448,47 +415,19 @@ export function isAttachAndDetachEffect(effect: MarkEffect): effect is AttachAnd
 	return effect.type === "AttachAndDetach";
 }
 
-export function isDetachOfRemovedNodes(
-	mark: Mark<unknown>,
-): mark is CellMark<DetachOfRemovedNodes, unknown> {
+export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRemovedNodes> {
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
-export function getDetachIdForLineage(
-	mark: MarkEffect,
-	fallbackRevision: RevisionTag | undefined,
-): ChangeAtomId | undefined {
-	if (isDetach(mark)) {
-		if (mark.idOverride?.type === DetachIdOverrideType.Redetach) {
-			return {
-				revision: mark.idOverride.id.revision ?? fallbackRevision,
-				localId: mark.idOverride.id.localId,
-			};
-		}
-		return { revision: mark.revision ?? fallbackRevision, localId: mark.id };
-	}
-	if (isAttachAndDetachEffect(mark)) {
-		return getDetachIdForLineage(mark.detach, fallbackRevision);
-	}
-	return undefined;
+export function isImpactfulCellRename(mark: Mark): mark is CellMark<CellRename> {
+	return (isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) && isImpactful(mark);
 }
 
-export function isImpactfulCellRename(
-	mark: Mark<unknown>,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): mark is CellMark<CellRename, unknown> {
-	return (
-		(isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark)) &&
-		isImpactful(mark, revision, revisionMetadata)
-	);
-}
-
-export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
+export function areInputCellsEmpty(mark: Mark): mark is EmptyInputCellMark {
 	return mark.cellId !== undefined;
 }
 
-export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
+export function areOutputCellsEmpty(mark: Mark): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
@@ -510,16 +449,10 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
  * context of that mark.
  *
  * @param mark - The mark to settle. Never mutated.
- * @param revision - The revision associated with the mark.
- * @param revisionMetadata - Metadata source for the revision associated with the mark.
  * @returns either the original mark or a shallow clone of it with effects stripped out.
  */
-export function settleMark<TChildChange>(
-	mark: Mark<TChildChange>,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): Mark<TChildChange> {
-	if (isImpactful(mark, revision, revisionMetadata)) {
+export function settleMark(mark: Mark): Mark {
+	if (isImpactful(mark)) {
 		return mark;
 	}
 	return omitMarkEffect(mark);
@@ -530,21 +463,17 @@ export function settleMark<TChildChange>(
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.
  */
-export function isImpactful(
-	mark: Mark<unknown>,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): boolean {
+export function isImpactful(mark: Mark): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
 			return false;
 		case "Remove": {
-			const inputId = getInputCellId(mark, revision, revisionMetadata);
+			const inputId = getInputCellId(mark);
 			if (inputId === undefined) {
 				return true;
 			}
-			const outputId = getOutputCellId(mark, revision, revisionMetadata);
+			const outputId = getOutputCellId(mark);
 			assert(outputId !== undefined, 0x824 /* Remove marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(inputId, outputId);
 		}
@@ -563,37 +492,12 @@ export function isImpactful(
 	}
 }
 
-export function isTombstone<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> & { cellId: CellId } {
+export function isTombstone(mark: Mark): mark is CellMark<NoopMark> & { cellId: CellId } {
 	return mark.type === NoopMarkType && mark.cellId !== undefined && mark.changes === undefined;
 }
 
-export function isNoopMark<T>(mark: Mark<T>): mark is CellMark<NoopMark, T> {
+export function isNoopMark(mark: Mark): mark is CellMark<NoopMark> {
 	return mark.type === NoopMarkType;
-}
-
-/**
- * @returns The number of cells in the range which come before the position described by `lineage`.
- */
-export function getOffsetInCellRange(
-	lineage: LineageEvent[] | undefined,
-	revision: RevisionTag | undefined,
-	id: ChangesetLocalId,
-	count: number,
-): number | undefined {
-	if (lineage === undefined || revision === undefined) {
-		return undefined;
-	}
-
-	for (const event of lineage) {
-		if (
-			event.revision === revision &&
-			areOverlappingIdRanges(id, count, event.id, event.count)
-		) {
-			return (event.id as number) + event.offset - id;
-		}
-	}
-
-	return undefined;
 }
 
 export function areOverlappingIdRanges(
@@ -617,30 +521,7 @@ export function compareCellsFromSameRevision(
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
-
-	// Both cells should have the same `adjacentCells`.
-	const adjacentCells = cell1.adjacentCells;
-	if (adjacentCells !== undefined) {
-		return (
-			getPositionAmongAdjacentCells(adjacentCells, cell1.localId) -
-			getPositionAmongAdjacentCells(adjacentCells, cell2.localId)
-		);
-	}
-
 	return undefined;
-}
-
-function getPositionAmongAdjacentCells(adjacentCells: IdRange[], id: ChangesetLocalId): number {
-	let priorCells = 0;
-	for (const range of adjacentCells) {
-		if (areOverlappingIdRanges(range.id, range.count, id, 1)) {
-			return priorCells + (id - range.id);
-		}
-
-		priorCells += range.count;
-	}
-
-	fail("Could not find id in adjacentCells");
 }
 
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
@@ -648,9 +529,7 @@ export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	return type === "Remove" || type === "MoveOut";
 }
 
-export function isRemoveMark<TNodeChange>(
-	mark: Mark<TNodeChange> | undefined,
-): mark is CellMark<Remove, TNodeChange> {
+export function isRemoveMark(mark: Mark | undefined): mark is CellMark<Remove> {
 	return mark?.type === "Remove";
 }
 
@@ -676,10 +555,7 @@ function areAdjacentIdRanges(
 
 function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
-		return (
-			lhs.idOverride.type === rhs.idOverride.type &&
-			areMergeableCellIds(lhs.idOverride.id, lhsCount, rhs.idOverride.id)
-		);
+		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
 	}
 	return (lhs.idOverride === undefined) === (rhs.idOverride === undefined);
 }
@@ -689,9 +565,7 @@ function areMergeableCellIds(
 	lhsCount: number,
 	rhs: CellId | undefined,
 ): boolean {
-	return (
-		areMergeableChangeAtoms(lhs, lhsCount, rhs) && areSameLineage(lhs?.lineage, rhs?.lineage)
-	);
+	return areMergeableChangeAtoms(lhs, lhsCount, rhs);
 }
 
 /**
@@ -701,10 +575,7 @@ function areMergeableCellIds(
  * @returns `lhs` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `undefined` is returned, `lhs` is left untouched.
  */
-export function tryMergeMarks<T>(
-	lhs: Mark<T> & Partial<VestigialEndpoint>,
-	rhs: Readonly<Mark<T> & Partial<VestigialEndpoint>>,
-): (Mark<T> & Partial<VestigialEndpoint>) | undefined {
+export function tryMergeMarks(lhs: Mark, rhs: Readonly<Mark>): Mark | undefined {
 	if (rhs.type !== lhs.type) {
 		return undefined;
 	}
@@ -714,18 +585,6 @@ export function tryMergeMarks<T>(
 	}
 
 	if (rhs.changes !== undefined || lhs.changes !== undefined) {
-		return undefined;
-	}
-
-	if (isVestigialEndpoint(lhs)) {
-		if (isVestigialEndpoint(rhs)) {
-			if (!areMergeableChangeAtoms(lhs.vestigialEndpoint, lhs.count, rhs.vestigialEndpoint)) {
-				return undefined;
-			}
-		} else {
-			return undefined;
-		}
-	} else if (isVestigialEndpoint(rhs)) {
 		return undefined;
 	}
 
@@ -821,268 +680,6 @@ function tryMergeEffects(
 }
 
 /**
- * Keeps track of the different ways detached nodes may be referred to.
- * Allows updating changesets so they refer to a detached node by the details
- * of the last detach that affected them.
- *
- * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
- * This is code is currently meant for usage in tests.
- * It should be tested and made more efficient before production use.
- */
-export class DetachedNodeTracker {
-	// Maps the index for a node to its last characterization as a reattached node.
-	private nodes: Map<number, CellId> = new Map();
-	private readonly equivalences: { old: CellId; new: CellId }[] = [];
-
-	public constructor() {}
-
-	/**
-	 * Updates the internals of this instance to account for `change` having been applied.
-	 * @param change - The change that is being applied. Not mutated.
-	 * Must be applicable (i.e., `isApplicable(change)` must be true).
-	 */
-	public apply(change: TaggedChange<Changeset<unknown>>): void {
-		let index = 0;
-		for (const mark of change.change) {
-			const inputLength: number = getInputLength(mark);
-			if (markEmptiesCells(mark)) {
-				assert(isDetach(mark), 0x70d /* Only detach marks should empty cells */);
-				const newNodes: Map<number, CellId> = new Map();
-				const after = index + inputLength;
-				for (const [k, v] of this.nodes) {
-					if (k >= index) {
-						if (k >= after) {
-							newNodes.set(k - inputLength, v);
-						} else {
-							// The node is removed
-							this.equivalences.push({
-								old: v,
-								new: {
-									revision:
-										change.rollbackOf ??
-										mark.revision ??
-										change.revision ??
-										fail("Unable to track detached nodes"),
-									localId: brand((mark.id as number) + (k - index)),
-								},
-							});
-						}
-					} else {
-						newNodes.set(k, v);
-					}
-				}
-				this.nodes = newNodes;
-			}
-			index += inputLength;
-		}
-		index = 0;
-		for (const mark of change.change) {
-			const inputLength: number = getInputLength(mark);
-			if (isActiveReattach(mark)) {
-				const newNodes: Map<number, CellId> = new Map();
-				for (const [k, v] of this.nodes) {
-					if (k >= index) {
-						newNodes.set(k + inputLength, v);
-					} else {
-						newNodes.set(k, v);
-					}
-				}
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
-				for (let i = 0; i < mark.count; ++i) {
-					newNodes.set(index + i, {
-						revision: detachEvent.revision,
-						localId: brand((detachEvent.localId as number) + i),
-					});
-				}
-				this.nodes = newNodes;
-			}
-			if (!markEmptiesCells(mark)) {
-				index += inputLength;
-			}
-		}
-	}
-
-	/**
-	 * Checks whether the given `change` is applicable based on previous changes.
-	 * @param change - The change to verify the applicability of. Not mutated.
-	 * @returns false iff `change`'s description of detached nodes is inconsistent with that of changes applied
-	 * earlier. Returns true otherwise.
-	 */
-	public isApplicable(change: Changeset<unknown>): boolean {
-		for (const mark of change) {
-			if (isActiveReattach(mark)) {
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
-				const revision = detachEvent.revision;
-				for (let i = 0; i < mark.count; ++i) {
-					const localId = brand<ChangesetLocalId>((detachEvent.localId as number) + i);
-					const original: CellId = { revision, localId };
-					const updated = this.getUpdatedDetach(original);
-					for (const detached of this.nodes.values()) {
-						if (
-							updated.revision === detached.revision &&
-							updated.localId === detached.localId
-						) {
-							// The new change is attempting to reattach nodes in a location that has already been
-							// filled by a prior reattach.
-							return false;
-						}
-					}
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Creates an updated representation of the given `change` so that it refers to detached nodes using the revision
-	 * that last detached them.
-	 * @param change - The change to update. Not mutated.
-	 * Must be applicable (i.e., `isApplicable(change)` must be true).
-	 * @param genId - An ID allocator that produces ID unique within this changeset.
-	 * @returns A change equivalent to `change` that refers to detached nodes using the revision that last detached
-	 * them. May reuse parts of the input `change` structure.
-	 */
-	public update<T>(change: TaggedChange<Changeset<T>>): TaggedChange<Changeset<T>> {
-		const factory = new MarkListFactory<T>();
-		for (const mark of change.change) {
-			const cloned = cloneMark(mark);
-			if (areInputCellsEmpty(cloned) && !isNewAttach(cloned)) {
-				let remainder = cloned;
-				while (remainder.count > 1) {
-					const [head, tail] = splitMark(remainder, 1);
-					this.updateMark(head);
-					factory.push(head);
-					remainder = tail;
-				}
-				this.updateMark(remainder);
-				factory.push(remainder);
-			} else {
-				factory.push(cloned);
-			}
-		}
-
-		return {
-			...change,
-			change: factory.list,
-		};
-	}
-
-	private updateMark(mark: HasMarkFields & DetachedCellMark): void {
-		const detachEvent = mark.cellId;
-		const original = { revision: detachEvent.revision, localId: detachEvent.localId };
-		const updated = this.getUpdatedDetach(original);
-		if (updated.revision !== original.revision || updated.localId !== original.localId) {
-			mark.cellId = { ...updated };
-		}
-	}
-
-	private getUpdatedDetach(detach: CellId): CellId {
-		let curr = detach;
-		for (const eq of this.equivalences) {
-			if (curr.revision === eq.old.revision && curr.localId === eq.old.localId) {
-				curr = eq.new;
-			}
-		}
-		return curr;
-	}
-}
-
-/**
- * Checks whether `branch` changeset is consistent with a `target` changeset that is may be rebased over.
- *
- * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
- * This is code is currently meant for usage in tests.
- * It should be tested and made more efficient before production use.
- *
- * @param branch - The changeset that would be rebased over `target`.
- * @param target - The changeset that `branch` would be rebased over.
- * @returns false iff `branch`'s description of detached nodes is inconsistent with that of `target`.
- * Returns true otherwise.
- */
-export function areRebasable(branch: Changeset<unknown>, target: Changeset<unknown>): boolean {
-	const indexToReattach: Map<number, string[]> = new Map();
-	const reattachToIndex: Map<string, number> = new Map();
-	let index = 0;
-	for (const mark of branch) {
-		if (isActiveReattach(mark)) {
-			const list = getOrAddEmptyToMap(indexToReattach, index);
-			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
-				const entry: CellId = {
-					...detachEvent,
-					localId: brand((detachEvent.localId as number) + i),
-				};
-				const key = `${entry.revision}|${entry.localId}`;
-				assert(
-					!reattachToIndex.has(key),
-					0x506 /* First changeset as inconsistent characterization of detached nodes */,
-				);
-				list.push(key);
-				reattachToIndex.set(key, index);
-			}
-		}
-		index += getInputLength(mark);
-	}
-	index = 0;
-	let listIndex = 0;
-	for (const mark of target) {
-		if (isActiveReattach(mark)) {
-			const list = getOrAddEmptyToMap(indexToReattach, index);
-			for (let i = 0; i < mark.count; ++i) {
-				const detachEvent = mark.cellId ?? fail("Unable to track detached nodes");
-				const entry: CellId = {
-					...detachEvent,
-					localId: brand((detachEvent.localId as number) + i),
-				};
-				const key = `${entry.revision}|${entry.localId}`;
-				const indexInA = reattachToIndex.get(key);
-				if (indexInA !== undefined && indexInA !== index) {
-					// change b tries to reattach the same content as change a but in a different location
-					return false;
-				}
-				if (list.includes(key)) {
-					while (list[listIndex] !== undefined && list[listIndex] !== key) {
-						++listIndex;
-					}
-					if (list.slice(0, listIndex).includes(key)) {
-						// change b tries to reattach the same content as change a but in a different order
-						return false;
-					}
-				}
-			}
-		}
-		const inputLength = getInputLength(mark);
-		if (inputLength > 0) {
-			listIndex = 0;
-		}
-		index += inputLength;
-	}
-	return true;
-}
-
-/**
- * Checks whether sequential changesets are consistent.
- *
- * WARNING: this code consumes O(N) space and time for marks that affect N nodes.
- * This is code is currently meant for usage in tests.
- * It should be tested and made more efficient before production use.
- *
- * @param changes - The changesets that would be composed together.
- * @returns false iff the changesets in `changes` are inconsistent/incompatible in their description of detached nodes.
- * Returns true otherwise.
- */
-export function areComposable(changes: TaggedChange<Changeset<unknown>>[]): boolean {
-	const tracker = new DetachedNodeTracker();
-	for (const change of changes) {
-		if (!tracker.isApplicable(change.change)) {
-			return false;
-		}
-		tracker.apply(change);
-	}
-	return true;
-}
-
-/**
  * @internal
  */
 export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
@@ -1103,10 +700,10 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
 
-	const getMap = (target: CrossFieldTarget) =>
+	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
-	const getQueries = (target: CrossFieldTarget) =>
+	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
 		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
 
 	const table = {
@@ -1156,13 +753,6 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 }
 
 /**
- * @internal
- */
-export function newMoveEffectTable<T>(): MoveEffectTable<T> {
-	return newCrossFieldTable();
-}
-
-/**
  * Splits the `mark` into two marks such that the first returned mark has length `length`.
  * @param mark - The mark to split.
  * @param revision - The revision of the changeset the mark is part of.
@@ -1174,10 +764,7 @@ export function newMoveEffectTable<T>(): MoveEffectTable<T> {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>(
-	mark: TMark,
-	length: number,
-): [TMark, TMark] {
+export function splitMark<TMark extends Mark>(mark: TMark, length: number): [TMark, TMark] {
 	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
@@ -1190,14 +777,11 @@ export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>
 	if (mark2.cellId !== undefined) {
 		mark2.cellId = splitDetachEvent(mark2.cellId, length);
 	}
-	if (isVestigialEndpoint(mark2)) {
-		mark2.vestigialEndpoint = splitDetachEvent(mark2.vestigialEndpoint, length);
-	}
 
 	return [mark1, mark2];
 }
 
-function splitMarkEffect<TEffect extends MarkEffect>(
+export function splitMarkEffect<TEffect extends MarkEffect>(
 	effect: TEffect,
 	length: number,
 ): [TEffect, TEffect] {
@@ -1229,10 +813,7 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			const effect2 = { ...effect, id: id2 };
 			const effect2Remove = effect2 as Mutable<Remove>;
 			if (effect2Remove.idOverride !== undefined) {
-				effect2Remove.idOverride = {
-					...effect2Remove.idOverride,
-					id: splitDetachEvent(effect2Remove.idOverride.id, length),
-				};
+				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
 			}
 			return [effect1, effect2];
 		}
@@ -1245,10 +826,7 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			const return2 = effect2 as Mutable<MoveOut>;
 
 			if (return2.idOverride !== undefined) {
-				return2.idOverride = {
-					...return2.idOverride,
-					id: splitDetachEvent(return2.idOverride.id, length),
-				};
+				return2.idOverride = splitDetachEvent(return2.idOverride, length);
 			}
 
 			if (return2.finalEndpoint !== undefined) {
@@ -1282,49 +860,16 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 	return { ...detachEvent, localId: brand((detachEvent.localId as number) + length) };
 }
 
-/**
- * @returns -1 if the lineage indicates that cell1 is earlier in the field than cell2.
- * Returns 1 if cell2 is earlier in the field.
- * Returns 0 if the order cannot be determined from the lineage.
- */
-export function compareLineages(cell1: CellId, cell2: CellId): number {
-	const cell1Events = new Map<RevisionTag, LineageEvent>();
-	for (const event of cell1.lineage ?? []) {
-		// TODO: Are we guaranteed to only have one distinct lineage event per revision?
-		cell1Events.set(event.revision, event);
-	}
-
-	const lineage2 = cell2.lineage ?? [];
-	for (let i = lineage2.length - 1; i >= 0; i--) {
-		const event = lineage2[i];
-		const offset1 = cell1Events.get(event.revision)?.offset;
-		if (offset1 !== undefined) {
-			const offset2 = event.offset;
-			cell1Events.delete(event.revision);
-			if (offset1 < offset2) {
-				return -1;
-			} else if (offset1 > offset2) {
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
-
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
-export function extractMarkEffect<TEffect extends MarkEffect>(
-	mark: CellMark<TEffect, unknown>,
-): TEffect {
+export function extractMarkEffect<TEffect extends MarkEffect>(mark: CellMark<TEffect>): TEffect {
 	const { cellId: _cellId, count: _count, changes: _changes, ...effect } = mark;
 	return effect as unknown as TEffect;
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
-export function omitMarkEffect<TChildChange>(
-	mark: CellMark<unknown, TChildChange>,
-): CellMark<NoopMark, TChildChange> {
+export function omitMarkEffect(mark: CellMark<unknown>): CellMark<NoopMark> {
 	const { cellId, count, changes } = mark;
-	const noopMark: CellMark<NoopMark, TChildChange> = { count };
+	const noopMark: CellMark<NoopMark> = { count };
 	if (cellId !== undefined) {
 		noopMark.cellId = cellId;
 	}
@@ -1334,17 +879,12 @@ export function omitMarkEffect<TChildChange>(
 	return noopMark;
 }
 
-export function withNodeChange<
-	TMark extends CellMark<TKind, TNodeChange>,
-	TKind extends MarkEffect,
-	TNodeChange,
->(mark: TMark, changes: TNodeChange | undefined): TMark {
+export function withNodeChange<TMark extends CellMark<TKind>, TKind extends MarkEffect>(
+	mark: TMark,
+	changes: NodeId | undefined,
+): TMark {
 	const newMark = { ...mark };
 	if (changes !== undefined) {
-		assert(
-			mark.type !== "MoveIn",
-			0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */,
-		);
 		newMark.changes = changes;
 	} else {
 		delete newMark.changes;
@@ -1352,23 +892,27 @@ export function withNodeChange<
 	return newMark;
 }
 
-export function withRevision<TMark extends Mark<unknown>>(
+export function withRevision<TMark extends Mark>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
 ): TMark {
+	if (revision === undefined) {
+		return mark;
+	}
+
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
-	if (cloned.cellId !== undefined && cloned.cellId.revision === undefined) {
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
 		(cloned.cellId as Mutable<CellId>).revision = revision;
 	}
 	return cloned;
 }
 
-export function addRevision(effect: MarkEffect, revision: RevisionTag | undefined): void {
-	if (revision === undefined) {
-		return;
-	}
-
+function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 	if (effect.type === NoopMarkType) {
 		return;
 	}
@@ -1386,23 +930,11 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 	effect.revision = revision;
 }
 
-export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
-	if (isMoveMark(mark)) {
-		return mark.id;
-	}
-
-	return undefined;
-}
-
-export function getEndpoint(
-	effect: MoveMarkEffect,
-	revision: RevisionTag | undefined,
-): ChangeAtomId {
-	const effectRevision = effect.revision ?? revision;
+export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
 	return effect.finalEndpoint !== undefined
 		? {
 				...effect.finalEndpoint,
-				revision: effect.finalEndpoint.revision ?? effectRevision,
+				revision: effect.finalEndpoint.revision ?? effect.revision,
 		  }
-		: { revision: effectRevision, localId: effect.id };
+		: { revision: effect.revision, localId: effect.id };
 }

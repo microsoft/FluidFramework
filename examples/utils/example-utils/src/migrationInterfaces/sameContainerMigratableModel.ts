@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IImportExportModel, IVersionedModel } from "./migratableModel";
-import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool";
+
+import type { IImportExportModel, IVersionedModel } from "./migratableModel.js";
+import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool.js";
 
 /**
  * @internal

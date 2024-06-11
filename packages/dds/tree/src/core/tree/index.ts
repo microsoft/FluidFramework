@@ -43,7 +43,7 @@ export {
 	DetachedNodeRename as DeltaDetachedNodeRename,
 	FieldChanges as DeltaFieldChanges,
 } from "./delta.js";
-export { getMapTreeField, MapTree } from "./mapTree.js";
+export { MapTree } from "./mapTree.js";
 export {
 	clonePath,
 	topDownPath,
@@ -103,7 +103,6 @@ export { SparseNode, getDescendant } from "./sparseTree.js";
 
 export {
 	deltaForRootInitialization,
-	deltaForSet,
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,

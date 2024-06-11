@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions/internal";
+import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.

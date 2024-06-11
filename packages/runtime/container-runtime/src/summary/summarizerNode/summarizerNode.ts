@@ -3,41 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	ISummarizerNode,
-	ISummarizerNodeConfig,
-	ISummarizeResult,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	ISummarizeResult,
+	ISummarizerNode,
+	ISummarizerNodeConfig,
 	SummarizeInternalFn,
-	ITelemetryContext,
-	IExperimentalIncrementalSummaryContext,
-} from "@fluidframework/runtime-definitions";
-import {
-	ISequencedDocumentMessage,
-	SummaryType,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import { type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITelemetryLoggerExt,
-	createChildLogger,
 	LoggingError,
 	PerformanceEvent,
 	TelemetryDataTag,
+	createChildLogger,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { mergeStats } from "@fluidframework/runtime-utils";
+} from "@fluidframework/telemetry-utils/internal";
+
 import {
 	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
-	parseSummaryForSubtrees,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+	parseSummaryForSubtrees,
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
@@ -96,7 +99,22 @@ export class SummarizerNode implements IRootSummarizerNode {
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryBaseLogger) {
+	/**
+	 * In order to produce a summary with a summarizer node, the summarizer node system must be notified a summary has
+	 * started. This is done by calling startSummary. This will track the reference sequence number of the summary and
+	 * run some validation checks to ensure the summary is correct.
+	 * @param referenceSequenceNumber - the number of ops processed up to this point
+	 * @param summaryLogger - the logger to use for the summary
+	 * @param latestSummaryRefSeqNum - the reference sequence number of the latest summary. Another way to think about
+	 * it is the reference sequence number of the previous summary.
+	 * @returns the number of nodes in the tree, the number of nodes that are invalid, and the different types of
+	 * sequence number mismatches
+	 */
+	public startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryBaseLogger,
+		latestSummaryRefSeqNum: number,
+	): IStartSummaryResult {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -106,12 +124,40 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
+		let nodes = 1;
+		let invalidNodes = 0;
+		const sequenceNumberMismatchKeySet = new Set<string>();
+		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber;
+		if (
+			nodeLatestSummaryRefSeqNum !== undefined &&
+			latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum
+		) {
+			invalidNodes++;
+			sequenceNumberMismatchKeySet.add(
+				`${latestSummaryRefSeqNum}-${nodeLatestSummaryRefSeqNum}`,
+			);
+		}
+
 		this.wipSummaryLogger = summaryLogger;
 
 		for (const child of this.children.values()) {
-			child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
+			const childStartSummaryResult = child.startSummary(
+				referenceSequenceNumber,
+				this.wipSummaryLogger,
+				latestSummaryRefSeqNum,
+			);
+			nodes += childStartSummaryResult.nodes;
+			invalidNodes += childStartSummaryResult.invalidNodes;
+			for (const invalidSequenceNumber of childStartSummaryResult.mismatchNumbers) {
+				sequenceNumberMismatchKeySet.add(invalidSequenceNumber);
+			}
 		}
 		this.wipReferenceSequenceNumber = referenceSequenceNumber;
+		return {
+			nodes,
+			invalidNodes,
+			mismatchNumbers: sequenceNumberMismatchKeySet,
+		};
 	}
 
 	public async summarize(
@@ -119,15 +165,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		trackState: boolean = true,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		assert(
-			this.isSummaryInProgress(),
-			0x1a1 /* "summarize should not be called when not tracking the summary" */,
-		);
-		assert(
-			this.wipSummaryLogger !== undefined,
-			0x1a2 /* "wipSummaryLogger should have been set in startSummary or ctor" */,
-		);
-
 		// Try to reuse the tree if unchanged
 		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
 			const latestSummary = this._latestSummary;
@@ -150,21 +187,23 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		// This assert is the same the other 0a1x1 assert `isSummaryInProgress`, the only difference is that typescript
-		// complains if this assert isn't done this way
-		assert(
-			this.wipReferenceSequenceNumber !== undefined,
-			0x5df /* Summarize should not be called when not tracking the summary */,
-		);
-		const incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined =
-			this._latestSummary !== undefined
-				? {
-						summarySequenceNumber: this.wipReferenceSequenceNumber,
-						latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
-						// TODO: remove summaryPath
-						summaryPath: this._latestSummary.fullPath.path,
-				  }
-				: undefined;
+		let incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
+		if (!fullTree) {
+			assert(
+				this.wipReferenceSequenceNumber !== undefined,
+				0x5df /* Summarize should not be called when not tracking the summary */,
+			);
+			incrementalSummaryContext =
+				this._latestSummary !== undefined
+					? {
+							summarySequenceNumber: this.wipReferenceSequenceNumber,
+							latestSummarySequenceNumber:
+								this._latestSummary.referenceSequenceNumber,
+							// TODO: remove summaryPath
+							summaryPath: this._latestSummary.fullPath.path,
+					  }
+					: undefined;
+		}
 
 		const result = await this.summarizeInternalFn(
 			fullTree,
@@ -263,12 +302,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * queue. We track this until we get an ack from the server for this summary.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
-	public completeSummary(proposalHandle: string, validate: boolean) {
+	public completeSummary(proposalHandle: string) {
 		this.completeSummaryCore(
 			proposalHandle,
 			undefined /* parentPath */,
 			false /* parentSkipRecursion */,
-			validate,
 		);
 	}
 
@@ -284,15 +322,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		proposalHandle: string,
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
-		validate: boolean,
 	) {
-		if (validate && this.wasSummarizeMissed(parentSkipRecursion)) {
-			this.throwUnexpectedError({
-				eventName: "NodeDidNotSummarize",
-				proposalHandle,
-			});
-		}
-
 		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
 		let localPathsToUse = this.wipLocalPaths;
 
@@ -335,7 +365,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 				proposalHandle,
 				fullPathForChildren,
 				this.wipSkipRecursion || parentSkipRecursion,
-				validate,
 			);
 		}
 		// Note that this overwrites existing pending summary with
@@ -623,7 +652,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * Creates and throws an error due to unexpected conditions.
 	 */
-	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
+	protected throwUnexpectedError(eventProps: ITelemetryErrorEventExt): never {
 		const error = new LoggingError(eventProps.eventName, {
 			...eventProps,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,

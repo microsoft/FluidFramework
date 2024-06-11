@@ -40,6 +40,9 @@ export class DocumentLambda implements IPartitionLambda {
 	) {
 		this.contextManager = new DocumentContextManager(context);
 		this.contextManager.on("error", (error, errorData: IContextErrorData) => {
+			Lumberjack.verbose(
+				"Listening for errors in documentLambda, contextManager error event",
+			);
 			context.error(error, errorData);
 		});
 		this.activityCheckTimer = setInterval(
@@ -48,7 +51,10 @@ export class DocumentLambda implements IPartitionLambda {
 		);
 	}
 
-	public handler(message: IQueuedMessage) {
+	/**
+	 * {@inheritDoc IPartitionLambda.handler}
+	 */
+	public handler(message: IQueuedMessage): undefined {
 		if (!this.contextManager.setHead(message)) {
 			this.context.log?.warn(
 				"Unexpected head offset. " +

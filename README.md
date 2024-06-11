@@ -151,6 +151,52 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 
 -   Ensure that you have enabled running Powershell scripts by setting your environment's [Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
 
+### Other Build Commands
+
+#### Building our docs
+
+There are a few different areas in which we generate documentation content as a part our overall build.
+
+1. [fluidframework.com]()
+    - We build the contents of our public website from the `docs` directory under the root of this repo.
+      See its [README](./docs/README.md) for more details.
+2. Generated README contents
+    - We leverage a local tool ([markdown-magic](./tools/markdown-magic/README.md)) to generate / embed contents in our various package-level READMEs.
+      This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:readme` from the repo root.
+3. API reports
+    - We leverage [API-Extractor](https://api-extractor.com/) to generate summaries of our package APIs.
+      This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:api` from the repo root.
+
+## Common Workflows and Patterns
+
+This section contains common workflows and patterns to increase inner dev loop efficiency.
+
+### Build
+
+-   `pnpm install` from the root of the repository to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
+-   `pnpm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process. Incremental builds tend to leave extra files laying around, so running a clean is sometimes needed to cleanup ghost tests
+-   `pnpm run build:fast -- <path>` to build only a specific part of the repository.
+-   `pnpm run build` within a package directory to build that package.
+-   `pnpm run build:compile` for cross-package compilation.
+-   `pnpm run format` to format the code.
+
+-   `fluid-build --vscode` to output error message to work with default problem matcher in vscode. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
+
+#### Multi package setup
+
+-   `fluid-build -t build <NAME_OF_PACKAGES>` to build a multiple space-separated packages along with all their dependencies. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
+
+### Debug
+
+-   You can also use the VSCode JS debug terminal, then run the test as normal.
+
+-   Sometimes, uncommitted changes can cause build failures. Committing changes might be necessary to resolve such issues.
+
+### Troubleshooting
+
+-   `pnpm clean` if random build failures, especially with no changes
+-   `git clean -xdf` to remove extraneous files if debugging becomes slow or hangs.
+
 ## Testing
 
 You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`
@@ -171,9 +217,23 @@ git submodule update
 
 ### Run the tests
 
+Before running the tests, the project has to be built. Depending on what tests you want to run, execute the following command in the package directory or at the root:
+
 ```shell
 npm run test
 ```
+
+-   To run a single test within a module, add `.only` to `it` or `describe`. To exclude a test, use `.skip`.
+-   You can use `ts-mocha` to quickly run specific test files without needing to make the whole project compile. For more details on test filtering using CLI arguments, refer to the [Mocha documentation](https://mochajs.org/#command-line-usage).
+
+-   Our test setup generally requires building before running the tests.
+-   Incremental builds may leave extra files, which can result in ghost tests. To avoid this, consider running a clean build with the following command:
+
+```shell
+pnpm clean <package>
+```
+
+This removes any leftover files from previous builds, providing a clean testing environment.
 
 ### Include code coverage
 

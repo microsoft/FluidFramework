@@ -3,34 +3,33 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { strict as assert } from "assert";
-import type { SharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ConfigTypes,
-	FluidErrorTypes,
-	IConfigProviderBase,
-	IErrorBase,
-} from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
+	CompressionAlgorithms,
+	ContainerMessageType,
+} from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
-import { GenericError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -42,17 +41,19 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
-	afterEach(async () => provider.reset());
+	afterEach(async function () {
+		provider.reset();
+	});
 
 	let localContainer: IContainer;
 	let remoteContainer: IContainer;
 	let localDataObject: ITestFluidObject;
 	let remoteDataObject: ITestFluidObject;
-	let localMap: SharedMap;
-	let remoteMap: SharedMap;
+	let localMap: ISharedMap;
+	let remoteMap: ISharedMap;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
 		return {
@@ -72,12 +73,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
 		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
-		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
+		localMap = await localDataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
 		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
-		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
+		remoteMap = await remoteDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
 		await waitForContainerConnection(remoteContainer, true);
@@ -91,13 +92,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
-	const setMapKeys = (map: SharedMap, count: number, item: string): void => {
+	const setMapKeys = (map: ISharedMap, count: number, item: string): void => {
 		for (let i = 0; i < count; i++) {
 			map.set(`key${i}`, item);
 		}
 	};
 
-	const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
+	const assertMapValues = (map: ISharedMap, count: number, expected: string): void => {
 		for (let i = 0; i < count; i++) {
 			const value = map.get(`key${i}`);
 			assert.strictEqual(value, expected, `Wrong value for key${i}`);
@@ -229,7 +230,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 		});
-		const messageSizeInBytes = 500000;
+		const messageSizeInBytes = 100 * 1024;
 		const largeString = generateStringOfSize(messageSizeInBytes);
 		const messageCount = 10;
 		setMapKeys(localMap, messageCount, largeString);
@@ -340,8 +341,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		} batches`, () => {
 			describe("Chunking compressed batches", () =>
 				[
-					{ messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
-					{ messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
+					{ messagesInBatch: 1, messageSize: 2 * 1024 * 1024 }, // One large message
+					{ messagesInBatch: 3, messageSize: 2 * 1024 * 1024 }, // Three large messages
 					{ messagesInBatch: 1500, messageSize: 4 * 1024 }, // Many small messages
 				].forEach((testConfig) => {
 					it(
@@ -400,13 +401,22 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				],
 				async function () {
-					const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-					await setupContainers(containerConfig, {
-						"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
-					});
+					const maxMessageSizeInBytes = 50 * 1024; // 50 KB
+					await setupContainers(
+						{
+							...containerConfig,
+							runtimeOptions: {
+								...containerConfig.runtimeOptions,
+								maxBatchSizeInBytes: 51 * 1024, // 51 KB
+							},
+						},
+						{
+							"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
+						},
+					);
 
 					const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-					const messageCount = 3; // Will result in a 15 MB payload
+					const messageCount = 3; // Will result in a 150 KB payload
 					setMapKeys(localMap, messageCount, largeString);
 					await provider.ensureSynchronized();
 				},
@@ -502,6 +512,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								this.skip();
 							}
 
+							// TODO: This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
+							if (provider.driver.type === "routerlicious") {
+								this.skip();
+							}
+
 							await setup();
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
@@ -526,12 +541,17 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	describe("Resiliency", () => {
-		const messageSize = 5 * 1024 * 1024;
+		const messageSize = 50 * 1024; // 50 KB
 		const messagesInBatch = 3;
 		const config: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+				compressionOptions: {
+					minimumBatchSizeInBytes: 51 * 1024, // 51 KB
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				chunkSizeInBytes: 20 * 1024, // 20 KB
 			},
 		};
 
@@ -588,7 +608,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 
 			it("Reconnects while processing compressed batch", async function () {
 				// This is not supported by the local server. See ADO:2690
@@ -598,16 +618,21 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				}
 
 				await setupContainers(config);
-				// Force the container to reconnect after processing 2 empty ops
-				// which would unroll the original ops from compression
+				// Force the container to reconnect after processing all the chunks
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
-					(op) => op.type === MessageType.Operation && op.contents === undefined,
-					2,
+					(op) => {
+						const contents = op.contents as any | undefined;
+						return (
+							contents?.type === ContainerMessageType.ChunkedOp &&
+							contents?.contents?.chunkId === contents?.contents?.totalChunks
+						);
+					},
+					1,
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 		});
 
 		describe("Local container", () => {
@@ -635,7 +660,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 			it("Reconnects while sending chunks", async function () {
 				// This is not supported by the local server. See ADO:2690
-				if (provider.driver.type === "local") {
+				// This test is flaky on tinylicious. See ADO:7669
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
 					this.skip();
 				}
 
@@ -652,7 +678,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 
 			it("Reconnects while sending compressed batch", async function () {
 				// This is not supported by the local server. See ADO:2690
@@ -662,16 +688,21 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				}
 
 				await setupContainers(config);
-				// Force the container to reconnect after sending the compressed batch
+				// Force the container to reconnect after sending the compressed batch (i.e. send all chunks)
 				const secondConnection = reconnectAfterBatchSending(
 					localContainer,
-					(batch) =>
-						batch.length > 1 && batch.slice(1).every((x) => x.contents === undefined),
+					(batch) => {
+						const parsedContent = JSON.parse(batch[0].contents as string);
+						return (
+							parsedContent?.type === ContainerMessageType.ChunkedOp &&
+							parsedContent.contents.chunkId === parsedContent.contents.totalChunks
+						);
+					},
 					1,
 				);
 
 				await sendAndAssertSynchronization(secondConnection);
-			}).timeout(chunkingBatchesTimeoutMs);
+			});
 		});
 	});
 });

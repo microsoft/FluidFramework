@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { createDocumentWriter, DocumentWriter } from "./DocumentWriter";
+export { DocumentWriter } from "./DocumentWriter.js";
 export {
 	type RenderConfiguration as HtmlRenderConfiguration,
 	type RenderContext as HtmlRenderContext,
@@ -11,7 +11,7 @@ export {
 	renderNode as renderNodeAsHtml,
 	renderNodes as renderNodesAsHtml,
 	type Renderers as HtmlRenderers,
-} from "./html-renderer";
+} from "./html-renderer/index.js";
 export {
 	type RenderConfiguration as MarkdownRenderConfiguration,
 	type RenderContext as MarkdownRenderContext,
@@ -19,4 +19,4 @@ export {
 	renderNode as renderNodeAsMarkdown,
 	renderNodes as renderNodesAsMarkdown,
 	type Renderers as MarkdownRenderers,
-} from "./markdown-renderer";
+} from "./markdown-renderer/index.js";

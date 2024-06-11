@@ -48,6 +48,7 @@ export const defaultProvider = new nconf.Provider({}).use("memory").defaults({
 			name: "redisFs",
 		},
 		persistLatestFullSummary: false,
+		persistLatestFullEphemeralSummary: false,
 		repoPerDocEnabled: false,
 		enableRepositoryManagerMetrics: false,
 		apiMetricsSamplingPeriod: 100,

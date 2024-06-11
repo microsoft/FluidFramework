@@ -26,6 +26,12 @@ export interface IDeliServerConfiguration {
 	// Enables creating join/leave signals for write clients
 	enableWriteClientSignals: boolean;
 
+	// Enables ephemeral container summary deletion on deli close
+	enableEphemeralContainerSummaryCleanup: boolean;
+
+	// Time to wait before deleting ephemeral container summaries
+	ephemeralContainerSoftDeleteTimeInMs: number;
+
 	// Enables deli to maintain batches as it produces them to the next lambdas
 	maintainBatches: boolean;
 
@@ -130,6 +136,20 @@ export interface IScribeServerConfiguration {
 
 	// Controls how often scribe should checkpoint
 	checkpointHeuristics: ICheckpointHeuristicsServerConfiguration;
+
+	// Enables scrubbing user data from protocol state quorum in Summaries
+	scrubUserDataInSummaries: boolean;
+
+	// Enables scrubbing user data from protocol state quorum in local checkpoints
+	scrubUserDataInLocalCheckpoints: boolean;
+
+	// Enables scrubbing user data from protocol state quorum in global checkpoints
+	scrubUserDataInGlobalCheckpoints: boolean;
+
+	// Limits the number of service summary versions to track as "valid parent summaries"
+	// since the last client summary. If the list grows beyond this limit, the oldest
+	// service summary version is removed.
+	maxTrackedServiceSummaryVersionsSinceLastClientSummary: number;
 }
 
 /**
@@ -220,6 +240,8 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		enableNackMessages: true,
 		enableOpHashing: true,
 		enableAutoDSNUpdate: false,
+		enableEphemeralContainerSummaryCleanup: true,
+		ephemeralContainerSoftDeleteTimeInMs: -1,
 		checkForIdleClientsOnStartup: false,
 		maintainBatches: false,
 		enableWriteClientSignals: false,
@@ -270,6 +292,10 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 			maxTime: 1 * 60 * 1000,
 			maxMessages: 500,
 		},
+		scrubUserDataInSummaries: false,
+		scrubUserDataInLocalCheckpoints: false,
+		scrubUserDataInGlobalCheckpoints: false,
+		maxTrackedServiceSummaryVersionsSinceLastClientSummary: 10,
 	},
 	moira: {
 		enable: false,

@@ -5,7 +5,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { BaseCommand } from "../base";
+import { BaseCommand } from "../library/index.js";
 
 function renameFilesInDir(dir: string, extension: string, newExtension: string): void {
 	const files = fs.readdirSync(dir);
@@ -17,8 +17,7 @@ function renameFilesInDir(dir: string, extension: string, newExtension: string):
 		if (fileStat.isDirectory()) {
 			renameFilesInDir(filePath, extension, newExtension); // recurse into directories
 		} else if (filePath.endsWith(extension)) {
-			const newFilePath =
-				filePath.slice(0, filePath.length - extension.length) + newExtension;
+			const newFilePath = filePath.slice(0, filePath.length - extension.length) + newExtension;
 			fs.renameSync(filePath, newFilePath);
 		}
 	}

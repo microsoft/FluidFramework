@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { OdspClient, OdspContainerServices } from "@fluid-experimental/odsp-client";
+
+import { OdspClient, OdspContainerServices } from "@fluidframework/odsp-client";
 import { ContainerSchema, IFluidContainer, SharedTree } from "fluid-framework";
-import { clientProps } from "./clientProps";
+
+import { clientProps } from "./clientProps.js";
 
 const client = new OdspClient(clientProps);
 

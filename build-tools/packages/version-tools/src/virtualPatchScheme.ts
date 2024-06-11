@@ -2,12 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
+import { strict as assert } from "node:assert";
+
 import * as semver from "semver";
 
 import { VersionBumpType } from "./bumpTypes";
 
-/** The virtualPatch format uses this value to encode and decode versions in that scheme. */
+/**
+ * The virtualPatch format uses this value to encode and decode versions in that scheme.
+ */
 const VIRTUAL_PATCH_FORMAT_MULTIPLIER = 1000;
 
 /**
@@ -15,13 +19,17 @@ const VIRTUAL_PATCH_FORMAT_MULTIPLIER = 1000;
  */
 export function isVirtualPatch(version: semver.SemVer | string): boolean {
 	// If the major is 0 and the patch is >= 1000 assume it's a virtualPatch version
-	if (semver.major(version) === 0 && semver.patch(version) >= VIRTUAL_PATCH_FORMAT_MULTIPLIER) {
+	if (
+		semver.major(version) === 0 &&
+		semver.patch(version) >= VIRTUAL_PATCH_FORMAT_MULTIPLIER
+	) {
 		return true;
 	}
 	return false;
 }
 
 /**
+ * Increments the specified component of the provided version and returns the result.
  * @param versionBump - The bump type to do.
  * @param versionString - The version to bump.
  * @returns The bumped version.
@@ -72,7 +80,9 @@ export function bumpVirtualPatchVersion(
  * @param virtualPatchVersion - A Fluid virtualPatch version.
  * @returns The translated version.
  */
-export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer {
+export function fromVirtualPatchScheme(
+	virtualPatchVersion: semver.SemVer | string,
+): semver.SemVer {
 	const parsedVersion = semver.parse(virtualPatchVersion);
 	assert(parsedVersion !== null, `Parsed as null: ${virtualPatchVersion}`);
 

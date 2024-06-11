@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { PropertySet } from "@fluidframework/merge-tree";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { createSharedStringWithInterception } from "../sequence";
+
+import { PropertySet } from "@fluidframework/merge-tree/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { createSharedStringWithInterception } from "../sequence/index.js";
 
 describe("Shared String with Interception", () => {
 	/**
@@ -49,12 +51,10 @@ describe("Shared String with Interception", () => {
 		}
 
 		beforeEach(() => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			sharedString = new SharedString(
-				dataStoreRuntime,
-				documentId,
-				SharedStringFactory.Attributes,
-			);
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SharedString.getFactory()],
+			});
+			sharedString = SharedString.create(dataStoreRuntime, documentId);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			dataStoreContext = {

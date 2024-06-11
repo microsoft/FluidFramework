@@ -3,32 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
-	TreeFieldStoredSchema,
-	StoredSchemaCollection,
-	TreeNodeSchemaIdentifier,
-	ValueSchema,
-	ObjectNodeStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	ValueSchema,
+	Multiplicity,
+	identifierFieldKindIdentifier,
 } from "../../../core/index.js";
-import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { fail } from "../../../util/index.js";
-import { Multiplicity } from "../../multiplicity.js";
-import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
+import { FullSchemaPolicy } from "../../modular-schema/index.js";
+
 import {
 	EncoderCache,
 	FieldEncoder,
-	KeyedFieldEncoder,
 	FieldShaper,
+	KeyedFieldEncoder,
 	TreeShaper,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
 } from "./compressedEncode.js";
-import { NodeShape } from "./nodeShape.js";
 import { FieldBatch } from "./fieldBatch.js";
+import { EncodedFieldBatch, EncodedValueShape, SpecialField } from "./format.js";
+import { NodeShape } from "./nodeShape.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -40,17 +44,23 @@ export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldBatch: FieldBatch,
+	idCompressor: IIdCompressor,
 ): EncodedFieldBatch {
-	return compressedEncode(fieldBatch, buildCache(schema, policy));
+	return compressedEncode(fieldBatch, buildCache(schema, policy, idCompressor));
 }
 
-export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(
+	schema: StoredSchemaCollection,
+	policy: FullSchemaPolicy,
+	idCompressor: IIdCompressor,
+): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
-			fieldShaper(treeHandler, field, cache),
+			fieldShaper(treeHandler, field, cache, schema),
 		policy.fieldKinds,
+		idCompressor,
 	);
 	return cache;
 }
@@ -62,12 +72,32 @@ export function fieldShaper(
 	treeHandler: TreeShaper,
 	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
+	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
-	const kind = cache.fieldShapes.get(field.kind.identifier) ?? fail("missing FieldKind");
+	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
-	// eslint-disable-next-line unicorn/prefer-ternary
 	if (kind.multiplicity === Multiplicity.Single) {
+		if (field.kind === identifierFieldKindIdentifier) {
+			assert(type !== undefined, "field type must be defined in identifier field");
+			const nodeSchema = storedSchema.nodeSchema.get(type);
+			assert(nodeSchema !== undefined, "nodeSchema must be defined");
+			assert(
+				nodeSchema instanceof LeafNodeStoredSchema,
+				"nodeSchema must be LeafNodeStoredSchema",
+			);
+			assert(
+				nodeSchema.leafValue === ValueSchema.String,
+				"identifier field can only be type string",
+			);
+			const identifierNodeEncoder = new NodeShape(
+				type,
+				SpecialField.Identifier,
+				[],
+				undefined,
+			);
+			return asFieldEncoder(identifierNodeEncoder);
+		}
 		return asFieldEncoder(nodeEncoder);
 	} else {
 		return cache.nestedArray(nodeEncoder);

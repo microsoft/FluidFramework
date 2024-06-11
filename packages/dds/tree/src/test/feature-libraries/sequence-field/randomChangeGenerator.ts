@@ -4,8 +4,8 @@
  */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { SequenceField as SF, NodeChangeset } from "../../../feature-libraries/index.js";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 
 enum Operation {
@@ -22,7 +22,7 @@ enum Operation {
 export function generateRandomChange(
 	seed: number,
 	maxIndex: number,
-	childChangeGenerator: (seed: number) => NodeChangeset,
+	childChangeGenerator: (seed: number) => NodeId,
 ): SF.Changeset {
 	const random = makeRandom(seed);
 	const builder = SF.sequenceFieldEditor;

@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { IDiceRoller } from "./interface";
+import { IDiceRoller } from "./interface.js";
 
 interface IDiceRollerViewProps {
 	model: IDiceRoller;

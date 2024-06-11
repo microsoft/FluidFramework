@@ -43,7 +43,6 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	iterateCursorField,
-	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
@@ -67,7 +66,6 @@ export {
 	forEachField,
 	PathRootPrefix,
 	deltaForRootInitialization,
-	deltaForSet,
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,
@@ -124,24 +122,28 @@ export {
 	TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	FieldKindIdentifier,
-	FieldKindSpecifier,
+	FieldKindData,
 	TreeTypeSet,
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
+	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
 	schemaFormat,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
+	SchemaAndPolicy,
+	Multiplicity,
+	SchemaPolicy,
 } from "./schema-stored/index.js";
 
 export {
@@ -154,10 +156,14 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -168,9 +174,6 @@ export {
 	makeAnonChange,
 	tagChange,
 	mapTaggedChange,
-	noFailure,
-	OutputType,
-	verifyChangeRebaser,
 	tagRollbackInverse,
 	SessionIdSchema,
 	mintCommit,
@@ -183,6 +186,11 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
+	taggedAtomId,
+	taggedOptAtomId,
+	offsetChangeAtomId,
+	replaceAtomRevisions,
+	replaceChange,
 } from "./rebase/index.js";
 
 export {
@@ -193,4 +201,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible/index.js";
+export { Revertible, RevertibleStatus } from "./revertible/index.js";

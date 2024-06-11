@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MersenneTwister19937, pick, Engine } from "random-js";
+import { Engine, MersenneTwister19937, pick } from "random-js";
 
 /**
  * Converts all properties of an object to arrays of the

@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer";
-import { makeLocalId } from "./testCommon";
+
+import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
+
+import { makeLocalId } from "./testCommon.js";
 
 describe("SessionSpaceNormalizer", () => {
 	it("can be empty", () => {
@@ -43,5 +45,50 @@ describe("SessionSpaceNormalizer", () => {
 		assert.equal(normalizer.contains(makeLocalId(-8)), false);
 		assert.equal(normalizer.contains(makeLocalId(-15)), true);
 		assert.equal(normalizer.contains(makeLocalId(-17)), true);
+	});
+
+	it("can compute the ranges between a query", () => {
+		const normalizer = new SessionSpaceNormalizer();
+
+		assert.deepEqual(normalizer.getRangesBetween(1, 10), []);
+
+		normalizer.addLocalRange(2, 1);
+		normalizer.addLocalRange(4, 3);
+		normalizer.addLocalRange(9, 1);
+
+		assert.deepEqual(normalizer.getRangesBetween(1, 10), [
+			[2, 1],
+			[4, 3],
+			[9, 1],
+		]);
+
+		assert.deepEqual(normalizer.getRangesBetween(2, 9), [
+			[2, 1],
+			[4, 3],
+			[9, 1],
+		]);
+
+		assert.deepEqual(normalizer.getRangesBetween(3, 9), [
+			[4, 3],
+			[9, 1],
+		]);
+
+		assert.deepEqual(normalizer.getRangesBetween(3, 8), [[4, 3]]);
+
+		assert.deepEqual(normalizer.getRangesBetween(5, 9), [
+			[5, 2],
+			[9, 1],
+		]);
+
+		assert.deepEqual(normalizer.getRangesBetween(1, 5), [
+			[2, 1],
+			[4, 2],
+		]);
+
+		assert.deepEqual(normalizer.getRangesBetween(4, 4), [[4, 1]]);
+		assert.deepEqual(normalizer.getRangesBetween(5, 5), [[5, 1]]);
+		assert.deepEqual(normalizer.getRangesBetween(6, 6), [[6, 1]]);
+
+		assert.deepEqual(normalizer.getRangesBetween(3, 3), []);
 	});
 });

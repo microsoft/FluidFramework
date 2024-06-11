@@ -4,32 +4,33 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils/internal";
 import {
-	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
-} from "@fluidframework/local-driver";
-import { SharedString } from "@fluidframework/sequence";
+	createLocalResolverCreateNewRequest,
+} from "@fluidframework/local-driver/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainer,
-	createLoader,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
+	createAndAttachContainer,
+	createLoader,
+} from "@fluidframework/test-utils/internal";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const stringId = "stringKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",

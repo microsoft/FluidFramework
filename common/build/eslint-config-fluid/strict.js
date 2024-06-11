@@ -74,7 +74,10 @@ module.exports = {
 				 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
 				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
 				 */
-				"@typescript-eslint/consistent-type-exports": "error",
+				"@typescript-eslint/consistent-type-exports": [
+					"error",
+					{ fixMixedExportsWithInlineTypeSpecifier: false },
+				],
 
 				/**
 				 * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
@@ -82,7 +85,7 @@ module.exports = {
 				 */
 				"@typescript-eslint/consistent-type-imports": [
 					"error",
-					{ fixStyle: "inline-type-imports" },
+					{ fixStyle: "separate-type-imports" },
 				],
 
 				/**

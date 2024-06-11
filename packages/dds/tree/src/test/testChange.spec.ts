@@ -4,29 +4,31 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
-import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
+
 import {
-	makeAnonChange,
+	ChangeEncodingContext,
 	FieldKey,
-	tagChange,
-	deltaForSet,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
-	RevisionMetadataSource,
-	ChangeEncodingContext,
+	makeAnonChange,
+	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
-import { TestChange } from "./testChange.js";
+
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
-import { deepFreeze, mintRevisionTag } from "./utils.js";
+import { TestChange } from "./testChange.js";
+import { mintRevisionTag, testIdCompressor } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
 		const change1 = TestChange.mint([0, 1], 2);
 		const change2 = TestChange.mint([0, 1, 2], 3);
-		const composed = TestChange.compose([makeAnonChange(change1), makeAnonChange(change2)]);
+		const composed = TestChange.compose(change1, change2);
 
 		const expected = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(composed, expected);
@@ -35,10 +37,7 @@ describe("TestChange", () => {
 	it("can be composed without verification", () => {
 		const change1 = TestChange.mint([0], 1);
 		const change2 = TestChange.mint([2], 3);
-		const composed = TestChange.compose(
-			[makeAnonChange(change1), makeAnonChange(change2)],
-			false,
-		);
+		const composed = TestChange.compose(change1, change2, false);
 
 		const expected = TestChange.mint([0], [1, 3]);
 		assert.deepEqual(composed, expected);
@@ -47,7 +46,7 @@ describe("TestChange", () => {
 	it("composition of inverses leads to normalized form", () => {
 		const change1 = TestChange.mint([0], [1, 2]);
 		const change2 = TestChange.mint([0, 1, 2], [-2, -1, 3]);
-		const composed = TestChange.compose([makeAnonChange(change1), makeAnonChange(change2)]);
+		const composed = TestChange.compose(change1, change2);
 
 		const expected = TestChange.mint([0], [3]);
 		assert.deepEqual(composed, expected);
@@ -74,18 +73,13 @@ describe("TestChange", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
 		const tag = mintRevisionTag();
 		const delta = TestChange.toDelta(tagChange(change1, tag));
-		const fooField: FieldKey = brand("foo");
+		const field: FieldKey = brand("testIntentions");
 		const expected = new Map([
 			[
-				fooField,
-				deltaForSet(
-					cursorForJsonableTreeNode({
-						type: brand("test"),
-						value: "2|3",
-					}),
-					{ major: tag, minor: 424243 },
-					{ major: tag, minor: 424242 },
-				),
+				field,
+				{
+					local: [{ count: 2 }, { count: 3 }],
+				},
 			],
 		]);
 
@@ -99,7 +93,11 @@ describe("TestChange", () => {
 	it("can be encoded in JSON", () => {
 		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
-		const context: ChangeEncodingContext = { originatorId: "session1" as SessionId };
+		const context: ChangeEncodingContext = {
+			originatorId: "session1" as SessionId,
+			revision: undefined,
+			idCompressor: testIdCompressor,
+		};
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));
 		assert.deepEqual(normal, codec.decode(codec.encode(normal, context), context));
@@ -109,16 +107,23 @@ describe("TestChange", () => {
 
 	function rebaseComposed(
 		metadata: RevisionMetadataSource,
-		change: TestChange,
+		change: TaggedChange<TestChange>,
 		...baseChanges: TaggedChange<TestChange>[]
 	): TestChange {
 		baseChanges.forEach((base) => deepFreeze(base));
 		deepFreeze(change);
 
-		const composed = TestChange.compose(baseChanges);
-		const rebaseResult = TestChange.rebase(change, composed);
+		const composed = TestChange.composeList(baseChanges.map((c) => c.change));
+		const rebaseResult = TestChange.rebase(change.change, composed);
 		assert(rebaseResult !== undefined, "Shouldn't get undefined.");
 		return rebaseResult;
+	}
+
+	function assertChangesetsEquivalent(
+		change1: TaggedChange<TestChange>,
+		change2: TaggedChange<TestChange>,
+	): void {
+		assert.deepEqual(change1, change2);
 	}
 
 	/**
@@ -150,15 +155,21 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+						return (
+							TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange
+						);
 					},
-					compose: (changes) => {
-						return TestChange.compose(changes);
+					compose: (change1, change2) => {
+						return TestChange.compose(change1.change, change2.change);
 					},
 					invert: (change) => {
 						return TestChange.invert(change.change);
 					},
 					rebaseComposed,
+					inlineRevision: (change, revision) => change,
+					createEmpty: () => TestChange.emptyChange,
+					isEmpty: TestChange.isEmpty,
+					assertChangesetsEquivalent,
 				},
 				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
 			);

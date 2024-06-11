@@ -7,20 +7,21 @@
 // and are authored with awareness of the issues with these types.
 
 /* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
-import {
-	MakeNominal,
-	Covariant,
+import type {
 	Contravariant,
+	Covariant,
 	Invariant,
-	requireTrue,
-	requireFalse,
-	isAssignableTo,
+	MakeNominal,
 	areSafelyAssignable,
-	isAny,
 	eitherIsAny,
+	isAny,
+	isAssignableTo,
 	isStrictSubset,
+	requireFalse,
+	requireTrue,
 } from "./typeCheck.js";
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+
 import { schemaFormat } from "../../core/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };

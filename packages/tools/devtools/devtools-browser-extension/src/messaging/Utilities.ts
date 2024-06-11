@@ -6,9 +6,9 @@
 import {
 	type ISourcedDevtoolsMessage,
 	type MessageLoggingOptions,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
-import { type TypedPortConnection } from "./TypedPortConnection";
+import { type TypedPortConnection } from "./TypedPortConnection.js";
 
 function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOptions): string {
 	const loggingPreamble =

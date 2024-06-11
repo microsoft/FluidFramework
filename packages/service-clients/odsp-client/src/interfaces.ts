@@ -2,10 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IOdspTokenProvider } from "./token";
+import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+
+import { IOdspTokenProvider } from "./token.js";
 
 /**
  * Defines the necessary properties that will be applied to all containers
@@ -25,9 +27,14 @@ export interface OdspConnectionConfig {
 	siteUrl: string;
 
 	/**
-	 * RaaS Drive Id of the tenant where Fluid containers are created
+	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
+
+	/**
+	 * Specifies the file path where Fluid files are created. If passed an empty string, the Fluid files will be created at the root level.
+	 */
+	filePath: string;
 }
 /**
  * @beta
@@ -50,6 +57,21 @@ export interface OdspClientProps {
 }
 
 /**
+ * @alpha
+ */
+export interface OdspContainerAttachProps {
+	/**
+	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+	 */
+	filePath: string | undefined;
+
+	/**
+	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+	 */
+	fileName: string | undefined;
+}
+
+/**
  * OdspContainerServices is returned by the OdspClient alongside a FluidContainer. It holds the
  * functionality specifically tied to the ODSP service, and how the data stored in the
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
@@ -66,7 +88,7 @@ export interface OdspContainerServices {
 
 /**
  * Since ODSP provides user names and email for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
  * @beta
  */
@@ -74,7 +96,7 @@ export interface OdspMember extends IMember {
 	/**
 	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	id: string;
 	/**
 	 * The user's name
 	 */

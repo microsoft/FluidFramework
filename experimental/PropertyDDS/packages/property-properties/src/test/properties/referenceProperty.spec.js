@@ -15,11 +15,12 @@
 
 const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
+
 const { BaseProperty } = require("../..");
 const { PropertyFactory } = require("../..");
-const { ReferenceProperty } = require("../../properties/referenceProperty");
-const { ReferenceMapProperty } = require("../../properties/referenceMapProperty");
 const { ReferenceArrayProperty } = require("../../properties/referenceArrayProperty");
+const { ReferenceMapProperty } = require("../../properties/referenceMapProperty");
+const { ReferenceProperty } = require("../../properties/referenceProperty");
 
 describe("Reference Properties", function () {
 	var dereferenceToken;

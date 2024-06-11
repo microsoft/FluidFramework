@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Definition, StableNodeId } from './Identifiers';
-import { legacySharedTreeInitialTreeId } from './id-compressor';
-import { ChangeNode_0_0_2 } from './persisted-types';
+import type { Definition, StableNodeId } from './Identifiers.js';
+import { legacySharedTreeInitialTreeId } from './id-compressor/index.js';
+import { ChangeNode_0_0_2 } from './persisted-types/index.js';
 
 /**
  * The initial tree.

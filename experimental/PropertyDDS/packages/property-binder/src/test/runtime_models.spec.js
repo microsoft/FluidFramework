@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals should, expect, sinon */
 /* eslint-disable require-jsdoc */
 
-import { registerTestTemplates } from "./testTemplates";
-import { DataBinding } from "../data_binder/dataBinding";
-import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { DataBinder } from "..";
+import { DataBinding } from "../data_binder/dataBinding";
+import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
+import { registerTestTemplates } from "./testTemplates";
 
 class AnimalRepresentation {}
 

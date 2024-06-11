@@ -3,16 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions";
-import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
-	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
-} from "@fluidframework/tinylicious-driver";
-import { IDetachedModel, IModelLoader } from "./interfaces";
-import { ModelLoader } from "./modelLoader";
+	createTinyliciousCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/internal";
+
+import { IDetachedModel, IModelLoader } from "./interfaces.js";
+import { ModelLoader } from "./modelLoader.js";
 
 class TinyliciousService {
 	public readonly documentServiceFactory: IDocumentServiceFactory;
@@ -30,14 +34,16 @@ class TinyliciousService {
  */
 export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
 	private readonly tinyliciousService = new TinyliciousService();
-	private readonly modelLoader = new ModelLoader<ModelType>({
-		urlResolver: this.tinyliciousService.urlResolver,
-		documentServiceFactory: this.tinyliciousService.documentServiceFactory,
-		codeLoader: this.codeLoader,
-		generateCreateNewRequest: createTinyliciousCreateNewRequest,
-	});
+	private readonly modelLoader: ModelLoader<ModelType>;
 
-	public constructor(private readonly codeLoader: ICodeDetailsLoader) {}
+	public constructor(codeLoader: ICodeDetailsLoader) {
+		this.modelLoader = new ModelLoader<ModelType>({
+			urlResolver: this.tinyliciousService.urlResolver,
+			documentServiceFactory: this.tinyliciousService.documentServiceFactory,
+			codeLoader,
+			generateCreateNewRequest: createTinyliciousCreateNewRequest,
+		});
+	}
 
 	public async supportsVersion(version: string): Promise<boolean> {
 		return this.modelLoader.supportsVersion(version);

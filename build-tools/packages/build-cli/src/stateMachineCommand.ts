@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { BaseCommand } from "./base";
-import { StateHandler } from "./handlers";
-import { testModeFlag } from "./flags";
+import { testModeFlag } from "./flags.js";
+import { StateHandler } from "./handlers/index.js";
+import { BaseCommand } from "./library/index.js";
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state

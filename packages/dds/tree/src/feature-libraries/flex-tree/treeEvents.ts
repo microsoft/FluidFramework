@@ -3,32 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { UpPath, PathVisitor } from "../../core/index.js";
-import { FlexTreeNode } from "./flexTreeTypes.js";
+import { AnchorNode, PathVisitor, UpPath } from "../../core/index.js";
+import { Off } from "../../events/index.js";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
  * This means no editing is allowed.
  *
- * Schema aware APIs for working with trees should superset this, while sub-setting EditableTree.
+ * Schema aware APIs for working with trees should superset this, while sub-setting FlexTree.
  *
  * TODO:
- * This API should replace EditableTree as the default public API for tree access.
+ * This API should replace FlexTree as the default public API for tree access.
  * SchemaAware builds on this, adding editing and type safe APIs which can be accessed via SchematizeView.
- * Once this is finished, the unsafe EditableTree types can be removed (or converted to package internal documentation for the proxies).
+ * Once this is finished, the unsafe FlexTree types can be removed (or converted to package internal documentation for the proxies).
  */
-
-/**
- * An event raised on a {@link FlexTreeNode}.
- *
- * @internal
- */
-export interface TreeEvent {
-	/**
-	 * The node of the tree where the listener receiving the event is attached.
-	 */
-	readonly target: FlexTreeNode;
-}
 
 /**
  * A collection of events that can be raised by a {@link FlexTreeNode}.
@@ -40,12 +28,13 @@ export interface TreeEvent {
  * - Include sub-deltas in events.
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
+ * - Consider removing this and just using AnchorEvents and simple-tree's events (and extending them as needed).
  *
  * @internal
  */
-export interface EditableTreeEvents {
+export interface FlexTreeNodeEvents {
 	/**
-	 * Raised when a specific EditableTree node is changing.
+	 * Raised when a specific FlexTree node is changing.
 	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
 	 */
@@ -62,56 +51,48 @@ export interface EditableTreeEvents {
 	subtreeChanging(upPath: UpPath): PathVisitor | void;
 
 	/**
-	 * Raised on a node right before a change is applied to one of its fields or the fields of a descendant node.
-	 *
-	 * @param event - The event object. See {@link TreeEvent} for details.
-	 *
-	 * @remarks
-	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.afterChange}) is dependent
-	 * on the implementation of SharedTree. In general, these events will fire once for every atomic editing operation
-	 * supported by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
-	 * {@link EditableTreeEvents.afterChange} after it is.
-	 *
-	 * {@link FieldKinds.sequence} fields present two exceptions:
-	 *
-	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
-	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link FieldKinds.sequence}
-	 * field the following will happen:
-	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
-	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
-	 * - {@link EditableTreeEvents.beforeChange} will fire once before the second node is present in the tree, but the first one already is.
-	 * - {@link EditableTreeEvents.afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
-	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
-	 *
-	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
-	 * while they are being detached from their source location, and once when they are being attached at the target location.
+	 * This has the same contract as {@link TreeChangeEvents.nodeChanged}
 	 */
-	beforeChange(event: TreeEvent): void;
+	nodeChanged(): void;
 
 	/**
-	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
-	 *
-	 * @param event - The event object. See {@link TreeEvent} for details.
-	 *
-	 * @remarks
-	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.beforeChange}) is dependent
-	 * on the implementation of SharedTree. In general, these events will fire once for every atomic editing operation supported
-	 * by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
-	 * {@link EditableTreeEvents.afterChange} after it is.
-	 *
-	 * {@link FieldKinds.sequence} present two exceptions:
-	 *
-	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
-	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link FieldKinds.sequence}
-	 * field the following will happen:
-	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
-	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
-	 * - {@link EditableTreeEvents.beforeChange} will fire once before the second node is present in the tree, but the first one already is.
-	 * - {@link EditableTreeEvents.afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
-	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
-	 *
-	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
-	 * while they are being detached from their source location, and once when they are being attached at the target location.
+	 * This has the same contract as {@link TreeChangeEvents.treeChanged}
 	 */
-	afterChange(event: TreeEvent): void;
+	treeChanged(): void;
+}
+
+/**
+ * Subscribe to changes to the node for the given {@link AnchorNode}.
+ * @remarks This fulfills the contract of {@link TreeChangeEvents.nodeChanged}.
+ * @privateRemarks The logic in this function ensures that the listener is only fired once per change per node.
+ */
+export function onNodeChanged(
+	anchorNode: AnchorNode,
+	listener: FlexTreeNodeEvents["nodeChanged"],
+): Off {
+	// Debounce "childrenChanged" (which fires separately for each field that changed in the node)
+	// by waiting for "subtreeChanged" (which only fires once regardless of how many fields changed).
+	let unsubscribeFromTreeChanged: (() => void) | undefined;
+	// Every time that "childrenChanged" fires...
+	return anchorNode.on("childrenChanged", () => {
+		// ...subscribe to "subtreeChanged", but only if we haven't subscribed already already since the last time it fired
+		if (unsubscribeFromTreeChanged === undefined) {
+			unsubscribeFromTreeChanged = anchorNode.on("subtreeChanged", () => {
+				listener();
+				unsubscribeFromTreeChanged?.();
+				unsubscribeFromTreeChanged = undefined;
+			});
+		}
+	});
+}
+
+/**
+ * Subscribe to changes to the tree rooted at the given {@link AnchorNode}.
+ * @remarks This fulfills the contract of {@link TreeChangeEvents.treeChanged}.
+ */
+export function onTreeChanged(
+	anchorNode: AnchorNode,
+	listener: FlexTreeNodeEvents["treeChanged"],
+): Off {
+	return anchorNode.on("subtreeChanged", listener);
 }

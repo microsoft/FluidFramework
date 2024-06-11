@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { TSchema, Type, ObjectOptions, Static } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
-import { Brand, brandedNumberType } from "../util/index.js";
+import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+
 import {
-	SessionIdSchema,
+	EncodedRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
-	EncodedRevisionTag,
+	SessionIdSchema,
 } from "../core/index.js";
+import { Brand, brandedNumberType } from "../util/index.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -34,6 +35,9 @@ export type EncodedCommit<TChangeset> = {
 };
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+
+// Many of the return types in this module are intentionally derived, rather than explicitly specified.
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
@@ -81,6 +85,7 @@ export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly base: EncodedRevisionTag;
 	readonly commits: Commit<TChangeset>[];
 }
+
 const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
@@ -93,17 +98,17 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 export interface EncodedEditManager<TChangeset> {
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: typeof version;
+	readonly version: 1 | 2 | 3;
 }
-
-export const version = 1.0;
 
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			version: Type.Literal(version),
+			version: Type.Union([Type.Literal(1), Type.Literal(2), Type.Literal(3)]),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},
 		noAdditionalProps,
 	);
+
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

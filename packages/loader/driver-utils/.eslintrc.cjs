@@ -4,12 +4,15 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"import/no-nodejs-modules": ["error", { allow: ["url"] }],
+		"import/no-nodejs-modules": ["error"],
 	},
 	overrides: [
 		{

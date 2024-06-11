@@ -3,20 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import { strict as assert } from "assert";
-import { DriverError, IStream } from "@fluidframework/driver-definitions";
-import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { strict as assert } from "node:assert";
+import fs from "node:fs";
+
+import { IClient, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IClient,
+	DriverError,
+	IStream,
 	ISequencedDocumentMessage,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 /* eslint-disable import/no-internal-modules */
-import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory";
-import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService";
-import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager";
+import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService.js";
+import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory.js";
+import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager.js";
+
 /* eslint-enable import/no-internal-modules */
 
 describe("Local Odsp driver", () => {
@@ -48,7 +51,7 @@ describe("Local Odsp driver", () => {
 		{ encoding: "utf8" },
 	);
 
-	async function assertThrowsUsageError(fn: () => Promise<any>) {
+	async function assertThrowsUsageError(fn: () => Promise<unknown>): Promise<void> {
 		await assert.rejects(fn, (e: DriverError) => e.errorType === OdspErrorTypes.usageError);
 	}
 
@@ -91,7 +94,9 @@ describe("Local Odsp driver", () => {
 	});
 
 	describe("Local Odsp document service", () => {
-		async function readAll(stream: IStream<ISequencedDocumentMessage[]>) {
+		async function readAll(
+			stream: IStream<ISequencedDocumentMessage[]>,
+		): Promise<ISequencedDocumentMessage[]> {
 			const ops: ISequencedDocumentMessage[] = [];
 			// eslint-disable-next-line no-constant-condition
 			while (true) {

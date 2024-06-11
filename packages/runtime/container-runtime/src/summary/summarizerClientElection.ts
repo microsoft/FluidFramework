@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import { IClientDetails } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IOrderedClientElection,
 	ISerializedElection,
 	ITrackedClient,
-} from "./orderedClientElection";
-import { ISummaryCollectionOpEvents } from "./summaryCollection";
+} from "./orderedClientElection.js";
+import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export const summarizerClientType = "summarizer";
 

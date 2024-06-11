@@ -2,11 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops";
-import { PropertySet } from "./properties";
-import { ISegment } from "./mergeTreeNodes";
+import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 /**
  * @alpha
@@ -68,7 +70,19 @@ export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTr
 export interface IMergeTreeDeltaCallbackArgs<
 	TOperationType extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType,
 > {
+	/**
+	 * The type of operation that affected segments in the merge-tree.
+	 * The affected segments can be accessed via {@link IMergeTreeDeltaCallbackArgs.deltaSegments|deltaSegments}.
+	 *
+	 * See {@link MergeTreeDeltaOperationType} and {@link (MergeTreeMaintenanceType:type)} for possible values.
+	 */
 	readonly operation: TOperationType;
+
+	/**
+	 * A list of deltas describing actions taken on segments.
+	 *
+	 * Deltas are not guaranteed to be in any particular order.
+	 */
 	readonly deltaSegments: IMergeTreeSegmentDelta[];
 }
 
@@ -76,7 +90,20 @@ export interface IMergeTreeDeltaCallbackArgs<
  * @alpha
  */
 export interface IMergeTreeSegmentDelta {
+	/**
+	 * The segment this delta affected.
+	 */
 	segment: ISegment;
+
+	/**
+	 * A property set containing changes to properties on this segment.
+	 *
+	 * @remarks - Deleting a property is represented using `null` as the value.
+	 * @example
+	 *
+	 * An annotation change which deleted the property "foo" and set "bar" to 5 would be represented as:
+	 * `{ foo: null, bar: 5 }`.
+	 */
 	propertyDeltas?: PropertySet;
 }
 
@@ -90,20 +117,20 @@ export interface IMergeTreeDeltaOpArgs {
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly groupOp?: IMergeTreeGroupMsg;
-	/**
-	 * The merge tree operation
-	 */
-	readonly op: IMergeTreeOp;
-	/**
-	 * Get the sequence message, should only be null if the
-	 * Delta op args are for an unacked local change
-	 */
-	readonly sequencedMessage?: ISequencedDocumentMessage;
 
 	/**
-	 * If the operation is being applied as a stashed op, which means it may have been previously submitted, and therefore should not be resubmitted
+	 * The {@link IMergeTreeOp} corresponding to the delta.
+	 *
+	 * @remarks - This is useful for determining the type of change (see {@link (MergeTreeDeltaType:type)}).
 	 */
-	readonly stashed?: boolean;
+	readonly op: IMergeTreeOp;
+
+	/**
+	 * The {@link @fluidframework/protocol-definitions#ISequencedDocumentMessage} corresponding to this acknowledged change.
+	 *
+	 * This field is omitted for deltas corresponding to unacknowledged changes.
+	 */
+	readonly sequencedMessage?: ISequencedDocumentMessage;
 }
 
 /**

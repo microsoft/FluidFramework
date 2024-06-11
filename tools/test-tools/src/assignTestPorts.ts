@@ -21,7 +21,7 @@ export interface PackageInfo {
 export function getPackageInfo(): PackageInfo[] {
 	try {
 		const child = spawnSync("pnpm", ["recursive", "list", "--json", "--depth=-1"], {
-			encoding: "utf-8",
+			encoding: "utf8",
 			// shell:true is required for Windows without a resolved path to pnpm.
 			shell: true,
 		});

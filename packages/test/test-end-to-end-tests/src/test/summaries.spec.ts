@@ -4,40 +4,49 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import {
-	ContainerRuntime,
-	ISummarizer,
-	ISummarizeResults,
-	ISummaryRuntimeOptions,
-	DefaultSummaryConfiguration,
-	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	waitForContainerConnection,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
+	itExpects,
 } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	ISummarizeResults,
+	ISummarizer,
+	ISummaryRuntimeOptions,
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	FlushMode,
+	IFluidDataStoreFactory,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createSummarizer,
+	createSummarizerFromFactory,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import { SinonSandbox, createSandbox } from "sinon";
+
+import { TestSnapshotCache } from "../testSnapshotCache.js";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -98,21 +107,34 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-class TestDataObject1 extends DataObject {
-	protected async initializingFromExisting(): Promise<void> {
-		// This test data object will verify full initialization does not happen for summarizer client.
-		if (this.context.clientDetails.capabilities.interactive === false) {
-			throw Error(
-				"Non interactive/summarizer client's data object should not be initialized",
-			);
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject1 extends DataObject {
+		protected async initializingFromExisting(): Promise<void> {
+			// This test data object will verify full initialization does not happen for summarizer client.
+			if (this.context.clientDetails.capabilities.interactive === false) {
+				throw Error(
+					"Non interactive/summarizer client's data object should not be initialized",
+				);
+			}
 		}
 	}
-}
 
-describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
+	let sandbox: SinonSandbox;
+	before(() => {
+		sandbox = createSandbox();
+	});
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
+	});
+
+	afterEach(() => {
+		sandbox.restore();
 	});
 
 	it("On demand summaries", async () => {
@@ -222,8 +244,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 
 		const { stats, summary } = await containerRuntime.summarize({
 			runGC: false,
-			fullTree: false,
-			trackState: false,
+			fullTree: true,
 			summaryLogger: createChildLogger(),
 		});
 
@@ -401,11 +422,153 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
 	});
+
+	async function getNackPromise(container: IContainer) {
+		return timeoutPromise((resolve, reject) => {
+			const callback = (_reason, error) => {
+				try {
+					assert.strictEqual(error?.statusCode, 429);
+					assert.strictEqual(
+						error?.message,
+						"Nack (ThrottlingError): Submit a summary before inserting additional operations",
+					);
+					resolve();
+				} catch (err) {
+					// Assert errors will be caught here and reject the Promise
+					reject(err);
+				} finally {
+					container.deltaManager.off("disconnect", callback);
+				}
+			};
+			container.deltaManager.on("disconnect", callback);
+		});
+	}
+
+	it("Can summarize after hitting nack on unsummarized ops", async function () {
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+		const stringId = "sharedStringKey";
+		const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+		const config: ITestContainerConfig = {
+			...testContainerConfig,
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: {
+				flushMode: FlushMode.Immediate,
+			},
+		};
+		const configNoSummarizer: ITestContainerConfig = {
+			...config,
+			runtimeOptions: {
+				...config.runtimeOptions,
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+			},
+		};
+		const container1 = await provider.makeTestContainer(configNoSummarizer);
+		const entryPoint1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const sharedString1 = await entryPoint1.getSharedObject<SharedString>(stringId);
+
+		const container2 = await provider.loadTestContainer(configNoSummarizer);
+		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const sharedString2 = await entryPoint2.getSharedObject<SharedString>(stringId);
+
+		await waitForContainerConnection(container1);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+
+		// Max unsummarized ops is currently 200 for local service in e2e tests (see localServerTestDriver.ts)
+		for (let i = 0; i < 200; i++) {
+			sharedString1.insertText(0, "a");
+		}
+		await provider.ensureSynchronized();
+		{
+			// op 201 will get nacked
+			const prom = getNackPromise(container1);
+			sharedString1.insertText(0, "a");
+			await prom;
+		}
+		{
+			// op 202 will get nacked
+			const prom = getNackPromise(container1);
+			sharedString1.insertText(0, "a");
+			await prom;
+		}
+
+		// We can't call ensureSynchornized here as container1 will reconnect loop
+		await flushPromises();
+
+		assert.strictEqual(sharedString1.getLength(), 202);
+		assert.strictEqual(sharedString2.getLength(), 200);
+
+		const { summarizer } = await createSummarizer(provider, container2, config);
+		await summarizeNow(summarizer);
+
+		// Op 203 will succeed since we summarized
+		sharedString1.insertText(0, "a");
+
+		await provider.ensureSynchronized();
+		await flushPromises();
+		assert.strictEqual(sharedString1.getLength(), 203);
+		assert.strictEqual(sharedString2.getLength(), 203);
+	});
+
+	itExpects(
+		"attempt last summary if parent container disconnects",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_Op",
+				summarizeReason: "lastSummary",
+			},
+		],
+		async function () {
+			const container = await createContainer(provider, {});
+			const { summarizer } = await createSummarizer(provider, container, {
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							state: "enabled",
+							minOpsForLastSummaryAttempt: 1, // This is the key setting
+							maxTime: 60 * 1000,
+							maxOps: 1000,
+							minIdleTime: 60 * 1000,
+							maxIdleTime: 60 * 1000,
+							runtimeOpWeight: 1,
+							nonRuntimeOpWeight: 0.1,
+							initialSummarizerDelayMs: 0,
+							maxAckWaitTime: 60 * 1000,
+							maxOpsSinceLastSummary: 1000,
+						},
+					},
+				},
+			});
+			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
+
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+
+			const directory1 = defaultDataStore._root;
+			directory1.set("key", "value");
+			await provider.ensureSynchronized();
+
+			const summarizerRunProm = summarizer.run("test");
+			summarizer.stop("parentNotConnected");
+			await flushPromises();
+			await summarizerRunProm;
+
+			assert.strictEqual(submitSumarySpy.calledOnce, true, "expect a final summary to run");
+		},
+	);
 });
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -432,15 +595,13 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 			await containerRuntime
 				.summarize({
 					runGC: false,
-					fullTree: false,
-					trackState: false,
-					summaryLogger: createChildLogger(),
+					fullTree: true,
+					summaryLogger: createChildLogger({ logger: mockLogger }),
 				})
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) =>
-					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
+				(event) => event.eventName === "SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
@@ -465,8 +626,9 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
+	const testCache = new TestSnapshotCache();
+	beforeEach("setup", () => {
+		provider = getTestObjectProvider({ persistedCache: testCache });
 		configForSingleCommitSummary = {
 			...testContainerConfig,
 			loaderProps: {
@@ -476,7 +638,11 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		};
 	});
 
-	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+	afterEach("cleanup", async () => {
+		testCache.reset();
+	});
+
+	it("Non single commit summary/Match last summary ackHandle with current summary parent", async function () {
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
@@ -519,74 +685,80 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		);
 	});
 
-	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async function () {
-		if (provider.driver.type === "odsp") {
-			this.skip();
-		}
-		const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
+	itExpects(
+		"Non single commit summary/Last summary should be discarded due to missing SummaryOp",
+		[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
+		async function () {
+			if (provider.driver.type === "odsp") {
+				this.skip();
+			}
+			const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
 
-		// Summarize
-		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
-		const submitResult = await result.summarySubmitted;
-		assert(submitResult.success, "on-demand summary should submit");
-		const broadcastResult = await result.summaryOpBroadcasted;
-		assert(broadcastResult.success, "summary op should be broadcast");
+			// Summarize
+			const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+			const submitResult = await result.summarySubmitted;
+			assert(submitResult.success, "on-demand summary should submit");
+			const broadcastResult = await result.summaryOpBroadcasted;
+			assert(broadcastResult.success, "summary op should be broadcast");
 
-		const ackNackResult = await result.receivedSummaryAckOrNack;
-		assert(ackNackResult.success, "summary op should be acked");
-		const summary1AckHandle = ackNackResult.data.summaryAckOp.contents.handle;
-		summarizer.close();
-		await flushPromises();
+			const ackNackResult = await result.receivedSummaryAckOrNack;
+			assert(ackNackResult.success, "summary op should be acked");
+			const summary1AckHandle = ackNackResult.data.summaryAckOp.contents.handle;
+			summarizer.close();
+			await flushPromises();
 
-		// Create new summarizer
-		const { summarizer: summarizer2 } = await createSummarizer(
-			provider,
-			mainContainer,
-			testContainerConfig,
-		);
+			// Create new summarizer
+			const { summarizer: summarizer2 } = await createSummarizer(
+				provider,
+				mainContainer,
+				testContainerConfig,
+			);
 
-		// Second summary should be discarded
-		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
-		let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
-		const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-			uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
-			const response = await uploadSummaryUploaderFunc(summary, context);
-			// Close summarizer so that it does not submit SummaryOp
-			summarizer2.close();
-			return response;
-		};
-		containerRuntime.storage.uploadSummaryWithContext = func;
+			// Second summary should be discarded
+			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
+					containerRuntime.storage,
+				);
+				const response = await uploadSummaryUploaderFunc(summary, context);
+				// Close summarizer so that it does not submit SummaryOp
+				summarizer2.close();
+				return response;
+			};
+			containerRuntime.storage.uploadSummaryWithContext = func;
 
-		const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
-		assert((await result2.summarySubmitted).success === false, "Summary should fail");
-		await flushPromises();
+			const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
+			assert((await result2.summarySubmitted).success === false, "Summary should fail");
+			await flushPromises();
 
-		// Create new summarizer
-		const { summarizer: summarizer3 } = await createSummarizer(
-			provider,
-			mainContainer,
-			testContainerConfig,
-		);
+			// Create new summarizer
+			const { summarizer: summarizer3 } = await createSummarizer(
+				provider,
+				mainContainer,
+				testContainerConfig,
+			);
 
-		// Summarize third time
-		const result3: ISummarizeResults = summarizer3.summarizeOnDemand({ reason: "test3" });
-		const submitResult3 = await result3.summarySubmitted;
-		assert(submitResult3.success, "on-demand summary3 should submit");
-		assert(
-			submitResult3.data.stage === "submit",
-			"on-demand summary3 submitted data stage should be submit",
-		);
+			// Summarize third time
+			const result3: ISummarizeResults = summarizer3.summarizeOnDemand({ reason: "test3" });
+			const submitResult3 = await result3.summarySubmitted;
+			assert(submitResult3.success, "on-demand summary3 should submit");
+			assert(
+				submitResult3.data.stage === "submit",
+				"on-demand summary3 submitted data stage should be submit",
+			);
 
-		const broadcastResult3 = await result3.summaryOpBroadcasted;
-		assert(broadcastResult3.success, "summary op3 should be broadcast");
-		const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
-		assert(
-			summary3ParentHandle === summary1AckHandle,
-			"Summary Parent should match ack handle of summary1",
-		);
-	});
+			const broadcastResult3 = await result3.summaryOpBroadcasted;
+			assert(broadcastResult3.success, "summary op3 should be broadcast");
+			const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
+			assert(
+				summary3ParentHandle === summary1AckHandle,
+				"Summary Parent should match ack handle of summary1",
+			);
+		},
+	);
 
-	it("Single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+	it("Single commit summary/Match last summary ackHandle with current summary parent", async function () {
 		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
@@ -618,11 +790,14 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		);
 		summarizer.close();
 
+		testCache.clearCache();
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			mainContainer,
 			configForSingleCommitSummary,
 		);
+
+		await provider.ensureSynchronized();
 		// Second Summary
 		const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
 		const submitResult2 = await result2.summarySubmitted;
@@ -641,78 +816,93 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		);
 	});
 
-	it("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function () {
-		if (provider.driver.type !== "odsp") {
-			this.skip();
-		}
-		const { mainContainer, summarizer } = await createMainContainerAndSummarizer(
-			provider,
-			configForSingleCommitSummary,
-		);
+	itExpects(
+		"Single commit summary/Last summary should not be discarded due to missing SummaryOp",
+		[
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				error: "disconnected",
+			},
+		],
+		async function () {
+			if (provider.driver.type !== "odsp") {
+				this.skip();
+			}
+			const { mainContainer, summarizer } = await createMainContainerAndSummarizer(
+				provider,
+				configForSingleCommitSummary,
+			);
 
-		// Summarize
-		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
-		const submitResult = await result.summarySubmitted;
-		assert(submitResult.success, "on-demand summary should submit");
-		const broadcastResult = await result.summaryOpBroadcasted;
-		assert(broadcastResult.success, "summary op should be broadcast");
+			// Summarize
+			const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+			const submitResult = await result.summarySubmitted;
+			assert(submitResult.success, "on-demand summary should submit");
+			const broadcastResult = await result.summaryOpBroadcasted;
+			assert(broadcastResult.success, "summary op should be broadcast");
 
-		const ackNackResult = await result.receivedSummaryAckOrNack;
-		assert(ackNackResult.success, "summary op should be acked");
-		summarizer.close();
+			const ackNackResult = await result.receivedSummaryAckOrNack;
+			assert(ackNackResult.success, "summary op should be acked");
+			summarizer.close();
 
-		await flushPromises();
+			await flushPromises();
 
-		// Create new summarizer
-		const { summarizer: summarizer2 } = await createSummarizer(
-			provider,
-			mainContainer,
-			configForSingleCommitSummary,
-		);
+			testCache.clearCache();
+			// Create new summarizer
+			const { summarizer: summarizer2 } = await createSummarizer(
+				provider,
+				mainContainer,
+				configForSingleCommitSummary,
+			);
 
-		let summary2AckHandle: string | undefined;
-		// Second summary should be discarded
-		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
-		let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
-		const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-			uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
-			const response = await uploadSummaryUploaderFunc(summary, context);
-			summary2AckHandle = response;
-			// Close summarizer so that it does not submit SummaryOp
-			summarizer2.close();
-			return response;
-		};
-		containerRuntime.storage.uploadSummaryWithContext = func;
+			let summary2Handle: string | undefined;
+			// Second summary should be discarded
+			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
+					containerRuntime.storage,
+				);
+				const response = await uploadSummaryUploaderFunc(summary, context);
+				summary2Handle = response;
+				// Close summarizer so that it does not submit SummaryOp
+				summarizer2.close();
+				return response;
+			};
+			containerRuntime.storage.uploadSummaryWithContext = func;
 
-		const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
-		assert((await result2.summarySubmitted).success === false, "Summary should fail");
-		await flushPromises();
+			await provider.ensureSynchronized();
 
-		// Create new summarizer
-		const { summarizer: summarizer3 } = await createSummarizer(
-			provider,
-			mainContainer,
-			configForSingleCommitSummary,
-		);
+			const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
+			assert((await result2.summarySubmitted).success === false, "Summary should fail");
+			await flushPromises();
 
-		// Summarize third time
-		const result3: ISummarizeResults = summarizer3.summarizeOnDemand({
-			reason: "test3",
-			refreshLatestAck: true,
-		});
-		const submitResult3 = await result3.summarySubmitted;
-		assert(submitResult3.success, "on-demand summary3 should submit");
-		assert(
-			submitResult3.data.stage === "submit",
-			"on-demand summary3 submitted data stage should be submit",
-		);
+			testCache.clearCache();
+			// Create new summarizer
+			const { summarizer: summarizer3 } = await createSummarizer(
+				provider,
+				mainContainer,
+				configForSingleCommitSummary,
+			);
 
-		const broadcastResult3 = await result3.summaryOpBroadcasted;
-		assert(broadcastResult3.success, "summary op3 should be broadcast");
-		const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
-		assert(
-			summary3ParentHandle === summary2AckHandle,
-			"Summary Parent should match ack handle of summary2",
-		);
-	});
+			await provider.ensureSynchronized();
+			// Summarize third time
+			const result3: ISummarizeResults = summarizer3.summarizeOnDemand({
+				reason: "test3",
+			});
+			const submitResult3 = await result3.summarySubmitted;
+			assert(submitResult3.success, "on-demand summary3 should submit");
+			assert(
+				submitResult3.data.stage === "submit",
+				"on-demand summary3 submitted data stage should be submit",
+			);
+
+			const broadcastResult3 = await result3.summaryOpBroadcasted;
+			assert(broadcastResult3.success, "summary op3 should be broadcast");
+			const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
+			assert(
+				summary3ParentHandle === summary2Handle,
+				"Summary Parent should match handle of summary2",
+			);
+		},
+	);
 });

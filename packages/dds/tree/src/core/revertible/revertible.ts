@@ -6,70 +6,44 @@
 /**
  * Allows reversion of a change made to SharedTree.
  *
+ * @remarks
  * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
+ *
  * @public
  */
 export interface Revertible {
-	/** Indicates the type of edit that produced this revertible. */
-	readonly kind: RevertibleKind;
 	/**
-	 * Information about which client created the edit.
+	 * The current status of the revertible.
 	 */
-	readonly origin: {
-		/**
-		 * Indicates if the {@link Revertible} is from the local client (true) or a remote client (false).
-		 */
-		readonly isLocal: boolean;
-	};
+	readonly status: RevertibleStatus;
+
 	/**
-	 * Can be called in order to revert a change. A successful revert will automatically discard resources.
+	 * Reverts the associated change and disposes it.
 	 */
-	revert(): RevertResult;
+	revert(): void;
 	/**
-	 * Should be called to garbage collect any resources associated with the revertible.
+	 * Reverts the associated change and optionally disposes it.
+	 *
+	 * @param dispose - If true, the revertible will be disposed after being reverted.
+	 * If false, the revertible will remain valid. This can be useful for scenarios where the revert may be dropped
+	 * due to merge conflicts, and one wants to attempt reverting again.
 	 */
-	discard(): DiscardResult;
+	revert(dispose: boolean): void;
+
+	/**
+	 * Disposes this revertible, allowing associated resources to be released.
+	 */
+	dispose(): void;
 }
 
 /**
- * The type of revertible commit.
+ * The status of a {@link Revertible}.
  *
  * @public
  */
-export enum RevertibleKind {
-	/** A typical local commit */
-	Default,
-	/** A revertible that is the result of an undo. */
-	Undo,
-	/** A revertible that is the result of a redo. */
-	Redo,
-	/**
-	 * A revertible that is the result of a rebase and should replace a previously generated revertible.
-	 * todo: improve error reporting in this case
-	 */
-	Rebase,
-}
-
-/**
- * The result of a revert operation.
- *
- * @public
- */
-export enum RevertResult {
-	/** The revert was successful. */
-	Success,
-	/** The revert failed. */
-	Failure,
-}
-
-/**
- * The result of a discard operation.
- *
- * @public
- */
-export enum DiscardResult {
-	/** The discard was successful. */
-	Success,
-	/** The discard failed. */
-	Failure,
+export enum RevertibleStatus {
+	/** The revertible can be reverted. */
+	Valid,
+	/** The revertible has been disposed. Reverting it will have no effect. */
+	Disposed,
 }

@@ -4,31 +4,34 @@
  */
 
 import { strict as assert } from "assert";
-import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 const counterId = "counterKey";
-const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
-describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider) => {
+describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedCounter } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	let dataStore1: ITestFluidObject;
@@ -36,7 +39,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider) => {
 	let sharedCounter2: ISharedCounter;
 	let sharedCounter3: ISharedCounter;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -163,9 +166,17 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCounter } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -180,7 +191,7 @@ describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProv
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {

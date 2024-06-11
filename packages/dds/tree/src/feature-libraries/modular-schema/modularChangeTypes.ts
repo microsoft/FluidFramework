@@ -4,12 +4,12 @@
  */
 
 import {
+	ChangeAtomId,
 	ChangeAtomIdMap,
 	ChangesetLocalId,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
-	RevisionTag,
 } from "../../core/index.js";
 import { Brand } from "../../util/index.js";
 import { TreeChunk } from "../chunked-forest/index.js";
@@ -22,17 +22,19 @@ export interface ModularChangeset extends HasFieldChanges {
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.
 	 */
-	maxId?: ChangesetLocalId;
+	readonly maxId?: ChangesetLocalId;
 	/**
 	 * The revisions included in this changeset, ordered temporally (oldest to newest).
 	 * Undefined for anonymous changesets.
 	 * Should never be empty.
 	 */
 	readonly revisions?: readonly RevisionInfo[];
-	fieldChanges: FieldChangeMap;
-	constraintViolationCount?: number;
+	readonly fieldChanges: FieldChangeMap;
+	readonly nodeChanges: ChangeAtomIdMap<NodeChangeset>;
+	readonly constraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
 	readonly destroys?: ChangeAtomIdMap<number>;
+	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
 }
 
 /**
@@ -49,6 +51,8 @@ export interface NodeExistsConstraint {
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 }
+
+export type NodeId = ChangeAtomId;
 
 /**
  * @internal
@@ -67,15 +71,6 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
  */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
-
-	/**
-	 * If defined, `change` is part of the specified revision.
-	 * Undefined in the following cases:
-	 * A) A revision is specified on an ancestor of this `FieldChange`, in which case `change` is part of that revision.
-	 * B) `change` is composed of multiple revisions.
-	 * C) `change` is part of an anonymous revision.
-	 */
-	revision?: RevisionTag;
 	change: FieldChangeset;
 }
 

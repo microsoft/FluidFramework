@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ImplicitFieldSchema,
 	NodeKind,
@@ -11,9 +12,13 @@ import {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "../../simple-tree/index.js";
-import { getRoot, makeSchema, pretty } from "./utils.js";
+
+import { hydrate, pretty } from "./utils.js";
+
+const schemaFactory = new SchemaFactory("Test");
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+	name?: string;
 	schema: TSchema;
 	initialTree: TreeFieldFromImplicitField<TSchema>;
 }
@@ -40,22 +45,16 @@ export function testObjectPrototype(proxy: object, prototype: object) {
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("satisfies 'deepEqual'", () => {
-			for (const { schema, initialTree } of testCases) {
-				const proxy = getRoot(schema, () => initialTree);
-				const real = initialTree;
-
-				it(`deepEqual(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEqual'.");
+		describe("satisfies 'deepEqual'", () => {
+			for (const { schema, initialTree, name } of testCases) {
+				it(name ?? pretty(initialTree).toString(), () => {
+					const proxy = hydrate(schema, initialTree);
+					assert.deepEqual(proxy, initialTree, "Proxy must satisfy 'deepEqual'.");
 				});
 			}
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("inherits from Object.prototype", () => {
+		describe("inherits from Object.prototype", () => {
 			function findObjectPrototype(o: unknown) {
 				return Object.getPrototypeOf(
 					// If 'root' is an array, the immediate prototype is Array.prototype.  We need to go
@@ -67,7 +66,7 @@ function testObjectLike(testCases: TestCase[]) {
 			for (const { schema, initialTree } of testCases) {
 				describe("instanceof Object", () => {
 					it(`${pretty(initialTree)} -> true`, () => {
-						const root = getRoot(schema, () => initialTree);
+						const root = hydrate(schema, initialTree);
 						assert(root instanceof Object, "object must be instanceof Object");
 					});
 				});
@@ -79,7 +78,7 @@ function testObjectLike(testCases: TestCase[]) {
 						it(`Object.getOwnPropertyDescriptor(${pretty(
 							initialTree,
 						)}, ${key}) -> ${pretty(descriptor)}`, () => {
-							const root = getRoot(schema, () => initialTree);
+							const root = hydrate(schema, initialTree);
 							assert.deepEqual(
 								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
 								descriptor,
@@ -91,14 +90,14 @@ function testObjectLike(testCases: TestCase[]) {
 
 				describe("methods inherited from Object.prototype", () => {
 					it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
-						const root = getRoot(schema, () => initialTree);
+						const root = hydrate(schema, initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 					});
 
 					it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
-						const root = getRoot(schema, () => initialTree);
+						const root = hydrate(schema, initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(asObject), false);
@@ -113,7 +112,7 @@ function testObjectLike(testCases: TestCase[]) {
 						);
 
 						it(`${key} -> ${expected}`, () => {
-							const root = getRoot(schema, () => initialTree);
+							const root = hydrate(schema, initialTree);
 							const asObject = root as object;
 							// eslint-disable-next-line no-prototype-builtins -- compatibility test
 							assert.equal(asObject.propertyIsEnumerable(key), expected);
@@ -123,14 +122,18 @@ function testObjectLike(testCases: TestCase[]) {
 			}
 		});
 
+		/**
+		 * Creates a test out of applying the given function to both a structural clone of the initial tree object and a hydrated tree created from it for each test case.
+		 * The results are asserted to be equal with nodes's assert.deepEqual.
+		 */
 		function test1(fn: (subject: object) => unknown) {
-			for (const { schema, initialTree } of testCases) {
-				const real = structuredClone(initialTree) as object;
-				const expected = fn(real);
+			for (const { schema, initialTree, name } of testCases) {
+				const pojo = structuredClone(initialTree) as object;
 
-				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const proxy = getRoot(schema, () => initialTree);
-					const actual = fn(proxy as object);
+				it(name ?? `${pretty(pojo)} -> ${pretty(fn(pojo))}`, () => {
+					const expected = fn(pojo);
+					const node = hydrate(schema, initialTree);
+					const actual = fn(node as object);
 					assert.deepEqual(actual, expected);
 				});
 			}
@@ -140,16 +143,12 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => Object.keys(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.values", () => {
+		describe("Object.values", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			test1((subject) => Object.values(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.entries", () => {
+		describe("Object.entries", () => {
 			test1((subject) => Object.entries(subject));
 		});
 
@@ -160,22 +159,29 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		describe("Object.prototype.toLocaleString", () => {
-			test1((subject) => Object.prototype.toLocaleString.call(subject));
+			test1((subject) => {
+				try {
+					return Object.prototype.toLocaleString.call(subject);
+				} catch (e: unknown) {
+					assert(e instanceof Error);
+					// toLocaleString errors if there is a field named toString.
+					return e.message;
+				}
+			});
 		});
 
 		// 'deepEqual' requires that objects have the same prototype to be considered equal.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getPrototypeOf", () => {
+		describe("Object.getPrototypeOf", () => {
 			test1((subject) => Object.getPrototypeOf(subject) as unknown);
 		});
 
-		// 'deepEqual' enumerates and compares the own properties of objects.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getOwnPropertyDescriptors", () => {
+		// 'deepEqual' enumerates and compares the enumerable own properties of objects
+		describe("enumerable Object.getOwnPropertyDescriptors", () => {
 			test1((subject) => {
-				return Object.getOwnPropertyDescriptors(subject);
+				const all = Object.getOwnPropertyDescriptors(subject);
+				return Object.fromEntries(
+					Object.entries(all).filter(([key, descriptor]) => descriptor.enumerable),
+				);
 			});
 		});
 
@@ -194,13 +200,29 @@ function testObjectLike(testCases: TestCase[]) {
 
 		// Validate that root.toString() === initialTree.toString()
 		describe(".toString()", () => {
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
-			test1((subject) => subject.toString());
+			test1((subject) => {
+				try {
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
+					return subject.toString();
+				} catch (e: unknown) {
+					assert(e instanceof Error);
+					// toString errors if there is a field named toString.
+					return e.message;
+				}
+			});
 		});
 
 		// Validate that root.toLocaleString() === initialTree.toLocaleString()
 		describe(".toLocaleString()", () => {
-			test1((subject) => subject.toLocaleString());
+			test1((subject) => {
+				try {
+					return subject.toLocaleString();
+				} catch (e: unknown) {
+					assert(e instanceof Error);
+					// toLocaleString errors if there is a field named toString.
+					return e.message;
+				}
+			});
 		});
 
 		// Validate that JSON.stringify(root) === JSON.stringify(initialTree)
@@ -213,14 +235,14 @@ function testObjectLike(testCases: TestCase[]) {
 const tcs: TestCase[] = [
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testA");
 			return _.object("empty", {});
 		})(),
 		initialTree: {},
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testB");
 			return _.object("primitives", {
 				boolean: _.boolean,
 				number: _.number,
@@ -234,8 +256,9 @@ const tcs: TestCase[] = [
 		},
 	},
 	{
+		name: "Empty tree, optional fields",
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testC");
 			return _.object("optional", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
@@ -246,7 +269,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testD");
 			return _.object("optional (defined)", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
@@ -261,7 +284,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testE");
 
 			const inner = _.object("inner", {});
 
@@ -271,26 +294,79 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: { nested: {} },
 	},
+	// Case with explicit stored keys
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const schemaFactoryInner = new SchemaFactory("testE");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+				bar: schemaFactoryInner.optional(schemaFactoryInner.string, { key: "stable-bar" }),
+				baz: schemaFactoryInner.required(
+					[schemaFactoryInner.boolean, schemaFactoryInner.null],
+					{ key: "stable-baz" },
+				),
+			});
+		})(),
+		initialTree: {
+			foo: 42,
+			bar: "hello world",
+			baz: null,
+		},
+	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("testF");
 			return _.array(_.string);
 		})(),
 		initialTree: [],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testG");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A"],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testH");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A", "B"],
+	},
+	{
+		name: "Special Keys",
+		schema: (() => {
+			const _ = new SchemaFactory("testI");
+			return _.object("special keys", {
+				value: _.number,
+				[""]: _.number,
+				set: _.number,
+				__proto__: _.number,
+				constructor: _.number,
+				setting: _.number,
+			});
+		})(),
+		initialTree: {
+			value: 1,
+			[""]: 2,
+			set: 3,
+			__proto__: 4,
+			constructor: 5,
+			setting: 6,
+		},
+	},
+	{
+		name: "toString key",
+		schema: (() => {
+			const _ = new SchemaFactory("testI");
+			return _.object("special keys", {
+				toString: _.number,
+			});
+		})(),
+		initialTree: {
+			toString: 1,
+		},
 	},
 ];
 
@@ -298,19 +374,43 @@ testObjectLike(tcs);
 
 const factory = new SchemaFactory("test");
 
-describe("Object-like", () => {
-	describe("setting an invalid field", () => {
-		// TODO: Restore original behavior for bare '_.object()'?
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("throws TypeError in strict mode", () => {
-			const root = getRoot(
-				makeSchema((_) => _.object("no fields", {})),
-				() => ({}),
-			);
+describe("Object-like-2", () => {
+	describe("setting an local field", () => {
+		it("throws TypeError in POJO emulation mode", () => {
+			const root = hydrate(schemaFactory.object("no fields", {}), {});
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
+		});
+
+		it("works in Customizable mode", () => {
+			class Custom extends schemaFactory.object("no fields", {}) {
+				public foo?: number;
+			}
+			const root = hydrate(Custom, {});
+			root.foo = 3;
+		});
+	});
+
+	describe("deep equality and types", () => {
+		it("types are ignored in POJO emulation mode", () => {
+			const a = hydrate(schemaFactory.object("a", {}), {});
+			const b = hydrate(schemaFactory.object("b", {}), {});
+			assert.deepEqual(a, {});
+			assert.deepEqual(a, b);
+		});
+
+		it("types are compared in Customizable mode", () => {
+			class A extends schemaFactory.object("a", {}) {}
+			class B extends schemaFactory.object("b", {}) {}
+			const a = hydrate(A, {});
+			const b = hydrate(B, {});
+			assert.notDeepEqual(a, {});
+			assert.notDeepEqual(a, b);
+			const a2 = hydrate(A, {});
+			assert.deepEqual(a, a2);
 		});
 	});
 
@@ -323,44 +423,32 @@ describe("Object-like", () => {
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						const Root = factory.object("", { _value: schema });
-						const root = getRoot(Root, () => ({ _value: before }));
-						assert.equal(root._value, before);
-						root._value = after;
-						assert.equal(root._value, after);
+						const Root = factory.object("", { value: schema });
+						const root = hydrate(Root, { value: before });
+						assert.equal(root.value, before);
+						root.value = after;
+						assert.equal(root.value, after);
 					});
 				});
 
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: _.optional(schema) })),
-							() => ({ _value: undefined }),
+						const root = hydrate(
+							schemaFactory.object("", { value: schemaFactory.optional(schema) }),
+							{ value: undefined },
 						);
-						assert.equal(root._value, undefined);
-						root._value = before;
-						assert.equal(root._value, before);
-						root._value = after;
-						assert.equal(root._value, after);
+						assert.equal(root.value, undefined);
+						root.value = before;
+						assert.equal(root.value, before);
+						root.value = after;
+						assert.equal(root.value, after);
 					});
 				});
 			}
 
-			check(
-				makeSchema((_) => _.boolean),
-				false,
-				true,
-			);
-			check(
-				makeSchema((_) => _.number),
-				0,
-				1,
-			);
-			check(
-				makeSchema((_) => _.string),
-				"",
-				"!",
-			);
+			check(schemaFactory.boolean, false, true);
+			check(schemaFactory.number, 0, 1);
+			check(schemaFactory.string, "", "!");
 		});
 
 		describe("required object", () => {
@@ -375,7 +463,7 @@ describe("Object-like", () => {
 			const after = { objId: 1 };
 
 			it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(Schema, () => ({ child: before }));
+				const root = hydrate(Schema, { child: before });
 				assert.equal(root.child.objId, 0);
 				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
@@ -394,7 +482,7 @@ describe("Object-like", () => {
 			const after = { objId: 1 };
 
 			it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(Schema, () => ({ child: undefined }));
+				const root = hydrate(Schema, { child: undefined });
 				assert.equal(root.child, undefined);
 				root.child = new Child(before);
 				assert.equal(root.child.objId, 0);

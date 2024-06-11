@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Value, ValueSchema, TreeValue } from "../core/index.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
+import { TreeValue, Value, ValueSchema } from "../core/index.js";
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	if (schema === undefined) {
@@ -52,42 +54,22 @@ export type FluidSerializableReadOnly =
 			readonly [P in string]?: FluidSerializableReadOnly;
 	  };
 
-// TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: unknown): value is IFluidHandle {
-	if (typeof value !== "object" || value === null || !("IFluidHandle" in value)) {
-		return false;
-	}
-
-	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
-	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
-	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
-	const isHandle = handle === value;
-	// Since the requirement for this reference to be cyclic isn't particularly clear in the interface (typescript can't model that very well)
-	// do an extra test.
-	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
-	const getMember = (value as Partial<IFluidHandle>).get;
-	if (typeof getMember !== "function") {
-		return false;
-	}
-
-	return isHandle;
-}
-
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,
-): asserts value is Value {
-	assert(isAllowedValue(value), 0x843 /* invalid value */);
+): asserts value is TreeValue {
+	assert(isTreeValue(value), 0x843 /* invalid value */);
 }
 
-export function isAllowedValue(value: undefined | FluidSerializableReadOnly): value is Value {
-	switch (typeof value) {
+/**
+ * Checks if a value is a {@link TreeValue}.
+ */
+export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
+	switch (typeof nodeValue) {
 		case "string":
 		case "number":
 		case "boolean":
 			return true;
-		case "object":
-			return value === null || isFluidHandle(value);
 		default:
-			return false;
+			return nodeValue === null || isFluidHandle(nodeValue);
 	}
 }

@@ -4,19 +4,24 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidCodeDetails, ILoader, IContainer } from "@fluidframework/container-definitions";
-import { Loader, ILoaderProps } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	ILoader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
+import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 

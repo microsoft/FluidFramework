@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { EmptyKey, FieldKey } from "../../../core/index.js";
+import { jsonArray, jsonObject, leaf } from "../../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { dummyRoot } from "../../../feature-libraries/chunked-forest/index.js";
 import {
 	TreeShape,
 	UniformChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
-import { TestField, emptySchema } from "../../cursorTestSuite.js";
-import { jsonArray, leaf, jsonObject } from "../../../domains/index.js";
 import { brand, makeArray } from "../../../util/index.js";
-import { EmptyKey, FieldKey } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { dummyRoot } from "../../../feature-libraries/chunked-forest/index.js";
+import { TestField, emptySchema } from "../../cursorTestSuite.js";
 
 export const emptyShape = new TreeShape(emptySchema.name, false, []);
 

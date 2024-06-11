@@ -163,7 +163,7 @@ This is ideally suited for developers who prioritize familiarity and speed of de
 Note that this API is a wrapper that uses JavaScript proxies and does not impose any schema.
 Schema will be supported but not as part of this milestone.
 
-This API is called the Editable Tree API and is [here](../src/feature-libraries/editable-tree/README.md).
+This API is called the Flex Tree (previously Editable Tree) API and is [here](../src/feature-libraries/flex-tree/README.md).
 
 ## Undo/redo
 
@@ -172,9 +172,9 @@ This API is called the Editable Tree API and is [here](../src/feature-libraries/
 The ability to undo and redo changes is table stakes for a collaborative editing system.
 However, there are a variety of possible specifications with varying levels of complexity.
 
-For this milestone, Shared Tree offers an [undo/redo mechanism](../docs/wip/inverse-changes/README.md#undo-semantics) that generates the inverse of a given edit (most frequently the most recent local change group but not necessarily) and applies it to the document.
+For this milestone, Shared Tree offers an [undo/redo mechanism](../docs/wip/inverse-changes.md#undo-semantics) that generates the inverse of a given edit (most frequently the most recent local change group but not necessarily) and applies it to the document.
 This simple implementation is easy to reason about but can lead to cases where concurrent changes can render the inverse edit inconsistent with the user's intent (e.g., conflicted or unapplied).
-In a future milestone, [alternative designs](../docs/undo) are explored that better handle these cases.
+In a future milestone, [alternative designs](../docs/main/undo) are explored that better handle these cases.
 
 ## Move
 
@@ -304,7 +304,7 @@ Virtualization allows the client to download portions of the tree on demand rath
 This will dramatically improve load performance and is another precursor to supporting larger than memory datasets.
 
 This milestone enables both for the tree.
-A long-form design proposal for these features exists [here](../docs/storage/treeStorage.md).
+A long-form design proposal for these features exists [here](../docs/main/tree-storage.md).
 
 ## Type-safe schema API
 

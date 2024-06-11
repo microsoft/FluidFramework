@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { PropertySet } from "@fluidframework/sequence";
-import { CellRange } from "./cellrange";
-import { TableSliceType } from "./componentTypes";
-import { ConfigKey } from "./configKey";
-import { TableDocument } from "./document";
-import { ITable, TableDocumentItem } from "./table";
+import { PropertySet } from "@fluidframework/sequence/internal";
+
+import { CellRange } from "./cellrange.js";
+import { TableSliceType } from "./componentTypes.js";
+import { ConfigKey } from "./configKey.js";
+import { TableDocument } from "./document.js";
+import { ITable, TableDocumentItem } from "./table.js";
 
 export interface ITableSliceConfig {
 	docId: string;

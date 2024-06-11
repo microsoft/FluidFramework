@@ -4,24 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { ContainerRuntime, IGCRuntimeOptions, IGCStats } from "@fluidframework/container-runtime";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	IGCRuntimeOptions,
+	IGCStats,
+} from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	mockConfigProvider,
+	createTestConfigProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
+
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
@@ -36,13 +42,24 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 	const tombstoneTimeoutMs = 200;
 	const sweepGracePeriodMs = 0;
 
-	let settings = {};
+	const configProvider = createTestConfigProvider();
 
 	// GC options with sweep enabled.
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
 		sweepGracePeriodMs,
+	};
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					state: "disabled",
+				},
+			},
+			gcOptions,
+		},
+		loaderProps: { configProvider },
 	};
 
 	/**
@@ -73,26 +90,18 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		return summaryStats;
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		// These tests validate the GC stats in summary. It disables heuristics and summarizes explicitly on a separate
 		// container. They do not submits these summaries so it doesn't need to run against real services.
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings = {};
-		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
-		const testContainerConfig: ITestContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-				gcOptions,
-			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		};
+
+		configProvider.set(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+			tombstoneTimeoutMs,
+		);
 		mainContainer = await provider.makeTestContainer(testContainerConfig);
 		mainDataObject = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
@@ -107,6 +116,10 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		// result in closing the container (GC op can't be resubmitted).
 		summarizerDataObject._root.set("write", "mode");
 		await waitForContainerWriteModeConnectionWrite(summarizerContainer);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	async function createNewDataStore() {
@@ -167,7 +180,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		const gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		const summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		const summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		assert.strictEqual(
 			summarizeResult.stats.unreferencedBlobSize,
 			0,
@@ -236,7 +249,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		let summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		let summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		let unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [
 			dataStore1._context.id,
 		]);
@@ -263,7 +276,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		unrefDataStoreStats = getDataStoreSummaryStats(summarizeResult.summary, [
 			dataStore1._context.id,
 			dataStore2._context.id,
@@ -366,7 +379,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		const gcStats = await summarizerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
 
-		const summarizeResult = await summarizerRuntime.summarize({ trackState: false });
+		const summarizeResult = await summarizerRuntime.summarize({ fullTree: true });
 		assert.strictEqual(
 			summarizeResult.stats.unreferencedBlobSize,
 			0,
@@ -402,7 +415,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 
 		// Nothing should be unreferenced.
 		let gcStats = await summarizerRuntime.collectGarbage({});
-		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+		assert.deepStrictEqual(gcStats, expectedGCStats, "1. GC stats is not as expected");
 
 		// Remove both data store handles to mark them unreferenced.
 		mainDataObject._root.delete("dataStore1");
@@ -417,7 +430,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		expectedGCStats.updatedDataStoreCount = 2;
 
 		gcStats = await summarizerRuntime.collectGarbage({});
-		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+		assert.deepStrictEqual(gcStats, expectedGCStats, "2. GC stats is not as expected");
 
 		// Add their handle back to re-reference them.
 		mainDataObject._root.set("dataStore1", dataStore1.handle);
@@ -430,6 +443,6 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		expectedGCStats.unrefDataStoreCount -= 2;
 
 		gcStats = await summarizerRuntime.collectGarbage({});
-		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+		assert.deepStrictEqual(gcStats, expectedGCStats, "3. GC stats is not as expected");
 	});
 });

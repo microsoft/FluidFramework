@@ -1,9 +1,13 @@
 name: Update link report
 on:
   workflow_run:
-    workflows: [ "Website validation" ]
+    workflows: ["Website validation"]
     types:
       - completed
+
+permissions:
+  actions: read
+  pull-requests: write
 
 jobs:
   load_report:

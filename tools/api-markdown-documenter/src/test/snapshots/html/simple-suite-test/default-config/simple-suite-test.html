@@ -1,4 +1,3 @@
-<!-- Front Matter! -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -16,7 +15,7 @@
       </section>
       <section>
         <p>
-          Test package
+          <b>Test package</b>
         </p>
       </section>
       <section>
@@ -73,8 +72,6 @@
           <code>
             const foo = bar;
           </code>
-          <p>
-          </p>
         </p>
       </section>
       <section>
@@ -329,6 +326,9 @@
                 Modifiers
               </th>
               <th>
+                Type
+              </th>
+              <th>
                 Description
               </th>
             </tr>
@@ -345,6 +345,8 @@
                 <code>readonly</code>
               </td>
               <td>
+              </td>
+              <td>
                 Test Constant
               </td>
             </tr>
@@ -357,6 +359,9 @@
               </td>
               <td>
                 <code>readonly</code>
+              </td>
+              <td>
+                <span>string</span>
               </td>
               <td>
                 I have a <code>@deprecated</code> tag with an empty comment block.
@@ -443,8 +448,6 @@
                 <code>
                   const foo = TestEnum.TestEnumValue1
                 </code>
-                <p>
-                </p>
               </p>
             </section>
             <section>
@@ -458,8 +461,6 @@
                 <code>
                   const bar = TestEnum.TestEnumValue2
                 </code>
-                <p>
-                </p>
               </p>
             </section>
           </section>
@@ -670,8 +671,49 @@
               Signature
             </h4>
             <code>
-              export declare function testFunction&lt;TTypeParameter&gt;(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
+              export declare function testFunction&lt;TTypeParameter extends TestInterface = TestInterface&gt;(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
             </code>
+            <p>
+              <section>
+                <h5>
+                  Type Parameters
+                </h5>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        Parameter
+                      </th>
+                      <th>
+                        Constraint
+                      </th>
+                      <th>
+                        Default
+                      </th>
+                      <th>
+                        Description
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        TTypeParameter
+                      </td>
+                      <td>
+                        <span><a href='./simple-suite-test/testinterface-interface'>TestInterface</a></span>
+                      </td>
+                      <td>
+                        <span><a href='./simple-suite-test/testinterface-interface'>TestInterface</a></span>
+                      </td>
+                      <td>
+                        A test type parameter
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+            </p>
           </section>
           <section>
             <h4 id="testfunction-remarks">
@@ -914,8 +956,11 @@
               Signature
             </h4>
             <code>
-              testConstWithEmptyDeprecatedBlock = &quot;I have a `@deprecated` tag with an empty comment block.&quot;
+              testConstWithEmptyDeprecatedBlock: string
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>string</span></span>
+            </p>
           </section>
         </section>
       </section>

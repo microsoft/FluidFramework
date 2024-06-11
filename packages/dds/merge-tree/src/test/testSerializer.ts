@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Test serializer implementation for merge tree tests

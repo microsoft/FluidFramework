@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { AsyncReducer, BaseFuzzTestState, Reducer } from "./types.js";
 
 /**
  * @internal

@@ -58,7 +58,7 @@ export class Heap<T> {
 	 * Creates an instance of `Heap` with comparer.
 	 * @param comp - A comparer that specify how elements are ordered.
 	 */
-	constructor(public comp: IComparer<T>) {
+	public constructor(public comp: IComparer<T>) {
 		this.L = [{ value: comp.min, position: 0 }];
 	}
 

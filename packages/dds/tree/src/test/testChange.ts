@@ -3,26 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
+
+import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
-	ChangeFamily,
-	ChangeRebaser,
-	TaggedChange,
 	AnchorSet,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyCodec,
 	ChangeFamilyEditor,
-	FieldKey,
-	emptyDelta,
-	RevisionTag,
-	deltaForSet,
+	ChangeRebaser,
 	DeltaFieldMap,
 	DeltaRoot,
-	ChangeFamilyCodec,
-	ChangeEncodingContext,
+	FieldKey,
+	RevisionTag,
+	TaggedChange,
+	emptyDelta,
 } from "../core/index.js";
-import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
-import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
-import { deepFreeze } from "./utils.js";
+import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
 	/**
@@ -83,11 +82,19 @@ function composeIntentions(base: readonly number[], extras: readonly number[]): 
 	return composed;
 }
 
-function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): TestChange {
+function compose(
+	change1: TestChange | undefined,
+	change2: TestChange | undefined,
+	verify: boolean = true,
+): TestChange {
+	return composeList(getArrayWithoutUndefined([change1, change2]), verify);
+}
+
+function composeList(changes: TestChange[], verify: boolean = true): TestChange {
 	let inputContext: number[] | undefined;
 	let outputContext: number[] | undefined;
 	let intentions: number[] = [];
-	for (const { change } of changes) {
+	for (const change of changes) {
 		if (isNonEmptyChange(change)) {
 			inputContext ??= change.inputContext;
 			if (verify && outputContext !== undefined) {
@@ -98,7 +105,7 @@ function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): T
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
-	if (inputContext !== undefined) {
+	if (intentions.length !== 0 && inputContext !== undefined) {
 		return {
 			inputContext,
 			intentions,
@@ -106,6 +113,16 @@ function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): T
 		};
 	}
 	return emptyChange;
+}
+
+function getArrayWithoutUndefined<T>(array: (T | undefined)[]): T[] {
+	const result: T[] = [];
+	for (const item of array) {
+		if (item !== undefined) {
+			result.push(item);
+		}
+	}
+	return result;
 }
 
 function invert(change: TestChange): TestChange {
@@ -166,24 +183,14 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): DeltaFieldMap {
+function toDelta({ change }: TaggedChange<TestChange>): DeltaFieldMap {
 	if (change.intentions.length > 0) {
-		const hasMajor: { major?: RevisionTag } = {};
-		if (revision !== undefined) {
-			hasMajor.major = revision;
-		}
-		const buildId = { ...hasMajor, minor: 424243 };
 		return new Map([
 			[
-				brand("foo"),
-				deltaForSet(
-					cursorForJsonableTreeNode({
-						type: brand("test"),
-						value: change.intentions.map(String).join("|"),
-					}),
-					buildId,
-					{ ...hasMajor, minor: 424242 },
-				),
+				// We represent the intentions as a list if node offsets in some imaginary field "testIntentions".
+				// This is purely for the sake of testing.
+				brand("testIntentions"),
+				{ local: change.intentions.map((i) => ({ count: i })) },
 			],
 		]);
 	}
@@ -195,7 +202,10 @@ export interface AnchorRebaseData {
 	intentions: number[];
 }
 
-const emptyChange: TestChange = { intentions: [] };
+const emptyChange: TestChange = {
+	intentions: [],
+};
+
 const codec: IJsonCodec<
 	TestChange,
 	JsonCompatibleReadOnly,
@@ -211,31 +221,52 @@ export const TestChange = {
 	emptyChange,
 	mint,
 	compose,
+	composeList,
 	invert,
 	rebase,
 	checkChangeList,
 	toDelta,
 	isEmpty,
 	codec,
+	codecs: makeCodecFamily([
+		[1, codec],
+		[2, codec],
+		[3, codec],
+	]),
 };
 deepFreeze(TestChange);
 
 export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	public compose(changes: TaggedChange<TestChange>[]): TestChange {
-		return compose(changes);
+		return composeList(changes.map((c) => c.change));
 	}
 
 	public invert(change: TaggedChange<TestChange>): TestChange {
 		return invert(change.change);
 	}
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change) ?? { intentions: [] };
+	public rebase(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): TestChange {
+		return (
+			rebase(change.change, over.change) ?? {
+				intentions: [],
+			}
+		);
+	}
+
+	public changeRevision(
+		change: TestChange,
+		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
+	): TestChange {
+		return change;
 	}
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
 }
@@ -245,9 +276,12 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public invertedCount = 0;
 	public composedCount = 0;
 
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		this.rebasedCount += 1;
-		return change;
+		return change.change;
 	}
 
 	public override invert(change: TaggedChange<TestChange>): TestChange {
@@ -264,14 +298,17 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 	public constructor(
 		private readonly constraint: (
-			change: TestChange,
+			change: TaggedChange<TestChange>,
 			over: TaggedChange<TestChange>,
 		) => boolean,
 	) {
 		super();
 	}
 
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		assert(this.constraint(change, over));
 		return super.rebase(change, over);
 	}
@@ -305,7 +342,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		codecs: makeCodecFamily<TestChange, ChangeEncodingContext>([[0, TestChange.codec]]),
+		codecs: TestChange.codecs,
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),

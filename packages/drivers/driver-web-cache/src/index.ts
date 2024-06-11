@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { FluidCache, FluidCacheConfig } from "./FluidCache";
-export { deleteFluidCacheIndexDbInstance } from "./FluidCacheIndexedDb";
+export { FluidCache, FluidCacheConfig } from "./FluidCache.js";
+export { deleteFluidCacheIndexDbInstance } from "./FluidCacheIndexedDb.js";

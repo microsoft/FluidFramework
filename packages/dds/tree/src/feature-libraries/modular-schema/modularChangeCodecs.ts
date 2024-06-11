@@ -3,11 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { TAnySchema } from "@sinclair/typebox";
-import { assert } from "@fluidframework/core-utils";
+
 import {
-	ChangesetLocalId,
+	type ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	IMultiFormatCodec,
+	SchemaValidationFunction,
+	makeCodecFamily,
+	withSchemaValidation,
+} from "../../codec/index.js";
+import {
+	ChangeAtomIdMap,
 	ChangeEncodingContext,
+	ChangesetLocalId,
 	EncodedRevisionTag,
 	FieldKey,
 	FieldKindIdentifier,
@@ -15,28 +26,25 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core/index.js";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import {
-	ICodecOptions,
-	IJsonCodec,
-	IMultiFormatCodec,
-	SchemaValidationFunction,
-} from "../../codec/index.js";
+	IdAllocator,
+	JsonCompatibleReadOnly,
+	Mutable,
+	brand,
+	fail,
+	idAllocatorFromMaxId,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util/index.js";
 import {
-	FieldBatchEncodingContext,
 	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import {
-	FieldChangeMap,
-	FieldChangeset,
-	ModularChangeset,
-	NodeChangeset,
-} from "./modularChangeTypes.js";
-import { FieldKindWithEditor } from "./fieldKind.js";
+
+import { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	EncodedBuilds,
@@ -47,14 +55,17 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
+import {
+	FieldChangeMap,
+	FieldChangeset,
+	ModularChangeset,
+	NodeChangeset,
+	NodeId,
+} from "./modularChangeTypes.js";
+import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 
-const chunkEncodingContext: FieldBatchEncodingContext = {
-	encodeType: TreeCompressionStrategy.Compressed,
-	// TODO: provide a schema when encoding so schema based compression can actually happen.
-};
-
-export function makeV0Codec(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+export function makeModularChangeCodecFamily(
+	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -63,27 +74,51 @@ export function makeV0Codec(
 	>,
 	fieldsCodec: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
-): IJsonCodec<
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
+	return makeCodecFamily(
+		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
+			version,
+			makeModularChangeCodec(
+				fieldKinds,
+				revisionTagCodec,
+				fieldsCodec,
+				{ jsonValidator: validator },
+				chunkCompressionStrategy,
+			),
+		]),
+	);
+}
+
+type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
 	EncodedModularChangeset,
 	EncodedModularChangeset,
 	ChangeEncodingContext
-> {
-	const nodeChangesetCodec: IJsonCodec<
-		NodeChangeset,
-		EncodedNodeChangeset,
-		EncodedNodeChangeset,
-		ChangeEncodingContext
-	> = {
-		encode: encodeNodeChangesForJson,
-		decode: decodeNodeChangesetFromJson,
-		encodedSchema: EncodedNodeChangeset,
-	};
+>;
 
-	const getMapEntry = (field: FieldKindWithEditor) => {
-		const codec = field.changeHandler
-			.codecsFactory(nodeChangesetCodec, revisionTagCodec)
-			.resolve(0);
+type FieldCodec = IMultiFormatCodec<
+	FieldChangeset,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	FieldChangeEncodingContext
+>;
+
+function makeModularChangeCodec(
+	fieldKinds: FieldKindConfiguration,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	{ jsonValidator: validator }: ICodecOptions,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+): ModularChangeCodec {
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
+		const codec = kind.changeHandler.codecsFactory(revisionTagCodec).resolve(formatVersion);
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
@@ -92,23 +127,25 @@ export function makeV0Codec(
 		};
 	};
 
-	type FieldCodec = IMultiFormatCodec<
-		FieldChangeset,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>;
-
+	/**
+	 * The codec version for the generic field kind.
+	 */
+	const genericFieldKindFormatVersion = 1;
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
 			compiledSchema?: SchemaValidationFunction<TAnySchema>;
 			codec: FieldCodec;
 		}
-	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
+	> = new Map([
+		[
+			genericFieldKind.identifier,
+			getMapEntry({ kind: genericFieldKind, formatVersion: genericFieldKindFormatVersion }),
+		],
+	]);
 
-	fieldKinds.forEach((fieldKind, identifier) => {
-		fieldChangesetCodecs.set(identifier, getMapEntry(fieldKind));
+	fieldKinds.forEach((entry, identifier) => {
+		fieldChangesetCodecs.set(identifier, getMapEntry(entry));
 	});
 
 	const getFieldChangesetCodec = (
@@ -125,8 +162,29 @@ export function makeV0Codec(
 	function encodeFieldChangesForJson(
 		change: FieldChangeMap,
 		context: ChangeEncodingContext,
+		nodeChanges: ChangeAtomIdMap<NodeChangeset>,
+	): EncodedFieldChangeMap {
+		const fieldContext: FieldChangeEncodingContext = {
+			baseContext: context,
+
+			encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
+				const node = tryGetFromNestedMap(nodeChanges, nodeId.revision, nodeId.localId);
+				assert(node !== undefined, 0x92e /* Unknown node ID */);
+				return encodeNodeChangesForJson(node, fieldContext);
+			},
+
+			decodeNode: () => fail("Should not decode nodes during field encoding"),
+		};
+
+		return encodeFieldChangesForJsonI(change, fieldContext);
+	}
+
+	function encodeFieldChangesForJsonI(
+		change: FieldChangeMap,
+		context: FieldChangeEncodingContext,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
+
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
 			const encodedChange = codec.json.encode(fieldChange.change, context);
@@ -149,13 +207,13 @@ export function makeV0Codec(
 
 	function encodeNodeChangesForJson(
 		change: NodeChangeset,
-		context: ChangeEncodingContext,
+		context: FieldChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges, context);
+			encodedChange.fieldChanges = encodeFieldChangesForJsonI(fieldChanges, context);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -168,6 +226,32 @@ export function makeV0Codec(
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
 		context: ChangeEncodingContext,
+		idAllocator: IdAllocator,
+	): [FieldChangeMap, ChangeAtomIdMap<NodeChangeset>] {
+		const decodedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
+		const fieldContext: FieldChangeEncodingContext = {
+			baseContext: context,
+
+			encodeNode: () => fail("Should not encode nodes during field decoding"),
+
+			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
+				const node = decodeNodeChangesetFromJson(encodedNode, fieldContext);
+				const nodeId: NodeId = {
+					revision: context.revision,
+					localId: brand(idAllocator.allocate()),
+				};
+				setInNestedMap(decodedNodes, nodeId.revision, nodeId.localId, node);
+				return nodeId;
+			},
+		};
+
+		const decodedFields = decodeFieldChangesFromJsonI(encodedChange, fieldContext);
+		return [decodedFields, decodedNodes];
+	}
+
+	function decodeFieldChangesFromJsonI(
+		encodedChange: EncodedFieldChangeMap,
+		context: FieldChangeEncodingContext,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -190,13 +274,13 @@ export function makeV0Codec(
 
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
-		context: ChangeEncodingContext,
+		context: FieldChangeEncodingContext,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges, context);
+			decodedChange.fieldChanges = decodeFieldChangesFromJsonI(fieldChanges, context);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -206,16 +290,16 @@ export function makeV0Codec(
 		return decodedChange;
 	}
 
-	function encodeBuilds(
-		builds: ModularChangeset["builds"],
+	function encodeDetachedNodes(
+		detachedNodes: ChangeAtomIdMap<TreeChunk> | undefined,
 		context: ChangeEncodingContext,
 	): EncodedBuilds | undefined {
-		if (builds === undefined) {
+		if (detachedNodes === undefined) {
 			return undefined;
 		}
 
 		const treesToEncode: ITreeCursorSynchronous[] = [];
-		const buildsArray: EncodedBuildsArray = Array.from(builds.entries()).map(
+		const buildsArray: EncodedBuildsArray = Array.from(detachedNodes.entries()).map(
 			([r, commitBuilds]) => {
 				const commitBuildsEncoded: [ChangesetLocalId, number][] = Array.from(
 					commitBuilds.entries(),
@@ -227,30 +311,37 @@ export function makeV0Codec(
 				// `undefined` does not round-trip through JSON strings, so it needs special handling.
 				// Most entries will have an undefined revision due to the revision information being inherited from the `ModularChangeset`.
 				// We therefore optimize for the common case by omitting the revision when it is undefined.
-				return r !== undefined
-					? [commitBuildsEncoded, revisionTagCodec.encode(r, context)]
-					: [commitBuildsEncoded];
+				return r === undefined || r === context.revision
+					? [commitBuildsEncoded]
+					: [commitBuildsEncoded, revisionTagCodec.encode(r, context)];
 			},
 		);
 		return buildsArray.length === 0
 			? undefined
 			: {
 					builds: buildsArray,
-					trees: fieldsCodec.encode(treesToEncode, chunkEncodingContext),
+					trees: fieldsCodec.encode(treesToEncode, {
+						encodeType: chunkCompressionStrategy,
+						schema: context.schema,
+						idCompressor: context.idCompressor,
+					}),
 			  };
 	}
 
-	function decodeBuilds(
+	function decodeDetachedNodes(
 		encoded: EncodedBuilds | undefined,
 		context: ChangeEncodingContext,
-	): ModularChangeset["builds"] {
+	): ChangeAtomIdMap<TreeChunk> | undefined {
 		if (encoded === undefined || encoded.builds.length === 0) {
 			return undefined;
 		}
 
-		const chunks = fieldsCodec.decode(encoded.trees, chunkEncodingContext);
+		const chunks = fieldsCodec.decode(encoded.trees, {
+			encodeType: chunkCompressionStrategy,
+			idCompressor: context.idCompressor,
+		});
 		const getChunk = (index: number): TreeChunk => {
-			assert(index < chunks.length, "out of bounds index for build chunk");
+			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
 			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
 		};
 
@@ -258,7 +349,9 @@ export function makeV0Codec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined ? undefined : revisionTagCodec.decode(build[1], context);
+				build[1] === undefined
+					? context.revision
+					: revisionTagCodec.decode(build[1], context);
 			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
 		});
 
@@ -268,7 +361,18 @@ export function makeV0Codec(
 	function encodeRevisionInfos(
 		revisions: readonly RevisionInfo[],
 		context: ChangeEncodingContext,
-	): EncodedRevisionInfo[] {
+	): EncodedRevisionInfo[] | undefined {
+		if (context.revision !== undefined) {
+			assert(
+				revisions.length === 1 &&
+					revisions[0].revision === context.revision &&
+					revisions[0].rollbackOf === undefined,
+				0x964 /* A tagged change should only contain the tagged revision */,
+			);
+
+			return undefined;
+		}
+
 		const encodedRevisions = [];
 		for (const revision of revisions) {
 			const encodedRevision: Mutable<EncodedRevisionInfo> = {
@@ -286,9 +390,13 @@ export function makeV0Codec(
 	}
 
 	function decodeRevisionInfos(
-		revisions: readonly EncodedRevisionInfo[],
+		revisions: readonly EncodedRevisionInfo[] | undefined,
 		context: ChangeEncodingContext,
-	): RevisionInfo[] {
+	): RevisionInfo[] | undefined {
+		if (revisions === undefined) {
+			return context.revision !== undefined ? [{ revision: context.revision }] : undefined;
+		}
+
 		const decodedRevisions = [];
 		for (const revision of revisions) {
 			const decodedRevision: Mutable<RevisionInfo> = {
@@ -305,37 +413,54 @@ export function makeV0Codec(
 		return decodedRevisions;
 	}
 
-	// TODO: use withSchemaValidation here to validate data against format.
-	return {
+	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, "Unexpected changeset with destroys");
+			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
 			return {
 				maxId: change.maxId,
 				revisions:
 					change.revisions === undefined
-						? change.revisions
+						? undefined
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context),
-				builds: encodeBuilds(change.builds, context),
+				changes: encodeFieldChangesForJson(
+					change.fieldChanges,
+					context,
+					change.nodeChanges,
+				),
+				builds: encodeDetachedNodes(change.builds, context),
+				refreshers: encodeDetachedNodes(change.refreshers, context),
 			};
 		},
-		decode: (change, context) => {
-			const encodedChange = change as unknown as EncodedModularChangeset;
+
+		decode: (encodedChange: EncodedModularChangeset, context) => {
+			const [fieldChanges, nodeChanges] = decodeFieldChangesFromJson(
+				encodedChange.changes,
+				context,
+				idAllocatorFromMaxId(encodedChange.maxId),
+			);
 			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
+				fieldChanges,
+				nodeChanges,
 			};
+
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeBuilds(encodedChange.builds, context);
+				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
 			}
-			if (encodedChange.revisions !== undefined) {
-				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
+			if (encodedChange.refreshers !== undefined) {
+				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
+			}
+
+			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);
+			if (decodedRevInfos !== undefined) {
+				decoded.revisions = decodedRevInfos;
 			}
 			if (encodedChange.maxId !== undefined) {
 				decoded.maxId = encodedChange.maxId;
 			}
 			return decoded;
 		},
-		encodedSchema: EncodedModularChangeset,
 	};
+
+	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
 }

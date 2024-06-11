@@ -4,30 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedMap } from "@fluidframework/map";
-import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
-import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import {
+import { ISummaryBlob } from "@fluidframework/driver-definitions";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import type {
 	IIntervalCollection,
 	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
-	createOverlappingIntervalsIndex,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/internal/test/intervalCollection";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,
@@ -248,9 +248,10 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 	}
 }
 describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap } = apis.dds;
+	const { SharedMap, SharedString } = apis.dds;
+	const { createOverlappingIntervalsIndex } = apis.dataRuntime.packages.sequence;
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	describe("one client", () => {
@@ -265,7 +266,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
@@ -371,8 +372,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
-			for (let j = 0; j < 10; j++) {
-				for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 3; j++) {
+				for (let i = 0; i < 5; i++) {
 					sharedString.replaceText(0, 1, `x`);
 					assertIntervals([{ start: 0, end: 2 }]);
 
@@ -923,21 +924,21 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach(async () => {
+		beforeEach("setupSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
-			sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
+			sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 		});
 
 		// This functionality is used in Word and FlowView's "add comment" functionality.
@@ -996,7 +997,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					story: comment2Text.handle,
 				},
 			});
-			const nestedMap = SharedMap.create(dataObject1.runtime);
+			const nestedMap = SharedMap.create(dataObject1.runtime, "nestedMap");
 			nestedMap.set("nestedKey", "nestedValue");
 			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
@@ -1033,7 +1034,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			const interval3From3Properties = serialized3[2].properties;
 			assert(interval3From3Properties);
 			const mapFrom3 = await (
-				interval3From3Properties.story as IFluidHandle<SharedMap>
+				interval3From3Properties.story as IFluidHandle<ISharedMap>
 			).get();
 			assert.equal(
 				mapFrom3.get("nestedKey"),

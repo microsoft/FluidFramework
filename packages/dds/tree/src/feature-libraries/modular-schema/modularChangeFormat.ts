@@ -4,11 +4,12 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core/index.js";
+
+import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
-	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
+	brandedNumberType,
 } from "../../util/index.js";
 import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
@@ -22,24 +23,7 @@ export const EncodedChangeAtomId = Type.Union([
 	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
 	ChangesetLocalIdSchema,
 ]);
-
-const EncodedValueChange = Type.Object(
-	{
-		revision: Type.Optional(RevisionTagSchema),
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-	},
-	noAdditionalProps,
-);
-type EncodedValueChange = Static<typeof EncodedValueChange>;
-
-const EncodedValueConstraint = Type.Object(
-	{
-		value: Type.Optional(JsonCompatibleReadOnlySchema),
-		violated: Type.Boolean(),
-	},
-	noAdditionalProps,
-);
-type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
+export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 const EncodedFieldChange = Type.Object(
 	{
@@ -81,9 +65,7 @@ type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
 
 export const EncodedNodeChangeset = Type.Object(
 	{
-		valueChange: Type.Optional(EncodedValueChange),
 		fieldChanges: Type.Optional(EncodedFieldChangeMap),
-		valueConstraint: Type.Optional(EncodedValueConstraint),
 		nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 	},
 	noAdditionalProps,
@@ -149,6 +131,7 @@ export const EncodedModularChangeset = Type.Object(
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 		builds: Type.Optional(EncodedBuilds),
+		refreshers: Type.Optional(EncodedBuilds),
 	},
 	noAdditionalProps,
 );

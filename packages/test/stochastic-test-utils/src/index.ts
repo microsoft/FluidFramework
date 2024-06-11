@@ -3,16 +3,20 @@
  * Licensed under the MIT License.
  */
 
-export { combineReducers, combineReducersAsync } from "./combineReducers";
+export { combineReducers, combineReducersAsync } from "./combineReducers.js";
 export {
 	createFuzzDescribe,
+	CreateMochaSuite,
 	defaultOptions,
 	DescribeFuzz,
 	describeFuzz,
-	DescribeFuzzSuite,
+	DescribeStress,
+	describeStress,
 	FuzzDescribeOptions,
 	FuzzSuiteArguments,
-} from "./describeFuzz";
+	MochaSuiteWithArguments,
+	StressSuiteArguments,
+} from "./describeFuzz.js";
 export {
 	asyncGeneratorFromArray,
 	chain,
@@ -29,15 +33,15 @@ export {
 	repeatAsync,
 	take,
 	takeAsync,
-} from "./generators";
+} from "./generators.js";
 export {
 	MarkovChain,
 	PerformanceWordMarkovChain,
 	SpaceEfficientWordMarkovChain,
 	WordSpacing,
-} from "./markovChain";
-export { performFuzzActions, performFuzzActionsAsync, saveOpsToFile } from "./performActions";
-export { makeRandom } from "./random";
+} from "./markovChain.js";
+export { performFuzzActions, performFuzzActionsAsync, saveOpsToFile } from "./performActions.js";
+export { makeRandom } from "./random.js";
 export {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -49,6 +53,7 @@ export {
 	IRandom,
 	Reducer,
 	SaveInfo,
+	SaveDestination,
 	Weights,
-} from "./types";
-export { XSadd, XSaddCtor } from "./xsadd";
+} from "./types.js";
+export { XSadd, XSaddCtor } from "./xsadd.js";

@@ -4,15 +4,16 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import type {
 	DataTransformationCallback,
 	ISameContainerMigratableModel,
 	ISameContainerMigrator,
 	ISameContainerMigratorEvents,
 	SameContainerMigrationState,
-} from "../migrationInterfaces";
-import type { IModelLoader, IDetachedModel } from "../modelLoader";
+} from "../migrationInterfaces/index.js";
+import type { IDetachedModel, IModelLoader } from "../modelLoader/index.js";
 
 // TODO: Note that this class is far from the expected state - it effectively does nothing since takeAppropriateActionForCurrentMigratable is commented out.
 // Eventually it will be in charge of extracting the v1 data and calling migrationTool.finalizeMigration() with the transformed summary, but for now it's probably best to ignore it.

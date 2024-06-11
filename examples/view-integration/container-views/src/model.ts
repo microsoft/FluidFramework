@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IValueChanged } from "@fluidframework/map";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IValueChanged } from "@fluidframework/map/internal";
 
-import { IDiceRoller } from "./interface";
+import { IDiceRoller } from "./interface.js";
 
 const diceValueKey = "diceValue";
 

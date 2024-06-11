@@ -5,13 +5,13 @@
 
 import {
 	Divider,
-	makeStyles,
 	type SelectTabData,
 	type SelectTabEvent,
-	shorthands,
 	Tab,
 	TabList,
 	type TabValue,
+	makeStyles,
+	shorthands,
 } from "@fluentui/react-components";
 import {
 	type ContainerDevtoolsFeatureFlags,
@@ -21,17 +21,18 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
-import { useLogger } from "../TelemetryUtils";
-import { AudienceView } from "./AudienceView";
-import { ContainerHistoryView } from "./ContainerHistoryView";
-import { ContainerSummaryView } from "./ContainerSummaryView";
-import { DataObjectsView } from "./DataObjectsView";
-import { Waiting } from "./Waiting";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+
+import { AudienceView } from "./AudienceView.js";
+import { ContainerHistoryView } from "./ContainerHistoryView.js";
+import { ContainerSummaryView } from "./ContainerSummaryView.js";
+import { DataObjectsView } from "./DataObjectsView.js";
+import { Waiting } from "./Waiting.js";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -155,9 +156,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
-		supportedFeatures.containerDataVisualization === true ||
-			// Backwards compatibility check, needed until we require at least devtools-core/devtools v2.0.0-internal.6.1.0
-			supportedFeatures["container-data"] === true
+		supportedFeatures.containerDataVisualization === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
 	);

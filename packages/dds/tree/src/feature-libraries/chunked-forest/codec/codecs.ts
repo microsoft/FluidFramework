@@ -3,28 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { CursorLocationType, StoredSchemaCollection } from "../../../core/index.js";
-import { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
-import { FullSchemaPolicy } from "../../modular-schema/index.js";
+import { CursorLocationType, SchemaAndPolicy } from "../../../core/index.js";
+import { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
+
 import { decode } from "./chunkDecoding.js";
-import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { FieldBatch } from "./fieldBatch.js";
+import { EncodedFieldBatch, validVersions } from "./format.js";
+import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
+	readonly idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
-
-export interface SchemaAndPolicy {
-	readonly schema: StoredSchemaCollection;
-	readonly policy: FullSchemaPolicy;
-}
-
+/**
+ * @remarks
+ * Fields in this batch currently don't have field schema for the root, which limits optimizations.
+ */
 export type FieldBatchCodec = IJsonCodec<
 	FieldBatch,
 	EncodedFieldBatch,
@@ -32,18 +33,19 @@ export type FieldBatchCodec = IJsonCodec<
 	FieldBatchEncodingContext
 >;
 
-export function makeFieldBatchCodec(options: ICodecOptions): FieldBatchCodec {
+export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number): FieldBatchCodec {
 	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
 	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
 	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
 	// yet to receive that change).
+	assert(validVersions.has(writeVersion), 0x935 /* Invalid write version for FieldBatch codec */);
 
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
-					"FieldBatch expects fields cursors",
+					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
 			let encoded: EncodedFieldBatch;
@@ -58,6 +60,7 @@ export function makeFieldBatchCodec(options: ICodecOptions): FieldBatchCodec {
 							context.schema.schema,
 							context.schema.policy,
 							data,
+							context.idCompressor,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -72,9 +75,9 @@ export function makeFieldBatchCodec(options: ICodecOptions): FieldBatchCodec {
 			// TODO: consider checking input data was in schema.
 			return encoded;
 		},
-		decode: (data: EncodedFieldBatch): FieldBatch => {
+		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data).map((chunk) => chunk.cursor());
+			return decode(data, context.idCompressor).map((chunk) => chunk.cursor());
 		},
 	});
 }

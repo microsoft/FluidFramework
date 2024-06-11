@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
-import { pkgName } from "./packageVersion";
+
+import { pkgName } from "./packageVersion.js";
 
 // this will enabling capturing the full stack for errors
 // since this is test capturing the full stack is worth it
@@ -110,6 +111,8 @@ export const mochaHooks = {
 			timedOut: this.currentTest?.timedOut,
 			testVariant,
 			hostName: pkgName,
+			error: this.currentTest?.err?.message,
+			stack: this.currentTest?.err?.stack,
 		});
 
 		console.log = log;

@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { capitalize, transformObjectMap } from "../../util/index.js";
+
+import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
+import { benchmark } from "@fluid-tools/benchmark";
 
 describe("Utils", () => {
 	it("capitalize", () => {
@@ -28,5 +30,24 @@ describe("Utils", () => {
 			transformObjectMap({ a: "b", c: "d" }, (value, key) => `${key}${value}`),
 			Object.assign(Object.create(null), { a: "ab", c: "cd" }),
 		);
+	});
+
+	const testMap: Map<number, number> = new Map();
+	for (let index = 0; index < 1000; index++) {
+		testMap.set(index, index * 2);
+	}
+
+	benchmark({
+		title: `map from map spread`,
+		benchmarkFn: () => {
+			const m = new Map([...testMap].map(([k, v]) => [k, v] as const));
+		},
+	});
+
+	benchmark({
+		title: `map from mapIterable`,
+		benchmarkFn: () => {
+			const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
+		},
 	});
 });

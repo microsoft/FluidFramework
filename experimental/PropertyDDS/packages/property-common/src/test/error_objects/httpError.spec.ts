@@ -8,6 +8,7 @@
  */
 
 import { expect } from "chai";
+
 import { HTTPError } from "../..";
 
 describe("property-common.HTTPError", function () {

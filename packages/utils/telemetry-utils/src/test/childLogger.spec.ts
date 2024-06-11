@@ -4,13 +4,15 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger";
-import { MockLogger } from "../mockLogger";
+
+import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
+import { MockLogger } from "../mockLogger.js";
 
 describe("ChildLogger", () => {
 	it("Properties & Getters Propagate", () => {

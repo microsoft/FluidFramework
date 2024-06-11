@@ -6,35 +6,39 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
-
-import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { loadContainerPaused } from "@fluidframework/container-loader/internal";
+import {
+	DefaultSummaryConfiguration,
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	createLoader,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	timeoutPromise,
+	createLoader,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
+
+import { wrapObjectAndOverride } from "../mocking.js";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
-	opsBeforeReturn: [undefined, "sequenceNumber", "cached", "all"],
-	pauseAfterLoad: [undefined, true, false],
+	opsBeforeReturn: [undefined, "cached", "all"],
 });
 
 const testConfigs = generatePairwiseOptions({
 	loadOptions,
 	waitForSummary: [true, false],
+	opsUpToSeqNumber: [true, false, undefined],
 });
 
 const maxOps = 10;
@@ -183,6 +187,10 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 	for (const testConfig of testConfigs) {
 		it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function () {
 			const provider = getTestObjectProvider();
+			// REVIEW: enable CrossVersion compat testing?
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			switch (provider.driver.type) {
 				case "local":
 					break;
@@ -213,35 +221,20 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 				const validationDataObject =
 					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
-				const storageOnlyDsF: IDocumentServiceFactory = {
-					createContainer: provider.documentServiceFactory.createContainer.bind(
-						provider.documentServiceFactory,
-					),
-					createDocumentService: async (
-						resolvedUrl: IResolvedUrl,
-						logger?: ITelemetryBaseLogger,
-					) =>
-						new Proxy(
-							await provider.documentServiceFactory.createDocumentService(
-								resolvedUrl,
-								logger,
-							),
-							{
-								get: (target, prop: keyof IDocumentService, r) => {
-									if (prop === "policies") {
-										const policies: IDocumentService["policies"] = {
-											...target.policies,
-											storageOnly: true,
-										};
-										return policies;
-									}
-
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Reflection
-									return Reflect.get(target, prop, r);
-								},
+				const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							policies: (ds) => {
+								const policies: IDocumentService["policies"] = {
+									...ds.policies,
+									storageOnly: true,
+								};
+								return policies;
 							},
-						),
-				};
+						},
+					},
+				);
 
 				const storageOnlyLoader = createLoader(
 					[
@@ -254,32 +247,49 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 					provider.urlResolver,
 				);
 
-				// Define sequenceNumber if opsBeforeReturn is set to "sequenceNumber", otherwise leave undefined
-				const sequenceNumber =
-					testConfig.loadOptions.opsBeforeReturn === "sequenceNumber"
+				if (testConfig.opsUpToSeqNumber !== undefined) {
+					// Define sequenceNumber if opsUpToSeqNumber is set, otherwise leave undefined
+					const sequenceNumber = testConfig.opsUpToSeqNumber
 						? lastKnownSeqNum
 						: undefined;
-
-				const storageOnlyContainer = await storageOnlyLoader.resolve({
-					url: containerUrl,
-					headers: {
-						[LoaderHeader.loadMode]: testConfig.loadOptions,
-						[LoaderHeader.sequenceNumber]: sequenceNumber,
-					},
-				});
-
-				const deltaManager = storageOnlyContainer.deltaManager;
-
-				const loadedSeqNum = deltaManager.lastSequenceNumber;
-				if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
-					// We should have at loaded to at least the specified sequence number.
-					assert.ok(
-						loadedSeqNum >= lastKnownSeqNum,
-						"loadedSeqNum >= lastSequenceNumber",
+					const storageOnlyContainer = await loadContainerPaused(
+						storageOnlyLoader,
+						{
+							url: containerUrl,
+							headers: {
+								[LoaderHeader.loadMode]: testConfig.loadOptions,
+							},
+						},
+						sequenceNumber,
 					);
-				}
 
-				if (testConfig.loadOptions.pauseAfterLoad !== true) {
+					const deltaManager = storageOnlyContainer.deltaManager;
+					const loadedSeqNum = deltaManager.lastSequenceNumber;
+
+					if (testConfig.opsUpToSeqNumber === true) {
+						// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
+						assert.strictEqual(
+							loadedSeqNum,
+							lastKnownSeqNum,
+							"loadedSeqNum === lastKnownSeqNum",
+						);
+					}
+					// The sequence number should still be the same as when we loaded.
+					assert.strictEqual(
+						deltaManager.lastSequenceNumber,
+						loadedSeqNum,
+						"deltaManager.lastSequenceNumber === loadedSeqNum",
+					);
+				} else {
+					const storageOnlyContainer = await storageOnlyLoader.resolve({
+						url: containerUrl,
+						headers: {
+							[LoaderHeader.loadMode]: testConfig.loadOptions,
+						},
+					});
+
+					const deltaManager = storageOnlyContainer.deltaManager;
+
 					storageOnlyContainer.connect();
 					assert.strictEqual(deltaManager.active, false, "deltaManager.active");
 					assert.ok(
@@ -308,21 +318,6 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 							)} !== ${storageOnlyDataObject.root.get(key)}`,
 						);
 					}
-				} else {
-					if (testConfig.loadOptions.opsBeforeReturn === "sequenceNumber") {
-						// If we tried to freeze after loading a specific sequence number, the loaded sequence number should be the same as the last known sequence number.
-						assert.strictEqual(
-							loadedSeqNum,
-							lastKnownSeqNum,
-							"loadedSeqNum === lastKnownSeqNum",
-						);
-					}
-					// The sequence number should still be the same as when we loaded.
-					assert.strictEqual(
-						deltaManager.lastSequenceNumber,
-						loadedSeqNum,
-						"deltaManager.lastSequenceNumber === loadedSeqNum",
-					);
 				}
 			}
 		});

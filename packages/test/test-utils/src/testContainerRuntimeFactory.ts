@@ -3,26 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FluidObject,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+	// eslint-disable-next-line import/no-deprecated
+	RuntimeRequestHandler,
+	// eslint-disable-next-line import/no-deprecated
+	buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
-import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 interface backCompat_IFluidRouter {
 	IFluidRouter?: backCompat_IFluidRouter;
@@ -77,18 +78,28 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
+			// eslint-disable-next-line import/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
 			super();
 		}
 
 		public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-			const rootContext = runtime.createDetachedRootDataStore([this.type], "default");
+			// Back-compat - old code does not return IDataStore for rootContext.attachRuntime() call!
+			// Thus need to leverage old API createDetachedRootDataStore() that is gone in latest releases.
+			const rootContext =
+				"createDetachedRootDataStore" in runtime
+					? (runtime as any).createDetachedRootDataStore([this.type], "default")
+					: runtime.createDetachedDataStore([this.type]);
+
 			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
 				rootContext,
 				/* existing */ false,
 			);
-			await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+			const dataStore = await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+
+			const result = await dataStore?.trySetAlias("default");
+			assert(result === "Success" || result === undefined, "success");
 		}
 
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
@@ -120,6 +131,7 @@ export const createTestContainerRuntimeFactory = (
 						["default", Promise.resolve(this.dataStoreFactory)],
 						[this.type, Promise.resolve(this.dataStoreFactory)],
 					],
+					// eslint-disable-next-line import/no-deprecated
 					buildRuntimeRequestHandler(
 						backCompat_DefaultRouteRequestHandler("default"),
 						...this.requestHandlers,
@@ -153,6 +165,7 @@ export const createTestContainerRuntimeFactory = (
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
+				// eslint-disable-next-line import/no-deprecated
 				requestHandler: buildRuntimeRequestHandler(
 					getDefaultObject,
 					...this.requestHandlers,

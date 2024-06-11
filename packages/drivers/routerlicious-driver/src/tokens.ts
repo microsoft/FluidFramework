@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { ITokenClaims } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Abstracts the discovery of claims contained within a token.
@@ -87,8 +87,7 @@ export interface ITokenProvider {
 	 *
 	 * * Using the callback may have performance impact on the document creation process.
 	 *
-	 * * Any exceptions thrown in the callback would fail the creation workflow
-	 * (see {@link RouterliciousDocumentServiceFactory.createContainer} for more details).
+	 * * Any exceptions thrown in the callback would fail the creation workflow.
 	 *
 	 * @param documentId - Document ID.
 	 * @param creationToken - A special token that doesn't provide any kind of access, but it has the user's payload

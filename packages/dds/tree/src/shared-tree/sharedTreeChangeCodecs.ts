@@ -4,29 +4,66 @@
  */
 
 import {
-	IJsonCodec,
-	ICodecOptions,
-	ICodecFamily,
-	makeCodecFamily,
 	DiscriminatedUnionDispatcher,
+	ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	makeCodecFamily,
+	withSchemaValidation,
 } from "../codec/index.js";
-import { ChangeEncodingContext } from "../core/index.js";
-import { Mutable } from "../util/index.js";
+import { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
-	EncodedModularChangeset,
 	ModularChangeset,
-	makeSchemaChangeCodec,
+	type SchemaChange,
+	defaultSchemaPolicy,
+	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
-import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
-import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
+import { type JsonCompatibleReadOnly, Mutable } from "../util/index.js";
 
-export function makeSharedTreeChangeCodec(
+import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
+import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+
+export function makeSharedTreeChangeCodecFamily(
+	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	options: ICodecOptions,
+): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
+	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
+	return makeCodecFamily([
+		[
+			1,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(1).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
+		[
+			2,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(2).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
+		[
+			3,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(3).json,
+				schemaChangeCodecs.resolve(1).json,
+				options,
+			),
+		],
+	]);
+}
+
+function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<
 		ModularChangeset,
-		EncodedModularChangeset,
-		EncodedModularChangeset,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
 		ChangeEncodingContext
 	>,
+	schemaChangeCodec: IJsonCodec<SchemaChange>,
 	codecOptions: ICodecOptions,
 ): IJsonCodec<
 	SharedTreeChange,
@@ -34,8 +71,6 @@ export function makeSharedTreeChangeCodec(
 	EncodedSharedTreeChange,
 	ChangeEncodingContext
 > {
-	const schemaChangeCodec = makeSchemaChangeCodec(codecOptions);
-
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		EncodedSharedTreeInnerChange,
 		[context: ChangeEncodingContext],
@@ -55,41 +90,49 @@ export function makeSharedTreeChangeCodec(
 		},
 	});
 
-	return {
-		encode: (change, context) => {
-			const changes: EncodedSharedTreeInnerChange[] = [];
-			for (const decodedChange of change.changes) {
-				if (decodedChange.type === "data") {
-					changes.push({
-						data: modularChangeCodec.encode(decodedChange.innerChange, context),
-					});
-				} else if (decodedChange.type === "schema") {
-					changes.push({
-						schema: schemaChangeCodec.encode(decodedChange.innerChange),
-					});
+	return withSchemaValidation(
+		EncodedSharedTreeChange,
+		{
+			encode: (change, context) => {
+				const changes: EncodedSharedTreeInnerChange[] = [];
+				let updatedSchema: TreeStoredSchema | undefined;
+				for (const decodedChange of change.changes) {
+					if (decodedChange.type === "data") {
+						const schemaAndPolicy =
+							updatedSchema !== undefined
+								? {
+										policy:
+											context.schema !== undefined
+												? context.schema.policy
+												: defaultSchemaPolicy,
+										schema: updatedSchema,
+								  }
+								: context.schema;
+						changes.push({
+							data: modularChangeCodec.encode(decodedChange.innerChange, {
+								originatorId: context.originatorId,
+								schema: schemaAndPolicy,
+								idCompressor: context.idCompressor,
+								revision: context.revision,
+							}),
+						});
+					} else if (decodedChange.type === "schema") {
+						changes.push({
+							schema: schemaChangeCodec.encode(decodedChange.innerChange),
+						});
+						updatedSchema = decodedChange.innerChange.schema.new;
+					}
 				}
-			}
-			return changes;
+				return changes;
+			},
+			decode: (encodedChange, context) => {
+				const changes: Mutable<SharedTreeChange["changes"]> = [];
+				for (const subChange of encodedChange) {
+					changes.push(decoderLibrary.dispatch(subChange, context));
+				}
+				return { changes };
+			},
 		},
-		decode: (encodedChange, context) => {
-			const changes: Mutable<SharedTreeChange["changes"]> = [];
-			for (const subChange of encodedChange) {
-				changes.push(decoderLibrary.dispatch(subChange, context));
-			}
-			return { changes };
-		},
-		encodedSchema: EncodedSharedTreeChange,
-	};
-}
-
-export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodec: IJsonCodec<
-		ModularChangeset,
-		EncodedModularChangeset,
-		EncodedModularChangeset,
-		ChangeEncodingContext
-	>,
-	options: ICodecOptions,
-): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
-	return makeCodecFamily([[0, makeSharedTreeChangeCodec(modularChangeCodec, options)]]);
+		codecOptions.jsonValidator,
+	);
 }

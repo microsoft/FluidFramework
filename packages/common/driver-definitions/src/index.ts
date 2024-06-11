@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	DriverError,
-	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,
 	IDriverErrorBase,
@@ -13,9 +12,9 @@ export {
 	IGenericNetworkError,
 	ILocationRedirectionError,
 	IThrottlingWarning,
-} from "./driverError";
-export {
-	FetchSource,
+} from "./driverError.js";
+export { DriverErrorTypes } from "./driverError.js";
+export type {
 	FiveDaysMs,
 	IDeltasFetchResult,
 	IDeltaStorageService,
@@ -23,20 +22,112 @@ export {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	IStream,
 	IStreamResult,
 	ISummaryContext,
-	LoaderCachingPolicy,
-} from "./storage";
-export {
+} from "./storage.js";
+export { FetchSource, LoaderCachingPolicy } from "./storage.js";
+export type {
 	DriverPreCheckInfo,
-	DriverHeader,
 	IContainerPackageInfo,
 	IDriverHeader,
 	IResolvedUrl,
 	IUrlResolver,
-} from "./urlResolver";
+} from "./urlResolver.js";
+export { DriverHeader } from "./urlResolver.js";
+
+export type {
+	ConnectionMode,
+	IActorClient,
+	IApprovedProposal,
+	IAttachment,
+	IBlob,
+	IBranchOrigin,
+	ICapabilities,
+	IClient,
+	IClientConfiguration,
+	IClientDetails,
+	IClientJoin,
+	ICommittedProposal,
+	IConnect,
+	IConnected,
+	ICreateBlobResponse,
+	IDocumentAttributes,
+	IDocumentMessage,
+	IDocumentSystemMessage,
+	INack,
+	INackContent,
+	IProcessMessageResult,
+	IProposal,
+	IProtocolState,
+	IQuorum,
+	IQuorumClients,
+	IQuorumClientsEvents,
+	IQuorumEvents,
+	IQuorumProposals,
+	IQuorumProposalsEvents,
+	ISentSignalMessage,
+	ISequencedClient,
+	ISequencedDocumentAugmentedMessage,
+	ISequencedDocumentMessage,
+	ISequencedDocumentMessageExperimental,
+	ISequencedDocumentSystemMessage,
+	ISequencedProposal,
+	IServerError,
+	ISignalClient,
+	ISignalMessage,
+	ISignalMessageBase,
+	ISnapshotTree,
+	ISnapshotTreeEx,
+	IsoDate,
+	ISummaryAck,
+	ISummaryAttachment,
+	ISummaryBlob,
+	ISummaryContent,
+	ISummaryHandle,
+	ISummaryNack,
+	ISummaryProposal,
+	ISummaryTokenClaims,
+	ISummaryTree,
+	ITokenClaims,
+	ITokenProvider,
+	ITokenService,
+	ITrace,
+	ITree,
+	ITreeEntry,
+	IUploadedSummaryDetails,
+	IUser,
+	IVersion,
+	SummaryObject,
+	SummaryTree,
+	SummaryTypeNoHandle,
+} from "./protocol/index.js";
+export {
+	FileMode,
+	MessageType,
+	NackErrorType,
+	ScopeType,
+	SignalType,
+	SummaryType,
+	TreeEntry,
+} from "./protocol/index.js";
+export type {
+	IGitAuthor,
+	IGitBlob,
+	IGitCommitDetails,
+	IGitCommitHash,
+	IGitCommitter,
+	IGitCreateBlobParams,
+	IGitCreateBlobResponse,
+	IGitCreateTreeEntry,
+	IGitCreateTreeParams,
+	IGitTree,
+	IGitTreeEntry,
+} from "./git/index.js";

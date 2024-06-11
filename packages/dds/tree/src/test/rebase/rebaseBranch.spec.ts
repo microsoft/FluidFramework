@@ -4,7 +4,9 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 // Allow importing from these specific files which are being tested:
 import {
 	GraphCommit,
@@ -103,12 +105,16 @@ describe("rebaseBranch", () => {
 			newSourceHead: n3_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3, n1);
 		assert.equal(n3_1, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
 		assert.deepEqual(commits.targetCommits, []);
 		assert.deepEqual(commits.sourceCommits, [n2, n3]);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 0);
+		assert.equal(telemetryProperties.countDropped, 0);
 	});
 
 	it("can rebase a branch onto the head of another branch", () => {
@@ -126,17 +132,29 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n3);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
-			{ inputContext: [1, 2, 3], intentions: [4], outputContext: [1, 2, 3, 4] },
-			{ inputContext: [1, 2, 3, 4], intentions: [5], outputContext: [1, 2, 3, 4, 5] },
+			{
+				inputContext: [1, 2, 3],
+				intentions: [4],
+				outputContext: [1, 2, 3, 4],
+			},
+			{
+				inputContext: [1, 2, 3, 4],
+				intentions: [5],
+				outputContext: [1, 2, 3, 4, 5],
+			},
 		);
 		assertOutputContext(sourceChange, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 2);
+		assert.equal(telemetryProperties.countDropped, 0);
 	});
 
 	it("can rebase a branch onto the middle of another branch", () => {
@@ -154,17 +172,29 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n3);
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
-			{ inputContext: [1, 2], intentions: [4], outputContext: [1, 2, 4] },
-			{ inputContext: [1, 2, 4], intentions: [5], outputContext: [1, 2, 4, 5] },
+			{
+				inputContext: [1, 2],
+				intentions: [4],
+				outputContext: [1, 2, 4],
+			},
+			{
+				inputContext: [1, 2, 4],
+				intentions: [5],
+				outputContext: [1, 2, 4, 5],
+			},
 		);
 		assertOutputContext(sourceChange, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 1);
+		assert.equal(telemetryProperties.countDropped, 0);
 	});
 
 	it("skips and advances over commits with the same revision tag", () => {
@@ -184,6 +214,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n4);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
@@ -195,6 +226,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 3);
+		assert.equal(telemetryProperties.rebaseDistance, 2);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 
 	it("correctly rebases over branches that share some commits", () => {
@@ -214,6 +248,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n5_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n4);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
@@ -225,6 +260,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.sourceCommits, newPath);
+		assert.equal(telemetryProperties.sourceBranchLength, 3);
+		assert.equal(telemetryProperties.rebaseDistance, 3);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 
 	it("rebases the source branch farther than `newBase` if the source branch's next commits after `newBase` match those on the target branch", () => {
@@ -245,6 +283,7 @@ describe("rebaseBranch", () => {
 			newSourceHead: n6_1,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n6, n2, n5);
 		const newPath = getPath(n2, n6_1);
 		assertChanges(
@@ -257,6 +296,9 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n3_1, n4_1, n6]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.sourceCommits, [n6_1]);
+		assert.equal(telemetryProperties.sourceBranchLength, 3);
+		assert.equal(telemetryProperties.rebaseDistance, 3);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 
 	it("reports no change for equivalent branches", () => {
@@ -275,12 +317,16 @@ describe("rebaseBranch", () => {
 			newSourceHead: n3_2,
 			sourceChange,
 			commits,
+			telemetryProperties,
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n3_1, n3, n4);
 		assert.equal(n3_2, n3);
 		assert.equal(sourceChange, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.sourceCommits, []);
+		assert.equal(telemetryProperties.sourceBranchLength, 2);
+		assert.equal(telemetryProperties.rebaseDistance, 2);
+		assert.equal(telemetryProperties.countDropped, 2);
 	});
 });
 

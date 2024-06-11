@@ -3,30 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+
+import { defaultSchemaPolicy } from "./default-schema/index.js";
+import { FlexFieldKind } from "./modular-schema/index.js";
 import {
+	Any,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexList,
+	FlexMapFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	SchemaCollection,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
+	TreeNodeSchemaBase,
+	Unenforced,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
-	AllowedTypes,
-	FlexTreeNodeSchema,
-	TreeFieldSchema,
-	FlexTreeSchema,
-	FlexList,
-	Unenforced,
-	Any,
-	MapFieldSchema,
-	SchemaCollection,
-	ObjectNodeSchema,
-	MapNodeSchema,
-	FieldNodeSchema,
-	TreeNodeSchemaBase,
 } from "./typed-schema/index.js";
-import { FieldKind } from "./modular-schema/index.js";
-import { defaultSchemaPolicy } from "./default-schema/index.js";
 
 /**
  * Configuration for a SchemaBuilder.
@@ -77,7 +79,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
  */
 export class SchemaBuilderBase<
 	TScope extends string,
-	TDefaultKind extends FieldKind,
+	TDefaultKind extends FlexFieldKind,
 	TName extends number | string = string,
 > {
 	private readonly lintConfiguration: SchemaLintConfiguration;
@@ -96,7 +98,7 @@ export class SchemaBuilderBase<
 	public readonly name: string;
 
 	/**
-	 * @param defaultKind - The default field kind to use when inferring a {@link TreeFieldSchema} from {@link ImplicitAllowedTypes}.
+	 * @param defaultKind - The default field kind to use when inferring a {@link FlexFieldSchema} from {@link FlexImplicitAllowedTypes}.
 	 */
 	public constructor(
 		private readonly defaultKind: TDefaultKind,
@@ -125,7 +127,7 @@ export class SchemaBuilderBase<
 	 * Contents within the added libraries can still conflict however.
 	 * Such errors will be reported when finalizing this builder into a library of document schema.
 	 */
-	private addLibraries(...libraries: SchemaLibrary[]) {
+	private addLibraries(...libraries: SchemaLibrary[]): void {
 		for (const libs of libraries) {
 			for (const lib of libs.libraries) {
 				this.libraries.add(lib);
@@ -138,7 +140,7 @@ export class SchemaBuilderBase<
 		this.treeNodeSchema.set(schema.name, schema);
 	}
 
-	private finalizeCommon(field?: TreeFieldSchema): SchemaLibraryData {
+	private finalizeCommon(field?: FlexFieldSchema): SchemaLibraryData {
 		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
@@ -169,7 +171,7 @@ export class SchemaBuilderBase<
 	 * @remarks
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public intoSchema<const TSchema extends ImplicitFieldSchema>(
+	public intoSchema<const TSchema extends FlexImplicitFieldSchema>(
 		root: TSchema,
 	): FlexTreeSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
@@ -186,24 +188,24 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link ObjectNodeSchema}.
+	 * Define (and add to this library) a {@link FlexObjectNodeSchema}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
 	public object<
 		const Name extends TName,
-		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		const T extends RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>,
 	>(
 		name: Name,
 		t: T,
-	): ObjectNodeSchema<
+	): FlexObjectNodeSchema<
 		`${TScope}.${Name}`,
 		{ [key in keyof T]: NormalizeField<T[key], TDefaultKind> }
 	> {
-		const schema = ObjectNodeSchema.create(
+		const schema = FlexObjectNodeSchema.create(
 			this,
 			this.scoped(name),
-			transformObjectMap(t, (field): TreeFieldSchema => this.normalizeField(field)) as {
+			transformObjectMap(t, (field): FlexFieldSchema => this.normalizeField(field)) as {
 				[key in keyof T]: NormalizeField<T[key], TDefaultKind>;
 			},
 		);
@@ -221,22 +223,22 @@ export class SchemaBuilderBase<
 	 */
 	public objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-	>(name: Name, t: T): ObjectNodeSchema<`${TScope}.${Name}`, T> {
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>>,
+	>(name: Name, t: T): FlexObjectNodeSchema<`${TScope}.${Name}`, T> {
 		return this.object(
 			name,
-			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-		) as unknown as ObjectNodeSchema<`${TScope}.${Name}`, T>;
+			t as unknown as RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>,
+		) as unknown as FlexObjectNodeSchema<`${TScope}.${Name}`, T>;
 	}
 
 	/**
-	 * Define (and add to this library) a {@link MapNodeSchema}.
+	 * Define (and add to this library) a {@link FlexMapNodeSchema}.
 	 */
-	public map<Name extends TName, const T extends MapFieldSchema>(
+	public map<Name extends TName, const T extends FlexMapFieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): MapNodeSchema<`${TScope}.${Name}`, T> {
-		const schema = MapNodeSchema.create(this, this.scoped(name), fieldSchema);
+	): FlexMapNodeSchema<`${TScope}.${Name}`, T> {
+		const schema = FlexMapNodeSchema.create(this, this.scoped(name), fieldSchema);
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -249,15 +251,15 @@ export class SchemaBuilderBase<
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(
+	public mapRecursive<Name extends TName, const T extends Unenforced<FlexMapFieldSchema>>(
 		name: Name,
 		t: T,
-	): MapNodeSchema<`${TScope}.${Name}`, T> {
-		return this.map(name, t as MapFieldSchema) as MapNodeSchema<`${TScope}.${Name}`, T>;
+	): FlexMapNodeSchema<`${TScope}.${Name}`, T> {
+		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<`${TScope}.${Name}`, T>;
 	}
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema}.
+	 * Define (and add to this library) a {@link FlexFieldNodeSchema}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *
@@ -265,11 +267,11 @@ export class SchemaBuilderBase<
 	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
 	 * TODO: Maybe find a better name for this.
 	 */
-	public fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(
+	public fieldNode<Name extends TName, const T extends FlexImplicitFieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): FieldNodeSchema<`${TScope}.${Name}`, NormalizeField<T, TDefaultKind>> {
-		const schema = FieldNodeSchema.create(
+	): FlexFieldNodeSchema<`${TScope}.${Name}`, NormalizeField<T, TDefaultKind>> {
+		const schema = FlexFieldNodeSchema.create(
 			this,
 			this.scoped(name),
 			this.normalizeField(fieldSchema),
@@ -286,23 +288,23 @@ export class SchemaBuilderBase<
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
-		name: Name,
-		t: T,
-	): FieldNodeSchema<`${TScope}.${Name}`, T> {
-		return this.fieldNode(name, t as ImplicitFieldSchema) as FieldNodeSchema<
+	public fieldNodeRecursive<
+		Name extends TName,
+		const T extends Unenforced<FlexImplicitFieldSchema>,
+	>(name: Name, t: T): FlexFieldNodeSchema<`${TScope}.${Name}`, T> {
+		return this.fieldNode(name, t as FlexImplicitFieldSchema) as FlexFieldNodeSchema<
 			`${TScope}.${Name}`,
 			T
 		>;
 	}
 
 	/**
-	 * Define a {@link TreeFieldSchema}.
+	 * Define a {@link FlexFieldSchema}.
 	 *
 	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
-	 * @returns a {@link TreeFieldSchema} which can be used as a object field (see {@link SchemaBuilderBase.object}),
+	 * @returns a {@link FlexFieldSchema} which can be used as a object field (see {@link SchemaBuilderBase.object}),
 	 * a map field (see {@link SchemaBuilderBase.map}), a field node (see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.intoSchema}).
 	 *
 	 * @privateRemarks
@@ -310,11 +312,11 @@ export class SchemaBuilderBase<
 	 * If a solution to TreeFieldSchema not being able to have extends clauses gets found,
 	 * consider just having users do `new TreeFieldSchema` instead?
 	 */
-	public static field<Kind extends FieldKind, T extends ImplicitAllowedTypes>(
+	public static field<Kind extends FlexFieldKind, T extends FlexImplicitAllowedTypes>(
 		kind: Kind,
 		allowedTypes: T,
-	): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>> {
-		return TreeFieldSchema.create(kind, normalizeAllowedTypes(allowedTypes));
+	): FlexFieldSchema<Kind, NormalizeAllowedTypes<T>> {
+		return FlexFieldSchema.create(kind, normalizeAllowedTypes(allowedTypes));
 	}
 
 	/**
@@ -328,17 +330,17 @@ export class SchemaBuilderBase<
 	 * TODO: Try and find a way to provide a more specific type without triggering the above error.
 	 */
 	public static fieldRecursive<
-		Kind extends FieldKind,
+		Kind extends FlexFieldKind,
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 		T extends FlexList<Unenforced<FlexTreeNodeSchema>>,
-	>(kind: Kind, ...allowedTypes: T): TreeFieldSchema<Kind, T> {
-		return TreeFieldSchema.createUnsafe(kind, allowedTypes);
+	>(kind: Kind, ...allowedTypes: T): FlexFieldSchema<Kind, T> {
+		return FlexFieldSchema.createUnsafe(kind, allowedTypes);
 	}
 
 	/**
-	 * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema} using this schema builder's `defaultKind`.
+	 * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema} using this schema builder's `defaultKind`.
 	 */
-	protected normalizeField<TSchema extends ImplicitFieldSchema>(
+	protected normalizeField<TSchema extends FlexImplicitFieldSchema>(
 		schema: TSchema,
 	): NormalizeField<TSchema, TDefaultKind> {
 		return normalizeField(schema, this.defaultKind);
@@ -361,13 +363,13 @@ export interface SchemaLibrary extends SchemaCollection {
  * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
  * @internal
  */
-export type ImplicitAllowedTypes = AllowedTypes | FlexTreeNodeSchema | Any;
+export type FlexImplicitAllowedTypes = FlexAllowedTypes | FlexTreeNodeSchema | Any;
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
  * @internal
  */
-export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> =
+export type NormalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes> =
 	TSchema extends FlexTreeNodeSchema
 		? readonly [TSchema]
 		: TSchema extends Any
@@ -375,9 +377,9 @@ export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> =
 		: TSchema;
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
  */
-export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
+export function normalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes>(
 	schema: TSchema,
 ): NormalizeAllowedTypes<TSchema> {
 	if (schema === Any) {
@@ -391,35 +393,35 @@ export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 }
 
 /**
- * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
+ * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.
  * @internal
  */
 export type NormalizeField<
-	TSchema extends ImplicitFieldSchema,
-	TDefault extends FieldKind,
-> = TSchema extends TreeFieldSchema
+	TSchema extends FlexImplicitFieldSchema,
+	TDefault extends FlexFieldKind,
+> = TSchema extends FlexFieldSchema
 	? TSchema
-	: TreeFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
+	: FlexFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>>;
 
 /**
- * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
+ * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.
  */
-export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind>(
-	schema: TSchema,
-	defaultKind: TDefault,
-): NormalizeField<TSchema, TDefault> {
-	if (schema instanceof TreeFieldSchema) {
+export function normalizeField<
+	TSchema extends FlexImplicitFieldSchema,
+	TDefault extends FlexFieldKind,
+>(schema: TSchema, defaultKind: TDefault): NormalizeField<TSchema, TDefault> {
+	if (schema instanceof FlexFieldSchema) {
 		return schema as NormalizeField<TSchema, TDefault>;
 	}
 	const allowedTypes = normalizeAllowedTypes(schema);
-	return TreeFieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
+	return FlexFieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
 		TSchema,
 		TDefault
 	>;
 }
 
 /**
- * Type that when combined with a default {@link FieldKind} can be normalized into a {@link TreeFieldSchema}.
+ * Type that when combined with a default {@link FlexFieldKind} can be normalized into a {@link FlexFieldSchema}.
  * @internal
  */
-export type ImplicitFieldSchema = TreeFieldSchema | ImplicitAllowedTypes;
+export type FlexImplicitFieldSchema = FlexFieldSchema | FlexImplicitAllowedTypes;

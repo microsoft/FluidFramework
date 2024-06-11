@@ -4,29 +4,31 @@
  */
 
 import child_process from "child_process";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
+	IPublicClientConfig,
+	IOdspAuthRequestInfo,
+	IOdspDriveItem,
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	IClientConfig,
-	IOdspDriveItem,
 	getOdspRefreshTokenFn,
-	IOdspAuthRequestInfo,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	getMicrosoftConfiguration,
-	OdspTokenManager,
-	odspTokensCache,
-	OdspTokenConfig,
 	IOdspTokenManagerCacheKey,
-} from "@fluidframework/tool-utils";
-import { getForceTokenReauth } from "./fluidFetchArgs";
+	OdspTokenConfig,
+	OdspTokenManager,
+	getMicrosoftConfiguration,
+	odspTokensCache,
+} from "@fluidframework/tool-utils/internal";
+
+import { getForceTokenReauth } from "./fluidFetchArgs.js";
 
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
 	server: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	forceTokenReauth = false,
 	forToken = false,
 ): Promise<T> {
@@ -70,7 +72,7 @@ export async function resolveWrapper<T>(
 async function resolveDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 ) {
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -84,7 +86,7 @@ async function resolveDriveItemByServerRelativePath(
 async function resolveChildrenByDriveItem(
 	server: string,
 	folderDriveItem: IOdspDriveItem,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 ) {
 	return resolveWrapper<IOdspDriveItem[]>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async

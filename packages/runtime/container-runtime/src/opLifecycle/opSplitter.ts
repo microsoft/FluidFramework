@@ -3,18 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import {
-	createChildLogger,
-	DataCorruptionError,
-	extractSafePropertiesFromMessage,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes";
-import { estimateSocketSize } from "./batchManager";
-import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	DataCorruptionError,
+	createChildLogger,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+
+import { estimateSocketSize } from "./batchManager.js";
+import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
+
+export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
+	return isChunkedContents(message.contents);
+}
+
+interface IChunkedContents {
+	type: typeof ContainerMessageType.ChunkedOp;
+	contents: IChunkedOp;
+}
+
+function isChunkedContents(contents: any): contents is IChunkedContents {
+	return contents?.type === ContainerMessageType.ChunkedOp;
+}
 
 /**
  * Responsible for creating and reconstructing chunked messages.
@@ -43,44 +58,6 @@ export class OpSplitter {
 
 	public get chunks(): ReadonlyMap<string, string[]> {
 		return this.chunkMap;
-	}
-
-	public processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-		if (message.type !== ContainerMessageType.ChunkedOp) {
-			return {
-				message,
-				state: "Skipped",
-			};
-		}
-
-		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		const clientId = message.clientId as string;
-		const chunkedContent = message.contents as IChunkedOp;
-		this.addChunk(clientId, chunkedContent, message);
-
-		if (chunkedContent.chunkId < chunkedContent.totalChunks) {
-			// We are processing the op in chunks but haven't reached
-			// the last chunk yet in order to reconstruct the original op
-			return {
-				message,
-				state: "Accepted",
-			};
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const serializedContent = this.chunkMap.get(clientId)!.join("");
-		this.clearPartialChunks(clientId);
-
-		const newMessage = { ...message };
-		newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
-		newMessage.type = chunkedContent.originalType;
-		newMessage.metadata = chunkedContent.originalMetadata;
-		newMessage.compression = chunkedContent.originalCompression;
-		return {
-			message: newMessage,
-			state: "Processed",
-		};
 	}
 
 	public clearPartialChunks(clientId: string) {
@@ -134,8 +111,10 @@ export class OpSplitter {
 	 * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
 	 *
+	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 *
 	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A new adjusted batch which can be sent over the wire
+	 * @returns A new adjusted batch (last chunk + empty placeholders) which can be sent over the wire
 	 */
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
@@ -203,7 +182,55 @@ export class OpSplitter {
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
 	}
+
+	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
+		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
+		const contents: IChunkedContents = message.contents;
+
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		const clientId = message.clientId as string;
+		const chunkedContent = contents.contents;
+		this.addChunk(clientId, chunkedContent, message);
+
+		if (chunkedContent.chunkId < chunkedContent.totalChunks) {
+			// We are processing the op in chunks but haven't reached
+			// the last chunk yet in order to reconstruct the original op
+			return {
+				isFinalChunk: false,
+			};
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const serializedContent = this.chunkMap.get(clientId)!.join("");
+		this.clearPartialChunks(clientId);
+
+		// The final/complete message will contain the data from all the chunks.
+		// It will have the sequenceNumber of the last chunk
+		const completeMessage = { ...message };
+		completeMessage.contents =
+			serializedContent === "" ? undefined : JSON.parse(serializedContent);
+		// back-compat with 1.x builds
+		// This is only required / present for non-compressed, chunked ops
+		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
+		completeMessage.type = (chunkedContent as any).originalType;
+		completeMessage.metadata = chunkedContent.originalMetadata;
+		completeMessage.compression = chunkedContent.originalCompression;
+		return {
+			message: completeMessage,
+			isFinalChunk: true,
+		};
+	}
 }
+
+type ProcessChunkResult =
+	| {
+			readonly isFinalChunk: false;
+	  }
+	| {
+			readonly isFinalChunk: true;
+			readonly message: ISequencedDocumentMessage;
+	  };
 
 const chunkToBatchMessage = (
 	chunk: IChunkedOp,
@@ -216,9 +243,7 @@ const chunkToBatchMessage = (
 	};
 	return {
 		contents: JSON.stringify(payload),
-		type: payload.type,
 		metadata,
-		localOpMetadata: undefined,
 		referenceSequenceNumber,
 	};
 };
@@ -253,7 +278,6 @@ export const splitOp = (
 		const chunk: IChunkedOp = {
 			chunkId,
 			contents: op.contents.substr(offset, chunkSizeInBytes),
-			originalType: op.type,
 			totalChunks: chunkCount,
 		};
 
@@ -263,6 +287,15 @@ export const splitOp = (
 			// last chunk, therefore it is the only one that needs it.
 			chunk.originalMetadata = op.metadata;
 			chunk.originalCompression = op.compression;
+
+			// back-compat with 1.x builds
+			// 2.x builds only do chunking for compressed ops.
+			// originalType is no longer used in such cases, as each op preserves its type within compressed payload.
+			// But, if 1.x builds see this op, and there is no type on the message, then it will ignore this message silently.
+			// This is really bad, as we will crash on later ops and it's very hard to debug these cases.
+			// If we put some known type here, then we will crash on it (as 1.x does not understand compression, and thus will not
+			// find info on the op like address of the channel to deliver the op)
+			(chunk as any).originalType = "component";
 		}
 
 		chunks.push(chunk);

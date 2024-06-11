@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ArrayToUnion } from "./typeUtils.js";
-
 /** A symbol used to identify a `MarkedEager`. */
 const flexListEager = Symbol("FlexList Eager");
 
@@ -126,7 +124,7 @@ export type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<
  * Normalize FlexList type to a union.
  * @public
  */
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 /**
  * Normalize FlexList type to a non-lazy array.

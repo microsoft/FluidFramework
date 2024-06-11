@@ -20,4 +20,4 @@ export {
 	createSummaryParagraph,
 	createThrowsSection,
 	createTypeParametersSection,
-} from "./api-item-transforms";
+} from "./api-item-transforms/index.js";

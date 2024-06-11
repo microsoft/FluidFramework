@@ -2,16 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import React from "react";
 
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-
-import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
+import {
+	ContainerInfo,
+	createFluidContainer,
+	loadExistingFluidContainer,
+} from "./ClientUtilities.js";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -44,7 +48,7 @@ function getContainerIdFromLocation(location: Location): string {
  * Populate the app's `rootMap` with the desired initial data for use with the client debug view.
  */
 async function populateRootMap(container: IFluidContainer): Promise<void> {
-	const rootMap = container.initialObjects.rootMap as SharedMap;
+	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
@@ -95,7 +99,7 @@ export function App(): React.ReactElement {
 				setContainerInfo(data);
 			},
 			(error) => {
-				console.error(error);
+				throw error;
 			},
 		);
 	}, []);
@@ -129,7 +133,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
 	const { container, containerId } = containerInfo;
 
-	const rootMap = container.initialObjects.rootMap as SharedMap;
+	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}

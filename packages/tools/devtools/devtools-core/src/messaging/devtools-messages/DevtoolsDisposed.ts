@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IDevtoolsMessage } from "../Messages";
+import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link DevtoolsDisposed.Message}.

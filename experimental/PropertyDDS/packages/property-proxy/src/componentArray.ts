@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 
 import {
@@ -11,8 +12,8 @@ import {
 	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "./propertyProxy";
-import { forceType, Utilities } from "./utilities";
+import { PropertyProxy } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.

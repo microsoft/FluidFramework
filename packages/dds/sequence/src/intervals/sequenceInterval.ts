@@ -6,6 +6,8 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
 	ISegment,
@@ -22,17 +24,18 @@ import {
 	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/merge-tree/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	SequencePlace,
 	Side,
 	computeStickinessFromSide,
 	endpointPosAndSide,
+	reservedIntervalIdKey,
 	sidesFromStickiness,
-} from "../intervalCollection";
+} from "../intervalCollection.js";
+
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -41,9 +44,7 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-} from "./intervalUtils";
-
-const reservedIntervalIdKey = "intervalId";
+} from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
 	if (sideA === sideB) {
@@ -197,7 +198,7 @@ export class SequenceInterval implements ISerializableInterval {
 		};
 
 		if (this.properties) {
-			serializedInterval.properties = this.properties;
+			serializedInterval.properties = { ...this.properties };
 		}
 
 		return serializedInterval;
@@ -472,7 +473,7 @@ export function createPositionReferenceFromSegoff(
 		throw new UsageError("Non-transient references need segment");
 	}
 
-	return createDetachedLocalReferencePosition(refType);
+	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
 function createPositionReference(

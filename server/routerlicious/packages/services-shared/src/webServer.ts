@@ -12,6 +12,7 @@ import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as socketIo from "./socketIoServer";
 
 /**
@@ -93,10 +94,12 @@ const createAndConfigureHttpServer = (
  */
 export class SocketIoWebServerFactory implements core.IWebServerFactory {
 	constructor(
-		private readonly redisConfig: any,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		private readonly httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: any,
+		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {}
 
 	public create(requestListener: RequestListener): core.IWebServer {
@@ -105,10 +108,13 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		const httpServer = new HttpServer(server);
 
 		const socketIoServer = socketIo.create(
-			this.redisConfig,
+			this.redisClientConnectionManagerForPub,
+			this.redisClientConnectionManagerForSub,
 			server,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
+			undefined /* ioSetup */,
+			this.customCreateAdapter,
 		);
 
 		return new WebServer(httpServer, socketIoServer);
@@ -132,8 +138,7 @@ export class BasicWebServerFactory implements core.IWebServerFactory {
 
 /**
  * Node.js Clustering POC.
- * TODO:
- * - Add more to the heartbeat, like CPU and Memory usage, with related process kill checks: process.cpuUsage() and process.memoryUsage()
+ * This is WIP of a Node.js cluster Socket.io server that spawns a number of workers equal to the number of CPUs.
  */
 
 interface IWorkerMessage<T> {
@@ -372,11 +377,13 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
  */
 export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFactory {
 	constructor(
-		private readonly redisConfig: any,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: any,
 		clusterConfig?: Partial<INodeClusterConfig>,
+		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {
 		super(httpServerConfig, clusterConfig);
 	}
@@ -395,11 +402,13 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 		// Create a worker thread HTTP server and attach socket.io server to it.
 		const httpServer = this.initializeWorkerThread(requestListener);
 		const socketIoServer = socketIo.create(
-			this.redisConfig,
+			this.redisClientConnectionManagerForPub,
+			this.redisClientConnectionManagerForSub,
 			httpServer,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
 			setupWorker,
+			this.customCreateAdapter,
 		);
 		return new WebServer(new HttpServer(httpServer), socketIoServer);
 	}

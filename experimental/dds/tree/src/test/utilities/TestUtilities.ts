@@ -4,37 +4,44 @@
  */
 
 import { resolve } from 'path';
-import { assert } from '@fluidframework/core-utils';
-import { v5 as uuidv5 } from 'uuid';
-import { expect } from 'chai';
+
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
-import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
+import { AttachState } from '@fluidframework/container-definitions';
+import {
+	type IContainer,
+	type IFluidCodeDetails,
+	type IHostLoader,
+} from '@fluidframework/container-definitions/internal';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
+import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils/internal';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from '@fluidframework/test-runtime-utils';
+} from '@fluidframework/test-runtime-utils/internal';
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
-	TestObjectProvider,
+	ITestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	TestObjectProvider,
 	createAndAttachContainer,
-	ITestObjectProvider,
-} from '@fluidframework/test-utils';
-import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	IFluidCodeDetails,
-	IFluidHandle,
-	IRequestHeader,
-} from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { createChildLogger } from '@fluidframework/telemetry-utils';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+} from '@fluidframework/test-utils/internal';
+import { expect } from 'chai';
+import { v5 as uuidv5 } from 'uuid';
+
+import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
+import { ReplaceRecursive, fail, identity } from '../../Common.js';
+import { OrderedEditSet } from '../../EditLog.js';
+import { newEdit, setTrait } from '../../EditUtilities.js';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
+import { convertEditIds } from '../../IdConversion.js';
 import {
 	AttributionId,
 	DetachedSequenceId,
@@ -43,31 +50,32 @@ import {
 	OpSpaceNodeId,
 	SessionId,
 	StableNodeId,
-} from '../../Identifiers';
-import { fail, identity, ReplaceRecursive } from '../../Common';
-import { IdCompressor } from '../../id-compressor';
-import { createSessionId } from '../../id-compressor/NumericUuid';
-import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
-import { initialTree } from '../../InitialTree';
+} from '../../Identifiers.js';
+import { initialTree } from '../../InitialTree.js';
+import {
+	NodeIdContext,
+	NodeIdConverter,
+	NodeIdNormalizer,
+	getNodeId,
+	getNodeIdContext,
+} from '../../NodeIdUtilities.js';
+import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
+import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
+import { TraitLocation, TreeView } from '../../TreeView.js';
+import { createSessionId } from '../../id-compressor/NumericUuid.js';
+import { IdCompressor } from '../../id-compressor/index.js';
 import {
 	ChangeInternal,
 	Edit,
 	NodeData,
 	Payload,
-	reservedIdCount,
 	SharedTreeOp,
 	SharedTreeOp_0_0_2,
 	WriteFormat,
-} from '../../persisted-types';
-import { TraitLocation, TreeView } from '../../TreeView';
-import { SharedTreeDiagnosticEvent } from '../../EventTypes';
-import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
-import { newEdit, setTrait } from '../../EditUtilities';
-import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree';
-import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
-import { convertEditIds } from '../../IdConversion';
-import { OrderedEditSet } from '../../EditLog';
-import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
+	reservedIdCount,
+} from '../../persisted-types/index.js';
+
+import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -150,6 +158,7 @@ export function setUpTestSharedTree(
 		writeFormat,
 		attributionId,
 	} = options;
+	const attachState = localMode === true ? AttachState.Detached : undefined;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -160,9 +169,9 @@ export function setUpTestSharedTree(
 				return target[prop as keyof MockFluidDataStoreRuntime];
 			},
 		};
-		componentRuntime = new Proxy(new MockFluidDataStoreRuntime(), proxyHandler);
+		componentRuntime = new Proxy(new MockFluidDataStoreRuntime({ attachState }), proxyHandler);
 	} else {
-		componentRuntime = new MockFluidDataStoreRuntime();
+		componentRuntime = new MockFluidDataStoreRuntime({ attachState });
 	}
 
 	// Enable expensiveValidation
@@ -198,9 +207,7 @@ export function setUpTestSharedTree(
 
 	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
-	if (localMode === true) {
-		componentRuntime.local = true;
-	} else {
+	if (localMode !== true) {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
 			deltaConnection: componentRuntime.createDeltaConnection(),

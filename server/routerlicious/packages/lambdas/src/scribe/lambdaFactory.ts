@@ -6,15 +6,12 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
-	ControlMessageType,
 	ICheckpointService,
 	ICollection,
 	IContext,
-	IControlMessage,
 	IDeltaService,
 	IDocument,
 	IDocumentRepository,
-	ILambdaStartControlMessageContents,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -23,28 +20,23 @@ import {
 	ISequencedOperationMessage,
 	IServiceConfiguration,
 	ITenantManager,
-	LambdaName,
 	MongoManager,
 	runWithRetry,
 } from "@fluidframework/server-services-core";
-import {
-	IDocumentSystemMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
-	CommonProperties,
+	Lumber,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
+import { getClientIds, initializeProtocol, isScribeCheckpointQuorumScrubbed } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -63,6 +55,8 @@ const DefaultScribe: IScribe = {
 	lastSummarySequenceNumber: 0,
 	validParentSummaries: undefined,
 	isCorrupt: false,
+	protocolHead: undefined,
+	checkpointTimestamp: Date.now(),
 };
 
 /**
@@ -89,6 +83,7 @@ export class ScribeLambdaFactory
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly maxLogtailLength: number,
+		private readonly maxPendingCheckpointMessagesLength: number,
 	) {
 		super();
 	}
@@ -102,6 +97,8 @@ export class ScribeLambdaFactory
 		let lastCheckpoint: IScribe;
 		let summaryReader: SummaryReader;
 		let latestSummary: ILatestSummaryState;
+		let latestSummaryCheckpoint: IScribe | undefined;
+		let latestDbCheckpoint: IScribe | undefined;
 		let opMessages: ISequencedDocumentMessage[] = [];
 
 		const { tenantId, documentId } = config;
@@ -110,12 +107,13 @@ export class ScribeLambdaFactory
 			tenantId,
 		};
 
-		const scribeSessionMetric = createSessionMetric(
-			tenantId,
-			documentId,
-			LumberEventName.ScribeSessionResult,
-			this.serviceConfiguration,
-		);
+		let scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined;
+		const failCreation = async (error: unknown): Promise<void> => {
+			const errorMessage = "Scribe lambda creation failed.";
+			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
+			Lumberjack.error(errorMessage, lumberProperties, error);
+			scribeSessionMetric?.error("Scribe lambda creation failed", error);
+		};
 
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 
@@ -138,7 +136,7 @@ export class ScribeLambdaFactory
 				Lumberjack.error(errorMessage, lumberProperties);
 				return new NoOpLambda(context);
 			}
-			if (JSON.parse(document.scribe)?.isCorrupt) {
+			if (document.scribe && JSON.parse(document.scribe)?.isCorrupt) {
 				Lumberjack.info(
 					`Received attempt to connect to a corrupted document.`,
 					lumberProperties,
@@ -160,8 +158,11 @@ export class ScribeLambdaFactory
 				}
 			}
 
-			scribeSessionMetric?.setProperty(
-				CommonProperties.isEphemeralContainer,
+			scribeSessionMetric = createSessionMetric(
+				tenantId,
+				documentId,
+				LumberEventName.ScribeSessionResult,
+				this.serviceConfiguration,
 				document?.isEphemeralContainer ?? false,
 			);
 
@@ -173,36 +174,76 @@ export class ScribeLambdaFactory
 				this.enableWholeSummaryUpload,
 			);
 			latestSummary = await summaryReader.readLastSummary();
+			latestSummaryCheckpoint = latestSummary.scribe
+				? JSON.parse(latestSummary.scribe)
+				: undefined;
+			latestDbCheckpoint = (await this.checkpointService.restoreFromCheckpoint(
+				documentId,
+				tenantId,
+				"scribe",
+				document,
+			)) as IScribe;
 		} catch (error) {
-			const errorMessage = "Scribe lambda creation failed.";
-			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
-			Lumberjack.error(errorMessage, lumberProperties, error);
-			await this.sendLambdaStartResult(tenantId, documentId, {
-				lambdaName: LambdaName.Scribe,
-				success: false,
-			});
-			scribeSessionMetric?.error("Scribe lambda creation failed", error);
-
+			await failCreation(error);
 			throw error;
 		}
 
-		if (document.scribe === undefined || document.scribe === null) {
-			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
-			// both to be safe. Empty sring denotes a cache that was cleared due to a service summary
+		// For a new document, Summary, Global (document) DB and Local DB checkpoints will not exist.
+		// However, it is possible that the global checkpoint was cleared to an empty string
+		// due to a service summary, so specifically check if global is not defined at all.
+		// Lastly, a new document will also not have a summary checkpoint, so if one exists without a DB checkpoint,
+		// we should use the summary checkpoint because there was likely a DB failure.
+		const useDefaultCheckpointForNewDocument =
+			// Mongodb casts undefined as null so we are checking both to be safe.
+			(document.scribe === undefined || document.scribe === null) &&
+			!latestDbCheckpoint &&
+			!latestSummaryCheckpoint;
+		// Empty string for document DB checkpoint denotes a cache that was cleared due to a service summary.
+		// This will only happen if IServiceConfiguration.scribe.clearCacheAfterServiceSummary is true. Defaults to false.
+		const documentCheckpointIsCleared = document.scribe === "";
+		// It's possible that a local checkpoint is written after global checkpoint was cleared for service summary.
+		// Similarly, it's possible that the summary checkpoint is ahead of the latest db checkpoint due to a failure.
+		const summaryCheckpointAheadOfLatestDbCheckpoint =
+			latestSummaryCheckpoint &&
+			latestSummaryCheckpoint.sequenceNumber > latestDbCheckpoint?.sequenceNumber;
+		// Scrubbed users indicate that the quorum members have been scrubbed for privacy compliance.
+		const dbCheckpointQuorumIsScrubbed = isScribeCheckpointQuorumScrubbed(latestDbCheckpoint);
+		// Only use the summary checkpoint when
+		// 1) summary checkpoint is more recent than any DB checkpoint
+		// 2) the document checkpoint is cleared and there is not a more recent local checkpoint
+		// 3) the latest db checkpoint quorum members are scrubbed for privacy compliance
+		const useLatestSummaryCheckpointForExistingDocument =
+			summaryCheckpointAheadOfLatestDbCheckpoint ||
+			(documentCheckpointIsCleared && summaryCheckpointAheadOfLatestDbCheckpoint) ||
+			dbCheckpointQuorumIsScrubbed;
+
+		if (useDefaultCheckpointForNewDocument) {
+			// Restore scribe state if not present in the cache.
 			const message = "New document. Setting empty scribe checkpoint";
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
 			lastCheckpoint = DefaultScribe;
-		} else if (document.scribe === "") {
-			const message = "Existing document. Fetching checkpoint from summary";
+		} else if (useLatestSummaryCheckpointForExistingDocument) {
+			const message = `Existing document${
+				dbCheckpointQuorumIsScrubbed ? " with invalid quorum members" : ""
+			}. Fetching checkpoint from summary`;
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
-			if (!latestSummary.fromSummary) {
-				context.log?.error(`Summary can't be fetched`, { messageMetaData });
-				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
-				lastCheckpoint = DefaultScribe;
-			} else {
-				lastCheckpoint = JSON.parse(latestSummary.scribe);
+			if (latestSummary.fromSummary) {
+				if (!latestSummaryCheckpoint) {
+					const error = new Error(
+						"Attempted to load from non-existent summary checkpoint.",
+					);
+					await failCreation(error);
+					throw error;
+				}
+				if (isScribeCheckpointQuorumScrubbed(latestSummaryCheckpoint)) {
+					Lumberjack.error(
+						"Quorum from summary is scrubbed. Continuing.",
+						lumberProperties,
+					);
+				}
+				lastCheckpoint = latestSummaryCheckpoint;
 				opMessages = latestSummary.messages;
 				// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
 				// Currently the lambda checkpoints only after updating the logOffset so setting this to lower
@@ -212,14 +253,18 @@ export class ScribeLambdaFactory
 				const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
 				context.log?.info(checkpointMessage, { messageMetaData });
 				Lumberjack.info(checkpointMessage, lumberProperties);
+			} else {
+				context.log?.error(`Summary can't be fetched`, { messageMetaData });
+				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
+				lastCheckpoint = DefaultScribe;
 			}
 		} else {
-			lastCheckpoint = (await this.checkpointService.restoreFromCheckpoint(
-				documentId,
-				tenantId,
-				"scribe",
-				document,
-			)) as IScribe;
+			if (!latestDbCheckpoint) {
+				const error = new Error("Attempted to load from non-existent DB checkpoint.");
+				await failCreation(error);
+				throw error;
+			}
+			lastCheckpoint = latestDbCheckpoint;
 
 			try {
 				opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
@@ -254,10 +299,6 @@ export class ScribeLambdaFactory
 					"Invalid message sequence from checkpoint/summary",
 					error,
 				);
-				await this.sendLambdaStartResult(tenantId, documentId, {
-					lambdaName: LambdaName.Scribe,
-					success: false,
-				});
 
 				throw error;
 			}
@@ -327,12 +368,8 @@ export class ScribeLambdaFactory
 			this.kafkaCheckpointOnReprocessingOp,
 			document.isEphemeralContainer ?? false,
 			this.checkpointService.getLocalCheckpointEnabled(),
+			this.maxPendingCheckpointMessagesLength,
 		);
-
-		await this.sendLambdaStartResult(tenantId, documentId, {
-			lambdaName: LambdaName.Scribe,
-			success: true,
-		});
 		return scribeLambda;
 	}
 
@@ -364,27 +401,5 @@ export class ScribeLambdaFactory
 
 	public async dispose(): Promise<void> {
 		await this.mongoManager.close();
-	}
-
-	private async sendLambdaStartResult(
-		tenantId: string,
-		documentId: string,
-		contents: ILambdaStartControlMessageContents | undefined,
-	) {
-		const controlMessage: IControlMessage = {
-			type: ControlMessageType.LambdaStartResult,
-			contents,
-		};
-
-		const operation: IDocumentSystemMessage = {
-			clientSequenceNumber: -1,
-			contents: null,
-			data: JSON.stringify(controlMessage),
-			referenceSequenceNumber: -1,
-			traces: this.serviceConfiguration.enableTraces ? [] : undefined,
-			type: MessageType.Control,
-		};
-
-		return sendToDeli(tenantId, documentId, this.producer, operation);
 	}
 }

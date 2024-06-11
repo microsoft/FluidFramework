@@ -5,9 +5,9 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { InspectorTableDecorator } from "./InspectorTableDecorator";
-import { InspectorTableFooter } from "./InspectorTableFooter";
-import { IInspectorTableProps } from "./InspectorTableTypes";
+import { InspectorTableDecorator } from "./InspectorTableDecorator.js";
+import { InspectorTableFooter } from "./InspectorTableFooter.js";
+import { IInspectorTableProps } from "./InspectorTableTypes.js";
 
 const noop = () => {
 	/* noop */

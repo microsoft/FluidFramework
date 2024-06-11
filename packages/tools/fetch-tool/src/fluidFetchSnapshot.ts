@@ -7,10 +7,14 @@ import fs from "fs";
 import util from "util";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentService,
+	IDocumentStorageService,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
 
-import { formatNumber } from "./fluidAnalyzeMessages";
+import { formatNumber } from "./fluidAnalyzeMessages.js";
 import {
 	dumpSnapshotStats,
 	dumpSnapshotTrees,
@@ -18,8 +22,8 @@ import {
 	paramActualFormatting,
 	paramNumSnapshotVersions,
 	paramSnapshotVersionIndex,
-} from "./fluidFetchArgs";
-import { latestVersionsId } from "./fluidFetchInit";
+} from "./fluidFetchArgs.js";
+import { latestVersionsId } from "./fluidFetchInit.js";
 
 interface ISnapshotInfo {
 	blobCountNew: number;

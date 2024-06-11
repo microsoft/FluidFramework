@@ -4,12 +4,12 @@
  */
 
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { fail, getOrCreate } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
 	k: infer U,
 ) => unknown
@@ -17,21 +17,19 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 	: never;
 
 /**
- * `true` iff the given type is an acceptable shape for an event
+ * `true` iff the given type is an acceptable shape for a {@link Listeners | event} listener
  * @public
  */
-export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
+export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 /**
- * Used to specify the kinds of events emitted by an {@link ISubscribable}.
+ * Used to specify the kinds of events emitted by a {@link Listenable}.
  *
  * @remarks
- *
- * Any object type is a valid {@link Events}, but only the event-like properties of that
+ * Any object type is a valid {@link Listeners}, but only the {@link IsListener | event-like} properties of that
  * type will be included.
  *
  * @example
- *
  * ```typescript
  * interface MyEvents {
  *   load: (user: string, data: IUserData) => void;
@@ -41,12 +39,12 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  *
  * @public
  */
-export type Events<E> = {
-	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
+export type Listeners<T extends object> = {
+	[P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
 /**
- * Converts an `Events` type (i.e. the event registry for an {@link ISubscribable}) into a type consumable
+ * Converts a {@link Listeners} type (i.e. the event registry for a {@link Listenable}) into a type consumable
  * by an IEventProvider from `@fluidframework/core-interfaces`.
  * @param E - the `Events` type to transform
  * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
@@ -64,51 +62,66 @@ export type Events<E> = {
  * }
  * ```
  */
-export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent> = {
-	[P in keyof Events<E>]: (event: P, listener: E[P]) => void;
-} extends Record<any, infer Z>
-	? UnionToIntersection<Z> & Target
+export type TransformListeners<
+	TListeners extends Listeners<TListeners>,
+	TTarget extends IEvent = IEvent,
+> = {
+	[P in keyof Listeners<TListeners>]: (event: P, listener: TListeners[P]) => void;
+} extends Record<string | number | symbol, infer Z>
+	? UnionToIntersection<Z> & TTarget
 	: never;
 
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
+ * @param TListeners - All the {@link Listeners | events} that this subscribable supports
  *
+ * @privateRemarks
  * `EventEmitter` can be used as a base class to implement this via extension.
- * @param E - All the events that this emitter supports
- * @example
  * ```ts
  * type MyEventEmitter = IEventEmitter<{
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * @privateRemarks
  * {@link createEmitter} can help implement this interface via delegation.
  *
  * @public
  */
-export interface ISubscribable<E extends Events<E>> {
+export interface Listenable<TListeners extends object> {
 	/**
 	 * Register an event listener.
 	 * @param eventName - the name of the event
 	 * @param listener - the handler to run when the event is fired by the emitter
-	 * @returns a function which will deregister the listener when run. This function has undefined behavior
-	 * if called more than once.
+	 * @returns a {@link Off | function} which will deregister the listener when called.
+	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
+	 * @remarks Do not register the exact same `listener` object for the same event more than once.
+	 * Doing so will result in an error.
 	 */
-	on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
+	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
+
+/**
+ * A function that, when called, will deregister an event listener subscription that was previously registered.
+ * @remarks
+ * It is returned by the {@link Listenable.on | event registration function} when event registration occurs.
+ * @public
+ */
+export type Off = () => void;
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
  * @internal
  */
-export interface IEmitter<E extends Events<E>> {
+export interface IEmitter<TListeners extends Listeners<TListeners>> {
 	/**
 	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
 	 * @param eventName - the name of the event to fire
 	 * @param args - the arguments passed to the event listener functions
 	 */
-	emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+	emit<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		...args: Parameters<TListeners[K]>
+	): void;
 
 	/**
 	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
@@ -120,23 +133,23 @@ export interface IEmitter<E extends Events<E>> {
 	 * @param args - the arguments passed to the event listener functions
 	 * @returns An array of the return values of each listener, preserving the order listeners were called.
 	 */
-	emitAndCollect<K extends keyof Events<E>>(
+	emitAndCollect<K extends keyof Listeners<TListeners>>(
 		eventName: K,
-		...args: Parameters<E[K]>
-	): ReturnType<E[K]>[];
+		...args: Parameters<TListeners[K]>
+	): ReturnType<TListeners[K]>[];
 }
 
 /**
- * Create an {@link ISubscribable} that can be instructed to emit events via the {@link IEmitter} interface.
+ * Create a {@link Listenable} that can be instructed to emit events via the {@link IEmitter} interface.
  *
- * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
- * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
+ * A class can delegate handling {@link Listenable} to the returned value while using it to emit the events.
+ * See also `EventEmitter` which be used as a base class to implement {@link Listenable} via extension.
  * @internal
  */
-export function createEmitter<E extends Events<E>>(
-	noListeners?: NoListenersCallback<E>,
-): ISubscribable<E> & IEmitter<E> & HasListeners<E> {
-	return new ComposableEventEmitter<E>(noListeners);
+export function createEmitter<TListeners extends object>(
+	noListeners?: NoListenersCallback<TListeners>,
+): Listenable<TListeners> & IEmitter<TListeners> & HasListeners<TListeners> {
+	return new ComposableEventEmitter<TListeners>(noListeners);
 }
 
 /**
@@ -144,12 +157,14 @@ export function createEmitter<E extends Events<E>>(
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
  * @internal
  */
-export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
+export type NoListenersCallback<TListeners extends object> = (
+	eventName: keyof Listeners<TListeners>,
+) => void;
 
 /**
  * @internal
  */
-export interface HasListeners<E extends Events<E>> {
+export interface HasListeners<TListeners extends Listeners<TListeners>> {
 	/**
 	 * When no `eventName` is provided, returns true iff there are any listeners.
 	 *
@@ -158,7 +173,7 @@ export interface HasListeners<E extends Events<E>> {
 	 * @remarks
 	 * This can be used to know when its safe to cleanup data-structures which only exist to fire events for their listeners.
 	 */
-	hasListeners(eventName?: keyof Events<E>): boolean;
+	hasListeners(eventName?: keyof Listeners<TListeners>): boolean;
 }
 
 /**
@@ -190,38 +205,50 @@ export interface HasListeners<E extends Events<E>> {
  *     this.events.emit("loaded");
  *   }
  *
- *   public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+ *   public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): Off {
  *     return this.events.on(eventName, listener);
  *   }
  * }
  * ```
  */
-export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
-	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
+export class EventEmitter<TListeners extends Listeners<TListeners>>
+	implements Listenable<TListeners>, HasListeners<TListeners>
+{
+	protected readonly listeners = new Map<
+		keyof TListeners,
+		Map<Off, (...args: any[]) => TListeners[keyof TListeners]>
+	>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
-	protected constructor(private readonly noListeners?: NoListenersCallback<E>) {}
+	protected constructor(private readonly noListeners?: NoListenersCallback<TListeners>) {}
 
-	protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+	protected emit<K extends keyof TListeners>(
+		eventName: K,
+		...args: Parameters<TListeners[K]>
+	): void {
 		const listeners = this.listeners.get(eventName);
 		if (listeners !== undefined) {
 			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
-			for (const listener of listeners.values()) {
-				listener(...argArray);
+			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
+			for (const [off, listener] of [...listeners]) {
+				// If listener has been unsubscribed while invoking other listeners, skip it.
+				if (listeners.has(off)) {
+					listener(...argArray);
+				}
 			}
 		}
 	}
 
-	protected emitAndCollect<K extends keyof Events<E>>(
+	protected emitAndCollect<K extends keyof TListeners>(
 		eventName: K,
-		...args: Parameters<E[K]>
-	): ReturnType<E[K]>[] {
+		...args: Parameters<TListeners[K]>
+	): ReturnType<TListeners[K]>[] {
 		const listeners = this.listeners.get(eventName);
 		if (listeners !== undefined) {
 			const argArray: unknown[] = args;
-			const resultArray: ReturnType<E[K]>[] = [];
-			for (const listener of listeners.values()) {
+			const resultArray: ReturnType<TListeners[K]>[] = [];
+			for (const listener of [...listeners.values()]) {
 				resultArray.push(listener(...argArray));
 			}
 			return resultArray;
@@ -235,29 +262,43 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a function which will deregister the listener when run.
 	 * This function will error if called more than once.
+	 * @privateRemarks
+	 * TODO:
+	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
+	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
-	public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
-		getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
-		return () => this.off(eventName, listener);
-	}
+	public on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off {
+		const off: Off = () => {
+			const currentListeners = this.listeners.get(eventName);
+			if (currentListeners?.delete(off) === true) {
+				if (currentListeners.size === 0) {
+					this.listeners.delete(eventName);
+					this.noListeners?.(eventName);
+				}
+			}
+		};
 
-	private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
-		const listeners =
-			this.listeners.get(eventName) ??
-			fail(
-				"Event has no listeners. Event deregistration functions may only be invoked once.",
-			);
-		assert(
-			listeners.delete(listener),
-			0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
-		);
-		if (listeners.size === 0) {
-			this.listeners.delete(eventName);
-			this.noListeners?.(eventName);
+		const listeners = this.listeners.get(eventName);
+		if (listeners === undefined) {
+			const map = new Map([[off, listener]]);
+			this.listeners.set(eventName, map);
+		} else {
+			// If the same listener function is already registered, error.
+			// This policy may change in the future, but in the meantime this is a conservative choice that can accommodate multiple future eventing API/implementation options.
+			// For example, adding an `Listenable.off()` method in the future could be problematic if we allowed registering the same function twice (should `off(f)` deregister _both_ `f`s or just one?).
+			for (const l of listeners.values()) {
+				if (Object.is(l, listener)) {
+					throw new UsageError(
+						"The same listener may not be registered more than once for the same event",
+					);
+				}
+			}
+			listeners.set(off, listener);
 		}
+		return off;
 	}
 
-	public hasListeners(eventName?: keyof Events<E>): boolean {
+	public hasListeners(eventName?: keyof TListeners): boolean {
 		if (eventName === undefined) {
 			return this.listeners.size !== 0;
 		}
@@ -265,20 +306,28 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	}
 }
 
-// This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
-class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implements IEmitter<E> {
-	public constructor(noListeners?: NoListenersCallback<E>) {
+/**
+ * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
+ */
+export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
+	extends EventEmitter<TListeners>
+	implements IEmitter<TListeners>
+{
+	public constructor(noListeners?: NoListenersCallback<TListeners>) {
 		super(noListeners);
 	}
 
-	public override emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+	public override emit<K extends keyof TListeners>(
+		eventName: K,
+		...args: Parameters<TListeners[K]>
+	): void {
 		return super.emit(eventName, ...args);
 	}
 
-	public override emitAndCollect<K extends keyof Events<E>>(
+	public override emitAndCollect<K extends keyof TListeners>(
 		eventName: K,
-		...args: Parameters<E[K]>
-	): ReturnType<E[K]>[] {
+		...args: Parameters<TListeners[K]>
+	): ReturnType<TListeners[K]>[] {
 		return super.emitAndCollect(eventName, ...args);
 	}
 }

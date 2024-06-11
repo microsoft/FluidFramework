@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { validateMessages } from "../driverUtils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
+import { validateMessages } from "../driverUtils.js";
 
 describe("driver utils tests", () => {
 	describe("validateMessagesTests", () => {

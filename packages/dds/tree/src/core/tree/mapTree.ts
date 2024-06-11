@@ -4,6 +4,7 @@
  */
 
 import { FieldKey } from "../schema-stored/index.js";
+
 import { NodeData } from "./types.js";
 
 /**
@@ -16,22 +17,5 @@ import { NodeData } from "./types.js";
  * @internal
  */
 export interface MapTree extends NodeData {
-	fields: Map<FieldKey, MapTree[]>;
-}
-
-/**
- * Get a field from `node`, optionally modifying the tree to create it if missing.
- */
-export function getMapTreeField(node: MapTree, key: FieldKey, createIfMissing: boolean): MapTree[] {
-	const field = node.fields.get(key);
-	if (field !== undefined) {
-		return field;
-	}
-	// Handle missing field:
-	if (createIfMissing === false) {
-		return [];
-	}
-	const newField: MapTree[] = [];
-	node.fields.set(key, newField);
-	return newField;
+	readonly fields: ReadonlyMap<FieldKey, readonly MapTree[]>;
 }

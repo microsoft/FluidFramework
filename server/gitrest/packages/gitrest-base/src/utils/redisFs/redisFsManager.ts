@@ -20,17 +20,23 @@ import type {
 import { FileHandle } from "fs/promises";
 import { Stream } from "stream";
 import { Abortable } from "events";
-import * as IoRedis from "ioredis";
-import sizeof from "object-sizeof";
-import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IFileSystemManager, IFileSystemPromises } from "../definitions";
-import { getStats, ISystemError, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
-import { Redis, RedisParams } from "./redis";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
+import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
+import { FsPromisesBase } from "../fileSystemBase";
+import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
+import {
+	executeRedisFsApiWithMetric,
+	RedisFsApis,
+	RedisFSConstants,
+	RedisFsError,
+} from "./helpers";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
 	redisApiMetricsSamplingPeriod: number;
+	enableOptimizedStat: boolean;
 }
 
 export class RedisFsManager implements IFileSystemManager {
@@ -42,35 +48,56 @@ export class RedisFsManager implements IFileSystemManager {
 
 	constructor(
 		redisParam: RedisParams,
-		redisOptions: IoRedis.RedisOptions,
 		redisFsConfig: RedisFsConfig,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
+		fsManagerParams?: IFileSystemManagerParams,
+		maxFileSizeBytes?: number,
 	) {
-		this.promises = RedisFs.getInstance(redisParam, redisOptions, redisFsConfig);
+		this.promises = RedisFs.getInstance(
+			redisParam,
+			redisFsConfig,
+			this.redisClientConnectionManager,
+			fsManagerParams,
+			maxFileSizeBytes,
+		);
 	}
 }
 
-export class RedisFs implements IFileSystemPromises {
-	private static instance: RedisFs;
-	public readonly redisFsClient: Redis;
+export class RedisFs extends FsPromisesBase {
+	public readonly redisFsClient: IRedis;
 
 	constructor(
 		redisParams: RedisParams,
-		redisOptions: IoRedis.RedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
+		fsManagerParams?: IFileSystemManagerParams,
+		maxFileSizeBytes?: number,
 	) {
-		const redisClient = new IoRedis.default(redisOptions);
-		this.redisFsClient = new Redis(redisClient, redisParams);
+		super(maxFileSizeBytes);
+		this.redisFsClient =
+			fsManagerParams?.rootDir && redisParams.enableHashmapRedisFs
+				? new HashMapRedis(
+						fsManagerParams.rootDir,
+						this.redisClientConnectionManager,
+						redisParams,
+				  )
+				: new Redis(this.redisClientConnectionManager, redisParams);
 	}
 
 	public static getInstance(
 		redisParams: RedisParams,
-		redisOptions: IoRedis.RedisOptions,
 		redisFsConfig: RedisFsConfig,
+		redisClientConnectionManager: IRedisClientConnectionManager,
+		fsManagerParams?: IFileSystemManagerParams,
+		maxFileSizeBytes?: number,
 	): RedisFs {
-		if (!RedisFs.instance) {
-			RedisFs.instance = new RedisFs(redisParams, redisOptions, redisFsConfig);
-		}
-		return RedisFs.instance;
+		return new RedisFs(
+			redisParams,
+			redisFsConfig,
+			redisClientConnectionManager,
+			fsManagerParams,
+			maxFileSizeBytes,
+		);
 	}
 
 	/**
@@ -78,34 +105,34 @@ export class RedisFs implements IFileSystemPromises {
 	 * For more info on how isomorphic-git uses this, see:
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L83
 	 */
-	public async readFile(
+	public async readFileCore(
 		filepath: PathLike | FileHandle,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: { encoding?: null | undefined; flag?: OpenMode | undefined } | null,
 	): Promise<Buffer>;
-	public async readFile(
+	public async readFileCore(
 		filepath: PathLike | FileHandle,
 		options: { encoding: BufferEncoding; flag?: OpenMode | undefined } | BufferEncoding,
 	): Promise<string>;
-	public async readFile(
-		path: PathLike | FileHandle,
+	public async readFileCore(
+		filepath: PathLike | FileHandle,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: (ObjectEncodingOptions & { flag?: OpenMode | undefined }) | BufferEncoding | null,
 	): Promise<Buffer | string>;
-	public async readFile(
+	public async readFileCore(
 		filepath: PathLike | FileHandle,
 		options?: any,
 	): Promise<Buffer | string> {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const filepathString = filepath.toString();
 		// Do not read packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
 			return undefined;
 		}
 
-		const data = await executeRedisFsApi(
+		const data = await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.get<string | Buffer>(filepathString),
 			RedisFsApis.ReadFile,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -113,6 +140,9 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
+		if (data === undefined) {
+			throw new RedisFsError(SystemErrors.ENOENT, filepathString);
+		}
 		return data;
 	}
 
@@ -121,7 +151,7 @@ export class RedisFs implements IFileSystemPromises {
 	 * For more info on how isomorphic-git uses this, see:
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L101
 	 */
-	public async writeFile(
+	public async writeFileCore(
 		filepath: PathLike | FileHandle,
 		data:
 			| string
@@ -138,16 +168,16 @@ export class RedisFs implements IFileSystemPromises {
 			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const filepathString = filepath.toString();
 		// Do not write packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
 			return;
 		}
 
-		const result = await executeRedisFsApi(
+		const result = await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.set(filepathString, data),
 			RedisFsApis.WriteFile,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -166,13 +196,12 @@ export class RedisFs implements IFileSystemPromises {
 	 * For more info on how isomorphic-git uses this, see:
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L143
 	 */
-	public async unlink(filepath: PathLike): Promise<void> {
+	public async unlinkCore(filepath: PathLike): Promise<void> {
 		const filepathString = filepath.toString();
 
-		await executeRedisFsApi(
-			async () => this.redisFsClient.delete(filepathString),
+		await executeRedisFsApiWithMetric(
+			async () => this.redisFsClient.del(filepathString),
 			RedisFsApis.Unlink,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -188,7 +217,7 @@ export class RedisFs implements IFileSystemPromises {
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L186
 	 * isomorphic-git never provides options, and always expects string[] results.
 	 */
-	public async readdir(
+	public async readdirCore(
 		folderpath: PathLike,
 		options?:
 			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
@@ -196,11 +225,11 @@ export class RedisFs implements IFileSystemPromises {
 			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<string[]>;
-	public async readdir(
+	public async readdirCore(
 		folderpath: PathLike,
 		options: { encoding: "buffer"; withFileTypes?: false | undefined } | "buffer",
 	): Promise<Buffer[]>;
-	public async readdir(
+	public async readdirCore(
 		folderpath: PathLike,
 		options?:
 			| (ObjectEncodingOptions & { withFileTypes?: false | undefined })
@@ -208,20 +237,19 @@ export class RedisFs implements IFileSystemPromises {
 			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<string[] | Buffer[]>;
-	public async readdir(
+	public async readdirCore(
 		folderpath: PathLike,
 		options: ObjectEncodingOptions & { withFileTypes: true },
 	): Promise<Dirent[]>;
-	public async readdir(
+	public async readdirCore(
 		folderpath: PathLike,
 		options?: any,
 	): Promise<string[] | Buffer[] | Dirent[]> {
 		const folderpathString = folderpath.toString();
 
-		const result = await executeRedisFsApi(
+		const result = await executeRedisFsApiWithMetric(
 			async () => this.redisFsClient.keysByPrefix(folderpathString),
 			RedisFsApis.Readdir,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -239,21 +267,21 @@ export class RedisFs implements IFileSystemPromises {
 	 * For more info on how isomorphic-git uses this, see:
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L115
 	 */
-	public async mkdir(
+	public async mkdirCore(
 		folderpath: PathLike,
 		options: MakeDirectoryOptions & { recursive: true },
 	): Promise<string | undefined>;
-	public async mkdir(
+	public async mkdirCore(
 		folderpath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: Mode | (MakeDirectoryOptions & { recursive?: false | undefined }) | null,
 	): Promise<void>;
-	public async mkdir(
-		path: PathLike,
+	public async mkdirCore(
+		folderpath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: Mode | MakeDirectoryOptions | null,
 	): Promise<string | undefined>;
-	public async mkdir(
+	public async mkdirCore(
 		folderpath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: Mode | MakeDirectoryOptions | null,
@@ -264,27 +292,27 @@ export class RedisFs implements IFileSystemPromises {
 		if (recursive) {
 			const folderSeparator = "/";
 			const subfolders = folderpathString.split(folderSeparator);
-
+			const subFolderPaths: string[] = [];
 			for (let i = 1; i <= subfolders.length; i++) {
-				const currentPath = subfolders.slice(0, i).join(folderSeparator);
-				await setDirPath(currentPath, this.redisFsClient, this.redisFsConfig);
+				subFolderPaths.push(subfolders.slice(0, i).join(folderSeparator));
 			}
+			await setDirPath(subFolderPaths, this.redisFsClient, this.redisFsConfig);
 		} else {
-			await setDirPath(folderpathString, this.redisFsClient, this.redisFsConfig);
+			await setDirPath([folderpathString], this.redisFsClient, this.redisFsConfig);
 		}
 
 		async function setDirPath(
-			path: string,
-			redisFsClient: Redis,
+			paths: string[],
+			redisFsClient: IRedis,
 			redisFsConfig: RedisFsConfig,
 		): Promise<void> {
-			await executeRedisFsApi(
-				async (): Promise<void> => redisFsClient.set(path, ""),
+			await executeRedisFsApiWithMetric(
+				async (): Promise<void> =>
+					redisFsClient.setMany(paths.map((path) => ({ key: path, value: "" }))),
 				RedisFsApis.Mkdir,
-				RedisFSConstants.RedisFsApi,
 				redisFsConfig.enableRedisFsMetrics,
 				redisFsConfig.redisApiMetricsSamplingPeriod,
-				{ folderpathString: path },
+				{ folderpathString: paths.length > 1 ? paths.join(", ") : paths[0] },
 			);
 		}
 	}
@@ -295,36 +323,22 @@ export class RedisFs implements IFileSystemPromises {
 	 * For more info on how isomorphic-git uses this, see:
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L152
 	 */
-	public async rmdir(folderpath: PathLike, options?: RmDirOptions): Promise<void> {
+	public async rmdirCore(folderpath: PathLike, options?: RmDirOptions): Promise<void> {
 		const folderpathString = folderpath.toString();
 
-		const keysToRemove = await executeRedisFsApi(
-			async () => this.redisFsClient.keysByPrefix(folderpathString),
-			RedisFsApis.KeysByPrefix,
-			RedisFSConstants.RedisFsApi,
+		// Technically this should only be done for `options.recursive === true`, but
+		// this method is used by `rm(..., {recursive: true}).
+		// If implementing this as an actual FS, this should fail if directory is not empty, and
+		// `delAll` usage should be moved to `rm` instead.
+		await executeRedisFsApiWithMetric(
+			async () => this.redisFsClient.delAll(folderpathString),
+			RedisFsApis.Rmdir,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
 				folderpathString,
 			},
-		);
-
-		const deleteP = keysToRemove.map(async (key) => {
-			return executeRedisFsApi(
-				async () => this.redisFsClient.delete(key, false),
-				RedisFsApis.Rmdir,
-				RedisFSConstants.RedisFsApi,
-				this.redisFsConfig.enableRedisFsMetrics,
-				this.redisFsConfig.redisApiMetricsSamplingPeriod,
-				{
-					key,
-				},
-			);
-		});
-
-		await Promise.all(deleteP).catch((error) => {
-			Lumberjack.error("An error occurred while deleting keys", null, error);
-		});
+		).catch((error) => Lumberjack.error("An error occurred while deleting keys", null, error));
 	}
 
 	/**
@@ -341,21 +355,29 @@ export class RedisFs implements IFileSystemPromises {
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L191
 	 * Neither isomorphic-git nor GitRest currently use the options parameter.
 	 */
-	public async stat(
+	public async statCore(
 		filepath: PathLike,
 		options?: StatOptions & { bigint?: false | undefined },
 	): Promise<Stats>;
-	public async stat(
+	public async statCore(
 		filepath: PathLike,
 		options: StatOptions & { bigint: true },
 	): Promise<BigIntStats>;
-	public async stat(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
-	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
+	public async statCore(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
+	public async statCore(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
-		const data = await executeRedisFsApi(
-			async () => this.redisFsClient.get<string | Buffer>(filepathString),
+		const dataLength = await executeRedisFsApiWithMetric(
+			async () => {
+				if (this.redisFsConfig.enableOptimizedStat) {
+					return this.redisFsClient.peek(filepathString);
+				}
+				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
+				if (data === null || data === undefined) {
+					return -1;
+				}
+				return data.length;
+			},
 			RedisFsApis.Stat,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -364,11 +386,11 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (data === null) {
+		if (dataLength === -1) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+		const fsEntityType = dataLength === 0 ? RedisFSConstants.directory : RedisFSConstants.file;
 
 		return getStats(fsEntityType);
 	}
@@ -383,16 +405,15 @@ export class RedisFs implements IFileSystemPromises {
 	 * For more info on how isomorphic-git uses this, see:
 	 * https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L155
 	 */
-	public async rm(filepath: PathLike, options?: RmOptions): Promise<void> {
+	public async rmCore(filepath: PathLike, options?: RmOptions): Promise<void> {
 		const filepathString = filepath.toString();
 		if (options?.recursive) {
 			return this.rmdir(filepath);
 		}
 
-		await executeRedisFsApi(
-			async () => this.redisFsClient.delete(filepathString),
+		await executeRedisFsApiWithMetric(
+			async () => this.redisFsClient.del(filepathString),
 			RedisFsApis.Removefile,
-			RedisFSConstants.RedisFsApi,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
 			{
@@ -408,13 +429,16 @@ export class RedisFs implements IFileSystemPromises {
 	 */
 	// For more info on how isomorphic-git uses this, see:
 	// https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L203
-	public async lstat(
+	public async lstatCore(
 		path: PathLike,
 		opts?: StatOptions & { bigint?: false | undefined },
 	): Promise<Stats>;
-	public async lstat(path: PathLike, opts: StatOptions & { bigint: true }): Promise<BigIntStats>;
-	public async lstat(path: PathLike, opts?: StatOptions): Promise<Stats | BigIntStats>;
-	public async lstat(filepath: string, options?: any): Promise<Stats | BigIntStats> {
+	public async lstatCore(
+		path: PathLike,
+		opts: StatOptions & { bigint: true },
+	): Promise<BigIntStats>;
+	public async lstatCore(path: PathLike, opts?: StatOptions): Promise<Stats | BigIntStats>;
+	public async lstatCore(filepath: string, options?: any): Promise<Stats | BigIntStats> {
 		return this.stat(filepath, {
 			...options,
 			calledFromLStat: true,
@@ -429,18 +453,18 @@ export class RedisFs implements IFileSystemPromises {
 	 * the case with GitRest. However, the function needs to be defined to avoid errors in isomorphic-git.
 	 * It will just never be called.
 	 */
-	public async readlink(
+	public async readlinkCore(
 		filepath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: ObjectEncodingOptions | BufferEncoding | null,
 	): Promise<string>;
-	public async readlink(filepath: PathLike, options: BufferEncodingOption): Promise<Buffer>;
-	public async readlink(
+	public async readlinkCore(filepath: PathLike, options: BufferEncodingOption): Promise<Buffer>;
+	public async readlinkCore(
 		filepath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null
 		options?: ObjectEncodingOptions | string | null,
 	): Promise<string | Buffer>;
-	public async readlink(filepath: PathLike, options: any): Promise<string | Buffer> {
+	public async readlinkCore(filepath: PathLike, options: any): Promise<string | Buffer> {
 		throw Error("Not implemented");
 	}
 
@@ -452,7 +476,7 @@ export class RedisFs implements IFileSystemPromises {
 	 * the case with GitRest. However, the function needs to be defined to avoid errors in isomorphic-git.
 	 * It will just never be called.
 	 */
-	public async symlink(
+	public async symlinkCore(
 		target: PathLike,
 		filepath: PathLike,
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -469,68 +493,7 @@ export class RedisFs implements IFileSystemPromises {
 	 * In the future, if chmod is available, isomorphic-git will use it. We need to define the function to
 	 * comply with `IFileSystemPromises`.
 	 */
-	public async chmod(filepath: PathLike, mode: Mode): Promise<void> {
+	public async chmodCore(filepath: PathLike, mode: Mode): Promise<void> {
 		throw Error("Not implemented");
-	}
-}
-
-class RedisFsError extends Error {
-	public get code() {
-		return this.err.code;
-	}
-
-	constructor(
-		public readonly err: ISystemError,
-		message?: string,
-	) {
-		super(message ? `${err.description}: ${message}` : err.description);
-		this.name = "RedisFsError";
-	}
-}
-
-enum RedisFsApis {
-	ReadFile = "ReadFile",
-	WriteFile = "WriteFile",
-	Unlink = "Unlink",
-	Readdir = "Readdir",
-	Removefile = "Removefile",
-	Stat = "Stat",
-	Mkdir = "Mkdir",
-	Rmdir = "Rmdir",
-	KeysByPrefix = "keysByPrefix",
-}
-
-enum RedisFSConstants {
-	file = "file",
-	directory = "directory",
-	RedisFsApi = "RedisFsApi",
-}
-
-async function executeRedisFsApi<T>(
-	api: () => Promise<T>,
-	apiName: string,
-	metricName: string,
-	metricEnabled: boolean,
-	samplingPeriod: number,
-	telemetryProperties?: Record<string, any>,
-	logResponseSize: boolean = false,
-): Promise<T> {
-	if (!metricEnabled || (samplingPeriod && getRandomInt(samplingPeriod) !== 0)) {
-		return api();
-	}
-
-	const metric = Lumberjack.newLumberMetric(metricName, telemetryProperties);
-	try {
-		let responseSize;
-		const result = await api();
-		if (logResponseSize) {
-			responseSize = sizeof(result);
-		}
-		metric.setProperty("responseSize", responseSize);
-		metric.success(`${metricName}: ${apiName} success`);
-		return result;
-	} catch (error: any) {
-		metric.error(`${metricName}: ${apiName} error`, error);
-		throw error;
 	}
 }

@@ -4,26 +4,28 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaManager } from "@fluidframework/container-loader/test/deltaManager";
+import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
 // eslint-disable-next-line import/no-internal-modules
-import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/test/contracts";
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
 // eslint-disable-next-line import/no-internal-modules
-import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
+import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
+// eslint-disable-next-line import/no-internal-modules
+import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
-// eslint-disable-next-line import/no-internal-modules
-import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
+import { ScheduleManager } from "@fluidframework/container-runtime/internal/test/scheduleManager";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	ISequencedDocumentSystemMessage,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 
 describe("Container Runtime", () => {
 	/**

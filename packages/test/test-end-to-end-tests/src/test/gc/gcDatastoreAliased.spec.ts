@@ -4,21 +4,24 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+
 import {
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	ITestObjectProvider,
-	summarizeNow,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	ITestObjectProvider,
+	createSummarizer,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -28,7 +31,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
@@ -37,11 +40,12 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
 			trackState: false,
+			fullTree: true,
 		});
 	}
 
 	it("An unreferenced datastore when aliased becomes referenced.", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 		}
@@ -66,8 +70,8 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const gcStatePreAlias = getGCStateFromSummary(summaryWithStats.summary);
 		assert(gcStatePreAlias !== undefined, "Should get gc pre state from summary!");
 		assert(
-			gcStatePreAlias.gcNodes[dataObject2.handle.absolutePath].unreferencedTimestampMs !==
-				undefined,
+			gcStatePreAlias.gcNodes[toFluidHandleInternal(dataObject2.handle).absolutePath]
+				.unreferencedTimestampMs !== undefined,
 			"dataStore2 should be unreferenced as it is not aliased and not root!",
 		);
 
@@ -88,8 +92,8 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const gcStatePostAlias = getGCStateFromSummary(summaryWithStats.summary);
 		assert(gcStatePostAlias !== undefined, "Should get gc post state from summary!");
 		assert(
-			gcStatePostAlias.gcNodes[dataObject2.handle.absolutePath].unreferencedTimestampMs ===
-				undefined,
+			gcStatePostAlias.gcNodes[toFluidHandleInternal(dataObject2.handle).absolutePath]
+				.unreferencedTimestampMs === undefined,
 			"dataStore2 should be referenced as it is aliased and thus a root datastore!",
 		);
 	});
@@ -98,7 +102,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 describeCompat("GC Data Store Aliased No Compat", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 

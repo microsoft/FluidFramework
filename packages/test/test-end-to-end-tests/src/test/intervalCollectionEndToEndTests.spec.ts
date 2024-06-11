@@ -4,53 +4,30 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IHostLoader } from "@fluidframework/container-definitions/internal";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IHostLoader } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
-
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
-				},
-			},
-		},
-		enableRuntimeIdCompressor: true,
-	},
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -81,7 +58,38 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
+				},
+			},
+			enableRuntimeIdCompressor: "on",
+		},
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	let provider: ITestObjectProvider;
 	let container1: IContainerExperimental;
 	let sharedString1: SharedString;
@@ -121,7 +129,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 
 		await provider.ensureSynchronized();
 		await provider.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+		assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 		// the "callback" portion of the original e2e test
 		const sharedString = await dataStore.getSharedObject<SharedString>(stringId);

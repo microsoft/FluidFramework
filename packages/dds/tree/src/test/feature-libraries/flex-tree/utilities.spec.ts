@@ -4,15 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeStatus } from "../../../feature-libraries/index.js";
-import { FieldKey, AnchorSet, rootFieldKey, keyAsDetachedField } from "../../../core/index.js";
-import { brand } from "../../../util/index.js";
+
+import { AnchorSet, FieldKey, keyAsDetachedField, rootFieldKey } from "../../../core/index.js";
 import {
 	detachedFieldSlot,
 	treeStatusFromAnchorCache,
 	treeStatusFromDetachedField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/utilities.js";
+import { TreeStatus } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
 import { applyTestDelta } from "../../utils.js";
 
 describe("flex-tree utilities", () => {
@@ -29,7 +30,7 @@ describe("flex-tree utilities", () => {
 			assert(anchorNode0 !== undefined);
 
 			// Checks that treeStatusFromAnchorCache returns the correct TreeStatus.
-			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.InDocument);
+			assert(treeStatusFromAnchorCache(anchorNode0) === TreeStatus.InDocument);
 		});
 
 		it("non-root detachedField returns TreeStatus.Removed", () => {
@@ -45,7 +46,7 @@ describe("flex-tree utilities", () => {
 			assert(anchorNode0 !== undefined);
 
 			// Checks that treeStatusFromAnchorCache returns the correct TreeStatus.
-			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.Removed);
+			assert(treeStatusFromAnchorCache(anchorNode0) === TreeStatus.Removed);
 		});
 
 		it("uses cached field only when cache is not stale", () => {
@@ -60,7 +61,7 @@ describe("flex-tree utilities", () => {
 			assert(anchorNode0 !== undefined);
 
 			// Checks that treeStatus is TreeStatus.InDocument
-			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.InDocument);
+			assert(treeStatusFromAnchorCache(anchorNode0) === TreeStatus.InDocument);
 
 			// Manually set cache to a non-root detachedField to check if it's being used.
 			const testFieldKey: FieldKey = brand("testFieldKey");
@@ -68,12 +69,12 @@ describe("flex-tree utilities", () => {
 				generationNumber: 0,
 				detachedField: keyAsDetachedField(testFieldKey),
 			});
-			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.Removed);
+			assert(treeStatusFromAnchorCache(anchorNode0) === TreeStatus.Removed);
 
 			// Applies a dummy delta to increment anchorSet generationNumber.
 			applyTestDelta(new Map([]), anchors);
 			// Checks that the treeStatus is no longer being read from stale cache.
-			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.InDocument);
+			assert(treeStatusFromAnchorCache(anchorNode0) === TreeStatus.InDocument);
 		});
 
 		it("correctly sets and updates cache", () => {
@@ -96,7 +97,7 @@ describe("flex-tree utilities", () => {
 			};
 
 			// Checks that the cache is updated to the expected value after calling treeStatusFromAnchorCache.
-			treeStatusFromAnchorCache(anchors, anchorNode0);
+			treeStatusFromAnchorCache(anchorNode0);
 			assert.deepEqual(anchorNode0.slots.get(detachedFieldSlot), expectedCache);
 
 			// Applies a dummy delta to increment anchorSet generationNumber.
@@ -113,7 +114,7 @@ describe("flex-tree utilities", () => {
 				detachedField: keyAsDetachedField(rootFieldKey),
 			};
 			// Calls treeStatusFromAnchorCache and checks if cache is updated.
-			treeStatusFromAnchorCache(anchors, anchorNode0);
+			treeStatusFromAnchorCache(anchorNode0);
 			assert.deepEqual(anchorNode0.slots.get(detachedFieldSlot), expectedUpdatedCache);
 		});
 	});

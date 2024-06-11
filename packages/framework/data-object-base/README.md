@@ -1,4 +1,4 @@
-# @fluidframework/data-object-base
+# @fluid-experimental/data-object-base
 
 This is an experimental project that explores synchronous Fluid data object loading.
 
@@ -6,6 +6,11 @@ This is an experimental project that explores synchronous Fluid data object load
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
 
 ## Using Fluid Framework libraries
 
@@ -18,12 +23,12 @@ library consumers should always prefer `^`.
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluidframework/data-object-base
+npm i @fluid-experimental/data-object-base
 ```
 
 ## API Documentation
 
-API documentation for **@fluidframework/data-object-base** is available at <https://fluidframework.com/docs/api/v1/data-object-base>.
+API documentation for **@fluid-experimental/data-object-base** is available at <https://fluidframework.com/docs/apis/data-object-base>.
 
 ## Contribution Guidelines
 

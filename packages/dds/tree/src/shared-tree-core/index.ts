@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export {
 	onForkTransitive,
 	SharedTreeBranch,
@@ -11,11 +12,21 @@ export {
 } from "./branch.js";
 
 export {
+	ExplicitCoreCodecVersions,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "./sharedTreeCore.js";
+
+export { ResubmitMachine } from "./resubmitMachine.js";
+export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
+
+export {
+	ChangeEnricherReadonlyCheckout,
+	ChangeEnricherMutableCheckout,
+	NoOpChangeEnricher,
+} from "./changeEnricher.js";
 
 export { TransactionStack } from "./transactionStack.js";
 

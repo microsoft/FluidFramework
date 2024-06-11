@@ -3,90 +3,95 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import { NodeChangeset } from "../../../feature-libraries/index.js";
-import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
-import { EncodingTestData, MockIdCompressor, makeEncodingTestSuite } from "../../utils.js";
+
+import { brand } from "../../../util/index.js";
+import {
+	EncodingTestData,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../../utils.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { IJsonCodec } from "../../../codec/index.js";
-import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
-import { changesetForChild } from "../fieldKindTestUtils.js";
+import { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { TestChange } from "../../testChange.js";
+import { Change, inlineRevision } from "./optionalFieldUtils.js";
 
-const nodeChange1 = changesetForChild("nodeChange1");
+const nodeChange1: TestNodeId = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
+const tag1 = mintRevisionTag();
 
-const encodedChild = "encoded child";
+const change1 = inlineRevision(
+	Change.atOnce(Change.reserve("self", brand(1)), Change.move(brand(41), "self")),
+	tag1,
+);
 
-const childCodec1: IJsonCodec<
-	NodeChangeset,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	ChangeEncodingContext
-> = {
-	encode: (change: NodeChangeset) => {
-		assert.deepEqual(change, nodeChange1);
-		return encodedChild;
-	},
-	decode: (encodedChange: JsonCompatibleReadOnly) => {
-		assert.equal(encodedChange, encodedChild);
-		return nodeChange1;
-	},
-};
+const change2: OptionalChangeset = inlineRevision(
+	optionalFieldEditor.set(false, {
+		fill: brand(42),
+		detach: brand(2),
+	}),
+	tag1,
+);
 
-const change1: OptionalChangeset = {
-	moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
-	childChanges: [],
-	reservedDetachId: { localId: brand(1) },
-};
+const change2Inverted = inlineRevision(
+	Change.atOnce(Change.clear("self", brand(42)), Change.move(brand(2), "self")),
+	tag1,
+);
 
-const change2: OptionalChangeset = optionalFieldEditor.set(false, {
-	fill: brand(42),
-	detach: brand(2),
-});
+const changeWithChildChange = inlineRevision(
+	optionalFieldEditor.buildChildChange(0, nodeChange1),
+	tag1,
+);
 
-const change2Inverted: OptionalChangeset = {
-	moves: [
-		[{ localId: brand(2) }, "self", "nodeTargeting"],
-		["self", { localId: brand(42) }, "cellTargeting"],
-	],
-	childChanges: [],
-};
+const change1WithChildChange = inlineRevision(
+	Change.atOnce(
+		Change.clear("self", brand(1)),
+		Change.move(brand(41), "self"),
+		Change.child(nodeChange1),
+	),
+	tag1,
+);
 
-const changeWithChildChange = optionalFieldEditor.buildChildChange(0, nodeChange1);
+const clearEmpty = inlineRevision(Change.reserve("self", brand(3)), tag1);
 
-const change1WithChildChange: OptionalChangeset = {
-	moves: [
-		[{ localId: brand(41) }, "self", "nodeTargeting"],
-		["self", { localId: brand(1) }, "cellTargeting"],
-	],
-	childChanges: [["self", nodeChange1]],
-};
+const pin = inlineRevision(Change.pin(brand(4)), tag1);
 
 export function testCodecs() {
 	describe("Codecs", () => {
-		const sessionId = { originatorId: "session1" as SessionId };
+		const baseContext = {
+			originatorId: "session1" as SessionId,
+			revision: undefined,
+			idCompressor: testIdCompressor,
+		};
+		const context: FieldChangeEncodingContext = {
+			baseContext,
+			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
+		};
+
 		const encodingTestData: EncodingTestData<
 			OptionalChangeset,
 			unknown,
-			ChangeEncodingContext
+			FieldChangeEncodingContext
 		> = {
 			successes: [
-				["set from empty", change1, sessionId],
-				["set from non-empty", change2, sessionId],
-				["child change", changeWithChildChange, sessionId],
-				["field set with child change", change1WithChildChange, sessionId], // Note: should only get sent over the wire when using transaction APIs.
-				["undone field change", change2Inverted, sessionId],
+				["set from empty", change1, context],
+				["set from non-empty", change2, context],
+				["child change", changeWithChildChange, context],
+				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
+				["undone field change", change2Inverted, context],
+				["clear from empty", clearEmpty, context],
+				["pin", pin, context],
 			],
 		};
 
-		makeEncodingTestSuite(
-			makeOptionalFieldCodecFamily(childCodec1, new RevisionTagCodec(new MockIdCompressor())),
-			encodingTestData,
-		);
+		makeEncodingTestSuite(makeOptionalFieldCodecFamily(testRevisionTagCodec), encodingTestData);
 	});
 }

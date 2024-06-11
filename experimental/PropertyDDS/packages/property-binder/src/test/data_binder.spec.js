@@ -17,38 +17,38 @@
  */
 import _ from "lodash";
 import { DataBinder } from "../data_binder/dataBinder";
+import { DataBinding } from "../data_binder/dataBinding";
 import { ModificationContext } from "../data_binder/modificationContext";
 import {
-	registerTestTemplates,
-	ParentTemplate,
-	ChildTemplate,
-	PrimitiveChildrenTemplate,
 	ArrayContainerTemplate,
-	SetContainerTemplate,
-	MapContainerTemplate,
-	NodeContainerTemplate,
-	UnrepresentedTemplate,
+	ChildTemplate,
+	EscapingTestTemplate,
 	InheritedChildTemplate,
 	InheritedChildrenTemplate,
+	MapContainerTemplate,
 	MultipleInheritedTemplate,
-	positionTemplate,
+	NodeContainerTemplate,
+	ParentTemplate,
+	PrimitiveChildrenTemplate,
 	ReferenceParentTemplate,
-	EscapingTestTemplate,
+	SetContainerTemplate,
+	UnrepresentedTemplate,
+	positionTemplate,
+	registerTestTemplates,
 } from "./testTemplates";
-import { DataBinding } from "../data_binder/dataBinding";
 
-import {
-	ParentDataBinding,
-	DerivedDataBinding,
-	ChildDataBinding,
-	PrimitiveChildrenDataBinding,
-	InheritedChildDataBinding,
-} from "./testDataBindings";
-import { catchConsoleErrors, hadConsoleError, clearConsoleError } from "./catchConsoleError";
-import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
 import { RESOLVE_NEVER } from "../internal/constants";
+import { catchConsoleErrors, clearConsoleError, hadConsoleError } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
+import {
+	ChildDataBinding,
+	DerivedDataBinding,
+	InheritedChildDataBinding,
+	ParentDataBinding,
+	PrimitiveChildrenDataBinding,
+} from "./testDataBindings";
 
 const cleanupClasses = function () {
 	// Unregister DataBinding paths

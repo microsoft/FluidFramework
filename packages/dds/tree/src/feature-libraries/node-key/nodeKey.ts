@@ -4,8 +4,9 @@
  */
 
 import { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
-import { Brand, Opaque, brand } from "../../util/index.js";
+
 import { TreeNodeSchemaIdentifier } from "../../core/index.js";
+import { Brand, Opaque, brand } from "../../util/index.js";
 
 /**
  * A key which uniquely identifies a node in the tree within this session.
@@ -37,15 +38,6 @@ export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1 {
 	return a === b ? 0 : a > b ? 1 : -1;
 }
-
-/**
- * The key for the special field for {@link LocalNodeKey}s,
- * which allows nodes to be given keys that can be used to find the nodes via the node key index.
- * @internal
- * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for fields defined by the system.
- * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
- */
-export const nodeKeyFieldKey = "__n_id__";
 
 /**
  * The TreeNodeSchemaIdentifier for node keys.

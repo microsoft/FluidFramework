@@ -4,25 +4,27 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedMap } from "@fluidframework/map";
+
 import {
-	TestFluidObject,
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
 	TestDataObjectType,
+	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	ITestObjectProvider,
+	TestFluidObject,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
-	beforeEach(function () {
+	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
 	});
 
@@ -30,7 +32,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 	let firstContainerObject2: ITestDataObject;
 	let secondContainerObject1: ITestDataObject;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const firstContainer = await provider.makeTestContainer();
 		firstContainerObject1 =
@@ -98,10 +100,10 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const sharedMap = SharedMap.create(firstContainerObject1._runtime);
 		sharedMap.set("key1", "value1");
 
-		const sharedMapHandle = sharedMap.handle;
+		const sharedMapHandle = toFluidHandleInternal(sharedMap.handle);
 
 		// The expected absolute path.
-		const absolutePath = `/default/${sharedMap.id}`;
+		const absolutePath = `/${firstContainerObject1._runtime.id}/${sharedMap.id}`;
 
 		// Verify that the local client's handle has the correct absolute path.
 		assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
@@ -113,7 +115,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Get the handle in the remote client.
 		const remoteSharedMapHandle =
-			secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+			secondContainerObject1._root.get<IFluidHandleInternal<ISharedMap>>("sharedMap");
 		assert(remoteSharedMapHandle);
 
 		// Verify that the remote client's handle has the correct absolute path.
@@ -138,7 +140,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const sharedMap = SharedMap.create(firstContainerObject2._runtime);
 		sharedMap.set("key1", "value1");
 
-		const sharedMapHandle = sharedMap.handle;
+		const sharedMapHandle = toFluidHandleInternal(sharedMap.handle);
 
 		// The expected absolute path.
 		const absolutePath = `/${firstContainerObject2._runtime.id}/${sharedMap.id}`;
@@ -153,7 +155,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Get the handle in the remote client.
 		const remoteSharedMapHandle =
-			secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+			secondContainerObject1._root.get<IFluidHandleInternal<ISharedMap>>("sharedMap");
 		assert(remoteSharedMapHandle);
 
 		// Verify that the remote client's handle has the correct absolute path.
@@ -177,7 +179,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		// The expected absolute path.
 		const absolutePath = `/${firstContainerObject2._runtime.id}`;
 
-		const dataObjectHandle = firstContainerObject2.handle;
+		const dataObjectHandle = toFluidHandleInternal(firstContainerObject2.handle);
 
 		// Verify that the local client's handle has the correct absolute path.
 		assert.equal(
@@ -194,7 +196,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Get the handle in the remote client.
 		const remoteDataObjectHandle =
-			secondContainerObject1._root.get<IFluidHandle<TestFluidObject>>("dataObject2");
+			secondContainerObject1._root.get<IFluidHandleInternal<TestFluidObject>>("dataObject2");
 		assert(remoteDataObjectHandle);
 
 		// Verify that the remote client's handle has the correct absolute path.
@@ -208,8 +210,8 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const container2DataObject2 = await remoteDataObjectHandle.get();
 		// Verify that the `url` matches with that of the dataObject in container1.
 		assert.equal(
-			container2DataObject2.handle.absolutePath,
-			firstContainerObject2.handle.absolutePath,
+			toFluidHandleInternal(container2DataObject2.handle).absolutePath,
+			toFluidHandleInternal(firstContainerObject2.handle).absolutePath,
 			"The urls do not match",
 		);
 	});

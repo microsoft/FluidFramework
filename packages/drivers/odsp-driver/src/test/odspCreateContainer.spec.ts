@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IDocumentService } from "@fluidframework/driver-definitions";
+import { strict as assert } from "node:assert";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { getOdspResolvedUrl } from "../odspUtils";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { LocalPersistentCache } from "../odspCache";
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
-import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { getOdspResolvedUrl } from "../odspUtils.js";
+
+import { mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";
@@ -27,7 +30,7 @@ describe("Odsp Create Container Test", () => {
 	let request: IRequest;
 
 	const itemId = "fakeItemId";
-	const expectedResponse: any = {
+	const expectedResponse = {
 		context: "http://sp.devinstall/_api/v2.1/$metadata#",
 		sequenceNumber: 1,
 		sha: "shaxxshaxx",
@@ -44,7 +47,7 @@ describe("Odsp Create Container Test", () => {
 		{ snapshotOptions: { timeout: 2000 } },
 	);
 
-	const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
+	const createSummary = (putAppTree: boolean, putProtocolTree: boolean): ISummaryTree => {
 		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: {},
@@ -102,7 +105,7 @@ describe("Odsp Create Container Test", () => {
 		assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
 		assert.strictEqual(finalResolverUrl.hashedDocumentId, docID, "DocId should match");
 
-		const url = `fluid-odsp://placeholder/placeholder/${docID}/`;
+		const url = `https://placeholder/placeholder/${docID}/`;
 		const snapshotUrl = `${siteUrl}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 		assert.strictEqual(finalResolverUrl.url, url, "Url should match");
 		assert.strictEqual(
@@ -140,12 +143,14 @@ describe("Odsp Create Container Test", () => {
 				[
 					// Due to retry logic in getWithRetryForTokenRefresh() for OdspErrorTypes.incorrectServerResponse
 					// Need to mock two calls
-					async () => okResponse({}, {}),
-					async () => okResponse({}, {}),
+					async (): Promise<object> => okResponse({}, {}),
+					async (): Promise<object> => okResponse({}, {}),
 				],
 			);
-		} catch (error: any) {
-			assert.strictEqual(error.statusCode, undefined, "Wrong error code");
+		} catch (error: unknown) {
+			assert(isFluidError(error), "Error should be IFluidError");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			assert.strictEqual((error as any).statusCode, undefined, "Wrong error code");
 			assert.strictEqual(
 				error.errorType,
 				OdspErrorTypes.incorrectServerResponse,

@@ -5,17 +5,18 @@
 
 import {
 	DriverError,
-	IDriverErrorBase,
 	DriverErrorTypes,
-} from "@fluidframework/driver-definitions";
+	IDriverErrorBase,
+} from "@fluidframework/driver-definitions/internal";
 import {
-	NonRetryableError,
-	GenericNetworkError,
-	createGenericNetworkError,
 	AuthorizationError,
-} from "@fluidframework/driver-utils";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
-import { pkgVersion as driverVersion } from "./packageVersion";
+	GenericNetworkError,
+	NonRetryableError,
+	createGenericNetworkError,
+} from "@fluidframework/driver-utils/internal";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * Routerlicious Error types
@@ -39,7 +40,7 @@ export type RouterliciousErrorTypes =
 
 /**
  * Interface for error responses for the WebSocket connection
- * Intended to be compatible with output from {@link NetworkError.toJSON}
+ * Intended to be compatible with output from `NetworkError.toJSON`.
  */
 export interface IR11sSocketError {
 	/**
@@ -118,7 +119,6 @@ export function throwR11sNetworkError(
 ): never {
 	const networkError = createR11sNetworkError(errorMessage, statusCode, retryAfterMs);
 
-	// eslint-disable-next-line @typescript-eslint/no-throw-literal
 	throw networkError;
 }
 

@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import { Package, updatePackageJsonFile, PackageJson } from "@fluidframework/build-tools";
-import { PackageCommand } from "../../BasePackageCommand";
-import { ExtractorConfig } from "@microsoft/api-extractor";
-import { CommandLogger } from "../../logging";
-import path from "node:path";
+
 import { strict as assert } from "node:assert";
+import path from "node:path";
+import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { ExtractorConfig } from "@microsoft/api-extractor";
+import { Flags } from "@oclif/core";
+import { PackageCommand } from "../../BasePackageCommand.js";
+import type { PackageSelectionDefault } from "../../flags.js";
+import { CommandLogger } from "../../logging.js";
 
 /**
  * Represents a list of package categorized into two arrays
@@ -60,6 +62,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		...PackageCommand.flags,
 	};
 
+	protected defaultSelection = "dir" as PackageSelectionDefault;
+
 	private readonly packageList: PackageTypesList = {
 		packagesNotUpdated: [],
 		packagesUpdated: [],
@@ -85,9 +89,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
-				throw new Error(
-					"Neither 'types' nor 'typings' field is defined in the package.json.",
-				);
+				throw new Error("Neither 'types' nor 'typings' field is defined in the package.json.");
 			}
 
 			/**

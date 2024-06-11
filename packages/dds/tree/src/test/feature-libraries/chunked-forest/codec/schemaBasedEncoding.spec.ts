@@ -4,22 +4,11 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	cursorForJsonableTreeField,
-	intoStoredSchema,
-	TreeCompressionStrategy,
-	isFluidHandle,
-} from "../../../../feature-libraries/index.js";
 
-import {
-	buildCache,
-	fieldShaper,
-	oneFromSet,
-	treeShaper,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
+import { leaf } from "../../../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	FieldBatchEncodingContext,
 	makeFieldBatchCodec,
@@ -33,12 +22,27 @@ import {
 	anyFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+import {
+	buildCache,
+	fieldShaper,
+	oneFromSet,
+	treeShaper,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
 // eslint-disable-next-line import/no-internal-modules
-import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
+import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import {
+	FlexFieldSchema,
+	TreeCompressionStrategy,
+	cursorForJsonableTreeField,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+} from "../../../../feature-libraries/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { ajvValidator } from "../../../codec/index.js";
+import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import {
 	hasOptionalField,
 	minimal,
@@ -47,16 +51,20 @@ import {
 	storedLibrary,
 	testTrees,
 } from "../../../testTrees.js";
-import { leaf, SchemaBuilder } from "../../../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
-import { ajvValidator } from "../../../codec/index.js";
-import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
+
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createIdCompressor } from "../../../../../../../runtime/id-compressor/dist/idCompressor.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 const numericShape = new NodeShape(leaf.number.name, true, [], undefined);
+const identifierShape = new NodeShape(leaf.string.name, SpecialField.Identifier, [], undefined);
 
 describe("schemaBasedEncoding", () => {
 	it("oneFromSet", () => {
@@ -71,6 +79,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -80,8 +89,9 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required(minimal),
+				FlexFieldSchema.create(FieldKinds.required, [minimal]).stored,
 				cache,
+				{ nodeSchema: new Map() },
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
 			assert.equal(shape.shape, onlyTypeShape);
@@ -98,6 +108,7 @@ describe("schemaBasedEncoding", () => {
 				() => anyNodeShape,
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -107,8 +118,9 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required([minimal, leaf.number]),
+				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]).stored,
 				cache,
+				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
 			assert.equal(shape.shape, AnyShape.instance);
@@ -121,6 +133,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -130,8 +143,9 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.sequence(minimal),
+				FlexFieldSchema.create(FieldKinds.sequence, [minimal]).stored,
 				cache,
+				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
 			assert.equal(shape.shape, cache.nestedArray(onlyTypeShape));
@@ -144,6 +158,36 @@ describe("schemaBasedEncoding", () => {
 				[[new IdentifierToken("test.minimal"), new IdentifierToken("test.minimal")]],
 			);
 		});
+
+		it("identifier", () => {
+			const cache = new EncoderCache(
+				() => fail(),
+				() => fail(),
+				fieldKinds,
+				testIdCompressor,
+			);
+			const log: string[] = [];
+			const identifierField = FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]);
+			const storedSchema = identifierField.stored;
+			const shape = fieldShaper(
+				{
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
+						log.push(schemaName);
+						return identifierShape;
+					},
+				},
+				storedSchema,
+				cache,
+				{ nodeSchema: new Map([[leaf.string.name, leaf.string.stored]]) },
+			);
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			assert.deepEqual(shape.shape, identifierShape);
+			assert.deepEqual(
+				checkFieldEncode(shape, cache, [{ type: leaf.string.name, value: stableId }]),
+				[compressedId],
+			);
+		});
 	});
 
 	describe("treeShaper", () => {
@@ -152,6 +196,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const shape = treeShaper(
 				storedLibrary,
@@ -168,6 +213,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -204,6 +250,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -232,7 +279,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	it("recursiveType", () => {
-		const cache = buildCache(storedLibrary, defaultSchemaPolicy);
+		const cache = buildCache(storedLibrary, defaultSchemaPolicy, testIdCompressor);
 		const shape = cache.shapeFromTree(recursiveType.name);
 		const bufferEmpty = checkNodeEncode(shape, cache, { type: recursiveType.name });
 		assert.deepEqual(bufferEmpty, [0]);
@@ -248,18 +295,23 @@ describe("schemaBasedEncoding", () => {
 		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
+				const idCompressor = createIdCompressor(
+					assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+				);
 				const storedSchema = intoStoredSchema(schemaData);
-				const tree = treeFactory();
+				const tree = treeFactory(idCompressor);
 				// Check with checkFieldEncode
-				const cache = buildCache(storedSchema, defaultSchemaPolicy);
-				checkFieldEncode(anyFieldEncoder, cache, tree);
+				const cache = buildCache(storedSchema, defaultSchemaPolicy, idCompressor);
+				checkFieldEncode(anyFieldEncoder, cache, tree, idCompressor);
 
 				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+					idCompressor,
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator });
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				// End to end test
+				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], context);
 				const result = codec.decode(encoded, context);
 				const resultTree = result.map(jsonableTreesFromFieldCursor);

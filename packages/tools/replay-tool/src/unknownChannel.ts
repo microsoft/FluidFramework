@@ -4,21 +4,22 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore/internal";
 import {
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-	IChannelAttributes,
-	IChannelServices,
 	IChannel,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	IFluidDataStoreContext,
+	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+	IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
 	constructor(
@@ -86,13 +87,15 @@ class UnknownChannel implements IChannel {
 }
 
 export class UnknownChannelFactory implements IChannelFactory {
-	readonly attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "1.0",
-		packageVersion: "1.0",
-	};
+	readonly attributes: IChannelAttributes;
 
-	constructor(public readonly type: string) {}
+	constructor(public readonly type: string) {
+		this.attributes = {
+			type,
+			snapshotFormatVersion: "1.0",
+			packageVersion: "1.0",
+		};
+	}
 
 	async load(
 		runtime: IFluidDataStoreRuntime,

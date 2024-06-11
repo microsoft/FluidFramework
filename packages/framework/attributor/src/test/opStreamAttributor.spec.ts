@@ -2,14 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { OpStreamAttributor } from "../attributor";
-import { makeMockAudience } from "./utils";
+
+import { strict as assert } from "node:assert";
+
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+
+import { OpStreamAttributor } from "../attributor.js";
+
+import { makeMockQuorum } from "./utils.js";
 
 const clientIds = ["A", "B", "C"];
-const defaultAudience = makeMockAudience(clientIds);
+const defaultQuorumClients = makeMockQuorum(clientIds);
 
 class OpFactory {
 	private seq = 0;
@@ -39,13 +43,13 @@ describe("OpStreamAttributor", () => {
 
 	it("can retrieve user information from ops submitted during the current session", () => {
 		const deltaManager = new MockDeltaManager();
-		const attributor = new OpStreamAttributor(deltaManager, defaultAudience);
+		const attributor = new OpStreamAttributor(deltaManager, defaultQuorumClients);
 		const clientId = clientIds[1];
 		const timestamp = 50;
 		const op = opFactory.makeOp({ timestamp, clientId });
 		deltaManager.emit("op", op);
 		assert.deepEqual(attributor.getAttributionInfo(op.sequenceNumber), {
-			user: defaultAudience.getMember(clientId)?.user,
+			user: defaultQuorumClients.getMember(clientId)?.client.user,
 			timestamp,
 		});
 	});

@@ -6,13 +6,16 @@
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
 
+  // We prefer to use type-only imports, so we want the autoimporter to do that by default.
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
 	"typescript.tsc.autoDetect": "off",
 	"npm.autoDetect": "off",
 
 	"files.associations": {
-		"tools/pipelines/*.yml": "azure-pipelines",
+		"**/tools/pipelines/**/*.yml": "azure-pipelines",
 		// good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
 		"fence.json": "jsonc",
 		".git-blame-ignore-revs": "ignore",
@@ -67,6 +70,18 @@
 	"[typescript]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 	},
+	// Handle trailing whitespace and newlines for all files, in a way that matches how we configure the repo-wide formatter.
+	// They're specified here so they apply to files we don't format explicitly (e.g. yml files).
+	// Note they don't affect indentation, so they shouldn't inadvertently break yml files like other formatter rules might.
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
+	"files.trimTrailingWhitespace": true,
+
+	// Don't search for the biome executable in the path, as it's not a globally installed tool.
+	"biome.searchInPath": false,
+
+	// Use the biome executable from the node_modules folder.
+  "biome.lspBin": "node_modules/@biomejs/biome/bin/biome",
 
 	// Customizations for VSCode search results.
 	// These entries should probably be kept more or less in sync with the .gitignore file.

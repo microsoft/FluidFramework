@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const { OperationError } = require("@fluid-experimental/property-common");
 const HTTPStatus = require("http-status");
 const BranchManager = require("./branch_manager");

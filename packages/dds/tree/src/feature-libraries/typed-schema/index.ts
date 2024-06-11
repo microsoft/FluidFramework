@@ -5,22 +5,22 @@
 
 export {
 	FlexTreeNodeSchema,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
-	AllowedTypes,
+	FlexAllowedTypes,
 	LazyTreeNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	FieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldNodeSchema,
 	FlexTreeSchema,
 	Unenforced,
 	AllowedTypeSet,
-	MapFieldSchema,
+	FlexMapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
-	Fields,
+	FlexObjectNodeFields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -35,23 +35,13 @@ export {
 export { ViewSchema } from "./view.js";
 
 export {
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./schemaCollection.js";
 
-export {
-	FlexList,
-	markEager,
-	FlexListToUnion,
-	LazyItem,
-	isLazy,
-	ExtractItemType,
-	NormalizeLazyItem,
-} from "./flexList.js";
+export { FlexList, markEager, LazyItem, isLazy, NormalizeLazyItem } from "./flexList.js";
 
-export { ArrayToUnion } from "./typeUtils.js";
+import * as InternalFlexListTypes from "./internalTypes.js";
+export { InternalFlexListTypes };

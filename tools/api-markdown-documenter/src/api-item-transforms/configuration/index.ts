@@ -6,7 +6,7 @@
 export {
 	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
-} from "./Configuration";
+} from "./Configuration.js";
 export {
 	// Consumers should not use this, it exists externally for documentation purposes only.
 	type DefaultDocumentationSuiteOptions,
@@ -14,10 +14,10 @@ export {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
 	type HierarchyBoundaries,
-} from "./DocumentationSuiteOptions";
+} from "./DocumentationSuiteOptions.js";
 export {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationOptionsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-} from "./TransformationOptions";
+} from "./TransformationOptions.js";

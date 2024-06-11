@@ -4,17 +4,20 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
+
+import { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { TestChange } from "../../testChange.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
+import { SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-import { RevisionTagCodec } from "../../../core/index.js";
-import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 } from "../../utils.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
@@ -40,28 +43,36 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 	},
 ];
 
-const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
+// Dummy context object created to pass through the codec.
+const dummyContext = {
+	originatorId: "dummySessionID" as SessionId,
+	revision: undefined,
+	idCompressor: testIdCompressor,
+};
+const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { trunk: [], branches: new Map() }],
+		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],
 		[
 			"single commit",
 			{
 				trunk: trunkCommits.slice(0, 1),
-				branches: new Map(),
+				peerLocalBranches: new Map(),
 			},
+			dummyContext,
 		],
 		[
 			"multiple commits",
 			{
 				trunk: trunkCommits,
-				branches: new Map(),
+				peerLocalBranches: new Map(),
 			},
+			dummyContext,
 		],
 		[
 			"empty branch",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"3",
 						{
@@ -71,12 +82,13 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					],
 				]),
 			},
+			dummyContext,
 		],
 		[
 			"non-empty branch",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"4",
 						{
@@ -92,12 +104,13 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					],
 				]),
 			},
+			dummyContext,
 		],
 		[
 			"multiple branches",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"3",
 						{
@@ -120,16 +133,18 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					],
 				]),
 			},
+			dummyContext,
 		],
 	],
 	failures: {
-		0: [
+		1: [
 			[
 				"missing revision",
 				{
 					base: tags[0],
 					commits: [{ sessionId: "4", change: TestChange.mint([0], 1) }],
 				},
+				dummyContext,
 			],
 			[
 				"missing sessionId",
@@ -137,14 +152,16 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					base: tags[0],
 					commits: [{ change: TestChange.mint([0], 1), revision: mintRevisionTag() }],
 				},
+				dummyContext,
 			],
-			["non-object", ""],
+			["non-object", "", dummyContext],
 			[
 				"commit with parent field",
 				{
 					trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
 					branches: [],
 				},
+				dummyContext,
 			],
 		],
 	},
@@ -152,15 +169,11 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 
 export function testCodec() {
 	describe("Codec", () => {
-		const codec = makeEditManagerCodec(
-			withDefaultBinaryEncoding(TestChange.codec),
-			new RevisionTagCodec(new MockIdCompressor()),
-			{
-				jsonValidator: typeboxValidator,
-			},
-		);
+		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
+			jsonValidator: typeboxValidator,
+		});
 
-		makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases);
+		makeEncodingTestSuite(family, testCases);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
