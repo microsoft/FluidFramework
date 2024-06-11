@@ -195,22 +195,7 @@ describe("SchemaFactory Recursive methods", () => {
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive | number>>;
 			type _check2 = requireTrue<
-				areSafelyAssignable<
-					Field4,
-					| TreeNodeSchemaClass<
-							"com.fluidframework.leaf.number",
-							NodeKind.Leaf,
-							number,
-							number
-					  >
-					| TreeNodeSchemaNonClass<
-							"com.fluidframework.leaf.number",
-							NodeKind.Leaf,
-							number,
-							number
-					  >
-					| typeof ObjectRecursive
-				>
+				areSafelyAssignable<Field4, typeof sf.number | typeof ObjectRecursive>
 			>;
 
 			type Insertable = InsertableTreeNodeFromImplicitAllowedTypes<typeof ObjectRecursive>;
