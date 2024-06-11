@@ -227,7 +227,7 @@
                     "PascalCase"
                 ],
                 "custom": {
-                    "regex": "^T[A-Z]",
+                    "regex": "^(T[A-Z]|T$)",
                     "match": true
                 }
             },

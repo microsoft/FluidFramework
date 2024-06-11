@@ -39,7 +39,7 @@ module.exports = {
 			format: ["PascalCase"],
 			// Require "T" prefix for type parameters.
 			custom: {
-				regex: "^T[A-Z]",
+				regex: "^(T[A-Z]|T$)",
 				match: true,
 			},
 		},
