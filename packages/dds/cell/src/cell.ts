@@ -23,7 +23,7 @@ import { type IFluidSerializer } from "@fluidframework/shared-object-base/intern
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
 import {
-	type ICellLocalOpMetadata,
+	type CellLocalOpMetadata,
 	type ICellOptions,
 	type ISharedCell,
 	type ISharedCellEvents,
@@ -32,18 +32,18 @@ import {
 /**
  * Description of a cell delta operation
  */
-type ICellOperation = ISetCellOperation | IDeleteCellOperation;
+type CellOperation = SetCellOperation | DeleteCellOperation;
 
-interface ISetCellOperation {
+interface SetCellOperation {
 	type: "setCell";
-	value: ICellValue;
+	value: CellValue;
 }
 
-interface IDeleteCellOperation {
+interface DeleteCellOperation {
 	type: "deleteCell";
 }
 
-interface ICellValue {
+interface CellValue {
 	/**
 	 * The actual value contained in the `Cell`, which needs to be wrapped to handle `undefined`.
 	 */
@@ -122,11 +122,11 @@ export class SharedCell<T = any>
 			return;
 		}
 
-		const operationValue: ICellValue = {
+		const operationValue: CellValue = {
 			value,
 		};
 
-		const op: ISetCellOperation = {
+		const op: SetCellOperation = {
 			type: "setCell",
 			value: operationValue,
 		};
@@ -146,7 +146,7 @@ export class SharedCell<T = any>
 			return;
 		}
 
-		const op: IDeleteCellOperation = {
+		const op: DeleteCellOperation = {
 			type: "deleteCell",
 		};
 		this.submitCellMessage(op, previousValue);
@@ -186,7 +186,7 @@ export class SharedCell<T = any>
 	 * @returns The summary of the current state of the Cell.
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const content: ICellValue =
+		const content: CellValue =
 			this.attribution?.type === "local"
 				? { value: this.data, attribution: undefined }
 				: { value: this.data, attribution: this.attribution };
@@ -200,7 +200,7 @@ export class SharedCell<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
+		const content = await readAndParse<CellValue>(storage, snapshotFileName);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.data = this.serializer.decode(content.value);
@@ -224,7 +224,7 @@ export class SharedCell<T = any>
 	 *
 	 * @param content - ICellOperation content
 	 */
-	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
+	private applyInnerOp(content: CellOperation): Serializable<T> | undefined {
 		switch (content.type) {
 			case "setCell": {
 				return this.setCore(content.value.value as Serializable<T>);
@@ -253,7 +253,7 @@ export class SharedCell<T = any>
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+		const cellOpMetadata = localOpMetadata as CellLocalOpMetadata;
 		if (this.messageId !== this.messageIdObserved) {
 			// We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
 			if (local) {
@@ -278,7 +278,7 @@ export class SharedCell<T = any>
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
-			const op = message.contents as ICellOperation;
+			const op = message.contents as CellOperation;
 			// update the attributor
 			this.setAttribution(message);
 			this.applyInnerOp(op);
@@ -300,12 +300,12 @@ export class SharedCell<T = any>
 	}
 
 	private createLocalOpMetadata(
-		op: ICellOperation,
+		op: CellOperation,
 		previousValue?: Serializable<T>,
-	): ICellLocalOpMetadata {
+	): CellLocalOpMetadata {
 		const pendingMessageId = ++this.messageId;
 		this.pendingMessageIds.push(pendingMessageId);
-		const localMetadata: ICellLocalOpMetadata = {
+		const localMetadata: CellLocalOpMetadata = {
 			pendingMessageId,
 			previousValue,
 		};
@@ -316,7 +316,7 @@ export class SharedCell<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: unknown): void {
-		const cellContent = content as ICellOperation;
+		const cellContent = content as CellOperation;
 		switch (cellContent.type) {
 			case "deleteCell": {
 				this.delete();
@@ -341,7 +341,7 @@ export class SharedCell<T = any>
 	// TODO: use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
 	protected rollback(content: any, localOpMetadata: unknown): void {
-		const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+		const cellOpMetadata = localOpMetadata as CellLocalOpMetadata;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (content.type === "setCell" || content.type === "deleteCell") {
 			if (cellOpMetadata.previousValue === undefined) {
@@ -365,7 +365,7 @@ export class SharedCell<T = any>
 	 * @param op - The cell message.
 	 * @param previousValue - The value of the cell before this op.
 	 */
-	private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
+	private submitCellMessage(op: CellOperation, previousValue?: Serializable<T>): void {
 		const localMetadata = this.createLocalOpMetadata(op, previousValue);
 		this.submitLocalMessage(op, localMetadata);
 	}

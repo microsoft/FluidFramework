@@ -14,6 +14,8 @@ import {
  * Events emitted by {@link ISharedCell}.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 	/**
 	 * Emitted when the value has changed.
@@ -80,7 +82,8 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
  * @internal
  */
 // TODO: use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/naming-convention
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
 	/**
 	 * Retrieves the cell value.
@@ -119,7 +122,7 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
  */
 // TODO: use `unknown` instead.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ICellLocalOpMetadata<T = any> {
+export interface CellLocalOpMetadata<T = any> {
 	/**
 	 * Unique identifier for this local operation (op).
 	 */
@@ -135,17 +138,21 @@ export interface ICellLocalOpMetadata<T = any> {
  * Options related to attribution
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICellOptions {
 	attribution?: ICellAttributionOptions;
 }
 
 /**
  * This enables the cell to store the attribution information which can be accessed with the runtime
- * (i.e. who creeated the content and when it was created)
+ * (i.e. who created the content and when it was created).
  *
- * default: false
+ * @defaultValue `false`
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICellAttributionOptions {
 	track?: boolean;
 }
