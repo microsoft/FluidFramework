@@ -60,10 +60,10 @@ export abstract class View<TInit extends TProps, TProps = {} | undefined>
 	protected abstract onUpdate(props: Readonly<TProps>): void;
 	protected abstract onDetach(): void;
 
-	protected onDom<K extends keyof HTMLElementEventMap>(
+	protected onDom<TEventMap extends keyof HTMLElementEventMap>(
 		target: EventTarget,
-		type: K | string,
-		listener: (ev: HTMLElementEventMap[K]) => any,
+		type: TEventMap | string,
+		listener: (ev: HTMLElementEventMap[TEventMap]) => any,
 	) {
 		const eventListener = listener as EventListener;
 		const registration: IListenerRegistration = { target, type, listener: eventListener };
