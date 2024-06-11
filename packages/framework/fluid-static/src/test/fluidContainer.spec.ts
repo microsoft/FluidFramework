@@ -15,15 +15,15 @@ import type { ContainerSchema } from "../types.js";
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
  */
-export type requireAssignableTo<_A extends B, B> = true;
+type RequireAssignableTo<TTarget extends TSource, TSource> = true;
 
 // Type tests for InitialObjects
 {
 	// ContainerSchema case
 	{
-		type _a = InitialObjects<ContainerSchema>;
-		type _b = requireAssignableTo<_a, Record<string, unknown>>;
-		type _c = requireAssignableTo<Record<string, IFluidLoadable>, _a>;
+		type A = InitialObjects<ContainerSchema>;
+		type B = RequireAssignableTo<A, Record<string, unknown>>;
+		type C = RequireAssignableTo<Record<string, IFluidLoadable>, A>;
 	}
 	type ContainerSchemaWith<T extends SharedObjectKind> = ContainerSchema & {
 		initialObjects: { item: T };
@@ -41,15 +41,15 @@ export type requireAssignableTo<_A extends B, B> = true;
 
 	// SharedObjectKind case
 	{
-		type _a = InitialObjects<ContainerSchemaWith<SharedObjectKind>>["item"];
-		type _b = requireAssignableTo<_a, unknown>;
-		type _c = requireAssignableTo<unknown, _a>;
+		type A = InitialObjects<ContainerSchemaWith<SharedObjectKind>>["item"];
+		type B = RequireAssignableTo<A, unknown>;
+		type C = RequireAssignableTo<unknown, A>;
 	}
 
 	// SharedObject case
 	{
-		type _a = InitialObjects<ContainerSchemaWith<TestSharedObjectFactory>>["item"];
-		type _b = requireAssignableTo<_a, TestSharedObject>;
-		type _c = requireAssignableTo<TestSharedObject, _a>;
+		type A = InitialObjects<ContainerSchemaWith<TestSharedObjectFactory>>["item"];
+		type B = RequireAssignableTo<A, TestSharedObject>;
+		type C = RequireAssignableTo<TestSharedObject, A>;
 	}
 }

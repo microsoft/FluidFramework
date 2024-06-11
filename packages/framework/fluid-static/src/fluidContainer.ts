@@ -43,6 +43,7 @@ export type InitialObjects<T extends ContainerSchema> = {
  * @sealed
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidContainerEvents extends IEvent {
 	/**
 	 * Emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
@@ -110,6 +111,7 @@ export interface IFluidContainerEvents extends IEvent {
  * @sealed
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends IEventProvider<IFluidContainerEvents> {
 	/**
