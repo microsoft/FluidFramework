@@ -59,7 +59,10 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 
 	/**
 	 * Executes the specified code and keeps track of execution time statistics.
+	 * @param codeToMeasure - The code to be executed and measured.
+	 * @param customData - Custom data to be logged.
 	 *
+	 * @returns Whatever the passed-in code block returns.
 	 */
 	public measure<T extends IMeasuredCodeResult<TMetrics>>(
 		codeToMeasure: () => T,
