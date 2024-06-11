@@ -11,6 +11,7 @@ import type { IUser } from "./users.js";
  * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4}
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITokenClaims {
 	/**
 	 * Identifies the document (a.k.a container) for which the token is being generated.
@@ -71,6 +72,7 @@ export interface ITokenClaims {
  * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryTokenClaims {
 	sub: string;
 	act: IActorClient;
@@ -81,6 +83,7 @@ export interface ISummaryTokenClaims {
  * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IActorClient {
 	sub: string;
 }
@@ -89,6 +92,7 @@ export interface IActorClient {
  * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITokenService {
 	extractClaims(token: string): ITokenClaims;
 }
@@ -97,6 +101,7 @@ export interface ITokenService {
  * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITokenProvider {
 	/**
 	 * Whether or not the token is still valid to use.

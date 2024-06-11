@@ -7,6 +7,8 @@
  * Interface for a comparer.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IComparer<T> {
 	/**
 	 * The minimum value of type T.
@@ -42,6 +44,8 @@ export const NumberComparer: IComparer<number> = {
  * Interface to a node in {@link Heap}.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IHeapNode<T> {
 	value: T;
 	position: number;

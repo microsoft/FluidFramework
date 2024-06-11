@@ -7,6 +7,7 @@
  * Base user definition. It is valid to extend this interface when adding new details to the user object.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IUser {
 	/**
 	 * Unique identifier of the user session. This ID is established on each connection with the service.

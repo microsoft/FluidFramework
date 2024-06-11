@@ -21,6 +21,7 @@ export type ConnectionMode = "write" | "read";
  * In particular, whether or not the client is {@link ICapabilities.interactive}.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICapabilities {
 	/**
 	 * Indicates if the client represents a potentially interactive session with a user (if 'true') or if it's
@@ -38,6 +39,7 @@ export interface ICapabilities {
  * {@link IClient} connection / environment metadata.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IClientDetails {
 	/**
 	 * {@inheritDoc ICapabilities}
@@ -65,6 +67,7 @@ export interface IClientDetails {
  * Represents a client connected to a Fluid service, including associated user details, permissions, and connection mode.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IClient {
 	/**
 	 * {@inheritDoc ConnectionMode}
@@ -98,6 +101,7 @@ export interface IClient {
  * A {@link IClient} that has been acknowledged by the sequencer.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISequencedClient {
 	/**
 	 * The underlying client details.
@@ -113,6 +117,7 @@ export interface ISequencedClient {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISignalClient {
 	/**
 	 * The {@link ISignalClient.client}'s unique ID.
@@ -139,6 +144,8 @@ export interface ISignalClient {
  * Contents sent with a `ClientJoin` message.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IClientJoin {
 	/**
 	 * The ID of the joining client.

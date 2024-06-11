@@ -9,6 +9,8 @@ import { Deferred } from "./promises.js";
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITimer {
 	/**
 	 * True if timer is currently running
@@ -26,7 +28,7 @@ export interface ITimer {
 	clear(): void;
 }
 
-interface ITimeout {
+interface Timeout {
 	/**
 	 * Tick that timeout was started.
 	 */
@@ -43,7 +45,7 @@ interface ITimeout {
 	handler: () => void;
 }
 
-interface IRunningTimerState extends ITimeout {
+interface RunningTimerState extends Timeout {
 	/**
 	 * JavaScript Timeout object.
 	 */
@@ -57,7 +59,7 @@ interface IRunningTimerState extends ITimeout {
 	/**
 	 * Intended restart timeout.
 	 */
-	restart?: ITimeout;
+	restart?: Timeout;
 }
 
 const maxSetTimeoutMs = 0x7fffffff; // setTimeout limit is MAX_INT32=(2^31-1).
@@ -109,7 +111,7 @@ export class Timer implements ITimer {
 		return !!this.runningState;
 	}
 
-	private runningState: IRunningTimerState | undefined;
+	private runningState: RunningTimerState | undefined;
 	private readonly getCurrentTick: () => number = (): number => Date.now();
 
 	public constructor(
@@ -226,7 +228,7 @@ export class Timer implements ITimer {
 		}
 	}
 
-	private calculateRemainingTime(runningTimeout: ITimeout): number {
+	private calculateRemainingTime(runningTimeout: Timeout): number {
 		const elapsedTime = this.getCurrentTick() - runningTimeout.startTick;
 		return runningTimeout.duration - elapsedTime;
 	}
@@ -235,6 +237,8 @@ export class Timer implements ITimer {
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPromiseTimerResult {
 	timerResult: "timeout" | "cancel";
 }
@@ -244,6 +248,8 @@ export interface IPromiseTimerResult {
  * completes.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPromiseTimer extends ITimer {
 	/**
 	 * Starts the timer and returns a promise that

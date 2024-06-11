@@ -95,6 +95,7 @@ export enum SignalType {
  * Messages to track latency trace.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITrace {
 	/**
 	 * Service generating the trace.
@@ -115,6 +116,7 @@ export interface ITrace {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface INack {
 	/**
 	 * The operation that was just nacked.
@@ -136,6 +138,7 @@ export interface INack {
  * Document-specific message.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentMessage {
 	/**
 	 * The document's client sequence number.
@@ -183,6 +186,7 @@ export interface IDocumentMessage {
  * Document Message with optional system level data field.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentSystemMessage extends IDocumentMessage {
 	data: string;
 }
@@ -191,6 +195,7 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
  * Branch origin information.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IBranchOrigin {
 	/**
 	 * Origin branch of the message.
@@ -212,6 +217,7 @@ export interface IBranchOrigin {
  * Sequenced message for a distributed document.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISequencedDocumentMessage {
 	/**
 	 * The client ID that submitted the message.
@@ -301,6 +307,8 @@ export interface ISequencedDocumentMessage {
  * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ISequencedDocumentMessageExperimental = Omit<
 	ISequencedDocumentMessage,
 	"expHash1" | "compression"
@@ -319,6 +327,8 @@ export type ISequencedDocumentMessageExperimental = Omit<
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
 }
@@ -326,6 +336,8 @@ export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessa
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
 }
@@ -334,6 +346,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
  * Common interface between incoming and outgoing signals.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISignalMessageBase {
 	/**
 	 * Signal content
@@ -366,6 +379,7 @@ export interface ISignalMessageBase {
  * Interface for signals sent by the server to clients.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISignalMessage extends ISignalMessageBase {
 	/**
 	 * The client ID that submitted the message.
@@ -379,11 +393,14 @@ export interface ISignalMessage extends ISignalMessageBase {
  * Interface for signals sent by clients to the server.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ISentSignalMessage = ISignalMessageBase;
 
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IUploadedSummaryDetails {
 	/**
 	 * Indicates whether the uploaded summary contains ".protocol" tree.
@@ -394,6 +411,7 @@ export interface IUploadedSummaryDetails {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryContent {
 	/**
 	 * Handle reference to the summary data.
@@ -429,6 +447,8 @@ export interface ISummaryContent {
  * May want to add error code or something similar in the future.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IServerError {
 	/**
 	 * Message describing the server error.
@@ -440,6 +460,7 @@ export interface IServerError {
  * Data about the original proposed summary message.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryProposal {
 	/**
 	 * Actual sequence number of the summary message proposal.
@@ -451,6 +472,7 @@ export interface ISummaryProposal {
  * Contents of summary ack expected from the server.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryAck {
 	/**
 	 * Handle of the complete summary.
@@ -467,6 +489,7 @@ export interface ISummaryAck {
  * Contents of summary nack expected from the server.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryNack {
 	/**
 	 * Information about the proposed summary message.
@@ -497,6 +520,7 @@ export interface ISummaryNack {
  * Interface for nack content.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface INackContent {
 	/**
 	 * An error code number that represents the error. It will be a valid HTTP error code.
@@ -529,7 +553,7 @@ export interface INackContent {
  */
 export enum NackErrorType {
 	/**
-	 * Retriable after {@link ISummaryNack.retryAfter} seconds.
+	 * Retry-able after {@link ISummaryNack.retryAfter} seconds.
 	 */
 	ThrottlingError = "ThrottlingError",
 

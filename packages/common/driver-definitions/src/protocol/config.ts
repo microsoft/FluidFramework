@@ -7,6 +7,7 @@
  * Key value store of service configuration properties provided to the client as part of connection.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IClientConfiguration {
 	/**
 	 * Max message size the server will accept before requiring chunking.

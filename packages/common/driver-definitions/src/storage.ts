@@ -33,6 +33,8 @@ import type { IResolvedUrl } from "./urlResolver.js";
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltasFetchResult {
 	/**
 	 * Sequential set of messages starting from 'from' sequence number.
@@ -52,6 +54,7 @@ export interface IDeltasFetchResult {
  * Interface to provide access to stored deltas for a shared object
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltaStorageService {
 	/**
 	 * Retrieves all the delta operations within the inclusive sequence number range
@@ -75,12 +78,14 @@ export interface IDeltaStorageService {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
 }
@@ -89,6 +94,7 @@ export interface IStream<T> {
  * Interface to provide access to stored deltas for a shared object
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentDeltaStorageService {
 	/**
 	 * Retrieves all the delta operations within the exclusive sequence number range
@@ -123,6 +129,7 @@ export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
  * to direct how other components interact with the driver
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentStorageServicePolicies {
 	/**
 	 * Should the Loader implement any sort of pre-fetching or caching mechanism?
@@ -144,6 +151,7 @@ export interface IDocumentStorageServicePolicies {
  * Interface to provide access to snapshots saved for a shared object
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	/**
 	 * Policies implemented/instructed by driver.
@@ -217,6 +225,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
  * Events emitted by {@link IDocumentService}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentServiceEvents extends IEvent {
 	/**
 	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
@@ -228,6 +237,7 @@ export interface IDocumentServiceEvents extends IEvent {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
@@ -242,6 +252,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentDeltaConnection
 	extends IDisposable,
 		IEventProvider<IDocumentDeltaConnectionEvents> {
@@ -339,6 +350,7 @@ export enum LoaderCachingPolicy {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentServicePolicies {
 	/**
 	 * Do not connect to delta stream
@@ -361,6 +373,7 @@ export interface IDocumentServicePolicies {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
 
@@ -402,6 +415,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentServiceFactory {
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
@@ -444,6 +458,7 @@ export interface IDocumentServiceFactory {
  * Indicates the previously acked summary.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryContext {
 	/**
 	 * Parent summary proposed handle (from summary op)
@@ -471,6 +486,7 @@ export enum FetchSource {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISnapshot {
 	snapshotTree: ISnapshotTree;
 	blobContents: Map<string, ArrayBuffer>;
@@ -494,6 +510,7 @@ export interface ISnapshot {
  * when fetching the snapshot.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISnapshotFetchOptions {
 	/**
 	 * Indicates scenario in which the snapshot is fetched. It is a free form string  mostly

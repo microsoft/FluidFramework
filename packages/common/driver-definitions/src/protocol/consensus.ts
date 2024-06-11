@@ -14,6 +14,7 @@ import type { ISequencedClient } from "./clients.js";
  * the proposal.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProposal {
 	/**
 	 * The key for the proposal.
@@ -30,26 +31,29 @@ export interface IProposal {
  * Similar to {@link IProposal} except it also includes the sequence number when it was made.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an {@link ISequencedProposal}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an {@link IApprovedProposal}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
 /**
  * @deprecated This type is now unused and will be removed
  * Events fired by a Quorum in response to client tracking.
  * @internal
- *
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IQuorumClientsEvents {
 	(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
 	(event: "removeMember", listener: (clientId: string) => void);
@@ -62,6 +66,7 @@ export interface IQuorumClientsEvents {
  * @internal
  * @deprecated This type is now unused and will be removed
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IQuorumProposalsEvents {
 	(event: "addProposal", listener: (proposal: ISequencedProposal) => void);
 	(
@@ -82,12 +87,14 @@ export interface IQuorumProposalsEvents {
  * @internal
  * @deprecated This type is now unused and will be removed
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 /**
  * Interface for tracking clients in the Quorum.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IQuorumClients {
 	getMembers(): Map<string, ISequencedClient>;
 	getMember(clientId: string): ISequencedClient | undefined;
@@ -103,6 +110,7 @@ export interface IQuorumClients {
  * Interface for tracking proposals in the Quorum.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IQuorumProposals {
 	propose(key: string, value: unknown): Promise<void>;
 
@@ -130,6 +138,7 @@ export interface IQuorumProposals {
  * Interface combining tracking of clients as well as proposals in the Quorum.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IQuorum
 	extends Omit<IQuorumClients, "on" | "once" | "off">,
 		Omit<IQuorumProposals, "on" | "once" | "off"> {
@@ -141,6 +150,8 @@ export interface IQuorum
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProtocolState {
 	sequenceNumber: number;
 	minimumSequenceNumber: number;
@@ -152,6 +163,7 @@ export interface IProtocolState {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProcessMessageResult {
 	immediateNoOp?: boolean;
 }
