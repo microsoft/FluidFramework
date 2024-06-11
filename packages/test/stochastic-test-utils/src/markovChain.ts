@@ -10,11 +10,11 @@ import { IRandom } from "./types.js";
 /**
  * @internal
  */
-export abstract class MarkovChain<PredictionPointType, OutputType> {
+export abstract class MarkovChain<TPredictionPoint, TOutput> {
 	public static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
 	public static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
-	public abstract initialize(predicitionPoints: PredictionPointType[][]): void;
-	public abstract generateData(...args: any): OutputType;
+	public abstract initialize(predicitionPoints: TPredictionPoint[][]): void;
+	public abstract generateData(...args: any): TOutput;
 
 	protected static assumeWordLanguageWordSpacing(word: string): WordSpacing {
 		let spacedCount = 0;
