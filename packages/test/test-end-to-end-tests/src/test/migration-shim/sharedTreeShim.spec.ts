@@ -17,10 +17,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import {
-	type ITree,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeView,
 } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
