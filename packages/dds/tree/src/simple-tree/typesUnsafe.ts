@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
+import { InternalFlexListTypes, Unenforced } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
 
 import {
@@ -75,7 +75,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	: TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<FlexListToUnion<TSchema>>
+	? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
 	: unknown;
 
 /**
@@ -85,7 +85,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
 > = TSchema extends AllowedTypes
-	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>>
+	? InsertableTypedNodeUnsafe<InternalFlexListTypes.FlexListToUnion<TSchema>>
 	: InsertableTypedNodeUnsafe<TSchema>;
 
 /**

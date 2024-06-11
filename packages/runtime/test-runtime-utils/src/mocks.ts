@@ -54,6 +54,7 @@ import {
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,
+	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -1046,6 +1047,14 @@ export class MockFluidDataStoreRuntime
 				tree: {},
 			},
 			stats,
+		};
+	}
+
+	public getAttachGCData(
+		telemetryContext?: ITelemetryContext | undefined,
+	): IGarbageCollectionData {
+		return {
+			gcNodes: {},
 		};
 	}
 

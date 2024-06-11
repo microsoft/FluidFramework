@@ -41,12 +41,7 @@ export {
 	schemaLintDefault,
 } from "./schemaCollection.js";
 
-export {
-	FlexList,
-	markEager,
-	FlexListToUnion,
-	LazyItem,
-	isLazy,
-	ExtractItemType,
-	NormalizeLazyItem,
-} from "./flexList.js";
+export { FlexList, markEager, LazyItem, isLazy, NormalizeLazyItem } from "./flexList.js";
+
+import * as InternalFlexListTypes from "./internalTypes.js";
+export { InternalFlexListTypes };

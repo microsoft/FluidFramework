@@ -10,11 +10,11 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { FlexListToUnion } from "../../feature-libraries/index.js";
+import { InternalFlexListTypes } from "../../feature-libraries/index.js";
 import {
-	ApplyKind,
 	FieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	InternalSimpleTreeTypes,
 	NodeFromSchema,
 	TreeConfiguration,
 	TreeNodeFromImplicitAllowedTypes,
@@ -127,11 +127,15 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
+				? InternalSimpleTreeTypes.ApplyKind<
+						TreeNodeFromImplicitAllowedTypes<Types>,
+						Kind,
+						false
+				  >
 				: "zzz";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
-			type Field4 = FlexListToUnion<XTypes>;
+			type Field4 = InternalFlexListTypes.FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
 			type _check2 = requireTrue<areSafelyAssignable<Field4, typeof ObjectRecursive>>;
 

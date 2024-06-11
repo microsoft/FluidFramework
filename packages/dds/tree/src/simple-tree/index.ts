@@ -27,7 +27,6 @@ export {
 	type,
 	WithType,
 	AllowedTypes,
-	ApplyKind,
 	FieldKind,
 	FieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -37,6 +36,8 @@ export {
 	type FieldProps,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
+import * as InternalSimpleTreeTypes from "./internalTypes.js";
+export { InternalSimpleTreeTypes };
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, TreeNodeApi, TreeChangeEvents } from "./treeNodeApi.js";
