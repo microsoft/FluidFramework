@@ -264,9 +264,14 @@ export abstract class ReleaseReportBaseCommand<
 					};
 
 					answer = await inquirer.prompt(question);
+					const firstRelease = recentReleases[0];
+					assert(
+						firstRelease !== undefined,
+						"firstRelease is undefined in FluidImportManager.process()",
+					);
 					const selectedVersion =
 						answer === undefined
-							? recentReleases[0].version
+							? firstRelease.version
 							: (answer.selectedPackageVersion as string);
 					latestReleasedVersion = recentReleases.find((v) => v.version === selectedVersion);
 				}
@@ -650,11 +655,21 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 		}
 
 		tableData.sort((a, b) => {
-			if (a[0] > b[0]) {
+			const a0 = a[0];
+			const b0 = b[0];
+			assert(
+				a0 !== undefined,
+				"a0 is undefined in ReleaseReportCommand.generateReleaseTable()",
+			);
+			assert(
+				b0 !== undefined,
+				"b0 is undefined in ReleaseReportCommand.generateReleaseTable()",
+			);
+			if (a0 > b0) {
 				return 1;
 			}
 
-			if (a[0] < b[0]) {
+			if (a0 < b0) {
 				return -1;
 			}
 
@@ -712,10 +727,15 @@ async function writeReport(
 	baseFileName?: string,
 	log?: CommandLogger,
 ): Promise<void> {
+	const containerRuntimeReport = report["@fluidframework/container-runtime"];
+	assert(
+		containerRuntimeReport !== undefined,
+		"containerRuntimeReport is undefined in writeReport",
+	);
 	const version =
 		releaseGroup === undefined
 			? // Use container-runtime as a proxy for the client release group.
-				report["@fluidframework/container-runtime"].version
+				containerRuntimeReport.version
 			: context.getVersion(releaseGroup);
 
 	const reportName = generateReportFileName(kind, version, releaseGroup, baseFileName);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import {
@@ -51,6 +52,7 @@ function getAssertMessageParams(sourceFile: SourceFile): Node[] {
 			const args = call.getArguments();
 			if (args.length >= messageIndex && args[messageIndex] !== undefined) {
 				const messageArg = args[messageIndex];
+				assert(messageArg !== undefined, "messageArg is undefined in getAssertMessageParams");
 				messageArgs.push(messageArg);
 			}
 		}
@@ -106,7 +108,9 @@ export const handler: Handler = {
 						// If comment already exists, extract it for the mapping file
 						const comments = msg.getTrailingCommentRanges();
 						if (comments.length > 0) {
-							let originalErrorText = comments[0]
+							const comments0 = comments[0];
+							assert(comments0 !== undefined, "comments0 is undefined in handler");
+							let originalErrorText = comments0
 								.getText()
 								.replace(/\/\*/g, "")
 								.replace(/\*\//g, "")

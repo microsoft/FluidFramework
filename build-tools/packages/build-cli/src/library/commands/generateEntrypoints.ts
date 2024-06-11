@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -279,9 +280,14 @@ function readArgValues<TQuery extends Readonly<Record<string, string>>>(
 	const args = commandLine.split(" ");
 	for (const [argName, defaultValue] of Object.entries(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
+		const argAtIndexOfArgValue = args[indexOfArgValue];
+		assert(
+			argAtIndexOfArgValue !== undefined,
+			"argAtIndexOfArgValue is undefined in readArgValues",
+		);
 		values[argName] =
 			0 < indexOfArgValue && indexOfArgValue < args.length
-				? args[indexOfArgValue]
+				? argAtIndexOfArgValue
 				: defaultValue;
 	}
 	return values as TQuery;
