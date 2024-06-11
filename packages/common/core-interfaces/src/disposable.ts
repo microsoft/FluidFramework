@@ -12,6 +12,7 @@
  * @sealed
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDisposable {
 	/**
 	 * Whether or not the object has been disposed.
