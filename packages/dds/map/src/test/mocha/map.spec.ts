@@ -18,16 +18,16 @@ import {
 
 import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import type {
-	IMapClearLocalOpMetadata,
-	IMapClearOperation,
-	IMapDeleteOperation,
-	IMapKeyEditLocalOpMetadata,
-	IMapSetOperation,
+	MapClearLocalOpMetadata,
+	MapClearOperation,
+	MapDeleteOperation,
+	MapKeyEditLocalOpMetadata,
+	MapSetOperation,
 	ISerializableValue,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
-import type { IMapOperation } from "../../mapKernel.js";
+import type { MapOperation } from "../../mapKernel.js";
 
 /**
  * Creates and connects a new {@link ISharedMap}.
@@ -55,13 +55,13 @@ function createLocalMap(id: string): SharedMapInternal {
 
 class TestSharedMap extends SharedMapInternal {
 	private lastMetadata?: MapLocalOpMetadata;
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
+	public testApplyStashedOp(content: MapOperation): MapLocalOpMetadata | undefined {
 		this.lastMetadata = undefined;
 		this.applyStashedOp(content);
 		return this.lastMetadata;
 	}
 
-	public submitLocalMessage(op: IMapOperation, localOpMetadata: unknown): void {
+	public submitLocalMessage(op: MapOperation, localOpMetadata: unknown): void {
 		this.lastMetadata = localOpMetadata as MapLocalOpMetadata;
 		super.submitLocalMessage(op, localOpMetadata);
 	}
@@ -416,7 +416,7 @@ describe("Map", () => {
 			it("metadata op", async () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
+				const op: MapSetOperation = { type: "set", key: "key", value: serializable };
 				const map1 = new TestSharedMap(
 					"testMap1",
 					dataStoreRuntime1,
@@ -431,22 +431,22 @@ describe("Map", () => {
 				let metadata = map1.testApplyStashedOp(op);
 				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
-				const editMetadata = map1.testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
+				const editMetadata = map1.testApplyStashedOp(op) as MapKeyEditLocalOpMetadata;
 				assert.equal(editMetadata.type, "edit");
 				assert.equal(editMetadata.pendingMessageId, 1);
 				assert.equal(editMetadata.previousValue.value, "value");
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
-				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
+				const op2: MapSetOperation = { type: "set", key: "key2", value: serializable2 };
 				metadata = map1.testApplyStashedOp(op2);
 				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
-				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
+				const op3: MapDeleteOperation = { type: "delete", key: "key2" };
+				metadata = map1.testApplyStashedOp(op3) as MapKeyEditLocalOpMetadata;
 				assert.equal(metadata.type, "edit");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
-				const op4: IMapClearOperation = { type: "clear" };
-				metadata = map1.testApplyStashedOp(op4) as IMapClearLocalOpMetadata;
+				const op4: MapClearOperation = { type: "clear" };
+				metadata = map1.testApplyStashedOp(op4) as MapClearLocalOpMetadata;
 				assert.equal(metadata.pendingMessageId, 4);
 				assert.equal(metadata.type, "clear");
 				assert.equal(metadata.previousMap?.get("key")?.value, "value");

@@ -56,7 +56,7 @@ const snapshotFileName = "header";
 /**
  * Defines the means to process and submit a given op on a directory.
  */
-interface IDirectoryMessageHandler {
+interface DirectoryMessageHandler {
 	/**
 	 * Apply the given operation.
 	 * @param msg - The message from the server to apply.
@@ -84,6 +84,7 @@ interface IDirectoryMessageHandler {
  * Operation indicating a value should be set for a key.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectorySetOperation {
 	/**
 	 * String identifier of the operation type.
@@ -111,6 +112,7 @@ export interface IDirectorySetOperation {
  * Operation indicating a key should be deleted from the directory.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryDeleteOperation {
 	/**
 	 * String identifier of the operation type.
@@ -132,12 +134,14 @@ export interface IDirectoryDeleteOperation {
  * An operation on a specific key within a directory.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryClearOperation {
 	/**
 	 * String identifier of the operation type.
@@ -154,12 +158,14 @@ export interface IDirectoryClearOperation {
  * An operation on one or more of the keys within a directory.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryCreateSubDirectoryOperation {
 	/**
 	 * String identifier of the operation type.
@@ -181,6 +187,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
  * Operation indicating a subdirectory should be deleted.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryDeleteSubDirectoryOperation {
 	/**
 	 * String identifier of the operation type.
@@ -202,6 +209,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
  * An operation on the subdirectories within a directory.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
 	| IDirectoryDeleteSubDirectoryOperation;
@@ -210,6 +218,7 @@ export type IDirectorySubDirectoryOperation =
  * Any operation on a directory.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
@@ -219,6 +228,7 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateInfo {
 	/**
 	 * Sequence number at which this subdirectory was created.
@@ -243,6 +253,7 @@ export interface ICreateInfo {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
@@ -272,6 +283,7 @@ export interface IDirectoryDataObject {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryNewStorageFormat {
 	/**
 	 * Blob IDs representing larger directory data that was serialized.
@@ -446,7 +458,7 @@ export class SharedDirectory
 	/**
 	 * Mapping of op types to message handlers.
 	 */
-	private readonly messageHandlers = new Map<string, IDirectoryMessageHandler>();
+	private readonly messageHandlers = new Map<string, DirectoryMessageHandler>();
 
 	/**
 	 * Constructs a new shared directory. If the object is non-local an id and service interfaces will
@@ -1090,40 +1102,40 @@ export class SharedDirectory
 	}
 }
 
-interface IKeyEditLocalOpMetadata {
+interface KeyEditLocalOpMetadata {
 	type: "edit";
 	pendingMessageId: number;
 	previousValue: ILocalValue | undefined;
 }
 
-interface IClearLocalOpMetadata {
+interface ClearLocalOpMetadata {
 	type: "clear";
 	pendingMessageId: number;
 	previousStorage: Map<string, ILocalValue>;
 }
 
-interface ICreateSubDirLocalOpMetadata {
+interface CreateSubDirLocalOpMetadata {
 	type: "createSubDir";
 }
 
-interface IDeleteSubDirLocalOpMetadata {
+interface DeleteSubDirLocalOpMetadata {
 	type: "deleteSubDir";
 	subDirectory: SubDirectory | undefined;
 }
 
-type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
+type SubDirLocalOpMetadata = CreateSubDirLocalOpMetadata | DeleteSubDirLocalOpMetadata;
 
 /**
  * Types of local op metadata.
  */
 export type DirectoryLocalOpMetadata =
-	| IClearLocalOpMetadata
-	| IKeyEditLocalOpMetadata
+	| ClearLocalOpMetadata
+	| KeyEditLocalOpMetadata
 	| SubDirLocalOpMetadata;
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
-function isKeyEditLocalOpMetadata(metadata: any): metadata is IKeyEditLocalOpMetadata {
+function isKeyEditLocalOpMetadata(metadata: any): metadata is KeyEditLocalOpMetadata {
 	return (
 		metadata !== undefined &&
 		typeof metadata.pendingMessageId === "number" &&
@@ -1131,7 +1143,7 @@ function isKeyEditLocalOpMetadata(metadata: any): metadata is IKeyEditLocalOpMet
 	);
 }
 
-function isClearLocalOpMetadata(metadata: any): metadata is IClearLocalOpMetadata {
+function isClearLocalOpMetadata(metadata: any): metadata is ClearLocalOpMetadata {
 	return (
 		metadata !== undefined &&
 		metadata.type === "clear" &&
@@ -1803,7 +1815,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		const pendingMsgId = ++this.pendingMessageId;
 		this.pendingClearMessageIds.push(pendingMsgId);
-		const metadata: IClearLocalOpMetadata = {
+		const metadata: ClearLocalOpMetadata = {
 			type: "clear",
 			pendingMessageId: pendingMsgId,
 			previousStorage: previousValue,
@@ -1923,7 +1935,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		this.updatePendingSubDirMessageCount(op);
 
-		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
+		const localOpMetadata: CreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
@@ -1941,7 +1953,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		this.updatePendingSubDirMessageCount(op);
 
-		const localOpMetadata: IDeleteSubDirLocalOpMetadata = {
+		const localOpMetadata: DeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
 			subDirectory: subDir,
 		};

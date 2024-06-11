@@ -19,6 +19,7 @@ import type {
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IValueChanged {
 	/**
 	 * The key storing the value that changed.
@@ -39,6 +40,7 @@ export interface IValueChanged {
  * @remarks When used as a Map, operates on its keys.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,6 +125,7 @@ export interface IDirectory
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when a key is set or deleted. This is emitted for any key in the {@link ISharedDirectory} or any
@@ -196,6 +199,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * Events emitted in response to changes to the directory data.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryEvents extends IEvent {
 	/**
 	 * Emitted when a key is set or deleted. As opposed to the
@@ -277,6 +281,7 @@ export interface IDirectoryEvents extends IEvent {
  * SubDirectories can be retrieved for use as working directories.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedDirectory
 	extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
 		Omit<IDirectory, "on" | "once" | "off"> {
@@ -292,6 +297,7 @@ export interface ISharedDirectory
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**
 	 * The absolute path to the IDirectory storing the key which changed.
@@ -304,6 +310,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
 	 * Emitted when a key is set or deleted.
@@ -349,7 +356,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/naming-convention
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
