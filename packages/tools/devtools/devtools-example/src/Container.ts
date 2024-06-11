@@ -13,12 +13,7 @@ import { AppData } from "./FluidObject.js";
 /**
  * This model contains the data we want to share with other clients.
  */
-export interface IAppModel {
-	readonly appData: AppData;
-	readonly container: IContainer;
-}
-
-class AppModel implements IAppModel {
+export class AppModel {
 	public constructor(
 		public readonly appData: AppData,
 		public readonly container: IContainer,
@@ -30,7 +25,7 @@ const collaborativeObjId = "collaborative-obj";
 /**
  * The runtime factory for the app.
  */
-export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
+export class RuntimeFactory extends ModelContainerRuntimeFactory<AppModel> {
 	public constructor() {
 		super(
 			new Map([AppData.getFactory().registryEntry]), // registryEntries
@@ -54,7 +49,7 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,
-	): Promise<IAppModel> {
+	): Promise<AppModel> {
 		const entryPointHandle = (await runtime.getAliasedDataStoreEntryPoint(
 			collaborativeObjId,
 		)) as IFluidHandle<AppData> | undefined;

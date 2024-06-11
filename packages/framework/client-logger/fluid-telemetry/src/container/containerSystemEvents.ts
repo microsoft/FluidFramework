@@ -8,17 +8,16 @@
  * It's important to note that each actual system events is a function signature such as `(event: "readonly", listener: (readonly: boolean) => void): void;`
  * but this object only captures the event name in each function.
  *
- * @privateremarks This should probably exist within IContainer itself instead of being defined here.
+ * @privateRemarks This should probably exist within IContainer itself instead of being defined here.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const IFluidContainerSystemEventNames = {
+export const FluidContainerSystemEventNames = {
 	CONNECTED: "connected",
 	DISCONNECTED: "disconnected",
 	DISPOSED: "disposed",
 } as const;
 
 /**
- * The type for all values within {@link IFluidContainerSystemEventNames}
+ * The type for all values within {@link FluidContainerSystemEventNames}
  */
-export type IFluidContainerSystemEventName =
-	(typeof IFluidContainerSystemEventNames)[keyof typeof IFluidContainerSystemEventNames];
+export type FluidContainerSystemEventName =
+	(typeof FluidContainerSystemEventNames)[keyof typeof FluidContainerSystemEventNames];

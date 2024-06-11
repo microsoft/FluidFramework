@@ -21,10 +21,10 @@ import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-defi
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
 /**
- * ModelContainerRuntimeFactoryWithAttribution is an abstract class that gives a basic structure for container runtime initialization with attributor enabled.
- * It also requires a createModel method to returns the expected model type.
+ * An abstract class that gives a basic structure for container runtime initialization with attributor enabled.
+ * It also requires a `createModel` method to returns the expected model type.
  */
-export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
+export abstract class ModelContainerRuntimeFactoryWithAttribution<TModelType>
 	implements IRuntimeFactory
 {
 	public get IRuntimeFactory(): IRuntimeFactory {
@@ -49,7 +49,7 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 			registryEntries: this.registryEntries,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
-			): Promise<IModelContainerRuntimeEntryPoint<ModelType>> => ({
+			): Promise<IModelContainerRuntimeEntryPoint<TModelType>> => ({
 				getModel: async (container: IContainer) =>
 					this.createModel(containerRuntime, container),
 			}),
@@ -88,5 +88,5 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 	protected abstract createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,
-	): Promise<ModelType>;
+	): Promise<TModelType>;
 }

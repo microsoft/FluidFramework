@@ -12,6 +12,8 @@ import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages.
  *
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IMessageRelayEvents<
 	TMessage extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage,
 > extends IEvent {
@@ -33,6 +35,8 @@ export interface IMessageRelayEvents<
  *
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IMessageRelay<
 	TSend extends IDevtoolsMessage = IDevtoolsMessage,
 	TReceive extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage,

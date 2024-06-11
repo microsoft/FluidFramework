@@ -204,8 +204,8 @@ export { Range_2 as Range }
 export { Required_2 as Required }
 
 // @public
-export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
-    readonly [P in symbol | string]: P extends K ? T : never;
+export type RestrictiveReadonlyRecord<TKey extends symbol | string, T> = {
+    readonly [P in symbol | string]: P extends TKey ? T : never;
 };
 
 // @public

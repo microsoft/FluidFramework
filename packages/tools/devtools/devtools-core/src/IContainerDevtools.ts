@@ -20,6 +20,8 @@ import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from 
  *
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerDevtools extends HasContainerKey, IDisposable {
 	/**
 	 * Gets the history of all ConnectionState changes since the devtools session was initialized.

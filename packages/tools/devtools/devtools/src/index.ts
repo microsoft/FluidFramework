@@ -83,6 +83,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
  * @beta
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDevtools extends IDisposable {
 	/**
 	 * Initializes a {@link IDevtools} from the provided properties and stores it for future reference.

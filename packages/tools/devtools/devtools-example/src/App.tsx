@@ -37,7 +37,7 @@ import {
 	createLoader,
 	loadExistingContainer,
 } from "./ClientUtilities.js";
-import { type IAppModel } from "./Container.js";
+import { type AppModel } from "./Container.js";
 import { type AppData } from "./FluidObject.js";
 import { CounterWidget, EmojiGrid } from "./widgets/index.js";
 
@@ -58,7 +58,7 @@ function getContainerIdFromLocation(location: Location): string {
 function useContainerInfo(
 	devtools: IFluidDevtools,
 	logger: IDevtoolsLogger,
-	loader: SessionStorageModelLoader<IAppModel>,
+	loader: SessionStorageModelLoader<AppModel>,
 ): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;

@@ -4,8 +4,8 @@
  */
 
 export {
-	IFluidContainerSystemEventNames,
-	type IFluidContainerSystemEventName,
+	FluidContainerSystemEventNames as IFluidContainerSystemEventNames,
+	type FluidContainerSystemEventName as IFluidContainerSystemEventName,
 } from "./containerSystemEvents.js";
 
 export {

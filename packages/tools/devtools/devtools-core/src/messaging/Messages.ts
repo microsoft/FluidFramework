@@ -8,6 +8,8 @@
  *
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDevtoolsMessage<TData = unknown> {
 	/**
 	 * The type of message being sent.
@@ -27,6 +29,8 @@ export interface IDevtoolsMessage<TData = unknown> {
  *
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
 	/**
 	 * Identifies the source of the message.

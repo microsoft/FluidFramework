@@ -189,4 +189,5 @@ export interface AzureMember<T = any> extends IMember {
  * Audience object for Azure Fluid Relay containers
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IAzureAudience = IServiceAudience<AzureMember>;

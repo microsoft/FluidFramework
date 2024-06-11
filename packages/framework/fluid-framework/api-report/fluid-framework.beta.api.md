@@ -562,8 +562,8 @@ export type ReplaceIEventThisPlaceHolder<T extends any[], TThis> = T extends any
 } : T;
 
 // @public
-export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
-    readonly [P in symbol | string]: P extends K ? T : never;
+export type RestrictiveReadonlyRecord<TKey extends symbol | string, T> = {
+    readonly [P in symbol | string]: P extends TKey ? T : never;
 };
 
 // @public

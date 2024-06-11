@@ -357,7 +357,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 /**
  * Container actions supported by the devtools view.
  */
-export interface IContainerActions {
+export interface ContainerActions {
 	/**
 	 * Attempt to connect a disconnected Container.
 	 *
@@ -388,7 +388,7 @@ const useActionBarStyles = makeStyles({
 	},
 });
 
-interface ActionsBarProps extends IContainerActions {
+interface ActionsBarProps extends ContainerActions {
 	isContainerConnected: boolean;
 	containerState: ContainerStateMetadata;
 }

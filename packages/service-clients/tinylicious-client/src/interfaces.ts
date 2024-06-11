@@ -97,4 +97,6 @@ export interface TinyliciousMember extends IMember {
  * Tinylicious-specific {@link @fluidframework/fluid-static#IServiceAudience} implementation.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

@@ -79,6 +79,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
  * Allows for the Tree's schema to be baked into the container schema.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * The key under the root DataObject in which the {@link @fluidframework/tree#SharedTree} is stored.
@@ -110,6 +111,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
  * {@link ITreeDataObject} extended with a React Component to view the tree.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
 	extends ITreeDataObject<TSchema> {
 	/**
