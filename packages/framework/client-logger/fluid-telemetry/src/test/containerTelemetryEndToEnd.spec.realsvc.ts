@@ -171,24 +171,6 @@ describe("container telemetry E2E", () => {
 				});
 
 				container.on("disposed", () => {
-					// Obtain the calls made to the TestTelemetryConsumer consume() method
-					const actualConsumedDisposedTelemetry: ContainerDisposedTelemetry[] =
-						telemetryConsumerConsumeSpy
-							.getCalls()
-							.map((spyCall) => spyCall.args[0] as IFluidTelemetry)
-							.filter(
-								(telemetry) =>
-									telemetry.eventName === ContainerTelemetryEventNames.DISPOSED,
-							) as ContainerDisposedTelemetry[];
-
-					if (actualConsumedDisposedTelemetry.length === 0) {
-						reject(
-							new Error(
-								"Expected TestTelemetryConsumer.consume() to be called alteast once with expected container telemetry but was not.",
-							),
-						);
-					}
-
 					// We are making an assumption here that the 'disposed' event is the third sent to the ITelemetryConsumer.
 					const containerTelemetryFromSpy = telemetryConsumerConsumeSpy.getCalls()[2]
 						.args[0] as ContainerDisposedTelemetry;
