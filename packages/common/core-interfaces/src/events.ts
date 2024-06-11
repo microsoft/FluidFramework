@@ -155,7 +155,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 	(event: infer E12, listener: (...args: infer A12) => void);
 	(event: infer E13, listener: (...args: infer A13) => void);
 	(event: infer E14, listener: (...args: infer A14) => void);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(event: string, listener: (...args: any[]) => void);
 }
 	? TransformedEvent<TThis, E0, A0> &
@@ -188,7 +187,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E11, listener: (...args: infer A11) => void);
 			(event: infer E12, listener: (...args: infer A12) => void);
 			(event: infer E13, listener: (...args: infer A13) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -219,7 +217,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E10, listener: (...args: infer A10) => void);
 			(event: infer E11, listener: (...args: infer A11) => void);
 			(event: infer E12, listener: (...args: infer A12) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -248,7 +245,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E9, listener: (...args: infer A9) => void);
 			(event: infer E10, listener: (...args: infer A10) => void);
 			(event: infer E11, listener: (...args: infer A11) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -275,7 +271,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E8, listener: (...args: infer A8) => void);
 			(event: infer E9, listener: (...args: infer A9) => void);
 			(event: infer E10, listener: (...args: infer A10) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -300,7 +295,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E7, listener: (...args: infer A7) => void);
 			(event: infer E8, listener: (...args: infer A8) => void);
 			(event: infer E9, listener: (...args: infer A9) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -323,7 +317,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E6, listener: (...args: infer A6) => void);
 			(event: infer E7, listener: (...args: infer A7) => void);
 			(event: infer E8, listener: (...args: infer A8) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -344,7 +337,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E5, listener: (...args: infer A5) => void);
 			(event: infer E6, listener: (...args: infer A6) => void);
 			(event: infer E7, listener: (...args: infer A7) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -363,7 +355,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E4, listener: (...args: infer A4) => void);
 			(event: infer E5, listener: (...args: infer A5) => void);
 			(event: infer E6, listener: (...args: infer A6) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -380,7 +371,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E3, listener: (...args: infer A3) => void);
 			(event: infer E4, listener: (...args: infer A4) => void);
 			(event: infer E5, listener: (...args: infer A5) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -395,7 +385,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E2, listener: (...args: infer A2) => void);
 			(event: infer E3, listener: (...args: infer A3) => void);
 			(event: infer E4, listener: (...args: infer A4) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -408,7 +397,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E1, listener: (...args: infer A1) => void);
 			(event: infer E2, listener: (...args: infer A2) => void);
 			(event: infer E3, listener: (...args: infer A3) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -419,7 +407,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 			(event: infer E0, listener: (...args: infer A0) => void);
 			(event: infer E1, listener: (...args: infer A1) => void);
 			(event: infer E2, listener: (...args: infer A2) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> &
@@ -428,13 +415,11 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 	: TEvent extends {
 			(event: infer E0, listener: (...args: infer A0) => void);
 			(event: infer E1, listener: (...args: infer A1) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1>
 	: TEvent extends {
 			(event: infer E0, listener: (...args: infer A0) => void);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(event: string, listener: (...args: any[]) => void);
 	  }
 	? TransformedEvent<TThis, E0, A0>
