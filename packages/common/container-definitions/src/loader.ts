@@ -33,6 +33,7 @@ import type { AttachState } from "./runtime.js";
  * Encapsulates a module entry point with corresponding code details.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidModuleWithDetails {
 	/**
 	 * Fluid code module that implements the runtime factory needed to instantiate the container runtime.
@@ -53,6 +54,7 @@ export interface IFluidModuleWithDetails {
  * a package name and package version range.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
 	 * Load the code module (package) that can interact with the document.
@@ -68,6 +70,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
  * that have been resolved and are ready to load
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 	/**
 	 * A resolved version of the Fluid package. All Fluid browser file entries should be absolute urls.
@@ -87,6 +90,8 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  * version of package that supports the provided code details.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidCodeResolver {
 	/**
 	 * Resolves a Fluid code details into a form that can be loaded.
@@ -101,6 +106,7 @@ export interface IFluidCodeResolver {
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerEvents extends IEvent {
 	/**
 	 * Emitted when the readonly state of the container changes.
@@ -312,6 +318,7 @@ export type ConnectionState =
  * The Host's view of a Container and its connection to storage
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -523,6 +530,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
  * The Runtime's view of the Loader, used for loading Containers
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILoader extends Partial<IProvideLoader> {
 	/**
 	 * Resolves the resource specified by the URL + headers contained in the request object
@@ -540,6 +548,7 @@ export interface ILoader extends Partial<IProvideLoader> {
  * The Host's view of the Loader, used for loading Containers
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IHostLoader extends ILoader {
 	/**
 	 * Creates a new container using the specified chaincode but in an unattached state. While unattached all
@@ -570,7 +579,7 @@ export interface IHostLoader extends ILoader {
  * Options to configure various behaviors of the ILoader.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention
 export type ILoaderOptions = {
 	/**
 	 * @deprecated This option has been deprecated and will be removed in a future release
@@ -644,6 +653,7 @@ export enum LoaderHeader {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
 	 * No trailing ops are applied before container is returned.
@@ -691,6 +701,8 @@ export interface IContainerLoadMode {
  * Set of Request Headers that the Loader understands and may inspect or modify
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILoaderHeader {
 	/**
 	 * @deprecated This header has been deprecated and will be removed in a future release
@@ -705,6 +717,7 @@ export interface ILoaderHeader {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideLoader {
 	readonly ILoader: ILoader;
 }
@@ -716,6 +729,7 @@ export interface IProvideLoader {
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	blobsContents?: { [path: string]: ArrayBufferLike };
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };

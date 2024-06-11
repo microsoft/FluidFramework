@@ -7,6 +7,7 @@
  * Specifies an environment on Fluid property of a IFluidPackage.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidPackageEnvironment {
 	/**
 	 * The name of the target. For a browser environment, this could be umd for scripts
@@ -38,6 +39,7 @@ export interface IFluidPackageEnvironment {
  * {@link https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid}
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidPackage {
 	/**
 	 * The name of the package that this code represnets
@@ -75,6 +77,7 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
  * Package manager configuration. Provides a key value mapping of config values
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
 }
@@ -83,6 +86,7 @@ export interface IFluidCodeDetailsConfig {
  * Data structure used to describe the code to load on the Fluid document
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidCodeDetails {
 	/**
 	 * The code package to be used on the Fluid document. This is either the package name which will be loaded
@@ -122,6 +126,7 @@ export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer =
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideFluidCodeDetailsComparer {
 	readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
@@ -130,6 +135,7 @@ export interface IProvideFluidCodeDetailsComparer {
  * Provides capability to compare Fluid code details.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 	/**
 	 * Determines if the `candidate` code details satisfy the constraints specified in `constraint` code details.

@@ -24,6 +24,7 @@ import type {
  * Contract representing the result of a newly established connection to the server for syncing deltas.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IConnectionDetails {
 	/**
 	 * The client's unique identifier assigned by the service.
@@ -53,6 +54,7 @@ export interface IConnectionDetails {
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltaSender {
 	/**
 	 * Flush all pending messages through the outbound queue
@@ -65,6 +67,7 @@ export interface IDeltaSender {
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltaManagerEvents extends IEvent {
 	/**
 	 * @deprecated No replacement API recommended.
@@ -146,6 +149,7 @@ export interface IDeltaManagerEvents extends IEvent {
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/**
 	 * The queue of inbound delta messages
@@ -237,6 +241,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
 	/**
 	 * Emitted when a task is enqueued.
@@ -281,6 +286,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
  * @sealed
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
 	/**
 	 * Flag indicating whether or not the queue was paused

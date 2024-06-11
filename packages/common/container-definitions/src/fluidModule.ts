@@ -11,6 +11,7 @@ import type { IRuntimeFactory } from "./runtime.js";
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidModule {
 	fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }

@@ -9,6 +9,7 @@ import type { IClient } from "@fluidframework/driver-definitions";
  * Manages the state and the members for {@link IAudience}
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAudienceOwner extends IAudience {
 	/**
 	 * Adds a new client to the audience
@@ -32,6 +33,7 @@ export interface IAudienceOwner extends IAudience {
  * Interface describing Audience events
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAudienceEvents extends IEvent {
 	/**
 	 * "addMember" event is raised when a new user joins collaborative session.
@@ -55,6 +57,7 @@ export interface IAudienceEvents extends IEvent {
  * Return type of {@link IAudience.getSelf}. Please see remarks for {@link IAudience.getSelf} to learn more details on promises.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISelf {
 	/**
 	 * clientId of current or previous connection (if client is in disconnected or reconnecting / catching up state)
@@ -83,6 +86,7 @@ export interface ISelf {
  *
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAudience extends IEventProvider<IAudienceEvents> {
 	/**
 	 * List all clients connected to the op stream, keyed off their clientId.

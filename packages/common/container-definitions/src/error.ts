@@ -90,4 +90,5 @@ export interface ContainerWarning extends IErrorBase {
  *
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ICriticalContainerError = IErrorBase;

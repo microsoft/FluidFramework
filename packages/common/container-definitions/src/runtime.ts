@@ -58,6 +58,7 @@ export enum AttachState {
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRuntime extends IDisposable {
 	/**
 	 * Notifies the runtime of a change in the connection state
@@ -115,6 +116,7 @@ export interface IRuntime extends IDisposable {
  * Payload type for IContainerContext.submitBatchFn()
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IBatchMessage {
 	contents?: string;
 	metadata?: Record<string, unknown>;
@@ -131,6 +133,7 @@ export interface IBatchMessage {
  * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerContext {
 	/**
 	 * Not recommended for general use, is used in some cases to control various runtime behaviors.
@@ -219,6 +222,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
 }
@@ -230,6 +234,7 @@ export interface IProvideRuntimeFactory {
  * to start up the running instance of the Container.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
 	 * Instantiates a new IRuntime for the given IContainerContext to proxy to
@@ -245,6 +250,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
  * Defines list of properties expected for getPendingLocalState
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IGetPendingLocalStateProps {
 	/**
 	 * Indicates the container will close after getting the pending state. Used internally
