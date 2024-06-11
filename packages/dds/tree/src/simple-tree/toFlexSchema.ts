@@ -30,7 +30,7 @@ import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexLi
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
-import { InsertableContent, extractFactoryContent } from "./proxies.js";
+import { InsertableContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
@@ -64,7 +64,7 @@ function cursorFromUnhydratedRoot(
 	nodeKeyManager: NodeKeyManager,
 	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
+	const data = tree as InsertableContent;
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
 		cursorFromNodeData(

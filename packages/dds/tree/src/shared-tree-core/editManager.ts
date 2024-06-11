@@ -607,7 +607,7 @@ export class EditManager<
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);
 			this.pushCommitToTrunk(sequenceId, {
 				...newCommit,
-				change: newChangeFullyRebased,
+				change: newChangeFullyRebased.change,
 			});
 		}
 
