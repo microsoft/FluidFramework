@@ -10,9 +10,9 @@ import structuredClone from "@ungap/structured-clone";
 /**
  * Subset of Map interface.
  */
-export interface MapGetSet<K, V> {
-	get(key: K): V | undefined;
-	set(key: K, value: V): void;
+export interface MapGetSet<TKey, TValue> {
+	get(key: TKey): TValue | undefined;
+	set(key: TKey, value: TValue): void;
 }
 
 /**
@@ -132,7 +132,11 @@ export function compareSets<T>({
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<TKey, TValue>(
+	map: MapGetSet<TKey, TValue>,
+	key: TKey,
+	defaultValue: (key: TKey) => TValue,
+): TValue {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -146,7 +150,10 @@ export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (k
  * Gets the list associated with the provided key, if it exists.
  * Otherwise, creates an entry with an empty list, and returns that list.
  */
-export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
+export function getOrAddEmptyToMap<TKey, TValue>(
+	map: MapGetSet<TKey, TValue[]>,
+	key: TKey,
+): TValue[] {
 	let collection = map.get(key);
 	if (collection === undefined) {
 		collection = [];
@@ -161,7 +168,10 @@ export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
  * @param map - the transformation function to run on each element of the iterable
  * @returns a new iterable of elements which have been transformed by the `map` function
  */
-export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): IterableIterator<U> {
+export function* mapIterable<TIn, TOut>(
+	iterable: Iterable<TIn>,
+	map: (t: TIn) => TOut,
+): IterableIterator<TOut> {
 	for (const t of iterable) {
 		yield map(t);
 	}
@@ -302,14 +312,14 @@ export function assertNonNegativeSafeInteger(index: number): void {
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * This function helps these few cases get into using an actual map in as safe of was as is practical.
  */
-export function objectToMap<MapKey extends string | number | symbol, MapValue>(
-	objectMap: Record<MapKey, MapValue>,
-): Map<MapKey, MapValue> {
-	const map = new Map<MapKey, MapValue>();
+export function objectToMap<TKey extends string | number | symbol, TValue>(
+	objectMap: Record<TKey, TValue>,
+): Map<TKey, TValue> {
+	const map = new Map<TKey, TValue>();
 	// This function must only be used with objects specifically intended to encode map like information.
 	for (const key of Object.keys(objectMap)) {
-		const element = objectMap[key as MapKey];
-		map.set(key as MapKey, element);
+		const element = objectMap[key as TKey];
+		map.set(key as TKey, element);
 	}
 	return map;
 }
@@ -324,19 +334,19 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
  */
-export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
-	objectMap: Record<MapKey, MapValue>,
-	transformer: (value: MapValue, key: MapKey) => NewMapValue,
-): Record<MapKey, MapValue> {
-	const output: Record<MapKey, MapValue> = Object.create(null);
+export function transformObjectMap<TKey extends string | number | symbol, TValue, TValueNew>(
+	objectMap: Record<TKey, TValue>,
+	transformer: (value: TValue, key: TKey) => TValueNew,
+): Record<TKey, TValue> {
+	const output: Record<TKey, TValue> = Object.create(null);
 	// This function must only be used with objects specifically intended to encode map like information.
 	for (const key of Object.keys(objectMap)) {
-		const element = objectMap[key as MapKey];
+		const element = objectMap[key as TKey];
 		Object.defineProperty(output, key, {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: transformer(element, key as MapKey),
+			value: transformer(element, key as TKey),
 		});
 	}
 	return output;
@@ -347,8 +357,8 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
  *
  * @returns a map which can look up the keys from the values of the original map.
  */
-export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
-	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
+export function invertMap<TKey, TValue>(input: Map<TKey, TValue>): Map<TValue, TKey> {
+	const result = new Map<TValue, TKey>(mapIterable(input, ([key, value]) => [value, key]));
 	assert(result.size === input.size, 0x88a /* all values in a map must be unique to invert it */);
 	return result;
 }
@@ -430,16 +440,16 @@ export interface IDisposable {
 /**
  * Capitalize a string.
  */
-export function capitalize<S extends string>(s: S): Capitalize<S> {
+export function capitalize<TString extends string>(s: TString): Capitalize<TString> {
 	// To avoid splitting characters which are made of multiple UTF-16 code units,
 	// use iteration instead of indexing to separate the first character.
 	const iterated = s[Symbol.iterator]().next();
 	if (iterated.done === true) {
 		// Empty string case.
-		return "" as Capitalize<S>;
+		return "" as Capitalize<TString>;
 	}
 
-	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<S>;
+	return (iterated.value.toUpperCase() + s.slice(iterated.value.length)) as Capitalize<TString>;
 }
 
 /**
