@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { truncateToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
