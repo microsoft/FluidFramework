@@ -362,7 +362,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					itWorks: _.string,
 				}) {}
 
-				const view = await tree.viewWith(new TreeViewConfiguration({ schema: RootNode }));
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: RootNode }));
 				view.initialize(new RootNode({ itWorks: "yes" }));
 
 				// Ensure root node is correctly typed.

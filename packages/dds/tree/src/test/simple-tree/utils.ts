@@ -12,6 +12,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";
+// eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { flexTreeWithContent } from "../utils.js";
 

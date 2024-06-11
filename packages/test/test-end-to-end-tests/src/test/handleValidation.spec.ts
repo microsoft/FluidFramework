@@ -52,10 +52,10 @@ const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
 	h: builder.optional(builder.handle),
 }) {}
-async function treeSetup(dds: ITree) {
+function treeSetup(dds: ITree) {
 	const config = new TreeViewConfiguration({ schema: Bar });
 
-	const view = await dds.viewWith(config);
+	const view = dds.viewWith(config);
 	if (view.compatibility.canInitialize) {
 		view.initialize({ h: undefined });
 	}
@@ -284,21 +284,14 @@ const ddsTypes: aDDSFactory[] = [
 			return this.downCast(tree);
 		},
 		downCast(channel): aDDSType {
-			let treeView: TreeView<typeof Bar>;
-			async function getTreeView() {
-				if (!treeView) {
-					treeView = await treeSetup(channel as ISharedTree);
-				}
-				return treeView;
-			}
+			const view: TreeView<typeof Bar> = treeSetup(channel as ISharedTree);
+
 			return {
 				id: channel.id,
 				async storeHandle(handle: IFluidHandle) {
-					const view = await getTreeView();
 					view.root.h = handle;
 				},
 				async readHandle(): Promise<unknown> {
-					const view = await getTreeView();
 					return view.root.h;
 				},
 				handle: channel.handle,

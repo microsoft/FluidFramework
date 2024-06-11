@@ -26,7 +26,7 @@ import { testIdCompressor } from "../utils.js";
 const schema = new SchemaFactory("test");
 
 describe("schemaCreationUtilities", () => {
-	it("enum type switch", async () => {
+	it("enum type switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Object.values(Mode) }) {}
 		const config = new TreeViewConfiguration({ schema: Parent });
@@ -36,7 +36,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<typeof Parent> = await tree.viewWith(config);
+		const view: TreeView<typeof Parent> = tree.viewWith(config);
 		view.initialize(
 			new Parent({
 				mode: new Mode.Bonus({}),
@@ -99,7 +99,7 @@ describe("schemaCreationUtilities", () => {
 		const _test2: InstanceType<typeof ModeNodes.a> = new ModeNodes.b();
 	});
 
-	it("enum value switch", async () => {
+	it("enum value switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Cool", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: typedObjectValues(Mode) }) {}
 		const config = new TreeViewConfiguration({ schema: Parent });
@@ -109,7 +109,7 @@ describe("schemaCreationUtilities", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
 			"tree",
 		);
-		const view: TreeView<typeof Parent> = await tree.viewWith(config);
+		const view: TreeView<typeof Parent> = tree.viewWith(config);
 		view.initialize(
 			new Parent({
 				mode: new Mode.Bonus({}),
@@ -132,7 +132,7 @@ describe("schemaCreationUtilities", () => {
 		}
 	});
 
-	it("enum interop - enumFromStrings", async () => {
+	it("enum interop - enumFromStrings", () => {
 		const factory = new TreeFactory({});
 
 		enum Day {
@@ -149,7 +149,7 @@ describe("schemaCreationUtilities", () => {
 
 		const day = Day.Today;
 
-		const view = await tree.viewWith(
+		const view = tree.viewWith(
 			new TreeViewConfiguration({ schema: typedObjectValues(DayNodes) }),
 		);
 		view.initialize(DayNodes(day));
@@ -167,7 +167,7 @@ describe("schemaCreationUtilities", () => {
 		}
 	});
 
-	it("enum interop - adaptEnum", async () => {
+	it("enum interop - adaptEnum", () => {
 		const factory = new TreeFactory({});
 
 		enum Day {
@@ -187,7 +187,7 @@ describe("schemaCreationUtilities", () => {
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today({});
 
-		const view = await tree.viewWith(
+		const view = tree.viewWith(
 			new TreeViewConfiguration({ schema: typedObjectValues(DayNodes) }),
 		);
 		view.initialize(DayNodes(Day.Today));

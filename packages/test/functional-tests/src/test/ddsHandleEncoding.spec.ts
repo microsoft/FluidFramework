@@ -62,14 +62,14 @@ describe("DDS Handle Encoding", () => {
 	/** Each test case runs some code then declares the handles (if any) it expects to be included in the op payload */
 	interface ITestCase {
 		name: string;
-		addHandleToDDS(): void | Promise<void>;
+		addHandleToDDS(): void;
 		expectedHandles: string[];
 	}
 
 	/** This takes care of creating the DDS behind the scenes so the ITestCase's code is ready to invoke */
 	function createTestCase<T>(
 		factory: IChannelFactory<T>,
-		addHandleToDDS: (dds: T) => void | Promise<void>,
+		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],
 		nameOverride?: string,
 	): ITestCase {
@@ -134,7 +134,7 @@ describe("DDS Handle Encoding", () => {
 		),
 		createTestCase(
 			SharedTree.getFactory(),
-			async (dds: ITree) => {
+			(dds: ITree) => {
 				const builder = new SchemaFactory("test");
 				class Bar extends builder.object("bar", {
 					h: builder.optional(builder.handle),
@@ -142,7 +142,7 @@ describe("DDS Handle Encoding", () => {
 
 				const config = new TreeViewConfiguration({ schema: Bar });
 
-				const treeView = await dds.viewWith(config);
+				const treeView = dds.viewWith(config);
 				treeView.initialize({ h: undefined });
 
 				treeView.root.h = handle;
@@ -249,7 +249,7 @@ describe("DDS Handle Encoding", () => {
 	testCases.forEach((testCase) => {
 		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should not" : "should";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
-			await testCase.addHandleToDDS();
+			testCase.addHandleToDDS();
 
 			assert.deepEqual(
 				messages.flatMap((m) => findAllHandles(m)),

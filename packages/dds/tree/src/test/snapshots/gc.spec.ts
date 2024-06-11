@@ -16,7 +16,7 @@ import {
 
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { type ISharedTree, SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration, TreeView } from "../../simple-tree/index.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
@@ -57,13 +57,22 @@ describe("Garbage Collection", () => {
 		private _expectedRoutes: string[] = [];
 		private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 		private readonly tree1: ISharedTree;
-		private root1: SomeType | undefined;
+		private readonly view1: TreeView<typeof SomeType>;
+		private get root1(): SomeType {
+			return this.view1.root;
+		}
 		private readonly tree2: ISharedTree;
 
 		public constructor() {
 			this.containerRuntimeFactory = new MockContainerRuntimeFactory();
 			this.tree1 = createConnectedTree("tree1", this.containerRuntimeFactory);
 			this.tree2 = createConnectedTree("tree2", this.containerRuntimeFactory);
+			this.view1 = this.tree1.viewWith(new TreeViewConfiguration({ schema: SomeType }));
+			this.view1.initialize({
+				handles: [],
+				nested: undefined,
+				bump: undefined,
+			});
 		}
 
 		public get sharedObject(): ISharedTree {
@@ -74,27 +83,11 @@ describe("Garbage Collection", () => {
 			return this._expectedRoutes;
 		}
 
-		private async getInitializedRoot(): Promise<SomeType> {
-			if (!this.root1) {
-				const view = await this.tree1.viewWith(
-					new TreeViewConfiguration({ schema: SomeType }),
-				);
-				view.initialize({
-					handles: [],
-					nested: undefined,
-					bump: undefined,
-				});
-				this.root1 = view.root;
-			}
-			return this.root1;
-		}
-
 		public async addOutboundRoutes(): Promise<void> {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			const root = await this.getInitializedRoot();
-			root.handles.insertAtEnd(subtree1.handle, subtree2.handle);
+			this.root1.handles.insertAtEnd(subtree1.handle, subtree2.handle);
 
 			this._expectedRoutes.push(
 				toFluidHandleInternal(subtree1.handle).absolutePath,
@@ -104,7 +97,7 @@ describe("Garbage Collection", () => {
 		}
 
 		public async deleteOutboundRoutes(): Promise<void> {
-			const root = await this.getInitializedRoot();
+			const root = this.root1;
 			assert(root.handles.length > 0, "Route must be added before deleting");
 			const lastElementIndex = root.handles.length - 1;
 			// Get the handles that were last added.
@@ -143,8 +136,7 @@ describe("Garbage Collection", () => {
 			const subtree1 = createLocalTree(`tree-${++this.treeCount}`);
 			const subtree2 = createLocalTree(`tree-${++this.treeCount}`);
 
-			const root = await this.getInitializedRoot();
-			root.nested = new Bar({
+			this.root1.nested = new Bar({
 				nestedHandles: [subtree1.handle, subtree2.handle],
 			});
 

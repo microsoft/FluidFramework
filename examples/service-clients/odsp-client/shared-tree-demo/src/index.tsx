@@ -11,7 +11,7 @@ import { containerSchema, createFluidData, loadFluidData } from "./fluid.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./output.css";
 import { ReactApp } from "./reactApp.js";
-import { Letter, treeConfiguration, type App } from "./schema.js";
+import { Letter, treeConfiguration } from "./schema.js";
 
 async function start(): Promise<void> {
 	const app = document.createElement("div");
@@ -32,7 +32,7 @@ async function start(): Promise<void> {
 	}
 
 	const tree = container.initialObjects.appData as ITree;
-	const appData = await tree.viewWith(treeConfiguration);
+	const appData = tree.viewWith(treeConfiguration);
 	if (createNew) {
 		appData.initialize({
 			letters: [],

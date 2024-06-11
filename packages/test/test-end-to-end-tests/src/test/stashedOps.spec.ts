@@ -309,7 +309,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
 		const tree = await d.getSharedObject<ISharedTree>(treeId);
-		const view = await tree.viewWith(treeConfig);
+		const view = tree.viewWith(treeConfig);
 		if (view.compatibility.canInitialize) {
 			view.initialize({ map: new Map<string, string>() });
 		}

@@ -15,6 +15,7 @@ import { TreeConfiguration } from '@fluidframework/tree';
 import { TreeFieldFromImplicitField } from '@fluidframework/tree';
 import { TreeNode } from '@fluidframework/tree';
 import { TreeView } from '@fluidframework/tree';
+import { TreeViewConfiguration } from '@fluidframework/tree/internal';
 
 // @public
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {
@@ -23,7 +24,7 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> exten
 
 // @public
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
-    readonly config: TreeConfiguration<TSchema>;
+    readonly config: TreeViewConfiguration<TSchema>;
     readonly key: string;
     readonly tree: TreeView<TSchema>;
 }

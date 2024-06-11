@@ -22,66 +22,66 @@ class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 const factory = new TreeFactory({});
 
 describe("class-tree tree", () => {
-	it("ListRoot", async () => {
+	it("ListRoot", () => {
 		const config = new TreeViewConfiguration({ schema: NodeList });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof NodeList> = await tree.viewWith(config);
+		const view: TreeView<typeof NodeList> = tree.viewWith(config);
 		view.initialize(new NodeList(["a", "b"]));
 		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
-	it("Implicit ListRoot", async () => {
+	it("Implicit ListRoot", () => {
 		const config = new TreeViewConfiguration({ schema: NodeList });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof NodeList> = await tree.viewWith(config);
+		const view: TreeView<typeof NodeList> = tree.viewWith(config);
 		view.initialize(["a", "b"]);
 		assert.deepEqual([...view.root], ["a", "b"]);
 	});
 
-	it("ObjectRoot - Data", async () => {
+	it("ObjectRoot - Data", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = await tree.viewWith(config);
+		const view: TreeView<typeof Canvas> = tree.viewWith(config);
 		view.initialize({ stuff: ["a", "b"] });
 	});
 
-	it("ObjectRoot - unhydrated", async () => {
+	it("ObjectRoot - unhydrated", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = await tree.viewWith(config);
+		const view: TreeView<typeof Canvas> = tree.viewWith(config);
 		view.initialize(new Canvas({ stuff: ["a", "b"] }));
 	});
 
-	it("Union Root", async () => {
+	it("Union Root", () => {
 		const config = new TreeViewConfiguration({ schema: [schema.string, schema.number] });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = await tree.viewWith(config);
+		const view = tree.viewWith(config);
 		view.initialize("a");
 		assert.equal(view.root, "a");
 	});
 
-	it("optional Root - initialized to undefined", async () => {
+	it("optional Root - initialized to undefined", () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = await tree.viewWith(config);
+		const view = tree.viewWith(config);
 		// Note: the tree's schema hasn't been initialized at this point, so even though the view schema
 		// allows an optional field, explicit initialization must occur.
 		assert.throws(() => view.root, /Document is out of schema./);
@@ -89,36 +89,36 @@ describe("class-tree tree", () => {
 		assert.equal(view.root, undefined);
 	});
 
-	it("optional Root - initializing only schema", async () => {
+	it("optional Root - initializing only schema", () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = await tree.viewWith(config);
+		const view = tree.viewWith(config);
 		view.upgradeSchema();
 		assert.equal(view.root, undefined);
 	});
 
-	it("optional Root - full", async () => {
+	it("optional Root - full", () => {
 		const config = new TreeViewConfiguration({ schema: schema.optional(schema.string) });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = await tree.viewWith(config);
+		const view = tree.viewWith(config);
 		view.initialize("x");
 		assert.equal(view.root, "x");
 	});
 
-	it("Nested list", async () => {
+	it("Nested list", () => {
 		const nestedList = schema.array(schema.array(schema.string));
 		const config = new TreeViewConfiguration({ schema: nestedList });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = await tree.viewWith(config);
+		const view = tree.viewWith(config);
 		view.initialize([["a"]]);
 		assert.equal(view.root?.length, 1);
 		const child = view.root[0];

@@ -119,7 +119,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<SharedTreeShim>();
 		const tree1 = shim1.currentTree;
-		const view1 = await tree1.viewWith(handleTreeConfig);
+		const view1 = tree1.viewWith(handleTreeConfig);
 		view1.initialize({ handle: undefined });
 		const node1 = view1.root;
 
@@ -138,7 +138,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const tree2 = shim2.currentTree;
-		const node2 = (await tree2.viewWith(handleTreeConfig)).root;
+		const node2 = tree2.viewWith(handleTreeConfig).root;
 
 		const handle1 = node1.handle;
 		const handle2 = node2.handle;

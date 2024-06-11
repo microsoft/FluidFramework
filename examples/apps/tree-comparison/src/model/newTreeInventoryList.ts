@@ -115,7 +115,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 
 	protected async initializingFirstTime(): Promise<void> {
 		this._sharedTree = SharedTree.create(this.runtime);
-		const view = await this._sharedTree.viewWith(treeConfiguration);
+		const view = this._sharedTree.viewWith(treeConfiguration);
 		view.initialize(
 			new InventorySchema({
 				inventoryItemList: [
@@ -136,8 +136,9 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	}
 
 	protected async hasInitialized(): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
-		const view = await this.sharedTree.viewWith(treeConfiguration);
+		const view = this.sharedTree.viewWith(treeConfiguration);
 		this._inventoryItemList = view.root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.

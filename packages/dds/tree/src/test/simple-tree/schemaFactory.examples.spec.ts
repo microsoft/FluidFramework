@@ -73,8 +73,8 @@ class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const config = new TreeViewConfiguration({ schema: Canvas });
 
-async function setup(tree: ITree): Promise<Note[]> {
-	const view: TreeView<typeof Canvas> = await tree.viewWith(config);
+function setup(tree: ITree): Note[] {
+	const view: TreeView<typeof Canvas> = tree.viewWith(config);
 	view.initialize(
 		new Canvas({
 			stuff: new NodeList([
@@ -106,7 +106,7 @@ describe("Class based end to end example", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		await setup(theTree);
+		setup(theTree);
 	});
 
 	// Confirm that the alternative syntax for initialTree from the example above actually works.
@@ -116,7 +116,7 @@ describe("Class based end to end example", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = await theTree.viewWith(config);
+		const view: TreeView<typeof Canvas> = theTree.viewWith(config);
 		view.initialize(
 			new Canvas({
 				stuff: [

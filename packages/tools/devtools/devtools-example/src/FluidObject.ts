@@ -114,7 +114,7 @@ export class AppData extends DataObject {
 				emojiMatrix.setCell(row, col, emojiCell.handle);
 			}
 		}
-		await this.populateSharedTree(sharedTree);
+		this.populateSharedTree(sharedTree);
 
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 		this.root.set(this.sharedTextKey, text.handle);
@@ -174,7 +174,7 @@ export class AppData extends DataObject {
 		}
 	}
 
-	private async populateSharedTree(sharedTree: ITree): Promise<void> {
+	private populateSharedTree(sharedTree: ITree): void {
 		// Set up SharedTree for visualization
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
@@ -195,7 +195,7 @@ export class AppData extends DataObject {
 		}) {}
 
 		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
-		const view = await sharedTree.viewWith(config);
+		const view = sharedTree.viewWith(config);
 		view.initialize({
 			childrenOne: [
 				{

@@ -55,7 +55,7 @@ const sf = new SchemaFactory("recursive");
 
 describe("SchemaFactory Recursive methods", () => {
 	describe("objectRecursive", () => {
-		it("End-to-end with recursive object", async () => {
+		it("End-to-end with recursive object", () => {
 			const factory = new TreeFactory({});
 			const schema = new SchemaFactory("com.example");
 
@@ -84,7 +84,7 @@ describe("SchemaFactory Recursive methods", () => {
 				"tree",
 			);
 
-			const view: TreeView<typeof Box> = await tree.viewWith(config);
+			const view: TreeView<typeof Box> = tree.viewWith(config);
 			view.initialize(new Box({ text: "hi", child: undefined }));
 
 			assert.equal(view.root?.text, "hi");

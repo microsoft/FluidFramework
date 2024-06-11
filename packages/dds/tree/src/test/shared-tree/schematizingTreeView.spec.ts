@@ -27,8 +27,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { cursorFromUnhydratedRoot, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
-import type { TreeContent } from "../../shared-tree/schematizeTree.js";
-import type { TreeCheckout } from "../../shared-tree/treeCheckout.js";
+import type { TreeContent, TreeCheckout } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -36,17 +35,17 @@ const configGeneralized = new TreeViewConfiguration({ schema: [schema.number, sc
 const configGeneralized2 = new TreeViewConfiguration({ schema: [schema.number, schema.boolean] });
 
 function checkoutWithInitialTree(
-	config: TreeViewConfiguration,
+	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
 	nodeKeyManager = new MockNodeKeyManager(),
 ): TreeCheckout {
 	const initialTree = cursorFromUnhydratedRoot(
-		config.schema,
+		viewConfig.schema,
 		unhydratedInitialTree,
 		nodeKeyManager,
 	);
 	const treeContent: TreeContent = {
-		schema: toFlexSchema(config.schema),
+		schema: toFlexSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
@@ -266,11 +265,11 @@ describe("SchematizingSimpleTreeView", () => {
 		// This is a regression test for a bug in which the initial tree contained a proxy and subsequent reads of the tree would mix up the proxy associations.
 		const sf = new SchemaFactory(undefined);
 		class TestObject extends sf.object("TestObject", { value: sf.number }) {}
-		const config = new TreeViewConfiguration({ schema: TestObject });
+		const viewConfig = new TreeViewConfiguration({ schema: TestObject });
 		const nodeKeyManager = new MockNodeKeyManager();
 		const view = new SchematizingSimpleTreeView(
-			checkoutWithInitialTree(config, new TestObject({ value: 3 }), nodeKeyManager),
-			config,
+			checkoutWithInitialTree(viewConfig, new TestObject({ value: 3 }), nodeKeyManager),
+			viewConfig,
 			nodeKeyManager,
 		);
 

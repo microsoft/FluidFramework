@@ -6,8 +6,9 @@
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/internal";
-import { Table } from "./tree/index.js";
+
 import { generateTable } from "./data.js";
+import { Table } from "./tree/index.js";
 
 const userId = Math.random().toString(36).slice(2);
 
@@ -35,7 +36,7 @@ export async function initFluid() {
 	if (!location.hash) {
 		({ container } = await client.createContainer(containerSchema, "2"));
 		const { tree } = container.initialObjects;
-		view = await tree.viewWith(config);
+		view = tree.viewWith(config);
 		view.initialize(generateTable(10000));
 		// TODO: Waiting for 'attach()' is a work around for https://dev.azure.com/fluidframework/internal/_workitems/edit/6805
 		await container.attach().then((containerId) => (location.hash = containerId));
@@ -46,7 +47,7 @@ export async function initFluid() {
 			"2",
 		));
 		const { tree } = container.initialObjects;
-		view = await tree.viewWith(config);
+		view = tree.viewWith(config);
 	}
 
 	return { view };

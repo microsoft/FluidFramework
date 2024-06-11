@@ -392,9 +392,7 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: builder.number }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.number }));
 		view.initialize(0);
 
 		const result = await visualizeSharedTree(
@@ -436,9 +434,7 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.array([builder.number, builder.string]),
 		}) {}
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: [0, 1, 2, 3, "hello", "world"],
@@ -599,9 +595,7 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.map([builder.string, builder.number, builder.handle]),
 		}) {}
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: new Map([
@@ -724,9 +718,7 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: {
@@ -830,9 +822,7 @@ describe("DefaultVisualizers unit tests", () => {
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: builder.handle }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.handle }));
 		view.initialize(sharedString.handle);
 
 		const result = await visualizeSharedTree(
@@ -879,9 +869,7 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: {
@@ -1006,9 +994,7 @@ describe("DefaultVisualizers unit tests", () => {
 			]),
 		}) {}
 
-		const view = await sharedTree.viewWith(
-			new TreeViewConfiguration({ schema: RootNodeSchema }),
-		);
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 		view.initialize(
 			new RootNodeSchema({
 				foo: [

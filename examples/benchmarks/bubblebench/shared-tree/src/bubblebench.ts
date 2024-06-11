@@ -23,7 +23,7 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime() {
 		const tree = SharedTree.create(this.runtime);
 
-		this.view = await tree.viewWith(appTreeConfiguration);
+		this.view = tree.viewWith(appTreeConfiguration);
 		this.view.initialize({ clients: [] });
 		this.root.set(treeKey, tree.handle);
 	}
@@ -31,7 +31,7 @@ export class Bubblebench extends DataObject {
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const tree = await this.root.get<IFluidHandle<ITree>>(treeKey)!.get();
-		this.view = await tree.viewWith(appTreeConfiguration);
+		this.view = tree.viewWith(appTreeConfiguration);
 	}
 
 	protected async hasInitialized() {

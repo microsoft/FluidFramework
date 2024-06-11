@@ -70,11 +70,11 @@ describe("Table", () => {
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `SharedTree`,
-			before: async () => {
+			before: () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
 				const tree = channel as unknown as ITree;
 
-				const view = await tree.viewWith(new TreeViewConfiguration({ schema: Table }));
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
 				view.initialize(data);
 				table = view.root;
 
@@ -183,11 +183,11 @@ describe("Table", () => {
 				summaryBytes = measureAttachmentSummary(channel);
 			});
 
-			it("SharedTree", async () => {
+			it("SharedTree", () => {
 				const { channel, processAllMessages } = create(SharedTree.getFactory());
 				tree = channel;
 
-				const view = await tree.viewWith(new TreeViewConfiguration({ schema: Table }));
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
 				view.initialize(data);
 
 				processAllMessages();

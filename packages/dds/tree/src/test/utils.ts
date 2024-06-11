@@ -135,7 +135,7 @@ import { ensureSchema } from "../shared-tree/schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import { ImplicitFieldSchema, TreeViewConfiguration, toFlexConfig } from "../simple-tree/index.js";
+import { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
 import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";

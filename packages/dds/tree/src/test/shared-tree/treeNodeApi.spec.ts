@@ -138,13 +138,13 @@ describe("treeApi", () => {
 				assert.equal(view.root.content, 42);
 			});
 
-			it("respects a violated node existence constraint after sequencing", async () => {
+			it("respects a violated node existence constraint after sequencing", () => {
 				// Create two connected trees with child nodes
 				const config = new TreeViewConfiguration({ schema: TestObject });
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
-				const viewA = await treeA.viewWith(config);
-				const viewB = await treeB.viewWith(config);
+				const viewA = treeA.viewWith(config);
+				const viewB = treeB.viewWith(config);
 				viewA.initialize({
 					content: 42,
 					child: {},
