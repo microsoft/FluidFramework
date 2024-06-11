@@ -477,7 +477,11 @@ describe("treeNodeApi", () => {
 				});
 				Tree.on(root.list1, "nodeChanged", () => {
 					eventFirings.push("nodeChanged_1");
-					assert.deepEqual(eventFirings, ["nodeChanged_2", "treeChanged_2", "nodeChanged_1"]);
+					assert.deepEqual(eventFirings, [
+						"nodeChanged_2",
+						"treeChanged_2",
+						"nodeChanged_1",
+					]);
 				});
 				Tree.on(root.list1, "treeChanged", () => {
 					eventFirings.push("treeChanged_1");
