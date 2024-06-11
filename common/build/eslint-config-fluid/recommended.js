@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const { namingConventionRules } = require("./sharedRules");
+
 /**
  * "Recommended" eslint configuration.
  *
@@ -100,6 +102,13 @@ module.exports = {
 		 * The rule seems to crash on some of our code
 		 */
 		"unicorn/expiring-todo-comments": "off",
+
+		/**
+		 * Enforces our naming conventions.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/naming-convention/}
+		 */
+		"@typescript-eslint/naming-convention": ["error", ...namingConventionRules],
 
 		/**
 		 * Disallows the `any` type.

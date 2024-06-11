@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const { namingConventionRules } = require("./sharedRules");
-
 /**
  * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
  */
@@ -104,11 +102,22 @@ module.exports = {
 		"@rushstack/no-new-null": "warn",
 
 		/**
-		 * Enforces our naming conventions.
+		 * RATIONALE: Harmless.
 		 *
-		 * @see {@link https://typescript-eslint.io/rules/naming-convention/}
+		 * Our guideline is to only use leading underscores on private members when required to avoid a conflict
+		 * between private fields and a public property.
+		 *
+		 * Docs: {@link https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/naming-convention.md}
 		 */
-		"@typescript-eslint/naming-convention": ["error", ...namingConventionRules],
+		"@typescript-eslint/naming-convention": [
+			"error",
+			{
+				selector: "accessor",
+				modifiers: ["private"],
+				format: ["camelCase"],
+				leadingUnderscore: "allow",
+			},
+		],
 
 		/**
 		 * Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.

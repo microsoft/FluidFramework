@@ -165,16 +165,6 @@
                     "camelCase"
                 ],
                 "leadingUnderscore": "allow"
-            },
-            {
-                "selector": "typeParameter",
-                "format": [
-                    "PascalCase"
-                ],
-                "custom": {
-                    "regex": "^(T[A-Z]|T$)",
-                    "match": true
-                }
             }
         ],
         "@typescript-eslint/no-array-constructor": [
