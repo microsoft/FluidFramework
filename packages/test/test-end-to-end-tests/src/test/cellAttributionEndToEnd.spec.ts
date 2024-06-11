@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 
-import {
-	IRuntimeAttributor,
-	createRuntimeAttributor,
-	enableOnNewFileKey,
-} from "@fluid-experimental/attributor";
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	enableOnNewFileKey,
+	type ContainerRuntime,
+	type IRuntimeAttributor,
+} from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -95,19 +95,18 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		return dataObject.getSharedObject<ISharedCell>(cellId);
 	};
 
-	const getTestConfig = (runtimeAttributor?: IRuntimeAttributor): ITestContainerConfig => ({
+	const getTestConfig = (enableRuntimeAttributor: boolean): ITestContainerConfig => ({
 		...testContainerConfig,
-		enableAttribution: runtimeAttributor !== undefined,
+		enableAttribution: enableRuntimeAttributor,
 		loaderProps: {
-			scope: { IRuntimeAttributor: runtimeAttributor },
 			configProvider: configProvider({
-				[enableOnNewFileKey]: runtimeAttributor !== undefined,
+				[enableOnNewFileKey]: enableRuntimeAttributor,
 			}),
 			// TODO this option shouldn't live here - this options object is global to the container
 			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
-					track: runtimeAttributor !== undefined,
+					track: enableRuntimeAttributor,
 				},
 			} as any,
 		},
@@ -121,11 +120,14 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		"Can attribute content from multiple collaborators",
 		["tinylicious", "t9s"],
 		async () => {
-			const attributor = createRuntimeAttributor();
-			const container1 = await provider.makeTestContainer(getTestConfig(attributor));
+			const container1 = await provider.makeTestContainer(getTestConfig(true));
 			const sharedCell1 = await sharedCellFromContainer(container1);
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const sharedCell2 = await sharedCellFromContainer(container2);
+			const initDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+			const attributor = (initDataObject.context.containerRuntime as ContainerRuntime)
+				.IRuntimeAttributor;
 
 			assert(
 				container1.clientId !== undefined && container2.clientId !== undefined,
@@ -153,14 +155,16 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 	);
 
 	it("attributes content created in a detached state", async () => {
-		const attributor = createRuntimeAttributor();
-		const loader = provider.makeTestLoader(getTestConfig(attributor));
+		const loader = provider.makeTestLoader(getTestConfig(true));
 		const defaultCodeDetails: IFluidCodeDetails = {
 			package: "defaultTestPackage",
 			config: {},
 		};
 		const container1 = await loader.createDetachedContainer(defaultCodeDetails);
 		const sharedCell1 = await sharedCellFromContainer(container1);
+		const initDataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const attributor = (initDataObject.context.containerRuntime as ContainerRuntime)
+			.IRuntimeAttributor;
 
 		sharedCell1.set(1);
 		assertAttributionMatches(sharedCell1, attributor, "detached");
@@ -170,7 +174,7 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined);
-		const loader2 = provider.makeTestLoader(getTestConfig());
+		const loader2 = provider.makeTestLoader(getTestConfig(false));
 		const container2 = await loader2.resolve({ url });
 
 		const sharedCell2 = await sharedCellFromContainer(container2);

@@ -23,6 +23,7 @@ import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitio
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
+import type { Jsonable as Jsonable_2 } from '@fluidframework/runtime-definitions/internal';
 
 // @alpha (undocumented)
 export interface IChannel extends IFluidLoadable {
@@ -136,21 +137,21 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
     // (undocumented)
     [index: string | number]: JsonableTypeWith<T>;
 }
 
-// @alpha
+// @alpha @deprecated
 export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
     [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
 } : never : never;
 
-// @alpha
+// @alpha @deprecated
 export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
 // @alpha
-export type Serializable<T> = Jsonable<T, IFluidHandle>;
+export type Serializable<T> = Jsonable_2<T, IFluidHandle>;
 
 ```

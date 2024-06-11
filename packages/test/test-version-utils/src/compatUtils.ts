@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { mixinAttributor } from "@fluid-experimental/attributor";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
@@ -233,10 +232,7 @@ export async function getVersionedTestObjectProviderFromApis(
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
-		const runtimeCtor =
-			containerOptions?.enableAttribution === true
-				? mixinAttributor(apis.containerRuntime.ContainerRuntime)
-				: apis.containerRuntime.ContainerRuntime;
+		const runtimeCtor = apis.containerRuntime.ContainerRuntime;
 		const factoryCtor = createTestContainerRuntimeFactory(runtimeCtor);
 		return new factoryCtor(
 			TestDataObjectType,

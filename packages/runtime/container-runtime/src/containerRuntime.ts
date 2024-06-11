@@ -124,6 +124,13 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import {
+	attributorTreeName,
+	enableOnNewFileKey,
+	type IProvideRuntimeAttributor,
+	type IRuntimeAttributor,
+	type RuntimeAttributor,
+} from "./attributor/index.js";
 import { BindBatchTracker } from "./batchTracker.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
 import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
@@ -733,7 +740,8 @@ export class ContainerRuntime
 		IRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
-		IProvideFluidHandleContext
+		IProvideFluidHandleContext,
+		IProvideRuntimeAttributor
 {
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -1032,6 +1040,8 @@ export class ContainerRuntime
 			(error) => runtime.closeFn(error),
 		);
 
+		await runtime.runtimeAttributorLoadPromise();
+
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
@@ -1040,6 +1050,23 @@ export class ContainerRuntime
 		await runtime.initializeBaseState();
 
 		return runtime;
+	}
+
+	// Promise to load runtime attributor after loading module.
+	private runtimeAttributorP: Promise<RuntimeAttributor> | undefined;
+	private _runtimeAttributor: RuntimeAttributor | undefined;
+	// Represents whether the socket module is loaded or not.
+	private runtimeAttributorModuleLoaded: boolean = false;
+
+	public get IRuntimeAttributor(): IRuntimeAttributor {
+		if (this._runtimeAttributor === undefined) {
+			throw new UsageError("Attribution not available");
+		}
+		return this._runtimeAttributor;
+	}
+
+	private async runtimeAttributorLoadPromise(): Promise<IRuntimeAttributor | undefined> {
+		return this.runtimeAttributorP;
 	}
 
 	public readonly options: Record<string | number, any>;
@@ -1774,6 +1801,13 @@ export class ContainerRuntime
 			this.attachState !== AttachState.Attached || this.hasPendingMessages();
 		context.updateDirtyContainerState(this.dirtyContainer);
 
+		const shouldTrackAttribution = this.mc.config.getBoolean(enableOnNewFileKey) ?? false;
+		if (shouldTrackAttribution) {
+			(options.attribution ??= {}).track = true;
+			// Load the runtime attributor module is we want to track attribution.
+			this.loadAndInitializeRuntimeAttributor(context).catch(() => {});
+		}
+
 		if (this.summariesDisabled) {
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
 		} else {
@@ -1912,6 +1946,77 @@ export class ContainerRuntime
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+	}
+
+	private async loadAndInitializeRuntimeAttributor(context: IContainerContext): Promise<void> {
+		if (this.runtimeAttributorP === undefined) {
+			this.runtimeAttributorP = this.getDelayLoadedRuntimeAttributor().catch(() => {
+				// Retry once if module load fails.
+				return this.getDelayLoadedRuntimeAttributor();
+			});
+		}
+		this.runtimeAttributorP
+			.then(async (attributor) => {
+				this.runtimeAttributorModuleLoaded = true;
+				const pendingRuntimeState = context.pendingLocalState as {
+					baseSnapshot?: ISnapshotTree;
+				};
+				const baseSnapshot: ISnapshotTree | undefined =
+					pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
+
+				const { quorum, deltaManager } = context;
+				await PerformanceEvent.timedExecAsync(
+					this.logger,
+					{
+						eventName: "initializeRuntimeAttributor",
+					},
+					async (event) => {
+						await attributor.initialize(
+							deltaManager,
+							quorum,
+							baseSnapshot,
+							async (id) => this.storage.readBlob(id),
+							true, // shouldTrackAttribution,
+						);
+						event.end({
+							attributionEnabledInConfig: true, // shouldTrackAttribution,
+							attributionEnabledInDoc: attributor.isEnabled,
+						});
+					},
+				);
+			})
+			.catch((error) => {
+				// Setting undefined in case someone tries to recover from module failure by calling again.
+				this.runtimeAttributorP = undefined;
+				this.runtimeAttributorModuleLoaded = false;
+				throw error;
+			});
+	}
+
+	/**
+	 * This dynamically imports the module for loading the delta connection. In many cases the delta stream, is not
+	 * required during the critical load flow. So this way we don't have to bundle this in the initial bundle and can
+	 * import this later on when required.
+	 * @returns The delta stream object.
+	 */
+	private async getDelayLoadedRuntimeAttributor(): Promise<RuntimeAttributor> {
+		assert(this.runtimeAttributorModuleLoaded === false, "Should be loaded only once");
+		const module = await import(
+			/* webpackChunkName: "runtimeAttributorModule" */ "./attributor/index.js"
+		)
+			.then((m) => {
+				this.mc.logger.sendTelemetryEvent({ eventName: "RuntimeAttributorModuleLoaded" });
+				return m;
+			})
+			.catch((error) => {
+				this.mc.logger.sendErrorEvent(
+					{ eventName: "RuntimeAttributorModuleLoadFailed" },
+					error,
+				);
+				throw error;
+			});
+		this._runtimeAttributor = new module.RuntimeAttributor();
+		return this._runtimeAttributor;
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent) {
@@ -2279,6 +2384,13 @@ export class ContainerRuntime
 				this.summarizerClientElection?.serialize(),
 			);
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
+		}
+
+		if (this._runtimeAttributor?.isEnabled) {
+			const attributorSummary = this._runtimeAttributor?.summarize();
+			if (attributorSummary) {
+				addSummarizeResultToSummary(summaryTree, attributorTreeName, attributorSummary);
+			}
 		}
 
 		const blobManagerSummary = this.blobManager.summarize();

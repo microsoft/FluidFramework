@@ -6,6 +6,8 @@
 
 import { AliasResult } from '@fluidframework/runtime-definitions/internal';
 import { AttachState } from '@fluidframework/container-definitions';
+import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { ContainerWarning } from '@fluidframework/container-definitions/internal';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';

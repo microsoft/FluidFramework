@@ -6,6 +6,8 @@
 
 import { AliasResult } from '@fluidframework/runtime-definitions/internal';
 import { AttachState } from '@fluidframework/container-definitions';
+import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { ContainerWarning } from '@fluidframework/container-definitions/internal';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
@@ -205,6 +207,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
+    get runtimeAttributor(): IRuntimeAttributor | undefined;
+    // (undocumented)
     get scope(): FluidObject;
     get sessionSchema(): {
         explicitSchemaControl?: true | undefined;
@@ -269,6 +273,9 @@ export class DocumentsSchemaController {
     // (undocumented)
     summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined;
 }
+
+// @alpha (undocumented)
+export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
 
 // @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -562,6 +569,12 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly retryOnFailure?: boolean;
 }
 
+// @alpha (undocumented)
+export interface IProvideRuntimeAttributor {
+    // (undocumented)
+    readonly IRuntimeAttributor: IRuntimeAttributor;
+}
+
 // @alpha
 export interface IRefreshSummaryAckOptions {
     readonly ackHandle: string;
@@ -574,6 +587,19 @@ export interface IRefreshSummaryAckOptions {
 export interface IRetriableFailureError extends Error {
     // (undocumented)
     readonly retryAfterSeconds?: number;
+}
+
+// @alpha (undocumented)
+export const IRuntimeAttributor: keyof IProvideRuntimeAttributor;
+
+// @alpha @sealed
+export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
+    // (undocumented)
+    get(key: AttributionKey): AttributionInfo;
+    // (undocumented)
+    has(key: AttributionKey): boolean;
+    // (undocumented)
+    readonly isEnabled: boolean;
 }
 
 // @alpha
@@ -785,6 +811,22 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @alpha @deprecated
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
+
+// @alpha (undocumented)
+export class RuntimeAttributor implements IRuntimeAttributor {
+    // (undocumented)
+    get(key: AttributionKey): AttributionInfo;
+    // (undocumented)
+    has(key: AttributionKey): boolean;
+    // (undocumented)
+    initialize(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, quorum: IQuorumClients, baseSnapshot: ISnapshotTree | undefined, readBlob: (id: string) => Promise<ArrayBufferLike>, shouldAddAttributorOnNewFile: boolean): Promise<void>;
+    // (undocumented)
+    get IRuntimeAttributor(): IRuntimeAttributor;
+    // (undocumented)
+    isEnabled: boolean;
+    // (undocumented)
+    summarize(): ISummaryTreeWithStats | undefined;
+}
 
 // @alpha
 export interface SubmitSummaryFailureData {
