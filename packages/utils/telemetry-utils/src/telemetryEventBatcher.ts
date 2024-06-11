@@ -14,7 +14,7 @@ import type {
 type Data<TMetrics extends string> = { readonly [key in TMetrics]: number };
 
 /**
- * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} function is called reaches a number specified by the `threshold` value to this classes' constructor.
+ * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} the number of calls to this function reaches a number specified by {@link TelemetryEventBatcher.threshold}.
  * @typeparam TMetrics - The set of keys that should be logged.
  * E.g., `keyof Foo` for logging properties `bar` and `baz` from `type Foo = { bar: number, baz: number }`.
  */
