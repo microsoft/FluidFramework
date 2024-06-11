@@ -107,6 +107,15 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_ITelemetryBaseEvent": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryBaseLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
