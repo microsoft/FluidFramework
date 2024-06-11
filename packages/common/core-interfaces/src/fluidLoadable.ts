@@ -14,7 +14,6 @@ export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
  * @public
  */
 export interface IProvideFluidLoadable {
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	readonly IFluidLoadable: IFluidLoadable;
 }
 /**
@@ -35,7 +34,6 @@ export const IFluidRunnable: keyof IProvideFluidRunnable = "IFluidRunnable";
  * @internal
  */
 export interface IProvideFluidRunnable {
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	readonly IFluidRunnable: IFluidRunnable;
 }
 /**

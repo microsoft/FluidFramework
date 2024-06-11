@@ -22,21 +22,18 @@ export const ContainerTelemetryEventNames = {
 	 *
 	 * @see {@link ContainerConnectedTelemetry}
 	 */
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	CONNECTED: "fluidframework.container.connected",
 	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "disconnected" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerDisconnectedTelemetry}
 	 */
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	DISCONNECTED: "fluidframework.container.disconnected",
 	/**
 	 * Name for the container telemetry event that is intended to be produced from the IFluidContainer "disposed" {@link @fluidframework/fluid-static#IFluidContainerEvents | system event}
 	 *
 	 * @see {@link ContainerDisposedTelemetry}
 	 */
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	DISPOSED: "fluidframework.container.disposed",
 } as const;
 

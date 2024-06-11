@@ -74,7 +74,6 @@ declare function use(obj: unknown);
 // test implicit conversions between FluidObject and a FluidObject with a partial provider interface
 {
 	interface IProvideFoo {
-		// eslint-disable-next-line @typescript-eslint/naming-convention
 		IFoo: IFoo;
 	}
 	interface IFoo extends Partial<IProvideFoo> {
@@ -111,7 +110,6 @@ declare function use(obj: unknown);
 // validate provider inheritance
 {
 	interface IProvideFooParent {
-		// eslint-disable-next-line @typescript-eslint/naming-convention
 		IFooParent: IFooParent;
 	}
 
@@ -120,7 +118,6 @@ declare function use(obj: unknown);
 	}
 
 	interface IFooProvideChild {
-		// eslint-disable-next-line @typescript-eslint/naming-convention
 		IFooChild: IFooChild;
 	}
 
