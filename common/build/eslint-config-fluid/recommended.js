@@ -210,6 +210,9 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-explicit-any": "off",
 				"@typescript-eslint/no-unsafe-argument": "off",
+
+				// Don't apply naming conventions to generate type-test code
+				"@typescript-eslint/naming-convention": "off",
 			},
 		},
 	],

@@ -454,14 +454,6 @@ module.exports = {
 				],
 			},
 		},
-		{
-			// Rules only for type validation files
-			files: ["**/test/types/*validate*Previous*.ts"],
-			rules: {
-				// Don't apply naming conventions to generate type-test code
-				"@typescript-eslint/naming-convention": "off",
-			},
-		},
 	],
 	settings: {
 		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
