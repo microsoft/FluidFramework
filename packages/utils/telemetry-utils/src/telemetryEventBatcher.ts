@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { truncateToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
@@ -11,7 +12,14 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-type Data<TMetrics extends string> = { readonly [key in TMetrics]: number };
+type Data<T extends string> = { readonly [key in T]: number };
+
+/**
+ * Expected type of the custom data passed into the logger.
+ */
+interface IMeasuredCodeResult<T extends string> {
+	telemetryProperties?: { readonly [key in T]: number };
+}
 
 /**
  * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} the number of calls to this function reaches a number specified by {@link TelemetryEventBatcher.threshold}.
@@ -20,10 +28,12 @@ type Data<TMetrics extends string> = { readonly [key in TMetrics]: number };
  */
 export class TelemetryEventBatcher<TMetrics extends string> {
 	/**
+	 * `codeDuration`: stores the average duration of the code passed into the logger.
 	 * `dataSums`: stores the sum of the custom data passed into the logger.
 	 * `dataMaxes`: stores the maximum value of the custom data passed into the logger.
 	 * `dataSums` and `dataMaxes` should share identical sets of properties.
 	 */
+	private codeDuration: number = 0;
 	private dataSums: { [key in TMetrics]?: number } = {};
 	private dataMaxes: { [key in TMetrics]?: number } = {};
 
@@ -48,12 +58,25 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	) {}
 
 	/**
-	 * TODO
+	 * Executes the specified code and keeps track of execution time statistics.
+	 *
 	 */
-	public measure<T>(codeToMeasure: () => T, bucket: string = ""): T {
+	public measure<T extends IMeasuredCodeResult<TMetrics>>(
+		codeToMeasure: () => T,
+		customData: Data<TMetrics>,
+	): T {
 		const start = performance.now();
 		const returnValue = codeToMeasure();
 		const duration = performance.now() - start;
+
+		this.codeDuration = truncateToDecimalPlaces(
+			(this.codeDuration + duration) / this.counter,
+			6,
+		);
+
+		if (returnValue.telemetryProperties) {
+			this.log(customData);
+		}
 
 		return returnValue;
 	}
@@ -64,10 +87,13 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	 * @param customData -
 	 * A record storing the custom data to be logged.
 	 */
-	public log(customData: Data<TMetrics>): void {
+	private log(customData: Data<TMetrics>): void {
 		for (const key of Object.keys(customData) as TMetrics[]) {
 			this.dataSums[key] = (this.dataSums[key] ?? 0) + customData[key];
-			this.dataMaxes[key] = Math.max(this.dataMaxes[key] ?? 0, customData[key]);
+			this.dataMaxes[key] = Math.max(
+				this.dataMaxes[key] ?? Number.NEGATIVE_INFINITY,
+				customData[key],
+			);
 		}
 
 		this.counter++;
@@ -78,22 +104,28 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	}
 
 	private sendData(): void {
-		for (const key of Object.keys(this.dataSums) as TMetrics[]) {
-			// TODO copy the data somewhere else instead of mutating in place.
-			// This way you can add the "avg" and "max" qualifers to the key names
-			this.dataSums[key]! /= this.counter;
-		}
-
-		// TODO: Add `average` name to the custom data.
 		const telemetryEvent: ITelemetryPerformanceEventExt = {
 			...this.eventBase,
-			...customData,
 		};
+
+		for (const key of Object.keys(this.dataSums) as TMetrics[]) {
+			if (this.dataSums[key] !== undefined) {
+				telemetryEvent[`avg${key}`] = truncateToDecimalPlaces(
+					this.dataSums[key]! / this.counter,
+					6,
+				);
+			}
+			if (this.dataMaxes[key] !== undefined) {
+				telemetryEvent[`max${key}`] = this.dataMaxes[key];
+			}
+			telemetryEvent[`duration${key}`] = this.codeDuration;
+		}
 
 		this.logger.sendPerformanceEvent(telemetryEvent);
 
 		// Reset the counter and the data.
 		this.counter = 0;
+		this.codeDuration = 0;
 		this.dataSums = {};
 		this.dataMaxes = {};
 	}
