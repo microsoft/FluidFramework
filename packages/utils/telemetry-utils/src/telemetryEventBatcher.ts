@@ -19,9 +19,11 @@ type Data<TMetrics extends string> = { readonly [key in TMetrics]: number };
  * E.g., `keyof Foo` for logging properties `bar` and `baz` from `type Foo = { bar: number, baz: number }`.
  */
 export class TelemetryEventBatcher<TMetrics extends string> {
-	// `dataSums`: stores the sum of the custom data passed into the logger.
-	// `dataMaxes`: stores the maximum value of the custom data passed into the logger.
-	// `dataSums` and `dataMaxes` should share identical sets of properties.
+	/**
+	 * `dataSums`: stores the sum of the custom data passed into the logger.
+	 * `dataMaxes`: stores the maximum value of the custom data passed into the logger.
+	 * `dataSums` and `dataMaxes` should share identical sets of properties.
+	 */
 	private dataSums: { [key in TMetrics]?: number } = {};
 	private dataMaxes: { [key in TMetrics]?: number } = {};
 
@@ -44,6 +46,17 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 		 */
 		private readonly threshold: number,
 	) {}
+
+	/**
+	 * TODO
+	 */
+	public measure<T>(codeToMeasure: () => T, bucket: string = ""): T {
+		const start = performance.now();
+		const returnValue = codeToMeasure();
+		const duration = performance.now() - start;
+
+		return returnValue;
+	}
 
 	/**
 	 * Accumulates the custom data and sends it to the logger every {@link TelemetryEventBatcher.threshold} calls.
