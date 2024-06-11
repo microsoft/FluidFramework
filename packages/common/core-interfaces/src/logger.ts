@@ -14,16 +14,19 @@
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 /**
- * A property to be logged to telemetry may require a tag indicating the value may contain sensitive data.
- * This type wraps a value of the given type V in an object along with a string tag (type can be further specified as T).
+ * A property to be logged to telemetry may require a tag indicating that the value may contain sensitive data.
+ * This type wraps a value of the given type `TValue` in an object, along with a string tag
+ * (type can be further specified via `TTag`).
  *
+ * @remarks
  * This indicates that the value should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
+ *
  * @public
  */
-export interface Tagged<V, T extends string = string> {
-	value: V;
-	tag: T;
+export interface Tagged<TValue, TTag extends string = string> {
+	value: TValue;
+	tag: TTag;
 }
 
 /**

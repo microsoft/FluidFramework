@@ -8,9 +8,9 @@
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 // @public @sealed
-export abstract class ErasedType<out Name = unknown> {
+export abstract class ErasedType<out TName = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
-    protected abstract brand(dummy: never): Name;
+    protected abstract brand(dummy: never): TName;
 }
 
 // @public
@@ -323,18 +323,18 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 } : L;
 
 // @public
-export interface Tagged<V, T extends string = string> {
+export interface Tagged<TValue, TTag extends string = string> {
     // (undocumented)
-    tag: T;
+    tag: TTag;
     // (undocumented)
-    value: V;
+    value: TValue;
 }
 
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @public
-export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
+export type TransformedEvent<TThis, TEvent, TArguments extends any[]> = (event: TEvent, listener: (...args: ReplaceIEventThisPlaceHolder<TArguments, TThis>) => void) => TThis;
 
 // (No @packageDocumentation comment for this package)
 

@@ -121,9 +121,9 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TransformedEvent<TThis, E, A extends any[]> = (
-	event: E,
-	listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void,
+export type TransformedEvent<TThis, TEvent, TArguments extends any[]> = (
+	event: TEvent,
+	listener: (...args: ReplaceIEventThisPlaceHolder<TArguments, TThis>) => void,
 ) => TThis;
 
 /**
