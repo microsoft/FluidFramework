@@ -20,7 +20,11 @@ import {
 	FlexFieldSchema,
 	FlexTreeField,
 	FlexTreeNode,
+	FlexTreeNodeEvents,
 	FlexTreeTypedField,
+	MapTreeNode,
+	onNodeChanged,
+	onTreeChanged,
 	tryGetMapTreeNode,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
@@ -29,6 +33,7 @@ import { Mutable, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import { TreeNode, Unhydrated } from "./types.js";
+import { Off } from "../events/index.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -117,6 +122,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 /** The path of a proxy, relative to the root of the content tree that the proxy belongs to */
 interface RelativeProxyPath {
 	readonly path: UpPath;
+	readonly mapTreeNode: MapTreeNode;
 	readonly proxy: TreeNode;
 }
 
@@ -150,8 +156,8 @@ export function prepareContentForHydration(
 			proxyPaths: [],
 		};
 
-		walkMapTree(content, proxies.rootPath, (p, proxy) => {
-			proxies.proxyPaths.push({ path: p, proxy });
+		walkMapTree(content, proxies.rootPath, (p, mapTreeNode, proxy) => {
+			proxies.proxyPaths.push({ path: p, mapTreeNode, proxy });
 		});
 
 		bindProxies([proxies], forest);
@@ -172,8 +178,8 @@ function prepareArrayContentForHydration(
 			},
 			proxyPaths: [],
 		});
-		walkMapTree(content[i], proxies[i].rootPath, (p, proxy) => {
-			proxies[i].proxyPaths.push({ path: p, proxy });
+		walkMapTree(content[i], proxies[i].rootPath, (p, mapTreeNode, proxy) => {
+			proxies[i].proxyPaths.push({ path: p, mapTreeNode, proxy });
 		});
 	}
 
@@ -183,13 +189,13 @@ function prepareArrayContentForHydration(
 function walkMapTree(
 	mapTree: MapTree,
 	path: UpPath,
-	onVisitTreeNode: (path: UpPath, proxy: TreeNode) => void,
+	onVisitTreeNode: (path: UpPath, mapTreeNode: MapTreeNode, treeNode: TreeNode) => void,
 ): void {
-	const flexNode = tryGetMapTreeNode(mapTree);
-	if (flexNode !== undefined) {
-		const treeNode = tryGetProxy(flexNode);
+	const mapTreeNode = tryGetMapTreeNode(mapTree);
+	if (mapTreeNode !== undefined) {
+		const treeNode = tryGetProxy(mapTreeNode);
 		if (treeNode !== undefined) {
-			onVisitTreeNode(path, treeNode);
+			onVisitTreeNode(path, mapTreeNode, treeNode);
 		}
 	}
 
@@ -215,8 +221,29 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 		let i = 0;
 		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
 			(proxies[i].rootPath as Mutable<UpPath>).parentField = fieldKey;
-			for (const { path, proxy } of proxies[i].proxyPaths) {
-				anchorProxy(forest.anchors, path, proxy);
+			for (const { path, mapTreeNode, proxy } of proxies[i].proxyPaths) {
+				const anchorNode = anchorProxy(forest.anchors, path, proxy);
+				mapTreeNode.forwardEvents({
+					on<K extends keyof FlexTreeNodeEvents>(
+						eventName: K,
+						listener: FlexTreeNodeEvents[K],
+					): Off {
+						switch (eventName) {
+							case "nodeChanged":
+								return onNodeChanged(
+									anchorNode,
+									listener as FlexTreeNodeEvents["nodeChanged"],
+								);
+							case "treeChanged":
+								return onTreeChanged(
+									anchorNode,
+									listener as FlexTreeNodeEvents["treeChanged"],
+								);
+							default:
+								fail("Unexpected event subscription");
+						}
+					},
+				});
 			}
 			if (++i === proxies.length) {
 				off();

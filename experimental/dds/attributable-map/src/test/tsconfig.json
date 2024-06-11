@@ -6,6 +6,7 @@
 		"types": ["mocha", "node"],
 		"noUnusedLocals": false, // Required for memory tests
 		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
