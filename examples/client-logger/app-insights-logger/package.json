@@ -40,6 +40,7 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/app-insights-logger": "workspace:~",
+		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",

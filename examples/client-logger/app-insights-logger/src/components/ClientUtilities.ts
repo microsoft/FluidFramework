@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { createLogger } from "@fluidframework/app-insights-logger/internal";
+// import { createLogger } from "@fluidframework/app-insights-logger/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client/internal";
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+// import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -40,19 +40,21 @@ export interface ContainerInfo {
 }
 
 function initializeTinyliciousClient(): TinyliciousClient {
-	const appInsightsClient = new ApplicationInsights({
-		config: {
-			connectionString:
-				// Edit this with your app insights instance connection string (this is an example string)
-				"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
-		},
-	});
+	// const appInsightsClient = new ApplicationInsights({
+	// 	config: {
+	// 		connectionString:
+	// 			// Edit this with your app insights instance connection string (this is an example string)
+	// 			"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
+	// 	},
+	// });
 
-	appInsightsClient.loadAppInsights();
+	// appInsightsClient.loadAppInsights();
 
-	return new TinyliciousClient({
-		logger: createLogger(appInsightsClient),
-	});
+	// return new TinyliciousClient({
+	// 	logger: createLogger(appInsightsClient),
+	// });
+
+	return new TinyliciousClient();
 }
 
 /**

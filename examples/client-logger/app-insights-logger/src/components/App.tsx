@@ -6,10 +6,11 @@
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedCell } from "@fluidframework/cell/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import React from "react";
+import React, { useEffect } from "react";
 
 import {
 	ContainerInfo,
@@ -27,6 +28,12 @@ const sharedTextKey = "shared-text";
  */
 const sharedCounterKey = "shared-counter";
 
+
+/**
+ * Key in the app's `rootMap` under which the SharedCell object is stored.
+ */
+const sharedCellKey = "shared-cell";
+
 /**
  * Schema used by the app.
  */
@@ -34,7 +41,7 @@ const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
 	},
-	dynamicObjectTypes: [SharedCounter, SharedMap, SharedString],
+	dynamicObjectTypes: [SharedCounter, SharedMap, SharedString, SharedCell],
 };
 
 /**
@@ -72,6 +79,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 			b: "b",
 		},
 	});
+
+	// Set up SharedText for text form
+	const sharedCell = await container.create(SharedCell);
+	rootMap.set(sharedCellKey, sharedCell.handle);
 }
 
 /**
@@ -148,13 +159,31 @@ function AppView(props: AppViewProps): React.ReactElement {
 		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
 
+	useEffect(() => {
+		const intervalId = setInterval(async () => {
+			await logMessage();
+		}, 1000);
+
+
+
+		// Cleanup interval on component unmount
+		return () => clearInterval(intervalId);
+	}, []); // Empty dependency array ensures this effect runs only once after the initial render
+
+	const logMessage = async (): Promise<void> => {
+		// Simulate an async operation
+		await new Promise(resolve => setTimeout(resolve, 100));
+		console.log('Logging every second');
+	};
+
 	return (
 		<div style={{ padding: "10px" }}>
 			<div style={{ padding: "10px" }}>
 				<h4>{`Container Id: ${containerId}`}</h4>
 			</div>
 
-			<div style={{ padding: "10px" }}>
+			<div style={{ padding: "10px", display: 'flex', flexDirection: 'row' }}>
+				<h4>Number of happy employees</h4>
 				<CounterView sharedCounterHandle={sharedCounterHandle} />
 			</div>
 			<div style={{ padding: "10px" }}>
@@ -183,8 +212,11 @@ function TextView(props: TextViewProps): React.ReactElement {
 	return sharedText === undefined ? (
 		<h4> Loading...</h4>
 	) : (
-		<div data-testid="collaborative-text-area-widget">
-			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+		<div>
+			<h2>How Employees are feeling: </h2>
+			<div data-testid="collaborative-text-area-widget">
+				<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+			</div>
 		</div>
 	);
 }
