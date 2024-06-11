@@ -11462,6 +11462,9 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
         version: 0.15.2
+      '@biomejs/biome':
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
@@ -15238,6 +15241,9 @@ importers:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
         version: 0.15.2
+      '@biomejs/biome':
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
@@ -15322,9 +15328,21 @@ importers:
 
   packages/test/types_jest-environment-puppeteer:
     devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.7.3
+        version: 1.7.3
+      '@fluidframework/build-tools':
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.19.1)
       jest-environment-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2(typescript@5.4.5)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
 
   packages/tools/devtools/devtools:
     dependencies:
@@ -43869,6 +43887,7 @@ packages:
 
   /rimraf@2.6.3:
     resolution: {integrity: sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
@@ -43876,6 +43895,7 @@ packages:
 
   /rimraf@2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
