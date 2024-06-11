@@ -12,6 +12,7 @@
 			"react-dom",
 		],
 		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

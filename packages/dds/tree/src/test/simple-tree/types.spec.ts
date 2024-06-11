@@ -8,8 +8,13 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 // eslint-disable-next-line import/no-internal-modules
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "../../simple-tree/types.js";
-
-import { NodeKind, TreeNodeSchema, type } from "../../simple-tree/index.js";
+import {
+	NodeKind,
+	TreeNodeSchema,
+	type,
+	// Used to test that TreeNode is a type only export.
+	TreeNode as TreeNodePublic,
+} from "../../simple-tree/index.js";
 import { FlexTreeNode, FlexTreeNodeSchema, MapTreeNode } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -25,7 +30,21 @@ describe("simple-tree types", () => {
 		it("Assignability", () => {
 			// @ts-expect-error TreeNode should not allow non-node objects.
 			const n: TreeNode = {};
+			// @ts-expect-error TreeNode should not allow non-node objects.
+			const n2: TreeNode = {
+				[type]: "",
+			};
+
+			// Declared as a separate implicitly typed variable to avoid "Object literal may only specify known properties" error
+			// (which is good, but not what we are testing for here).
+			const n3 = {
+				[type]: "",
+				"#brand": undefined,
+			};
+			// @ts-expect-error TreeNode should not allow non-node objects, even if you use "add missing properties" refactor.
+			const _n4: TreeNode = n3;
 		});
+
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
 				public override get [type](): string {
@@ -37,6 +56,20 @@ describe("simple-tree types", () => {
 			}
 
 			assert.throws(() => new Subclass(), validateUsageError(/SchemaFactory/));
+		});
+
+		it("subclassing from public API", () => {
+			assert.throws(() => {
+				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
+				abstract class Subclass extends TreeNodePublic {}
+			});
+		});
+
+		it("instancof public", () => {
+			assert.throws(() => {
+				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
+				const x = {} instanceof TreeNodePublic;
+			});
 		});
 	});
 

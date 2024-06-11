@@ -14,11 +14,7 @@
  * @packageDocumentation
  */
 
-import { TinyliciousClient } from "./TinyliciousClient.js";
-
 export {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
 	type ITinyliciousAudience,
 	type TinyliciousClientProps,
 	type TinyliciousConnectionConfig,
@@ -27,6 +23,3 @@ export {
 	type TinyliciousUser,
 } from "./interfaces.js";
 export { TinyliciousClient } from "./TinyliciousClient.js";
-
-// eslint-disable-next-line import/no-default-export, unicorn/prefer-export-from
-export default TinyliciousClient;

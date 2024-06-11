@@ -18,6 +18,7 @@ import {
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
+import { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -141,8 +142,8 @@ export interface GraphCommit<TChange> {
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
-	/** The inverse of this commit */
-	inverse?: TChange;
+	/** The rollback of this commit */
+	rollback?: TaggedChange<TChange, RevisionTag>;
 }
 
 /**
@@ -200,6 +201,6 @@ export function replaceChange<TChange>(
 	change: TChange,
 ): GraphCommit<TChange> {
 	const output = { ...commit, change };
-	delete output.inverse;
+	delete output.rollback;
 	return output;
 }
