@@ -60,6 +60,7 @@
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "pretty-quick --branch main",
 		"format:changed:next": "pretty-quick --branch next",
+		"format:prettier": "fluid-build --task format:prettier",
 		"format:repo": "npm run prettier:repo:fix",
 		"generate:packageList": "fluid-build --task generate:packageList",
 		"generate:packageList:internal-build": "flub list client --no-private --feed internal-build --outFile feeds/internal-build.txt",
@@ -249,6 +250,12 @@
 			"build:readme": {
 				"dependsOn": []
 			},
+			"check:format": {
+				"dependsOn": [
+					"^check:format"
+				],
+				"script": false
+			},
 			"checks": {
 				"dependsOn": [
 					"^checks",
@@ -312,9 +319,7 @@
 			"format": {
 				"dependsOn": [
 					"prettier:root:fix",
-					"^prettier:fix",
-					"^format:prettier",
-					"^format:biome"
+					"^format"
 				],
 				"script": false
 			},

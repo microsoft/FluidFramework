@@ -678,6 +678,7 @@ export class Container
 		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
+
 	private supportGetSnapshotApi(): boolean {
 		const supportGetSnapshotApi: boolean =
 			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
@@ -1355,7 +1356,10 @@ export class Container
 
 					// If offline load is enabled, attachP will return the attach summary (in Snapshot format) so we can initialize SerializedStateManager
 					const snapshotWithBlobs = await attachP;
-					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
+					this.serializedStateManager.setInitialSnapshot(
+						snapshotWithBlobs,
+						this.supportGetSnapshotApi,
+					);
 
 					if (!this.closed) {
 						this.detachedBlobStorage.dispose?.();
