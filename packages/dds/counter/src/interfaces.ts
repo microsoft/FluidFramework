@@ -12,6 +12,7 @@ import {
  * Events sent by {@link ISharedCounter}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedCounterEvents extends ISharedObjectEvents {
 	/**
 	 * This event is raised when the counter is incremented or decremented.
@@ -63,6 +64,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
  * ```
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
 	/**
 	 * The counter value.

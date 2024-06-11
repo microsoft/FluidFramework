@@ -23,7 +23,7 @@ import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js"
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
  */
-interface IIncrementOperation {
+interface IncrementOperation {
 	type: "increment";
 	incrementAmount: number;
 }
@@ -31,7 +31,7 @@ interface IIncrementOperation {
 /**
  * @remarks Used in snapshotting.
  */
-interface ICounterSnapshotFormat {
+interface CounterSnapshotFormat {
 	/**
 	 * The value of the counter.
 	 */
@@ -72,7 +72,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 			throw new Error("Must increment by a whole number");
 		}
 
-		const op: IIncrementOperation = {
+		const op: IncrementOperation = {
 			type: "increment",
 			incrementAmount,
 		};
@@ -93,7 +93,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		// Get a serializable form of data
-		const content: ICounterSnapshotFormat = {
+		const content: CounterSnapshotFormat = {
 			value: this.value,
 		};
 
@@ -105,7 +105,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
+		const content = await readAndParse<CounterSnapshotFormat>(storage, snapshotFileName);
 
 		this._value = content.value;
 	}
@@ -130,7 +130,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
-			const op = message.contents as IIncrementOperation;
+			const op = message.contents as IncrementOperation;
 
 			switch (op.type) {
 				case "increment": {
@@ -149,7 +149,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 * {@inheritdoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(op: unknown): void {
-		const counterOp = op as IIncrementOperation;
+		const counterOp = op as IncrementOperation;
 
 		// TODO: Clean up error code linter violations repo-wide.
 
