@@ -57,7 +57,6 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  */
 export interface DataObjectClass<T extends IFluidLoadable> {
 	readonly factory: IFluidDataStoreFactory;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	new (...args: any[]): T;
 }
 
@@ -113,6 +112,8 @@ export interface ContainerSchema {
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideRootDataObject {
 	readonly IRootDataObject: IRootDataObject;
 }
@@ -122,6 +123,8 @@ export interface IProvideRootDataObject {
  * to dynamically create further objects during usage.
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRootDataObject extends IProvideRootDataObject {
 	/**
 	 * Provides a record of the initial objects defined on creation.
@@ -160,6 +163,7 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
  * @typeParam M - A service-specific {@link IMember} implementation.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 	/**
 	 * Emitted when a {@link IMember | member}(s) are either added or removed.
@@ -194,6 +198,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * @typeParam M - A service-specific {@link IMember} type.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IServiceAudience<M extends IMember>
 	extends IEventProvider<IServiceAudienceEvents<M>> {
 	/**
@@ -215,6 +220,7 @@ export interface IServiceAudience<M extends IMember>
  * @remarks This interface can be extended to provide additional information specific to each service.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IConnection {
 	/**
 	 * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
@@ -233,6 +239,7 @@ export interface IConnection {
  * @remarks This interface can be extended by each service to provide additional service-specific user metadata.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IMember {
 	/**
 	 * An ID for the user, unique among each individual user connecting to the session.
@@ -249,4 +256,6 @@ export interface IMember {
  * An extended member object that includes currentConnection
  * @public
  */
-export type Myself<M extends IMember = IMember> = M & { readonly currentConnection: string };
+export type Myself<TMember extends IMember = IMember> = TMember & {
+	readonly currentConnection: string;
+};
