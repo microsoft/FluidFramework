@@ -354,8 +354,7 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
-	public setInitialSnapshot(
-		snapshot: SnapshotWithBlobs | undefined) {
+	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,

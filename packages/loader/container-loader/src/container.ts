@@ -678,7 +678,6 @@ export class Container
 		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
-
 	private supportGetSnapshotApi(): boolean {
 		const supportGetSnapshotApi: boolean =
 			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
