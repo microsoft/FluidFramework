@@ -177,8 +177,8 @@ describe("SimpleTree benchmarks", () => {
 					tree.moveToIndex(tree.length - 2, tree.length - 1);
 				},
 				after: () => {
-					const actual = tree[tree.length - 1];
-					assert.equal(actual, changedLeafValue);
+					if (!isInPerformanceTestingMode)
+						assert.equal(tree[tree.length - 1], changedLeafValue);
 				},
 			});
 		}
