@@ -126,16 +126,16 @@ export class SparseArray2D<T>
 	}
 
 	/**
-	 * Invokes the give 'callback' with the next 'level' array for each populated region
+	 * Invokes the given 'callback' with the next 'level' array for each populated region
 	 * of the given row  in the 'currentLevel'.
 	 *
 	 * (Note that 'rowBits' is the appropriate byte from 'r0ToMorton16' for the current
 	 * level being traversed.)
 	 */
-	private forEachInRow<V extends UA<any>, U extends UA<V>>(
-		currentLevel: U,
+	private forEachInRow<TNext extends UA<any>, TCurrent extends UA<TNext>>(
+		currentLevel: TCurrent,
 		rowBits: number,
-		callback: (level: V) => void,
+		callback: (level: TNext) => void,
 	) {
 		this.forEachKeyInRow(rowBits, (key) => {
 			const nextLevel = currentLevel[key];
@@ -146,16 +146,16 @@ export class SparseArray2D<T>
 	}
 
 	/**
-	 * Invokes the give 'callback' with the next 'level' array for each populated region
+	 * Invokes the given 'callback' with the next 'level' array for each populated region
 	 * of the given col in the 'currentLevel'.
 	 *
 	 * (Note that 'colBits' is the appropriate byte from 'c0ToMorton16' for the current
 	 * level being traversed.)
 	 */
-	private forEachInCol<V extends UA<any>, U extends UA<V>>(
-		currentLevel: U,
+	private forEachInCol<TNext extends UA<any>, TCurrent extends UA<TNext>>(
+		currentLevel: TCurrent,
 		colBits: number,
-		callback: (level: V) => void,
+		callback: (level: TNext) => void,
 	) {
 		this.forEachKeyInCol(colBits, (key) => {
 			const nextLevel = currentLevel[key];
@@ -165,7 +165,7 @@ export class SparseArray2D<T>
 		});
 	}
 
-	/** Clears the all cells contained within the specified span of rows. */
+	/** Clears all cells contained within the specified span of rows. */
 	public clearRows(rowStart: number, rowCount: number) {
 		const rowEnd = rowStart + rowCount;
 		for (let row = rowStart; row < rowEnd; row++) {

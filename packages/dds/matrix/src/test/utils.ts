@@ -43,14 +43,14 @@ const nullConsumer = new NullMatrixConsumer();
 /**
  * Fills the designated region of the matrix with values computed by the `value` callback.
  */
-export function fill<T extends IMatrix<U>, U>(
-	matrix: T,
+export function fill<TMatrix extends IMatrix<TData>, TData>(
+	matrix: TMatrix,
 	rowStart = 0,
 	colStart = 0,
 	rowCount = matrix.rowCount - rowStart,
 	colCount = matrix.colCount - colStart,
 	value = (row: number, col: number) => row * rowCount + col,
-): T {
+): TMatrix {
 	const rowEnd = rowStart + rowCount;
 	const colEnd = colStart + colCount;
 
@@ -66,7 +66,7 @@ export function fill<T extends IMatrix<U>, U>(
 /**
  * Sets the corners of the given matrix.
  */
-export function setCorners<T extends IMatrix<U>, U>(matrix: T) {
+export function setCorners<TMatrix extends IMatrix<TData>, TData>(matrix: TMatrix) {
 	matrix.setCell(0, 0, "TopLeft" as any);
 	matrix.setCell(0, matrix.colCount - 1, "TopRight" as any);
 	matrix.setCell(matrix.rowCount - 1, matrix.colCount - 1, "BottomRight" as any);
@@ -76,7 +76,7 @@ export function setCorners<T extends IMatrix<U>, U>(matrix: T) {
 /**
  * Checks the corners of the given matrix.
  */
-export function checkCorners<T extends IMatrix<U>, U>(matrix: T) {
+export function checkCorners<TMatrix extends IMatrix<TData>, TData>(matrix: TMatrix) {
 	assert.equal(matrix.getCell(0, 0), "TopLeft");
 	assert.equal(matrix.getCell(0, matrix.colCount - 1), "TopRight");
 	assert.equal(matrix.getCell(matrix.rowCount - 1, matrix.colCount - 1), "BottomRight");
@@ -87,15 +87,15 @@ export function checkCorners<T extends IMatrix<U>, U>(matrix: T) {
  * Vets that cells are equal to the values computed by the 'value' callback for the designated
  * region of the matrix.
  */
-export function check<T extends IMatrix<U>, U>(
-	matrix: T,
+export function check<TMatrix extends IMatrix<TData>, TData>(
+	matrix: TMatrix,
 	rowStart = 0,
 	colStart = 0,
 	rowCount = matrix.rowCount - rowStart,
 	colCount = matrix.colCount - colStart,
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	value = (row: number, col: number): U => (row * rowCount + col) as any,
-): T {
+	value = (row: number, col: number): TData => (row * rowCount + col) as any,
+): TMatrix {
 	const rowEnd = rowStart + rowCount;
 	const colEnd = colStart + colCount;
 
@@ -107,8 +107,8 @@ export function check<T extends IMatrix<U>, U>(
 	return matrix;
 }
 
-export function checkValue<T extends IMatrix<U>, U>(
-	matrix: T,
+export function checkValue<TMatrix extends IMatrix<TData>, TData>(
+	matrix: TMatrix,
 	test: unknown,
 	r: number,
 	c: number,
