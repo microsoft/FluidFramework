@@ -111,9 +111,9 @@ export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[]
-	? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] }
-	: L;
+export type ReplaceIEventThisPlaceHolder<T extends any[], TThis> = T extends any[]
+	? { [K in keyof T]: T[K] extends IEventThisPlaceHolder ? TThis : T[K] }
+	: T;
 
 /**
  * Transforms the event overload by replacing {@link IEventThisPlaceHolder} with `TThis` in the event listener

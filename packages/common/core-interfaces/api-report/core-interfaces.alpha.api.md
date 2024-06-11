@@ -374,9 +374,9 @@ export const LogLevel: {
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
-export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
-    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
-} : L;
+export type ReplaceIEventThisPlaceHolder<T extends any[], TThis> = T extends any[] ? {
+    [K in keyof T]: T[K] extends IEventThisPlaceHolder ? TThis : T[K];
+} : T;
 
 // @public
 export interface Tagged<TValue, TTag extends string = string> {
