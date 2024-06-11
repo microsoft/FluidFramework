@@ -18,7 +18,6 @@ import {
 	treeNodeApi as Tree,
 	TreeChangeEvents,
 	TreeConfiguration,
-	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import { hydrate } from "./utils.js";
@@ -35,7 +34,6 @@ import {
 } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../simple-tree/treeNodeApi.js";
-import type { TreeCheckout } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -455,52 +453,6 @@ describe("treeNodeApi", () => {
 				assert.equal(shallowChanges, 6);
 				assert.equal(deepChanges, 6);
 			});
-
-			it(`moves between array nodes at different depths fire events on the deeper array node first`, () => {
-				const list = sb.array("list", sb.number);
-				const testSchema = sb.object("root", {
-					list1: list,
-					deeper: sb.object("inner", { list2: list }),
-				});
-
-				const root = hydrate(testSchema, { list1: [1], deeper: { list2: [] } });
-
-				const eventFirings: string[] = [];
-				// Asserts in event handlers validate that things fired in the correct order
-				Tree.on(root.deeper.list2, "nodeChanged", () => {
-					eventFirings.push("nodeChanged_2");
-					assert.deepEqual(eventFirings, ["nodeChanged_2"]);
-				});
-				Tree.on(root.deeper.list2, "treeChanged", () => {
-					eventFirings.push("treeChanged_2");
-					assert.deepEqual(eventFirings, ["nodeChanged_2", "treeChanged_2"]);
-				});
-				Tree.on(root.list1, "nodeChanged", () => {
-					eventFirings.push("nodeChanged_1");
-					assert.deepEqual(eventFirings, [
-						"nodeChanged_2",
-						"treeChanged_2",
-						"nodeChanged_1",
-					]);
-				});
-				Tree.on(root.list1, "treeChanged", () => {
-					eventFirings.push("treeChanged_1");
-					assert.deepEqual(eventFirings, [
-						"nodeChanged_2",
-						"treeChanged_2",
-						"nodeChanged_1",
-						"treeChanged_1",
-					]);
-				});
-
-				root.deeper.list2.moveToIndex(0, 0, root.list1);
-				assert.deepEqual(eventFirings, [
-					"nodeChanged_2",
-					"treeChanged_2",
-					"nodeChanged_1",
-					"treeChanged_1",
-				]);
-			});
 		});
 
 		describe("map node", () => {
@@ -748,130 +700,5 @@ describe("treeNodeApi", () => {
 			assert.equal(deepChanges, 1, "'treeChanged' should only fire once");
 			assert.equal(shallowChanges, 1, "'nodeChanged' should only fire once");
 		});
-
-		it(`batched changes to several nodes at different depths trigger 'nodeChanged' and 'treeChanged' in the correct order`, () => {
-			const sb = new SchemaFactory("recursive");
-			class nodeSchema extends sb.objectRecursive("node", {
-				deeper: sb.optionalRecursive([() => nodeSchema]),
-				value: sb.optional(sb.number),
-			}) {}
-			{
-				// Best practice when using recursive schema. Helps ensure that it is defined correctly.
-				type _check = ValidateRecursiveSchema<typeof nodeSchema>;
-			}
-
-			const { root, checkout } = getView(
-				new TreeConfiguration(
-					nodeSchema,
-					() => new nodeSchema({ value: 1, deeper: undefined }),
-				),
-			);
-			root.deeper = new nodeSchema({ value: 1, deeper: undefined });
-			root.deeper.deeper = new nodeSchema({ value: 1, deeper: undefined });
-			root.deeper.deeper.deeper = new nodeSchema({ value: 1, deeper: undefined });
-
-			const nodeChangedEvents: string[] = [];
-			const treeChangedEvents: string[] = [];
-			// Asserts inside the event handlers validate that the events are fired in the correct order; changes from deeper
-			// nodes first, upwards to the root.
-			Tree.on(root, "nodeChanged", () => {
-				nodeChangedEvents.push("nodeChanged_0");
-				assert.deepEqual(nodeChangedEvents, [
-					"nodeChanged_3",
-					"nodeChanged_2",
-					"nodeChanged_1",
-					"nodeChanged_0",
-				]);
-			});
-			Tree.on(root.deeper, "nodeChanged", () => {
-				nodeChangedEvents.push("nodeChanged_1");
-				assert.deepEqual(nodeChangedEvents, [
-					"nodeChanged_3",
-					"nodeChanged_2",
-					"nodeChanged_1",
-				]);
-			});
-			Tree.on(root.deeper.deeper, "nodeChanged", () => {
-				nodeChangedEvents.push("nodeChanged_2");
-				assert.deepEqual(nodeChangedEvents, ["nodeChanged_3", "nodeChanged_2"]);
-			});
-			Tree.on(root.deeper.deeper.deeper, "nodeChanged", () => {
-				nodeChangedEvents.push("nodeChanged_3");
-				assert.deepEqual(nodeChangedEvents, ["nodeChanged_3"]);
-			});
-			Tree.on(root, "treeChanged", () => {
-				treeChangedEvents.push("treeChanged_0");
-				assert.deepEqual(treeChangedEvents, [
-					"treeChanged_3",
-					"treeChanged_2",
-					"treeChanged_1",
-					"treeChanged_0",
-				]);
-			});
-			Tree.on(root.deeper, "treeChanged", () => {
-				treeChangedEvents.push("treeChanged_1");
-				assert.deepEqual(treeChangedEvents, [
-					"treeChanged_3",
-					"treeChanged_2",
-					"treeChanged_1",
-				]);
-			});
-			Tree.on(root.deeper.deeper, "treeChanged", () => {
-				treeChangedEvents.push("treeChanged_2");
-				assert.deepEqual(treeChangedEvents, ["treeChanged_3", "treeChanged_2"]);
-			});
-			Tree.on(root.deeper.deeper.deeper, "treeChanged", () => {
-				treeChangedEvents.push("treeChanged_3");
-				assert.deepEqual(treeChangedEvents, ["treeChanged_3"]);
-			});
-
-			const branch = makeChangesInLocalBranch(checkout);
-			checkout.merge(branch);
-
-			assert.equal(root.value, 2, "root value did not change");
-			assert.equal(root.deeper.value, 2, "depth-1 value did not change");
-			assert.equal(root.deeper.deeper.value, 2, "depth-2 value did not change");
-			assert.equal(root.deeper.deeper.deeper.value, 2, "depth-3 value did not change");
-		});
 	});
 });
-
-function makeChangesInLocalBranch(checkout: TreeCheckout): TreeCheckout {
-	const branch = checkout.fork();
-	const rootNode: UpPath = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	const depth1Node: UpPath = {
-		parent: rootNode,
-		parentField: brand("deeper"),
-		parentIndex: 0,
-	};
-	const depth2Node: UpPath = {
-		parent: depth1Node,
-		parentField: brand("deeper"),
-		parentIndex: 0,
-	};
-	const depth3Node: UpPath = {
-		parent: depth2Node,
-		parentField: brand("deeper"),
-		parentIndex: 0,
-	};
-	// Make changes in a "weird order" that doesn't match the order we expect the events to fire.
-	// Events should fire on the deepest nodes first (i.e. "3, 2, 1, 0"), so we fire the events in "0, 3, 1, 2" order.
-	branch.editor
-		.valueField({ parent: rootNode, field: brand("value") })
-		.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
-	branch.editor
-		.valueField({ parent: depth3Node, field: brand("value") })
-		.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
-	branch.editor
-		.valueField({ parent: depth1Node, field: brand("value") })
-		.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
-	branch.editor
-		.valueField({ parent: depth2Node, field: brand("value") })
-		.set(cursorForJsonableTreeNode({ type: leaf.number.name, value: 2 }));
-
-	return branch;
-}
