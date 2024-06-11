@@ -141,10 +141,12 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 
 	/**
 	 * Moves the specified item to the desired location in the array.
-	 * @param index - The index to move the item to.
+	 * @param index - The index to move the item to in the range [0, `array.length`].
+	 * This is based on the state of the array before moving the source item.
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source array to move the item out of.
-	 * @throws Throws if any of the input indices are not in the range [0, `array.length`).
+	 * @throws Throws if any of the source index is not in the range [0, `array.length`),
+	 * or if the index is not in the range [0, `array.length`].
 	 */
 	moveToIndex(index: number, sourceIndex: number, source: TMoveFrom): void;
 
@@ -153,6 +155,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
@@ -163,6 +166,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
@@ -171,6 +175,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
@@ -181,6 +186,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
 	 * if either of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
 
@@ -191,6 +197,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
@@ -201,7 +208,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source array to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if any of the input indices are not in the range [0, `array.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * if any of the input indices are not in the range [0, `array.length`], or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
 		index: number,
@@ -674,55 +681,38 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		const isEmptyMove = sourceIndex === 0 && (source?.length === 0 || this.length === 0);
-		if (!isEmptyMove) {
-			const field = getSequenceField(this);
-			validateIndex(sourceIndex, field, "moveToStart");
-			this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
-		}
+		const field = getSequenceField(this);
+		validateIndex(sourceIndex, field, "moveToStart");
+		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		const isEmptyMove = sourceIndex === 0 && (source?.length === 0 || this.length === 0);
-		if (!isEmptyMove) {
-			const field = getSequenceField(this);
-			validateIndex(sourceIndex, field, "moveToEnd");
-			this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
-		}
+		const field = getSequenceField(this);
+		validateIndex(sourceIndex, field, "moveToEnd");
+		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const isEmptyMove = sourceIndex === 0 && (source?.length === 0 || this.length === 0);
-		if (!isEmptyMove) {
-			const field = getSequenceField(this);
-			validateIndex(index, field, "moveToIndex", true);
-			validateIndex(sourceIndex, field, "moveToIndex");
-			this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
-		}
+		const field = getSequenceField(this);
+		validateIndex(index, field, "moveToIndex", true);
+		validateIndex(sourceIndex, field, "moveToIndex");
+		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		const isEmptyMove =
-			(source?.length === 0 || this.length === 0) && sourceStart === 0 && sourceEnd === 0;
-		if (!isEmptyMove) {
-			validateIndexRange(
-				sourceStart,
-				sourceEnd,
-				source ?? getSequenceField(this),
-				"moveRangeToStart",
-			);
-			this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
-		}
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToStart",
+		);
+		this.moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
 	public moveRangeToEnd(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
-		const isEmptyMove =
-			(source?.length === 0 || this.length === 0) && sourceStart === 0 && sourceEnd === 0;
-		if (!isEmptyMove) {
-			validateIndexRange(
-				sourceStart,
-				sourceEnd,
-				source ?? getSequenceField(this),
-				"moveRangeToEnd",
-			);
-			this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
-		}
+		validateIndexRange(
+			sourceStart,
+			sourceEnd,
+			source ?? getSequenceField(this),
+			"moveRangeToEnd",
+		);
+		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
 	public moveRangeToIndex(
 		index: number,
@@ -730,41 +720,37 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
-		const isEmptyMove =
-			(source?.length === 0 || this.length === 0) && sourceStart === 0 && sourceEnd === 0;
-		if (!isEmptyMove) {
-			const field = getSequenceField(this);
-			validateIndex(index, field, "moveRangeToIndex", true);
-			validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
-			const sourceField =
-				source !== undefined
-					? field.isSameAs(getSequenceField(source))
-						? field
-						: getSequenceField(source)
-					: field;
+		const field = getSequenceField(this);
+		validateIndex(index, field, "moveRangeToIndex", true);
+		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
+		const sourceField =
+			source !== undefined
+				? field.isSameAs(getSequenceField(source))
+					? field
+					: getSequenceField(source)
+				: field;
 
-			// TODO: determine support for move across different sequence types
-			if (field.schema.types !== undefined && sourceField !== field) {
-				for (let i = sourceStart; i < sourceEnd; i++) {
-					const sourceNode =
-						sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
-					if (!field.schema.types.has(sourceNode.schema.name)) {
-						throw new Error("Type in source sequence is not allowed in destination.");
-					}
+		// TODO: determine support for move across different sequence types
+		if (field.schema.types !== undefined && sourceField !== field) {
+			for (let i = sourceStart; i < sourceEnd; i++) {
+				const sourceNode =
+					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
+				if (!field.schema.types.has(sourceNode.schema.name)) {
+					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}
-			const movedCount = sourceEnd - sourceStart;
-			const sourceFieldPath = sourceField.getFieldPath();
-
-			const destinationFieldPath = field.getFieldPath();
-			field.context.checkout.editor.move(
-				sourceFieldPath,
-				sourceStart,
-				movedCount,
-				destinationFieldPath,
-				index,
-			);
 		}
+		const movedCount = sourceEnd - sourceStart;
+		const sourceFieldPath = sourceField.getFieldPath();
+
+		const destinationFieldPath = field.getFieldPath();
+		field.context.checkout.editor.move(
+			sourceFieldPath,
+			sourceStart,
+			movedCount,
+			destinationFieldPath,
+			index,
+		);
 	}
 }
 
@@ -894,10 +880,6 @@ function validateIndex(
 	allowOnePastEnd: boolean = false,
 ): void {
 	validatePositiveIndex(index);
-	// Handles edge case to handle editing operations on empty sequences
-	if (index === 0 && array.length === 0) {
-		return;
-	}
 	if (allowOnePastEnd) {
 		if (index > array.length) {
 			throw new UsageError(
@@ -919,13 +901,9 @@ function validateIndexRange(
 	array: { readonly length: number },
 	methodName: string,
 ): void {
-	// Handles edge case to handle editing operations on empty sequences.
-	if (array.length === 0 && startIndex === 0 && endIndex === 0) {
-		return;
-	}
-	validateIndex(startIndex, array, methodName);
+	validateIndex(startIndex, array, methodName, true);
 	validateIndex(endIndex, array, methodName, true);
-	if (startIndex >= endIndex || array.length < endIndex) {
+	if (startIndex > endIndex || array.length < endIndex) {
 		throw new UsageError(`Index value passed to TreeArrayNode.${methodName} is out of bounds.`);
 	}
 }

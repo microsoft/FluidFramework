@@ -120,12 +120,6 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array1], [2, 1, 2]);
 			});
 
-			it("move within empty field", () => {
-				const array = hydrate(schemaType, []);
-				array.moveToStart(0);
-				assert.deepEqual([...array], []);
-			});
-
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// Index too large
@@ -160,12 +154,6 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array1], [1, 2, 2]);
 			});
 
-			it("move within empty field", () => {
-				const array = hydrate(schemaType, []);
-				array.moveToEnd(0);
-				assert.deepEqual([...array], []);
-			});
-
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// Index too large
@@ -188,12 +176,6 @@ describe("ArrayNode", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToIndex(0, 1);
 				assert.deepEqual([...array], [2, 1, 3]);
-			});
-
-			it("move within empty field", () => {
-				const array = hydrate(schemaType, []);
-				array.moveToIndex(0, 0);
-				assert.deepEqual([...array], []);
 			});
 
 			it("cross-field move", () => {
