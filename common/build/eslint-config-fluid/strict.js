@@ -155,5 +155,13 @@ module.exports = {
 				"@typescript-eslint/no-redundant-type-constituents": "error",
 			},
 		},
+		{
+			// Rules only for type validation files
+			files: ["**/test/types/*validate*Previous*.ts"],
+			rules: {
+				// Don't apply naming conventions to generate type-test code
+				"@typescript-eslint/naming-convention": "off",
+			},
+		},
 	],
 };
