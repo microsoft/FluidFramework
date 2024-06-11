@@ -44,6 +44,8 @@ export const stringEnumValue = ((): StringEnum => StringEnum.a)();
 export const constHeterogenousEnumValue = ((): ConstHeterogenousEnum => ConstHeterogenousEnum.a)();
 export const computedEnumValue = ((): ComputedEnum => ComputedEnum.computed)();
 
+// #region Object (record) types
+
 export const object: object = { key: "value" };
 export const emptyObject = {};
 export const objectWithBoolean = { boolean: true };
@@ -77,29 +79,65 @@ export const objectWithNumberOrUndefinedUndefined: ObjectWithNumberOrUndefined =
 	numOrUndef: undefined,
 };
 export const objectWithNumberOrUndefinedNumbered: ObjectWithNumberOrUndefined = { numOrUndef: 5.2 };
+export const objectWithOptionalUndefinedEnclosingRequiredUndefined: {
+	opt?: { requiredUndefined: number | undefined };
+} = { opt: { requiredUndefined: undefined } };
 export const objectWithNever = {
 	never,
 };
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+// #region Recursive types
+
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
+
 type ObjectWithPossibleRecursion = {
 	[x: string]: ObjectWithPossibleRecursion | string;
 };
 export const objectWithPossibleRecursion: ObjectWithPossibleRecursion = {
 	recursive: { stop: "here" },
 };
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type ObjectWithOptionalRecursion = {
 	recursive?: ObjectWithOptionalRecursion;
 };
 export const objectWithRecursion: ObjectWithOptionalRecursion = {
 	recursive: {},
 };
+export const objectWithEmbeddedRecursion = {
+	outer: objectWithRecursion,
+};
 export const objectWithSelfReference: ObjectWithOptionalRecursion = {};
 objectWithSelfReference.recursive = objectWithSelfReference;
 
+type ObjectWithAlternatingRecursionA = {
+	recurseA: ObjectWithAlternatingRecursionB | number;
+};
+type ObjectWithAlternatingRecursionB = {
+	recurseB: ObjectWithAlternatingRecursionA | "stop";
+};
+export const objectWithAlternatingRecursion: ObjectWithAlternatingRecursionA = {
+	recurseA: {
+		recurseB: {
+			recurseA: {
+				recurseB: "stop",
+			},
+		},
+	},
+};
+
+type ObjectWithSymbolAndRecursion = {
+	recurse: ObjectWithSymbolAndRecursion | symbol;
+};
+export const objectWithSymbolAndRecursion: ObjectWithSymbolAndRecursion = {
+	recurse: { recurse: Symbol("stop") },
+};
+
+/* eslint-enable @typescript-eslint/consistent-type-definitions */
+
 export const simpleJson: JsonTypeWith<never> = { a: [{ b: { b2: 8 }, c: true }] };
 
+// #endregion
+
+// #region with literal types
 export const objectWithLiterals = {
 	true: true,
 	false: false,
@@ -117,7 +155,9 @@ export const arrayOfLiterals: readonly (
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 )[] = [true, 0, 1, "string", "hello", null];
+// #endregion
 
+// #region Class types
 export class ClassWithPrivateData {
 	public public = "public";
 	// @ts-expect-error secret is never read
@@ -173,6 +213,9 @@ export class ClassWithPublicSetter {
 	}
 }
 export const classInstanceWithPublicSetter = new ClassWithPublicSetter();
+// #endregion
+
+// #endregion
 
 /* eslint-enable unicorn/no-null */
 /* eslint-enable jsdoc/require-jsdoc */

@@ -36,6 +36,7 @@ import {
 	objectWithSymbol,
 	objectWithBigint,
 	objectWithFunction,
+	objectWithBigintOrString,
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalNumberNotPresent,
@@ -43,10 +44,14 @@ import {
 	objectWithOptionalNumberDefined,
 	objectWithNumberOrUndefinedUndefined,
 	objectWithNumberOrUndefinedNumbered,
+	objectWithOptionalUndefinedEnclosingRequiredUndefined,
 	objectWithNever,
 	objectWithPossibleRecursion,
 	objectWithRecursion,
+	objectWithEmbeddedRecursion,
+	objectWithAlternatingRecursion,
 	objectWithSelfReference,
+	objectWithSymbolAndRecursion,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -63,7 +68,6 @@ import {
 	ClassWithPublicData,
 	ClassWithPublicGetter,
 	ClassWithPublicSetter,
-	objectWithBigintOrString,
 } from "./testValues.js";
 
 /**
@@ -197,19 +201,21 @@ describe("JsonSerializable", () => {
 			});
 
 			it("object with optional type recursion", () => {
-				// FIX: @ts-expect-error typeof `objectWithRecursion` is recursive
+				passThru(objectWithRecursion) satisfies typeof objectWithRecursion;
+			});
+
+			it("object with deep type recursion", () => {
+				passThru(objectWithEmbeddedRecursion) satisfies typeof objectWithEmbeddedRecursion;
+			});
+
+			it("object with alternating type recursion", () => {
 				passThru(
-					objectWithRecursion,
-					// no error
-				) satisfies typeof objectWithRecursion;
+					objectWithAlternatingRecursion,
+				) satisfies typeof objectWithAlternatingRecursion;
 			});
 
 			it("simple json (JsonTypeWith<never>)", () => {
-				// FIX: @ts-expect-error `JsonTypeWith<never>` is recursive
-				passThru(
-					simpleJson,
-					// no error
-				) satisfies typeof simpleJson;
+				passThru(simpleJson) satisfies typeof simpleJson;
 			});
 
 			it("non-const enums are supported as themselves", () => {
@@ -460,23 +466,40 @@ describe("JsonSerializable", () => {
 					);
 				});
 
+				it("with recursion and `symbol`", () => {
+					passThru(
+						// @ts-expect-error 'ObjectWithSymbolAndRecursion' is not assignable to parameter of type '{ recurse: { recurse: ObjectWithSymbolAndRecursion; }; }' (`symbol` becomes `never`)
+						objectWithSymbolAndRecursion,
+						// JsonDeserialized does not yet handle recursive types, but we use filter here as the general expectation.
+						// @ts-expect-error 'recurse' circularly references itself in mapped type '{ [K in "recurse"]: JsonDeserialized<ObjectWithSymbolAndRecursion[K], never>; }'
+						{ recurse: {} },
+					);
+				});
+
 				describe("with `undefined`", () => {
 					it("as exact property type", () => {
 						passThru(
-							// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithUndefined,
 							{},
 						);
 					});
 					it("in union property", () => {
 						passThru(
-							// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithNumberOrUndefinedUndefined,
 							{},
 						);
 						passThru(
-							// @ts-expect-error not assignable to "error-required-property-may-not-allow-undefined-value"
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithNumberOrUndefinedNumbered,
+						);
+					});
+					it("under an optional property", () => {
+						passThru(
+							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
+							objectWithOptionalUndefinedEnclosingRequiredUndefined,
+							{ opt: {} },
 						);
 					});
 				});

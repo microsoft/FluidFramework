@@ -49,6 +49,14 @@ import type { JsonTypeWith } from "./jsonType.js";
  * ```typescript
  * function foo<T>(value: JsonSerializable<T>) { ... }
  * ```
+ *
+ * @privateRemarks
+ * Upon recursion, the original type T is preserved intact. This is done to prevent
+ * infinite recursion and produces a technically incorrect result type. However with that
+ * proper use that will never be an issue as any filtering of types will happen before T
+ * recursion.
+ * To accomplish this behavior `TReplaced` during recursion is unioned with type `T`.
+ *
  * @beta
  */
 export type JsonSerializable<T, TReplaced = never> = /* test for 'any' */ boolean extends (
@@ -74,7 +82,7 @@ export type JsonSerializable<T, TReplaced = never> = /* test for 'any' */ boolea
 					[K in keyof T]: JsonForArrayItem<
 						T[K],
 						TReplaced,
-						JsonSerializable<T[K], TReplaced>
+						JsonSerializable<T[K], TReplaced | T>
 					>;
 			  }
 			: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
@@ -85,13 +93,13 @@ export type JsonSerializable<T, TReplaced = never> = /* test for 'any' */ boolea
 					{
 						/* required properties are recursed and may not have undefined values. */
 						[K in NonSymbolWithRequiredPropertyOf<T>]-?: undefined extends T[K]
-							? "error-required-property-may-not-allow-undefined-value"
-							: JsonSerializable<T[K], TReplaced>;
+							? { ["error required property may not allow undefined value"]: never }
+							: JsonSerializable<T[K], TReplaced | T>;
 					} & {
 						/* optional properties are recursed and allowed to preserve undefined value type. */
 						[K in NonSymbolWithOptionalPropertyOf<T>]?: JsonSerializable<
 							T[K],
-							TReplaced | undefined
+							TReplaced | T | undefined
 						>;
 					} & {
 						/* symbol properties are rejected */
