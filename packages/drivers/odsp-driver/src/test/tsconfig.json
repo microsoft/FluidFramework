@@ -5,6 +5,7 @@
 			"outDir": "../../lib/test",
 			"types": ["mocha", "node"],
 			"noUncheckedIndexedAccess": false,
+			"exactOptionalPropertyTypes": false,
 		},
 		"include": ["./**/*"],
 		"references": [
