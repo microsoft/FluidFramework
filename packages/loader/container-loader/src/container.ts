@@ -678,6 +678,13 @@ export class Container
 		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
+	private get supportGetSnapshotApi(): boolean {
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+				true && this.service?.policies?.supportGetSnapshotApi === true;
+		return supportGetSnapshotApi;
+	}
+
 	/**
 	 * Get the code details that are currently specified for the container.
 	 * @returns The current code details if any are specified, undefined if none are specified.
@@ -1347,7 +1354,10 @@ export class Container
 
 					// If offline load is enabled, attachP will return the attach summary (in Snapshot format) so we can initialize SerializedStateManager
 					const snapshotWithBlobs = await attachP;
-					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
+					this.serializedStateManager.setInitialSnapshot(
+						snapshotWithBlobs,
+						this.supportGetSnapshotApi,
+					);
 
 					if (!this.closed) {
 						this.detachedBlobStorage.dispose?.();
@@ -1615,13 +1625,10 @@ export class Container
 
 		timings.phase2 = performance.now();
 
-		const supportGetSnapshotApi: boolean =
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
-				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
-			supportGetSnapshotApi,
+			this.supportGetSnapshotApi,
 		);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;

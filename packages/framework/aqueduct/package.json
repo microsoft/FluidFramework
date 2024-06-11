@@ -85,21 +85,11 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
-		],
+		"exclude": ["src/test/**/*.*ts", "dist/test/**/*.*js"],
 		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js"
-		],
+		"include": ["src/**/*.*ts", "dist/**/*.*js"],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {

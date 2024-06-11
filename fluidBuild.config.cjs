@@ -45,7 +45,7 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: [],
+			dependsOn: ["check:format"],
 			script: false,
 		},
 		"checks:fix": {

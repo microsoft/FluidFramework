@@ -26,12 +26,7 @@
 	},
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
-	"files": [
-		"dist/**/*",
-		"!dist/test/**",
-		"lib/**/*",
-		"es5/**/*"
-	],
+	"files": ["dist/**/*", "!dist/test/**", "lib/**/*", "es5/**/*"],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",

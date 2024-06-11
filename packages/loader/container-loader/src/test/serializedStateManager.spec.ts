@@ -220,10 +220,15 @@ describe("serializedStateManager", () => {
 			() => false,
 		);
 		// equivalent to attach
-		serializedStateManager.setInitialSnapshot({
-			baseSnapshot: snapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
-		});
+		serializedStateManager.setInitialSnapshot(
+			{
+				baseSnapshot: snapshot,
+				snapshotBlobs: {
+					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+				},
+			},
+			false,
+		);
 		await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -515,7 +520,6 @@ describe("serializedStateManager", () => {
 				eventEmitter,
 				isDirtyF,
 			);
-
 			const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
 			const lastProcessedOpSequenceNumber = 40;
 			let seq = firstProcessedOpSequenceNumber;
@@ -816,7 +820,6 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					() => isDirty,
 				);
-
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -868,7 +871,6 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 				);
-
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {

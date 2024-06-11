@@ -97,9 +97,7 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"tsc": [
-				"typetests:gen"
-			]
+			"tsc": ["typetests:gen"]
 		}
 	},
 	"typeValidation": {

@@ -21,12 +21,7 @@
 	},
 	"main": "lib/src/index.js",
 	"types": "lib/src/index.d.ts",
-	"files": [
-		"dist/src",
-		"dist/assets",
-		"lib/src",
-		"lib/assets"
-	],
+	"files": ["dist/src", "dist/assets", "lib/src", "lib/assets"],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -130,16 +125,10 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": [
-					"...",
-					"webpack",
-					"build:copy-resources"
-				],
+				"dependsOn": ["...", "webpack", "build:copy-resources"],
 				"script": false
 			},
-			"build:copy-resources": [
-				"webpack"
-			]
+			"build:copy-resources": ["webpack"]
 		}
 	},
 	"typeValidation": {

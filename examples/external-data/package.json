@@ -127,9 +127,7 @@
 	"fluid": {
 		"browser": {
 			"umd": {
-				"files": [
-					"main.bundle.js"
-				],
+				"files": ["main.bundle.js"],
 				"library": "main"
 			}
 		}

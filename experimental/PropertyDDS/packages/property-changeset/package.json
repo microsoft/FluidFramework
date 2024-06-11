@@ -25,11 +25,7 @@
 	},
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
-	"files": [
-		"dist/**/*",
-		"lib/**/*",
-		"dist/index.d.ts"
-	],
+	"files": ["dist/**/*", "lib/**/*", "dist/index.d.ts"],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
@@ -62,21 +58,11 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
-		],
+		"exclude": ["src/test/**/*.*ts", "dist/test/**/*.*js"],
 		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js"
-		],
+		"include": ["src/**/*.*ts", "dist/**/*.*js"],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
