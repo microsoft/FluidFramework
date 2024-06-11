@@ -30,6 +30,7 @@ import {
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
 	resolveHandle(request: IRequest): Promise<IResponse>;
@@ -39,6 +40,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * Events emitted by {@link IContainerRuntime}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
@@ -47,6 +49,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 	IEventProvider<IContainerRuntimeEvents>;
 
@@ -54,6 +57,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {

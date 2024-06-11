@@ -8,6 +8,7 @@ import type { IsoDate } from "./date.js";
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDocumentAttributes {
 	/**
 	 * Sequence number at which the snapshot was taken
@@ -34,6 +35,7 @@ export enum FileMode {
  * Raw blob stored within the tree.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IBlob {
 	/**
 	 * Contents of the blob
@@ -50,6 +52,7 @@ export interface IBlob {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAttachment {
 	id: string;
 }
@@ -57,6 +60,7 @@ export interface IAttachment {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateBlobResponse {
 	id: string;
 }
@@ -65,6 +69,7 @@ export interface ICreateBlobResponse {
  * A tree entry wraps a path with a type of node.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ITreeEntry = {
 	/**
 	 * Path to the object
@@ -104,6 +109,7 @@ export enum TreeEntry {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITree {
 	entries: ITreeEntry[];
 
@@ -130,6 +136,7 @@ export interface ITree {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISnapshotTree {
 	id?: string;
 	blobs: { [path: string]: string };
@@ -152,6 +159,8 @@ export interface ISnapshotTree {
 /**
  * @internal
  */
+// TODO: fix now
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
 	trees: { [path: string]: ISnapshotTreeEx };
@@ -161,6 +170,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
  * Represents a version of the snapshot of a data store.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IVersion {
 	/**
 	 * Version ID
