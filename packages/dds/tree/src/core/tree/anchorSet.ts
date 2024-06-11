@@ -97,32 +97,52 @@ export interface AnchorEvents {
 	afterDestroy(anchor: AnchorNode): void;
 
 	/**
-	 * One or more of the children of this node is just about to change.
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if one or more of this node's
+	 * direct children are about to change due to updates from the batch.
 	 *
 	 * @remarks
-	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
+	 * node's fields.
 	 */
 	childrenChanging(anchor: AnchorNode): void;
 
 	/**
-	 * One or more of the children of this node has just changed.
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if one or more of this node's
+	 * direct children just change due to updates from the batch.
 	 *
 	 * @remarks
-	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
+	 * node's fields.
+	 *
+	 * Compare to {@link AnchorEvents.childrenChangedAfterBatch} which is emitted after the whole batch has been applied.
 	 */
 	childrenChanged(anchor: AnchorNode): void;
-	childrenChangedBatched(anchor: AnchorNode): void;
 
 	/**
-	 * Something in this tree is changing.
+	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if one or more of this node's
+	 * direct children changed due to updates from the batch.
+	 *
+	 * @remarks
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
+	 * node's fields.
+	 *
+	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
+	 */
+	childrenChangedAfterBatch(anchor: AnchorNode): void;
+
+	/**
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
+	 * rooted at `anchor` _may_ be about to change due to updates from the batch.
+	 *
+	 * @remarks
 	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
-	 * Includes changes to this node itself.
 	 */
 	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
 
 	/**
-	 * Emitted after the subtree rooted at `anchor` may have been changed.
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
+	 * rooted at `anchor` _may_ have just changed due to updates from the batch.
 	 *
 	 * @remarks
 	 * While this event is always emitted in the presence of changes to the subtree,
@@ -132,17 +152,33 @@ export interface AnchorEvents {
 	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
 	 * least once on each ancestor.
 	 *
+	 * Compare to {@link AnchorEvents.subtreeChangedAfterBatch} which is emitted after the whole batch has been applied.
+	 *
 	 * @privateRemarks
 	 * The delta visit algorithm is complicated and it may fire this event multiple times for the same change to a node.
 	 * The change to the tree may not be visible until the event fires for the last time.
 	 * Refer to the documentation of the delta visit algorithm for more details.
-	 *
-	 * TODO: can we make it so this event is guaranteed to only fire once during the delta visit? Specifically when
-	 * changes to the tree did happen and are visible to the listener.
 	 */
 	subtreeChanged(anchor: AnchorNode): void;
 
-	subtreeChangedBatched(anchor: AnchorNode): void;
+	/**
+	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if something in the subtree
+	 * rooted at `anchor` changed due to updates from the batch.
+	 *
+	 * @param anchor - The anchor node.
+	 *
+	 * @remarks
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
+	 * least once on each ancestor.
+	 *
+	 * Compare to {@link AnchorEvents.subtreeChanged} which is emitted in the middle of the batch/delta-visit.
+	 *
+	 * @privateRemarks
+	 * Note that because this is fired after the full batch of changes is applied, it guarantees that something in the
+	 * subtree changed, compared to {@link AnchorEvents.subtreeChanged} or {@link AnchorEvents.subtreeChanging} which
+	 * fire when something _may_ have changed or _may_ be about to change.
+	 */
+	subtreeChangedAfterBatch(anchor: AnchorNode): void;
 
 	/**
 	 * Value on this node is changing.
@@ -721,7 +757,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						p.events.emit("childrenChanged", p);
 						this.bufferedEvents.push({
 							node: p,
-							event: "childrenChangedBatched",
+							event: "childrenChangedAfterBatch",
 							depth: this.currentDepth,
 						});
 					},
@@ -1004,7 +1040,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					if (nodeChangeHappened) {
 						this.bufferedEvents.push({
 							node: p,
-							event: "subtreeChangedBatched",
+							event: "subtreeChangedAfterBatch",
 							depth: this.currentDepth,
 						});
 						const lastIndex = this.actualChangeStack.length - 1;

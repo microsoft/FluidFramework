@@ -69,7 +69,7 @@ export function onNodeChanged(
 	anchorNode: AnchorNode,
 	listener: FlexTreeNodeEvents["nodeChanged"],
 ): Off {
-	return anchorNode.on("childrenChangedBatched", listener);
+	return anchorNode.on("childrenChangedAfterBatch", listener);
 }
 
 /**
@@ -80,5 +80,5 @@ export function onTreeChanged(
 	anchorNode: AnchorNode,
 	listener: FlexTreeNodeEvents["treeChanged"],
 ): Off {
-	return anchorNode.on("subtreeChangedBatched", listener);
+	return anchorNode.on("subtreeChangedAfterBatch", listener);
 }
