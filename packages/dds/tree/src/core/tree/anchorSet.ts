@@ -671,7 +671,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
-			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
+			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents; depth: number }[],
 
 			// A stack of booleans to keep track of when we should be enqueuing treeChanged events during tree traversal
 			// as a delta visit drives this visitor.
@@ -681,6 +681,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			// a treeChanged event; it's also an indication that we should enqueue treeChanged events for all ancestors of the
 			// node, so we need to also update the top of the stack to ensure that keeps happening as we go up the tree.
 			actualChangeStack: [] as boolean[],
+
+			// To keep track of which depth we're at when enqueuing events, so we can then emit them in the correct order.
+			currentDepth: 0,
+
 			free() {
 				assert(
 					this.anchorSet.activeVisitor !== undefined,
@@ -690,6 +694,8 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					node.removeRef();
 				}
 				this.anchorSet.activeVisitor = undefined;
+				// Sort them by depth, with deeper first
+				this.bufferedEvents = this.bufferedEvents.sort((a, b) => b.depth - a.depth);
 				const alreadyEmitted = new Map<PathNode, string[]>();
 				for (const { node, event } of this.bufferedEvents) {
 					if (!alreadyEmitted.has(node)) {
@@ -713,7 +719,11 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				this.maybeWithNode(
 					(p) => {
 						p.events.emit("childrenChanged", p);
-						this.bufferedEvents.push({ node: p, event: "childrenChangedBatched" });
+						this.bufferedEvents.push({
+							node: p,
+							event: "childrenChangedBatched",
+							depth: this.currentDepth,
+						});
 					},
 					() => {},
 				);
@@ -984,6 +994,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					}
 				});
 				this.actualChangeStack.push(false);
+				this.currentDepth++;
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
@@ -991,7 +1002,11 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					p.events.emit("subtreeChanged", p);
 					const nodeChangeHappened = this.actualChangeStack.pop() ?? false;
 					if (nodeChangeHappened) {
-						this.bufferedEvents.push({ node: p, event: "subtreeChangedBatched" });
+						this.bufferedEvents.push({
+							node: p,
+							event: "subtreeChangedBatched",
+							depth: this.currentDepth,
+						});
 						const lastIndex = this.actualChangeStack.length - 1;
 						this.actualChangeStack[lastIndex] = nodeChangeHappened;
 					}
@@ -1001,6 +1016,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
+				this.currentDepth--;
 			},
 			enterField(key: FieldKey): void {
 				this.parentField = key;
