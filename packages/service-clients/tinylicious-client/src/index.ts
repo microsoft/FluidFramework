@@ -15,8 +15,6 @@
  */
 
 export {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
 	type ITinyliciousAudience,
 	type TinyliciousClientProps,
 	type TinyliciousConnectionConfig,
