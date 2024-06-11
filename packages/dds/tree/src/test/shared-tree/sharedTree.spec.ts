@@ -1359,9 +1359,6 @@ describe("SharedTree", () => {
 				} satisfies InitializeAndSchematizeConfiguration;
 				const tree1 = schematizeFlexTree(provider.trees[0], content);
 
-				// make sure that revertibles are created
-				const { unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
-
 				provider.processMessages();
 				const tree2 = schematizeFlexTree(provider.trees[1], content);
 
@@ -1410,8 +1407,6 @@ describe("SharedTree", () => {
 				assert.equal(repairCursor1.value, "A");
 				repairCursor2.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 3);
-
-				unsubscribe();
 			});
 
 			it("due to revertibles", () => {
