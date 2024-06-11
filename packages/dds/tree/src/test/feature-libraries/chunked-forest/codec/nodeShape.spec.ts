@@ -27,6 +27,7 @@ import { fieldKinds } from "../../../../feature-libraries/default-schema/index.j
 import { brand } from "../../../../util/index.js";
 
 import { checkNodeEncode } from "./checkEncode.js";
+import { testIdCompressor } from "../../../utils.js";
 
 describe("nodeShape", () => {
 	describe("NodeShape", () => {
@@ -40,6 +41,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 
 			const buffer = checkNodeEncode(shape, cache, {
@@ -57,6 +59,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 
 			const encodedChunk = checkNodeEncode(shape, cache, {
@@ -71,6 +74,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 
 			const fieldShapeLocal = cache.nestedArray(
@@ -106,6 +110,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				() => fail(),
 				fieldKinds,
+				testIdCompressor,
 			);
 
 			// Shape which encodes to nothing.

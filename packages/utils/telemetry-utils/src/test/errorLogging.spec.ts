@@ -649,7 +649,11 @@ class TestFluidError implements IFluidErrorBase {
 	constructor(
 		errorProps: Omit<
 			IFluidErrorBase,
-			"getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId" | "name"
+			| "getTelemetryProperties"
+			| "addTelemetryProperties"
+			| "errorInstanceId"
+			| "name"
+			| "cause"
 		>,
 	) {
 		this.errorType = errorProps.errorType;

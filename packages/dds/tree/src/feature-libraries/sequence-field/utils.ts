@@ -50,7 +50,12 @@ import {
 } from "./types.js";
 
 export function isEmpty(change: Changeset): boolean {
-	return change.length === 0;
+	for (const mark of change) {
+		if (mark.changes !== undefined || mark.type !== undefined) {
+			return false;
+		}
+	}
+	return true;
 }
 
 export function createEmpty(): Changeset {

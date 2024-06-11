@@ -77,10 +77,11 @@ export function setupEnricher() {
 		"test",
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
+		testIdCompressor,
 		{ jsonValidator: typeboxValidator },
 	);
 	const forest = buildForest();
-	initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+	initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec, testIdCompressor);
 	const schema = new TreeStoredSchemaRepository();
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,
