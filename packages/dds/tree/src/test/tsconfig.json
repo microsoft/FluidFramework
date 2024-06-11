@@ -8,6 +8,7 @@
 		"outDir": "../../lib/test",
 		"types": ["node", "mocha"],
 		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
