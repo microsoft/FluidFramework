@@ -7,11 +7,6 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	type ISummaryTreeWithStats,
-	type AttributionInfo,
-	type AttributionKey,
-} from "@fluidframework/runtime-definitions/internal";
-import {
 	type IQuorumClients,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions";
@@ -19,6 +14,11 @@ import {
 	type IDocumentMessage,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	type ISummaryTreeWithStats,
+	type AttributionInfo,
+	type AttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
