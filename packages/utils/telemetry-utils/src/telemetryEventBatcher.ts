@@ -46,7 +46,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	) {}
 
 	/**
-	 * Accumulates the custom data and sends it to the logger every time the number of logs reaches the threshold by calling `sendData()`.
+	 * Accumulates the custom data and sends it to the logger every {@link TelemetryEventBatcher.threshold} calls.
 	 *
 	 * @param customData -
 	 * A record storing the custom data to be logged.
