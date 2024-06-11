@@ -13,6 +13,5 @@
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
 	},
 }

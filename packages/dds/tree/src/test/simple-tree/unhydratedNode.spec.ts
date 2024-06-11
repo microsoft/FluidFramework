@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { TreeStatus } from "../../../dist/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { SchemaFactory, FieldProps, TreeNode } from "../../simple-tree/index.js";
+import { SchemaFactory, FieldProps } from "../../simple-tree/index.js";
 import {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
@@ -16,7 +16,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { hydrate } from "./utils.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -143,87 +142,6 @@ describe("Unhydrated nodes", () => {
 		assert.equal(Tree.status(object), TreeStatus.New);
 	});
 
-	it("preserve events after hydration", () => {
-		function registerEvents(node: TreeNode): () => void {
-			let deepEvent = false;
-			let shallowEvent = false;
-			Tree.on(node, "nodeChanged", () => (shallowEvent = true));
-			Tree.on(node, "treeChanged", () => (deepEvent = true));
-			return () => {
-				assert.equal(shallowEvent, true);
-				assert.equal(deepEvent, true);
-			};
-		}
-		// Create three unhydrated nodes to test (`leafObject`, `array`, and `map`).
-		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
-		const leafObject = new TestLeaf({ value: "value" });
-		const array = new TestArray([leafObject]);
-		const map = new TestMap([]);
-		// Register events on each node
-		const assertLeafObject = registerEvents(leafObject);
-		const assertMap = registerEvents(map);
-		const assertArray = registerEvents(array);
-		// Hydrate the nodes
-		root.array = array;
-		root.map = map;
-		// Change each node to trigger the events
-		leafObject.value = "new value";
-		map.set("new key", new TestLeaf({ value: "new leaf" }));
-		array.insertAtEnd(new TestLeaf({ value: "new leaf" }));
-		// Assert that the events fired
-		assertLeafObject();
-		assertMap();
-		assertArray();
-	});
-
-	it("can unsubscribe from events after hydration", () => {
-		function registerEvents(node: TreeNode): {
-			deregister: () => void;
-			assert: () => void;
-		} {
-			let deepEvent = false;
-			let shallowEvent = false;
-			const offNodeChanged = Tree.on(node, "nodeChanged", () => (shallowEvent = true));
-			const offTreeChanged = Tree.on(node, "treeChanged", () => (deepEvent = true));
-			return {
-				deregister: () => {
-					offNodeChanged();
-					offTreeChanged();
-				},
-				assert: () => {
-					// Assert that the events _don't_ fire:
-					assert.equal(shallowEvent, false);
-					assert.equal(deepEvent, false);
-				},
-			};
-		}
-		// Create three unhydrated nodes to test (`leafObject`, `array`, and `map`).
-		const root = hydrate(TestObject, new TestObject({ array: [], map: new Map() }));
-		const leafObject = new TestLeaf({ value: "value" });
-		const array = new TestArray([leafObject]);
-		const map = new TestMap([]);
-		// Register events on each node
-		const { deregister: deregisterLeafObject, assert: assertLeafObject } =
-			registerEvents(leafObject);
-		const { deregister: deregisterMap, assert: assertMap } = registerEvents(map);
-		const { deregister: deregisterArray, assert: assertArray } = registerEvents(array);
-		// Hydrate the nodes
-		root.array = array;
-		root.map = map;
-		// Deregister the events
-		deregisterLeafObject();
-		deregisterMap();
-		deregisterArray();
-		// Change each node to trigger the events
-		leafObject.value = "new value";
-		map.set("new key", new TestLeaf({ value: "new leaf" }));
-		array.insertAtEnd(new TestLeaf({ value: "new leaf" }));
-		// Assert that the events fired
-		assertLeafObject();
-		assertMap();
-		assertArray();
-	});
-
 	it("read constant defaulted properties", () => {
 		const defaultValue = 3;
 		const constantProvider: ConstantFieldProvider = () => {
@@ -239,7 +157,6 @@ describe("Unhydrated nodes", () => {
 		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
-	// TODO: Fail instead of returning undefined, as is the case for identifiers.
 	it("read undefined for contextual defaulted properties", () => {
 		const defaultValue = 3;
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
@@ -254,43 +171,6 @@ describe("Unhydrated nodes", () => {
 		}) {}
 		const defaultingLeaf = new HasDefault({ value: undefined });
 		assert.equal(defaultingLeaf.value, undefined);
-	});
-
-	it("read manually provided identifiers", () => {
-		class TestObjectWithId extends schemaFactory.object("HasId", {
-			id: schemaFactory.identifier,
-		}) {}
-
-		const id = "my identifier";
-		const object = new TestObjectWithId({ id });
-		assert.equal(object.id, id);
-	});
-
-	it("fail to read automatically generated identifiers", () => {
-		class TestObjectWithId extends schemaFactory.object("HasId", {
-			id: schemaFactory.identifier,
-		}) {}
-
-		const object = new TestObjectWithId({ id: undefined });
-		assert.throws(
-			() => object.id,
-			(error: Error) =>
-				validateAssertionError(
-					error,
-					/An automatically generated node identifier may not be queried until the node is inserted into the tree/,
-				),
-		);
-	});
-
-	it("correctly iterate identifiers", () => {
-		class TestObjectWithId extends schemaFactory.object("HasIds", {
-			id: schemaFactory.identifier,
-			autoId: schemaFactory.identifier,
-		}) {}
-
-		const id = "my identifier";
-		const object = new TestObjectWithId({ id, autoId: undefined });
-		assert.deepEqual(Object.entries(object), [["id", id]]);
 	});
 });
 

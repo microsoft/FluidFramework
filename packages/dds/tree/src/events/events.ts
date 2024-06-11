@@ -214,7 +214,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
 {
-	protected readonly listeners = new Map<
+	private readonly listeners = new Map<
 		keyof TListeners,
 		Map<Off, (...args: any[]) => TListeners[keyof TListeners]>
 	>();
@@ -306,10 +306,8 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	}
 }
 
-/**
- * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
- */
-export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
+// This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
+class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	extends EventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {

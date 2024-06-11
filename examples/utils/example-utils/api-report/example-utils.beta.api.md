@@ -18,8 +18,6 @@ import { IContainerRuntimeOptions } from '@fluidframework/container-runtime/inte
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions/internal';
-import type { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
-import type { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions/internal';
 import { ILoaderProps } from '@fluidframework/container-loader/internal';

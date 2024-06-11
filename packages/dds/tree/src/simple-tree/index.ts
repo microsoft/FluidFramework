@@ -74,9 +74,7 @@ export {
 	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
-// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
-// See docs on TreeNode for more details.
-export { type TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
+export { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
 export { TreeArrayNode, IterableTreeArrayContent, TreeArrayNodeBase } from "./arrayNode.js";
 export {
 	InsertableObjectFromSchemaRecord,

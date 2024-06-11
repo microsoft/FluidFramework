@@ -8,7 +8,6 @@
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

@@ -288,8 +288,8 @@ export function testPerf() {
 							//   They therefore undergo no inverting.
 							// As part of rebasing P+, we invert...
 							//   - each of the phase-1 peer edits: P
-							//     However, all but the last of these had their inverse already cached
-							inverted: 1,
+							// Adding both terms and simplifying:
+							inverted: P,
 							// As part of rebasing the peer branch that contains the phase-1 edits,
 							//   none of the peer edits need to be rebased,
 							//   so we don't compose the changes they would need to rebase over.
@@ -375,15 +375,14 @@ export function testPerf() {
 							//   we invert...
 							//     - each of the phase-1 peer edits: P
 							//       (these are based on commit 0)
-							//       However, all but the last of these had their inverse already cached
-							//   This adds up 1 invert.
+							//   This adds up P inverts.
 							// As part of rebasing P+ to the tip of the trunk,
 							//   we invert...
 							//     - each of the phase-1 peer edits: P
 							//       (these are based on commit Tc)
 							//   This adds up P inverts.
 							// Adding both terms:
-							inverted: P + 1,
+							inverted: 2 * P,
 							// As part of rebasing the peer branch that contains the phase-1 edits, we compose...
 							//   - the trunk edits: T
 							//   then for the Ith local edit on the branch we compose...

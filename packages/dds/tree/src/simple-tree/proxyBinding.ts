@@ -58,7 +58,7 @@ const anchorForgetters = new WeakMap<TreeNode, () => void>();
  * @privateRemarks Use `forgetters` to cleanup the anchor allocated by this function once the anchor is no longer needed.
  * In practice, this happens when either the anchor node is destroyed, or another anchor to the same node is created by a new flex node.
  */
-export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): AnchorNode {
+export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): void {
 	assert(!anchorForgetters.has(proxy), 0x91c /* Proxy anchor should not be set twice */);
 	const anchor = anchors.track(path);
 	const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
@@ -72,7 +72,6 @@ export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): 
 	};
 	anchorForgetters.set(proxy, forget);
 	const off = anchorNode.on("afterDestroy", forget);
-	return anchorNode;
 }
 
 /**

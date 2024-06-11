@@ -16,27 +16,10 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 export type MigrationState = "collaborating" | "stopping" | "migrating" | "migrated";
 
 /**
- * The details of the accepted migration.  Signifies that the collaboration has agreed to migrate whatever
- * data was present at sequence number migrationSequenceNumber to use version newVersion.
- * @internal
- */
-export interface IAcceptedMigrationDetails {
-	/**
-	 * The version to migrate to.
-	 */
-	newVersion: string;
-	/**
-	 * The sequence number indicating the data state to migrate.
-	 */
-	migrationSequenceNumber: number;
-}
-
-/**
  * @internal
  */
 export interface IMigrationToolEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
-	(event: "disposed", listener: () => void);
 }
 
 /**
@@ -63,9 +46,9 @@ export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
 	 */
 	readonly proposedVersion: string | undefined;
 	/**
-	 * The details of the accepted migration, if one has been accepted.
+	 * The version string of the accepted new version to use, if one has been accepted.
 	 */
-	readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
+	readonly acceptedVersion: string | undefined;
 	/**
 	 * Propose a new version to use.
 	 * @param newVersion - the version string

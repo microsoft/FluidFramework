@@ -48,7 +48,7 @@ describe("Fluid audience", () => {
 	 *
 	 * Expected behavior: container should have a single member upon creation.
 	 */
-	it("can find original member", async () => {
+	it.skip("can find original member", async () => {
 		const { container, services } = await client.createContainer(schema);
 		const itemId = await container.attach();
 

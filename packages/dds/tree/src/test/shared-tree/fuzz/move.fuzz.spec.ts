@@ -41,9 +41,6 @@ describe("Fuzz - move", () => {
 			sequence: 1,
 			recurse: 2,
 		},
-		start: 1,
-		commit: 1,
-		abort: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 

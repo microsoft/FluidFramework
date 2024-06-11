@@ -10,6 +10,5 @@
 		// @fluentui packages raise tsc errors.
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
 	},
 }

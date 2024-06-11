@@ -5,7 +5,7 @@
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
 import {
-	MigrationToolFactory,
+	MigrationToolInstantiationFactory,
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
@@ -17,11 +17,14 @@ import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
-const inventoryListId = "default-inventory-list";
-const migrationToolId = "migration-tool";
-
-const migrationToolRegistryKey = "migration-tool";
-const migrationToolFactory = new MigrationToolFactory();
+/**
+ * @internal
+ */
+export const inventoryListId = "default-inventory-list";
+/**
+ * @internal
+ */
+export const migrationToolId = "migration-tool";
 
 /**
  * @internal
@@ -35,7 +38,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		super(
 			new Map([
 				InventoryListInstantiationFactory.registryEntry,
-				[migrationToolRegistryKey, Promise.resolve(migrationToolFactory)],
+				MigrationToolInstantiationFactory.registryEntry,
 			]), // registryEntries
 			testMode
 				? {
@@ -53,7 +56,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
 		const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
 		await inventoryList.trySetAlias(inventoryListId);
-		const migrationTool = await runtime.createDataStore(migrationToolRegistryKey);
+		const migrationTool = await runtime.createDataStore(MigrationToolInstantiationFactory.type);
 		await migrationTool.trySetAlias(migrationToolId);
 	}
 

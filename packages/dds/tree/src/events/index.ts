@@ -6,7 +6,6 @@
 export {
 	createEmitter,
 	EventEmitter,
-	ComposableEventEmitter,
 	Listeners,
 	Listenable,
 	Off,

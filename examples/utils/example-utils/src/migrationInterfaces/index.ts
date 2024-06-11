@@ -9,12 +9,7 @@ export {
 	IMigratableModelEvents,
 	IVersionedModel,
 } from "./migratableModel.js";
-export {
-	IAcceptedMigrationDetails,
-	IMigrationTool,
-	IMigrationToolEvents,
-	MigrationState,
-} from "./migrationTool.js";
+export { IMigrationTool, IMigrationToolEvents, MigrationState } from "./migrationTool.js";
 export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator.js";
 export {
 	ISameContainerMigratableModel,

@@ -10,7 +10,6 @@
 		// node-specific functionality at runtime.
 		"types": ["node"],
 		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

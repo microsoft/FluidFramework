@@ -4,7 +4,6 @@
 		"rootDir": "src",
 		"outDir": "./lib",
 		"types": ["chai", "mocha"],
-		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

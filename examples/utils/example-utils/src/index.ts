@@ -21,7 +21,6 @@ export {
 } from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
-	IAcceptedMigrationDetails,
 	IImportExportModel,
 	IMigratableModel,
 	IMigratableModelEvents,
@@ -40,7 +39,8 @@ export type {
 	SameContainerMigrationState,
 } from "./migrationInterfaces/index.js";
 export {
-	MigrationToolFactory,
+	MigrationTool,
+	MigrationToolInstantiationFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
 } from "./migrationTool/index.js";
