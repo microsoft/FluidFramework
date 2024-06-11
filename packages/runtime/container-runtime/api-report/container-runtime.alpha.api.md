@@ -820,7 +820,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
     // (undocumented)
     has(key: AttributionKey): boolean;
     // (undocumented)
-    initialize(deltaManager: IDeltaManager<ISequencedDocumentMessage_2, IDocumentMessage>, quorum: IQuorumClients_2, baseSnapshot: ISnapshotTree | undefined, readBlob: (id: string) => Promise<ArrayBufferLike>, shouldAddAttributorOnNewFile: boolean): Promise<void>;
+    initialize(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, quorum: IQuorumClients_2, baseSnapshot: ISnapshotTree | undefined, readBlob: (id: string) => Promise<ArrayBufferLike>, shouldAddAttributorOnNewFile: boolean): Promise<void>;
     // (undocumented)
     get IRuntimeAttributor(): IRuntimeAttributor;
     // (undocumented)

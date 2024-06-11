@@ -10,10 +10,11 @@ import { strict as assert } from "assert";
 import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentStorageService,
 	type ISnapshotTree,
+	type ISequencedDocumentMessage,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
