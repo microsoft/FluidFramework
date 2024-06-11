@@ -21,9 +21,6 @@ import {
 	TreeView,
 	SchemaFactory,
 	InternalTreeNode,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchemaNonClass,
-	type NodeKind,
 } from "../../simple-tree/index.js";
 import {
 	ValidateRecursiveSchema,
@@ -132,8 +129,10 @@ describe("SchemaFactory Recursive methods", () => {
 						Kind,
 						false
 				  >
-				: "zzz";
-			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
+				: "Not a FieldSchema";
+			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+				? Types
+				: "Not A FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = InternalFlexListTypes.FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
@@ -188,14 +187,20 @@ describe("SchemaFactory Recursive methods", () => {
 
 			type XSchema = typeof ObjectRecursive.info.x;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
-				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
-				: "zzz";
-			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
+				? InternalSimpleTreeTypes.ApplyKind<
+						TreeNodeFromImplicitAllowedTypes<Types>,
+						Kind,
+						false
+				  >
+				: "Not a FieldSchema";
+			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+				? Types
+				: "Not A FieldSchemaUnsafe";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
-			type Field4 = FlexListToUnion<XTypes>;
+			type Field4 = InternalFlexListTypes.FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive | number>>;
 			type _check2 = requireTrue<
-				areSafelyAssignable<Field4, typeof sf.number | typeof ObjectRecursive>
+				areSafelyAssignable<Field4, typeof ObjectRecursive | typeof sf.number>
 			>;
 
 			type Insertable = InsertableTreeNodeFromImplicitAllowedTypes<typeof ObjectRecursive>;
