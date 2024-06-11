@@ -11,14 +11,20 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-type TCustomData = Record<string, number>;
+type Data<TMetrics extends string> = { readonly [key in TMetrics]: number };
 
 /**
  * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} function is called reaches a number specified by the `threshold` value to this classes' constructor.
+ * @typeparam TMetrics - The set of keys that should be logged.
+ * E.g., `keyof Foo` for logging properties `bar` and `baz` from `type Foo = { bar: number, baz: number }`.
  */
-export class TelemetryEventBatcher<TMetrics extends TCustomData> {
-	// Stores value of the custom data passed into the logger.
-	private readonly customDataMap: Map<string, number> = new Map<string, number>();
+export class TelemetryEventBatcher<TMetrics extends string> {
+	// `dataSums`: stores the sum of the custom data passed into the logger.
+	// `dataMaxes`: stores the maximum value of the custom data passed into the logger.
+	// `dataSums` and `dataMaxes` should share identical sets of properties.
+	private dataSums: { [key in TMetrics]?: number } = {};
+	private dataMaxes: { [key in TMetrics]?: number } = {};
+
 	// Counter to keep track of the number of times the log function is called.
 	private counter = 0;
 
@@ -45,9 +51,10 @@ export class TelemetryEventBatcher<TMetrics extends TCustomData> {
 	 * @param customData -
 	 * A record storing the custom data to be logged.
 	 */
-	public log(customData: TMetrics): void {
-		for (const key of Object.keys(customData)) {
-			this.customDataMap.set(key, (this.customDataMap.get(key) ?? 0) + customData[key]);
+	public log(customData: Data<TMetrics>): void {
+		for (const key of Object.keys(customData) as TMetrics[]) {
+			this.dataSums[key] = (this.dataSums[key] ?? 0) + customData[key];
+			this.dataMaxes[key] = Math.max(this.dataMaxes[key] ?? 0, customData[key]);
 		}
 
 		this.counter++;
@@ -58,9 +65,11 @@ export class TelemetryEventBatcher<TMetrics extends TCustomData> {
 	}
 
 	private sendData(): void {
-		const customData = Object.fromEntries(
-			[...this.customDataMap.entries()].map(([key, value]) => [key, value / this.counter]),
-		);
+		for (const key of Object.keys(this.dataSums) as TMetrics[]) {
+			// TODO copy the data somewhere else instead of mutating in place.
+			// This way you can add the "avg" and "max" qualifers to the key names
+			this.dataSums[key]! /= this.counter;
+		}
 
 		// TODO: Add `average` name to the custom data.
 		const telemetryEvent: ITelemetryPerformanceEventExt = {
@@ -69,7 +78,10 @@ export class TelemetryEventBatcher<TMetrics extends TCustomData> {
 		};
 
 		this.logger.sendPerformanceEvent(telemetryEvent);
+
+		// Reset the counter and the data.
 		this.counter = 0;
-		this.customDataMap.clear();
+		this.dataSums = {};
+		this.dataMaxes = {};
 	}
 }
