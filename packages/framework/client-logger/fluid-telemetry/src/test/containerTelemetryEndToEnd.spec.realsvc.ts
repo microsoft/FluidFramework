@@ -81,6 +81,8 @@ describe("container telemetry E2E", () => {
 						expectedContainerTelemetry: {
 							eventName: ContainerTelemetryEventNames.CONNECTED,
 							containerId,
+							// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
+							// We can't use the underlying container's id because it is not exposed by IFluidContainer.
 							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
 						},
 					});
@@ -126,6 +128,8 @@ describe("container telemetry E2E", () => {
 						expectedContainerTelemetry: {
 							eventName: ContainerTelemetryEventNames.DISCONNECTED,
 							containerId,
+							// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
+							// We can't use the underlying container's id because it is not exposed by IFluidContainer.
 							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
 						},
 					});
@@ -180,6 +184,8 @@ describe("container telemetry E2E", () => {
 						expectedContainerTelemetry: {
 							eventName: ContainerTelemetryEventNames.DISPOSED,
 							containerId,
+							// containerInstanceId is a uniquely generated UUID by the fluid-telemetry's ContainerEventTelemetryProducer class.
+							// We can't use the underlying container's id because it is not exposed by IFluidContainer.
 							containerInstanceId: containerTelemetryFromSpy.containerInstanceId,
 						},
 					});
