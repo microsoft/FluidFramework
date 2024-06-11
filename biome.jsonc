@@ -28,7 +28,7 @@
 		"maxSize": 2097152,
 	},
 	"organizeImports": {
-		"enabled": false
+		"enabled": false,
 	},
 	"linter": {
 		"enabled": false,
@@ -66,7 +66,7 @@
 				"**/*.jsonc",
 				"**/.vscode/*.json",
 				"**/tsconfig*.json",
-				"**/api-extractor*.json"
+				"**/api-extractor*.json",
 			],
 			"json": {
 				"parser": {
@@ -80,9 +80,11 @@
 		},
 		{
 			"include": ["**/package.json"],
+			// These settings are used to format package.json files in the way npm itself does, with the exception of using
+			// tabs instead of spaces.
 			"json": {
 				"formatter": {
-					"lineWidth": 80,
+					"lineWidth": 1,
 				},
 			},
 		},
