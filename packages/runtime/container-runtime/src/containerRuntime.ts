@@ -1950,7 +1950,7 @@ export class ContainerRuntime
 
 	private async loadAndInitializeRuntimeAttributor(context: IContainerContext): Promise<void> {
 		if (this.runtimeAttributorP === undefined) {
-			this.runtimeAttributorP = this.getDelayLoadedRuntimeAttributor().catch(() => {
+			this.runtimeAttributorP = this.getDelayLoadedRuntimeAttributor().catch(async () => {
 				// Retry once if module load fails.
 				return this.getDelayLoadedRuntimeAttributor();
 			});

@@ -7,12 +7,10 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	type IQuorumClients,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
-import {
 	type IDocumentMessage,
 	type ISnapshotTree,
+	type IQuorumClients,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type ISummaryTreeWithStats,

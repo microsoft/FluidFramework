@@ -46,10 +46,12 @@ import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IQuorumClients } from '@fluidframework/driver-definitions';
+import { IQuorumClients as IQuorumClients_2 } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage as ISequencedDocumentMessage_2 } from '@fluidframework/driver-definitions/internal';
 import { ISignalMessage } from '@fluidframework/driver-definitions';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
@@ -99,7 +101,7 @@ export enum ContainerMessageType {
 }
 
 // @alpha
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext, IProvideRuntimeAttributor {
     protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
@@ -179,6 +181,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
+    // (undocumented)
+    get IRuntimeAttributor(): IRuntimeAttributor;
     get isDirty(): boolean;
     protected _loadIdCompressor: Promise<void> | undefined;
     static loadRuntime(params: {
@@ -206,8 +210,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     processSignal(message: ISignalMessage, local: boolean): void;
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     resolveHandle(request: IRequest): Promise<IResponse>;
-    // (undocumented)
-    get runtimeAttributor(): IRuntimeAttributor | undefined;
     // (undocumented)
     get scope(): FluidObject;
     get sessionSchema(): {
@@ -819,7 +821,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
     // (undocumented)
     has(key: AttributionKey): boolean;
     // (undocumented)
-    initialize(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, quorum: IQuorumClients, baseSnapshot: ISnapshotTree | undefined, readBlob: (id: string) => Promise<ArrayBufferLike>, shouldAddAttributorOnNewFile: boolean): Promise<void>;
+    initialize(deltaManager: IDeltaManager<ISequencedDocumentMessage_2, IDocumentMessage>, quorum: IQuorumClients_2, baseSnapshot: ISnapshotTree | undefined, readBlob: (id: string) => Promise<ArrayBufferLike>, shouldAddAttributorOnNewFile: boolean): Promise<void>;
     // (undocumented)
     get IRuntimeAttributor(): IRuntimeAttributor;
     // (undocumented)
