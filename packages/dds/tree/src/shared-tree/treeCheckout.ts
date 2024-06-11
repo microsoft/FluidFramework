@@ -520,12 +520,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("ancestryTrimmed", (revisions) => {
 			this.withCombinedVisitor((visitor) => {
 				revisions.forEach((revision) => {
-					// get all the roots last created or used by the revision
 					this.removedRoots
+						// get all the roots last created or used by the revision
 						.getLatestRelevantRoots(revision)
-						.map((root) => this.removedRoots.toFieldKey(root))
+						// remove any roots not created by valid revertibles
+						.filter(
+							([_, { major }]) =>
+								major !== undefined && !this.revertibleCommitBranches.has(major),
+						)
+						// get the detached field for the root and delete it from the removed roots
+						.map(([root, detachedNodeId]) => {
+							const field = this.removedRoots.toFieldKey(root);
+							this.removedRoots.deleteEntry(detachedNodeId);
+							return field;
+						})
 						.forEach((field) => visitor.destroy(field, 1));
-					this.removedRoots.deleteLatestRelevantRoots(revision);
 				});
 			});
 		});

@@ -1382,7 +1382,7 @@ describe("SharedTree", () => {
 				assert.equal(repairCursor1.firstNode(), true);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor1.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				// send edits to move the collab window up
 				root2.insertAt(3, ["y"]);
@@ -1404,9 +1404,9 @@ describe("SharedTree", () => {
 				const repairCursor2 = tree2.checkout.forest.allocateCursor();
 				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
 				assert.equal(repairCursor2.firstNode(), true);
-				assert.equal(repairCursor1.value, "A");
+				assert.equal(repairCursor2.value, "A");
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 3);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 3);
 			});
 
 			it("due to revertibles", () => {
