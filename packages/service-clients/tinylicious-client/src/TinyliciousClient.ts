@@ -17,13 +17,16 @@ import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	type CompatibilityMode,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	type CompatibilityMode,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";

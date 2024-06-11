@@ -6,10 +6,10 @@
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,

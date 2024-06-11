@@ -50,9 +50,8 @@ import { IQuorumClients as IQuorumClients_2 } from '@fluidframework/driver-defin
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage as ISequencedDocumentMessage_2 } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';

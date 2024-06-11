@@ -22,6 +22,7 @@ import {
 	typeNameSymbol,
 	valueSchemaAllows,
 	NodeKeyManager,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 
@@ -42,6 +43,7 @@ import {
 	FieldProvider,
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
+import { tryGetFlexNode } from "./proxyBinding.js";
 
 /**
  * Module notes:
@@ -156,27 +158,73 @@ export function cursorFromFieldData(
  * * `-0` =\> `+0`
  *
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param context - An optional context which, if present, will allow defaults to be created by {@link ContextualFieldProvider}s.
+ * If absent, only defaults from {@link ConstantFieldProvider}s will be created.
  * @param schemaValidationPolicy - The stored schema and policy to be used for validation, if the policy says schema
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
+ * @remarks The resulting tree will be populated with any defaults from {@link FieldProvider}s in the schema.
  */
-export function nodeDataToMapTree(
+export function mapTreeFromNodeData(
 	data: InsertableContent,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	allowedTypes: ImplicitAllowedTypes,
+	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): MapTree;
-export function nodeDataToMapTree(
+export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	allowedTypes: ImplicitAllowedTypes,
+	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): MapTree | undefined;
-export function nodeDataToMapTree(
+export function mapTreeFromNodeData(
 	data: InsertableContent | undefined,
-	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	allowedTypes: ImplicitAllowedTypes,
+	context?: NodeKeyManager,
 	schemaValidationPolicy?: SchemaAndPolicy,
 ): MapTree | undefined {
 	if (data === undefined) {
 		return undefined;
+	}
+
+	const mapTree = nodeDataToMapTree(
+		data,
+		normalizeAllowedTypes(allowedTypes),
+		schemaValidationPolicy,
+	);
+	addDefaultsToMapTree(mapTree, allowedTypes, context);
+	return mapTree;
+}
+
+function nodeDataToMapTree(
+	data: InsertableContent,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
+): MapTree;
+function nodeDataToMapTree(
+	data: InsertableContent | undefined,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
+): MapTree | undefined;
+function nodeDataToMapTree(
+	data: InsertableContent | undefined,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
+): MapTree | undefined {
+	if (data === undefined) {
+		return undefined;
+	}
+
+	// A special cache path for processing unhydrated nodes.
+	// They already have the mapTree, so there is no need to recompute it.
+	const flexNode = tryGetFlexNode(data);
+	if (flexNode !== undefined) {
+		if (isMapTreeNode(flexNode)) {
+			return flexNode.mapTree;
+		} else {
+			// The node is already hydrated, meaning that it already got inserted into the tree previously
+			throw new UsageError("A node may not be inserted into the tree more than once");
+		}
 	}
 
 	const schema = getType(data, allowedTypes);
@@ -289,7 +337,7 @@ function mapValueWithFallbacks(
 function arrayToMapTreeFields(
 	data: readonly InsertableContent[],
 	allowedTypes: ReadonlySet<TreeNodeSchema>,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+	schemaValidationPolicy: SchemaAndPolicy | undefined,
 ): MapTree[] {
 	const mappedData: MapTree[] = [];
 	for (const child of data) {
@@ -322,11 +370,7 @@ function arrayToMapTreeFields(
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function arrayToMapTree(
-	data: InsertableContent,
-	schema: TreeNodeSchema,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): MapTree {
+function arrayToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
 	if (!isReadonlyArray(data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
@@ -334,7 +378,7 @@ function arrayToMapTree(
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const mappedData = arrayToMapTreeFields(data, allowedChildTypes, schemaValidationPolicy);
+	const mappedData = arrayToMapTreeFields(data, allowedChildTypes, undefined);
 
 	// Array node children are represented as a single field entry denoted with `EmptyKey`
 	const fieldsEntries: [FieldKey, MapTree[]][] =
@@ -355,11 +399,7 @@ function arrayToMapTree(
  * validation should happen. If it does, the input tree will be validated against this schema + policy, and an error will
  * be thrown if the tree does not conform to the schema. If undefined, no validation against the stored schema is done.
  */
-function mapToMapTree(
-	data: InsertableContent,
-	schema: TreeNodeSchema,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): MapTree {
+function mapToMapTree(data: InsertableContent, schema: TreeNodeSchema): MapTree {
 	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
 	if (!(data instanceof Map)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
@@ -373,7 +413,7 @@ function mapToMapTree(
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = nodeDataToMapTree(value, allowedChildTypes, schemaValidationPolicy);
+			const mappedField = nodeDataToMapTree(value, allowedChildTypes, undefined);
 			transformedFields.set(brand(key), [mappedField]);
 		}
 	}
@@ -418,7 +458,11 @@ function setFieldValue(
 	key: string,
 ): void {
 	if (fieldValue !== undefined) {
-		const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
+		const mappedChildTree = nodeDataToMapTree(
+			fieldValue,
+			fieldSchema.allowedTypeSet,
+			undefined,
+		);
 		const flexKey: FieldKey = brand(getStoredKey(key, fieldSchema));
 
 		assert(!fields.has(flexKey), 0x956 /* Keys must not be duplicated */);
@@ -629,7 +673,7 @@ export interface ContextuallyTypedNodeDataObject {
  * @remarks This function mutates the input tree by adding new fields to the field maps where applicable.
  * @privateRemarks TODO: Create a more established type for mutable MapTrees, and use where appropriate.
  */
-export function addDefaultsToMapTree(
+function addDefaultsToMapTree(
 	mapTree: MapTree,
 	allowedTypes: ImplicitAllowedTypes,
 	context: NodeKeyManager | undefined,

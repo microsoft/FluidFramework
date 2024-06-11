@@ -34,6 +34,7 @@ import {
 	assertDeltaEqual,
 	failCodecFamily,
 	mintRevisionTag,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 
@@ -112,12 +113,21 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [cursorForJsonableTreeNode(data)], testRevisionTagCodec);
+		initializeForest(
+			forest,
+			[cursorForJsonableTreeNode(data)],
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex(undefined, testRevisionTagCodec);
+	const detachedFieldIndex = makeDetachedFieldIndex(
+		undefined,
+		testRevisionTagCodec,
+		testIdCompressor,
+	);
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);

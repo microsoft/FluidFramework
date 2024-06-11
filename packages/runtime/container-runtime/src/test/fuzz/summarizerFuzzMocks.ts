@@ -4,13 +4,14 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
 	type ISummaryNack,
 	MessageType,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {

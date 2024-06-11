@@ -6,8 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDeltasFetchResult } from "@fluidframework/driver-definitions/internal";
+import {
+	IDeltasFetchResult,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
