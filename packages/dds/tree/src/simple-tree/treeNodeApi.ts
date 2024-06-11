@@ -149,14 +149,11 @@ export const treeNodeApi: TreeNodeApi = {
 		listener: TreeChangeEvents[K],
 	) => {
 		const flex = getFlexNode(node);
-		const anchor = flex.anchorNode;
-
 		switch (eventName) {
-			case "nodeChanged": {
-				return anchor.on("childrenChangedBatched", () => listener());
-			}
+			case "nodeChanged":
+				return flex.on("nodeChanged", listener);
 			case "treeChanged":
-				return anchor.on("subtreeChangedBatched", () => listener());
+				return flex.on("treeChanged", listener);
 			default:
 				return unreachableCase(eventName);
 		}

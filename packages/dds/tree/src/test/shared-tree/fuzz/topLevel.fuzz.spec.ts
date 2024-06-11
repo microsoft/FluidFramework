@@ -51,8 +51,7 @@ describe("Fuzz - Top-Level", () => {
 		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: AB#7780 investigate failures when abort is enabled
-		abort: 0,
+		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 1,
 	};

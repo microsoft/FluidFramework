@@ -15,5 +15,7 @@
 		"strict": true,
 		"target": "ES2022",
 		"types": [],
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
 	},
 }
