@@ -242,6 +242,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
+		if (count === 0) {
+			return;
+		} else if (count < 0 || !Number.isSafeInteger(count)) {
+			throw new UsageError(`Expected non-negative count, got ${count}.`);
+		}
 		const detachId = this.modularBuilder.generateId(count);
 		const attachId = this.modularBuilder.generateId(count);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
@@ -352,6 +357,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
+				if (count === 0) {
+					return;
+				} else if (count < 0 || !Number.isSafeInteger(count)) {
+					throw new UsageError(`Expected non-negative count, got ${count}.`);
+				}
 				const detachId = this.modularBuilder.generateId(count);
 				const attachId = this.modularBuilder.generateId(count);
 				const change = sequence.changeHandler.editor.move(
