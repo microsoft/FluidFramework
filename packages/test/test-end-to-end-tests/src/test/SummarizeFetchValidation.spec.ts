@@ -45,7 +45,7 @@ export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.
  */
-describeCompat.only(
+describeCompat(
 	"Summarizer fetches expected number of times",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
