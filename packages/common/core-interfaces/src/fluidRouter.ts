@@ -6,6 +6,7 @@
 /**
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRequestHeader {
 	// TODO: Use `unknown` instead (API-Breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,6 +16,7 @@ export interface IRequestHeader {
 /**
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRequest {
 	url: string;
 	headers?: IRequestHeader;
@@ -23,6 +25,7 @@ export interface IRequest {
 /**
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IResponse {
 	mimeType: string;
 	status: number;

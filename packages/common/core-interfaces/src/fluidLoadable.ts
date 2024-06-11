@@ -13,6 +13,7 @@ export const IFluidLoadable: keyof IProvideFluidLoadable = "IFluidLoadable";
 /**
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideFluidLoadable {
 	readonly IFluidLoadable: IFluidLoadable;
 }
@@ -20,6 +21,7 @@ export interface IProvideFluidLoadable {
  * A shared FluidObject has a URL from which it can be referenced
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject
 	readonly handle: IFluidHandle;
@@ -33,12 +35,14 @@ export const IFluidRunnable: keyof IProvideFluidRunnable = "IFluidRunnable";
 /**
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideFluidRunnable {
 	readonly IFluidRunnable: IFluidRunnable;
 }
 /**
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidRunnable {
 	// TODO: Use `unknown` instead (API-Breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

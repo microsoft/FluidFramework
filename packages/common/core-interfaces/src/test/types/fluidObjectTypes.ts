@@ -73,62 +73,62 @@ declare function use(obj: unknown);
 
 // test implicit conversions between FluidObject and a FluidObject with a partial provider interface
 {
-	interface IProvideFoo {
-		IFoo: IFoo;
+	interface ProvideFoo {
+		IFoo: Foo;
 	}
-	interface IFoo extends Partial<IProvideFoo> {
+	interface Foo extends Partial<ProvideFoo> {
 		doFoo();
 	}
 
-	const foo: FluidObject<IFoo> = getFluidObject();
+	const foo: FluidObject<Foo> = getFluidObject();
 	useFluidObject(foo);
 	useFluidObject(foo.IFoo);
 	useProvider(foo);
 	useProvider(foo.IFoo);
 	foo.IFoo?.doFoo();
-	const fooKey: keyof IFoo = "doFoo";
+	const fooKey: keyof Foo = "doFoo";
 	// @ts-expect-error provider shouldn't have any non-provider properties
-	useProviderKey<IFoo>(fooKey);
+	useProviderKey<Foo>(fooKey);
 	const unknown: FluidObject | undefined = foo.IFoo;
 	useFluidObject(unknown);
 	useProvider(unknown);
-	useProvider<IFoo>(unknown);
+	useProvider<Foo>(unknown);
 	useLoadable(unknown);
 }
 
 // validate nested property is FluidObject too
 {
-	interface IFoo {
+	interface Foo {
 		z: { z: { z: boolean } };
 	}
 
-	const foo: FluidObject<IFoo> = getFluidObject();
+	const foo: FluidObject<Foo> = getFluidObject();
 	// @ts-expect-error "Property 'z' does not exist on type 'FluidObject<IFoo>'."
 	useProvider(foo.z);
 }
 
 // validate provider inheritance
 {
-	interface IProvideFooParent {
-		IFooParent: IFooParent;
+	interface ProvideFooParent {
+		IFooParent: FooParent;
 	}
 
-	interface IFooParent extends Partial<IProvideFooParent> {
+	interface FooParent extends Partial<ProvideFooParent> {
 		parent();
 	}
 
-	interface IFooProvideChild {
-		IFooChild: IFooChild;
+	interface FooProvideChild {
+		IFooChild: FooChild;
 	}
 
-	interface IFooChild extends IFooParent, Partial<IFooProvideChild> {
+	interface FooChild extends FooParent, Partial<FooProvideChild> {
 		child();
 	}
 
-	const p: FluidObject<IProvideFooParent> = getFluidObject();
+	const p: FluidObject<ProvideFooParent> = getFluidObject();
 	useProvider(p.IFooParent?.parent());
 
-	const c: FluidObject<IFooProvideChild> = getFluidObject();
+	const c: FluidObject<FooProvideChild> = getFluidObject();
 	// @ts-expect-error Property 'IFooParent' does not exist on type 'FluidObject<IFooProvideChild>'.
 	useProvider(c.IFooParent?.parent());
 	useProvider(c.IFooChild?.child());
