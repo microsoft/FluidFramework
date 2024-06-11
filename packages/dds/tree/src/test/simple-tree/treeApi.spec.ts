@@ -327,8 +327,8 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe("list node", () => {
-			const sb = new SchemaFactory("list-node-in-root");
+		describe("array node", () => {
+			const sb = new SchemaFactory("array-node-tests");
 			class myObject extends sb.object("object", {
 				myNumber: sb.number,
 			}) {}
@@ -364,24 +364,6 @@ describe("treeNodeApi", () => {
 
 			check("nodeChanged", (root) => root.insertAtEnd({ myNumber: 2 }));
 			check("treeChanged", (root) => root[0].myNumber++, 1);
-
-			it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
-				const root = hydrate(treeSchema, [
-					{
-						myNumber: 1,
-					},
-				]);
-
-				let shallowChanges = 0;
-				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", () => shallowChanges++);
-				Tree.on(root, "treeChanged", () => deepChanges++);
-
-				root.insertAtEnd({ myNumber: 2 });
-
-				assert.equal(shallowChanges, 1, `nodeChanged should fire.`);
-				assert.equal(deepChanges, 1, `treeChanged should fire.`);
-			});
 
 			it(`change to descendant fields only triggers 'treeChanged'`, () => {
 				const root = hydrate(treeSchema, [
@@ -428,6 +410,92 @@ describe("treeNodeApi", () => {
 				assert.equal(a1DeepChanges, 1, `treeChanged should fire once.`);
 				assert.equal(a2ShallowChanges, 1, `nodeChanged should fire once.`);
 				assert.equal(a2DeepChanges, 1, `treeChanged should fire once.`);
+			});
+
+			it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
+				const testSchema = sb.array("listRoot", sb.number);
+				const root = hydrate(testSchema, []);
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "treeChanged", () => {
+					deepChanges++;
+				});
+				Tree.on(root, "nodeChanged", () => {
+					shallowChanges++;
+				});
+
+				// Insert single item
+				root.insertAtStart(1);
+				assert.equal(shallowChanges, 1);
+				assert.equal(deepChanges, 1);
+
+				// Insert multiple items
+				root.insertAtEnd(2, 3);
+				assert.equal(shallowChanges, 2);
+				assert.equal(deepChanges, 2);
+
+				// Move one item within the same node
+				root.moveToEnd(0);
+				assert.equal(shallowChanges, 3);
+				assert.equal(deepChanges, 3);
+
+				// Move multiple items within the same node
+				root.moveRangeToEnd(0, 2);
+				assert.equal(shallowChanges, 4);
+				assert.equal(deepChanges, 4);
+
+				// Remove single item
+				root.removeAt(0);
+				assert.equal(shallowChanges, 5);
+				assert.equal(deepChanges, 5);
+
+				// Remove multiple items
+				root.removeRange(0, 2);
+				assert.equal(shallowChanges, 6);
+				assert.equal(deepChanges, 6);
+			});
+
+			it(`moves between array nodes at different depths fire events on the deeper array node first`, () => {
+				const list = sb.array("list", sb.number);
+				const testSchema = sb.object("root", {
+					list1: list,
+					deeper: sb.object("inner", { list2: list }),
+				});
+
+				const root = hydrate(testSchema, { list1: [1], deeper: { list2: [] } });
+
+				const eventFirings: string[] = [];
+				// Asserts in event handlers validate that things fired in the correct order
+				Tree.on(root.deeper.list2, "nodeChanged", () => {
+					eventFirings.push("nodeChanged_2");
+					assert.deepEqual(eventFirings, ["nodeChanged_2"]);
+				});
+				Tree.on(root.deeper.list2, "treeChanged", () => {
+					eventFirings.push("treeChanged_2");
+					assert.deepEqual(eventFirings, ["nodeChanged_2", "treeChanged_2"]);
+				});
+				Tree.on(root.list1, "nodeChanged", () => {
+					eventFirings.push("nodeChanged_1");
+					assert.deepEqual(eventFirings, ["nodeChanged_2", "treeChanged_2", "nodeChanged_1"]);
+				});
+				Tree.on(root.list1, "treeChanged", () => {
+					eventFirings.push("treeChanged_1");
+					assert.deepEqual(eventFirings, [
+						"nodeChanged_2",
+						"treeChanged_2",
+						"nodeChanged_1",
+						"treeChanged_1",
+					]);
+				});
+
+				root.deeper.list2.moveToIndex(0, 0, root.list1);
+				assert.deepEqual(eventFirings, [
+					"nodeChanged_2",
+					"treeChanged_2",
+					"nodeChanged_1",
+					"treeChanged_1",
+				]);
 			});
 		});
 
@@ -636,94 +704,6 @@ describe("treeNodeApi", () => {
 			actAndVerify(() => root.rootObject.arrayProp?.removeAt(0), 1, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
 			// Detach array node
 			actAndVerify(() => (root.rootObject.arrayProp = undefined), 1, 1);
-		});
-
-		it(`all kinds of shallow changes on array nodes trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-			const sb = new SchemaFactory("array-node-in-root");
-			const treeSchema = sb.array("listRoot", sb.number);
-
-			const root = hydrate(treeSchema, []);
-
-			let shallowChanges = 0;
-			let deepChanges = 0;
-			Tree.on(root, "treeChanged", () => {
-				deepChanges++;
-			});
-			Tree.on(root, "nodeChanged", () => {
-				shallowChanges++;
-			});
-
-			// Insert single item
-			root.insertAtStart(1);
-			assert.equal(shallowChanges, 1);
-			assert.equal(deepChanges, 1);
-
-			// Insert multiple items
-			root.insertAtEnd(2, 3);
-			assert.equal(shallowChanges, 2);
-			assert.equal(deepChanges, 2);
-
-			// Move one item within the same node
-			root.moveToEnd(0);
-			assert.equal(shallowChanges, 3);
-			assert.equal(deepChanges, 3);
-
-			// Move multiple items within the same node
-			root.moveRangeToEnd(0, 2);
-			assert.equal(shallowChanges, 4);
-			assert.equal(deepChanges, 4);
-
-			// Remove single item
-			root.removeAt(0);
-			assert.equal(shallowChanges, 5);
-			assert.equal(deepChanges, 5);
-
-			// Remove multiple items
-			root.removeRange(0, 2);
-			assert.equal(shallowChanges, 6);
-			assert.equal(deepChanges, 6);
-		});
-
-		it(`moves between array nodes at different depths fire events on the deeper array node first`, () => {
-			const sb = new SchemaFactory("array-nodes-different-depths");
-			const list = sb.array("list", sb.number);
-			const treeSchema = sb.object("root", {
-				list1: list,
-				deeper: sb.object("inner", { list2: list }),
-			});
-
-			const root = hydrate(treeSchema, { list1: [1], deeper: { list2: [] } });
-
-			const eventFirings: string[] = [];
-			Tree.on(root.deeper.list2, "nodeChanged", () => {
-				eventFirings.push("nodeChanged_2");
-				assert.deepEqual(eventFirings, ["nodeChanged_2"]);
-			});
-			Tree.on(root.deeper.list2, "treeChanged", () => {
-				eventFirings.push("treeChanged_2");
-				assert.deepEqual(eventFirings, ["nodeChanged_2", "treeChanged_2"]);
-			});
-			Tree.on(root.list1, "nodeChanged", () => {
-				eventFirings.push("nodeChanged_1");
-				assert.deepEqual(eventFirings, ["nodeChanged_2", "treeChanged_2", "nodeChanged_1"]);
-			});
-			Tree.on(root.list1, "treeChanged", () => {
-				eventFirings.push("treeChanged_1");
-				assert.deepEqual(eventFirings, [
-					"nodeChanged_2",
-					"treeChanged_2",
-					"nodeChanged_1",
-					"treeChanged_1",
-				]);
-			});
-
-			root.deeper.list2.moveToIndex(0, 0, root.list1);
-			assert.deepEqual(eventFirings, [
-				"nodeChanged_2",
-				"treeChanged_2",
-				"nodeChanged_1",
-				"treeChanged_1",
-			]);
 		});
 
 		it(`batched changes to several direct fields trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
