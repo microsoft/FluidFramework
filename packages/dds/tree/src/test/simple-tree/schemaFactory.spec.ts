@@ -101,7 +101,8 @@ describe("schemaFactory", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.schematize(config);
+		const view = tree.viewWith(config);
+		view.initialize(5);
 		assert.equal(view.root, 5);
 	});
 
@@ -170,7 +171,9 @@ describe("schemaFactory", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const root = tree.schematize(config).root;
+			const view = tree.viewWith(config);
+			view.initialize(new Point({ x: 1, y: 2 }));
+			const { root } = view;
 			assert.equal(root.x, 1);
 			assert.equal(root.y, 2);
 

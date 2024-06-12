@@ -95,6 +95,7 @@ export const valueHandler = {
 
 	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
+	getNestedChanges: (change) => [],
 	createEmpty: () => 0,
 } satisfies FieldChangeHandler<ValueChangeset>;
 

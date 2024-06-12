@@ -4,17 +4,17 @@
  */
 
 export {
-	Anchor,
-	AnchorLocator,
+	type Anchor,
+	type AnchorLocator,
 	AnchorSet,
-	AnchorSlot,
-	AnchorNode,
+	type AnchorSlot,
+	type AnchorNode,
 	anchorSlot,
-	AnchorEvents,
-	AnchorSetRootEvents,
+	type AnchorEvents,
+	type AnchorSetRootEvents,
 } from "./anchorSet.js";
 export {
-	ITreeCursor,
+	type ITreeCursor,
 	CursorLocationType,
 	castCursorToSynchronous,
 	mapCursorField,
@@ -23,14 +23,14 @@ export {
 	forEachNodeInSubtree,
 	forEachField,
 	iterateCursorField,
-	ITreeCursorSynchronous,
-	PathRootPrefix,
+	type ITreeCursorSynchronous,
+	type PathRootPrefix,
 	inCursorField,
 	inCursorNode,
 	CursorMarker,
 	isCursor,
 } from "./cursor.js";
-export {
+export type {
 	ProtoNodes,
 	Root as DeltaRoot,
 	ProtoNode as DeltaProtoNode,
@@ -43,61 +43,61 @@ export {
 	DetachedNodeRename as DeltaDetachedNodeRename,
 	FieldChanges as DeltaFieldChanges,
 } from "./delta.js";
-export { MapTree } from "./mapTree.js";
+export type { MapTree } from "./mapTree.js";
 export {
 	clonePath,
 	topDownPath,
 	getDepth,
-	UpPath,
-	FieldUpPath,
-	Range,
-	RangeUpPath,
-	PlaceUpPath,
-	PlaceIndex,
-	NodeIndex,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
+	type UpPath,
+	type FieldUpPath,
+	type Range,
+	type RangeUpPath,
+	type PlaceUpPath,
+	type PlaceIndex,
+	type NodeIndex,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
 	getDetachedFieldContainingPath,
-	UpPathDefault,
+	type UpPathDefault,
 } from "./pathTree.js";
 export {
-	FieldMapObject,
-	GenericFieldsNode,
+	type FieldMapObject,
+	type GenericFieldsNode,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
-	GenericTreeNode,
+	type GenericTreeNode,
 	getGenericTreeField,
-	JsonableTree,
+	type JsonableTree,
 	setGenericTreeField,
 } from "./treeTextFormat.js";
 export { EncodedJsonableTree } from "./persistedTreeTextFormat.js";
 export {
 	EmptyKey,
-	TreeType,
-	ChildLocation,
-	DetachedField,
-	ChildCollection,
-	RootField,
-	Value,
-	TreeValue,
+	type TreeType,
+	type ChildLocation,
+	type DetachedField,
+	type ChildCollection,
+	type RootField,
+	type Value,
+	type TreeValue,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	rootFieldKey,
-	NodeData,
+	type NodeData,
 	rootField,
 	aboveRootPlaceholder,
 } from "./types.js";
-export { DeltaVisitor, visitDelta } from "./visitDelta.js";
+export { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 export {
-	AnnouncedVisitor,
+	type AnnouncedVisitor,
 	announceDelta,
 	applyDelta,
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
-export { PathVisitor } from "./visitPath.js";
+export type { PathVisitor } from "./visitPath.js";
 
 export { SparseNode, getDescendant } from "./sparseTree.js";
 
@@ -110,4 +110,4 @@ export {
 	emptyDelta,
 } from "./deltaUtil.js";
 
-export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
+export { DetachedFieldIndex, type ForestRootId } from "./detachedFieldIndex.js";
