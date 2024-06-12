@@ -16,10 +16,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";

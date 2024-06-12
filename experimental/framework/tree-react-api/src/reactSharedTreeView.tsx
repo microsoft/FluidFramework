@@ -22,11 +22,7 @@ import {
 	type TreeView,
 	type ImplicitFieldSchema,
 } from "@fluidframework/tree";
-import {
-	configuredSharedTree,
-	typeboxValidator,
-	type TreeViewConfiguration,
-} from "@fluidframework/tree/internal";
+import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**

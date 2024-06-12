@@ -16,7 +16,7 @@ import {
 
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { type ISharedTree, SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
-import { SchemaFactory, TreeViewConfiguration, TreeView } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration, type TreeView } from "../../simple-tree/index.js";
 
 const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
