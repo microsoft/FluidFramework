@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { type SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
