@@ -106,7 +106,9 @@ export async function getFileLink(
 }
 
 /**
- * Handles location redirection while fulfilling the getFilelink call.
+ * Handles location redirection while fulfilling the getFilelink call. We don't want browser to handle
+ * the redirection as the browser will retry with same auth token which will not work as we need app
+ * to regenerate tokens for the new site domain.
  * @param getToken - token fetcher to fetch the token.
  * @param odspUrlParts - parts of odsp resolved url.
  * @param logger - logger to send events.
@@ -128,11 +130,11 @@ async function getFileLinkWithLocationRedirectionHandling(
 				isFluidError(error) &&
 				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 			) {
-				logger.sendTelemetryEvent({
-					eventName: "LocationRedirectionErrorForGetOdspFileLink",
-				});
 				const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
 				if (redirectLocation !== undefined) {
+					logger.sendTelemetryEvent({
+						eventName: "LocationRedirectionErrorForGetOdspFileLink",
+					});
 					// Generate the new SiteUrl from the redirection location.
 					const newSiteDomain = new URL(redirectLocation).origin;
 					const newSiteUrl = `${newSiteDomain}${new URL(odspUrlParts.siteUrl).pathname}`;
@@ -184,7 +186,7 @@ async function getFileLinkCore(
 					true,
 				);
 				// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
-				// Adding below header will make VROOM API return 404 instead of 308 and browser can not intercept it.
+				// Adding prefer: manualredirect header will make VROOM API return 404 instead of 308 and browser can not intercept it.
 				// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 				// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 				const requestInit = {
@@ -274,6 +276,10 @@ async function getFileItemLite(
 					storageToken,
 					forceAccessTokenViaAuthorizationHeader,
 				);
+				// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
+				// Adding prefer: manualredirect header will make VROOM API return 404 instead of 308 and browser can not intercept it.
+				// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
+				// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 				headers.prefer = "manualredirect";
 				const requestInit = { method: "GET", headers };
 				const response = await fetchHelper(url, requestInit);
