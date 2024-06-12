@@ -6,31 +6,31 @@
 import { strict as assert } from "assert";
 
 import {
-	AsyncGenerator,
-	BaseFuzzTestState,
-	Generator,
-	IRandom,
-	Weights,
+	type AsyncGenerator,
+	type BaseFuzzTestState,
+	type Generator,
+	type IRandom,
+	type Weights,
 	createWeightedGenerator,
 	done,
 } from "@fluid-private/stochastic-test-utils";
-import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import type { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 
 import {
 	AllowedUpdateType,
-	FieldKey,
-	FieldUpPath,
-	JsonableTree,
-	UpPath,
+	type FieldKey,
+	type FieldUpPath,
+	type JsonableTree,
+	type UpPath,
 } from "../../../core/index.js";
 import {
-	DownPath,
-	FlexTreeField,
-	FlexTreeNode,
+	type DownPath,
+	type FlexTreeField,
+	type FlexTreeNode,
 	toDownPath,
 	treeSchemaFromStoredSchema,
 } from "../../../feature-libraries/index.js";
-import {
+import type {
 	FlexTreeView,
 	ITreeViewFork,
 	TreeContent,
@@ -41,8 +41,13 @@ import {
 import { brand, fail, getOrCreate, makeArray } from "../../../util/index.js";
 import { schematizeFlexTree } from "../../utils.js";
 
-import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
+	type FuzzNode,
+	type FuzzNodeSchema,
+	type fuzzSchema,
+	initialFuzzSchema,
+} from "./fuzzUtils.js";
+import type {
 	Insert,
 	Remove,
 	SetField,

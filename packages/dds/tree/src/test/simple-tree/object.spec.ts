@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 
 import {
-	ImplicitFieldSchema,
-	NodeKind,
+	type ImplicitFieldSchema,
+	type NodeKind,
 	SchemaFactory,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 
 import { hydrate, pretty } from "./utils.js";

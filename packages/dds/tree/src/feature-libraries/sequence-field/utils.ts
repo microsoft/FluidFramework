@@ -6,47 +6,47 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionMetadataSource,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
+import { type Mutable, type RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
-	CrossFieldManager,
-	CrossFieldQuerySet,
+	type CrossFieldManager,
+	type CrossFieldQuerySet,
 	CrossFieldTarget,
-	NodeId,
+	type NodeId,
 	addCrossFieldQuery,
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
-import {
+import type {
 	CellRename,
 	DetachOfRemovedNodes,
 	EmptyInputCellMark,
 	MoveMarkEffect,
 } from "./helperTypes.js";
 import {
-	Attach,
-	AttachAndDetach,
-	CellId,
-	CellMark,
-	Changeset,
-	Detach,
-	DetachFields,
-	HasRevisionTag,
-	Insert,
-	Mark,
-	MarkEffect,
-	MoveId,
-	MoveIn,
-	MoveOut,
-	NoopMark,
+	type Attach,
+	type AttachAndDetach,
+	type CellId,
+	type CellMark,
+	type Changeset,
+	type Detach,
+	type DetachFields,
+	type HasRevisionTag,
+	type Insert,
+	type Mark,
+	type MarkEffect,
+	type MoveId,
+	type MoveIn,
+	type MoveOut,
+	type NoopMark,
 	NoopMarkType,
-	Remove,
+	type Remove,
 } from "./types.js";
 
 export function isEmpty(change: Changeset): boolean {

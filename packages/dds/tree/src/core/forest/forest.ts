@@ -5,15 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Listenable } from "../../events/index.js";
-import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
+import type { Listenable } from "../../events/index.js";
+import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
-	Anchor,
-	AnchorSet,
-	DetachedField,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	UpPath,
+	type Anchor,
+	type AnchorSet,
+	type DetachedField,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type UpPath,
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";

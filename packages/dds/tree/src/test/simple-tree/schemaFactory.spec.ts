@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { treeNodeApi as Tree, TreeConfiguration, type TreeView } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
@@ -22,7 +22,7 @@ import {
 	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactory.js";
-import {
+import type {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -30,7 +30,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
 

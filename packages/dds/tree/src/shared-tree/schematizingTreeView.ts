@@ -7,33 +7,38 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, Compatibility } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
-	FlexFieldSchema,
-	NodeKeyManager,
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
+import {
+	type FlexFieldSchema,
+	type NodeKeyManager,
 	ViewSchema,
 	defaultSchemaPolicy,
 	ContextSlot,
 } from "../feature-libraries/index.js";
 import {
-	FieldSchema,
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	SchemaIncompatible,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-	TreeViewEvents,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type SchemaIncompatible,
+	type TreeConfiguration,
+	type TreeFieldFromImplicitField,
+	type TreeView,
+	type TreeViewEvents,
 	getProxyForField,
 	toFlexConfig,
 	setField,
 	normalizeFieldSchema,
-	InsertableContent,
+	type InsertableContent,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
-import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
-import { TreeCheckout } from "./treeCheckout.js";
+import { type TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 
 /**

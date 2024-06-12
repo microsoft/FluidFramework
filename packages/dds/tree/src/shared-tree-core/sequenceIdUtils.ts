@@ -5,7 +5,7 @@
 
 import { brand } from "../util/index.js";
 
-import { SequenceId } from "./editManagerFormat.js";
+import type { SequenceId } from "./editManagerFormat.js";
 
 export const sequenceIdComparator = (a: SequenceId, b: SequenceId): number =>
 	a.sequenceNumber !== b.sequenceNumber

@@ -4,15 +4,15 @@
 
 ```ts
 
-import { ErasedType } from '@fluidframework/core-interfaces';
-import { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import type { ErasedType } from '@fluidframework/core-interfaces';
+import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import { SharedObjectKind } from '@fluidframework/shared-object-base';
-import { StableId } from '@fluidframework/id-compressor';
+import type { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
+import type { SharedObjectKind } from '@fluidframework/shared-object-base';
+import type { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 

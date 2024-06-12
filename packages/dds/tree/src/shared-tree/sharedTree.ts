@@ -4,29 +4,34 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ICodecOptions, noopValidator } from "../codec/index.js";
+import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	JsonableTree,
+	type JsonableTree,
 	RevisionTagCodec,
-	TreeStoredSchema,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
+import {
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
-	FlexFieldSchema,
+	type FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
@@ -42,19 +47,24 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	DefaultResubmitMachine,
-	ExplicitCoreCodecVersions,
+	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import { ITree, ImplicitFieldSchema, TreeConfiguration, TreeView } from "../simple-tree/index.js";
+import type {
+	ITree,
+	ImplicitFieldSchema,
+	TreeConfiguration,
+	TreeView,
+} from "../simple-tree/index.js";
 
-import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
+import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { CheckoutEvents, TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.

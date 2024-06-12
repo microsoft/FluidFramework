@@ -6,13 +6,13 @@
 import { strict as assert, fail } from "assert";
 
 import {
-	ChangeAtomId,
-	DeltaFieldChanges,
-	TaggedChange,
+	type ChangeAtomId,
+	type DeltaFieldChanges,
+	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
 } from "../../../core/index.js";
-import {
+import type {
 	CrossFieldManager,
 	NodeId,
 	RelevantRemovedRootsFromChild,
@@ -20,7 +20,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeHandler,
 	optionalChangeRebaser,
 	optionalFieldEditor,

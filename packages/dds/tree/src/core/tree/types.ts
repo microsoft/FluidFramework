@@ -3,10 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import { Brand, Opaque, _InlineTrick, brand, extractFromOpaque } from "../../util/index.js";
-import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
+import {
+	type Brand,
+	type Opaque,
+	type _InlineTrick,
+	brand,
+	extractFromOpaque,
+} from "../../util/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
 
 /**
  * @internal

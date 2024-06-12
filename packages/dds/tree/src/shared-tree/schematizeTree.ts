@@ -8,17 +8,17 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AllowedUpdateType,
 	Compatibility,
-	ITreeCursorSynchronous,
-	TreeStoredSchema,
+	type ITreeCursorSynchronous,
+	type TreeStoredSchema,
 	rootFieldKey,
 	schemaDataIsEmpty,
 } from "../core/index.js";
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeSchema,
-	InsertableFlexField,
-	ViewSchema,
+	type FlexFieldSchema,
+	type FlexTreeSchema,
+	type InsertableFlexField,
+	type ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -26,7 +26,7 @@ import {
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
-import { ITreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.

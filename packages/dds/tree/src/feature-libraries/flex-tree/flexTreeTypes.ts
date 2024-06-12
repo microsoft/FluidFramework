@@ -4,18 +4,21 @@
  */
 
 import {
-	AnchorNode,
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeValue,
+	type AnchorNode,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
-import { Assume, FlattenKeys } from "../../util/index.js";
-import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
-import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
-import {
+import type { Assume, FlattenKeys } from "../../util/index.js";
+import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import type { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
+import type {
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
+} from "../schema-aware/index.js";
+import type {
 	Any,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -30,8 +33,8 @@ import {
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
 
-import { FlexTreeContext } from "./context.js";
-import { FlexTreeNodeEvents } from "./treeEvents.js";
+import type { FlexTreeContext } from "./context.js";
+import type { FlexTreeNodeEvents } from "./treeEvents.js";
 
 /**
  * An anchor slot which records the {@link FlexTreeNode} associated with that anchor, if there is one.

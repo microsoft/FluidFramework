@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexMapNodeSchema,
-	FlexTreeNode,
-	MapTreeNode,
+	type FlexMapNodeSchema,
+	type FlexTreeNode,
+	type MapTreeNode,
 	cursorForMapTreeNode,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
 	prepareContentForHydration,
@@ -25,14 +25,14 @@ import {
 	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeFromImplicitAllowedTypes,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
+	type TreeNodeFromImplicitAllowedTypes,
 	type,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
+import { type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { TUnsafe, Type } from "@sinclair/typebox";
+import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { DeltaFieldChanges, makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
+import { type DeltaFieldChanges, makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
 import {
-	FieldChangeEncodingContext,
-	FieldChangeHandler,
-	FieldChangeRebaser,
+	type FieldChangeEncodingContext,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
 	FieldKindWithEditor,
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { Mutable, fail } from "../../../util/index.js";
+import { type Mutable, fail } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**

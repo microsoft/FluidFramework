@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
-import {
+import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import type {
 	ChangeEncodingContext,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -13,12 +13,12 @@ import {
 	RevisionMetadataSource,
 	RevisionTag,
 } from "../../core/index.js";
-import { IdAllocator, Invariant } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
+import type { IdAllocator, Invariant } from "../../util/index.js";
+import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
-import { CrossFieldManager } from "./crossFieldQueries.js";
-import { NodeId } from "./modularChangeTypes.js";
-import { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type { NodeId } from "./modularChangeTypes.js";
+import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
