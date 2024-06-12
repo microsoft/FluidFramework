@@ -98,7 +98,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
 		if (!this.connected) {
 			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
-			// machine, since its possible another client has already completed the migration by the time we reconnect.
+			// machine, since it's possible another client has already completed the migration by the time we reconnect.
 			this.currentModel.migrationEvents.once(
 				"connected",
 				this.takeAppropriateActionForCurrentMigratable,
