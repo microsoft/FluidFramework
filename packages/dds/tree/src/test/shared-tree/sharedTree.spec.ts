@@ -1067,6 +1067,7 @@ describe("SharedTree", () => {
 			unsubscribe();
 		});
 
+		// TODO: try to dedupe some of these tests
 		describe("repair data is destroyed when", () => {
 			it("the collab window progresses far enough", () => {
 				const provider = new TestTreeProviderLite(2);
@@ -1344,6 +1345,67 @@ describe("SharedTree", () => {
 				assert.equal(repairCursor2.firstNode(), false);
 				repairCursor2.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+
+				unsubscribe();
+			});
+
+			it("created in a transaction with an aborted nested transaction", () => {
+				const provider = new TestTreeProviderLite(2);
+				const content = {
+					schema: stringSequenceRootSchema,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+					initialTree: ["A", "B", "C", "D"],
+				} satisfies InitializeAndSchematizeConfiguration;
+				const tree1 = schematizeFlexTree(provider.trees[0], content);
+
+				// make sure that revertibles are created
+				const { unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+
+				provider.processMessages();
+				const tree2 = schematizeFlexTree(provider.trees[1], content);
+
+				const root1 = tree1.flexTree;
+				const root2 = tree2.flexTree;
+
+				// remove in first tree in a transaction
+				tree1.checkout.transaction.start();
+				root1.removeAt(0);
+				tree1.checkout.transaction.start();
+				root1.removeAt(0);
+				tree1.checkout.transaction.abort();
+				tree1.checkout.transaction.commit();
+
+				provider.processMessages();
+				const removeSequenceNumber = provider.sequenceNumber;
+				assert.deepEqual([...root1], ["B", "C", "D"]);
+				assert.deepEqual([...root2], ["B", "C", "D"]);
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
+
+				// check the detached field on the peer
+				const repairCursor1 = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
+				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(repairCursor1.value, "A");
+				repairCursor1.free();
+
+				// send edits to move the collab window up
+				root1.insertAt(0, ["y"]);
+				provider.processMessages();
+				root1.removeAt(0);
+				provider.processMessages();
+
+				assert.deepEqual([...root1], ["B", "C", "D"]);
+				assert.deepEqual([...root2], ["B", "C", "D"]);
+
+				// ensure the remove is out of the collab window
+				assert(removeSequenceNumber < provider.minimumSequenceNumber);
+
+				// check that the repair data on the peer is destroyed
+				const repairCursor2 = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
+				assert.equal(repairCursor2.firstNode(), false);
+				repairCursor2.free();
+				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
