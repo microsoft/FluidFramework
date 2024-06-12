@@ -134,17 +134,19 @@ export class DetachedFieldIndex {
 			const innerUpdated = this.detachedNodeToField.get(updated);
 			if (innerUpdated === undefined) {
 				this.detachedNodeToField.set(updated, innerCurrent);
-			} else {
-				for (const [minor, entry] of innerCurrent) {
+			}
+
+			for (const [minor, entry] of innerCurrent) {
+				if (innerUpdated !== undefined) {
 					assert(
 						innerUpdated.get(minor) === undefined,
 						0x7a9 /* Collision during index update */,
 					);
 					innerUpdated.set(minor, entry);
-					this.latestRelevantRevisionToFields
-						.get(entry.latestRelevantRevision)
-						?.set(entry.root, { major: updated, minor });
 				}
+				this.latestRelevantRevisionToFields
+					.get(entry.latestRelevantRevision)
+					?.set(entry.root, { major: updated, minor });
 			}
 		}
 	}
