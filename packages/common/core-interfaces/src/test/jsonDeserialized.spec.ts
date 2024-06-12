@@ -52,6 +52,8 @@ import {
 	objectWithNever,
 	objectWithPossibleRecursion,
 	objectWithRecursion,
+	objectWithEmbeddedRecursion,
+	// objectWithAlternatingRecursion,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -70,6 +72,26 @@ import {
 	ClassWithPublicGetter,
 	ClassWithPublicSetter,
 } from "./testValues.js";
+
+/**
+ * Type filter to determine if T is or contains `any` type.
+ * Use by checking if result `satisfied never`.
+ */
+type ContainsAny<T, TRecursion = never> = boolean extends (T extends never ? true : false)
+	? true
+	: T extends TRecursion
+	? never
+	: T extends object
+	? T extends readonly (infer A)[]
+		? ContainsAny<A, TRecursion | T>
+		: {
+				[K in keyof T]: ContainsAny<Exclude<Required<T>[K], undefined>, TRecursion | T>;
+		  }[keyof T]
+	: never;
+
+function ContainsAny<T>(_: T): ContainsAny<T> {
+	return undefined as ContainsAny<T>;
+}
 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
@@ -193,10 +215,14 @@ describe("JsonDeserialized", () => {
 				);
 			});
 			it("array of literals", () => {
-				passThru(arrayOfLiterals) satisfies typeof arrayOfLiterals;
+				const resultRead = passThru(arrayOfLiterals);
+				resultRead satisfies typeof arrayOfLiterals;
+				ContainsAny(resultRead) satisfies never;
 			});
 			it("tuple of literals", () => {
-				passThru(tupleWithLiterals) satisfies typeof tupleWithLiterals;
+				const resultRead = passThru(tupleWithLiterals);
+				resultRead satisfies typeof tupleWithLiterals;
+				ContainsAny(resultRead) satisfies never;
 			});
 			it("specific numeric enum value", () => {
 				passThru(NumericEnum.two) satisfies NumericEnum.two;
@@ -219,37 +245,79 @@ describe("JsonDeserialized", () => {
 
 		describe("supported object types", () => {
 			it("empty object", () => {
-				passThru(emptyObject) satisfies typeof emptyObject;
+				const resultRead = passThru(emptyObject);
+				ContainsAny(resultRead) satisfies never;
+				emptyObject satisfies typeof resultRead;
+				resultRead satisfies typeof emptyObject;
 			});
 
 			it("with `boolean`", () => {
-				passThru(objectWithBoolean) satisfies typeof objectWithBoolean;
+				const resultRead = passThru(objectWithBoolean);
+				ContainsAny(resultRead) satisfies never;
+				objectWithBoolean satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithBoolean;
 			});
 			it("with `number`", () => {
-				passThru(objectWithNumber) satisfies typeof objectWithNumber;
+				const resultRead = passThru(objectWithNumber);
+				ContainsAny(resultRead) satisfies never;
+				objectWithNumber satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithNumber;
 			});
 			it("with `string`", () => {
-				passThru(objectWithString) satisfies typeof objectWithString;
+				const resultRead = passThru(objectWithString);
+				ContainsAny(resultRead) satisfies never;
+				objectWithString satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithString;
 			});
 
 			it("object with possible type recursion through union", () => {
-				passThru(objectWithPossibleRecursion) satisfies typeof objectWithPossibleRecursion;
+				const resultRead = passThru(objectWithPossibleRecursion);
+				// @ts-expect-error TO FIX: resultRead is (erroneously) `{}` that ContainsAny doesn't handle.
+				ContainsAny(resultRead) satisfies never;
+				objectWithPossibleRecursion satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithPossibleRecursion;
 			});
 
 			it("object with optional type recursion", () => {
-				// FIX: @ts-expect-error typeof `objectWithRecursion` is recursive
-				passThru(
+				// @ts-expect-error TO FIX: typeof `objectWithRecursion` is recursive
+				const resultRead = passThru(
 					objectWithRecursion,
 					// no error
-				) satisfies typeof objectWithRecursion;
+				);
+				// @ts-expect-error TO FIX: resultRead contains `any`
+				ContainsAny(resultRead) satisfies never;
+				objectWithRecursion satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithRecursion;
 			});
 
+			it("object with deep type recursion", () => {
+				// TO FIX: earlier error in "object with optional type recursion" prevents need to suppress need to fix this error
+				// TO FIX: @ts-expect-error TO FIX: typeof `ObjectWithOptionalRecursion` is recursive
+				const resultRead = passThru(objectWithEmbeddedRecursion);
+				// @ts-expect-error TO FIX: resultRead contains `any`
+				ContainsAny(resultRead) satisfies never;
+				objectWithEmbeddedRecursion satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithEmbeddedRecursion;
+			});
+
+			// TO FIX: This test is disabled because it breaks typescript (because recursion is not handled correctly)
+			// it("object with alternating type recursion", () => {
+			// 	const resultRead = passThru(
+			// 		objectWithAlternatingRecursion,
+			// 	);
+			// 	resultRead satisfies typeof objectWithAlternatingRecursion;
+			// });
+
 			it("simple json (`JsonTypeWith<never>`)", () => {
-				// FIX: @ts-expect-error `JsonTypeWith<never>` is recursive
-				passThru(
+				// @ts-expect-error TO FIX: `JsonTypeWith<never>` is recursive
+				const resultRead = passThru(
 					simpleJson,
 					// no error
 				) satisfies typeof simpleJson;
+				// @ts-expect-error TO FIX: resultRead is (erroneously) `{}` that ContainsAny doesn't handle.
+				ContainsAny(resultRead) satisfies never;
+				simpleJson satisfies typeof resultRead;
+				resultRead satisfies typeof simpleJson;
 			});
 
 			it("non-const enum are supported as themselves", () => {
@@ -433,6 +501,7 @@ describe("JsonDeserialized", () => {
 				// @ts-expect-error `unknown` does not satisfy `JsonTypeWith<never>`
 				unknownValueOfSimpleRecord satisfies typeof resultRead;
 				resultRead satisfies JsonTypeWith<never>;
+				ContainsAny(resultRead) satisfies never;
 			});
 			it("`symbol` becomes `never`", () => {
 				passThruThrows(
@@ -459,10 +528,12 @@ describe("JsonDeserialized", () => {
 				) satisfies never;
 			});
 			it("`object` (plain object) becomes non-null Json object", () => {
-				passThru(
+				const resultRead = passThru(
 					object,
 					// object's value is actually supported; so, no runtime error.
-				) satisfies NonNullJsonObject;
+				);
+				resultRead satisfies NonNullJsonObject;
+				ContainsAny(resultRead) satisfies never;
 			});
 			it("`void` becomes `never`", () => {
 				passThru(
@@ -511,20 +582,23 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString: string }
 					objectWithBigintOrString satisfies typeof resultRead;
 					resultRead satisfies { bigintOrString: string };
+					ContainsAny(resultRead) satisfies never;
 				});
 			});
-		});
-
-		it("explicit `any` generic still limits allowed types", () => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			passThruThrows<any>(
-				undefined,
-				new SyntaxError("Unexpected token u in JSON at position 0"),
-			);
 		});
 	});
 
 	describe("special cases", () => {
+		it("explicit `any` generic limits result type", () => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const resultRead = passThruThrows<any>(
+				undefined,
+				new SyntaxError("Unexpected token u in JSON at position 0"),
+			);
+			resultRead satisfies JsonTypeWith<never>;
+			ContainsAny(resultRead) satisfies never;
+		});
+
 		describe("possibly `undefined` property is only supported as optional", () => {
 			describe("with `undefined` in union property becomes optional", () => {
 				it("with undefined value", () => {
