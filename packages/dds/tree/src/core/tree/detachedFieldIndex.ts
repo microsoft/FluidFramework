@@ -180,7 +180,7 @@ export class DetachedFieldIndex {
 	/**
 	 * Returns all entries last created or used by the given revision.
 	 */
-	public getLatestRelevantRoots(revision: RevisionTag): [ForestRootId, Delta.DetachedNodeId][] {
+	public getRootsLastTouchedByRevision(revision: RevisionTag): [ForestRootId, Delta.DetachedNodeId][] {
 		return Array.from(this.latestRelevantRevisionToFields.get(revision)?.entries() ?? []);
 	}
 

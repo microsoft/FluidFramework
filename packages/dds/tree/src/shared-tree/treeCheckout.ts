@@ -522,7 +522,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				revisions.forEach((revision) => {
 					this.removedRoots
 						// get all the roots last created or used by the revision
-						.getLatestRelevantRoots(revision)
+						.getRootsLastTouchedByRevision(revision)
 						// get the detached field for the root and delete it from the removed roots
 						.forEach(([root, detachedNodeId]) => {
 							const field = this.removedRoots.toFieldKey(root);
