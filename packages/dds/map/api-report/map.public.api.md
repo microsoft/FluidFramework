@@ -8,6 +8,7 @@ import type { IChannelAttributes } from '@fluidframework/datastore-definitions/i
 import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';

@@ -69,6 +69,9 @@ export * from "@fluidframework/tree";
 // ---------------------------------------------------------------
 // #region Custom re-exports
 
+import type { IFluidLoadable, IEventProvider } from "@fluidframework/core-interfaces";
+import { SharedMap as OriginalSharedMap } from "@fluidframework/map/internal";
+import type { ISharedMapEvents } from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
 import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
@@ -85,6 +88,52 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
  */
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+/**
+ * The SharedMap distributed data structure can be used to store key-value pairs.
+ *
+ * @remarks
+ * SharedMap provides the same API for setting and retrieving values that JavaScript developers are accustomed to with the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
+ * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
+ * {@link @fluidframework/datastore#FluidObjectHandle}.
+ *
+ * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
+ *
+ * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
+ * @privateRemarks
+ * This interface is very similar to ISharedMap from `@fluidframework/map`, but avoids referencing encapsulated API concepts like ISharedObject,
+ * and uses unknown instead of `any` for outputs.
+ * @sealed
+ * @beta
+ */
+export interface ISharedMap
+	extends IEventProvider<ISharedMapEvents>,
+		Map<string, unknown>,
+		IFluidLoadable {
+	/**
+	 * Retrieves the given key from the map if it exists.
+	 * @param key - Key to retrieve from
+	 * @returns The stored value, or undefined if the key is not set
+	 */
+	get<T = unknown>(key: string): T | undefined;
+
+	/**
+	 * Sets the value stored at key to the provided value.
+	 * @param key - Key to set
+	 * @param value - Value to set
+	 * @returns The {@link ISharedMap} itself
+	 */
+	set<T = unknown>(key: string, value: T): this;
+}
+
+/**
+ * Entrypoint for {@link @fluidframework/map#ISharedMap} creation.
+ * @privateRemarks
+ * See note on SharedTree.
+ * @beta
+ */
+export const SharedMap: SharedObjectKind<ISharedMap> = OriginalSharedMap;
+
 // #endregion Custom re-exports
 // #endregion Public exports
 
@@ -97,12 +146,11 @@ export type {
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
-	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
 } from "@fluidframework/map/internal";
 
-export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+export { SharedDirectory } from "@fluidframework/map/internal";
 
 export type {
 	DeserializeCallback,

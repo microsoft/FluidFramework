@@ -482,6 +482,18 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "memberRemoved", listener: MemberChangedListener<M>): void;
 }
 
+// @beta @sealed
+export interface ISharedMap extends IEventProvider<ISharedMapEvents>, Map<string, unknown>, IFluidLoadable {
+    get<T = unknown>(key: string): T | undefined;
+    set<T = unknown>(key: string, value: T): this;
+}
+
+// @beta @sealed
+export interface ISharedMapEvents extends IErrorEvent {
+    (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
+}
+
 // @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
@@ -503,6 +515,12 @@ export interface ITree extends IFluidLoadable {
 // @public
 export interface ITreeConfigurationOptions {
     enableSchemaValidation?: boolean;
+}
+
+// @beta @sealed
+export interface IValueChanged {
+    readonly key: string;
+    readonly previousValue: any;
 }
 
 // @public
@@ -657,6 +675,9 @@ export interface SchemaIncompatible {
 
 // @public
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+
+// @beta
+export const SharedMap: SharedObjectKind<ISharedMap>;
 
 // @public
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
