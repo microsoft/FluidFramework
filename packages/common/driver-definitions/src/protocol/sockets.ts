@@ -12,6 +12,7 @@ import type { ITokenClaims } from "./tokens.js";
  * Message sent to connect to the given document.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IConnect {
 	/**
 	 * The tenant ID for the document.
@@ -81,6 +82,7 @@ export interface IConnect {
  * Message sent to indicate a client has connected to the server.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IConnected {
 	/**
 	 * Claims for the client

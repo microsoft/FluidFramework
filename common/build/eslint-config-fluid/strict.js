@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const { namingConventionRules } = require("./sharedRules");
+
 /**
  * "Strict" eslint configuration.
  *
@@ -48,6 +50,27 @@ module.exports = {
 					"TSTypeAliasDeclaration",
 					"VariableDeclaration",
 				],
+			},
+		],
+
+		/**
+		 * Enforces our naming conventions.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/naming-convention/}
+		 */
+		"@typescript-eslint/naming-convention": [
+			"error",
+			...namingConventionRules,
+			{
+				// This rule is applied to the strict config only for now due to the dramatic change in guidance.
+				// Once more code has been migrated, this should be promoted to the `recommended` config.
+				selector: "typeLike",
+				format: ["PascalCase"],
+				// Forbid "I" prefix for interfaces (and other types).
+				custom: {
+					regex: "^I[A-Z]",
+					match: false,
+				},
 			},
 		],
 	},
@@ -130,6 +153,14 @@ module.exports = {
 				"@typescript-eslint/consistent-generic-constructors": "error",
 
 				"@typescript-eslint/no-redundant-type-constituents": "error",
+			},
+		},
+		{
+			// Rules only for type validation files
+			files: ["**/test/types/*validate*Previous*.ts"],
+			rules: {
+				// Don't apply naming conventions to generate type-test code
+				"@typescript-eslint/naming-convention": "off",
 			},
 		},
 	],

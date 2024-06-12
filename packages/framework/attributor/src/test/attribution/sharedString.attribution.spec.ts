@@ -489,8 +489,8 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 // SerializableISummaryTree is a version of ISummaryTree with Uint8Array content removed.
 type SerializableISummaryTree = ExcludeDeeply<ISummaryTree, Uint8Array>;
 
-type ExcludeDeeply<T, Exclusion, TBase = Exclude<T, Exclusion>> = TBase extends object
-	? { [K in keyof TBase]: ExcludeDeeply<TBase[K], Exclusion> }
+type ExcludeDeeply<T, TExclusion, TBase = Exclude<T, TExclusion>> = TBase extends object
+	? { [K in keyof TBase]: ExcludeDeeply<TBase[K], TExclusion> }
 	: TBase;
 
 /**

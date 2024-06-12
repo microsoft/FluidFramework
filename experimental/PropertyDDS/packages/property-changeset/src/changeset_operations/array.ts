@@ -80,12 +80,12 @@ enum ArrayChangeSetRangeType {
 	partOfApartOfB,
 }
 
-interface SegmentType<T = GenericOperation, K = GenericOperation, L = GenericOperation> {
+interface SegmentType<TOpA = GenericOperation, TOpB = GenericOperation, TOpC = GenericOperation> {
 	begin?: number;
-	op?: T;
+	op?: TOpA;
 	flag?: ArrayChangeSetRangeType;
-	opA?: K;
-	opB?: L;
+	opA?: TOpB;
+	opB?: TOpC;
 	removeInsertOperationA?: arrayRemoveList | arrayInsertList;
 }
 

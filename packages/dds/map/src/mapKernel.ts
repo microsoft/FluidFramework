@@ -11,12 +11,12 @@ import { ValueType } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMapEvents } from "./interfaces.js";
 import type {
-	IMapClearLocalOpMetadata,
-	IMapClearOperation,
-	IMapDeleteOperation,
-	IMapKeyAddLocalOpMetadata,
-	IMapKeyEditLocalOpMetadata,
-	IMapSetOperation,
+	MapClearLocalOpMetadata,
+	MapClearOperation,
+	MapDeleteOperation,
+	MapKeyAddLocalOpMetadata,
+	MapKeyEditLocalOpMetadata,
+	MapSetOperation,
 	// eslint-disable-next-line import/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
@@ -26,7 +26,7 @@ import { type ILocalValue, LocalValueMaker, makeSerializable } from "./localValu
 /**
  * Defines the means to process and submit a given op on a map.
  */
-interface IMapMessageHandler {
+interface MapMessageHandler {
 	/**
 	 * Apply the given operation.
 	 * @param op - The map operation to apply
@@ -34,25 +34,25 @@ interface IMapMessageHandler {
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	process(op: IMapOperation, local: boolean, localOpMetadata: MapLocalOpMetadata): void;
+	process(op: MapOperation, local: boolean, localOpMetadata: MapLocalOpMetadata): void;
 
 	/**
 	 * Communicate the operation to remote clients.
 	 * @param op - The map operation to submit
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
-	submit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
+	submit(op: MapOperation, localOpMetadata: MapLocalOpMetadata): void;
 }
 
 /**
  * Map key operations are one of several types.
  */
-export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
+export type MapKeyOperation = MapSetOperation | MapDeleteOperation;
 
 /**
  * Description of a map delta operation
  */
-export type IMapOperation = IMapKeyOperation | IMapClearOperation;
+export type MapOperation = MapKeyOperation | MapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -63,15 +63,15 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 // eslint-disable-next-line import/no-deprecated
-export type IMapDataObjectSerializable = Record<string, ISerializableValue>;
+export type MapDataObjectSerializable = Record<string, ISerializableValue>;
 
 /**
  * Serialized key/value data.
  */
-export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
+export type MapDataObjectSerialized = Record<string, ISerializedValue>;
 
-type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
-type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
+type MapKeyLocalOpMetadata = MapKeyEditLocalOpMetadata | MapKeyAddLocalOpMetadata;
+type MapLocalOpMetadata = MapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
@@ -83,7 +83,7 @@ function isMapKeyLocalOpMetadata(metadata: any): metadata is MapKeyLocalOpMetada
 	);
 }
 
-function isClearLocalOpMetadata(metadata: any): metadata is IMapClearLocalOpMetadata {
+function isClearLocalOpMetadata(metadata: any): metadata is MapClearLocalOpMetadata {
 	return (
 		metadata !== undefined &&
 		metadata.type === "clear" &&
@@ -102,11 +102,11 @@ function isMapLocalOpMetadata(metadata: any): metadata is MapLocalOpMetadata {
 /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
 function createClearLocalOpMetadata(
-	op: IMapClearOperation,
+	op: MapClearOperation,
 	pendingClearMessageId: number,
 	previousMap?: Map<string, ILocalValue>,
-): IMapClearLocalOpMetadata {
-	const localMetadata: IMapClearLocalOpMetadata = {
+): MapClearLocalOpMetadata {
+	const localMetadata: MapClearLocalOpMetadata = {
 		type: "clear",
 		pendingMessageId: pendingClearMessageId,
 		previousMap,
@@ -115,7 +115,7 @@ function createClearLocalOpMetadata(
 }
 
 function createKeyLocalOpMetadata(
-	op: IMapKeyOperation,
+	op: MapKeyOperation,
 	pendingMessageId: number,
 	previousValue?: ILocalValue,
 ): MapKeyLocalOpMetadata {
@@ -139,7 +139,7 @@ export class MapKernel {
 	/**
 	 * Mapping of op types to message handlers.
 	 */
-	private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
+	private readonly messageHandlers: ReadonlyMap<string, MapMessageHandler> = new Map();
 
 	/**
 	 * The in-memory data the map is storing.
@@ -302,7 +302,7 @@ export class MapKernel {
 			return;
 		}
 
-		const op: IMapSetOperation = {
+		const op: MapSetOperation = {
 			key,
 			type: "set",
 			value: { type: localValue.type, value: localValue.value as unknown },
@@ -324,7 +324,7 @@ export class MapKernel {
 			return previousValue !== undefined;
 		}
 
-		const op: IMapDeleteOperation = {
+		const op: MapDeleteOperation = {
 			key,
 			type: "delete",
 		};
@@ -350,7 +350,7 @@ export class MapKernel {
 			return;
 		}
 
-		const op: IMapClearOperation = {
+		const op: MapClearOperation = {
 			type: "clear",
 		};
 		this.submitMapClearMessage(op, copy);
@@ -361,16 +361,16 @@ export class MapKernel {
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns A JSON string containing serialized map data
 	 */
-	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
-		const serializableMapData: IMapDataObjectSerialized = {};
+	public getSerializedStorage(serializer: IFluidSerializer): MapDataObjectSerialized {
+		const serializableMapData: MapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
 			serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
 		}
 		return serializableMapData;
 	}
 
-	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
-		const serializableMapData: IMapDataObjectSerializable = {};
+	public getSerializableStorage(serializer: IFluidSerializer): MapDataObjectSerializable {
+		const serializableMapData: MapDataObjectSerializable = {};
 		for (const [key, localValue] of this.data.entries()) {
 			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
 		}
@@ -385,9 +385,9 @@ export class MapKernel {
 	 * Populate the kernel with the given map data.
 	 * @param data - A JSON string containing serialized map data
 	 */
-	public populateFromSerializable(json: IMapDataObjectSerializable): void {
+	public populateFromSerializable(json: MapDataObjectSerializable): void {
 		for (const [key, serializable] of Object.entries(
-			this.serializer.decode(json) as IMapDataObjectSerializable,
+			this.serializer.decode(json) as MapDataObjectSerializable,
 		)) {
 			const localValue = {
 				key,
@@ -406,7 +406,7 @@ export class MapKernel {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public trySubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
+	public trySubmitMessage(op: MapOperation, localOpMetadata: unknown): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -415,7 +415,7 @@ export class MapKernel {
 		return true;
 	}
 
-	public tryApplyStashedOp(op: IMapOperation): void {
+	public tryApplyStashedOp(op: MapOperation): void {
 		switch (op.type) {
 			case "clear": {
 				this.clear();
@@ -443,7 +443,7 @@ export class MapKernel {
 	 * For messages from a remote client, this will be undefined.
 	 * @returns True if the operation was processed, false otherwise.
 	 */
-	public tryProcessMessage(op: IMapOperation, local: boolean, localOpMetadata: unknown): boolean {
+	public tryProcessMessage(op: MapOperation, local: boolean, localOpMetadata: unknown): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -608,7 +608,7 @@ export class MapKernel {
 	 * @returns True if the operation should be processed, false otherwise
 	 */
 	private needProcessKeyOperation(
-		op: IMapKeyOperation,
+		op: MapKeyOperation,
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
@@ -654,10 +654,10 @@ export class MapKernel {
 	 * Get the message handlers for the map.
 	 * @returns A map of string op names to IMapMessageHandlers for those ops
 	 */
-	private getMessageHandlers(): Map<string, IMapMessageHandler> {
-		const messageHandlers = new Map<string, IMapMessageHandler>();
+	private getMessageHandlers(): Map<string, MapMessageHandler> {
+		const messageHandlers = new Map<string, MapMessageHandler>();
 		messageHandlers.set("clear", {
-			process: (op: IMapClearOperation, local, localOpMetadata) => {
+			process: (op: MapClearOperation, local, localOpMetadata) => {
 				if (local) {
 					assert(
 						isClearLocalOpMetadata(localOpMetadata),
@@ -676,7 +676,7 @@ export class MapKernel {
 				}
 				this.clearCore(local);
 			},
-			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
+			submit: (op: MapClearOperation, localOpMetadata: MapClearLocalOpMetadata) => {
 				assert(
 					isClearLocalOpMetadata(localOpMetadata),
 					0x2fc /* Invalid localOpMetadata for clear */,
@@ -691,18 +691,18 @@ export class MapKernel {
 			},
 		});
 		messageHandlers.set("delete", {
-			process: (op: IMapDeleteOperation, local, localOpMetadata) => {
+			process: (op: MapDeleteOperation, local, localOpMetadata) => {
 				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
 					return;
 				}
 				this.deleteCore(op.key, local);
 			},
-			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
+			submit: (op: MapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
 			},
 		});
 		messageHandlers.set("set", {
-			process: (op: IMapSetOperation, local, localOpMetadata) => {
+			process: (op: MapSetOperation, local, localOpMetadata) => {
 				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
 					return;
 				}
@@ -711,7 +711,7 @@ export class MapKernel {
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
 			},
-			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
+			submit: (op: MapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
 			},
 		});
@@ -730,14 +730,14 @@ export class MapKernel {
 	 * @param op - The clear message
 	 */
 	private submitMapClearMessage(
-		op: IMapClearOperation,
+		op: MapClearOperation,
 		previousMap?: Map<string, ILocalValue>,
 	): void {
 		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
 		this.submitMessage(op, metadata);
 	}
 
-	private getMapKeyMessageId(op: IMapKeyOperation): number {
+	private getMapKeyMessageId(op: MapKeyOperation): number {
 		const pendingMessageId = ++this.pendingMessageId;
 		const pendingMessageIds = this.pendingKeys.get(op.key);
 		if (pendingMessageIds === undefined) {
@@ -753,7 +753,7 @@ export class MapKernel {
 	 * @param op - The map key message
 	 * @param previousValue - The value of the key before this op
 	 */
-	private submitMapKeyMessage(op: IMapKeyOperation, previousValue?: ILocalValue): void {
+	private submitMapKeyMessage(op: MapKeyOperation, previousValue?: ILocalValue): void {
 		const localMetadata = createKeyLocalOpMetadata(
 			op,
 			this.getMapKeyMessageId(op),
@@ -767,7 +767,7 @@ export class MapKernel {
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
 	 */
-	private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
+	private resubmitMapKeyMessage(op: MapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
 		assert(
 			isMapKeyLocalOpMetadata(localOpMetadata),
 			0x2fe /* Invalid localOpMetadata in submit */,

@@ -100,6 +100,7 @@ export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryT
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryHandle {
 	type: SummaryType.Handle;
 
@@ -126,6 +127,7 @@ export interface ISummaryHandle {
  *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryBlob {
 	type: SummaryType.Blob;
 	content: string | Uint8Array;
@@ -144,6 +146,7 @@ export interface ISummaryBlob {
  * "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryAttachment {
 	type: SummaryType.Attachment;
 	id: string;
@@ -154,6 +157,7 @@ export interface ISummaryAttachment {
  * Blob, Handle, Attachment or another Tree.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISummaryTree {
 	type: SummaryType.Tree;
 

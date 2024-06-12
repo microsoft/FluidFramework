@@ -7,6 +7,7 @@
  * Base interface for event emitters.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IEvent {
 	/**
 	 * Base event emitter signature.
@@ -14,7 +15,7 @@ export interface IEvent {
 	 * @remarks The event emitter polyfill and the node event emitter have different event types:
 	 * `string | symbol` vs. `string | number`.
 	 *
-	 * So for our typing we'll contrain to string, that way we work with both.
+	 * So for our typing we'll constrain to string, that way we work with both.
 	 *
 	 * @eventProperty
 	 */
@@ -26,6 +27,7 @@ export interface IEvent {
  * Base interface for error event emitters.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IErrorEvent extends IEvent {
 	/**
 	 * Base error event emitter signature.
@@ -40,6 +42,7 @@ export interface IErrorEvent extends IEvent {
  * Base interface for event providers.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IEventProvider<TEvent extends IEvent> {
 	/**
 	 * Registers a callback to be invoked when the corresponding event is triggered.
@@ -103,7 +106,7 @@ export type ExtendEventProvider<
  * The placeholder type that should be used instead of `this` in events.
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention
 export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
 
 /**
@@ -111,9 +114,9 @@ export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder" };
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[]
-	? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] }
-	: L;
+export type ReplaceIEventThisPlaceHolder<T extends any[], TThis> = T extends any[]
+	? { [K in keyof T]: T[K] extends IEventThisPlaceHolder ? TThis : T[K] }
+	: T;
 
 /**
  * Transforms the event overload by replacing {@link IEventThisPlaceHolder} with `TThis` in the event listener
@@ -121,9 +124,9 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TransformedEvent<TThis, E, A extends any[]> = (
-	event: E,
-	listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void,
+export type TransformedEvent<TThis, TEvent, TArguments extends any[]> = (
+	event: TEvent,
+	listener: (...args: ReplaceIEventThisPlaceHolder<TArguments, TThis>) => void,
 ) => TThis;
 
 /**
@@ -136,6 +139,7 @@ export type TransformedEvent<TThis, E, A extends any[]> = (
  * If we need to move beyond 15 we should evaluate using a mapped type pattern like `{"event":(listenerArgs)=>void}`
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 	(event: infer E0, listener: (...args: infer A0) => void);
 	(event: infer E1, listener: (...args: infer A1) => void);

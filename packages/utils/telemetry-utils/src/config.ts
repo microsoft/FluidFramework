@@ -268,9 +268,9 @@ export class CachedConfigProvider implements IConfigProvider {
  *
  * @internal
  */
-export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
+export interface MonitoringContext<TLogger extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
 	config: IConfigProvider;
-	logger: L;
+	logger: TLogger;
 }
 
 /**
@@ -279,10 +279,10 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
  *
  * @internal
  */
-export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	obj: L,
-): obj is L & MonitoringContext<L> {
-	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
+export function loggerIsMonitoringContext<
+	TLogger extends ITelemetryBaseLogger = ITelemetryLoggerExt,
+>(obj: TLogger): obj is TLogger & MonitoringContext<TLogger> {
+	const maybeConfig = obj as Partial<MonitoringContext<TLogger>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
@@ -291,13 +291,13 @@ export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITele
  *
  * @internal
  */
-export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	logger: L,
-): MonitoringContext<L> {
-	if (loggerIsMonitoringContext<L>(logger)) {
+export function loggerToMonitoringContext<
+	TLogger extends ITelemetryBaseLogger = ITelemetryLoggerExt,
+>(logger: TLogger): MonitoringContext<TLogger> {
+	if (loggerIsMonitoringContext<TLogger>(logger)) {
 		return logger;
 	}
-	return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
+	return mixinMonitoringContext<TLogger>(logger, sessionStorageConfigProvider.value);
 }
 
 /**
@@ -311,11 +311,11 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
  *
  * @internal
  */
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	logger: L,
+export function mixinMonitoringContext<TLogger extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
+	logger: TLogger,
 	...configs: (IConfigProviderBase | undefined)[]
-): MonitoringContext<L> {
-	if (loggerIsMonitoringContext<L>(logger)) {
+): MonitoringContext<TLogger> {
+	if (loggerIsMonitoringContext<TLogger>(logger)) {
 		throw new Error("Logger is already a monitoring context");
 	}
 	/**
@@ -326,10 +326,10 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 	 * so if a deeper layer then converts that logger to a monitoring context it can find the smuggled properties
 	 * of the MonitoringContext and get the config provider.
 	 */
-	const mc: L & Partial<MonitoringContext<L>> = logger;
+	const mc: TLogger & Partial<MonitoringContext<TLogger>> = logger;
 	mc.config = new CachedConfigProvider(logger, ...configs);
 	mc.logger = logger;
-	return mc as MonitoringContext<L>;
+	return mc as MonitoringContext<TLogger>;
 }
 
 function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {

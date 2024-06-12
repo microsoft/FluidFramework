@@ -8,6 +8,7 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IResolvedUrl {
 	type: "fluid";
 	/**
@@ -23,6 +24,7 @@ export interface IResolvedUrl {
  * Container package info handed off to resolver.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IContainerPackageInfo {
 	/**
 	 * Container package name.
@@ -33,6 +35,7 @@ export interface IContainerPackageInfo {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IUrlResolver {
 	// Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
 	// the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
@@ -85,6 +88,7 @@ export enum DriverHeader {
 /**
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDriverHeader {
 	[DriverHeader.summarizingClient]: boolean;
 	// TODO: Use something other than `any`.
@@ -98,6 +102,6 @@ declare module "@fluidframework/core-interfaces" {
 	 * For example, caller can use this to pass on various loader options in the container
 	 * load request.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-empty-interface
+	// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/naming-convention
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }

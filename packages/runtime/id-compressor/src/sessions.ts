@@ -271,11 +271,11 @@ export class Session {
 		});
 	}
 
-	static binarySearch<S, T>(
-		search: S,
-		arr: readonly T[],
-		comparator: (a: S, b: T) => number,
-	): T | undefined {
+	static binarySearch<TSearch, TData>(
+		search: TSearch,
+		arr: readonly TData[],
+		comparator: (a: TSearch, b: TData) => number,
+	): TData | undefined {
 		let left = 0;
 		let right = arr.length - 1;
 		while (left <= right) {

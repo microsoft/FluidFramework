@@ -9,8 +9,8 @@ import { v4 as uuid } from "uuid";
 import type { IFluidTelemetry } from "../index.js";
 
 import {
-	type IFluidContainerSystemEventName,
-	IFluidContainerSystemEventNames,
+	type FluidContainerSystemEventName,
+	FluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import {
 	ContainerTelemetryEventNames,
@@ -33,19 +33,19 @@ export class ContainerEventTelemetryProducer {
 	public constructor(private readonly containerId: string) {}
 
 	public produceFromSystemEvent(
-		eventName: IFluidContainerSystemEventName,
+		eventName: FluidContainerSystemEventName,
 		payload?: unknown,
 	): IContainerTelemetry | undefined {
 		switch (eventName) {
-			case IFluidContainerSystemEventNames.CONNECTED: {
+			case FluidContainerSystemEventNames.CONNECTED: {
 				return this.produceBaseContainerTelemetry(ContainerTelemetryEventNames.CONNECTED);
 			}
-			case IFluidContainerSystemEventNames.DISCONNECTED: {
+			case FluidContainerSystemEventNames.DISCONNECTED: {
 				return this.produceBaseContainerTelemetry(
 					ContainerTelemetryEventNames.DISCONNECTED,
 				);
 			}
-			case IFluidContainerSystemEventNames.DISPOSED: {
+			case FluidContainerSystemEventNames.DISPOSED: {
 				const typedPayload = payload as { error?: ICriticalContainerError };
 				return this.produceDiposedTelemetry(typedPayload);
 			}

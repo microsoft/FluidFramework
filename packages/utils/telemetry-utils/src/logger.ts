@@ -906,26 +906,26 @@ function convertToBasePropertyTypeUntagged(
  * @internal
  */
 export const tagData = <
-	T extends TelemetryDataTag,
-	V extends Record<
+	TTag extends TelemetryDataTag,
+	TValue extends Record<
 		string,
 		TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)
 	>,
 >(
-	tag: T,
-	values: V,
+	tag: TTag,
+	values: TValue,
 ): {
-	[P in keyof V]:
-		| (V[P] extends () => TelemetryBaseEventPropertyType
+	[P in keyof TValue]:
+		| (TValue[P] extends () => TelemetryBaseEventPropertyType
 				? () => {
-						value: ReturnType<V[P]>;
-						tag: T;
+						value: ReturnType<TValue[P]>;
+						tag: TTag;
 				  }
 				: {
-						value: Exclude<V[P], undefined>;
-						tag: T;
+						value: Exclude<TValue[P], undefined>;
+						tag: TTag;
 				  })
-		| (V[P] extends undefined ? undefined : never);
+		| (TValue[P] extends undefined ? undefined : never);
 } =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	Object.entries(values)

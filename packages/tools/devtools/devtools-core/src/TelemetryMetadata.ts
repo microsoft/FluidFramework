@@ -10,6 +10,8 @@ import { type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
  *
  * @internal
  */
+// TODO:[File work item]: Fix internal export names
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITimestampedTelemetryEvent {
 	/**
 	 * The contents of the telemetry event.

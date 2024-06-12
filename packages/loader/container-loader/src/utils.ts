@@ -356,17 +356,19 @@ export function getAttachedContainerStateFromSerializedContainer(
  * Ensures only a single instance of the provided async function is running.
  * If there are multiple calls they will all get the same promise to wait on.
  */
-export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
+export const runSingle = <TArguments extends any[], TResult>(
+	func: (...args: TArguments) => Promise<TResult>,
+) => {
 	let running:
 		| {
-				args: A;
-				result: Promise<R>;
+				args: TArguments;
+				result: Promise<TResult>;
 		  }
 		| undefined;
 	// don't mark this function async, so we return the same promise,
 	// rather than one that is wrapped due to async
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	return (...args: A) => {
+	return (...args: TArguments) => {
 		if (running !== undefined) {
 			if (!compareArrays(running.args, args)) {
 				return Promise.reject(

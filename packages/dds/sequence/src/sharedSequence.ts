@@ -37,9 +37,9 @@ export class SubSequence<T> extends BaseSegment {
 	public static is(segment: ISegment): segment is SubSequence<any> {
 		return segment.type === SubSequence.typeString;
 	}
-	public static fromJSONObject<U>(spec: any) {
+	public static fromJSONObject<TInner>(spec: any) {
 		if (spec && typeof spec === "object" && "items" in spec) {
-			const segment = new SubSequence<U>(spec.items);
+			const segment = new SubSequence<TInner>(spec.items);
 			if (spec.props) {
 				segment.addProperties(spec.props);
 			}

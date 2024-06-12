@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const { namingConventionRules } = require("./sharedRules");
+
 /**
  * "Recommended" eslint configuration.
  *
@@ -100,6 +102,13 @@ module.exports = {
 		 * The rule seems to crash on some of our code
 		 */
 		"unicorn/expiring-todo-comments": "off",
+
+		/**
+		 * Enforces our naming conventions.
+		 *
+		 * @see {@link https://typescript-eslint.io/rules/naming-convention/}
+		 */
+		"@typescript-eslint/naming-convention": ["error", ...namingConventionRules],
 
 		/**
 		 * Disallows the `any` type.
@@ -201,6 +210,9 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-explicit-any": "off",
 				"@typescript-eslint/no-unsafe-argument": "off",
+
+				// Don't apply naming conventions to generate type-test code
+				"@typescript-eslint/naming-convention": "off",
 			},
 		},
 	],

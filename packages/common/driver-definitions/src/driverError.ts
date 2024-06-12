@@ -123,6 +123,7 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * but we can't reference a specific driver's error type enum in this code.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 	readonly errorType: string;
 	/**
@@ -136,6 +137,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
  * Base interface for all errors and warnings
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDriverErrorBase {
 	/**
 	 * Classification of what type of error this is, used programmatically by consumers to interpret the error.
@@ -169,6 +171,7 @@ export interface IDriverErrorBase {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IThrottlingWarning extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.throttlingError;
 	readonly retryAfterSeconds: number;
@@ -177,6 +180,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IGenericNetworkError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.genericNetworkError;
 	readonly statusCode?: number;
@@ -185,6 +189,7 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.authorizationError;
 	readonly claims?: string;
@@ -194,6 +199,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILocationRedirectionError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.locationRedirection;
 	readonly redirectUrl: IResolvedUrl;
@@ -204,6 +210,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
  * allows compiler to differentiate interfaces based on error type
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDriverBasicError extends IDriverErrorBase {
 	readonly errorType:
 		| typeof DriverErrorTypes.genericError

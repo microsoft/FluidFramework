@@ -291,6 +291,10 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	);
 }
 
+/**
+ * {@link _DevtoolsView} input props.
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 interface _DevtoolsViewProps {
 	/**
 	 * Set of features supported by the Devtools.

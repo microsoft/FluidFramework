@@ -163,8 +163,8 @@ export type _RecursiveTrick = never;
  * The cause for this is unclear, but empirically it was the case when this comment was written.
  * @public
  */
-export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
-	readonly [P in symbol | string]: P extends K ? T : never;
+export type RestrictiveReadonlyRecord<TKey extends symbol | string, T> = {
+	readonly [P in symbol | string]: P extends TKey ? T : never;
 };
 
 /**

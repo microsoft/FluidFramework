@@ -8,7 +8,7 @@ import type { ILocalValue } from "./localValues.js";
 /**
  * Operation indicating a value should be set for a key.
  */
-export interface IMapSetOperation {
+export interface MapSetOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -28,7 +28,7 @@ export interface IMapSetOperation {
 /**
  * Operation indicating the map should be cleared.
  */
-export interface IMapClearOperation {
+export interface MapClearOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -38,7 +38,7 @@ export interface IMapClearOperation {
 /**
  * Operation indicating a key should be deleted from the map.
  */
-export interface IMapDeleteOperation {
+export interface MapDeleteOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -53,7 +53,7 @@ export interface IMapDeleteOperation {
 /**
  * Metadata for an local `edit` operation.
  */
-export interface IMapKeyEditLocalOpMetadata {
+export interface MapKeyEditLocalOpMetadata {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -73,7 +73,7 @@ export interface IMapKeyEditLocalOpMetadata {
 /**
  * Metadata for an local `add` operation.
  */
-export interface IMapKeyAddLocalOpMetadata {
+export interface MapKeyAddLocalOpMetadata {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -88,7 +88,7 @@ export interface IMapKeyAddLocalOpMetadata {
 /**
  * Metadata for an local `clear` operation.
  */
-export interface IMapClearLocalOpMetadata {
+export interface MapClearLocalOpMetadata {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -108,12 +108,12 @@ export interface IMapClearLocalOpMetadata {
 /**
  * Metadata for a local operation associated with a specific key entry in the map.
  */
-export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+export type MapKeyLocalOpMetadata = MapKeyEditLocalOpMetadata | MapKeyAddLocalOpMetadata;
 
 /**
  * Metadata for a local operation.
  */
-export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
+export type MapLocalOpMetadata = MapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 
 /**
  * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
@@ -139,6 +139,7 @@ export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadat
  * @deprecated This type is legacy and deprecated(AB#8004).
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISerializableValue {
 	/**
 	 * A type annotation to help indicate how the value serializes.
@@ -156,6 +157,7 @@ export interface ISerializableValue {
  * Serialized {@link ISerializableValue} counterpart.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISerializedValue {
 	/**
 	 * A type annotation to help indicate how the value serializes.

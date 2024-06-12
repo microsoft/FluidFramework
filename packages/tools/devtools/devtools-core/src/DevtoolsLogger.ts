@@ -33,7 +33,7 @@ import {
  * @sealed
  * @beta
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/naming-convention
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {}
 
 /**

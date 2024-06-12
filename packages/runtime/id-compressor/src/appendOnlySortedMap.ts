@@ -11,13 +11,13 @@ import { assert } from "@fluidframework/core-utils/internal";
  * A map in which entries are always added in key-sorted order.
  * Supports appending and searching.
  */
-export class AppendOnlySortedMap<K, V> {
-	protected readonly elements: (K | V)[] = [];
+export class AppendOnlySortedMap<TKey, TValue> {
+	protected readonly elements: (TKey | TValue)[] = [];
 
 	/**
 	 * @param comparator - a comparator for keys
 	 */
-	public constructor(protected readonly comparator: (a: K, b: K) => number) {}
+	public constructor(protected readonly comparator: (a: TKey, b: TKey) => number) {}
 
 	/**
 	 * @returns the number of entries in this map
@@ -29,105 +29,105 @@ export class AppendOnlySortedMap<K, V> {
 	/**
 	 * @returns the min key in the map.
 	 */
-	public minKey(): K | undefined {
-		return this.elements[0] as K | undefined;
+	public minKey(): TKey | undefined {
+		return this.elements[0] as TKey | undefined;
 	}
 
 	/**
 	 * @returns the max key in the map.
 	 */
-	public maxKey(): K | undefined {
-		return this.elements[this.elements.length - 2] as K | undefined;
+	public maxKey(): TKey | undefined {
+		return this.elements[this.elements.length - 2] as TKey | undefined;
 	}
 
 	/**
 	 * @returns the min value in the map.
 	 */
-	public minValue(): V | undefined {
-		return this.elements[1] as V | undefined;
+	public minValue(): TValue | undefined {
+		return this.elements[1] as TValue | undefined;
 	}
 
 	/**
 	 * @returns the min value in the map.
 	 */
-	public maxValue(): V | undefined {
-		return this.elements[this.elements.length - 1] as V | undefined;
+	public maxValue(): TValue | undefined {
+		return this.elements[this.elements.length - 1] as TValue | undefined;
 	}
 
 	/**
 	 * @returns the min key in the map.
 	 */
-	public first(): [K, V] | undefined {
+	public first(): [TKey, TValue] | undefined {
 		const { elements } = this;
 		const { length } = elements;
 		if (length === 0) {
 			return undefined;
 		}
-		return [elements[0] as K, elements[1] as V];
+		return [elements[0] as TKey, elements[1] as TValue];
 	}
 
 	/**
 	 * @returns the max key in the map.
 	 */
-	public last(): [K, V] | undefined {
+	public last(): [TKey, TValue] | undefined {
 		const { elements } = this;
 		const { length } = elements;
 		if (length === 0) {
 			return undefined;
 		}
 		const lastKeyIndex = length - 2;
-		return [elements[lastKeyIndex] as K, elements[lastKeyIndex + 1] as V];
+		return [elements[lastKeyIndex] as TKey, elements[lastKeyIndex + 1] as TValue];
 	}
 
 	/**
 	 * Returns the element at the insertion index.
 	 */
-	public getAtIndex(index: number): [K, V] | undefined {
+	public getAtIndex(index: number): [TKey, TValue] | undefined {
 		const realIndex = index * 2;
 		const { elements } = this;
 		if (realIndex < 0 || realIndex > elements.length - 1) {
 			return undefined;
 		}
-		return [elements[realIndex] as K, elements[realIndex + 1] as V];
+		return [elements[realIndex] as TKey, elements[realIndex + 1] as TValue];
 	}
 
 	/**
 	 * @returns an iterable of the entries in the map.
 	 */
-	public *entries(): IterableIterator<readonly [K, V]> {
+	public *entries(): IterableIterator<readonly [TKey, TValue]> {
 		const { elements } = this;
 		for (let i = 0; i < elements.length; i += 2) {
-			yield [elements[i] as K, elements[i + 1] as V];
+			yield [elements[i] as TKey, elements[i + 1] as TValue];
 		}
 	}
 
 	/**
 	 * @returns an iterable of the keys in the map.
 	 */
-	public *keys(): IterableIterator<K> {
+	public *keys(): IterableIterator<TKey> {
 		const { elements } = this;
 		for (let i = 0; i < elements.length; i += 2) {
-			yield elements[i] as K;
+			yield elements[i] as TKey;
 		}
 	}
 
 	/**
 	 * @returns an iterable of the values in the map.
 	 */
-	public *values(): IterableIterator<V> {
+	public *values(): IterableIterator<TValue> {
 		const { elements } = this;
 		for (let i = 0; i < elements.length; i += 2) {
-			yield elements[i + 1] as V;
+			yield elements[i + 1] as TValue;
 		}
 	}
 
 	/**
 	 * @returns an iterable of the entries in the map, reversed.
 	 */
-	public *entriesReversed(): IterableIterator<readonly [K, V]> {
+	public *entriesReversed(): IterableIterator<readonly [TKey, TValue]> {
 		const { elements } = this;
 		for (let i = elements.length - 2; i >= 0; i -= 2) {
-			yield [elements[i] as K, elements[i + 1] as V];
+			yield [elements[i] as TKey, elements[i + 1] as TValue];
 		}
 	}
 
@@ -136,10 +136,10 @@ export class AppendOnlySortedMap<K, V> {
 	 * @param key - the key to add.
 	 * @param value - the value to add.
 	 */
-	public append(key: K, value: V): void {
+	public append(key: TKey, value: TValue): void {
 		const { elements } = this;
 		const { length } = elements;
-		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
+		if (length !== 0 && this.comparator(key, this.maxKey() as TKey) <= 0) {
 			throw new Error("Inserted key must be > all others in the map.");
 		}
 		elements.push(key);
@@ -152,13 +152,13 @@ export class AppendOnlySortedMap<K, V> {
 	 * @param key - the key to add.
 	 * @param value - the value to add.
 	 */
-	public replaceLast(key: K, value: V): void {
+	public replaceLast(key: TKey, value: TValue): void {
 		const { elements, comparator } = this;
 		const { length } = elements;
 		if (length !== 0) {
 			elements.pop();
 			elements.pop();
-			if (comparator(key, this.maxKey() as K) <= 0) {
+			if (comparator(key, this.maxKey() as TKey) <= 0) {
 				throw new Error("Inserted key must be > all others in the map.");
 			}
 		}
@@ -170,12 +170,12 @@ export class AppendOnlySortedMap<K, V> {
 	 * @param key - the key to lookup.
 	 * @returns the value associated with `key` if such an entry exists, and undefined otherwise.
 	 */
-	public get(key: K): V | undefined {
+	public get(key: TKey): TValue | undefined {
 		const index = AppendOnlySortedMap.keyIndexOf(this.elements, key, this.comparator);
 		if (index < 0) {
 			return undefined;
 		}
-		return this.elements[index + 1] as V;
+		return this.elements[index + 1] as TValue;
 	}
 
 	/**
@@ -183,7 +183,7 @@ export class AppendOnlySortedMap<K, V> {
 	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next lower key if such an entry
 	 * exists, and undefined otherwise.
 	 */
-	public getPairOrNextLower(key: K): readonly [K, V] | undefined {
+	public getPairOrNextLower(key: TKey): readonly [TKey, TValue] | undefined {
 		return this.getPairOrNextLowerBy(key, this.comparator);
 	}
 
@@ -192,7 +192,7 @@ export class AppendOnlySortedMap<K, V> {
 	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next higher key if such an entry
 	 * exists, and undefined otherwise.
 	 */
-	public getPairOrNextHigher(key: K): readonly [K, V] | undefined {
+	public getPairOrNextHigher(key: TKey): readonly [TKey, TValue] | undefined {
 		return this.getPairOrNextHigherBy(key, this.comparator);
 	}
 
@@ -200,8 +200,8 @@ export class AppendOnlySortedMap<K, V> {
 	 * Compares two `AppendOnlySortedMap`s.
 	 */
 	public equals(
-		other: AppendOnlySortedMap<K, V>,
-		compareValues: (a: V, b: V) => boolean,
+		other: AppendOnlySortedMap<TKey, TValue>,
+		compareValues: (a: TValue, b: TValue) => boolean,
 	): boolean {
 		if (other === this) {
 			return true;
@@ -212,10 +212,10 @@ export class AppendOnlySortedMap<K, V> {
 		}
 
 		for (let i = this.elements.length - 2; i >= 0; i -= 2) {
-			const keyThis = this.elements[i] as K;
-			const valueThis = this.elements[i + 1] as V;
-			const keyOther = other.elements[i] as K;
-			const valueOther = other.elements[i + 1] as V;
+			const keyThis = this.elements[i] as TKey;
+			const valueThis = this.elements[i + 1] as TValue;
+			const keyOther = other.elements[i] as TKey;
+			const valueOther = other.elements[i + 1] as TValue;
 			if (this.comparator(keyThis, keyOther) !== 0) {
 				return false;
 			}
@@ -231,7 +231,7 @@ export class AppendOnlySortedMap<K, V> {
 	 * Test-only expensive assertions to check the internal validity of the data structure.
 	 */
 	public assertValid(): void {
-		let prev: readonly [K, unknown] | undefined;
+		let prev: readonly [TKey, unknown] | undefined;
 		for (const kv of this.entries()) {
 			if (prev !== undefined) {
 				assert(
@@ -249,7 +249,7 @@ export class AppendOnlySortedMap<K, V> {
 	 * @param to - the key to end the range query at, inclusive.
 	 * @returns the range of entries.
 	 */
-	public *getRange(from: K, to: K): IterableIterator<readonly [K, V]> {
+	public *getRange(from: TKey, to: TKey): IterableIterator<readonly [TKey, TValue]> {
 		const keyIndexFrom = this.getKeyIndexOfOrNextHigher(from, this.comparator);
 		if (keyIndexFrom === undefined) {
 			return;
@@ -261,25 +261,25 @@ export class AppendOnlySortedMap<K, V> {
 		}
 
 		for (let i = keyIndexFrom; i <= keyIndexTo; i += 2) {
-			yield [this.elements[i] as K, this.elements[i + 1] as V];
+			yield [this.elements[i] as TKey, this.elements[i + 1] as TValue];
 		}
 	}
 
 	protected getPairOrNextLowerBy<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
-	): readonly [K, V] | undefined {
+		comparator: (search: T, key: TKey, value: TValue) => number,
+	): readonly [TKey, TValue] | undefined {
 		const keyIndex = this.getKeyIndexOfOrNextLower(search, comparator);
 		if (keyIndex === undefined) {
 			return undefined;
 		}
 
-		return [this.elements[keyIndex] as K, this.elements[keyIndex + 1] as V];
+		return [this.elements[keyIndex] as TKey, this.elements[keyIndex + 1] as TValue];
 	}
 
 	private getKeyIndexOfOrNextLower<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: TKey, value: TValue) => number,
 	): number | undefined {
 		const { elements } = this;
 		if (elements.length === 0) {
@@ -298,19 +298,19 @@ export class AppendOnlySortedMap<K, V> {
 
 	protected getPairOrNextHigherBy<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
-	): readonly [K, V] | undefined {
+		comparator: (search: T, key: TKey, value: TValue) => number,
+	): readonly [TKey, TValue] | undefined {
 		const keyIndex = this.getKeyIndexOfOrNextHigher(search, comparator);
 		if (keyIndex === undefined) {
 			return undefined;
 		}
 
-		return [this.elements[keyIndex] as K, this.elements[keyIndex + 1] as V];
+		return [this.elements[keyIndex] as TKey, this.elements[keyIndex + 1] as TValue];
 	}
 
 	private getKeyIndexOfOrNextHigher<T>(
 		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+		comparator: (search: T, key: TKey, value: TValue) => number,
 	): number | undefined {
 		const { elements } = this;
 		const { length } = elements;
@@ -338,10 +338,10 @@ export class AppendOnlySortedMap<K, V> {
 	 * @returns the index of the key for `search`, or (if not present) the index it would have been inserted into xor'd
 	 * with `failureXor`. Note that negating is not an adequate solution as that could result in -0.
 	 */
-	public static keyIndexOf<T, K, V>(
-		elements: readonly (K | V)[],
-		search: T,
-		comparator: (search: T, key: K, value: V) => number,
+	public static keyIndexOf<TSearch, TKey, TValue>(
+		elements: readonly (TKey | TValue)[],
+		search: TSearch,
+		comparator: (search: TSearch, key: TKey, value: TValue) => number,
 	): number {
 		// Low, high, and mid are addresses of [K,V] pairs and *not* key indices
 		let low = 0;
@@ -349,7 +349,11 @@ export class AppendOnlySortedMap<K, V> {
 		let mid = high >> 1;
 		while (low < high) {
 			const keyIndex = mid * 2;
-			const c = comparator(search, elements[keyIndex] as K, elements[keyIndex + 1] as V);
+			const c = comparator(
+				search,
+				elements[keyIndex] as TKey,
+				elements[keyIndex + 1] as TValue,
+			);
 			if (c > 0) {
 				low = mid + 1;
 			} else if (c < 0) {

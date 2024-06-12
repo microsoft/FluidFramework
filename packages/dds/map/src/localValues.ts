@@ -19,6 +19,7 @@ import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.
  * A local value to be stored in a container type Distributed Data Store (DDS).
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILocalValue {
 	/**
 	 * Type indicator of the value stored within.

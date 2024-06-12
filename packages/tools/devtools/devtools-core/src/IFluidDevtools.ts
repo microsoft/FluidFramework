@@ -22,6 +22,7 @@ import { type ContainerDevtoolsProps } from "./ContainerDevtools.js";
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidDevtools extends IDisposable {
 	/**
 	 * Registers the provided {@link @fluidframework/container-definitions#IContainer} with the Devtools to begin

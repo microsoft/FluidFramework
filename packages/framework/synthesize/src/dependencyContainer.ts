@@ -62,13 +62,13 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	/**
 	 * {@inheritDoc (IFluidDependencySynthesizer:interface).synthesize}
 	 */
-	public synthesize<O, R = undefined | Record<string, never>>(
-		optionalTypes: FluidObjectSymbolProvider<O>,
-		requiredTypes: Required<FluidObjectSymbolProvider<R>>,
-	): AsyncFluidObjectProvider<O, R> {
-		const base: AsyncFluidObjectProvider<O, R> = {} as any;
-		this.generateRequired<R>(base, requiredTypes);
-		this.generateOptional<O>(base, optionalTypes);
+	public synthesize<TOptional, TRequired = undefined | Record<string, never>>(
+		optionalTypes: FluidObjectSymbolProvider<TOptional>,
+		requiredTypes: Required<FluidObjectSymbolProvider<TRequired>>,
+	): AsyncFluidObjectProvider<TOptional, TRequired> {
+		const base: AsyncFluidObjectProvider<TOptional, TRequired> = {} as any;
+		this.generateRequired<TRequired>(base, requiredTypes);
+		this.generateOptional<TOptional>(base, optionalTypes);
 		Object.defineProperty(base, IFluidDependencySynthesizer, { get: () => this });
 		return base;
 	}

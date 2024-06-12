@@ -501,10 +501,10 @@ describe("someObjectlicious", () => {
 
 class PassThru<TMap> implements IFluidDependencySynthesizer {
 	constructor(private readonly parent: IFluidDependencySynthesizer) {}
-	synthesize<O, R = Record<string, never> | undefined>(
-		optionalTypes: FluidObjectSymbolProvider<O>,
-		requiredTypes: Required<FluidObjectSymbolProvider<R>>,
-	): AsyncFluidObjectProvider<O, R> {
+	synthesize<TOptional, TRequired = Record<string, never> | undefined>(
+		optionalTypes: FluidObjectSymbolProvider<TOptional>,
+		requiredTypes: Required<FluidObjectSymbolProvider<TRequired>>,
+	): AsyncFluidObjectProvider<TOptional, TRequired> {
 		return this.parent.synthesize(optionalTypes, requiredTypes);
 	}
 	has(type: string): boolean {
@@ -512,7 +512,7 @@ class PassThru<TMap> implements IFluidDependencySynthesizer {
 	}
 	readonly IFluidDependencySynthesizer = this;
 
-	getProvider<K extends keyof TMap>(key: K): FluidObjectProvider<TMap[K]> | undefined {
+	getProvider<TKey extends keyof TMap>(key: TKey): FluidObjectProvider<TMap[TKey]> | undefined {
 		const maybe = this.parent as any as Partial<this>;
 		if (maybe.getProvider) {
 			return maybe.getProvider(key);

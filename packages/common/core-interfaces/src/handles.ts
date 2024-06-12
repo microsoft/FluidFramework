@@ -14,6 +14,7 @@ export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHand
 /**
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideFluidHandleContext {
 	readonly IFluidHandleContext: IFluidHandleContext;
 }
@@ -22,6 +23,7 @@ export interface IProvideFluidHandleContext {
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**
 	 * The absolute path to the handle context from the root.
@@ -59,6 +61,7 @@ export const IFluidHandle = "IFluidHandle";
  * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideFluidHandle {
 	/**
 	 * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
@@ -74,6 +77,7 @@ export interface IProvideFluidHandle {
  * Handle to a shared {@link FluidObject}.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidHandleInternal<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
 	out T = unknown, // FluidObject & IFluidLoadable,
@@ -118,6 +122,7 @@ export const fluidHandleSymbol: unique symbol = Symbol.for(
  * Handle to a shared {@link FluidObject}.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidHandle<out T = unknown> {
 	/**
 	 * Flag indicating whether or not the entity has services attached.
@@ -146,5 +151,5 @@ export interface IFluidHandle<out T = unknown> {
  * Created from {@link IFluidHandleInternal} using {@link toFluidHandleErased}.
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/naming-convention
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}

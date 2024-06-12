@@ -188,6 +188,26 @@
                     "camelCase"
                 ],
                 "leadingUnderscore": "allow"
+            },
+            {
+                "selector": "typeParameter",
+                "format": [
+                    "PascalCase"
+                ],
+                "custom": {
+                    "regex": "^(T[A-Z]|T$)",
+                    "match": true
+                }
+            },
+            {
+                "selector": "typeLike",
+                "format": [
+                    "PascalCase"
+                ],
+                "custom": {
+                    "regex": "^I[A-Z]",
+                    "match": false
+                }
             }
         ],
         "@typescript-eslint/no-array-constructor": [

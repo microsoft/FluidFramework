@@ -10,8 +10,8 @@ import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { type ITelemetryConsumer } from "../common/index.js";
 
 import {
-	type IFluidContainerSystemEventName,
-	IFluidContainerSystemEventNames,
+	type FluidContainerSystemEventName,
+	FluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
 import { type IContainerTelemetry } from "./containerTelemetry.js";
 import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
@@ -37,16 +37,16 @@ export class ContainerTelemetryManager {
 	 * Subscribes to the raw container system events and routes them to telemetry producers.
 	 */
 	private setupEventHandlers(): void {
-		this.container.on(IFluidContainerSystemEventNames.CONNECTED, () =>
-			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.CONNECTED),
+		this.container.on(FluidContainerSystemEventNames.CONNECTED, () =>
+			this.handleContainerSystemEvent(FluidContainerSystemEventNames.CONNECTED),
 		);
-		this.container.on(IFluidContainerSystemEventNames.DISCONNECTED, () =>
-			this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISCONNECTED),
+		this.container.on(FluidContainerSystemEventNames.DISCONNECTED, () =>
+			this.handleContainerSystemEvent(FluidContainerSystemEventNames.DISCONNECTED),
 		);
 		this.container.on(
-			IFluidContainerSystemEventNames.DISPOSED,
+			FluidContainerSystemEventNames.DISPOSED,
 			(error?: ICriticalContainerError) =>
-				this.handleContainerSystemEvent(IFluidContainerSystemEventNames.DISPOSED, {
+				this.handleContainerSystemEvent(FluidContainerSystemEventNames.DISPOSED, {
 					error,
 				}),
 		);
@@ -72,7 +72,7 @@ export class ContainerTelemetryManager {
 	 * produce {@link IContainerTelemetry} and sending it to the {@link ITelemetryConsumer} to be consumed.
 	 */
 	private handleContainerSystemEvent(
-		eventName: IFluidContainerSystemEventName,
+		eventName: FluidContainerSystemEventName,
 		payload?: unknown,
 	): void {
 		const telemetry: IContainerTelemetry | undefined =

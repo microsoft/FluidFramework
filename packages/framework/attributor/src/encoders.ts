@@ -112,7 +112,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 /**
  * Creates an encoder which composes `a` and `b`.
  */
-export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
+export const chain = <TA, TB, TC>(a: Encoder<TA, TB>, b: Encoder<TB, TC>): Encoder<TA, TC> => ({
 	encode: (content) => b.encode(a.encode(content)),
 	decode: (content) => a.decode(b.decode(content)),
 });

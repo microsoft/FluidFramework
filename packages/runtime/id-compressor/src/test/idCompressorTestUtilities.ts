@@ -47,8 +47,8 @@ import {
 /**
  * A readonly `Map` which is known to contain a value for every possible key
  */
-export interface ClosedMap<K, V> extends Omit<Map<K, V>, "delete" | "clear"> {
-	get(key: K): V;
+export interface ClosedMap<TKey, TValue> extends Omit<Map<TKey, TValue>, "delete" | "clear"> {
+	get(key: TKey): TValue;
 }
 
 /** Identifies a compressor in a network */
@@ -228,13 +228,16 @@ export class IdCompressorTestNetwork {
 	public getCompressor(client: Client): ReadonlyIdCompressor {
 		const compressors = this.compressors;
 		const handler = {
-			get<P extends keyof IdCompressor>(_: unknown, property: P): IdCompressor[P] {
+			get<TProperty extends keyof IdCompressor>(
+				_: unknown,
+				property: TProperty,
+			): IdCompressor[TProperty] {
 				return compressors.get(client)[property];
 			},
-			set<P extends keyof IdCompressor>(
+			set<TProperty extends keyof IdCompressor>(
 				_: unknown,
-				property: P,
-				value: IdCompressor[P],
+				property: TProperty,
+				value: IdCompressor[TProperty],
 			): boolean {
 				compressors.get(client)[property] = value;
 				return true;
@@ -724,10 +727,10 @@ export function expectSerializes(
 /**
  * Merges 'from' into 'to', and returns 'to'.
  */
-export function mergeArrayMaps<K, V>(
-	to: Pick<Map<K, V[]>, "get" | "set">,
-	from: ReadonlyMap<K, V[]>,
-): Pick<Map<K, V[]>, "get" | "set"> {
+export function mergeArrayMaps<TKey, TValue>(
+	to: Pick<Map<TKey, TValue[]>, "get" | "set">,
+	from: ReadonlyMap<TKey, TValue[]>,
+): Pick<Map<TKey, TValue[]>, "get" | "set"> {
 	for (const [key, value] of from.entries()) {
 		const entry = to.get(key);
 		if (entry !== undefined) {

@@ -138,6 +138,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 /**
  * {@link _ContainerDevtoolsView} input props.
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 interface _ContainerDevtoolsViewProps extends HasContainerKey {
 	/**
 	 * Set of features supported by the corresponding Container-level devtools instance.

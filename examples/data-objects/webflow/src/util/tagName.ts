@@ -263,9 +263,9 @@ export function isTextNode(node: Node): node is Text {
 }
 
 /** Type guard that returns true if the given `node` has the given `tagName`. */
-export function hasTagName<K extends keyof TagMap>(
+export function hasTagName<TTagMap extends keyof TagMap>(
 	node: Node | Element,
-	tagName: K,
-): node is TagMap[K] {
+	tagName: TTagMap,
+): node is TagMap[TTagMap] {
 	return (node as Element).tagName === tagName;
 }

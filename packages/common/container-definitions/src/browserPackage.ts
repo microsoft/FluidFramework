@@ -10,6 +10,7 @@ import { isFluidPackage } from "./fluidPackage.js";
  * A specific Fluid package environment for browsers
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
 	/**
 	 * The Universal Module Definition (umd) target specifics the scripts necessary for
@@ -34,6 +35,7 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
  * A Fluid package for specification for browser environments
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidBrowserPackage extends IFluidPackage {
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidPackage.fluid}

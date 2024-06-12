@@ -14,22 +14,26 @@
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 /**
- * A property to be logged to telemetry may require a tag indicating the value may contain sensitive data.
- * This type wraps a value of the given type V in an object along with a string tag (type can be further specified as T).
+ * A property to be logged to telemetry may require a tag indicating that the value may contain sensitive data.
+ * This type wraps a value of the given type `TValue` in an object, along with a string tag
+ * (type can be further specified via `TTag`).
  *
+ * @remarks
  * This indicates that the value should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
+ *
  * @public
  */
-export interface Tagged<V, T extends string = string> {
-	value: V;
-	tag: T;
+export interface Tagged<TValue, TTag extends string = string> {
+	value: TValue;
+	tag: TTag;
 }
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITelemetryBaseProperties {
 	/**
 	 * Properties of a telemetry event. They are string-indexed, and their values restricted to a known set of
@@ -45,6 +49,7 @@ export interface ITelemetryBaseProperties {
  * @param eventName - name of the event.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 	category: string;
 	eventName: string;
@@ -71,6 +76,7 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
  * Implemented by hosting app / loader
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITelemetryBaseLogger {
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
@@ -85,6 +91,7 @@ export interface ITelemetryBaseLogger {
  * No replacement intended for FluidFramework consumers.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 	eventName: string;
 }
@@ -93,6 +100,7 @@ export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
  * An error object that supports exporting its properties to be logged to telemetry
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILoggingError extends Error {
 	/**
 	 * Return all properties from this object that should be logged to telemetry

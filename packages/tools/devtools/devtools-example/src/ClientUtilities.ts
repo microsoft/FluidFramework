@@ -8,7 +8,7 @@ import { type IContainer } from "@fluidframework/container-definitions/internal"
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type IDevtoolsLogger } from "@fluidframework/devtools-core/internal";
 
-import { type IAppModel, RuntimeFactory } from "./Container.js";
+import { type AppModel, RuntimeFactory } from "./Container.js";
 import { type AppData } from "./FluidObject.js";
 
 /**
@@ -38,9 +38,9 @@ export interface ContainerInfo {
 /**
  * Creates a new Container from the provided client and container schema.
  */
-export function createLoader(logger?: IDevtoolsLogger): SessionStorageModelLoader<IAppModel> {
+export function createLoader(logger?: IDevtoolsLogger): SessionStorageModelLoader<AppModel> {
 	const codeLoader = new StaticCodeLoader(new RuntimeFactory());
-	const loader = new SessionStorageModelLoader<IAppModel>(codeLoader, logger);
+	const loader = new SessionStorageModelLoader<AppModel>(codeLoader, logger);
 
 	return loader;
 }
@@ -53,11 +53,11 @@ export function createLoader(logger?: IDevtoolsLogger): SessionStorageModelLoade
  * @throws If container creation or attaching fails for any reason.
  */
 export async function createContainer(
-	loader: SessionStorageModelLoader<IAppModel>,
+	loader: SessionStorageModelLoader<AppModel>,
 ): Promise<ContainerInfo> {
 	// Create the container and attach it
 	console.log("Creating new container...");
-	let model: IAppModel;
+	let model: AppModel;
 	let containerId: string;
 	try {
 		const createResponse = await loader.createDetached("1.0");
@@ -83,10 +83,10 @@ export async function createContainer(
  */
 export async function loadExistingContainer(
 	containerId: string,
-	loader: SessionStorageModelLoader<IAppModel>,
+	loader: SessionStorageModelLoader<AppModel>,
 ): Promise<ContainerInfo> {
 	console.log("Loading existing container...");
-	let model: IAppModel;
+	let model: AppModel;
 	try {
 		model = await loader.loadExisting(containerId);
 	} catch (error) {

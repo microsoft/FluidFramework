@@ -32,9 +32,10 @@ export interface DataObjectTypes {
 /**
  * @alpha
  */
-export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface IDataObjectProps<TTypes extends DataObjectTypes = DataObjectTypes> {
 	readonly runtime: IFluidDataStoreRuntime;
 	readonly context: IFluidDataStoreContext;
-	readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
-	readonly initProps?: I["InitialState"];
+	readonly providers: AsyncFluidObjectProvider<TTypes["OptionalProviders"]>;
+	readonly initProps?: TTypes["InitialState"];
 }

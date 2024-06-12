@@ -61,8 +61,10 @@ import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import type { MinimizationTransform } from "./minification.js";
 import { FuzzTestMinimizer } from "./minification.js";
 
-const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOperation): op is O =>
-	op.type === type;
+const isOperationType = <TOp extends BaseOperation>(
+	type: TOp["type"],
+	op: BaseOperation,
+): op is TOp => op.type === type;
 
 /**
  * @internal
@@ -1175,11 +1177,11 @@ export function mixinStashedClient<
  *
  * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
  */
-async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, Result>(
+async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, TResult>(
 	state: TState,
 	client: TState["client"],
-	callback: (state: TState) => Promise<Result>,
-): Promise<Result> {
+	callback: (state: TState) => Promise<TResult>,
+): Promise<TResult> {
 	const oldClient = state.client;
 	state.client = client;
 	try {
