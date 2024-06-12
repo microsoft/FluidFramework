@@ -108,7 +108,7 @@ export interface AnchorEvents {
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if one or more of this node's
-	 * direct children just change due to updates from the batch.
+	 * direct children just changed due to updates from the batch.
 	 *
 	 * @remarks
 	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
@@ -168,8 +168,7 @@ export interface AnchorEvents {
 	 * @param anchor - The anchor node.
 	 *
 	 * @remarks
-	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
-	 * least once on each ancestor.
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well.
 	 *
 	 * Compare to {@link AnchorEvents.subtreeChanged} which is emitted in the middle of the batch/delta-visit.
 	 *
