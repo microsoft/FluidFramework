@@ -23,13 +23,13 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./legacy": {
+		"./alpha": {
 			"import": {
-				"types": "./lib/legacy.d.ts",
+				"types": "./lib/alpha.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/legacy.d.ts",
+				"types": "./dist/alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -58,8 +58,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
