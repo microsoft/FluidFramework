@@ -60,7 +60,7 @@ stages:
             AFFECTED_PATHS: ${{ join(';', package.affectedPaths) }}
 
   - ${{ each package in parameters.packages }}:
-    - stage:
+    - stage: ${{ replace(replace(package.name, '@fluidframework/', ''), '@fluid-experimental/', 'experimental_') }}_stress_tests
       dependsOn: CheckAffectedPaths
       displayName: Run ${{ package.name }} stress tests
       jobs:
