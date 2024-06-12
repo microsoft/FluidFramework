@@ -381,8 +381,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	>();
 
 	/**
-	 * A copy of the removed roots that is modified during a transaction. If the transaction is aborted, this copy is disposed.
-	 * If the transaction is committed, this copy replaces {@link removedRoots}.
+	 * copies of the removed roots used as snapshots for reverting to previous state when transactions are aborted
 	 */
 	private readonly removedRootsSnapshots: DetachedFieldIndex[] = [];
 
