@@ -248,6 +248,28 @@ export function testRebase() {
 			assertChangesetsEqual(actual, expected);
 		});
 
+		it("return ↷ orphaned attach+detach", () => {
+			const cellId1: SF.CellId = { revision: tag1, localId: brand(1) };
+			const cellId2: SF.CellId = { revision: tag2, localId: brand(2) };
+			const ret = [
+				Mark.moveOut(1, brand(3), { revision: tag3 }),
+				Mark.returnTo(1, brand(3), cellId1, { revision: tag3 }),
+			];
+			const ad = [
+				Mark.skip(1),
+				Mark.attachAndDetach(
+					Mark.returnTo(1, brand(2), cellId1, { revision: tag2 }),
+					Mark.moveOut(1, brand(2), { revision: tag2 }),
+				),
+			];
+			const actual = rebase(ret, ad);
+			const expected = [
+				Mark.moveOut(1, brand(3), { revision: tag3 }),
+				Mark.returnTo(1, brand(3), cellId2, { revision: tag3 }),
+			];
+			assertChangesetsEqual(actual, expected);
+		});
+
 		it("move ↷ overlapping remove", () => {
 			// Moves ---DEFGH--
 			const move = [Mark.moveIn(5, brand(0)), { count: 3 }, Mark.moveOut(5, brand(0))];
@@ -688,14 +710,16 @@ export function testRebase() {
 			const [mo1, mi1] = Mark.move(1, brand(0));
 			const [mo2, mi2] = Mark.move(1, brand(1));
 			const [mo3, mi3] = Mark.move(1, brand(2));
-			const move = [
-				mo1,
+			const src: SF.CellMark<SF.MoveOut> = { ...mo1, finalEndpoint: { localId: brand(2) } };
+			const dst: SF.CellMark<SF.MoveIn> = { ...mi3, finalEndpoint: { localId: brand(0) } };
+			const move: SF.Changeset = [
+				src,
 				Mark.skip(1),
 				Mark.attachAndDetach(mi1, mo2),
 				Mark.skip(1),
 				Mark.attachAndDetach(mi2, mo3),
 				Mark.skip(1),
-				mi3,
+				dst,
 			];
 			const del = [Mark.remove(1, brand(0))];
 			const rebased = rebase(del, move);

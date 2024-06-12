@@ -962,6 +962,24 @@ describe("DefaultEditBuilder", () => {
 			};
 			assert.deepEqual(treeView, [expected]);
 		});
+
+		it("Moving 0 items does nothing.", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 0, 0, { parent: root, field: fooKey }, 0);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
 	});
 });
 
