@@ -101,7 +101,7 @@ describe("treeApi", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getViewOrError();
+				const checkoutView = view.getView();
 				assert(checkoutView instanceof CheckoutFlexTreeView);
 				const { undoStack, redoStack } = createTestUndoRedoStacks(
 					checkoutView.checkout.events,

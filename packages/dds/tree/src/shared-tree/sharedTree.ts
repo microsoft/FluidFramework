@@ -53,8 +53,10 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
+	// eslint-disable-next-line import/no-deprecated
 	TreeConfiguration,
 	TreeView,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
 import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -109,7 +111,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
-	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+	 * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
 	 *
 	 * Returned view is disposed when the stored schema becomes incompatible with the view schema.
 	 * Undefined is returned if the stored data could not be made compatible with the view schema.
@@ -309,6 +311,7 @@ export class SharedTree
 	}
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
+		// eslint-disable-next-line import/no-deprecated
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
@@ -317,10 +320,20 @@ export class SharedTree
 			createNodeKeyManager(this.runtime.idCompressor),
 		);
 		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.error?.canInitialize === true) {
-			view.upgradeSchema();
+		if (view.compatibility.canInitialize === true) {
+			view.initialize(config.initialTree());
 		}
 		return view;
+	}
+
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot> {
+		return new SchematizingSimpleTreeView(
+			this.checkout,
+			config,
+			createNodeKeyManager(this.runtime.idCompressor),
+		);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {

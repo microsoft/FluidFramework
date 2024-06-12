@@ -534,7 +534,7 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				const view1 = assertSchema(tree1, stringSequenceRootSchema, () => {});
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();

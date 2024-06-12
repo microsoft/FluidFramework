@@ -8,8 +8,10 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	TreeConfiguration,
+	TreeViewConfiguration,
+	type ITreeViewConfiguration,
+	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
-	type SchemaIncompatible,
 } from "./tree.js";
 export {
 	type TreeNodeSchema,
@@ -41,7 +43,7 @@ export { InternalSimpleTreeTypes };
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
-export { toFlexConfig } from "./toFlexSchema.js";
+export { toFlexConfig, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export type {
 	ObjectFromSchemaRecordUnsafe,
 	TreeObjectNodeUnsafe,
