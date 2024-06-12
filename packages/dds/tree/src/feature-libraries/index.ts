@@ -117,7 +117,7 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	NodeExistenceState,
+	NodeAttachState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
