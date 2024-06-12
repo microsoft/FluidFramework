@@ -23,8 +23,9 @@ interface IMeasuredCodeResult<TKey extends string> {
 }
 
 /**
- * @remarks The logger is expected to be used for a single event type. If the set of `telmetryProperties` is different for different events, a separate `TelemetryEventBatcher` should be created for each event type.
- * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} the number of calls to this function reaches a number specified by {@link TelemetryEventBatcher.threshold}.
+ * Telemetry class that measures the execution time of a given piece of code and accumulates user defined telemetry metrics ({@link ICustomDataMap}), to finally log an event through the {@link TelemetryEventBatcher.logger | logger} provided to this class when the number of calls to the {@link TelemetryEventBatcher.measure | measure} function reaches the specified by {@link TelemetryEventBatcher.threshold | threshold}.
+ *
+ * @remarks It is expected to be used for a single event type. If the set of `telemetryProperties` is different for different events, a separate `TelemetryEventBatcher` should be created for each event type.
  * @typeparam TMetrics - The set of keys that should be logged.
  * E.g., `keyof Foo` for logging properties `bar` and `baz` from `type Foo = { bar: number, baz: number }`.
  *
