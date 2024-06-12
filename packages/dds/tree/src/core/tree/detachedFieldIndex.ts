@@ -211,7 +211,7 @@ export class DetachedFieldIndex {
 		}
 
 		for (const [_, { root, latestRelevantRevision }] of entries.entries()) {
-			this.deleteRootFromLatestRelevantRevisionsMap(root, latestRelevantRevision);
+			deleteFromNestedMap(this.latestRelevantRevisionToFields, latestRelevantRevision, root);
 		}
 		this.detachedNodeToField.delete(revision);
 	}
@@ -240,19 +240,11 @@ export class DetachedFieldIndex {
 		const entry = tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		assert(entry !== undefined, "Unable to delete unknown entry");
 		deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-		this.deleteRootFromLatestRelevantRevisionsMap(entry.root, entry.latestRelevantRevision);
-	}
-
-	private deleteRootFromLatestRelevantRevisionsMap(
-		root: ForestRootId,
-		latestRelevantRevision: RevisionTag | undefined,
-	): void {
-		const revisionRoots = this.latestRelevantRevisionToFields.get(latestRelevantRevision);
-		assert(revisionRoots !== undefined, "Unable to delete unknown entry");
-		revisionRoots.delete(root);
-		if (revisionRoots.size === 0) {
-			this.latestRelevantRevisionToFields.delete(latestRelevantRevision);
-		}
+		deleteFromNestedMap(
+			this.latestRelevantRevisionToFields,
+			entry.latestRelevantRevision,
+			entry.root,
+		);
 	}
 
 	/**
