@@ -32,12 +32,12 @@ class TinyliciousService {
 /**
  * @internal
  */
-export class TinyliciousModelLoader<TModelType> implements IModelLoader<TModelType> {
+export class TinyliciousModelLoader<TModel> implements IModelLoader<TModel> {
 	private readonly tinyliciousService = new TinyliciousService();
-	private readonly modelLoader: ModelLoader<TModelType>;
+	private readonly modelLoader: ModelLoader<TModel>;
 
 	public constructor(codeLoader: ICodeDetailsLoader) {
-		this.modelLoader = new ModelLoader<TModelType>({
+		this.modelLoader = new ModelLoader<TModel>({
 			urlResolver: this.tinyliciousService.urlResolver,
 			documentServiceFactory: this.tinyliciousService.documentServiceFactory,
 			codeLoader,
@@ -49,13 +49,13 @@ export class TinyliciousModelLoader<TModelType> implements IModelLoader<TModelTy
 		return this.modelLoader.supportsVersion(version);
 	}
 
-	public async createDetached(version: string): Promise<IDetachedModel<TModelType>> {
+	public async createDetached(version: string): Promise<IDetachedModel<TModel>> {
 		return this.modelLoader.createDetached(version);
 	}
-	public async loadExisting(id: string): Promise<TModelType> {
+	public async loadExisting(id: string): Promise<TModel> {
 		return this.modelLoader.loadExisting(id);
 	}
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<TModelType> {
+	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<TModel> {
 		return this.modelLoader.loadExistingPaused(id, sequenceNumber);
 	}
 }

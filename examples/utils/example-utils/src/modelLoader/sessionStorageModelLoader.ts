@@ -36,7 +36,7 @@ const getDocumentServiceFactory = (documentId: string) => {
 /**
  * @internal
  */
-export class SessionStorageModelLoader<TModelType> implements IModelLoader<TModelType> {
+export class SessionStorageModelLoader<TModel> implements IModelLoader<TModel> {
 	public constructor(
 		private readonly codeLoader: ICodeDetailsLoader,
 		private readonly logger?: ITelemetryBaseLogger,
@@ -46,9 +46,9 @@ export class SessionStorageModelLoader<TModelType> implements IModelLoader<TMode
 		return true;
 	}
 
-	public async createDetached(version: string): Promise<IDetachedModel<TModelType>> {
+	public async createDetached(version: string): Promise<IDetachedModel<TModel>> {
 		const documentId = uuid();
-		const modelLoader = new ModelLoader<TModelType>({
+		const modelLoader = new ModelLoader<TModel>({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
@@ -57,9 +57,9 @@ export class SessionStorageModelLoader<TModelType> implements IModelLoader<TMode
 		});
 		return modelLoader.createDetached(version);
 	}
-	public async loadExisting(id: string): Promise<TModelType> {
+	public async loadExisting(id: string): Promise<TModel> {
 		const documentId = id;
-		const modelLoader = new ModelLoader<TModelType>({
+		const modelLoader = new ModelLoader<TModel>({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(documentId),
 			codeLoader: this.codeLoader,
@@ -68,8 +68,8 @@ export class SessionStorageModelLoader<TModelType> implements IModelLoader<TMode
 		});
 		return modelLoader.loadExisting(`${window.location.origin}/${id}`);
 	}
-	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<TModelType> {
-		const modelLoader = new ModelLoader<TModelType>({
+	public async loadExistingPaused(id: string, sequenceNumber: number): Promise<TModel> {
+		const modelLoader = new ModelLoader<TModel>({
 			urlResolver,
 			documentServiceFactory: getDocumentServiceFactory(id),
 			codeLoader: this.codeLoader,

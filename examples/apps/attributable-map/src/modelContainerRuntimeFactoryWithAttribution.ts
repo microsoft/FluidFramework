@@ -24,7 +24,7 @@ const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
  * An abstract class that gives a basic structure for container runtime initialization with attributor enabled.
  * It also requires a `createModel` method to returns the expected model type.
  */
-export abstract class ModelContainerRuntimeFactoryWithAttribution<TModelType>
+export abstract class ModelContainerRuntimeFactoryWithAttribution<TModel>
 	implements IRuntimeFactory
 {
 	public get IRuntimeFactory(): IRuntimeFactory {
@@ -49,7 +49,7 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<TModelType>
 			registryEntries: this.registryEntries,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
-			): Promise<IModelContainerRuntimeEntryPoint<TModelType>> => ({
+			): Promise<IModelContainerRuntimeEntryPoint<TModel>> => ({
 				getModel: async (container: IContainer) =>
 					this.createModel(containerRuntime, container),
 			}),
@@ -88,5 +88,5 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<TModelType>
 	protected abstract createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,
-	): Promise<TModelType>;
+	): Promise<TModel>;
 }
