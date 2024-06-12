@@ -11,6 +11,7 @@ import type { IInventoryListAppModel } from "../modelInterfaces.js";
 import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
+	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigratableModel interface.
 	model: IInventoryListAppModel & IMigratableModel;
 }
 
