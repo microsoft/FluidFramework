@@ -538,6 +538,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					for (const root of roots) {
 						visitor.destroy(this.removedRoots.toFieldKey(root), 1);
 					}
+
+					this.removedRoots.deleteRootsLastTouchedByRevision(revision);
 				});
 			});
 		});
