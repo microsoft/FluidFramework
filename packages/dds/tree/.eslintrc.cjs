@@ -49,6 +49,10 @@ module.exports = {
 
 		// TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
+		"@typescript-eslint/consistent-type-exports": [
+			"error",
+			{ fixMixedExportsWithInlineTypeSpecifier: true },
+		],
 	},
 	overrides: [
 		{

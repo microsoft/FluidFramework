@@ -71,6 +71,18 @@ export interface FieldChangeHandler<
 	 */
 	isEmpty(change: TChangeset): boolean;
 
+	/**
+	 * @param change - The field change to get the child changes from.
+	 *
+	 * @returns The set of `NodeId`s that correspond to nested changes in the given `change`.
+	 * Each `NodeId` is associated with the index of the node in the field in the input context of the changeset
+	 * (or `undefined` if the node is not attached in the input context).
+	 * For all returned entries where the index is defined,
+	 * the indices are are ordered from smallest to largest (with no duplicates).
+	 * The returned array is owned by the caller.
+	 */
+	getNestedChanges(change: TChangeset): [NodeId, number | undefined][];
+
 	createEmpty(): TChangeset;
 }
 
