@@ -14,7 +14,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { type SharedTree, SharedTreeFactory, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import {
+	type SharedTree,
+	SharedTreeFactory,
+	SharedTreeFormatVersion,
+} from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**
