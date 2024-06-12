@@ -13,34 +13,20 @@ import {
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
-	ISummaryContext,
-	ISnapshotTree,
-	IVersion,
-} from "@fluidframework/driver-definitions/internal";
+import { ISummaryContext, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { seqFromTree } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
-
-// eslint-disable-next-line import/no-internal-modules
-import { reconnectSummarizerToBeElected } from "./gc/gcTestSummaryUtils.js";
-
-const testContainerConfig: ITestContainerConfig = {
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: { state: "disabled" },
-		},
-	},
-};
-export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
+import { createSandbox, SinonSandbox } from "sinon";
 
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.
@@ -48,10 +34,63 @@ export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 describeCompat(
 	"Summarizer fetches expected number of times",
 	"NoCompat",
-	(getTestObjectProvider, apis) => {
+	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
 		let mainDataStore: ITestFluidObject;
+
+		const configProvider = createTestConfigProvider();
+		const testContainerConfig: ITestContainerConfig = {
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: { state: "disabled" },
+				},
+			},
+			loaderProps: { configProvider },
+		};
+		const summarizerContainerConfig: ITestContainerConfig = {
+			loaderProps: { configProvider },
+		};
+
+		let sandbox: SinonSandbox;
+		before(() => {
+			sandbox = createSandbox();
+		});
+
+		afterEach(() => {
+			sandbox.restore();
+			configProvider.clear();
+		});
+
+		beforeEach("setup", async () => {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+			mainContainer = await provider.makeTestContainer(testContainerConfig);
+
+			mainDataStore = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+			mainDataStore.root.set("test", "value");
+			await waitForContainerConnection(mainContainer);
+		});
+
+		interface GetVersionWrap {
+			/** The reference sequence number of the submitted summary. */
+			summaryRefSeq: number;
+			/** The version number of the submitted summary. */
+			summaryVersion: string;
+			/** Number of times snapshot is fetched from the server when submitting a summary. */
+			fetchCount: number;
+			/** The referenced sequence number of the last fetched snapshot when submitting a summary. */
+			fetchSnapshotRefSeq: number;
+		}
+
+		async function createSummarizerWithConfig(summaryVersion?: string) {
+			return createSummarizer(
+				provider,
+				mainContainer,
+				summarizerContainerConfig,
+				summaryVersion,
+			);
+		}
 
 		async function waitForSummary(summarizer: ISummarizer) {
 			// Wait for all pending ops to be processed by all clients.
@@ -63,68 +102,46 @@ describeCompat(
 			};
 		}
 
-		beforeEach("setup", async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-			mainContainer = await provider.makeTestContainer(testContainerConfig);
-
-			mainDataStore = (await mainContainer.getEntryPoint()) as ITestFluidObject;
-			mainDataStore.root.set("test", "value");
-			await waitForContainerConnection(mainContainer);
-		});
-
-		interface GetVersionWrap {
-			/** The reference sequence number of the submitted summary. */
-			summaryRefSeq?: number;
-			/** The version number of the submitted summary. */
-			summaryVersion?: string;
-			/** Number of times snapshot is fetched from the server when submitting a summary. */
-			fetchCount: number;
-			/** The referenced sequence number of the last fetched snapshot when submitting a summary. */
-			fetchSnapshotRefSeq: number;
-			/** Error during summarize, if any */
-			error?: any;
-		}
-
 		async function sendOpAndSummarize(summarizer: ISummarizer): Promise<GetVersionWrap> {
-			let fetchCount: number = 0;
-			let fetchSnapshotRefSeq = -1;
 			mainDataStore.root.set("key", "value");
 
+			// Spy on the getSnapshotTree function to find out if it was called and if so, what is the
+			// reference sequence number of the snapshot returned.
 			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+			const getSnapshotTreeSpy = sandbox.spy(containerRuntime.storage, "getSnapshotTree");
+
+			const summaryResult = await waitForSummary(summarizer);
+			assert(summaryResult.summaryVersion, "Summary version should be defined");
+			const summaryVersion = summaryResult.summaryVersion;
+			const summaryRefSeq = summaryResult.summaryRefSeq;
+
+			const fetchCount = getSnapshotTreeSpy.callCount;
+			let fetchSnapshotRefSeq = -1;
+			// If getSnapshotTree was called, get the reference sequence number of the snapshot it returned.
+			if (fetchCount > 0) {
+				const snapshotTree = await getSnapshotTreeSpy.returnValues[0];
+				assert(snapshotTree !== null, "Could not find snapshot tree");
+				fetchSnapshotRefSeq = await getSnapshotSequenceNumber(
+					containerRuntime,
+					snapshotTree,
+				);
+			}
+
+			getSnapshotTreeSpy.restore();
+			return { fetchCount, fetchSnapshotRefSeq, summaryVersion, summaryRefSeq };
+		}
+
+		async function getSnapshotSequenceNumber(
+			containerRuntime: ContainerRuntime,
+			snapshotTree: ISnapshotTree,
+		) {
 			const readAndParseBlob = async <T>(id: string) =>
 				readAndParse<T>(containerRuntime.storage, id);
-			let getSnapshotTreeFunc = containerRuntime.storage.getSnapshotTree;
-			const getSnapshotTreeOverride = async (
-				version?: IVersion,
-				scenarioName?: string,
-			): Promise<ISnapshotTree | null> => {
-				getSnapshotTreeFunc = getSnapshotTreeFunc.bind(containerRuntime.storage);
-				const snapshotTree = await getSnapshotTreeFunc(version, scenarioName);
-				assert(snapshotTree !== null, "getSnapshotTree should did not return a tree");
-				fetchSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
-				fetchCount++;
-				return snapshotTree;
-			};
-			containerRuntime.storage.getSnapshotTree = getSnapshotTreeOverride;
-
-			// Try to summarize. This can fail in scenario such as when a newer ack is received by the summarizer. In such
-			// cases, return the error.
-			let error: any;
-			let summaryVersion: string | undefined;
-			let summaryRefSeq: number | undefined;
-			try {
-				const summaryResult = await waitForSummary(summarizer);
-				assert(summaryResult.summaryVersion, "Summary version should be defined");
-				summaryVersion = summaryResult.summaryVersion;
-				summaryRefSeq = summaryResult.summaryRefSeq;
-			} catch (e) {
-				error = e;
-			}
-			return { fetchCount, fetchSnapshotRefSeq, summaryVersion, summaryRefSeq, error };
+			return seqFromTree(snapshotTree, readAndParseBlob);
 		}
 
 		it("First Summary does not result in fetch", async () => {
-			const summarizer1 = (await createSummarizer(provider, mainContainer)).summarizer;
+			const summarizer1 = (await createSummarizerWithConfig()).summarizer;
 
 			const versionWrap = await sendOpAndSummarize(summarizer1);
 			assert(versionWrap.fetchCount === 0, "No fetch should have happened");
@@ -132,7 +149,7 @@ describeCompat(
 		});
 
 		it("Summarizing consecutive times should not fetch", async () => {
-			const summarizer1 = (await createSummarizer(provider, mainContainer)).summarizer;
+			const summarizer1 = (await createSummarizerWithConfig()).summarizer;
 
 			let versionWrap = await sendOpAndSummarize(summarizer1);
 			assert(versionWrap.fetchCount === 0, "No fetch should have happened");
@@ -142,56 +159,51 @@ describeCompat(
 			summarizer1.close();
 		});
 
-		itExpects(
-			"Summarizer loading from an older summary should fetch latest summary",
-			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
-					error: "disconnected",
-				},
-			],
-			async function () {
-				// TODO: This test is consistently failing when ran against FRS. See ADO:7895
-				if (
-					provider.driver.type === "routerlicious" &&
-					provider.driver.endpointName === "frs"
-				) {
-					this.skip();
-				}
-				const summarizer1 = (await createSummarizer(provider, mainContainer)).summarizer;
-				// Create a second summarizer. Note that this is done before posting a summary because the server may
-				// delete this summary when a new one is posted.
-				// This summarizer will be used later to generate a summary and validate that it fetches the latest summary.
-				const { container: container2, summarizer: summarizer2 } = await createSummarizer(
-					provider,
-					mainContainer,
-				);
+		it("Summarizer loading from an older summary should fetch latest summary", async function () {
+			const summarizer1 = (await createSummarizerWithConfig()).summarizer;
+			// Create a second summarizer. Note that this is done before posting a summary because the server may
+			// delete this summary when a new one is posted.
+			// This summarizer will be used later to generate a summary and validate that it fetches the latest summary.
+			const { summarizer: summarizer2, container: container2 } =
+				await createSummarizerWithConfig();
+			const containerRuntime2 = (summarizer2 as any).runtime as ContainerRuntime;
 
-				const versionWrap1 = await sendOpAndSummarize(summarizer1);
-				assert(versionWrap1.fetchCount === 0, "No fetch should have happened");
-				assert(versionWrap1.summaryVersion, "Summary version should be defined");
-				summarizer1.close();
+			// Create a spy for "getSnapshotTree" function of the second summarizer. When it receives the ack for
+			// the summary submitted by the first summarizer, it should call this function to fetch the latest snapshot.
+			const getSnapshotTreeSpy2 = sandbox.spy(containerRuntime2.storage, "getSnapshotTree");
 
-				// Reconnect the second summarizer's container so that it is elected as the summarizer client.
-				await reconnectSummarizerToBeElected(container2);
+			// This tells the summarizer to process the latest summary ack
+			// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
+			// tell the summarizer to process acks.
+			const summarizerRunP = summarizer2.run("test");
 
-				// Try to summarize with the second summarizer. This will fetch the latest snapshot on receiving the ack for the
-				// above summary and then close.
-				const versionWrap2 = await sendOpAndSummarize(summarizer2);
+			const versionWrap1 = await sendOpAndSummarize(summarizer1);
+			assert(versionWrap1.fetchCount === 0, "No fetch should have happened");
+			summarizer1.close();
 
-				assert(
-					versionWrap2.error?.message === "disconnected",
-					"The summarizer should have disconnected after fetching latest snapshot",
-				);
-				assert(versionWrap2.fetchCount === 1, "Fetch should have happened");
-				assert.strictEqual(
-					versionWrap2.fetchSnapshotRefSeq,
-					versionWrap1.summaryRefSeq,
-					"Fetch did not download latest snapshot",
-				);
-				summarizer2.close();
-			},
-		);
+			// Send an op and wait for the second summarizer to process this. This ensures that the summary ack from
+			// the previous summary will be processed.
+			mainDataStore.root.set("key", "value");
+			await summarizerRunP;
+
+			// Validate that the second summarizer fetches the latest snapshot.
+			assert.strictEqual(
+				getSnapshotTreeSpy2.calledOnce,
+				true,
+				"Snapshot fetch did not happen",
+			);
+			const snapshotTree2 = await getSnapshotTreeSpy2.returnValues[0];
+			assert(snapshotTree2 !== null, "Did not find snapshot tree");
+			const fetchSnapshotRefSeq = await getSnapshotSequenceNumber(
+				containerRuntime2,
+				snapshotTree2,
+			);
+			assert.strictEqual(
+				fetchSnapshotRefSeq,
+				versionWrap1.summaryRefSeq,
+				"Fetch did not download latest snapshot",
+			);
+		});
 
 		const errorString = "Summary failed after upload";
 		itExpects(
@@ -208,7 +220,7 @@ describeCompat(
 			],
 			async () => {
 				// Create new summarizer
-				const summarizer = (await createSummarizer(provider, mainContainer)).summarizer;
+				const summarizer = (await createSummarizerWithConfig()).summarizer;
 
 				// Second summary should be discarded
 				const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
@@ -232,10 +244,10 @@ describeCompat(
 					reason: "test2",
 				});
 				assert((await result2.summarySubmitted).success === false, "Summary should fail");
+				summarizer.close();
 
-				const secondSummarizer = (
-					await createSummarizer(provider, mainContainer, undefined, lastSummaryVersion)
-				).summarizer;
+				const secondSummarizer = (await createSummarizerWithConfig(lastSummaryVersion))
+					.summarizer;
 				const versionWrap = await sendOpAndSummarize(secondSummarizer);
 				assert(versionWrap.fetchCount === 0, "No fetch should have happened");
 				secondSummarizer.close();
