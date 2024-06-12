@@ -42,7 +42,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	private dataSums: { [key in TMetrics]?: number } = {};
 	private dataMaxes: { [key in TMetrics]?: number } = {};
 
-	// Counter to keep track of the number of times the log function is called.
+	/** Counter to keep track of the number of times the log function is called. */
 	private counter = 0;
 
 	public constructor(
