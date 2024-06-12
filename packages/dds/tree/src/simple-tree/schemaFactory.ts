@@ -43,7 +43,7 @@ import {
 } from "./schemaTypes.js";
 import { TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
+import { TreeObjectNodeSchema, objectSchema } from "./objectNode.js";
 import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
 	FieldSchemaUnsafe,
@@ -228,17 +228,7 @@ export class SchemaFactory<
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(
-		name: Name,
-		fields: T,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Object,
-		TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		true,
-		T
-	> {
+	>(name: Name, fields: T): TreeObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true> {
 		return objectSchema(this.scoped(name), fields, true);
 	}
 
@@ -599,7 +589,8 @@ export class SchemaFactory<
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
 			T
-		>;
+		> &
+			TreeObjectNodeSchema<TScopedName>;
 	}
 
 	/**
