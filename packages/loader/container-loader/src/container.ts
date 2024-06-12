@@ -680,7 +680,7 @@ export class Container
 
 	private get supportGetSnapshotApi(): boolean {
 		const supportGetSnapshotApi: boolean =
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
 				true && this.service?.policies?.supportGetSnapshotApi === true;
 		return supportGetSnapshotApi;
 	}
