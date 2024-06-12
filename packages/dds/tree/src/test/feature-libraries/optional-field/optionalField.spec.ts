@@ -965,7 +965,7 @@ describe("optionalField", () => {
 		it("includes changes to the node in the field", () => {
 			const change: OptionalChangeset = Change.child(nodeId1);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			assert.deepEqual(actual, [nodeId1]);
+			assert.deepEqual(actual, [[nodeId1, 0]]);
 		});
 		it("includes changes to removed nodes", () => {
 			const change: OptionalChangeset = Change.atOnce(
@@ -973,7 +973,10 @@ describe("optionalField", () => {
 				Change.childAt(brand(42), nodeId2),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			assert.deepEqual(actual, [nodeId1, nodeId2]);
+			assert.deepEqual(actual, [
+				[nodeId1, undefined],
+				[nodeId2, undefined],
+			]);
 		});
 	});
 });

@@ -62,8 +62,18 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
-export function getNestedChanges(change: Changeset): NodeId[] {
-	return change.flatMap(({ changes }) => changes ?? []);
+export function getNestedChanges(change: Changeset): [NodeId, number | undefined][] {
+	const output: [NodeId, number | undefined][] = [];
+	let index = 0;
+	for (const { changes, cellId, count } of change) {
+		if (changes !== undefined) {
+			output.push([changes, cellId === undefined ? index : undefined]);
+		}
+		if (cellId === undefined) {
+			index += count;
+		}
+	}
+	return output;
 }
 
 export function isNewAttach(mark: Mark, revision?: RevisionTag): boolean {

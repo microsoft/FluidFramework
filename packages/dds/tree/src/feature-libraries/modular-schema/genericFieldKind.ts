@@ -105,8 +105,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	createEmpty: (): GenericChangeset => [],
 };
 
-function getNestedChanges(change: GenericChangeset): NodeId[] {
-	return change.map(({ nodeChange }) => nodeChange);
+function getNestedChanges(change: GenericChangeset): [NodeId, number | undefined][] {
+	return change.map(({ index, nodeChange }) => [nodeChange, index]);
 }
 
 function rebaseGenericChange(

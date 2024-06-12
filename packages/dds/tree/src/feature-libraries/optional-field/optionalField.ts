@@ -719,8 +719,11 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	createEmpty: () => ({ moves: [], childChanges: [] }),
 };
 
-function getNestedChanges(change: OptionalChangeset): NodeId[] {
-	return change.childChanges.map(([register, nodeId]) => nodeId);
+function getNestedChanges(change: OptionalChangeset): [NodeId, number | undefined][] {
+	return change.childChanges.map(([register, nodeId]) => [
+		nodeId,
+		register === "self" ? 0 : undefined,
+	]);
 }
 
 function* relevantRemovedRoots(

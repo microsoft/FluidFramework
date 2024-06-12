@@ -27,7 +27,10 @@ export function testGetNestedChanges() {
 		it("includes changes to nodes in the field", () => {
 			const change = [Mark.modify(nodeId1), { count: 42 }, Mark.modify(nodeId2)];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			assert.deepEqual(actual, [nodeId1, nodeId2]);
+			assert.deepEqual(actual, [
+				[nodeId1, 0],
+				[nodeId2, 43],
+			]);
 		});
 		it("includes changes to removed nodes", () => {
 			const change = [
@@ -35,7 +38,10 @@ export function testGetNestedChanges() {
 				Mark.modify(nodeId2, { revision: tag1, localId: brand(43) }),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			assert.deepEqual(actual, [nodeId1, nodeId2]);
+			assert.deepEqual(actual, [
+				[nodeId1, undefined],
+				[nodeId2, undefined],
+			]);
 		});
 	});
 }
