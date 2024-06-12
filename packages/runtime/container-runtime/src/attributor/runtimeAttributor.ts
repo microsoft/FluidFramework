@@ -81,7 +81,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 	public get(key: AttributionKey): AttributionInfo {
 		assert(
 			this.opAttributor !== undefined,
-			0x509 /* RuntimeAttributor must be initialized before getAttributionInfo can be called */,
+			"RuntimeAttributor must be initialized before getAttributionInfo can be called",
 		);
 
 		if (key.type === "detached") {
@@ -152,10 +152,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 			this.opAttributor = new OpStreamAttributor(deltaManager, quorum);
 		} else {
 			const id = attributorTree.blobs[opBlobName];
-			assert(
-				id !== undefined,
-				0x50a /* Attributor tree should have op attributor summary blob. */,
-			);
+			assert(id !== undefined, "Attributor tree should have op attributor summary blob.");
 			const blobContents = await readBlob(id);
 			const attributorSnapshot = bufferToString(blobContents, "utf8");
 			this.opAttributor = this.encoder.decode(attributorSnapshot);
@@ -170,7 +167,7 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 
 		assert(
 			this.opAttributor !== undefined,
-			0x50b /* RuntimeAttributor should be initialized before summarization */,
+			"RuntimeAttributor should be initialized before summarization",
 		);
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));

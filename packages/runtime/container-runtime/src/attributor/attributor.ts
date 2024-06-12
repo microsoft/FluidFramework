@@ -95,13 +95,10 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 			if (message.type === MessageType.Operation) {
 				assert(
 					typeof message.clientId === "string",
-					0x966 /* Client id should be present and should be of type string */,
+					"Client id should be present and should be of type string",
 				);
 				const client = quorumClients.getMember(message.clientId);
-				assert(
-					client !== undefined,
-					0x967 /* Received message from user not in the quorumClients */,
-				);
+				assert(client !== undefined, "Received message from user not in the quorumClients");
 				this.keyToInfo.set(message.sequenceNumber, {
 					user: client.client.user,
 					timestamp: message.timestamp,

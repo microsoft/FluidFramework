@@ -77,7 +77,8 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * Using `Jsonable<unknown>` or `Jsonable<any>` is a type alias for
  * {@link JsonableTypeWith}`<never>` and should not be used if precise type safety is desired.
  *
- * @deprecated - This has been moved to {@link @fluidframework/runtime-definitions#Jsonable}
+ * TODO: Will deprecate in another PR.
+ * This has been moved to {@link @fluidframework/runtime-definitions#Jsonable}
  * @example Typical usage
  *
  * ```typescript

@@ -30,10 +30,7 @@ export const deltaEncoder: TimestampEncoder = {
 		return deltaTimestamps;
 	},
 	decode: (encoded: unknown) => {
-		assert(
-			Array.isArray(encoded),
-			0x4b0 /* Encoded timestamps should be an array of numbers */,
-		);
+		assert(Array.isArray(encoded), "Encoded timestamps should be an array of numbers");
 		const timestamps: number[] = Array.from({ length: encoded.length });
 		let cumulativeSum = 0;
 		for (let i = 0; i < encoded.length; i++) {
@@ -95,7 +92,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
 		assert(
 			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
-			0x4b1 /* serialized attribution columns should have the same length */,
+			"serialized attribution columns should have the same length",
 		);
 		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
 		for (let i = 0; i < seqs.length; i++) {

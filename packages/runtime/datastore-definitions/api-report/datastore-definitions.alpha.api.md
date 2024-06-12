@@ -143,7 +143,7 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
     [index: string | number]: JsonableTypeWith<T>;
 }
 
-// @alpha @deprecated
+// @alpha
 export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
     [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
 } : never : never;
