@@ -54,7 +54,6 @@
 		"hugo-extended": "^0.113.0",
 		"js-yaml": "^4.1.0",
 		"linkcheck-bin": "3.0.0-1",
-		"markdown-magic": "npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1",
 		"markdown-magic-package-json": "^2.0.2",
 		"markdown-magic-package-scripts": "^1.2.2",
 		"markdown-magic-template": "^1.0.1",
