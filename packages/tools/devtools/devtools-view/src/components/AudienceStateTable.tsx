@@ -75,6 +75,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
+						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
 						<TableCell key={columnIndex}>
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout

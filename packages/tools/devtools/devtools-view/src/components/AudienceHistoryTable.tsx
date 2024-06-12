@@ -79,6 +79,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			<TableHeader>
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
+						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
 						<TableCell key={columnIndex}>
 							{column.columnKey === "event" && (
 								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
