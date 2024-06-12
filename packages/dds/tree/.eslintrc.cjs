@@ -51,7 +51,7 @@ module.exports = {
 		"@typescript-eslint/explicit-member-accessibility": "error",
 		"@typescript-eslint/consistent-type-exports": [
 			"error",
-			{ fixMixedExportsWithInlineTypeSpecifier: false },
+			{ fixMixedExportsWithInlineTypeSpecifier: true },
 		],
 		"@typescript-eslint/consistent-type-imports": [
 			"error",
