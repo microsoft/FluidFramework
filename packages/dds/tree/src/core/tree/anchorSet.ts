@@ -126,6 +126,8 @@ export interface AnchorEvents {
 	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
 	 * node's fields.
 	 *
+	 * This event is guaranteed to be emitted on a given node only once per batch.
+	 *
 	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
 	childrenChangedAfterBatch(anchor: AnchorNode): void;
@@ -165,10 +167,10 @@ export interface AnchorEvents {
 	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if something in the subtree
 	 * rooted at `anchor` changed due to updates from the batch.
 	 *
-	 * @param anchor - The anchor node.
-	 *
 	 * @remarks
-	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well.
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, from bottom to top.
+	 *
+	 * This event is guaranteed to be emitted on a given node only once per batch.
 	 *
 	 * Compare to {@link AnchorEvents.subtreeChanged} which is emitted in the middle of the batch/delta-visit.
 	 *
@@ -1028,7 +1030,9 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
 					p.events.emit("subtreeChanged", p);
-					const nodeChangeHappened = this.actualChangeStack.pop() ?? false;
+					assert (this.actualChangeStack.length > 0, "Unbalanced delta walk, exited from more nodes than we entered");
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated with the assertion above
+					const nodeChangeHappened = this.actualChangeStack.pop()!;
 					if (nodeChangeHappened) {
 						this.bufferedEvents.push({
 							node: p,
