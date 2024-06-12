@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -13,14 +13,17 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	type ITestFluidObject,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,
 	CommitKind,
-	JsonableTree,
-	Revertible,
-	UpPath,
+	type JsonableTree,
+	type Revertible,
+	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
@@ -38,8 +41,8 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	FlexTreeTypedField,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
 	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
@@ -56,18 +59,18 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	CheckoutFlexTreeView,
-	FlexTreeView,
+	type CheckoutFlexTreeView,
+	type FlexTreeView,
 	ForestType,
-	ISharedTree,
-	InitializeAndSchematizeConfiguration,
-	SharedTree,
+	type ISharedTree,
+	type InitializeAndSchematizeConfiguration,
+	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
-import { EditManager } from "../../shared-tree-core/index.js";
+import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
 	TreeConfiguration,
@@ -75,10 +78,10 @@ import {
 } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
-	ConnectionSetter,
+	type ConnectionSetter,
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
-	SharedTreeWithConnectionStateSetter,
+	type SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -95,7 +98,7 @@ import {
 	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,

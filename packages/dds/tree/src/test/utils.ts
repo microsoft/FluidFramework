@@ -8,16 +8,16 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -26,11 +26,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
-	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	SummaryInfo,
+	type ChannelFactoryRegistry,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	type SummaryInfo,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
@@ -38,35 +38,35 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
-	AnnouncedVisitor,
-	ChangeFamily,
-	ChangeFamilyEditor,
+	type AnnouncedVisitor,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
-	CommitMetadata,
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeDestruction,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	FieldUpPath,
-	IEditableForest,
-	IForestSubscription,
-	JsonableTree,
-	Revertible,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
+	type CommitMetadata,
+	type DeltaDetachedNodeBuild,
+	type DeltaDetachedNodeDestruction,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type FieldUpPath,
+	type IEditableForest,
+	type IForestSubscription,
+	type JsonableTree,
+	type Revertible,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	RevisionTagCodec,
-	TaggedChange,
-	TreeStoredSchema,
+	type TaggedChange,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	UpPath,
+	type UpPath,
 	announceDelta,
 	applyDelta,
 	clonePath,
@@ -89,14 +89,14 @@ import {
 	leaf,
 	singleJsonCursor,
 } from "../domains/index.js";
-import { HasListeners, IEmitter, Listenable } from "../events/index.js";
+import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	ContextuallyTypedNodeData,
+	type ContextuallyTypedNodeData,
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeTypedField,
-	NodeKeyManager,
+	type FlexFieldSchema,
+	type FlexTreeTypedField,
+	type NodeKeyManager,
 	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
@@ -113,17 +113,17 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
-	CheckoutEvents,
+	type CheckoutEvents,
 	CheckoutFlexTreeView,
-	ISharedTree,
-	ITreeCheckout,
-	InitializeAndSchematizeConfiguration,
-	RevertibleFactory,
+	type ISharedTree,
+	type ITreeCheckout,
+	type InitializeAndSchematizeConfiguration,
+	type RevertibleFactory,
 	SharedTree,
-	SharedTreeContentSnapshot,
+	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
-	TreeCheckout,
-	TreeContent,
+	type TreeCheckout,
+	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
@@ -134,9 +134,9 @@ import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
+import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import type { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
+import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 

@@ -7,22 +7,22 @@ import { strict as assert } from "node:assert";
 
 import {
 	CheckoutFlexTreeView,
-	TransactionConstraint,
+	type TransactionConstraint,
 	Tree,
-	rollback,
+	type rollback,
 } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	ValidateRecursiveSchema,
-	TreeView,
-	InsertableTypedNode,
 	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
+	type TreeView,
+	type InsertableTypedNode,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { runTransaction } from "../../shared-tree/treeApi.js";
 

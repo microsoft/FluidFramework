@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
 
-import { CommitMetadata } from "../core/index.js";
-import { Listenable } from "../events/index.js";
-import { RevertibleFactory } from "../shared-tree/index.js";
+import type { CommitMetadata } from "../core/index.js";
+import type { Listenable } from "../events/index.js";
+import type { RevertibleFactory } from "../shared-tree/index.js";
 
-import {
+import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,

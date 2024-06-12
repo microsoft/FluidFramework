@@ -5,22 +5,22 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
-import { IdAllocator, brand } from "../../util/index.js";
+import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import { type IdAllocator, brand } from "../../util/index.js";
 import {
-	CrossFieldManager,
+	type CrossFieldManager,
 	CrossFieldTarget,
-	NodeChangeRebaser,
+	type NodeChangeRebaser,
 	NodeExistenceState,
-	NodeId,
-	RebaseRevisionMetadata,
+	type NodeId,
+	type RebaseRevisionMetadata,
 } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	MoveEffect,
-	MoveEffectTable,
+	type MoveEffect,
+	type MoveEffectTable,
 	getMoveEffect,
 	isMoveIn,
 	isMoveMark,
@@ -28,16 +28,16 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	CellId,
-	CellMark,
-	Changeset,
-	Mark,
-	MarkEffect,
-	MarkList,
-	MoveId,
-	MoveIn,
-	MoveOut,
-	NoopMark,
+	type CellId,
+	type CellMark,
+	type Changeset,
+	type Mark,
+	type MarkEffect,
+	type MarkList,
+	type MoveId,
+	type MoveIn,
+	type MoveOut,
+	type NoopMark,
 	NoopMarkType,
 } from "./types.js";
 import {
@@ -333,6 +333,10 @@ function rebaseMarkIgnoreChild(
 			baseMark.cellId !== undefined,
 			0x81a /* AttachAndDetach mark should target an empty cell */,
 		);
+		if (isMoveIn(baseMark.attach) && isMoveOut(baseMark.detach)) {
+			// Orphaned moves are effectively cell renames.
+			return withCellId(currMark, getDetachOutputCellId(baseMark.detach));
+		}
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },

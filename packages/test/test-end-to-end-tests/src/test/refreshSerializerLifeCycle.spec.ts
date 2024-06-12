@@ -96,7 +96,7 @@ async function loadOffline(
 	return container;
 }
 
-describeCompat("Validate Attach lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

@@ -4,22 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { type SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { EncodedRevisionTag, GraphCommit } from "../../core/index.js";
-import { ChangeEncodingContext } from "../../core/index.js";
+import type {
+	EncodedRevisionTag,
+	GraphCommit,
+	RevisionTag,
+	TaggedChange,
+	ChangeEncodingContext,
+} from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Message } from "../../shared-tree-core/messageFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
+import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
@@ -144,7 +149,10 @@ describe("message codec", () => {
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
-					inverse: "Extra field that should be dropped" as unknown as TestChange,
+					rollback: "Extra field that should be dropped" as unknown as TaggedChange<
+						TestChange,
+						RevisionTag
+					>,
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
 			};

@@ -27,20 +27,20 @@ Instead, applications should initialize their trees in document creation codepat
 As an example, something like the following code may have been used before for both the document create and document load codepaths:
 
 ```typescript
-// -- first-party API --
-const tree = SharedTree.create(runtime, "foo");
-const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
-```
-
-When using the third-party API, creating a tree looks a bit different but the call to `schematize` is the same:
-
-```typescript
-// -- third-party API for statically defined objects in container schema --
+// -- fluid-framework API for statically defined objects in container schema --
 const tree = container.initialObjects.myTree;
 const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
 
-// -- third-party API for dynamically created objects --
+// -- fluid-framework API for dynamically created objects --
 const tree = await container.create(SharedTree);
+const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+```
+
+When using the encapsulated API, creating a tree looks a bit different but the call to `schematize` is the same:
+
+```typescript
+// -- encapsulated API --
+const tree = SharedTree.create(runtime, "foo");
 const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
 ```
 

@@ -9,10 +9,10 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
-	TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "../../simple-tree/index.js";
 import {
 	adaptEnum,

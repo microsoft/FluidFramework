@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { TreeStatus } from "../../../dist/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { SchemaFactory, FieldProps, TreeNode } from "../../simple-tree/index.js";
-import {
+import { SchemaFactory, type FieldProps, type TreeNode } from "../../simple-tree/index.js";
+import type {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
 	FieldProvider,
@@ -239,6 +239,7 @@ describe("Unhydrated nodes", () => {
 		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
+	// TODO: Fail instead of returning undefined, as is the case for identifiers.
 	it("read undefined for contextual defaulted properties", () => {
 		const defaultValue = 3;
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
@@ -253,6 +254,43 @@ describe("Unhydrated nodes", () => {
 		}) {}
 		const defaultingLeaf = new HasDefault({ value: undefined });
 		assert.equal(defaultingLeaf.value, undefined);
+	});
+
+	it("read manually provided identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasId", {
+			id: schemaFactory.identifier,
+		}) {}
+
+		const id = "my identifier";
+		const object = new TestObjectWithId({ id });
+		assert.equal(object.id, id);
+	});
+
+	it("fail to read automatically generated identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasId", {
+			id: schemaFactory.identifier,
+		}) {}
+
+		const object = new TestObjectWithId({ id: undefined });
+		assert.throws(
+			() => object.id,
+			(error: Error) =>
+				validateAssertionError(
+					error,
+					/An automatically generated node identifier may not be queried until the node is inserted into the tree/,
+				),
+		);
+	});
+
+	it("correctly iterate identifiers", () => {
+		class TestObjectWithId extends schemaFactory.object("HasIds", {
+			id: schemaFactory.identifier,
+			autoId: schemaFactory.identifier,
+		}) {}
+
+		const id = "my identifier";
+		const object = new TestObjectWithId({ id, autoId: undefined });
+		assert.deepEqual(Object.entries(object), [["id", id]]);
 	});
 });
 

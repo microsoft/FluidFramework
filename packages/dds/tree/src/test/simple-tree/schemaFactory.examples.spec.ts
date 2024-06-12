@@ -9,11 +9,11 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	ITree,
+	type ITree,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	TreeView,
 	TreeViewConfiguration,
+	type TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 

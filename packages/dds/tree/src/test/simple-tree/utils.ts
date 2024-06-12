@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager, type NodeKeyManager } from "../../feature-libraries/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	TreeFieldFromImplicitField,
 	cursorFromUnhydratedRoot,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";

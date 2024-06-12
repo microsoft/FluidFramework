@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
+import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
 import { testIdCompressor } from "../utils.js";
 import {
-	ChangeEnricherMutableCheckout,
+	type ChangeEnricherMutableCheckout,
 	DefaultResubmitMachine,
 } from "../../shared-tree-core/index.js";
 import { disposeSymbol } from "../../util/index.js";

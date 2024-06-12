@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	TreeArrayNode,
 	TreeViewConfiguration,
@@ -20,7 +20,7 @@ import { isTreeNode } from "../../simple-tree/proxies.js";
 import { hydrate, pretty } from "./utils.js";
 import { getView } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -33,6 +33,7 @@ describe("simple-tree proxies", () => {
 		object: childSchema,
 		list: sb.array(sb.number),
 		map: sb.map("map", sb.string),
+		optionalFlag: sb.optional(sb.boolean),
 	});
 
 	const initialTree = {

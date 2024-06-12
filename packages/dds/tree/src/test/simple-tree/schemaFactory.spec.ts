@@ -14,7 +14,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeView, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	treeNodeApi as Tree,
+	TreeViewConfiguration,
+	type TreeView,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
@@ -22,7 +26,7 @@ import {
 	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactory.js";
-import {
+import type {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -30,7 +34,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
 
@@ -139,6 +143,30 @@ describe("schemaFactory", () => {
 		const foo = factory.object("foo", {}).identifier;
 		type _check = requireTrue<areSafelyAssignable<"foo", typeof foo>>;
 		assert.equal(foo, "foo");
+	});
+
+	it("Optional fields", () => {
+		const factory = new SchemaFactory("test");
+		class Foo extends factory.object("foo", {
+			x: factory.optional(factory.number),
+		}) {}
+
+		const _check1 = new Foo({});
+		const _check2 = new Foo({ x: undefined });
+		const _check3 = new Foo({ x: 1 });
+	});
+
+	it("Required fields", () => {
+		const factory = new SchemaFactory("test");
+		class Foo extends factory.object("foo", {
+			x: factory.required(factory.number),
+		}) {}
+
+		// @ts-expect-error Missing required field
+		const _check1 = new Foo({});
+		// @ts-expect-error Required field cannot be undefined
+		const _check2 = new Foo({ x: undefined });
+		const _check3 = new Foo({ x: 1 });
 	});
 
 	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
