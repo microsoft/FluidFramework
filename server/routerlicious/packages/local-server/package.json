@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-local-server",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"description": "Fluid local server implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
