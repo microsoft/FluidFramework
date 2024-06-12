@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { truncateToDecimalPlaces } from "./mathTools.js";
+import { performance } from "@fluid-internal/client-utils";
+
+import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
-
 /**
  * Expected type of the custom data passed into the logger.
  */
@@ -19,6 +20,9 @@ import type {
  * Expected type of the custom data passed into the logger.
  */
 interface IMeasuredCodeResult<TKey extends string> {
+	/**
+	 * Optional properties to log custom data. The set of properties must be the same for all calls to the `measure` function.
+	 */
 	telemetryProperties?: { readonly [key in TKey]: number };
 }
 
@@ -33,16 +37,23 @@ interface IMeasuredCodeResult<TKey extends string> {
  */
 export class TelemetryEventBatcher<TMetrics extends string> {
 	/**
-	 * `codeDuration`: stores the average duration of the code passed into the logger.
-	 * `dataSums`: stores the sum of the custom data passed into the logger.
-	 * `dataMaxes`: stores the maximum value of the custom data passed into the logger.
-	 * `dataSums` and `dataMaxes` should share identical sets of properties.
+	 * Stores the accumulated duration of the code passed into the logger.
 	 */
-	private codeDuration: number = 0;
+	private accumulatedDuration: number = 0;
+
+	/**
+	 * Stores the sum of the custom data passed into the logger.
+	 */
 	private dataSums: { [key in TMetrics]?: number } = {};
+
+	/**
+	 * Stores the maximum value of the custom data passed into the logger.
+	 */
 	private dataMaxes: { [key in TMetrics]?: number } = {};
 
-	/** Counter to keep track of the number of times the log function is called. */
+	/**
+	 * Counter to keep track of the number of times the log function is called.
+	 */
 	private counter = 0;
 
 	public constructor(
@@ -69,21 +80,15 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	 *
 	 * @returns Whatever the passed-in code block returns.
 	 */
-	public measure<T extends IMeasuredCodeResult<TMetrics>>(
-		codeToMeasure: () => T,
-		customData: Record<TMetrics, number>,
-	): T {
+	public measure<T extends IMeasuredCodeResult<TMetrics>>(codeToMeasure: () => T): T {
 		const start = performance.now();
 		const returnValue = codeToMeasure();
 		const duration = performance.now() - start;
 
-		this.codeDuration = truncateToDecimalPlaces(
-			(this.codeDuration + duration) / this.counter,
-			6,
-		);
+		this.accumulatedDuration += duration;
 
 		if (returnValue.telemetryProperties) {
-			this.log(customData);
+			this.accumulateAndLog(returnValue.telemetryProperties);
 		}
 
 		return returnValue;
@@ -116,9 +121,11 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 			...this.eventBase,
 		};
 
+		telemetryEvent.avgcAccumulatedDuration = this.accumulatedDuration /= this.counter;
+
 		for (const key of Object.keys(this.dataSums) as TMetrics[]) {
 			if (this.dataSums[key] !== undefined) {
-				telemetryEvent[`avg${key}`] = truncateToDecimalPlaces(
+				telemetryEvent[`avg${key}`] = roundToDecimalPlaces(
 					this.dataSums[key]! / this.counter,
 					6,
 				);
@@ -126,14 +133,13 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 			if (this.dataMaxes[key] !== undefined) {
 				telemetryEvent[`max${key}`] = this.dataMaxes[key];
 			}
-			telemetryEvent[`duration${key}`] = this.codeDuration;
 		}
 
 		this.logger.sendTelemetryEvent(telemetryEvent);
 
 		// Reset the counter and the data.
 		this.counter = 0;
-		this.codeDuration = 0;
+		this.accumulatedDuration = 0;
 		this.dataSums = {};
 		this.dataMaxes = {};
 	}

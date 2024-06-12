@@ -4,11 +4,11 @@
  */
 
 /**
- * Function to truncate a number to a specified number of decimal places.
+ * Function to round a number to a specified number of decimal places.
  *
- * @param number - The number to truncate.
- * @param decimalPlaces - The number of decimal places to truncate to.
- * @returns The truncated number.
+ * @param number - The number to round.
+ * @param decimalPlaces - The number of decimal places to round to.
+ * @returns The rounded number.
  */
 export function roundToDecimalPlaces(number: number, decimalPlaces: number): number {
 	const factor = Math.pow(10, decimalPlaces);
