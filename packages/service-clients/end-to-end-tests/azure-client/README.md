@@ -6,6 +6,10 @@ To run FRS e2e tests: `test:realsvc:azure`.
 
 To run Azure Local Service e2e tests: `test:realsvc`.
 
+## Dependency Management
+
+This package is built as a test only package without production code. To support use outside of repository `devDependencies` that are required to run tests, are listed as `peerDependencies`.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->

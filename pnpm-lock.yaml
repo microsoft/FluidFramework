@@ -13383,7 +13383,10 @@ importers:
         version: 9.0.1
 
   packages/service-clients/end-to-end-tests/azure-client:
-    dependencies:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.7.3
+        version: 1.7.3
       '@fluid-experimental/data-objects':
         specifier: workspace:~
         version: link:../../../../experimental/framework/data-objects
@@ -13399,6 +13402,15 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../azure-client
+      '@fluidframework/azure-client-legacy':
+        specifier: npm:@fluidframework/azure-client@^1.2.0
+        version: /@fluidframework/azure-client@1.2.0
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -13414,12 +13426,18 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../runtime/datastore-definitions
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../framework/fluid-static
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../dds/map
+      '@fluidframework/map-legacy':
+        specifier: npm:@fluidframework/map@^1.4.0
+        version: /@fluidframework/map@1.4.0
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
@@ -13441,28 +13459,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../dds/tree
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ^1.7.3
-        version: 1.7.3
-      '@fluidframework/azure-client-legacy':
-        specifier: npm:@fluidframework/azure-client@^1.2.0
-        version: /@fluidframework/azure-client@1.2.0
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.39.0-264124
-        version: 0.39.0-264124(@types/node@18.19.1)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.3.0
-        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/map-legacy':
-        specifier: npm:@fluidframework/map@^1.4.0
-        version: /@fluidframework/map@1.4.0
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -13523,6 +13519,9 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
 
   packages/service-clients/end-to-end-tests/odsp-client:
     dependencies:
