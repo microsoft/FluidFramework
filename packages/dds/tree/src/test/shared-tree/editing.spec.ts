@@ -2716,7 +2716,7 @@ describe("Editing", () => {
 
 				const fooPath: FieldUpPath = { parent: rootNode, field: brand("foo") };
 
-				// Remove A and modify the field containing the node existence constraint.
+				// Modify the field containing the node existence constraint then remove its ancestor
 				tree.transaction.start();
 				tree.editor
 					.sequenceField(fooPath)
