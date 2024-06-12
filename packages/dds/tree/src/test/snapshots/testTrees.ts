@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	JsonableTree,
-	UpPath,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type JsonableTree,
+	type UpPath,
 	rootFieldKey,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
@@ -22,18 +22,18 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	InsertableFlexNode,
+	type FlexTreeNodeSchema,
+	type InsertableFlexNode,
 	cursorForJsonableTreeNode,
 	cursorForTypedTreeData,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
 import {
-	ISharedTree,
-	ITreeCheckout,
-	InitializeAndSchematizeConfiguration,
+	type ISharedTree,
+	type ITreeCheckout,
+	type InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
-	SharedTreeOptions,
+	type SharedTreeOptions,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";

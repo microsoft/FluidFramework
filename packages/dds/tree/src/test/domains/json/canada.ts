@@ -5,8 +5,8 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
-import { FieldKey } from "../../../core/index.js";
-import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import type { FieldKey } from "../../../core/index.js";
+import { type JsonCompatibleReadOnly, brand } from "../../../util/index.js";
 
 export interface Canada {
 	readonly [P: string]: JsonCompatibleReadOnly | undefined;

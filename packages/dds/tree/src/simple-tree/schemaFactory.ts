@@ -9,15 +9,15 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line unused-imports/no-unused-imports
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
-import { TreeValue } from "../core/index.js";
+import type { TreeValue } from "../core/index.js";
 import {
-	FlexTreeNode,
-	NodeKeyManager,
-	Unenforced,
+	type FlexTreeNode,
+	type NodeKeyManager,
+	type Unenforced,
 	isFlexTreeNode,
 	isLazy,
 } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { type RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
 import {
 	booleanSchema,
@@ -28,25 +28,37 @@ import {
 } from "./leafNodeSchema.js";
 import {
 	FieldKind,
-	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	WithType,
+	type FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
 	type FieldProps,
 	createFieldSchema,
-	DefaultProvider,
+	type DefaultProvider,
 	getDefaultProvider,
 } from "./schemaTypes.js";
-import { TreeArrayNode, arraySchema } from "./arrayNode.js";
+import { type TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
-import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
+	type InsertableObjectFromSchemaRecord,
+	type TreeObjectNode,
+	objectSchema,
+} from "./objectNode.js";
+import { type TreeMapNode, mapSchema } from "./mapNode.js";
+import type {
 	FieldSchemaUnsafe,
+	// Adding these unused imports makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
+	// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
+	// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
+	// API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	FieldHasDefaultUnsafe,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	InsertableTreeFieldFromImplicitFieldUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,

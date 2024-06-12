@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
-import { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
+import type { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
+import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 
 /**
  * Utility for producing an enriched commit out of multiple transaction steps
