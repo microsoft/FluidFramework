@@ -6,23 +6,23 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
+	type Anchor,
 	AnchorSet,
-	DeltaVisitor,
-	DetachedField,
-	FieldAnchor,
-	FieldKey,
-	ForestEvents,
-	IEditableForest,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
+	type DeltaVisitor,
+	type DetachedField,
+	type FieldAnchor,
+	type FieldKey,
+	type ForestEvents,
+	type IEditableForest,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	PlaceIndex,
-	ProtoNodes,
-	Range,
+	type PlaceIndex,
+	type ProtoNodes,
+	type Range,
 	TreeNavigationResult,
-	TreeStoredSchemaSubscription,
-	UpPath,
+	type TreeStoredSchemaSubscription,
+	type UpPath,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	mapCursorField,
@@ -31,9 +31,9 @@ import {
 import { createEmitter } from "../../events/index.js";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 
-import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
-import { ChunkedCursor, TreeChunk } from "./chunk.js";
-import { IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
+import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
+import type { ChunkedCursor, TreeChunk } from "./chunk.js";
+import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());

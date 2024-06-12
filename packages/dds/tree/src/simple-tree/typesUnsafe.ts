@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { InternalFlexListTypes, Unenforced } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { InternalFlexListTypes, Unenforced } from "../feature-libraries/index.js";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
-import {
+import type {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
-	type FieldSchema,
+	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
@@ -19,8 +19,8 @@ import {
 	TreeNodeSchema,
 	WithType,
 } from "./schemaTypes.js";
-import { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
-import { TreeNode, Unhydrated } from "./types.js";
+import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
+import type { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:

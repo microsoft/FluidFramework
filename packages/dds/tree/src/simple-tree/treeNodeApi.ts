@@ -8,8 +8,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
-	LazyItem,
-	TreeStatus,
+	type LazyItem,
+	type TreeStatus,
 	isLazy,
 	isTreeValue,
 } from "../feature-libraries/index.js";
@@ -21,13 +21,13 @@ import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
 	type TreeLeafValue,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	type ImplicitFieldSchema,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	TreeNodeFromImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import type { TreeNode } from "./types.js";
 import {
 	booleanSchema,
 	handleSchema,

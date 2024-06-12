@@ -6,22 +6,22 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	ChangeAtomIdMap,
-	ChangesetLocalId,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaMark,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangeAtomIdMap,
+	type ChangesetLocalId,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaMark,
+	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 	replaceAtomRevisions,
 	taggedAtomId,
 } from "../../core/index.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	setInNestedMap,
@@ -29,19 +29,19 @@ import {
 } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
-	FieldChangeHandler,
-	FieldChangeRebaser,
-	FieldEditor,
-	NodeChangeComposer,
-	NodeChangePruner,
-	NodeChangeRebaser,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NodeChangeComposer,
+	type NodeChangePruner,
+	type NodeChangeRebaser,
 	NodeExistenceState,
-	NodeId,
-	RelevantRemovedRootsFromChild,
-	ToDelta,
+	type NodeId,
+	type RelevantRemovedRootsFromChild,
+	type ToDelta,
 } from "../modular-schema/index.js";
 
-import {
+import type {
 	ChildChange,
 	Move,
 	OptionalChangeset,

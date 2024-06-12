@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 	ValueSchema,
 	Multiplicity,
 } from "../../core/index.js";
-import { Assume, InternalUtilTypes } from "../../util/index.js";
-import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
-import {
+import type { Assume, InternalUtilTypes } from "../../util/index.js";
+import type {
+	ContextuallyTypedNodeData,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped.js";
+import type {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,

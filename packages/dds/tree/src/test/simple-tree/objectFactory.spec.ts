@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
-	InsertableTreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,

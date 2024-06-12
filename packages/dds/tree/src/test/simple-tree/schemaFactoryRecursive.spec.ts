@@ -10,23 +10,23 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { InternalFlexListTypes } from "../../feature-libraries/index.js";
+import type { InternalFlexListTypes } from "../../feature-libraries/index.js";
 import {
-	FieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	InternalSimpleTreeTypes,
-	NodeFromSchema,
+	type FieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type InternalSimpleTreeTypes,
+	type NodeFromSchema,
 	TreeConfiguration,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeView,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeView,
 	SchemaFactory,
-	InternalTreeNode,
+	type InternalTreeNode,
 } from "../../simple-tree/index.js";
-import {
+import type {
 	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
-import {
+import type {
 	FieldSchemaUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
@@ -35,11 +35,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/typesUnsafe.js";
 import { TreeFactory } from "../../treeFactory.js";
-import {
+import type {
 	areSafelyAssignable,
 	requireAssignableTo,
 	requireTrue,
-	type requireFalse,
+	requireFalse,
 } from "../../util/index.js";
 
 import { hydrate } from "./utils.js";

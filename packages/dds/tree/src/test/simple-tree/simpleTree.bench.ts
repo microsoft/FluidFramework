@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import {
-	DeepTreeNode,
+	type DeepTreeNode,
 	generateDeepSimpleTree,
 	generateWideSimpleTree,
 	readDeepSimpleTree,

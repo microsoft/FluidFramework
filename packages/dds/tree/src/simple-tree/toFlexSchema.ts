@@ -6,31 +6,31 @@
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import {
+import type {
 	ITreeCursorSynchronous,
 	TreeNodeSchemaIdentifier,
-	type SchemaAndPolicy,
+	SchemaAndPolicy,
 } from "../core/index.js";
 import {
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldKind,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	NodeKeyManager,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { TreeContent } from "../shared-tree/index.js";
+import type { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
-import { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
@@ -39,11 +39,11 @@ import {
 import {
 	FieldKind,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";

@@ -5,23 +5,23 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexObjectNodeSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
+	type FlexAllowedTypes,
+	type FlexObjectNodeSchema,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
-	MapTreeNode,
+	type MapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
 	prepareContentForHydration,
@@ -29,23 +29,23 @@ import {
 import { getFlexNode } from "./proxyBinding.js";
 import {
 	NodeKind,
-	ImplicitFieldSchema,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
+	type ImplicitFieldSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
-	TreeFieldFromImplicitField,
-	InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type TreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
+	type FieldSchema,
 	normalizeFieldSchema,
 	type,
 	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
-import { type RestrictiveReadonlyRecord, fail, InternalUtilTypes } from "../util/index.js";
+import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
+import { type RestrictiveReadonlyRecord, fail, type InternalUtilTypes } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
