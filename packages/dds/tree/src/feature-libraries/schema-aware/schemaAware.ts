@@ -15,11 +15,11 @@ import {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexListToUnion,
 	FlexMapNodeSchema,
 	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
+	InternalFlexListTypes,
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
@@ -102,7 +102,7 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
  */
 export type AllowedTypesToFlexInsertableTree<T extends FlexAllowedTypes> = [
 	T extends readonly LazyItem<FlexTreeNodeSchema>[]
-		? InsertableFlexNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
+		? InsertableFlexNode<Assume<InternalFlexListTypes.FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: ContextuallyTypedNodeData,
 ][_InlineTrick];
 

@@ -68,7 +68,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	};
 	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch", true);
+	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2", true);
 	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";
