@@ -56,7 +56,7 @@ export class DetachedFieldIndex {
 	private detachedNodeToField: NestedMap<
 		Major,
 		Minor,
-		{ readonly root: ForestRootId; latestRelevantRevision: RevisionTag | undefined }
+		{ readonly root: ForestRootId; readonly latestRelevantRevision: RevisionTag | undefined }
 	> = new Map();
 	/**
 	 * A map between revisions and all roots for which the revision is the latest relevant revision.
@@ -306,7 +306,10 @@ export class DetachedFieldIndex {
 			new Map(),
 		);
 		latestRevisionRoots.set(root, id);
-		fieldEntry.latestRelevantRevision = revision;
+		setInNestedMap(this.detachedNodeToField, id.major, id.minor, {
+			root,
+			latestRelevantRevision: revision,
+		});
 	}
 
 	public encode(): JsonCompatibleReadOnly {
@@ -356,12 +359,14 @@ export class DetachedFieldIndex {
 			"revisions should only be set once using this function after loading data from a summary",
 		);
 
+		const newDetachedNodeToField = new Map();
 		const rootMap = new Map();
-		forEachInNestedMap(this.detachedNodeToField, (entry, major, minor) => {
-			entry.latestRelevantRevision = latestRevision;
-			rootMap.set(entry.root, { major, minor });
+		forEachInNestedMap(this.detachedNodeToField, ({ root }, major, minor) => {
+			setInNestedMap(newDetachedNodeToField, major, minor, { root, latestRevision });
+			rootMap.set(root, { major, minor });
 		});
 
+		this.detachedNodeToField = newDetachedNodeToField;
 		this.latestRelevantRevisionToFields.delete(fakeRevisionWhenNotSet);
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
 		this.fullyLoaded = true;
