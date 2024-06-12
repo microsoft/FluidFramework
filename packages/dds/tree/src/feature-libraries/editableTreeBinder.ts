@@ -6,20 +6,20 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
-	FieldKey,
-	PathVisitor,
-	PlaceUpPath,
-	ProtoNodes,
-	RangeUpPath,
-	UpPath,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
+	type FieldKey,
+	type PathVisitor,
+	type PlaceUpPath,
+	type ProtoNodes,
+	type RangeUpPath,
+	type UpPath,
 	topDownPath,
 } from "../core/index.js";
-import { Listeners, Listenable } from "../events/index.js";
+import type { Listeners, Listenable } from "../events/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
-import { FlexTreeNode } from "./flex-tree/index.js";
+import type { FlexTreeNode } from "./flex-tree/index.js";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../rebase/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { RevisionTag } from "../rebase/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { ITreeCursorSynchronous } from "./cursor.js";
+import type { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * This format describes changes that must be applied to a forest in order to update it.

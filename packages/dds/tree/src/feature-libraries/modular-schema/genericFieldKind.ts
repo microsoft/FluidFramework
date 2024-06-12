@@ -4,18 +4,18 @@
  */
 
 import {
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaMark,
-	RevisionMetadataSource,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaMark,
+	type RevisionMetadataSource,
 	Multiplicity,
-	RevisionTag,
+	type RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";
-import { IdAllocator, fail } from "../../util/index.js";
+import { type IdAllocator, fail } from "../../util/index.js";
 
-import { CrossFieldManager } from "./crossFieldQueries.js";
-import {
+import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type {
 	FieldChangeHandler,
 	NodeChangeComposer,
 	NodeChangePruner,
@@ -25,8 +25,8 @@ import {
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
-import { GenericChangeset } from "./genericFieldKindTypes.js";
-import { NodeId } from "./modularChangeTypes.js";
+import type { GenericChangeset } from "./genericFieldKindTypes.js";
+import type { NodeId } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -101,8 +101,13 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
+	getNestedChanges,
 	createEmpty: (): GenericChangeset => [],
 };
+
+function getNestedChanges(change: GenericChangeset): [NodeId, number | undefined][] {
+	return change.map(({ index, nodeChange }) => [nodeChange, index]);
+}
 
 function rebaseGenericChange(
 	change: GenericChangeset,

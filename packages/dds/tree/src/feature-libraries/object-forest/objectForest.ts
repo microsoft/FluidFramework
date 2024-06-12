@@ -6,30 +6,30 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
+	type Anchor,
 	AnchorSet,
-	CursorLocationType,
-	DeltaVisitor,
-	DetachedField,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ForestEvents,
-	IEditableForest,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
+	type CursorLocationType,
+	type DeltaVisitor,
+	type DetachedField,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldUpPath,
+	type ForestEvents,
+	type IEditableForest,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	MapTree,
-	PathRootPrefix,
-	PlaceIndex,
-	ProtoNodes,
-	Range,
+	type MapTree,
+	type PathRootPrefix,
+	type PlaceIndex,
+	type ProtoNodes,
+	type Range,
 	TreeNavigationResult,
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchemaSubscription,
-	UpPath,
-	Value,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchemaSubscription,
+	type UpPath,
+	type Value,
 	aboveRootPlaceholder,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
@@ -42,7 +42,7 @@ import {
 	mapIterable,
 } from "../../util/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {

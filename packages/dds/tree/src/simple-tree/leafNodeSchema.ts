@@ -5,17 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import type { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
-	LeafNodeSchema as FlexLeafNodeSchema,
-	FlexTreeNode,
+	type LeafNodeSchema as FlexLeafNodeSchema,
+	type FlexTreeNode,
 	isFlexTreeNode,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 
 import { setFlexSchemaFromClassSchema } from "./schemaCaching.js";
-import { NodeKind, TreeNodeSchema, TreeNodeSchemaNonClass } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./schemaTypes.js";
 
 type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
 	infer Name extends string

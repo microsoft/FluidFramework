@@ -9,21 +9,21 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	CommitKind,
-	GraphCommit,
-	RevisionTag,
+	type GraphCommit,
+	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeBranch,
-	SharedTreeBranchChange,
+	type SharedTreeBranchChange,
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
 import { brand, fail } from "../../util/index.js";
