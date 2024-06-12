@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import http from "http";
-import { Socket } from "net";
+import http from "node:http";
+import { Socket } from "node:net";
 
 export interface ITrackedHttpServer {
 	readonly server: http.Server;
@@ -26,9 +26,11 @@ export function createTrackedServer(
 	return {
 		server,
 		sockets,
-		fullyClose() {
+		fullyClose(): void {
 			server.close();
-			sockets.forEach((socket) => socket.destroy());
+			for (const socket of sockets) {
+				socket.destroy();
+			}
 		},
 	};
 }

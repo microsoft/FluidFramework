@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IAsyncCache, IResources, loadRC, lockRC, saveRC } from "./fluidToolRC.js";
+export { IAsyncCache, IResources, loadRC, lockRC, saveRC } from "./fluidToolRc.js";
 export {
 	getMicrosoftConfiguration,
 	IOdspTokenManagerCacheKey,

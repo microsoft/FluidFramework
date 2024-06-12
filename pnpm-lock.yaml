@@ -16757,6 +16757,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
+      '@types/proper-lockfile':
+        specifier: ^4.1.4
+        version: 4.1.4
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -28304,6 +28307,12 @@ packages:
 
   /@types/prop-types@15.7.11:
     resolution: {integrity: sha512-ga8y9v9uyeiLdpKddhxYQkxNDrfvuPrlFb0N1qnZZByvcElJaXthF1UhvCh9TLWJBEHeNtdnbysW7Y6Uq8CVng==}
+
+  /@types/proper-lockfile@4.1.4:
+    resolution: {integrity: sha512-uo2ABllncSqg9F1D4nugVl9v93RmjxF6LJzQLMLDdPaXCUIDPeOJ21Gbqi43xNKzBi/WQ0Q0dICqufzQbMjipQ==}
+    dependencies:
+      '@types/retry': 0.12.0
+    dev: true
 
   /@types/prosemirror-model@1.17.0:
     resolution: {integrity: sha512-lG5xEMkE8r8Soa80KdWPTbCLUaSHBHVHpTIEsQiebfONpvmS5061IMGzHUdb1oWjgrwh8EJq0GgMNwXHUx5mVg==}
