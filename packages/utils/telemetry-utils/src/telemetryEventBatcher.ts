@@ -13,19 +13,22 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-type Data<T extends string> = { readonly [key in T]: number };
+// type Data<TKey extends string> = { readonly [key in TKey]: number };
 
 /**
  * Expected type of the custom data passed into the logger.
  */
-interface IMeasuredCodeResult<T extends string> {
-	telemetryProperties?: { readonly [key in T]: number };
+interface IMeasuredCodeResult<TKey extends string> {
+	telemetryProperties?: { readonly [key in TKey]: number };
 }
 
 /**
+ * @remarks The logger is expected to be used for a single event type. If the set of `telmetryProperties` is different for different events, a separate `TelemetryEventBatcher` should be created for each event type.
  * Telemetry class that accumulates user defined telemetry metrics {@link ICustomDataMap} and sends it to the {@link  ITelemetryLoggerExt} logger provided to this class every time the {@link TelemetryEventBatcher.log} the number of calls to this function reaches a number specified by {@link TelemetryEventBatcher.threshold}.
  * @typeparam TMetrics - The set of keys that should be logged.
  * E.g., `keyof Foo` for logging properties `bar` and `baz` from `type Foo = { bar: number, baz: number }`.
+ *
+ * @internal
  */
 export class TelemetryEventBatcher<TMetrics extends string> {
 	/**
@@ -67,7 +70,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	 */
 	public measure<T extends IMeasuredCodeResult<TMetrics>>(
 		codeToMeasure: () => T,
-		customData: Data<TMetrics>,
+		customData: Record<TMetrics, number>,
 	): T {
 		const start = performance.now();
 		const returnValue = codeToMeasure();
@@ -91,7 +94,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	 * @param customData -
 	 * A record storing the custom data to be logged.
 	 */
-	private log(customData: Data<TMetrics>): void {
+	private log(customData: Record<TMetrics, number>): void {
 		for (const key of Object.keys(customData) as TMetrics[]) {
 			this.dataSums[key] = (this.dataSums[key] ?? 0) + customData[key];
 			this.dataMaxes[key] = Math.max(
@@ -125,7 +128,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 			telemetryEvent[`duration${key}`] = this.codeDuration;
 		}
 
-		this.logger.sendPerformanceEvent(telemetryEvent);
+		this.logger.sendTelemetryEvent(telemetryEvent);
 
 		// Reset the counter and the data.
 		this.counter = 0;
