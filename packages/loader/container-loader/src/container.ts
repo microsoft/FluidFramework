@@ -990,8 +990,8 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			() => this.supportGetSnapshotApi(),
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
+			() => this.supportGetSnapshotApi(),
 		);
 
 		const isDomAvailable =
