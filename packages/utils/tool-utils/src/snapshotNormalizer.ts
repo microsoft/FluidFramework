@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
 	BlobTreeEntry,

@@ -4,10 +4,12 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IPublicClientConfig,
 	IOdspTokens,
 	TokenRequestCredentials,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
 	fetchTokens,
 	getLoginPageUrl,
 	getOdspScope,
@@ -18,7 +20,8 @@ import { Mutex } from "async-mutex";
 import { jwtDecode } from "jwt-decode";
 
 import { debug } from "./debug.js";
-import { IAsyncCache, loadRC, lockRC, saveRC, type IResources } from "./fluidToolRc.js";
+import type { IAsyncCache, IResources } from "./fluidToolRc.js";
+import { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
 import { endResponse, serverListenAndHandle } from "./httpHelpers.js";
 
 const odspAuthRedirectPort = 7000;
@@ -83,7 +86,7 @@ export class OdspTokenManager {
 	private readonly storageCache = new Map<string, IOdspTokens>();
 	private readonly pushCache = new Map<string, IOdspTokens>();
 	private readonly cacheMutex = new Mutex();
-	constructor(
+	public constructor(
 		private readonly tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
 	) {}
 

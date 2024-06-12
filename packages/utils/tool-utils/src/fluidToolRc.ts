@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import util from "node:util";
 
-import { IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
+import type { IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
 import { lock } from "proper-lockfile";
 
 /**
@@ -26,12 +26,13 @@ export interface IAsyncCache<TKey, TValue> {
 export interface IResources {
 	tokens?: {
 		version?: number;
-		data: {
-			[key: string]: {
+		data: Record<
+			string,
+			{
 				storage?: IOdspTokens;
 				push?: IOdspTokens;
-			};
-		};
+			}
+		>;
 	};
 }
 

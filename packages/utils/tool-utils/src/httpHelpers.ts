@@ -4,7 +4,7 @@
  */
 
 import http from "node:http";
-import { Socket } from "node:net";
+import type { Socket } from "node:net";
 
 export interface ITrackedHttpServer {
 	readonly server: http.Server;
