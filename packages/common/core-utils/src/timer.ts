@@ -9,7 +9,7 @@ import { Deferred } from "./promises.js";
 /**
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITimer {
 	/**
@@ -237,7 +237,7 @@ export class Timer implements ITimer {
 /**
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPromiseTimerResult {
 	timerResult: "timeout" | "cancel";
@@ -248,7 +248,7 @@ export interface IPromiseTimerResult {
  * completes.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPromiseTimer extends ITimer {
 	/**

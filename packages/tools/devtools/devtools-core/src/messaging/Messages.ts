@@ -8,7 +8,7 @@
  *
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IDevtoolsMessage<TData = unknown> {
 	/**
@@ -29,7 +29,7 @@ export interface IDevtoolsMessage<TData = unknown> {
  *
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
 	/**

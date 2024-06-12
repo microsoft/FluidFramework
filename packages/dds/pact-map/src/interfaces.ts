@@ -12,7 +12,7 @@ import {
  * Events emitted by {@link IPactMap}.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPactMapEvents extends ISharedObjectEvents {
 	/**
@@ -25,7 +25,7 @@ export interface IPactMapEvents extends ISharedObjectEvents {
  * Details of the accepted pact.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAcceptedPact<T> {
 	/**
@@ -51,7 +51,7 @@ export interface IAcceptedPact<T> {
  * or disconnected.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPactMap<T = unknown> extends ISharedObject<IPactMapEvents> {
 	/**

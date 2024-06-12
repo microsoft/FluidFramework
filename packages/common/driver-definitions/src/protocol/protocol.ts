@@ -307,7 +307,7 @@ export interface ISequencedDocumentMessage {
  * {@link ISequencedDocumentAugmentedMessage} with experimental properties.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type ISequencedDocumentMessageExperimental = Omit<
 	ISequencedDocumentMessage,
@@ -327,7 +327,7 @@ export type ISequencedDocumentMessageExperimental = Omit<
 /**
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
 	data: string;
@@ -336,7 +336,7 @@ export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessa
 /**
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMessage {
 	additionalContent: string;
@@ -393,7 +393,7 @@ export interface ISignalMessage extends ISignalMessageBase {
  * Interface for signals sent by clients to the server.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type ISentSignalMessage = ISignalMessageBase;
 
@@ -447,7 +447,7 @@ export interface ISummaryContent {
  * May want to add error code or something similar in the future.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IServerError {
 	/**

@@ -14,7 +14,7 @@ import {
  * Events emitted by {@link ISharedCell}.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 	/**
@@ -82,7 +82,7 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
  * @internal
  */
 // TODO: use `unknown` instead (breaking change).
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/naming-convention
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
 	/**
@@ -138,7 +138,7 @@ export interface CellLocalOpMetadata<T = any> {
  * Options related to attribution
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICellOptions {
 	attribution?: ICellAttributionOptions;
@@ -151,7 +151,7 @@ export interface ICellOptions {
  * @defaultValue `false`
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICellAttributionOptions {
 	track?: boolean;

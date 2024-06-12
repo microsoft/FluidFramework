@@ -112,7 +112,7 @@ export interface ContainerSchema {
 /**
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProvideRootDataObject {
 	readonly IRootDataObject: IRootDataObject;
@@ -123,7 +123,7 @@ export interface IProvideRootDataObject {
  * to dynamically create further objects during usage.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRootDataObject extends IProvideRootDataObject {
 	/**

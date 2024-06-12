@@ -7,7 +7,7 @@
  * Interface for a comparer.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IComparer<T> {
 	/**
@@ -44,7 +44,7 @@ export const NumberComparer: IComparer<number> = {
  * Interface to a node in {@link Heap}.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IHeapNode<T> {
 	value: T;

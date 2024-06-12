@@ -15,7 +15,7 @@
  * Details about the author of the commit
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IAuthor {
 	name: string;
@@ -28,7 +28,7 @@ export interface IAuthor {
  * Details about the committer of the commit
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICommitter {
 	name: string;
@@ -41,7 +41,7 @@ export interface ICommitter {
  * Details of the commit
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICommitHash {
 	sha: string;
@@ -52,7 +52,7 @@ export interface ICommitHash {
  * Required params to create commit
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateCommitParams {
 	message: string;
@@ -66,7 +66,7 @@ export interface ICreateCommitParams {
  * Commit content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICommit {
 	sha: string;
@@ -89,7 +89,7 @@ export interface ICommit {
  * https://developer.github.com/v3/repos/commits/
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICommitDetails {
 	url: string;
@@ -108,7 +108,7 @@ export interface ICommitDetails {
  * Blob content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IBlob {
 	content: string;
@@ -122,7 +122,7 @@ export interface IBlob {
  * Required params to create blob
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateBlobParams {
 	// The encoded content
@@ -137,7 +137,7 @@ export interface ICreateBlobParams {
  * Response to create blob request
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateBlobResponse {
 	sha: string;
@@ -148,7 +148,7 @@ export interface ICreateBlobResponse {
  * Ref content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IRef {
 	ref: string;
@@ -164,7 +164,7 @@ export interface IRef {
  * Required params to create ref
  * @alpha
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateRefParams {
 	ref: string;
@@ -175,7 +175,7 @@ export interface ICreateRefParams {
  * Required params to patch ref
  * @alpha
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IPatchRefParams {
 	sha: string;
@@ -187,7 +187,7 @@ export interface IPatchRefParams {
  * @param name - name of the repository
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateRepoParams {
 	name: string;
@@ -197,7 +197,7 @@ export interface ICreateRepoParams {
  * Required details to create tree entry
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateTreeEntry {
 	path: string;
@@ -210,7 +210,7 @@ export interface ICreateTreeEntry {
  * Required params to create tree
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateTreeParams {
 	base_tree?: string;
@@ -221,7 +221,7 @@ export interface ICreateTreeParams {
  * Tree Entry Content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITreeEntry {
 	path: string;
@@ -236,7 +236,7 @@ export interface ITreeEntry {
  * Tree content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITree {
 	sha: string;
@@ -248,7 +248,7 @@ export interface ITree {
  * Tagger content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITagger {
 	name: string;
@@ -261,7 +261,7 @@ export interface ITagger {
  * Required params to create tag
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ICreateTagParams {
 	tag: string;
@@ -275,7 +275,7 @@ export interface ICreateTagParams {
  * Tag content
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ITag {
 	tag: string;

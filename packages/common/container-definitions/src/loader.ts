@@ -90,7 +90,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  * version of package that supports the provided code details.
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidCodeResolver {
 	/**
@@ -701,7 +701,7 @@ export interface IContainerLoadMode {
  * Set of Request Headers that the Loader understands and may inspect or modify
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ILoaderHeader {
 	/**

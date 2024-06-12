@@ -150,7 +150,7 @@ export interface IQuorum
 /**
  * @internal
  */
-// TODO: fix now
+// TODO:[File work item]: Fix internal export names
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IProtocolState {
 	sequenceNumber: number;
