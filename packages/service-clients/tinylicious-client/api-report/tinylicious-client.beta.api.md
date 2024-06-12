@@ -13,4 +13,48 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/driver-definitions';
 
+// @beta
+export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
+
+// @beta @sealed
+export class TinyliciousClient {
+    constructor(props?: TinyliciousClientProps | undefined);
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+}
+
+// @beta
+export interface TinyliciousClientProps {
+    connection?: TinyliciousConnectionConfig;
+    logger?: ITelemetryBaseLogger;
+}
+
+// @beta
+export interface TinyliciousConnectionConfig {
+    domain?: string;
+    port?: number;
+    tokenProvider?: ITokenProvider;
+}
+
+// @beta
+export interface TinyliciousContainerServices {
+    audience: ITinyliciousAudience;
+}
+
+// @beta
+export interface TinyliciousMember extends IMember {
+    name: string;
+}
+
+// @beta
+export interface TinyliciousUser extends IUser {
+    name: string;
+}
+
 ```

@@ -43,7 +43,9 @@ import { type TinyliciousClientProps, type TinyliciousContainerServices } from "
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
  * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
- * @internal
+ *
+ * @sealed
+ * @beta
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;

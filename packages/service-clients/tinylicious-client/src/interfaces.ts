@@ -9,8 +9,8 @@ import { type IMember, type IServiceAudience } from "@fluidframework/fluid-stati
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
- * Props for initializing a {@link TinyliciousClient}
- * @internal
+ * Properties for initializing a {@link TinyliciousClient}
+ * @beta
  */
 export interface TinyliciousClientProps {
 	/**
@@ -18,6 +18,7 @@ export interface TinyliciousClientProps {
 	 * If not specified, will use {@link TinyliciousConnectionConfig}'s default values.
 	 */
 	connection?: TinyliciousConnectionConfig;
+
 	/**
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
@@ -26,7 +27,7 @@ export interface TinyliciousClientProps {
 
 /**
  * Parameters for establishing a connection with the a Tinylicious service.
- * @internal
+ * @beta
  */
 export interface TinyliciousConnectionConfig {
 	/**
@@ -54,25 +55,28 @@ export interface TinyliciousConnectionConfig {
 }
 
 /**
- * TinyliciousContainerServices is returned by the TinyliciousClient alongside a FluidContainer.
- * It holds the functionality specifically tied to the Tinylicious service, and how the data stored in
- * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
- * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,
- * will not be included here but rather on the FluidContainer class itself.
- * @internal
+ * Holds the functionality specifically tied to the Tinylicious service, and how the data stored in
+ * the {@link @fluidframework/fluid-static#IFluidContainer} is persisted in the backend and consumed by users.
+ *
+ * @remarks
+ * Any functionality regarding how the data is handled within the FluidContainer itself (e.g., which data objects or
+ * DDSes to use) will not be included here but rather on the FluidContainer class itself.
+ *
+ * Returned by {@link TinyliciousClient.createContainer} alongside the FluidContainer.
+ *
+ * @beta
  */
 export interface TinyliciousContainerServices {
 	/**
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
-	 * listeners for when the roster has any changes from users joining/leaving the session
+	 * listeners for when the roster has any changes from users joining/leaving the session.
 	 */
 	audience: ITinyliciousAudience;
 }
 
 /**
- * Since Tinylicious provides user names for all of its members, we extend the `IUser` interface to include
- * this service-specific value.
- * @internal
+ * Tinylicious {@link @fluidframework/fluid-static#IUser}.
+ * @beta
  */
 export interface TinyliciousUser extends IUser {
 	/**
@@ -82,9 +86,8 @@ export interface TinyliciousUser extends IUser {
 }
 
 /**
- * Since Tinylicious provides user names for all of its members, we extend the `IMember` interface to include
- * this service-specific value. It will be returned for all audience members connected to Tinylicious.
- * @internal
+ * Tinylicious {@link @fluidframework/fluid-static#IMember}.
+ * @beta
  */
 export interface TinyliciousMember extends IMember {
 	/**
@@ -94,7 +97,7 @@ export interface TinyliciousMember extends IMember {
 }
 
 /**
- * Tinylicious-specific {@link @fluidframework/fluid-static#IServiceAudience} implementation.
- * @internal
+ * Tinylicious {@link @fluidframework/fluid-static#IServiceAudience}.
+ * @beta
  */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
