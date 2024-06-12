@@ -27,7 +27,7 @@ import {
 	FlexFieldKind,
 	FlexFieldSchema,
 } from "../../../feature-libraries/index.js";
-import type { TreeContent } from "../../../shared-tree/index.js";
+import { type TreeContent } from "../../../shared-tree/index.js";
 
 import { contextWithContentReadonly } from "./utils.js";
 
