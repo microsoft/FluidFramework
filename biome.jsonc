@@ -11,7 +11,9 @@
 		"ignore": [
 			"**/*.generated.*",
 			"**/_api-extractor-temp/**",
+			"**/api-report/*",
 			"**/test/snapshots/content/**",
+			"**/snapshots/*.json",
 			"**/localOdspSnapshots/**",
 			"**/_package.json",
 			"**/biome.jsonc",
@@ -21,7 +23,7 @@
 		"maxSize": 2097152
 	},
 	"organizeImports": {
-		"enabled": true
+		"enabled": false
 	},
 	"linter": {
 		"enabled": false,
@@ -30,7 +32,8 @@
 		}
 	},
 	"formatter": {
-		"enabled": false,
+		"enabled": true,
+		"ignore": ["**/dist/**", "**/lib/**"],
 		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"lineWidth": 95,
@@ -54,7 +57,12 @@
 	},
 	"overrides": [
 		{
-			"include": ["**/*.jsonc", "**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
+			"include": [
+				"**/*.jsonc",
+				"**/.vscode/*.json",
+				"**/tsconfig*.json",
+				"**/api-extractor*.json"
+			],
 			"json": {
 				"parser": {
 					"allowComments": true,

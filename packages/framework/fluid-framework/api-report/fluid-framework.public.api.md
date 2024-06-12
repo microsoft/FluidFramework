@@ -35,7 +35,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @public
-export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
     [FieldKind.Required]: T;
     [FieldKind.Optional]: T | undefined;
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
@@ -100,7 +100,7 @@ export abstract class ErasedType<out TName = unknown> {
 }
 
 // @public
-export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
 export enum FieldKind {
@@ -135,7 +135,7 @@ export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -426,10 +426,10 @@ export type InsertableTreeFieldFromImplicitField<TSchema extends ImplicitFieldSc
 export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 // @public
-export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? InsertableTypedNode<FlexListToUnion<TSchema>> : never;
+export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? InsertableTypedNode<InternalFlexListTypes.FlexListToUnion<TSchema>> : never;
 
 // @public
-export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends AllowedTypes ? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>> : InsertableTypedNodeUnsafe<TSchema>;
+export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends AllowedTypes ? InsertableTypedNodeUnsafe<InternalFlexListTypes.FlexListToUnion<TSchema>> : InsertableTypedNodeUnsafe<TSchema>;
 
 // @public
 export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
@@ -440,6 +440,21 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
 export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderDataUnsafe<T> : never);
+
+declare namespace InternalFlexListTypes {
+    export {
+        FlexListToUnion,
+        ExtractItemType
+    }
+}
+export { InternalFlexListTypes }
+
+declare namespace InternalSimpleTreeTypes {
+    export {
+        ApplyKind
+    }
+}
+export { InternalSimpleTreeTypes }
 
 // @public
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
@@ -482,12 +497,20 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
 
 // @public
 export interface ITree extends IFluidLoadable {
+    // @deprecated
     schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public
 export interface ITreeConfigurationOptions {
     enableSchemaValidation?: boolean;
+}
+
+// @public
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    readonly enableSchemaValidation?: boolean;
+    readonly schema: TSchema;
 }
 
 // @public
@@ -603,6 +626,14 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
+// @public
+export interface SchemaCompatibilityStatus {
+    readonly canInitialize: boolean;
+    readonly canUpgrade: boolean;
+    readonly canView: boolean;
+    readonly isEquivalent: boolean;
+}
+
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> {
     constructor(scope: TScope);
@@ -633,11 +664,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     // (undocumented)
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
-}
-
-// @public
-export interface SchemaIncompatible {
-    readonly canUpgrade: boolean;
 }
 
 // @public
@@ -716,12 +742,12 @@ export interface TreeChangeEvents {
     treeChanged(): void;
 }
 
-// @public
+// @public @deprecated
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
+    readonly enableSchemaValidation: boolean;
     // (undocumented)
     readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    readonly options: Required<ITreeConfigurationOptions>;
     // (undocumented)
     readonly schema: TSchema;
 }
@@ -769,10 +795,10 @@ export interface TreeNodeApi {
 }
 
 // @public
-export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
+export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>> : unknown;
 
 // @public
-export type TreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
+export type TreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>> : unknown;
 
 // @public
 export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean, Info = unknown> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
@@ -815,11 +841,19 @@ export enum TreeStatus {
 
 // @public
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
-    readonly error?: SchemaIncompatible;
+    readonly compatibility: SchemaCompatibilityStatus;
     readonly events: Listenable<TreeViewEvents>;
+    initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
+}
+
+// @public
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
+    constructor(props: ITreeViewConfiguration<TSchema>);
+    readonly enableSchemaValidation: boolean;
+    readonly schema: TSchema;
 }
 
 // @public
@@ -827,6 +861,7 @@ export interface TreeViewEvents {
     afterBatch(): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
+    schemaChanged(): void;
 }
 
 // @public

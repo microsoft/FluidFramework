@@ -74,7 +74,7 @@ export async function prefetchLatestSnapshot(
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
 	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
-		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch",
+		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2",
 	);
 	// For prefetch, we just want to fetch the ungrouped data and want to use the new API if the
 	// feature gate is set, so provide an empty array.
