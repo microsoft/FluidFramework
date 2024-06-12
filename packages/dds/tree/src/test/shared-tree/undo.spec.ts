@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UpPath, rootFieldKey } from "../../core/index.js";
+import { type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { JsonCompatible, brand } from "../../util/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectJsonTree,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";

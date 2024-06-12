@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId } from "../../core/index.js";
-import { NodeId } from "../modular-schema/index.js";
+import type { ChangeAtomId } from "../../core/index.js";
+import type { NodeId } from "../modular-schema/index.js";
 
 /**
  * Uniquely identifies a register within the scope of this changeset.

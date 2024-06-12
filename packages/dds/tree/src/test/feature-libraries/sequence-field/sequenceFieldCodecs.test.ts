@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import {
-	FieldChangeEncodingContext,
+	type FieldChangeEncodingContext,
 	SequenceField as SF,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,

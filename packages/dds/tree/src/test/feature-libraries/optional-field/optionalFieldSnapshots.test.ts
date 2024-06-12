@@ -5,11 +5,11 @@
 
 import path from "path";
 
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
+import { type ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";

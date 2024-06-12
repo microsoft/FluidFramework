@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { UpPath, rootFieldKey } from "../../core/index.js";
+import { type UpPath, rootFieldKey } from "../../core/index.js";
 import {
 	cursorForJsonableTreeNode,
 	MockNodeKeyManager,
 	TreeStatus,
 } from "../../feature-libraries/index.js";
 import {
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	TreeChangeEvents,
+	type TreeChangeEvents,
 	TreeConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";

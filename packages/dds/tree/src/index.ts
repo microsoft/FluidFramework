@@ -293,6 +293,8 @@ export {
 	type AllowedTypes,
 	FieldKind,
 	FieldSchema,
+	type FieldHasDefault,
+	type FieldHasDefaultUnsafe,
 	type ImplicitAllowedTypes,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
@@ -355,14 +357,13 @@ export {
 	type AllowOptional,
 	type RequiredFields,
 	type OptionalFields,
-	type _InlineTrick,
 	type _RecursiveTrick,
-	type FlattenKeys,
 	type AllowOptionalNotFlattened,
 	type isAny,
 	type BrandedKeyContent,
 	type RestrictiveReadonlyRecord,
 	type MakeNominal,
+	type InternalUtilTypes,
 } from "./util/index.js";
 
 export {
