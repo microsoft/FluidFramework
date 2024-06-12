@@ -63,7 +63,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	) {}
 
 	/**
-	 * Executes the specified code and keeps track of execution time statistics.
+	 * Executes the specified code, keeping statistics of its execution time and the telemetry properties it returns, and when the {@link TelemetryEventBatcher.threshold threshold} is reached it logs a performance event which includes the maxes and averages.
 	 * @param codeToMeasure - The code to be executed and measured.
 	 * @param customData - Custom data to be logged.
 	 *
