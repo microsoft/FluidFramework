@@ -44,7 +44,7 @@ export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
 export { toFlexConfig, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
-export {
+export type {
 	ObjectFromSchemaRecordUnsafe,
 	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
