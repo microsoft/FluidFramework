@@ -87,9 +87,7 @@ export type {
 	AllowOptional,
 	RequiredFields,
 	OptionalFields,
-	_InlineTrick,
 	_RecursiveTrick,
-	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
 	Assume,
@@ -120,3 +118,12 @@ export {
 	type IdAllocationState,
 	fakeIdAllocator,
 } from "./idAllocator.js";
+
+import * as InternalUtilTypes from "./internalTypes.js";
+export {
+	/**
+	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
+	 */
+	InternalUtilTypes,
+};

@@ -8,7 +8,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type Brand,
 	type Opaque,
-	type _InlineTrick,
+	type InternalUtilTypes,
 	brand,
 	extractFromOpaque,
 } from "../../util/index.js";
@@ -134,7 +134,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 		// eslint-disable-next-line @rushstack/no-new-null
 		[ValueSchema.Null]: null;
 	}[TSchema],
-][_InlineTrick];
+][InternalUtilTypes._InlineTrick];
 
 /**
  * Value stored on a node.

@@ -313,6 +313,18 @@ const tcs: TestCase[] = [
 			baz: null,
 		},
 	},
+	// Case with omitted optional property
+	{
+		schema: (() => {
+			const schemaFactoryInner = new SchemaFactory("test-inner");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+			});
+		})(),
+		initialTree: {
+			// `foo` property omitted - property should be implicitly treated as `undefined`.
+		},
+	},
 	{
 		schema: (() => {
 			const _ = new SchemaFactory("testF");

@@ -33,6 +33,7 @@ describe("simple-tree proxies", () => {
 		object: childSchema,
 		list: sb.array(sb.number),
 		map: sb.map("map", sb.string),
+		optionalFlag: sb.optional(sb.boolean),
 	});
 
 	const initialTree = {
