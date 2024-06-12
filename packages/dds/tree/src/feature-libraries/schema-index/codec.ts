@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import {
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../codec/index.js";
+import {
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	schemaFormat,

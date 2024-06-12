@@ -6,20 +6,20 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	FieldKey,
-	ForestEvents,
-	TreeFieldStoredSchema,
+	type FieldKey,
+	type ForestEvents,
+	type TreeFieldStoredSchema,
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import { Listenable } from "../../events/index.js";
-import { IDisposable, disposeSymbol } from "../../util/index.js";
-import { FieldGenerator } from "../fieldGenerator.js";
-import { NodeKeyManager } from "../node-key/index.js";
-import { FlexTreeSchema } from "../typed-schema/index.js";
+import type { Listenable } from "../../events/index.js";
+import { type IDisposable, disposeSymbol } from "../../util/index.js";
+import type { FieldGenerator } from "../fieldGenerator.js";
+import type { NodeKeyManager } from "../node-key/index.js";
+import type { FlexTreeSchema } from "../typed-schema/index.js";
 
-import { FlexTreeField } from "./flexTreeTypes.js";
-import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import type { FlexTreeField } from "./flexTreeTypes.js";
+import { type LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 

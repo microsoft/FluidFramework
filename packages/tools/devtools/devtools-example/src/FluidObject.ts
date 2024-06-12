@@ -9,6 +9,7 @@ import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-int
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
+// eslint-disable-next-line import/no-deprecated
 import { type ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 /**
@@ -194,6 +195,7 @@ export class AppData extends DataObject {
 			childrenTwo: builder.number,
 		}) {}
 
+		// eslint-disable-next-line import/no-deprecated
 		const config = new TreeConfiguration(RootNodeSchema, () => ({
 			childrenOne: [
 				{

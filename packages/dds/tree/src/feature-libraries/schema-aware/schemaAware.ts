@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 	ValueSchema,
 	Multiplicity,
 } from "../../core/index.js";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
-import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
-import {
+import type { Assume, InternalUtilTypes } from "../../util/index.js";
+import type {
+	ContextuallyTypedNodeData,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped.js";
+import type {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexListToUnion,
 	FlexMapNodeSchema,
 	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
+	InternalFlexListTypes,
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
@@ -42,7 +46,7 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema | undefined,
 	TName,
 > = TValueSchema extends undefined
-	? FlattenKeys<
+	? InternalUtilTypes.FlattenKeys<
 			{ [typeNameSymbol]?: UnbrandedName<TName> } & (TValueSchema extends ValueSchema
 				? { [valueSymbol]: TreeValue<TValueSchema> }
 				: EmptyObject)
@@ -58,7 +62,7 @@ export type CollectOptions<
  */
 export type UnbrandedName<TName> = [
 	TName extends TreeNodeSchemaIdentifier<infer S> ? S : string,
-][_InlineTrick];
+][InternalUtilTypes._InlineTrick];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -72,7 +76,7 @@ export type TypedFields<TFields extends undefined | { readonly [key: string]: Fl
 				-readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
 		  }
 		: EmptyObject,
-][_InlineTrick];
+][InternalUtilTypes._InlineTrick];
 
 /**
  * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on FieldKind.
@@ -83,7 +87,7 @@ export type InsertableFlexField<TField extends FlexFieldSchema> = [
 		TField["kind"]["multiplicity"],
 		AllowedTypesToFlexInsertableTree<TField["allowedTypes"]>
 	>,
-][_InlineTrick];
+][InternalUtilTypes._InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -102,15 +106,15 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
  */
 export type AllowedTypesToFlexInsertableTree<T extends FlexAllowedTypes> = [
 	T extends readonly LazyItem<FlexTreeNodeSchema>[]
-		? InsertableFlexNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
+		? InsertableFlexNode<Assume<InternalFlexListTypes.FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: ContextuallyTypedNodeData,
-][_InlineTrick];
+][InternalUtilTypes._InlineTrick];
 
 /**
  * Generate a schema aware API for a single tree schema.
  * @internal
  */
-export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys<
+export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = InternalUtilTypes.FlattenKeys<
 	CollectOptions<
 		TSchema extends FlexObjectNodeSchema<string, infer TFields extends FlexObjectNodeFields>
 			? TypedFields<TFields>

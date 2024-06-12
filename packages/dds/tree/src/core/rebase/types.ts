@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
@@ -11,14 +11,14 @@ import {
 import { Type } from "@sinclair/typebox";
 
 import {
-	Brand,
-	NestedMap,
-	RangeMap,
+	type Brand,
+	type NestedMap,
+	type RangeMap,
 	brand,
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
-import { TaggedChange } from "./changeRebaser.js";
+import type { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s

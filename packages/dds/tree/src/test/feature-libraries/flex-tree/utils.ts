@@ -6,21 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import {
-	FieldAnchor,
-	IEditableForest,
-	ITreeSubscriptionCursor,
+	type FieldAnchor,
+	type IEditableForest,
+	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldKind,
-	FlexTreeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
+	type FlexTreeSchema,
 	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import type { TreeContent } from "../../../shared-tree/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {

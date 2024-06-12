@@ -135,7 +135,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider: configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
@@ -163,7 +163,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
@@ -172,7 +172,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			runtimeFactory,
 			{
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			},
 			{ [LoaderHeader.version]: summaryVersion },
@@ -219,7 +219,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider: configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
@@ -247,7 +247,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
@@ -268,7 +268,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			runtimeFactory,
 			{
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			},
 			{ [LoaderHeader.version]: summaryVersion },
@@ -327,7 +327,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			// Load basic container stuff
 			const container = await provider.createContainer(runtimeFactory, {
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			});
 			const mainObject = (await container.getEntryPoint()) as TestDataObject;
@@ -353,7 +353,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				undefined,
 				undefined,
 				configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			);
 
@@ -372,7 +372,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				undefined,
 				undefined,
 				configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			);
 
@@ -386,7 +386,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 					undefined,
 					undefined,
 					configProvider({
-						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 					}),
 				);
 			await provider.ensureSynchronized();
@@ -447,7 +447,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// Load basic container stuff
 		const container = await provider.createContainer(runtimeFactory, {
 			configProvider: configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
@@ -473,7 +473,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		);
 
@@ -496,7 +496,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			runtimeFactory,
 			{
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			},
 			{ [LoaderHeader.version]: summaryVersion2 },

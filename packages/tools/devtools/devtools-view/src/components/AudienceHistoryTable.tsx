@@ -8,7 +8,6 @@ import {
 	TableBody,
 	TableCell,
 	TableHeader,
-	TableHeaderCell,
 	TableRow,
 	makeStyles,
 	tokens,
@@ -80,7 +79,8 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			<TableHeader>
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
-						<TableHeaderCell key={columnIndex}>
+						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
+						<TableCell key={columnIndex}>
 							{column.columnKey === "event" && (
 								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
 									{column.label}
@@ -100,7 +100,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 									{column.label}
 								</LabelCellLayout>
 							)}
-						</TableHeaderCell>
+						</TableCell>
 					))}
 				</TableRow>
 			</TableHeader>

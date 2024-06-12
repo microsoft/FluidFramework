@@ -5,14 +5,14 @@
 
 import { strict as assert, fail } from "assert";
 
-import { Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";
+import type { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";
 import {
-	ChunkDecoder,
-	StreamCursor,
+	type ChunkDecoder,
+	type StreamCursor,
 	getChecked,
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
@@ -27,7 +27,7 @@ import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
-import { TreeChunk } from "../../../../feature-libraries/index.js";
+import type { TreeChunk } from "../../../../feature-libraries/index.js";
 import { ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 

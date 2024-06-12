@@ -5,21 +5,21 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Listenable, createEmitter } from "../../events/index.js";
+import { type Listenable, createEmitter } from "../../events/index.js";
 import {
-	Brand,
-	BrandedKey,
-	BrandedMapSubset,
-	Opaque,
+	type Brand,
+	type BrandedKey,
+	type BrandedMapSubset,
+	type Opaque,
 	ReferenceCountedBase,
 	brand,
 	brandedSlot,
 	fail,
 } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import * as Delta from "./delta.js";
-import {
+import type * as Delta from "./delta.js";
+import type {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	PlaceIndex,
@@ -28,10 +28,10 @@ import {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree.js";
-import { EmptyKey, Value } from "./types.js";
-import { DeltaVisitor } from "./visitDelta.js";
-import { PathVisitor } from "./visitPath.js";
-import { AnnouncedVisitor } from "./visitorUtils.js";
+import { EmptyKey, type Value } from "./types.js";
+import type { DeltaVisitor } from "./visitDelta.js";
+import type { PathVisitor } from "./visitPath.js";
+import type { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.

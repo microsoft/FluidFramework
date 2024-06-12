@@ -9,16 +9,16 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-	TreeTypeSet,
-	ValueSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeTypeSet,
+	type ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import { compareSets, fail } from "../../util/index.js";
 
-import { FullSchemaPolicy } from "./fieldKind.js";
+import type { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
 

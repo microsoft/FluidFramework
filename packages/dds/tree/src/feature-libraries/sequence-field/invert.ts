@@ -5,24 +5,24 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { RevisionTag } from "../../core/index.js";
-import { IdAllocator, Mutable, fail } from "../../util/index.js";
-import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
+import type { RevisionTag } from "../../core/index.js";
+import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
+import { type CrossFieldManager, CrossFieldTarget, type NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
-	CellId,
-	CellMark,
-	Changeset,
-	Detach,
-	Mark,
-	MarkEffect,
-	MarkList,
-	MoveIn,
-	MoveOut,
-	NoopMark,
+	type CellId,
+	type CellMark,
+	type Changeset,
+	type Detach,
+	type Mark,
+	type MarkEffect,
+	type MarkList,
+	type MoveIn,
+	type MoveOut,
+	type NoopMark,
 	NoopMarkType,
-	Remove,
+	type Remove,
 } from "./types.js";
 import {
 	extractMarkEffect,

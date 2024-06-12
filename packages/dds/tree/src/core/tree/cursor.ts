@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { FieldKey } from "../schema-stored/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { FieldUpPath, UpPath } from "./pathTree.js";
-import { TreeType, Value } from "./types.js";
+import type { FieldUpPath, UpPath } from "./pathTree.js";
+import type { TreeType, Value } from "./types.js";
 
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.

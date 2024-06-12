@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FlexListToUnion, LazyItem, NodeKeyManager, isLazy } from "../feature-libraries/index.js";
-import { MakeNominal, brand, isReadonlyArray } from "../util/index.js";
-import { InternalTreeNode, Unhydrated } from "./types.js";
-import { FieldKey } from "../core/index.js";
-import { InsertableContent } from "./proxies.js";
+import {
+	type InternalFlexListTypes,
+	type LazyItem,
+	type NodeKeyManager,
+	isLazy,
+} from "../feature-libraries/index.js";
+import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
+import type { FieldKey } from "../core/index.js";
+import type { InsertableContent } from "./proxies.js";
 
 /**
  * Schema for a tree node.
@@ -459,7 +464,7 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<FlexListToUnion<TSchema>>
+	? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
 	: unknown;
 
 /**
@@ -471,7 +476,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-	? InsertableTypedNode<FlexListToUnion<TSchema>>
+	? InsertableTypedNode<InternalFlexListTypes.FlexListToUnion<TSchema>>
 	: never;
 
 /**
