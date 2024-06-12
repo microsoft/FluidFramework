@@ -60,25 +60,3 @@ export interface FlexTreeNodeEvents {
 	 */
 	treeChanged(): void;
 }
-
-/**
- * Subscribe to changes to the node for the given {@link AnchorNode}.
- * @remarks This fulfills the contract of {@link TreeChangeEvents.nodeChanged}.
- */
-export function onNodeChanged(
-	anchorNode: AnchorNode,
-	listener: FlexTreeNodeEvents["nodeChanged"],
-): Off {
-	return anchorNode.on("childrenChangedAfterBatch", listener);
-}
-
-/**
- * Subscribe to changes to the tree rooted at the given {@link AnchorNode}.
- * @remarks This fulfills the contract of {@link TreeChangeEvents.treeChanged}.
- */
-export function onTreeChanged(
-	anchorNode: AnchorNode,
-	listener: FlexTreeNodeEvents["treeChanged"],
-): Off {
-	return anchorNode.on("subtreeChangedAfterBatch", listener);
-}
