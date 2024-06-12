@@ -35,7 +35,13 @@ import {
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
+import {
+	EventEmitter,
+	HasListeners,
+	IEmitter,
+	Listenable,
+	createEmitter,
+} from "../events/index.js";
 import {
 	FieldBatchCodec,
 	TreeCompressionStrategy,
@@ -304,23 +310,34 @@ export interface ITransaction {
 	inProgress(): boolean;
 }
 
-class Transaction implements ITransaction {
+interface TransactionEvents {
+	transactionStarted(): void;
+	transactionCommitted(): void;
+	transactionAborted(): void;
+}
+
+class Transaction extends EventEmitter<TransactionEvents> implements ITransaction {
 	public constructor(
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	) {}
+	) {
+		super();
+	}
 
 	public start(): void {
 		this.branch.startTransaction();
 		this.branch.editor.enterTransaction();
+		this.emit("transactionStarted");
 	}
 	public commit(): TransactionResult.Commit {
 		this.branch.commitTransaction();
 		this.branch.editor.exitTransaction();
+		this.emit("transactionCommitted");
 		return TransactionResult.Commit;
 	}
 	public abort(): TransactionResult.Abort {
 		this.branch.abortTransaction();
 		this.branch.editor.exitTransaction();
+		this.emit("transactionAborted");
 		return TransactionResult.Abort;
 	}
 	public inProgress(): boolean {
@@ -367,10 +384,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * A copy of the removed roots that is modified during a transaction. If the transaction is aborted, this copy is disposed.
 	 * If the transaction is committed, this copy replaces {@link removedRoots}.
 	 */
-	private removedRootsInTransaction: DetachedFieldIndex | undefined;
+	private readonly removedRootsSnapshots: DetachedFieldIndex[] = [];
 
 	public constructor(
-		public readonly transaction: ITransaction,
+		public readonly transaction: ITransaction & EventEmitter<TransactionEvents>,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
@@ -387,6 +404,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			idCompressor,
 		),
 	) {
+		// when a transaction is started, take a snapshot of the current state of removed roots
+		transaction.on("transactionStarted", () => {
+			this.removedRootsSnapshots.push(this.removedRoots.clone());
+		});
+		// when a transaction is committed, the latest snapshot of removed roots can be discarded
+		transaction.on("transactionCommitted", () => {
+			this.removedRootsSnapshots.pop();
+		});
+		// when a transaction is aborted, revert removed roots back to the latest snapshot
+		transaction.on("transactionAborted", () => {
+			const snapshot = this.removedRootsSnapshots.pop();
+			assert(snapshot !== undefined, "a snapshot for removed roots does not exist");
+			this.removedRoots.loadIndex(snapshot);
+		});
+
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
@@ -398,21 +430,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						? event.newCommits[event.newCommits.length - 1].revision
 						: event.change.revision;
 
-				if (this.removedRootsInTransaction === undefined && this.transaction.inProgress()) {
-					this.removedRootsInTransaction = this.removedRoots.clone();
-				}
-
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
 						const delta = intoDelta(tagChange(change.innerChange, revision));
 						this.withCombinedVisitor((visitor) => {
-							visitDelta(
-								delta,
-								visitor,
-								this.removedRootsInTransaction ?? this.removedRoots,
-								revision,
-							);
+							visitDelta(delta, visitor, this.removedRoots, revision);
 						});
 					} else if (change.type === "schema") {
 						// Schema changes from a current to a new schema are expected to be backwards compatible.
@@ -438,22 +461,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				// commit the in progress removed roots if there are no more transactions
-				if (!this.transaction.inProgress()) {
-					assert(
-						this.removedRootsInTransaction !== undefined,
-						"a transaction should operate on a copy of the removed roots index",
-					);
-					this.removedRoots.loadIndex(this.removedRootsInTransaction);
-					this.removedRootsInTransaction = undefined;
-				}
 				const transactionRevision = event.newCommits[0].revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}
-			}
-			if (event.type === "remove") {
-				this.removedRootsInTransaction = undefined;
 			}
 		});
 		branch.on("commitApplied", (data) => {
