@@ -127,6 +127,7 @@ export {
 	FieldChangeEncodingContext,
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
+	Incompatibility,
 } from "./modular-schema/index.js";
 
 export {
