@@ -54,6 +54,7 @@ import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/driver-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
@@ -469,6 +470,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
+    // (undocumented)
+    getAttachGCData(telemetryContext?: ITelemetryContext | undefined): IGarbageCollectionData;
     // (undocumented)
     getAttachSnapshot(): ITreeEntry[];
     // (undocumented)
