@@ -81,9 +81,7 @@ export {
 	AllowOptional,
 	RequiredFields,
 	OptionalFields,
-	_InlineTrick,
 	_RecursiveTrick,
-	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
 	Assume,
@@ -114,3 +112,6 @@ export {
 	IdAllocationState,
 	fakeIdAllocator,
 } from "./idAllocator.js";
+
+import * as InternalUtilTypes from "./internalTypes.js";
+export { InternalUtilTypes };

@@ -141,7 +141,7 @@ export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends
 }
 
 // @public
-export type FlattenKeys<T> = [{
+type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
 }][_InlineTrick];
 
@@ -521,10 +521,10 @@ export type InitialObjects<T extends ContainerSchema> = {
 };
 
 // @public
-export type _InlineTrick = 0;
+type _InlineTrick = 0;
 
 // @public
-export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FlattenKeys<{
+export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = InternalUtilTypes.FlattenKeys<{
     readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 } & {
     readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
@@ -585,6 +585,14 @@ export { InternalSimpleTreeTypes }
 // @public
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
+
+declare namespace InternalUtilTypes {
+    export {
+        _InlineTrick,
+        FlattenKeys
+    }
+}
+export { InternalUtilTypes }
 
 // @alpha
 export interface IntervalIndex<TInterval extends ISerializableInterval> {

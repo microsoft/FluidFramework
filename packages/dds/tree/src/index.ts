@@ -355,14 +355,13 @@ export {
 	AllowOptional,
 	RequiredFields,
 	OptionalFields,
-	_InlineTrick,
 	_RecursiveTrick,
-	FlattenKeys,
 	AllowOptionalNotFlattened,
 	isAny,
 	BrandedKeyContent,
 	RestrictiveReadonlyRecord,
 	MakeNominal,
+	InternalUtilTypes,
 } from "./util/index.js";
 
 export {

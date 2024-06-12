@@ -45,7 +45,7 @@ import {
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
-import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
+import { type RestrictiveReadonlyRecord, fail, InternalUtilTypes } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
@@ -104,7 +104,7 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = FlattenKeys<
+> = InternalUtilTypes.FlattenKeys<
 	{
 		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 	} & {

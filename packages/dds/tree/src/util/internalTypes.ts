@@ -5,4 +5,4 @@
 
 // Used by public types, but not part of the desired API surface
 
-export type { ApplyKind } from "./schemaTypes.js";
+export type { _InlineTrick, FlattenKeys } from "./typeUtils.js";
