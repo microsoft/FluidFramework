@@ -109,16 +109,25 @@ export function SettingsView(): React.ReactElement {
 	return (
 		<div className={styles.root}>
 			<div className={styles.section}>
-				<h4 className={styles.sectionHeader}>Theme</h4>
+				<h4 title="ThemeTitle" className={styles.sectionHeader}>
+					Theme
+				</h4>
 				<Dropdown
+					title="ThemeDropdown"
 					aria-label="Theme Dropdown"
 					value={themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
 				>
-					<Option value={ThemeOption.Light}>Light</Option>
-					<Option value={ThemeOption.Dark}>Dark</Option>
-					<Option value={ThemeOption.HighContrast}>High Contrast</Option>
+					<Option title="Light" tabIndex={0} value={ThemeOption.Light}>
+						Light
+					</Option>
+					<Option tabIndex={1} value={ThemeOption.Dark}>
+						Dark
+					</Option>
+					<Option tabIndex={2} value={ThemeOption.HighContrast}>
+						High Contrast
+					</Option>
 				</Dropdown>
 			</div>
 			<div className={styles.section}>
