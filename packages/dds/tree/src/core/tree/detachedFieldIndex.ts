@@ -180,17 +180,25 @@ export class DetachedFieldIndex {
 	/**
 	 * Returns all entries last created or used by the given revision.
 	 */
-	public getRootsLastTouchedByRevision(revision: RevisionTag): [ForestRootId, Delta.DetachedNodeId][] {
-		return Array.from(this.latestRelevantRevisionToFields.get(revision)?.entries() ?? []);
+	public *getRootsLastTouchedByRevision(revision: RevisionTag): Iterable<ForestRootId> {
+		const roots = this.latestRelevantRevisionToFields.get(revision);
+		if (roots !== undefined) {
+			for (const root of roots.keys()) {
+				yield root;
+			}
+		}
 	}
 
 	/**
 	 * Returns all entries created by the given revision.
 	 */
-	public getRoots(revision: RevisionTag): ForestRootId[] {
-		return Array.from(this.detachedNodeToField.get(revision)?.values() ?? []).map(
-			({ root }) => root,
-		);
+	public *getRoots(revision: RevisionTag): Iterable<ForestRootId> {
+		const roots = this.detachedNodeToField.get(revision);
+		if (roots !== undefined) {
+			for (const { root } of roots.values()) {
+				yield root;
+			}
+		}
 	}
 
 	/**
@@ -204,6 +212,26 @@ export class DetachedFieldIndex {
 			this.deleteRootFromLatestRelevantRevisionsMap(root, latestRelevantRevision);
 		}
 		this.detachedNodeToField.delete(revision);
+	}
+
+	/**
+	 * Removes all entries last created or used by the given revision.
+	 */
+	public deleteRootsLastTouchedByRevision(revision: RevisionTag): void {
+		const entries = this.latestRelevantRevisionToFields.get(revision);
+		if (entries === undefined) {
+			return;
+		}
+
+		this.latestRelevantRevisionToFields.delete(revision);
+		for (const detachedNodeId of entries.values()) {
+			const found = deleteFromNestedMap(
+				this.detachedNodeToField,
+				detachedNodeId.major,
+				detachedNodeId.minor,
+			);
+			assert(found, "Unable to delete unknown entry");
+		}
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {

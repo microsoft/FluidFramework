@@ -520,15 +520,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("ancestryTrimmed", (revisions) => {
 			this.withCombinedVisitor((visitor) => {
 				revisions.forEach((revision) => {
-					this.removedRoots
-						// get all the roots last created or used by the revision
-						.getRootsLastTouchedByRevision(revision)
-						// get the detached field for the root and delete it from the removed roots
-						.forEach(([root, detachedNodeId]) => {
-							const field = this.removedRoots.toFieldKey(root);
-							this.removedRoots.deleteEntry(detachedNodeId);
-							visitor.destroy(field, 1);
-						});
+					// get all the roots last created or used by the revision
+					const roots = this.removedRoots.getRootsLastTouchedByRevision(revision);
+
+					// get the detached field for the root and delete it from the removed roots
+					for (const root of roots) {
+						visitor.destroy(this.removedRoots.toFieldKey(root), 1);
+					}
 				});
 			});
 		});
@@ -660,15 +658,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private disposeRevertibleRoots(revision: RevisionTag): void {
 		const roots = this.removedRoots.getRoots(revision);
-		if (roots.length > 0) {
-			this.withCombinedVisitor((visitor) => {
-				// get all the roots associated with the revision
-				roots
-					.map((root) => this.removedRoots.toFieldKey(root))
-					.forEach((field) => visitor.destroy(field, 1));
-			});
-			this.removedRoots.deleteRoots(revision);
-		}
+		this.withCombinedVisitor((visitor) => {
+			for (const root of roots) {
+				visitor.destroy(this.removedRoots.toFieldKey(root), 1);
+			}
+		});
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
