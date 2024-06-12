@@ -9,7 +9,7 @@ import React, { useEffect, useState } from "react";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
-	model: IInventoryListAppModel;
+	model: IInventoryListAppModel & IMigratableModel;
 	getUrlForContainerId?: (containerId: string) => string;
 }
 

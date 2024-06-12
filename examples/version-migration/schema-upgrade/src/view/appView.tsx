@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IMigratableModel } from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
@@ -10,7 +11,7 @@ import type { IInventoryListAppModel } from "../modelInterfaces.js";
 import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
-	model: IInventoryListAppModel;
+	model: IInventoryListAppModel & IMigratableModel;
 }
 
 /**

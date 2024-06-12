@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter, type IMigratableModel } from "@fluid-example/example-utils";
+import { EventEmitter } from "@fluid-example/example-utils";
 import { SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
  * for the application to run.
  */
-export interface IInventoryListAppModel extends IMigratableModel {
+export interface IInventoryListAppModel {
 	/**
 	 * An inventory tracker list.
 	 */

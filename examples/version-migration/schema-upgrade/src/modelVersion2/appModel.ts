@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IMigratableModelEvents, type IMigrationTool } from "@fluid-example/example-utils";
+import type {
+	IMigratableModelEvents,
+	IMigratableModel,
+	IMigrationTool,
+} from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
@@ -22,7 +26,7 @@ export type InventoryListAppModelExportFormat2 = string;
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
  */
-export class InventoryListAppModel implements IInventoryListAppModel {
+export class InventoryListAppModel implements IInventoryListAppModel, IMigratableModel {
 	// To be used by the consumer of the model to pair with an appropriate view.
 	public readonly version = "two";
 
