@@ -20,23 +20,23 @@ export interface IVersionedModel {
 /**
  * @internal
  */
-export interface IImportExportModel<TImportType, TExportType> {
+export interface IImportExportModel<TImport, TExport> {
 	/**
 	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
 	 * we can still check whether the model supports that data.
 	 */
-	supportsDataFormat: (initialData: unknown) => initialData is TImportType;
+	supportsDataFormat: (initialData: unknown) => initialData is TImport;
 
 	/**
 	 * importData must be called after initialization but before modifying or attaching the model (i.e. can only
 	 * be called on an unaltered, detached model).
 	 */
-	importData: (initialData: TImportType) => Promise<void>;
+	importData: (initialData: TImport) => Promise<void>;
 
 	/**
 	 * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
 	 */
-	exportData: () => Promise<TExportType>;
+	exportData: () => Promise<TExport>;
 }
 
 /**
