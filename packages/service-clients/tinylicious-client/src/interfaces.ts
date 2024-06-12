@@ -62,7 +62,7 @@ export interface TinyliciousConnectionConfig {
  * Any functionality regarding how the data is handled within the FluidContainer itself (e.g., which data objects or
  * DDSes to use) will not be included here but rather on the FluidContainer class itself.
  *
- * Returned by {@link TinyliciousClient.createContainer} alongside the FluidContainer.
+ * Returned by {@link TinyliciousClient.createContainer} and {@link TinyliciousClient.getContainer} alongside the FluidContainer.
  *
  * @beta
  */
