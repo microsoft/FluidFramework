@@ -10,7 +10,7 @@
  * @param decimalPlaces - The number of decimal places to truncate to.
  * @returns The truncated number.
  */
-export function truncateToDecimalPlaces(number: number, decimalPlaces: number): number {
+export function roundToDecimalPlaces(number: number, decimalPlaces: number): number {
 	const factor = Math.pow(10, decimalPlaces);
 	return Math.round(number * factor) / factor;
 }
