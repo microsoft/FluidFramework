@@ -53,7 +53,7 @@ import {
 	objectWithPossibleRecursion,
 	objectWithRecursion,
 	objectWithEmbeddedRecursion,
-	// objectWithAlternatingRecursion,
+	objectWithAlternatingRecursion,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -85,7 +85,7 @@ type ContainsAny<T, TRecursion = never> = boolean extends (T extends never ? tru
 	? T extends readonly (infer A)[]
 		? ContainsAny<A, TRecursion | T>
 		: {
-				[K in keyof T]: ContainsAny<Exclude<Required<T>[K], undefined>, TRecursion | T>;
+				[K in keyof T]-?: ContainsAny<Exclude<Required<T>[K], undefined>, TRecursion | T>;
 		  }[keyof T]
 	: never;
 
@@ -272,49 +272,44 @@ describe("JsonDeserialized", () => {
 
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
-				// @ts-expect-error TO FIX: resultRead is (erroneously) `{}` that ContainsAny doesn't handle.
 				ContainsAny(resultRead) satisfies never;
 				objectWithPossibleRecursion satisfies typeof resultRead;
+				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'string | ObjectWithPossibleRecursion'
 				resultRead satisfies typeof objectWithPossibleRecursion;
 			});
 
 			it("object with optional type recursion", () => {
-				// @ts-expect-error TO FIX: typeof `objectWithRecursion` is recursive
 				const resultRead = passThru(
 					objectWithRecursion,
 					// no error
 				);
-				// @ts-expect-error TO FIX: resultRead contains `any`
 				ContainsAny(resultRead) satisfies never;
 				objectWithRecursion satisfies typeof resultRead;
+				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'ObjectWithRecursion'
 				resultRead satisfies typeof objectWithRecursion;
 			});
 
 			it("object with deep type recursion", () => {
-				// TO FIX: earlier error in "object with optional type recursion" prevents need to suppress need to fix this error
-				// TO FIX: @ts-expect-error TO FIX: typeof `ObjectWithOptionalRecursion` is recursive
 				const resultRead = passThru(objectWithEmbeddedRecursion);
-				// @ts-expect-error TO FIX: resultRead contains `any`
 				ContainsAny(resultRead) satisfies never;
 				objectWithEmbeddedRecursion satisfies typeof resultRead;
+				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'ObjectWithEmbeddedRecursion'
 				resultRead satisfies typeof objectWithEmbeddedRecursion;
 			});
 
-			// TO FIX: This test is disabled because it breaks typescript (because recursion is not handled correctly)
-			// it("object with alternating type recursion", () => {
-			// 	const resultRead = passThru(
-			// 		objectWithAlternatingRecursion,
-			// 	);
-			// 	resultRead satisfies typeof objectWithAlternatingRecursion;
-			// });
+			it("object with alternating type recursion", () => {
+				const resultRead = passThru(objectWithAlternatingRecursion);
+				ContainsAny(resultRead) satisfies never;
+				objectWithAlternatingRecursion satisfies typeof resultRead;
+				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'ObjectWithAlternatingRecursion'
+				resultRead satisfies typeof objectWithAlternatingRecursion;
+			});
 
 			it("simple json (`JsonTypeWith<never>`)", () => {
-				// @ts-expect-error TO FIX: `JsonTypeWith<never>` is recursive
 				const resultRead = passThru(
 					simpleJson,
 					// no error
 				) satisfies typeof simpleJson;
-				// @ts-expect-error TO FIX: resultRead is (erroneously) `{}` that ContainsAny doesn't handle.
 				ContainsAny(resultRead) satisfies never;
 				simpleJson satisfies typeof resultRead;
 				resultRead satisfies typeof simpleJson;

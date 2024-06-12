@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { JsonTypeWith, NonNullJsonObject } from "./jsonType.js";
+
 /**
  * Returns non-symbol keys for optional properties of an object type.
  *
@@ -160,3 +162,84 @@ export type FlattenIntersection<T> = T extends Record<string | number | symbol, 
 export type FullyReadonly<T> = {
 	readonly [K in keyof T]: FullyReadonly<T[K]>;
 };
+
+/**
+ * Recurses T applying {@link JsonDeserialized} filter up to RecurseLimit times.
+ *
+ * @beta
+ */
+export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit> = RecurseLimit extends 10
+	? JsonDeserializedImpl<T, TReplaced, 9>
+	: RecurseLimit extends 9
+	? JsonDeserializedImpl<T, TReplaced, 8>
+	: RecurseLimit extends 8
+	? JsonDeserializedImpl<T, TReplaced, 7>
+	: RecurseLimit extends 7
+	? JsonDeserializedImpl<T, TReplaced, 6>
+	: RecurseLimit extends 6
+	? JsonDeserializedImpl<T, TReplaced, 5>
+	: RecurseLimit extends 5
+	? JsonDeserializedImpl<T, TReplaced, 4>
+	: RecurseLimit extends 4
+	? JsonDeserializedImpl<T, TReplaced, 3>
+	: RecurseLimit extends 3
+	? JsonDeserializedImpl<T, TReplaced, 2>
+	: RecurseLimit extends 2
+	? JsonDeserializedImpl<T, TReplaced, 1>
+	: RecurseLimit extends 1
+	? JsonDeserializedImpl<T, TReplaced, 0>
+	: JsonTypeWith<TReplaced>;
+
+/**
+ * Implementation of {@link JsonDeserialized}.
+ */
+export type JsonDeserializedImpl<
+	T,
+	TReplaced,
+	RecurseLimit = 10,
+> = /* test for 'any' */ boolean extends (T extends never ? true : false)
+	? /* 'any' => */ JsonTypeWith<TReplaced>
+	: /* test for 'unknown' */ unknown extends T
+	? /* 'unknown' => */ JsonTypeWith<TReplaced>
+	: /* test for deserializable primitive types or given alternate */ T extends  // eslint-disable-next-line @rushstack/no-new-null
+			| null
+			| boolean
+			| number
+			| string
+			| TReplaced
+	? /* primitive types => */ T
+	: // eslint-disable-next-line @typescript-eslint/ban-types
+	/* test for not a function */ Extract<T, Function> extends never
+	? /* not a function => test for object */ T extends object
+		? /* object => test for array */ T extends readonly (infer _)[]
+			? /* array => */ {
+					/* array items may not not allow undefined */
+					/* use homomorphic mapped type to preserve tuple type */
+					[K in keyof T]: JsonForArrayItem<
+						T[K],
+						TReplaced,
+						JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit>
+					>;
+			  }
+			: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
+			? /* `object` => */ NonNullJsonObject
+			: /* test for enum like types */ IsEnumLike<T> extends true
+			? /* enum or similar simple type (return as-is) => */ T
+			: /* property bag => */ FlattenIntersection<
+					/* properties with symbol keys or unsupported values are removed */
+					{
+						/* properties with defined values are recursed */
+						[K in NonSymbolWithDefinedNotDeserializablePropertyOf<
+							T,
+							TReplaced
+						>]: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit>;
+					} & {
+						/* properties that may have undefined values are optional */
+						[K in NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
+							T,
+							TReplaced
+						>]?: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit>;
+					}
+			  >
+		: /* not an object => */ never
+	: /* function => */ never;

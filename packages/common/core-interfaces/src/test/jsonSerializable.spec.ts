@@ -470,8 +470,6 @@ describe("JsonSerializable", () => {
 					passThru(
 						// @ts-expect-error 'ObjectWithSymbolAndRecursion' is not assignable to parameter of type '{ recurse: { recurse: ObjectWithSymbolAndRecursion; }; }' (`symbol` becomes `never`)
 						objectWithSymbolAndRecursion,
-						// JsonDeserialized does not yet handle recursive types, but we use filter here as the general expectation.
-						// @ts-expect-error 'recurse' circularly references itself in mapped type '{ [K in "recurse"]: JsonDeserialized<ObjectWithSymbolAndRecursion[K], never>; }'
 						{ recurse: {} },
 					);
 				});
