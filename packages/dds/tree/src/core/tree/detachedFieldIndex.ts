@@ -358,10 +358,8 @@ export class DetachedFieldIndex {
 
 		const rootMap = new Map();
 		forEachInNestedMap(this.detachedNodeToField, (entry, major, minor) => {
-			if (entry.latestRelevantRevision === fakeRevisionWhenNotSet) {
-				entry.latestRelevantRevision = latestRevision;
-				rootMap.set(entry.root, { major, minor });
-			}
+			entry.latestRelevantRevision = latestRevision;
+			rootMap.set(entry.root, { major, minor });
 		});
 
 		this.latestRelevantRevisionToFields.delete(fakeRevisionWhenNotSet);
