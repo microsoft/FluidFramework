@@ -4,19 +4,19 @@
  */
 
 export {
-	IEditableForest,
-	FieldLocation,
-	TreeLocation,
+	type IEditableForest,
+	type FieldLocation,
+	type TreeLocation,
 	isFieldLocation,
-	ForestLocation,
+	type ForestLocation,
 	initializeForest,
 } from "./editableForest.js";
 export {
-	IForestSubscription,
-	ITreeSubscriptionCursor,
+	type IForestSubscription,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
-	FieldAnchor,
+	type FieldAnchor,
 	moveToDetachedField,
-	ForestEvents,
+	type ForestEvents,
 } from "./forest.js";

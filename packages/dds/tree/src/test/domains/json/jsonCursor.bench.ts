@@ -9,9 +9,9 @@ import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-too
 
 import {
 	EmptyKey,
-	FieldKey,
-	ITreeCursor,
-	JsonableTree,
+	type FieldKey,
+	type ITreeCursor,
+	type JsonableTree,
 	TreeStoredSchemaRepository,
 	initializeForest,
 	moveToDetachedField,
@@ -39,7 +39,7 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import { brand, JsonCompatible } from "../../../util/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
 
 import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageValues, sum, sumMap } from "./benchmarks.js";

@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { TaggedChange } from "../../../core/index.js";
+import type { TaggedChange } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	ConstrainedTestChangeRebaser,

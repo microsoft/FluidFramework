@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { treeNodeApi as Tree, TreeConfiguration, type TreeView } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
@@ -22,7 +22,7 @@ import {
 	schemaFromValue,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactory.js";
-import {
+import type {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -30,7 +30,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
 
@@ -101,7 +101,8 @@ describe("schemaFactory", () => {
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view = tree.schematize(config);
+		const view = tree.viewWith(config);
+		view.initialize(5);
 		assert.equal(view.root, 5);
 	});
 
@@ -143,6 +144,30 @@ describe("schemaFactory", () => {
 		assert.equal(foo, "foo");
 	});
 
+	it("Optional fields", () => {
+		const factory = new SchemaFactory("test");
+		class Foo extends factory.object("foo", {
+			x: factory.optional(factory.number),
+		}) {}
+
+		const _check1 = new Foo({});
+		const _check2 = new Foo({ x: undefined });
+		const _check3 = new Foo({ x: 1 });
+	});
+
+	it("Required fields", () => {
+		const factory = new SchemaFactory("test");
+		class Foo extends factory.object("foo", {
+			x: factory.required(factory.number),
+		}) {}
+
+		// @ts-expect-error Missing required field
+		const _check1 = new Foo({});
+		// @ts-expect-error Required field cannot be undefined
+		const _check2 = new Foo({ x: undefined });
+		const _check3 = new Foo({ x: 1 });
+	});
+
 	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
 	it("Typed factories are assignable to default typing", () => {
 		type _check1 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>>;
@@ -170,7 +195,9 @@ describe("schemaFactory", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const root = tree.schematize(config).root;
+			const view = tree.viewWith(config);
+			view.initialize(new Point({ x: 1, y: 2 }));
+			const { root } = view;
 			assert.equal(root.x, 1);
 			assert.equal(root.y, 2);
 

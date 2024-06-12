@@ -6,31 +6,31 @@
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import {
+import type {
 	ITreeCursorSynchronous,
 	TreeNodeSchemaIdentifier,
-	type SchemaAndPolicy,
+	SchemaAndPolicy,
 } from "../core/index.js";
 import {
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldKind,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	NodeKeyManager,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { TreeContent } from "../shared-tree/index.js";
+import type { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
-import { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
@@ -39,16 +39,17 @@ import {
 import {
 	FieldKind,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeConfiguration } from "./tree.js";
+// eslint-disable-next-line import/no-deprecated
+import { TreeConfiguration, type TreeViewConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -58,7 +59,7 @@ import { TreeConfiguration } from "./tree.js";
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-function cursorFromUnhydratedRoot(
+export function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 	nodeKeyManager: NodeKeyManager,
@@ -76,6 +77,14 @@ function cursorFromUnhydratedRoot(
 	);
 }
 
+/* eslint-disable import/no-deprecated */
+function isTreeConfiguration(
+	config: TreeViewConfiguration | TreeConfiguration,
+): config is TreeConfiguration {
+	return config instanceof TreeConfiguration;
+}
+/* eslint-enable import/no-deprecated */
+
 /**
  * Generates a configuration object (schema + initial tree) for a FlexTree.
  * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
@@ -89,11 +98,12 @@ function cursorFromUnhydratedRoot(
  * I wrote these docs without a ton of context, they can probably be improved.
  */
 export function toFlexConfig(
-	config: TreeConfiguration,
+	// eslint-disable-next-line import/no-deprecated
+	config: TreeViewConfiguration | TreeConfiguration,
 	nodeKeyManager: NodeKeyManager,
 	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): TreeContent {
-	const unhydrated = config.initialTree();
+	const unhydrated = isTreeConfiguration(config) ? config.initialTree() : undefined;
 	const initialTree =
 		unhydrated === undefined
 			? undefined

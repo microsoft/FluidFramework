@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
-import { Mark } from "./types.js";
+import { type MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
+import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
 
 export class MarkQueue {

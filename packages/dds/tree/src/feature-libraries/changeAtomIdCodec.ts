@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec } from "../codec/index.js";
-import {
+import type { IJsonCodec } from "../codec/index.js";
+import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
 	EncodedChangeAtomId,

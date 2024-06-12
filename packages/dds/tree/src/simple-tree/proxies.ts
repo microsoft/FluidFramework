@@ -3,37 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
-	IForestSubscription,
-	MapTree,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	UpPath,
+	type IForestSubscription,
+	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type UpPath,
 } from "../core/index.js";
 
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeNodeEvents,
-	FlexTreeTypedField,
-	MapTreeNode,
+	type FlexFieldSchema,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeNodeEvents,
+	type FlexTreeTypedField,
+	type MapTreeNode,
 	onNodeChanged,
 	onTreeChanged,
 	tryGetMapTreeNode,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
-import { Mutable, fail, isReadonlyArray } from "../util/index.js";
+import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { TreeNode, Unhydrated } from "./types.js";
-import { Off } from "../events/index.js";
+import type { TreeNode, Unhydrated } from "./types.js";
+import type { Off } from "../events/index.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.

@@ -28,7 +28,7 @@ import {
 
 import { TestSnapshotCache } from "../../testSnapshotCache.js";
 
-import { supportsDataVirtualization } from "./utils.js";
+import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
 	parent: any,
@@ -243,7 +243,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		);
 		await provider.ensureSynchronized();
@@ -259,15 +259,12 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectTreeB.type === SummaryType.Tree, "dataObjectTree should be a tree");
 		assert(dataObjectTreeB.groupId === loadingGroupId, "GroupId missing from B summary tree");
 
-		// TODO enable for prod odsp
-		if (provider.driver.endpointName === "odsp-df") {
-			persistedCache.clearCache();
-		}
+		clearCacheIfOdsp(provider, persistedCache);
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
 			{
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			},
 			{
@@ -313,7 +310,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		if (supportsDataVirtualization(provider)) {
 			const container2 = await provider.loadContainer(runtimeFactory, {
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			});
 			await provider.ensureSynchronized();
@@ -365,7 +362,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 			}),
 		);
 		const { summaryVersion, summaryRefSeq } = await summarizeNow(summarizer);
@@ -388,17 +385,14 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			},
 		);
 
-		// TODO enable for prod odsp
-		if (provider.driver.endpointName === "odsp-df") {
-			persistedCache.clearCache();
-		}
+		clearCacheIfOdsp(provider, persistedCache);
 
 		// Load from the summary
 		const container2 = await provider.loadContainer(
 			runtimeFactory,
 			{
 				configProvider: configProvider({
-					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch": true,
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
 				}),
 			},
 			{

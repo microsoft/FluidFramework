@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager, type NodeKeyManager } from "../../feature-libraries/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 	TreeConfiguration,
-	TreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
 	toFlexConfig,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
