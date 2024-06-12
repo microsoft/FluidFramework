@@ -710,14 +710,26 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			parent: undefined as UpPath | undefined,
 			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
 
-			// A stack of booleans to keep track of when we should be enqueuing treeChanged events during tree traversal
-			// as a delta visit drives this visitor.
-			// As we go deeper into the tree we add entries to the stack, defaulting to false, and when a node actually changes
-			// we set the top of the stack to true.
-			// As we exit nodes, we pop the stack and if the popped value is true, that's an indication that we should enqueue
-			// a treeChanged event; it's also an indication that we should enqueue treeChanged events for all ancestors of the
-			// node, so we need to also update the top of the stack to ensure that keeps happening as we go up the tree.
-			actualChangeStack: [] as boolean[],
+			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
+			// subtreeChangedAfterBatch events.
+			// The algorithm works as follows:
+			// - Initialize both to 0.
+			// - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
+			// - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
+			//   Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
+			//   node at this depth you should emit a subtreeChangedAfterBatch event".
+			// - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
+			//   Then decrement currentDepth unconditionally.
+			// Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
+			// have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
+			// parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
+			// get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
+			// walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
+			// as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
+			// back up that path, until we get back to the depth where we were already emitting the event, and will continue
+			// emitting it on the way to the root.
+			currentDepth: 0,
+			depthThresholdForSubtreeChanged: 0,
 
 			free() {
 				assert(
@@ -821,7 +833,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					parentIndex: destination,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
-				this.actualChangeStack[this.actualChangeStack.length - 1] = true;
+				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
 			beforeDetach(source: Range, destination: FieldKey): void {
 				assert(
@@ -885,7 +897,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					parentIndex: 0,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
-				this.actualChangeStack[this.actualChangeStack.length - 1] = true;
+				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
 			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
 				assert(
@@ -1024,22 +1036,18 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 						}
 					}
 				});
-				this.actualChangeStack.push(false);
+				this.currentDepth++;
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
 					p.events.emit("subtreeChanged", p);
-					assert (this.actualChangeStack.length > 0, "Unbalanced delta walk, exited from more nodes than we entered");
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- validated with the assertion above
-					const nodeChangeHappened = this.actualChangeStack.pop()!;
-					if (nodeChangeHappened) {
+					if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
 						this.bufferedEvents.push({
 							node: p,
 							event: "subtreeChangedAfterBatch",
 						});
-						const lastIndex = this.actualChangeStack.length - 1;
-						this.actualChangeStack[lastIndex] = nodeChangeHappened;
+						this.depthThresholdForSubtreeChanged--;
 					}
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
@@ -1047,6 +1055,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
+				this.currentDepth--;
 			},
 			enterField(key: FieldKey): void {
 				this.parentField = key;
