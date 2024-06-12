@@ -46,6 +46,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
+	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
 };
 
