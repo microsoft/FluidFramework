@@ -12,5 +12,5 @@
  */
 export function truncateToDecimalPlaces(number: number, decimalPlaces: number): number {
 	const factor = Math.pow(10, decimalPlaces);
-	return Math.trunc(number * factor) / factor;
+	return Math.round(number * factor) / factor;
 }
