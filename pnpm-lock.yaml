@@ -15346,8 +15346,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0-264124
-        version: 0.39.0-264124
+        specifier: ^0.39.0
+        version: 0.39.0(@types/node@18.19.1)
       jest-environment-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2(typescript@5.4.5)
@@ -16921,7 +16921,7 @@ packages:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -16974,7 +16974,7 @@ packages:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.568.0
@@ -17038,7 +17038,7 @@ packages:
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -17127,7 +17127,7 @@ packages:
       - aws-crt
     dev: true
 
-  /@aws-sdk/client-sts@3.569.0(@aws-sdk/client-sso-oidc@3.569.0):
+  /@aws-sdk/client-sts@3.569.0:
     resolution: {integrity: sha512-3AyipQ2zHszkcTr8n1Sp7CiMUi28aMf1vOhEo0KKi0DWGo1Z1qJEpWeRP363KG0n9/8U3p1IkXGz5FRbpXZxIw==}
     engines: {node: '>=16.0.0'}
     dependencies:
@@ -17172,7 +17172,6 @@ packages:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.6.2
     transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
     dev: true
 
@@ -17223,7 +17222,7 @@ packages:
       '@aws-sdk/client-sts':
         optional: true
     dependencies:
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/credential-provider-env': 3.568.0
       '@aws-sdk/credential-provider-process': 3.568.0
       '@aws-sdk/credential-provider-sso': 3.568.0(@aws-sdk/client-sso-oidc@3.569.0)
@@ -17297,7 +17296,7 @@ packages:
       '@aws-sdk/client-sts':
         optional: true
     dependencies:
-      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
+      '@aws-sdk/client-sts': 3.569.0
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
       '@smithy/types': 2.12.0
@@ -21576,69 +21575,6 @@ packages:
       change-case: 3.1.0
       danger: 11.3.0
       date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.2.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.0
-      inquirer: 8.2.6
-      json5: 2.2.3
-      jssm: 5.98.2
-      latest-version: 5.1.0
-      minimatch: 7.4.6
-      node-fetch: 2.7.0
-      npm-check-updates: 16.14.20
-      oclif: 4.10.4
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      replace-in-file: 7.1.0
-      resolve.exports: 2.0.2
-      semver: 7.6.0
-      semver-utils: 1.1.4
-      simple-git: 3.21.0
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.1
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - aws-crt
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluid-tools/build-cli@0.39.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-6YA9Bnm+url3ZRrIf+dwePhv1z30oxazimuEswFWocPQDCDrOcepE4OVEcwi85/lRjN14LklJkwww7YBQXn2Bg==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/version-tools': 0.39.0
-      '@fluidframework/build-tools': 0.39.0(@types/node@18.19.1)(webpack-cli@4.10.0)
-      '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
-      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.1)
-      '@oclif/core': 3.27.0
-      '@oclif/plugin-autocomplete': 3.0.17
-      '@oclif/plugin-commands': 3.3.2
-      '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-not-found': 3.1.8
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
-      async: 3.2.5
-      chalk: 5.3.0
-      change-case: 3.1.0
-      danger: 11.3.0
-      date-fns: 2.30.0
       debug: 4.3.5(supports-color@8.1.1)
       execa: 5.1.1
       fflate: 0.8.2
@@ -21722,23 +21658,6 @@ packages:
       table: 6.8.1
     transitivePeerDependencies:
       - supports-color
-
-  /@fluid-tools/version-tools@0.39.0-264124:
-    resolution: {integrity: sha512-CVq50WXgAH4gJUu2Ghzq7x3//gWCEZc8cPC5qD6CT5eiFOg5GLEf35bKjOSMj+fqIUigtoWj1j+uIUhnddwYLQ==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@oclif/core': 3.27.0
-      '@oclif/plugin-autocomplete': 3.0.17
-      '@oclif/plugin-commands': 3.3.2
-      '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-not-found': 3.1.8
-      chalk: 2.4.2
-      semver: 7.6.0
-      table: 6.8.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
 
   /@fluidframework/agent-scheduler@2.0.0-rc.4.0.0:
     resolution: {integrity: sha512-nC2Nv2xK5rdAf9qJKfQjOyQ/r68rorPFY4MPQteu8xA7JiWyDDNBilXukf2AD2owuZlkzlIIc05+wujlTa51LA==}
@@ -21888,7 +21807,7 @@ packages:
       cosmiconfig: 8.3.6(typescript@5.1.6)
       danger: 11.3.0
       date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       detect-indent: 6.1.0
       find-up: 7.0.0
       fs-extra: 11.2.0
@@ -21930,7 +21849,7 @@ packages:
       cosmiconfig: 8.3.6(typescript@5.1.6)
       danger: 11.3.0
       date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.5(supports-color@8.1.1)
       detect-indent: 6.1.0
       find-up: 7.0.0
       fs-extra: 11.2.0
@@ -21957,66 +21876,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.39.0-264124:
-    resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
-    engines: {node: '>=14.17.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.39.0-264124
-      '@fluidframework/bundle-size-tools': 0.39.0-264124
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
-      async: 3.2.5
-      chalk: 2.4.2
-      cosmiconfig: 8.3.6(typescript@5.1.6)
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.3.0
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.0
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.1.6
-      yaml: 2.3.4
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
   /@fluidframework/bundle-size-tools@0.39.0(webpack-cli@4.10.0):
     resolution: {integrity: sha512-X1eaDPuvQ3BHhB4+COK1sEauQxyRcXZ8aZdhqETASgLJqL3VqMlCEGqu3uGsENSkG55BU0zyFBTziZiW4aRIRQ==}
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 5.1.6
-      webpack: 5.89.0(webpack-cli@4.10.0)
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/bundle-size-tools@0.39.0-264124:
-    resolution: {integrity: sha512-nVRbK5X1SnRoZRA6jkxKYtDQ5cRZ1oH6XBJxkvwoPEUsjPNHaco+juwsMDucu0oBA/FnMhOZEz5DtiQz4sBbgQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
