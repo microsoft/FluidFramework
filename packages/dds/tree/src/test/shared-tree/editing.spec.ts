@@ -2725,13 +2725,16 @@ describe("Editing", () => {
 				tree.transaction.commit();
 
 				tree2.transaction.start();
-				// Put existence constraint on child field of A
+
+				// Put existence constraint on child of A
 				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
+
+				// Insert B if the child of A is still attached
 				tree2Sequence.insert(
 					1,
 					cursorForJsonableTreeNode({ type: leaf.string.name, value: "B" }),

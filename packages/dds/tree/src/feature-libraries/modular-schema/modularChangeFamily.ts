@@ -636,11 +636,10 @@ export class ModularChangeFamily
 			genId,
 			crossFieldTable,
 			rebaseMetadata,
-			NodeAttachState.Attached,
 		);
 
 		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		for (const [newId, baseId, attachState] of crossFieldTable.nodeIdPairs) {
+		for (const [newId, baseId] of crossFieldTable.nodeIdPairs) {
 			const newNodeChange =
 				newId !== undefined
 					? tryGetFromNestedMap(change.nodeChanges, newId.revision, newId.localId)
@@ -661,8 +660,6 @@ export class ModularChangeFamily
 				genId,
 				crossFieldTable,
 				rebaseMetadata,
-				constraintState,
-				attachState,
 			);
 
 			if (rebasedNode !== undefined) {
@@ -701,6 +698,13 @@ export class ModularChangeFamily
 			}
 		}
 
+		this.updateConstraintsForFields(
+			rebasedFields,
+			NodeAttachState.Attached,
+			constraintState,
+			rebasedNodes,
+		);
+
 		return makeModularChangeset(
 			this.pruneFieldMap(rebasedFields, rebasedNodes),
 			rebasedNodes,
@@ -719,7 +723,6 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
-		parentAttachState: NodeAttachState,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -740,13 +743,9 @@ export class ModularChangeFamily
 			const rebaseChild = (
 				child: NodeId | undefined,
 				baseChild: NodeId | undefined,
-				attachState: NodeAttachState | undefined,
+				_attachState: NodeAttachState | undefined,
 			): ChangeAtomId => {
-				crossFieldTable.nodeIdPairs.push([
-					child,
-					baseChild,
-					attachState ?? NodeAttachState.Attached,
-				]);
+				crossFieldTable.nodeIdPairs.push([child, baseChild]);
 				return (
 					child ??
 					// The fact `child` is undefined means that the changeset to rebase does not include changes for
@@ -806,7 +805,7 @@ export class ModularChangeFamily
 							0x5b6 /* This field should not have any base changes */,
 						);
 
-						crossFieldTable.nodeIdPairs.push([child, undefined, parentAttachState]);
+						crossFieldTable.nodeIdPairs.push([child, undefined]);
 
 						return child;
 					},
@@ -831,8 +830,6 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
-		constraintState: ConstraintState,
-		attachState: NodeAttachState,
 	): NodeChangeset | undefined {
 		const key = change ?? over;
 		if (key === undefined) {
@@ -847,7 +844,6 @@ export class ModularChangeFamily
 			genId,
 			crossFieldTable,
 			revisionMetadata,
-			attachState,
 		);
 
 		const rebasedChange: NodeChangeset = {};
@@ -856,22 +852,56 @@ export class ModularChangeFamily
 			rebasedChange.fieldChanges = fieldChanges;
 		}
 
-		// If there's a node exists constraint and we removed or revived the node, update constraint state
 		if (change?.nodeExistsConstraint !== undefined) {
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
-			const violatedAfter = attachState === NodeAttachState.Detached;
-
-			if (rebasedChange.nodeExistsConstraint.violated !== violatedAfter) {
-				rebasedChange.nodeExistsConstraint = {
-					...rebasedChange.nodeExistsConstraint,
-					violated: violatedAfter,
-				};
-				constraintState.violationCount += violatedAfter ? 1 : -1;
-			}
 		}
 
 		crossFieldTable.rebasedNodeCache.set(key, rebasedChange);
 		return rebasedChange;
+	}
+
+	private updateConstraintsForFields(
+		fields: FieldChangeMap,
+		parentAttachState: NodeAttachState,
+		constraintState: ConstraintState,
+		nodes: ChangeAtomIdMap<NodeChangeset>,
+	): void {
+		for (const field of fields.values()) {
+			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
+			for (const [nodeId, index] of handler.getNestedChanges(field.change)) {
+				const isDetached = index === undefined;
+				const attachState =
+					parentAttachState === NodeAttachState.Detached || isDetached
+						? NodeAttachState.Detached
+						: NodeAttachState.Attached;
+				this.updateConstraintsForNode(nodeId, attachState, constraintState, nodes);
+			}
+		}
+	}
+
+	private updateConstraintsForNode(
+		nodeId: NodeId,
+		attachState: NodeAttachState,
+		constraintState: ConstraintState,
+		nodes: ChangeAtomIdMap<NodeChangeset>,
+	): void {
+		const node =
+			tryGetFromNestedMap(nodes, nodeId.revision, nodeId.localId) ?? fail("Unknown node ID");
+
+		if (node.nodeExistsConstraint !== undefined) {
+			const isNowViolated = attachState === NodeAttachState.Detached;
+			if (node.nodeExistsConstraint.violated !== isNowViolated) {
+				node.nodeExistsConstraint = {
+					...node.nodeExistsConstraint,
+					violated: isNowViolated,
+				};
+				constraintState.violationCount += isNowViolated ? 1 : -1;
+			}
+		}
+
+		if (node.fieldChanges !== undefined) {
+			this.updateConstraintsForFields(node.fieldChanges, attachState, constraintState, nodes);
+		}
 	}
 
 	private pruneFieldMap(
@@ -1477,7 +1507,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	/**
 	 * List of (newId, baseId) pairs encountered so far.
 	 */
-	nodeIdPairs: [NodeId | undefined, NodeId | undefined, NodeAttachState][];
+	nodeIdPairs: [NodeId | undefined, NodeId | undefined][];
 }
 
 interface RebaseFieldContext {
