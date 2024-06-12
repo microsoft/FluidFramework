@@ -145,26 +145,26 @@ describe("schemaFactory", () => {
 
 	it("Optional fields", () => {
 		const factory = new SchemaFactory("test");
-		const foo = factory.object("foo", {
+		class Foo extends factory.object("foo", {
 			x: factory.optional(factory.number),
-		});
+		}) {}
 
-		const _check1 = new foo({});
-		const _check2 = new foo({ x: undefined });
-		const _check3 = new foo({ x: 1 });
+		const _check1 = new Foo({});
+		const _check2 = new Foo({ x: undefined });
+		const _check3 = new Foo({ x: 1 });
 	});
 
 	it("Required fields", () => {
 		const factory = new SchemaFactory("test");
-		const foo = factory.object("foo", {
+		class Foo extends factory.object("foo", {
 			x: factory.required(factory.number),
-		});
+		}) {}
 
 		// @ts-expect-error Missing required field
-		const _check1 = new foo({});
+		const _check1 = new Foo({});
 		// @ts-expect-error Required field cannot be undefined
-		const _check2 = new foo({ x: undefined });
-		const _check3 = new foo({ x: 1 });
+		const _check2 = new Foo({ x: undefined });
+		const _check3 = new Foo({ x: 1 });
 	});
 
 	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
