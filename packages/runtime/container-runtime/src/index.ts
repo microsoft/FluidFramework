@@ -52,7 +52,6 @@ export {
 	IGCStats,
 } from "./gc/index.js";
 export {
-	RuntimeAttributor,
 	IRuntimeAttributor,
 	IProvideRuntimeAttributor,
 	IAttributor,

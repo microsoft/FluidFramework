@@ -46,7 +46,6 @@ import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IQuorumClients } from '@fluidframework/driver-definitions';
-import { IQuorumClients as IQuorumClients_2 } from '@fluidframework/driver-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
@@ -812,22 +811,6 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 
 // @alpha @deprecated
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
-
-// @alpha (undocumented)
-export class RuntimeAttributor implements IRuntimeAttributor {
-    // (undocumented)
-    get(key: AttributionKey): AttributionInfo;
-    // (undocumented)
-    has(key: AttributionKey): boolean;
-    // (undocumented)
-    initialize(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, quorum: IQuorumClients_2, baseSnapshot: ISnapshotTree | undefined, readBlob: (id: string) => Promise<ArrayBufferLike>, shouldAddAttributorOnNewFile: boolean): Promise<void>;
-    // (undocumented)
-    get IRuntimeAttributor(): IRuntimeAttributor;
-    // (undocumented)
-    isEnabled: boolean;
-    // (undocumented)
-    summarize(): ISummaryTreeWithStats | undefined;
-}
 
 // @alpha
 export interface SubmitSummaryFailureData {
