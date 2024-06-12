@@ -31,30 +31,30 @@ export class TinyliciousClient {
 
 // @beta
 export interface TinyliciousClientProps {
-    connection?: TinyliciousConnectionConfig;
-    logger?: ITelemetryBaseLogger;
+    readonly connection?: TinyliciousConnectionConfig;
+    readonly logger?: ITelemetryBaseLogger;
 }
 
 // @beta
 export interface TinyliciousConnectionConfig {
-    domain?: string;
-    port?: number;
-    tokenProvider?: ITokenProvider;
+    readonly domain?: string;
+    readonly port?: number;
+    readonly tokenProvider?: ITokenProvider;
 }
 
 // @beta
 export interface TinyliciousContainerServices {
-    audience: ITinyliciousAudience;
+    readonly audience: ITinyliciousAudience;
 }
 
 // @beta
 export interface TinyliciousMember extends IMember {
-    name: string;
+    readonly name: string;
 }
 
 // @beta
 export interface TinyliciousUser extends IUser {
-    name: string;
+    readonly name: string;
 }
 
 ```

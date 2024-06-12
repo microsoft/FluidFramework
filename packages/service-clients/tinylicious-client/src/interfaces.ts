@@ -17,12 +17,12 @@ export interface TinyliciousClientProps {
 	 * Optional. Configuration for establishing a connection with the Tinylicious.
 	 * If not specified, will use {@link TinyliciousConnectionConfig}'s default values.
 	 */
-	connection?: TinyliciousConnectionConfig;
+	readonly connection?: TinyliciousConnectionConfig;
 
 	/**
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
-	logger?: ITelemetryBaseLogger;
+	readonly logger?: ITelemetryBaseLogger;
 }
 
 /**
@@ -35,14 +35,14 @@ export interface TinyliciousConnectionConfig {
 	 *
 	 * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousPort}
 	 */
-	port?: number;
+	readonly port?: number;
 
 	/**
 	 * Optional. Override of the domain.
 	 *
 	 * @defaultValue {@link @fluidframework/tinylicious-driver#defaultTinyliciousEndpoint}
 	 */
-	domain?: string;
+	readonly domain?: string;
 
 	/**
 	 * Optional. Override of tokenProvider. If a param is not provided, TinyliciousConnectionConfig
@@ -51,7 +51,7 @@ export interface TinyliciousConnectionConfig {
 	 *
 	 * @defaultValue {@link @fluidframework/tinylicious-driver#InsecureTinyliciousTokenProvider}
 	 */
-	tokenProvider?: ITokenProvider;
+	readonly tokenProvider?: ITokenProvider;
 }
 
 /**
@@ -71,7 +71,7 @@ export interface TinyliciousContainerServices {
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
 	 * listeners for when the roster has any changes from users joining/leaving the session.
 	 */
-	audience: ITinyliciousAudience;
+	readonly audience: ITinyliciousAudience;
 }
 
 /**
@@ -82,7 +82,7 @@ export interface TinyliciousUser extends IUser {
 	/**
 	 * The user's name
 	 */
-	name: string;
+	readonly name: string;
 }
 
 /**
@@ -93,7 +93,7 @@ export interface TinyliciousMember extends IMember {
 	/**
 	 * {@inheritDoc TinyliciousUser.name}
 	 */
-	name: string;
+	readonly name: string;
 }
 
 /**
