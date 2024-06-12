@@ -19,7 +19,7 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-interface IMeasuredCodeResult<TKey extends string> {
+export interface IMeasuredCodeResult<TKey extends string> extends ITelemetryPerformanceEventExt {
 	/**
 	 * Optional properties to log custom data. The set of properties must be the same for all calls to the `measure` function.
 	 */
@@ -121,7 +121,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 			...this.eventBase,
 		};
 
-		telemetryEvent.avgcAccumulatedDuration = this.accumulatedDuration /= this.counter;
+		telemetryEvent.duration = this.accumulatedDuration /= this.counter;
 
 		for (const key of Object.keys(this.dataSums) as TMetrics[]) {
 			if (this.dataSums[key] !== undefined) {
