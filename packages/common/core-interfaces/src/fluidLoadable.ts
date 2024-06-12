@@ -44,6 +44,7 @@ export interface IProvideFluidRunnable {
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface IFluidRunnable {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	run(...args: any[]): Promise<void>;
 	stop(reason?: string): void;
 }
