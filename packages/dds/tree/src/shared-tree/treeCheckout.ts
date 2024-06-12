@@ -523,18 +523,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					this.removedRoots
 						// get all the roots last created or used by the revision
 						.getLatestRelevantRoots(revision)
-						// remove any roots not created by valid revertibles
-						.filter(
-							([_, { major }]) =>
-								major !== undefined && !this.revertibleCommitBranches.has(major),
-						)
 						// get the detached field for the root and delete it from the removed roots
-						.map(([root, detachedNodeId]) => {
+						.forEach(([root, detachedNodeId]) => {
 							const field = this.removedRoots.toFieldKey(root);
 							this.removedRoots.deleteEntry(detachedNodeId);
-							return field;
-						})
-						.forEach((field) => visitor.destroy(field, 1));
+							visitor.destroy(field, 1);
+						});
 				});
 			});
 		});
