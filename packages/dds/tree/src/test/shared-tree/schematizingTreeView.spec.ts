@@ -25,7 +25,12 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
+import {
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	insert,
+	validateUsageError,
+} from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
@@ -52,19 +57,13 @@ describe("SchematizingSimpleTreeView", () => {
 		const checkout = checkoutWithContent(emptyContent);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
-		assert.throws(
-			() => view.root,
-			(e) => e instanceof UsageError,
-		);
+		assert.throws(() => view.root, validateUsageError(/compatibility/));
 		const { compatibility } = view;
 		assert.equal(compatibility.canView, false);
 		assert.equal(compatibility.canUpgrade, false);
 		assert.equal(compatibility.canInitialize, true);
 
-		assert.throws(
-			() => view.upgradeSchema(),
-			(e) => e instanceof UsageError,
-		);
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
 		view.initialize(5);
 
 		assert.equal(view.root, 5);
@@ -184,7 +183,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.root, 5);
 	});
 
-	it("Attempt to open document using view schema that allows a subset of stored schema documents", () => {
+	it("Attempt to open document using view schema that is incompatible due to being too strict compared to the stored schema", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
