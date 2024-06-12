@@ -707,7 +707,7 @@ describe("sharedTreeView", () => {
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
-		// trunk trimming causes a revertible to be disposed
+		// trunk trimming causes a removed root to be garbage collected
 		assert.deepEqual(checkout2.getRemovedRoots().length, 1);
 
 		checkout1Revertibles.unsubscribe();
