@@ -52,10 +52,12 @@ export interface IMigratableModelEvents extends IEvent {
 /**
  * @internal
  */
-export interface IMigratableModel
-	extends IVersionedModel,
-		IImportExportModel<unknown, unknown>,
-		IEventProvider<IMigratableModelEvents> {
+export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
+	/**
+	 * The event provider that will emit when migration status changes.
+	 */
+	readonly migrationEvents: IEventProvider<IMigratableModelEvents>;
+
 	/**
 	 * The tool that will be used to facilitate the migration.
 	 */

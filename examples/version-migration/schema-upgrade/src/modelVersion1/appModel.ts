@@ -3,18 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "@fluid-example/example-utils";
+import type { IMigratableModelEvents, IMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import type { IEventProvider } from "@fluidframework/core-interfaces";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
-import type {
-	IInventoryList,
-	IInventoryListAppModel,
-	IInventoryListAppModelEvents,
-} from "../modelInterfaces.js";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportFormat1 = string;
@@ -25,21 +22,22 @@ export type InventoryListAppModelExportFormat1 = string;
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
  */
-export class InventoryListAppModel
-	extends TypedEventEmitter<IInventoryListAppModelEvents>
-	implements IInventoryListAppModel
-{
+export class InventoryListAppModel implements IInventoryListAppModel {
 	// To be used by the consumer of the model to pair with an appropriate view.
 	public readonly version = "one";
+
+	private readonly _migrationEvents = new TypedEventEmitter<IMigratableModelEvents>();
+	public get migrationEvents(): IEventProvider<IMigratableModelEvents> {
+		return this._migrationEvents;
+	}
 
 	public constructor(
 		public readonly inventoryList: IInventoryList,
 		public readonly migrationTool: IMigrationTool,
 		private readonly container: IContainer,
 	) {
-		super();
 		this.container.on("connected", () => {
-			this.emit("connected");
+			this._migrationEvents.emit("connected");
 		});
 	}
 
