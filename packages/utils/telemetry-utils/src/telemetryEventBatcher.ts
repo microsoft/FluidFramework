@@ -135,7 +135,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 			}
 		}
 
-		this.logger.sendTelemetryEvent(telemetryEvent);
+		this.logger.sendPerformanceEvent(telemetryEvent);
 
 		// Reset the counter and the data.
 		this.counter = 0;
