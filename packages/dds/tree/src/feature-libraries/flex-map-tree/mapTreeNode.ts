@@ -608,7 +608,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		throw unsupportedUsageError("Editing a sequence");
 	}
 	public getFieldPath(): FieldUpPath {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 }
 
