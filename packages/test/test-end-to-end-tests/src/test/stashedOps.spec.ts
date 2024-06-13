@@ -59,7 +59,8 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { SchemaFactory } from "@fluidframework/tree";
-import { ISharedTree, SharedTree, TreeViewConfiguration } from "@fluidframework/tree/internal";
+import { TreeViewConfiguration } from "@fluidframework/tree";
+import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
 

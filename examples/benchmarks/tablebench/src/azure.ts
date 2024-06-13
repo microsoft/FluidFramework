@@ -5,7 +5,8 @@
 
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/internal";
+import { TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";

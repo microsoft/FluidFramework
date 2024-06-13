@@ -18,8 +18,8 @@ import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory } from "@fluidframework/tree";
-import { SharedTree, TreeViewConfiguration } from "@fluidframework/tree/internal";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
