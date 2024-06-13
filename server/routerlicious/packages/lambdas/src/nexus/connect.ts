@@ -336,12 +336,10 @@ async function checkClusterDraining(
 			...properties,
 			tenantId: message.tenantId,
 		});
-		const error = createFluidServiceNetworkError(
-			503,
-			{
-				message: "Cluster is not available. Please retry later.",
-				internalErrorCode: InternalErrorCode.ClusterDraining,
-			});
+		const error = createFluidServiceNetworkError(503, {
+			message: "Cluster is not available. Please retry later.",
+			internalErrorCode: InternalErrorCode.ClusterDraining,
+		});
 		throw error;
 	}
 }
@@ -714,7 +712,10 @@ export async function connectDocument(
 				connectMetric.setProperty(CommonProperties.errorCode, uncaughtError.code);
 			}
 			if (uncaughtError.internalErrorCode !== undefined) {
-				connectMetric.setProperty(CommonProperties.internalErrorCode, uncaughtError.internalErrorCode);
+				connectMetric.setProperty(
+					CommonProperties.internalErrorCode,
+					uncaughtError.internalErrorCode,
+				);
 			}
 			connectMetric.error(`Connect document failed`, uncaughtError);
 		} else {
