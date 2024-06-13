@@ -88,6 +88,8 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     type: "remote";
 }
 
+export { CompatibilityMode }
+
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 

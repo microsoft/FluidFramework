@@ -31,3 +31,5 @@ export { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions
 
 // Re-export so developers can build loggers without pulling in core-interfaces
 export type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
+export type { CompatibilityMode } from "@fluidframework/fluid-static";
