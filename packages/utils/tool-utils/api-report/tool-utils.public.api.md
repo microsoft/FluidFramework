@@ -4,9 +4,9 @@
 
 ```ts
 
-import { IOdspTokens } from '@fluidframework/odsp-doclib-utils/internal';
-import { IPublicClientConfig } from '@fluidframework/odsp-doclib-utils/internal';
-import { ITree } from '@fluidframework/driver-definitions/internal';
+import type { IOdspTokens } from '@fluidframework/odsp-doclib-utils/internal';
+import type { IPublicClientConfig } from '@fluidframework/odsp-doclib-utils/internal';
+import type { ITree } from '@fluidframework/driver-definitions/internal';
 
 // (No @packageDocumentation comment for this package)
 
