@@ -5,11 +5,8 @@
 
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IFluidHandle,
-	ITelemetryBaseProperties,
-	type ErasedType,
-} from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -22,9 +19,9 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	ISequencedDocumentMessage,
 	type IDocumentMessage,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -33,6 +30,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal, TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -44,8 +42,6 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
@@ -328,18 +324,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * {@inheritDoc (ISharedObject:interface).getGCData}
 	 */
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
-
-	/**
-	 * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
-	 * to another object in the container.
-	 * @param decodedHandle - The handle of the Fluid object that is decoded.
-	 */
-	protected handleDecoded(decodedHandle: IFluidHandle) {
-		if (this.isAttached()) {
-			// This represents an outbound reference from this object to the node represented by decodedHandle.
-			this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
-		}
-	}
 
 	/**
 	 * Allows the distributed data type to perform custom loading
@@ -664,10 +648,7 @@ export abstract class SharedObject<
 	) {
 		super(id, runtime, attributes);
 
-		this._serializer = new FluidSerializer(
-			this.runtime.channelsRoutingContext,
-			(handle: IFluidHandle) => this.handleDecoded(handle),
-		);
+		this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 	}
 
 	/**
@@ -733,10 +714,7 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const serializer = new SummarySerializer(
-				this.runtime.channelsRoutingContext,
-				(handle: IFluidHandle) => this.handleDecoded(handle),
-			);
+			const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 			this.processGCDataCore(serializer);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.
@@ -778,9 +756,23 @@ export abstract class SharedObject<
 		incrementBy: number,
 		telemetryContext?: ITelemetryContext,
 	) {
-		const prevTotal = (telemetryContext?.get(this.telemetryContextPrefix, propertyName) ??
-			0) as number;
-		telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+		if (telemetryContext !== undefined) {
+			// TelemetryContext needs to implment a get function
+			assert(
+				"get" in telemetryContext && typeof telemetryContext.get === "function",
+				"received context must have a get function",
+			);
+
+			const prevTotal = ((telemetryContext as TelemetryContext).get(
+				this.telemetryContextPrefix,
+				propertyName,
+			) ?? 0) as number;
+			telemetryContext.set(
+				this.telemetryContextPrefix,
+				propertyName,
+				prevTotal + incrementBy,
+			);
+		}
 	}
 }
 

@@ -5,7 +5,7 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -77,12 +77,8 @@ export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombston
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 /** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
-export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
 export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
-/** Config key to turn GC on / off for testing. */
-export const runGCTestKey = "Fluid.GarbageCollection.Test.RunGC";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -302,8 +298,6 @@ export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
-	/** Before GC runs, called to notify the runtime to update any pending GC state. */
-	updateStateBeforeGC(): Promise<void>;
 	/** Returns the garbage collection data of the runtime. */
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 	/** After GC has run, called to notify the runtime of routes that are used in it. */
@@ -334,8 +328,6 @@ export interface IGarbageCollector {
 	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
-	/** Tells whether the GC state in summary needs to be reset in the next summary. */
-	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
 	/** Tells whether tombstone feature is enabled and enforced. */
@@ -472,11 +464,6 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
-	/**
-	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
-	 * disabled via runtime options or feature flags.
-	 */
-	readonly shouldRunGC: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

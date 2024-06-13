@@ -6,31 +6,31 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { ICodecFamily } from "../../codec/index.js";
+import type { ICodecFamily } from "../../codec/index.js";
 import {
-	ChangeAtomIdMap,
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	ChangesetLocalId,
+	type ChangeAtomIdMap,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type ChangesetLocalId,
 	CursorLocationType,
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeDestruction,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaRoot,
+	type DeltaDetachedNodeBuild,
+	type DeltaDetachedNodeDestruction,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaRoot,
 	EditBuilder,
-	FieldKey,
-	FieldKindIdentifier,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
-	UpPath,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
+	type UpPath,
 	emptyDelta,
 	isEmptyFieldChanges,
 	makeAnonChange,
@@ -40,10 +40,10 @@ import {
 	type ChangeAtomId,
 } from "../../core/index.js";
 import {
-	IdAllocationState,
-	IdAllocator,
-	Mutable,
-	NestedSet,
+	type IdAllocationState,
+	type IdAllocator,
+	type Mutable,
+	type NestedSet,
 	addToNestedSet,
 	brand,
 	deleteFromNestedMap,
@@ -60,7 +60,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../util/index.js";
 import {
-	TreeChunk,
+	type TreeChunk,
 	chunkFieldSingle,
 	chunkTree,
 	defaultChunkPolicy,
@@ -69,21 +69,21 @@ import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import {
-	CrossFieldManager,
-	CrossFieldMap,
+	type CrossFieldManager,
+	type CrossFieldMap,
 	CrossFieldTarget,
 	getFirstFromCrossFieldMap,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 import {
-	FieldChangeHandler,
+	type FieldChangeHandler,
 	NodeExistenceState,
-	RebaseRevisionMetadata,
+	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
+import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
-import { GenericChangeset } from "./genericFieldKindTypes.js";
-import {
+import type { GenericChangeset } from "./genericFieldKindTypes.js";
+import type {
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
@@ -257,7 +257,7 @@ export class ModularChangeFamily
 				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
-				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
+				const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 				const composeNodes = (
 					child1: NodeId | undefined,
 					child2: NodeId | undefined,
@@ -692,7 +692,7 @@ export class ModularChangeFamily
 				context.rebasedChange.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					baseChangeset,
-					(curr, base, existenceState) => curr,
+					(curr, base, existenceState) => curr ?? base,
 					genId,
 					newCrossFieldManager(crossFieldTable, field),
 					rebaseMetadata,

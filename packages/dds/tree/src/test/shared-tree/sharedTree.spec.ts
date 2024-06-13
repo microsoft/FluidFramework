@@ -5,22 +5,25 @@
 
 import { strict as assert } from "assert";
 
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	type ITestFluidObject,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,
 	CommitKind,
-	JsonableTree,
-	Revertible,
-	UpPath,
+	type JsonableTree,
+	type Revertible,
+	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
@@ -38,14 +41,14 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	FlexTreeTypedField,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
+	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
 	TreeCompressionStrategy,
 	TreeStatus,
 	ViewSchema,
-	createMockNodeKeyManager,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	intoStoredSchema,
@@ -56,25 +59,25 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	CheckoutFlexTreeView,
-	FlexTreeView,
+	type CheckoutFlexTreeView,
+	type FlexTreeView,
 	ForestType,
-	ISharedTree,
-	InitializeAndSchematizeConfiguration,
-	SharedTree,
+	type ISharedTree,
+	type InitializeAndSchematizeConfiguration,
+	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
-import { EditManager } from "../../shared-tree-core/index.js";
+import type { EditManager } from "../../shared-tree-core/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
-	ConnectionSetter,
+	type ConnectionSetter,
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
-	SharedTreeWithConnectionStateSetter,
+	type SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -91,7 +94,7 @@ import {
 	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -531,7 +534,7 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				const view1 = assertSchema(tree1, stringSequenceRootSchema, () => {});
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
@@ -1898,6 +1901,53 @@ describe("SharedTree", () => {
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);
 		});
 	});
+
+	describe("Schema validation", () => {
+		it("can create tree with schema validation enabled", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const [sharedTree] = provider.trees;
+			const sf = new SchemaFactory("test");
+			const schema = sf.string;
+			assert.doesNotThrow(() =>
+				sharedTree.schematize(
+					new TreeConfiguration(schema, () => "42", {
+						enableSchemaValidation: true,
+					}),
+				),
+			);
+		});
+
+		it("schema validation throws as expected", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const [sharedTree] = provider.trees;
+			const sf = new SchemaFactory("test");
+
+			// No validation failures when initializing the tree for the first time.
+			// Stored schema is set up so 'foo' is an array of strings.
+			const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
+			sharedTree.schematize(
+				new TreeConfiguration(schema, () => ({ foo: ["42"] }), {
+					enableSchemaValidation: true,
+				}),
+			);
+
+			// Trying to use the tree with a view schema that makes 'foo' an array of strings or numbers
+			// should not cause compile-time errors when inserting a number, but stored schema validation
+			// should kick in and throw an error.
+			const viewschema = sf.object("myObject", {
+				foo: sf.array("foo", [sf.string, sf.number]),
+			});
+			const tree = sharedTree.schematize(
+				new TreeConfiguration(viewschema, () => ({ foo: ["42"] }), {
+					enableSchemaValidation: true,
+				}),
+			);
+
+			assert.throws(() => {
+				tree.root.foo.insertAtEnd(3);
+			}, "Tree does not conform to schema.");
+		});
+	});
 });
 
 function assertSchema<TRoot extends FlexFieldSchema>(
@@ -1906,5 +1956,5 @@ function assertSchema<TRoot extends FlexFieldSchema>(
 	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
 	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-	return requireSchema(tree.checkout, viewSchema, onDispose, createMockNodeKeyManager());
+	return requireSchema(tree.checkout, viewSchema, onDispose, new MockNodeKeyManager());
 }

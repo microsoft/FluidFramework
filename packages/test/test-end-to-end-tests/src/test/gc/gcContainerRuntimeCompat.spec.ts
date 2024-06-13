@@ -17,7 +17,7 @@ import {
 	IContainerRuntimeOptions,
 	type ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

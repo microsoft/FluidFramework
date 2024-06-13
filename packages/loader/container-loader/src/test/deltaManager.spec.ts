@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
+	IDocumentDeltaStorageService,
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MockLogger,

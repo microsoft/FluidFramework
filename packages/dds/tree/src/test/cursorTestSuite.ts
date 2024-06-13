@@ -8,12 +8,12 @@ import { strict as assert } from "assert";
 import {
 	CursorLocationType,
 	EmptyKey,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursor,
-	JsonableTree,
-	PathRootPrefix,
-	UpPath,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursor,
+	type JsonableTree,
+	type PathRootPrefix,
+	type UpPath,
 	compareFieldUpPaths,
 	rootFieldKey,
 	setGenericTreeField,
@@ -49,7 +49,9 @@ export const mapSchema = schemaBuilder.map(
 export const objectSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
-
+export const identifierSchema = schemaBuilder.object("identifier-object", {
+	identifier: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+});
 export const testTreeSchema = schemaBuilder.intoSchema(
 	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 );

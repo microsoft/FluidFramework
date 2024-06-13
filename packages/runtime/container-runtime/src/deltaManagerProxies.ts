@@ -13,17 +13,17 @@ import type {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
-import { summarizerClientType } from "./summary/index.js";
 import type { PendingStateManager } from "./pendingStateManager.js";
+import { summarizerClientType } from "./summary/index.js";
 
 /**
  * Base class for DeltaManager proxy that proxy's access to the real DeltaManager.

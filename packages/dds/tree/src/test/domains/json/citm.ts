@@ -6,9 +6,9 @@
 // This file replicates data which contains nulls, and thus the nulls introduced here are not new.
 /* eslint-disable @rushstack/no-new-null */
 
-import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 
-import { FieldKey } from "../../../core/index.js";
+import type { FieldKey } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 
 import { getRandomEnglishString, getSizeInBytes } from "./jsonGeneratorUtils.js";

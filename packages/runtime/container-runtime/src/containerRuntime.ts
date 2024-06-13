@@ -45,10 +45,22 @@ import {
 	delay,
 } from "@fluidframework/core-utils/internal";
 import {
+	IClientDetails,
+	IQuorumClients,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISummaryContent,
+	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -58,19 +70,6 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
-import {
-	IClientDetails,
-	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	ISnapshotTree,
-	ISummaryContent,
-	ISummaryTree,
-	MessageType,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -88,6 +87,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcTreeKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -2227,7 +2227,7 @@ export class ContainerRuntime
 		);
 
 		// Is document schema explicit control on?
-		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2241,10 +2241,10 @@ export class ContainerRuntime
 			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
-			message: explitiSchemaControl
+			message: explicitSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
-			lastMessage: explitiSchemaControl ? message : undefined,
+			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
 		};
 
@@ -2685,12 +2685,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.FluidDataStoreOp:
-				this.channelCollection.process(
-					messageWithContext.message,
-					local,
-					localOpMetadata,
-					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
-				);
+				this.channelCollection.process(messageWithContext.message, local, localOpMetadata);
 				break;
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
@@ -3252,16 +3247,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
-	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
-	 * but there can be some for which async operation is required (such as detecting new root data stores).
-	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
-	 */
-	public async updateStateBeforeGC() {
-		return this.channelCollection.updateStateBeforeGC();
-	}
-
 	private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		return this.channelCollection.getGCData(fullGC);
 	}
@@ -3318,9 +3303,7 @@ export class ContainerRuntime
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
-		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
+		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.channelCollection.updateTombstonedRoutes(dataStoreRoutes);
 	}
 
@@ -3415,19 +3398,13 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * Called when a new outbound route is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	) {
-		this.garbageCollector.addedOutboundReference(
-			srcHandle.absolutePath,
-			outboundHandle.absolutePath,
-		);
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this.garbageCollector.addedOutboundReference(fromPath, toPath);
 	}
 
 	/**
@@ -3614,12 +3591,9 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
-			// If the GC state needs to be reset, we need to force a full tree summary and update the unreferenced
-			// state of all the nodes.
-			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree || forcedFullTree,
+					fullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
@@ -3696,7 +3670,6 @@ export class ContainerRuntime
 				summaryTree,
 				summaryStats,
 				generateDuration: trace.trace().duration,
-				forcedFullTree,
 			} as const;
 
 			continueResult = checkContinue();

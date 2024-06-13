@@ -9,8 +9,8 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 
-import { releaseGroupFlag } from "../../flags";
-import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library";
+import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
 
 const DEFAULT_FILE = "UPCOMING.md";
 

@@ -15,13 +15,12 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
 	MessageType,
-	SummaryObject,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,

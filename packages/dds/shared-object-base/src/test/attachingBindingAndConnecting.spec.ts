@@ -16,7 +16,7 @@ import {
 	IChannelStorageService,
 	IDeltaConnection,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,

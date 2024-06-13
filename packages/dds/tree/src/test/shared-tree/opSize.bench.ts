@@ -7,7 +7,7 @@ import { strict as assert, fail } from "assert";
 
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -17,9 +17,9 @@ import Table from "easy-table";
 
 import {
 	AllowedUpdateType,
-	FieldKey,
-	JsonableTree,
-	Value,
+	type FieldKey,
+	type JsonableTree,
+	type Value,
 	forEachNode,
 	moveToDetachedField,
 	rootFieldKey,
@@ -30,8 +30,8 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
-import { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
-import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
+import type { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
+import { type JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
 import { schematizeFlexTree, treeTestFactory } from "../utils.js";
 
 // Notes:

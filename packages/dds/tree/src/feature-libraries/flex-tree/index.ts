@@ -4,36 +4,36 @@
  */
 
 export {
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeEntity,
-	FlexTreeTypedField,
-	FlexTreeFieldNode,
-	FlexibleFieldContent,
-	FlexibleNodeContent,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeObjectNode,
-	FlexTreeObjectNodeTyped,
-	AssignableFieldKinds,
-	FlexTreeTypedNode,
-	FlexTreeTypedNodeUnion,
-	CheckTypesOverlap,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeEntity,
+	type FlexTreeTypedField,
+	type FlexTreeFieldNode,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeObjectNode,
+	type FlexTreeObjectNodeTyped,
+	type AssignableFieldKinds,
+	type FlexTreeTypedNode,
+	type FlexTreeTypedNodeUnion,
+	type CheckTypesOverlap,
 	TreeStatus,
-	FlexTreeUnknownUnboxed,
-	FlexTreeUnboxField,
+	type FlexTreeUnknownUnboxed,
+	type FlexTreeUnboxField,
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	isFlexTreeNode,
-	PropertyNameFromFieldKey,
-	ReservedObjectNodeFieldPropertyNames,
-	ReservedObjectNodeFieldPropertyNamePrefixes,
+	type PropertyNameFromFieldKey,
+	type ReservedObjectNodeFieldPropertyNames,
+	type ReservedObjectNodeFieldPropertyNamePrefixes,
 	reservedObjectNodeFieldPropertyNames,
 	reservedObjectNodeFieldPropertyNamePrefixes,
-	FlexTreeObjectNodeFieldsInner,
+	type FlexTreeObjectNodeFieldsInner,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 
@@ -45,12 +45,12 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation.js";
 
-export { getTreeContext, FlexTreeContext, Context, ContextSlot } from "./context.js";
+export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./context.js";
 
-export { FlexTreeNodeEvents } from "./treeEvents.js";
+export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
-export {
+export type {
 	FlexTreeTypedFieldInner,
 	FlexTreeUnboxFieldInner,
 	FlexTreeObjectNodeFields,
@@ -63,4 +63,4 @@ export {
 
 export { assertFlexTreeEntityNotFreed } from "./lazyEntity.js";
 
-export { getSchemaAndPolicy } from "./utilities.js";
+export { getSchemaAndPolicy, indexForAt } from "./utilities.js";

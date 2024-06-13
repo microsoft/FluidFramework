@@ -189,12 +189,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": [
-				"generate",
-				"typetests",
-				"--dir",
-				".",
-			],
+			"args": ["generate", "typetests", "--dir", "."],
 		},
 		{
 			"name": "fluid-type-test-generator",
@@ -352,9 +347,10 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (auto build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
@@ -400,9 +396,10 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__odspEndpointName": "odsp", //values: odsp, odsp-df
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
@@ -415,6 +412,20 @@
 				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			// These skipped files contain exceptions that are consistently thrown during test setup
+			// You can comment out this part if you want to debug these files
+			"skipFiles": [
+				"<node_internals>/**",
+				// @fluid-internal/mocha-test-setup is resolved first using esm resolution algorithm first before cjs resolution algorithm (require)
+				"**/node_modules/mocha/lib/nodejs/esm-utils.js",
+				// We pass multiple glob patterns to mocha (as seen above) to look for the correct spec file to debug
+				// Two of these will always throw file not found error, so we skip them here
+				"**/node_modules/mocha/lib/cli/lookup-files.js",
+				// There's an empty catch here for CommonJS default export support
+				"**/node_modules/uuid/dist/v35.js",
+				// test-version-utils checks for valid semver version first and handles ranges seperately.
+				"**/node_modules/semver/classes/semver.js",
+			],
 			"outFiles": [
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",
@@ -426,9 +437,10 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (CommonJS-dist;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1"
+				// "fluid__test__driver": "odsp", //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "fluid__test__odspEndpointName": "odsp", //values: odsp, odsp-df
+				// "FLUID_TEST_VERBOSE": "1",
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,

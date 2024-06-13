@@ -10,28 +10,28 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	AllowedUpdateType,
 	CommitKind,
-	FieldUpPath,
-	Revertible,
+	type FieldUpPath,
+	type Revertible,
 	RevertibleStatus,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-	TreeValue,
-	Value,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeValue,
+	type Value,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
-	ContextuallyTypedNodeData,
+	type ContextuallyTypedNodeData,
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
+import type { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
 	checkoutWithContent,
@@ -844,7 +844,7 @@ describe("sharedTreeView", () => {
 				assert.equal(revertiblesCreated.length, 2);
 				assert.equal(revertiblesDisposed.length, 0);
 
-				revertiblesCreated[0][disposeSymbol]();
+				revertiblesCreated[0].dispose();
 
 				assert.equal(revertiblesDisposed.length, 1);
 				assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
@@ -907,10 +907,10 @@ describe("sharedTreeView", () => {
 			assert.equal(revertiblesCreated.length, 1);
 			const revertible = revertiblesCreated[0];
 
-			revertible[disposeSymbol]();
+			revertible.dispose();
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
-			assert.throws(() => revertible[disposeSymbol]());
+			assert.throws(() => revertible.dispose());
 			assert.throws(() => revertible.revert(false));
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);

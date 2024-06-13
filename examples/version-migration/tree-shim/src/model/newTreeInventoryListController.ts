@@ -9,8 +9,8 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
+	// eslint-disable-next-line import/no-deprecated
 	TreeConfiguration,
-	disposeSymbol,
 } from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
@@ -36,6 +36,7 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
+// eslint-disable-next-line import/no-deprecated
 export const treeConfiguration = new TreeConfiguration(
 	InventorySchema,
 	() =>
@@ -103,7 +104,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 
 		// This is required because schematizing the tree twice will result in an error
 		if (initialTree !== undefined) {
-			view[disposeSymbol]();
+			view.dispose();
 		}
 	}
 

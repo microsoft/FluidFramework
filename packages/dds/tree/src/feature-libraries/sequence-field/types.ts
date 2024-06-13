@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
-import { NodeId } from "../index.js";
+import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { NodeId } from "../index.js";
 
 export type CellCount = number;
 

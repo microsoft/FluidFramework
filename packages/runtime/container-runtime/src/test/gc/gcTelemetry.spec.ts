@@ -74,7 +74,6 @@ describe("GC Telemetry Tracker", () => {
 		const configs: IGarbageCollectorConfigs = {
 			gcEnabled: true,
 			sweepEnabled: false,
-			shouldRunGC: true,
 			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,

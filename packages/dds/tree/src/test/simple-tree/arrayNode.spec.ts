@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
-import { Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
 import { validateUsageError } from "../utils.js";
@@ -163,5 +164,91 @@ describe("ArrayNode", () => {
 		assert.equal(asIndex(" 1", Number.POSITIVE_INFINITY), undefined);
 		assert.equal(asIndex("1.0", Number.POSITIVE_INFINITY), undefined);
 		assert.equal(asIndex("1 ", Number.POSITIVE_INFINITY), undefined);
+	});
+
+	describe("shadowing", () => {
+		it("Shadowing index property with incompatible type", () => {
+			class Array extends schemaFactory.array(
+				"ArrayWithTypeIncompatibleShadow",
+				schemaFactory.number,
+			) {
+				// @ts-expect-error Cannot shadow property with incompatible type.
+				public 5: string = "foo";
+			}
+
+			assert.throws(
+				() => new Array([0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+
+			assert.throws(
+				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+		});
+
+		it("Shadowing index property with compatible type", () => {
+			class Array extends schemaFactory.array(
+				"ArrayWithTypeCompatibleShadow",
+				schemaFactory.number,
+			) {
+				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+				public 5: number = 42;
+			}
+
+			assert.throws(
+				() => new Array([0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+
+			assert.throws(
+				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+		});
+
+		it("Shadowing index property with compatible type (getter)", () => {
+			class Array extends schemaFactory.array("ArrayWithGetterShadow", schemaFactory.number) {
+				// Shadowing with compatible type is allowed by the type-system, but will throw at construction.
+				// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+				public get 5(): number {
+					return 42;
+				}
+			}
+
+			assert.throws(
+				() => new Array([0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+
+			assert.throws(
+				() => hydrate(Array, [0, 1, 2]),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+		});
+
+		it("Shadowing index property with constructor-initialized property", () => {
+			class Array extends schemaFactory.array("ArrayWithGetterShadow", schemaFactory.number) {
+				public readonly 5: number;
+				public constructor(data: number[], five: number) {
+					super(data);
+					this[5] = five;
+				}
+			}
+
+			assert.throws(
+				// False positive
+				// eslint-disable-next-line @typescript-eslint/no-array-constructor
+				() => new Array([0, 1, 2], 42),
+				(error: Error) =>
+					validateAssertionError(error, /Shadowing of array indices is not permitted/),
+			);
+		});
 	});
 });

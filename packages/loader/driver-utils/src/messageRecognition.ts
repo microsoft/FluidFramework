@@ -4,10 +4,10 @@
  */
 
 import {
-	IDocumentMessage,
 	ISequencedDocumentMessage,
+	IDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Tells if message was sent by container runtime

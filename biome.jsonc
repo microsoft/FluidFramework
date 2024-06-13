@@ -1,0 +1,85 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"root": ".",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"ignore": [
+			"**/*.generated.*",
+			"**/_api-extractor-temp/**",
+			"**/api-report/*",
+			"**/test/snapshots/content/**",
+			"**/snapshots/*.json",
+			"**/localOdspSnapshots/**",
+			"**/_package.json",
+			"**/biome.jsonc",
+			"**/oclif.manifest.json",
+			"packages/test/snapshots/content/**"
+		],
+		"maxSize": 2097152
+	},
+	"organizeImports": {
+		"enabled": false
+	},
+	"linter": {
+		"enabled": false,
+		"rules": {
+			"recommended": true
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"ignore": ["**/dist/**", "**/lib/**"],
+		"formatWithErrors": true,
+		"indentStyle": "tab",
+		"lineWidth": 95,
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"arrowParentheses": "always",
+			"jsxQuoteStyle": "double",
+			"semicolons": "always",
+			"trailingComma": "all",
+			"quoteProperties": "preserve",
+			"quoteStyle": "double",
+			"bracketSpacing": true
+		}
+	},
+	"json": {
+		"formatter": {
+			"indentStyle": "tab"
+		}
+	},
+	"overrides": [
+		{
+			"include": [
+				"**/*.jsonc",
+				"**/.vscode/*.json",
+				"**/tsconfig*.json",
+				"**/api-extractor*.json"
+			],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
+				}
+			}
+		},
+		{
+			"include": ["**/package.json"],
+			"json": {
+				"formatter": {
+					"lineWidth": 80
+				}
+			}
+		}
+	]
+}

@@ -10,11 +10,11 @@ import {
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	ISummaryTree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -214,8 +214,6 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 	readonly summaryStats: IGeneratedSummaryStats;
 	/** Time it took to generate the summary tree and stats. */
 	readonly generateDuration: number;
-	/** True if the full tree regeneration with no handle reuse optimizations was forced. */
-	readonly forcedFullTree: boolean;
 }
 
 /**

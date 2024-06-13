@@ -19,7 +19,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import * as Validator from "jsonschema";
 
 import {
@@ -242,7 +242,7 @@ export class Sanitizer {
 		return result.valid;
 	};
 
-	readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, this.debug);
+	readonly chunkProcessor: ChunkedOpProcessor;
 
 	constructor(
 		readonly messages: ISequencedDocumentMessage[],
@@ -256,6 +256,7 @@ export class Sanitizer {
 		this.defaultExcludedKeys.add("snapshotFormatVersion");
 		this.defaultExcludedKeys.add("packageVersion");
 		this.mergeTreeExcludedKeys.add("nodeType");
+		this.chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, debug);
 	}
 
 	debugMsg(msg: any) {

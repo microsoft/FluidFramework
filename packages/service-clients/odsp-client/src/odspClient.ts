@@ -15,6 +15,7 @@ import {
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	ContainerAttachProps,
@@ -38,7 +39,6 @@ import type {
 	OdspResourceTokenFetchOptions,
 	TokenResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -172,7 +172,10 @@ export class OdspClient {
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			compatibilityMode: "2",
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -231,7 +234,7 @@ export class OdspClient {
 			}
 
 			/**
-			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * A unique identifier for the file within the provided SharePoint Embedded container ID. When you attach a container,
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */

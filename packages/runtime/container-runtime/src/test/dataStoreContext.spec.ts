@@ -17,13 +17,12 @@ import {
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	IDocumentStorageService,
 	IBlob,
 	ISnapshotTree,
-	ISummaryBlob,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
@@ -49,7 +48,11 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
+import {
+	ChannelCollection,
+	getLocalDataStoreType,
+	wrapContextForInnerChannel,
+} from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { channelToDataStore } from "../dataStore.js";
 import {
@@ -207,11 +210,8 @@ describe("Data Store Context Tests", () => {
 				});
 
 				await localDataStoreContext.realize();
-				const {
-					attachSummary: { summary },
-					type,
-				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
-				const snapshot = convertSummaryTreeToITree(summary);
+				const attachSummary = localDataStoreContext.getAttachSummary();
+				const snapshot = convertSummaryTreeToITree(attachSummary.summary);
 
 				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
@@ -245,7 +245,11 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(type, "TestDataStore1", "Attach message type does not match.");
+				assert.strictEqual(
+					getLocalDataStoreType(localDataStoreContext),
+					"TestDataStore1",
+					"Attach message type does not match.",
+				);
 			});
 
 			it("should generate exception when incorrectly created with array of packages", async () => {
@@ -296,11 +300,8 @@ describe("Data Store Context Tests", () => {
 
 				await localDataStoreContext.realize();
 
-				const {
-					attachSummary: { summary },
-					type,
-				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
-				const snapshot = convertSummaryTreeToITree(summary);
+				const attachSummary = localDataStoreContext.getAttachSummary();
+				const snapshot = convertSummaryTreeToITree(attachSummary.summary);
 				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
 				);
@@ -332,7 +333,11 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
+				assert.strictEqual(
+					getLocalDataStoreType(localDataStoreContext),
+					"SubComp",
+					"Attach message type does not match.",
+				);
 			});
 
 			it("can correctly initialize non-root context", async () => {

@@ -12,6 +12,10 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
@@ -43,7 +47,6 @@ import {
 	createRemoveRangeOp,
 	matchProperties,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,

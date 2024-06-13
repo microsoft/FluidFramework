@@ -8,8 +8,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
-	LazyItem,
-	TreeStatus,
+	type LazyItem,
+	type TreeStatus,
 	isLazy,
 	isTreeValue,
 } from "../feature-libraries/index.js";
@@ -21,13 +21,13 @@ import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	NodeKind,
 	type TreeLeafValue,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	type ImplicitFieldSchema,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	TreeNodeFromImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import type { TreeNode } from "./types.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -149,23 +149,11 @@ export const treeNodeApi: TreeNodeApi = {
 		listener: TreeChangeEvents[K],
 	) => {
 		const flex = getFlexNode(node);
-		const anchor = flex.anchorNode;
-
 		switch (eventName) {
-			case "nodeChanged": {
-				let unsubscribeFromTreeChanged: (() => void) | undefined;
-				return anchor.on("childrenChanged", () => {
-					if (unsubscribeFromTreeChanged === undefined) {
-						unsubscribeFromTreeChanged = anchor.on("subtreeChanged", () => {
-							listener();
-							unsubscribeFromTreeChanged?.();
-							unsubscribeFromTreeChanged = undefined;
-						});
-					}
-				});
-			}
+			case "nodeChanged":
+				return flex.on("nodeChanged", listener);
 			case "treeChanged":
-				return anchor.on("subtreeChanged", () => listener());
+				return flex.on("treeChanged", listener);
 			default:
 				return unreachableCase(eventName);
 		}
@@ -297,7 +285,7 @@ function getViewKeyFromStoredKey(
 }
 
 /**
- * A collection of events that can be raised by a {@link TreeNode}.
+ * A collection of events that can be emitted by a {@link TreeNode}.
  *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
@@ -319,7 +307,8 @@ function getViewKeyFromStoredKey(
  */
 export interface TreeChangeEvents {
 	/**
-	 * Emitted by a node when a batch of changes is applied to it, where a change is:
+	 * Emitted by a node after a batch of changes has been applied to the tree, if a change affected the node, where a
+	 * change is:
 	 *
 	 * - For an object node, when the value of one of its properties changes (i.e., the property's value is set
 	 * to something else, including `undefined`).
@@ -329,20 +318,19 @@ export interface TreeChangeEvents {
 	 * - For a map node, when an entry is added, updated, or removed.
 	 *
 	 * @remarks
-	 * This event is not raised when:
+	 * This event is not emitted when:
 	 *
 	 * - Properties of a child node change. Notably, updates to an array node or a map node (like adding or removing
-	 * elements/entries) will raise this event on the array/map node itself, but not on the node that contains the
+	 * elements/entries) will emit this event on the array/map node itself, but not on the node that contains the
 	 * array/map node as one of its properties.
 	 *
 	 * - The node is moved to a different location in the tree or removed from the tree.
-	 * In this case the event is raised on the _parent_ node, not the node itself.
+	 * In this case the event is emitted on the _parent_ node, not the node itself.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
-	 * While a batch of edits will as a whole update the tree to the appropriate end state, no guarantees are made about
-	 * how many times this event will be raised during any intermediate states.
-	 * When it is raised, the tree is guaranteed to be in-schema.
+	 *
+	 * When it is emitted, the tree is guaranteed to be in-schema.
 	 *
 	 * @privateRemarks
 	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
@@ -353,26 +341,20 @@ export interface TreeChangeEvents {
 	nodeChanged(): void;
 
 	/**
-	 * Emitted by a node when something _may_ have changed anywhere in the subtree rooted at it.
+	 * Emitted by a node after a batch of changes has been applied to the tree, when something changed anywhere in the
+	 * subtree rooted at it.
 	 *
 	 * @remarks
-	 * This event is guaranteed to be emitted whenever the subtree _has_ changed.
-	 * However, it might also be emitted when the subtree has no visible changes compared to before the event firing.
-	 *
-	 * Consumers of this event have the guarantee that they won't miss any changes, but should also handle the scenario
-	 * where the event fires with no visible changes as well.
-	 *
-	 * This event is not raised when the node itself is moved to a different location in the tree or removed from the tree.
-	 * In that case it is raised on the _parent_ node, not the node itself.
+	 * This event is not emitted when the node itself is moved to a different location in the tree or removed from the tree.
+	 * In that case it is emitted on the _parent_ node, not the node itself.
 	 *
 	 * The node itself is part of the subtree, so this event will be emitted even if the only changes are to the properties
 	 * of the node itself.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
-	 * While a batch of edits will as a whole update the tree to the appropriate end state, no guarantees are made about
-	 * how many times this event will be raised during any intermediate states.
-	 * When it is raised, the tree is guaranteed to be in-schema.
+	 *
+	 * When it is emitted, the tree is guaranteed to be in-schema.
 	 */
 	treeChanged(): void;
 }

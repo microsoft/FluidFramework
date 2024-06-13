@@ -14,17 +14,17 @@ import {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
+	IResolvedUrl,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	IClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
+import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";
 import { ProtocolHandler } from "../protocol.js";
-import { Audience } from "../audience.js";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>

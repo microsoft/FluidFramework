@@ -112,9 +112,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		}
 
 		const migratable = this._currentModel;
-		const acceptedVersion = migratable.migrationTool.acceptedVersion;
-		if (acceptedVersion === undefined) {
-			throw new Error("Expect an accepted version before migration starts");
+		const acceptedMigration = migratable.migrationTool.acceptedMigration;
+		if (acceptedMigration === undefined) {
+			throw new Error("Expect an accepted migration before migration starts");
 		}
 
 		const doTheMigration = async () => {
@@ -124,23 +124,40 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 			// appropriate action (see then() block below).
 
 			const prepareTheMigration = async () => {
-				// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
+				// It's possible that our modelLoader is older and doesn't understand the new acceptedMigration.
 				// Currently this fails the migration gracefully and emits an event so the app developer can know
 				// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
 				// forward, or at least advise the end user to refresh the page or something.
 				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
 				// a new ModelLoader?
-				const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
+				const migrationSupported = await this.modelLoader.supportsVersion(
+					acceptedMigration.newVersion,
+				);
 				if (!migrationSupported) {
-					this.emit("migrationNotSupported", acceptedVersion);
+					this.emit("migrationNotSupported", acceptedMigration.newVersion);
 					this._migrationP = undefined;
 					return;
 				}
 
-				const detachedModel = await this.modelLoader.createDetached(acceptedVersion);
+				const detachedModel = await this.modelLoader.createDetached(
+					acceptedMigration.newVersion,
+				);
 				const migratedModel = detachedModel.model;
 
-				const exportedData = await migratable.exportData();
+				// Here we load the model at the specified sequence number for export.  This way we can ensure we don't include
+				// any local un-ack'd changes or even remote changes that came in too-late.
+				// TODO:  There is risk that a summary comes in after accepting the migration, which will prevent us from loading
+				// the desired sequence number (as the summary will be too-new).  To avoid this, we'd probably need one of the following:
+				// 1. Collaborators would disable summarization upon seeing acceptance
+				// 2. Have the paused loading logic know how to load a different older snapshot version (though old versions may get deleted).
+				// 3. Have a acceptance rollback or acceptance update path, to either retry or update the acceptance sequence number to be reachable
+				// 4. Use a non-paused load, and accept that some late-arriving data might get included.
+				const exportModel = await this.modelLoader.loadExistingPaused(
+					this._currentModelId,
+					acceptedMigration.migrationSequenceNumber,
+				);
+				const exportedData = await exportModel.exportData();
+				exportModel.close();
 
 				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
 				// exported data into a format that the new model can import?  If we can determine it early, then
@@ -161,13 +178,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 					} catch {
 						// TODO: This implies that the contract is to throw if the data can't be transformed, which
 						// isn't great.  How should the dataTransformationCallback indicate failure?
-						this.emit("migrationNotSupported", acceptedVersion);
+						this.emit("migrationNotSupported", acceptedMigration.newVersion);
 						this._migrationP = undefined;
 						return;
 					}
 				} else {
 					// We can't get the data into a format that we can import, give up.
-					this.emit("migrationNotSupported", acceptedVersion);
+					this.emit("migrationNotSupported", acceptedMigration.newVersion);
 					this._migrationP = undefined;
 					return;
 				}
@@ -263,8 +280,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		}
 
 		const migratable = this._currentModel;
-		const acceptedVersion = migratable.migrationTool.acceptedVersion;
-		if (acceptedVersion === undefined) {
+		const acceptedMigration = migratable.migrationTool.acceptedMigration;
+		if (acceptedMigration === undefined) {
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
@@ -276,9 +293,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		const doTheLoad = async () => {
 			// doTheLoad() should only be called once. It will resolve once we complete loading.
 
-			const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
+			const migrationSupported = await this.modelLoader.supportsVersion(
+				acceptedMigration.newVersion,
+			);
 			if (!migrationSupported) {
-				this.emit("migrationNotSupported", acceptedVersion);
+				this.emit("migrationNotSupported", acceptedMigration.newVersion);
 				this._migratedLoadP = undefined;
 				return;
 			}

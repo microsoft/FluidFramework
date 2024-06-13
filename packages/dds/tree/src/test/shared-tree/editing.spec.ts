@@ -8,24 +8,24 @@ import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	AnchorNode,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
+	type AnchorNode,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
 	EmptyKey,
-	FieldUpPath,
-	PathVisitor,
-	PlaceUpPath,
-	ProtoNodes,
-	RangeUpPath,
+	type FieldUpPath,
+	type PathVisitor,
+	type PlaceUpPath,
+	type ProtoNodes,
+	type RangeUpPath,
 	TreeNavigationResult,
-	UpPath,
+	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { JsonCompatible, brand, makeArray } from "../../util/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectJsonTree,
@@ -44,6 +44,12 @@ const rootNode: UpPath = {
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
+};
+
+const rootNode2: UpPath = {
+	parent: undefined,
+	parentField: rootFieldKey,
+	parentIndex: 1,
 };
 
 describe("Editing", () => {
@@ -80,6 +86,29 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
+			const tree1 = makeTreeFromJson([[], ["X", "Y"]]);
+			const tree2 = tree1.fork();
+
+			tree1.transaction.start();
+			tree1.editor.move(
+				{ parent: rootNode2, field: brand("") },
+				0,
+				1,
+				{ parent: rootNode, field: brand("") },
+				0,
+			);
+			tree1.editor.sequenceField(rootField).move(1, 1, 0);
+			tree1.transaction.commit();
+
+			tree2.editor.sequenceField({ parent: rootNode2, field: brand("") }).move(0, 1, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [["X", "Y"], []]);
 		});
 
 		it("can rebase remove over cross-field move", () => {
@@ -1529,11 +1558,6 @@ describe("Editing", () => {
 		});
 
 		it("can move a node out from a field and into a field under a sibling", () => {
-			const rootNode2: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
 			const tree = makeTreeFromJson(["A", {}]);
 			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
 			const expectedState: JsonCompatible = [{ foo: "A" }];

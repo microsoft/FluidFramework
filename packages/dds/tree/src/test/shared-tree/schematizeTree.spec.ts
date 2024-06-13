@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import {
 	AllowedUpdateType,
-	Anchor,
-	AnchorNode,
-	IForestSubscription,
-	JsonableTree,
-	TreeStoredSchema,
+	type Anchor,
+	type AnchorNode,
+	type IForestSubscription,
+	type JsonableTree,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
@@ -20,23 +20,23 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	NewFieldContent,
+	type FlexTreeSchema,
+	type NewFieldContent,
 	SchemaBuilderBase,
 	ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import {
+import type {
 	ITreeCheckout,
 	ITreeCheckoutFork,
-	type CheckoutEvents,
-	type ISharedTreeEditor,
-	type ITransaction,
+	CheckoutEvents,
+	ISharedTreeEditor,
+	ITransaction,
 } from "../../shared-tree/index.js";
 import {
-	TreeContent,
+	type TreeContent,
 	UpdateType,
 	canInitialize,
 	ensureSchema,
@@ -45,7 +45,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import { checkoutWithContent, jsonSequenceRootSchema, validateViewConsistency } from "../utils.js";
-import type { ISubscribable } from "../../events/index.js";
+import type { Listenable } from "../../events/index.js";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
@@ -182,8 +182,8 @@ describe("schematizeTree", () => {
 			updateSchema(newSchema: TreeStoredSchema): void {
 				throw new Error("Function not implemented.");
 			},
-			events: undefined as unknown as ISubscribable<CheckoutEvents>,
-			rootEvents: undefined as unknown as ISubscribable<AnchorSetRootEvents>,
+			events: undefined as unknown as Listenable<CheckoutEvents>,
+			rootEvents: undefined as unknown as Listenable<AnchorSetRootEvents>,
 			getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 				throw new Error("Function not implemented.");
 			},

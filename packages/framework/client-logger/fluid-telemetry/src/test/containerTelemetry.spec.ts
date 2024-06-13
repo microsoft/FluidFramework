@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import type Sinon from "sinon";
-import { spy } from "sinon";
-import { expect } from "chai";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import type { IFluidContainer, IFluidContainerEvents } from "@fluidframework/fluid-static";
-import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
+import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
+import { expect } from "chai";
+import { spy } from "sinon";
+import type Sinon from "sinon";
+
 import { IFluidContainerSystemEventNames, type IContainerTelemetry } from "../container/index.js";
+import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import {
+	AppInsightsTelemetryConsumer,
 	ContainerTelemetryEventNames,
 	type ContainerConnectedTelemetry,
 	type ContainerDisconnectedTelemetry,
 	type ContainerDisposedTelemetry,
-	type IFluidTelemetry,
-	type ITelemetryConsumer,
 } from "../index.js";
 
 /**
@@ -57,17 +57,6 @@ describe("container telemetry via", () => {
 
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockFluidContainer = new MockFluidContainer();
-
-		class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
-			public constructor(private readonly client: ApplicationInsights) {}
-
-			public consume(event: IFluidTelemetry): void {
-				this.client.trackEvent({
-					name: event.eventName,
-					properties: event,
-				});
-			}
-		}
 
 		telemetryConfig = {
 			container: mockFluidContainer as unknown as IFluidContainer,
