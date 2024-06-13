@@ -65,7 +65,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 	private readonly opProcessingHelper: SampledTelemetryHelper;
 	private readonly callbacksHelper: SampledTelemetryHelper;
-	private readonly telemetryEventBatcher: TelemetryEventBatcher<keyof ITelemetryProperties>;
+	private readonly telemetryEventBatcher:
+		| TelemetryEventBatcher<keyof ITelemetryProperties>
+		| undefined;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -538,9 +540,17 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			local ? "local" : "remote",
 		);
 
-		this.telemetryEventBatcher.measure(() => {
-			this.processCore(message, local, localOpMetadata);
-		});
+		if (this.telemetryEventBatcher !== undefined) {
+			this.telemetryEventBatcher.measure(() => {
+				this.processCore(message, local, localOpMetadata);
+				return {
+					telemetryProperties: {
+						sequenceDifference:
+							message.sequenceNumber - message.referenceSequenceNumber,
+					},
+				};
+			});
+		}
 
 		this.emitInternal("op", message, local, this);
 	}
