@@ -7,19 +7,19 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldKey,
-	FieldUpPath,
-	PathRootPrefix,
-	TreeNodeSchemaIdentifier,
-	TreeType,
-	TreeValue,
-	UpPath,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type PathRootPrefix,
+	type TreeNodeSchemaIdentifier,
+	type TreeType,
+	type TreeValue,
+	type UpPath,
+	type Value,
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 
-import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
+import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.

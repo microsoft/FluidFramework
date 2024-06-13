@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	Brand,
 	BrandedType,
 	areSafelyAssignable,
@@ -13,8 +13,8 @@ import {
 	requireTrue,
 } from "../../util/index.js";
 import {
-	ExtractFromOpaque,
-	Opaque,
+	type ExtractFromOpaque,
+	type Opaque,
 	brandOpaque,
 	extractFromOpaque,
 	// Allow importing from this specific file which is being tested:

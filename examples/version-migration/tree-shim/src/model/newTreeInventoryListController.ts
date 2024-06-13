@@ -9,6 +9,7 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
+	// eslint-disable-next-line import/no-deprecated
 	TreeConfiguration,
 } from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -35,6 +36,7 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
+// eslint-disable-next-line import/no-deprecated
 export const treeConfiguration = new TreeConfiguration(
 	InventorySchema,
 	() =>

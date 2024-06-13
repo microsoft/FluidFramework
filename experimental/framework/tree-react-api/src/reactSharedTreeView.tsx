@@ -13,13 +13,14 @@ import {
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import {
-	type ITree,
-	type SchemaIncompatible,
-	type TreeConfiguration,
-	type TreeFieldFromImplicitField,
-	type TreeView,
-	type ImplicitFieldSchema,
+import type {
+	ITree,
+	SchemaCompatibilityStatus,
+	// eslint-disable-next-line import/no-deprecated
+	TreeConfiguration,
+	TreeFieldFromImplicitField,
+	TreeView,
+	ImplicitFieldSchema,
 } from "@fluidframework/tree";
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
@@ -41,6 +42,7 @@ const SharedTree = configuredSharedTree({
  */
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	key: string,
+	// eslint-disable-next-line import/no-deprecated
 	treeConfiguration: TreeConfiguration<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable> {
 	return treeDataObjectInternal(key, treeConfiguration);
@@ -55,6 +57,7 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
  */
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	key: string,
+	// eslint-disable-next-line import/no-deprecated
 	treeConfiguration: TreeConfiguration<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
 	readonly factory: IFluidDataStoreFactory;
@@ -98,6 +101,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly config: TreeConfiguration<TSchema>;
 
 	/**
@@ -114,7 +118,7 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
 	extends ITreeDataObject<TSchema> {
 	/**
 	 * React component which handles schematizing trees.
-	 * This includes displaying errors when the document can not be schematized.
+	 * This includes displaying errors when the document can not be viewed using the view schema.
 	 *
 	 * @privateRemarks
 	 * This is exposed as a member rather than a free function since type inference for the schema doesn't work when used as a free function,
@@ -159,9 +163,9 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	protected override async initializingFirstTime(): Promise<void> {
 		const tree = SharedTree.create(this.runtime);
-		this.#tree = tree.schematize(this.config);
+		this.#tree = tree.viewWith(this.config);
 		// Initialize the tree content and schema.
-		this.#tree.upgradeSchema();
+		this.#tree.initialize(this.config.initialTree());
 		this.root.set(this.key, tree.handle);
 	}
 
@@ -169,10 +173,10 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 		const handle = this.root.get<IFluidHandle<ITree>>(this.key);
 		if (handle === undefined)
 			throw new Error("map should be populated on creation by 'initializingFirstTime'");
-		// If the tree is incompatible with the config's schema,
-		// the TreeView exposes an error which is explicitly handled by TreeViewComponent.
-		const tree = await handle.get();
-		this.#tree = tree.schematize(this.config);
+
+		// the TreeView exposes this via `compatibility` which is explicitly handled by TreeViewComponent.
+		const iTree = await handle.get();
+		this.#tree = iTree.viewWith(this.config);
 	}
 
 	protected override async hasInitialized(): Promise<void> {
@@ -181,6 +185,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	public abstract readonly key: string;
 
+	// eslint-disable-next-line import/no-deprecated
 	public abstract readonly config: TreeConfiguration<TSchema>;
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
@@ -195,6 +200,48 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 		});
 }
 
+function useViewCompatibility<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): SchemaCompatibilityStatus {
+	const [compatibility, setCompatibility] = React.useState<SchemaCompatibilityStatus>(
+		view.compatibility,
+	);
+
+	React.useEffect(() => {
+		const updateCompatibility = (): void => {
+			setCompatibility(view.compatibility);
+		};
+
+		updateCompatibility();
+		return view.events.on("schemaChanged", updateCompatibility);
+	}, [view]);
+
+	return compatibility;
+}
+
+function useViewRoot<TSchema extends ImplicitFieldSchema>(
+	view: TreeView<TSchema>,
+): TreeFieldFromImplicitField<TSchema> | undefined {
+	const [root, setRoot] = React.useState<TreeFieldFromImplicitField<TSchema> | undefined>(
+		undefined,
+	);
+
+	React.useEffect(() => {
+		const updateRoot = (): void => {
+			if (view.compatibility.canView) {
+				setRoot(view.root);
+			} else {
+				setRoot(undefined);
+			}
+		};
+
+		updateRoot();
+		return view.events.on("rootChanged", updateRoot);
+	}, [view]);
+
+	return root;
+}
+
 /**
  * React component which handles schematizing trees.
  * This includes displaying errors when the document can not be schematized.
@@ -202,52 +249,33 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
-	viewComponent,
+	viewComponent: ViewComponent,
 	errorComponent,
 }: TreeViewProps<TSchema> & {
 	tree: TreeDataObject<TSchema>;
 }) {
 	const view = tree.tree;
 
-	const [error, setError] = React.useState<null | SchemaIncompatible>(null);
-	const [root, setRoot] = React.useState<null | TreeFieldFromImplicitField<TSchema>>(null);
+	const compatibility = useViewCompatibility(view);
+	const root = useViewRoot(view);
+	const upgradeSchema = React.useCallback((): void => view.upgradeSchema(), [view]);
 
-	React.useEffect(() => {
-		let ignore = false;
-
-		const update = (): void => {
-			if (!ignore) {
-				if (view.error === undefined) {
-					setError(null);
-					setRoot(view.root);
-				} else {
-					setError(view.error);
-					setRoot(null);
-				}
-			}
-		};
-
-		update();
-		view.events.on("rootChanged", update);
-
-		return (): void => {
-			ignore = true;
-			// View is owned by tree so its not disposed here.
-		};
-	}, [view]);
-
-	if (error !== null) {
-		return React.createElement(errorComponent ?? TreeErrorComponent, {
-			error,
-			upgradeSchema: () => view.upgradeSchema(),
-		});
+	// Note: this policy is on the stricter side and ensures that clients will only be able to submit edits when their view schema
+	// supports exactly the same documents as the stored schema.
+	// A realistic production application using this strategy would need to take steps to attempt to open the document using
+	// several different view schemas in order to ensure that their users don't temporarily lose access to documents while
+	// code rollout is in progress.
+	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
+	if (!compatibility.isEquivalent) {
+		const Error = errorComponent ?? TreeErrorComponent;
+		return <Error compatibility={compatibility} upgradeSchema={upgradeSchema} />;
 	}
 
-	if (root === null) {
+	if (root === undefined) {
 		return <div>View not set</div>;
 	}
 
-	return React.createElement(viewComponent, { root });
+	return <ViewComponent root={root} />;
 }
 
 /**
@@ -256,9 +284,9 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
  */
 export interface SchemaIncompatibleProps {
 	/**
-	 * Information about how the schema is incompatible.
+	 * Information about the view schema's compatibility with the stored schema.
 	 */
-	readonly error: SchemaIncompatible;
+	readonly compatibility: SchemaCompatibilityStatus;
 	/**
 	 * Callback to request that the stored schema in the document be upgraded.
 	 */
@@ -268,10 +296,15 @@ export interface SchemaIncompatibleProps {
 /**
  * React component which displays schema errors and allows upgrading schema when possible.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function TreeErrorComponent({ error, upgradeSchema }: SchemaIncompatibleProps) {
+function TreeErrorComponent({
+	compatibility,
+	upgradeSchema,
+}: {
+	compatibility: SchemaCompatibilityStatus;
+	upgradeSchema: () => void;
+}): React.JSX.Element {
 	// eslint-disable-next-line unicorn/prefer-ternary
-	if (error.canUpgrade) {
+	if (compatibility.canUpgrade) {
 		return (
 			<div>
 				<div>
@@ -279,7 +312,7 @@ function TreeErrorComponent({ error, upgradeSchema }: SchemaIncompatibleProps) {
 					document format can be updated. This may prevent other versions of the
 					application from opening this document.
 				</div>
-				<button onClick={(): void => upgradeSchema()}>Upgrade</button>;
+				<button onClick={upgradeSchema}>Upgrade</button>;
 			</div>
 		);
 	} else {

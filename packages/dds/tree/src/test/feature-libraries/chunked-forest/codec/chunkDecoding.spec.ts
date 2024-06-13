@@ -10,8 +10,8 @@ import { compareArrays } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
-	ChunkDecoder,
-	StreamCursor,
+	type ChunkDecoder,
+	type StreamCursor,
 	readStream,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
@@ -29,7 +29,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
-	EncodedChunkShape,
+	type EncodedChunkShape,
 	SpecialField,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
@@ -40,8 +40,8 @@ import {
 } from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
-import { TreeChunk } from "../../../../feature-libraries/index.js";
-import { ReferenceCountedBase, brand } from "../../../../util/index.js";
+import type { TreeChunk } from "../../../../feature-libraries/index.js";
+import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 import { testIdCompressor } from "../../../utils.js";
 

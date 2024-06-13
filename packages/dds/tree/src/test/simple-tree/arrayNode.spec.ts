@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
-import { Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
 import { validateUsageError } from "../utils.js";
@@ -45,9 +45,18 @@ describe("ArrayNode", () => {
 			const array = hydrate(schemaType, [0]);
 			const mutableArray = array as Mutable<typeof array>;
 			assert.equal(mutableArray.length, 1);
-			assert.throws(() => (mutableArray[0] = 3)); // An index within the array that already has an element
-			assert.throws(() => (mutableArray[1] = 3)); // An index just past the end of the array, where a new element would be pushed
-			assert.throws(() => (mutableArray[2] = 3)); // An index that would leave a "gap" past the current end of the array if a set occurred
+			assert.throws(
+				() => (mutableArray[0] = 3),
+				validateUsageError(/Use array node mutation APIs/),
+			); // An index within the array that already has an element
+			assert.throws(
+				() => (mutableArray[1] = 3),
+				validateUsageError(/Use array node mutation APIs/),
+			); // An index just past the end of the array, where a new element would be pushed
+			assert.throws(
+				() => (mutableArray[2] = 3),
+				validateUsageError(/Use array node mutation APIs/),
+			); // An index that would leave a "gap" past the current end of the array if a set occurred
 		});
 
 		it("stringifies in the same way as a JS array", () => {
@@ -167,6 +176,8 @@ describe("ArrayNode", () => {
 	});
 
 	describe("shadowing", () => {
+		// Apps compiled targeting es2020 will hit the "fails at runtime if attempting to set content via index assignment" case tested above instead of these due to using assignment in the constructor to implement fields defaulting.
+
 		it("Shadowing index property with incompatible type", () => {
 			class Array extends schemaFactory.array(
 				"ArrayWithTypeIncompatibleShadow",

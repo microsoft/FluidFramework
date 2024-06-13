@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ObjectOptions } from "@sinclair/typebox";
+import type { ObjectOptions } from "@sinclair/typebox";
 
-import { _InlineTrick, fail, objectToMap } from "../util/index.js";
+import { type InternalUtilTypes, fail, objectToMap } from "../util/index.js";
 
 /**
  * This module contains utilities for an encoding of a discriminated union that is efficient to validate using
@@ -95,7 +95,7 @@ export class DiscriminatedUnionDispatcher<TUnion extends object, TArgs extends a
 					...args: TArgs
 				) => TResult;
 			},
-		][_InlineTrick],
+		][InternalUtilTypes._InlineTrick],
 	) {
 		this.library = objectToMap(
 			library as Record<keyof TUnion, (value: unknown, ...args: TArgs) => TResult>,

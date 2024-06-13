@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter, Listenable, createEmitter } from "../../events/index.js";
+import { EventEmitter, type Listenable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;

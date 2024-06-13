@@ -678,7 +678,7 @@ export class Container
 		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
-	private get supportGetSnapshotApi(): boolean {
+	private supportGetSnapshotApi(): boolean {
 		const supportGetSnapshotApi: boolean =
 			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
 				true && this.service?.policies?.supportGetSnapshotApi === true;
@@ -965,9 +965,9 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context or supportedFeatures flag by the service.
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
-		const forceEnableSummarizeProtocolTree =
+		const shouldSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree;
 
@@ -977,7 +977,7 @@ export class Container
 			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
-			forceEnableSummarizeProtocolTree,
+			shouldSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
@@ -991,6 +991,7 @@ export class Container
 			offlineLoadEnabled,
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
+			() => this.supportGetSnapshotApi(),
 		);
 
 		const isDomAvailable =
@@ -1354,11 +1355,7 @@ export class Container
 
 					// If offline load is enabled, attachP will return the attach summary (in Snapshot format) so we can initialize SerializedStateManager
 					const snapshotWithBlobs = await attachP;
-					this.serializedStateManager.setInitialSnapshot(
-						snapshotWithBlobs,
-						this.supportGetSnapshotApi,
-					);
-
+					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
 						this.detachedBlobStorage.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
@@ -1626,10 +1623,8 @@ export class Container
 		timings.phase2 = performance.now();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
-			specifiedVersion,
-			this.supportGetSnapshotApi,
-		);
+		const { baseSnapshot, version } =
+			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(

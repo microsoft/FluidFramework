@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { UpPath, rootFieldKey } from "../../core/index.js";
+import { type UpPath, rootFieldKey } from "../../core/index.js";
 import {
 	cursorForJsonableTreeNode,
 	MockNodeKeyManager,
 	TreeStatus,
 } from "../../feature-libraries/index.js";
 import {
-	NodeFromSchema,
+	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	TreeChangeEvents,
+	type TreeChangeEvents,
 	TreeConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
@@ -284,8 +284,7 @@ describe("treeNodeApi", () => {
 						myNumber: 2,
 					})),
 			);
-			// treeChanged fires during both the detach and attach visitor passes
-			check("treeChanged", (root) => root.rootObject.myNumber++, 2);
+			check("treeChanged", (root) => root.rootObject.myNumber++, 1);
 
 			it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
 				const root = hydrate(treeSchema, {
@@ -304,7 +303,7 @@ describe("treeNodeApi", () => {
 				});
 
 				assert.equal(shallowChanges, 1, `nodeChanged should fire.`);
-				assert.equal(deepChanges, 2, `treeChanged should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
 			it(`change to descendant fields only triggers 'treeChanged'`, () => {
@@ -322,12 +321,12 @@ describe("treeNodeApi", () => {
 				root.rootObject.myNumber++;
 
 				assert.equal(shallowChanges, 0, `nodeChanged should NOT fire.`);
-				assert.equal(deepChanges, 2, `treeChanged should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 		});
 
-		describe("list node", () => {
-			const sb = new SchemaFactory("list-node-in-root");
+		describe("array node", () => {
+			const sb = new SchemaFactory("array-node-tests");
 			class myObject extends sb.object("object", {
 				myNumber: sb.number,
 			}) {}
@@ -362,26 +361,7 @@ describe("treeNodeApi", () => {
 			}
 
 			check("nodeChanged", (root) => root.insertAtEnd({ myNumber: 2 }));
-			// treeChanged fires during both the detach and attach visitor passes
-			check("treeChanged", (root) => root[0].myNumber++, 2);
-
-			it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
-				const root = hydrate(treeSchema, [
-					{
-						myNumber: 1,
-					},
-				]);
-
-				let shallowChanges = 0;
-				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", () => shallowChanges++);
-				Tree.on(root, "treeChanged", () => deepChanges++);
-
-				root.insertAtEnd({ myNumber: 2 });
-
-				assert.equal(shallowChanges, 1, `nodeChanged should NOT fire.`);
-				assert.equal(deepChanges, 2, `treeChanged should fire.`); // Fires during both the detach and attach visitor passes
-			});
+			check("treeChanged", (root) => root[0].myNumber++, 1);
 
 			it(`change to descendant fields only triggers 'treeChanged'`, () => {
 				const root = hydrate(treeSchema, [
@@ -398,7 +378,7 @@ describe("treeNodeApi", () => {
 				root[0].myNumber++;
 
 				assert.equal(shallowChanges, 0, `nodeChanged should NOT fire.`);
-				assert.equal(deepChanges, 2, `treeChanged should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
 			it(`move between array nodes triggers both 'nodeChanged' and 'treeChanged' the correct number of times on source and target nodes`, () => {
@@ -425,9 +405,53 @@ describe("treeNodeApi", () => {
 				assert.deepEqual(root.array1, []);
 				assert.deepEqual(root.array2, [2, 1]);
 				assert.equal(a1ShallowChanges, 1, `nodeChanged should fire once.`);
-				assert.equal(a1DeepChanges, 2, `treeChanged should fire twice.`); // Fires during both the detach and attach visitor passes
+				assert.equal(a1DeepChanges, 1, `treeChanged should fire once.`);
 				assert.equal(a2ShallowChanges, 1, `nodeChanged should fire once.`);
-				assert.equal(a2DeepChanges, 2, `treeChanged should fire twice.`); // Fires during both the detach and attach visitor passes
+				assert.equal(a2DeepChanges, 1, `treeChanged should fire once.`);
+			});
+
+			it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
+				const testSchema = sb.array("listRoot", sb.number);
+				const root = hydrate(testSchema, []);
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "treeChanged", () => {
+					deepChanges++;
+				});
+				Tree.on(root, "nodeChanged", () => {
+					shallowChanges++;
+				});
+
+				// Insert single item
+				root.insertAtStart(1);
+				assert.equal(shallowChanges, 1);
+				assert.equal(deepChanges, 1);
+
+				// Insert multiple items
+				root.insertAtEnd(2, 3);
+				assert.equal(shallowChanges, 2);
+				assert.equal(deepChanges, 2);
+
+				// Move one item within the same node
+				root.moveToEnd(0);
+				assert.equal(shallowChanges, 3);
+				assert.equal(deepChanges, 3);
+
+				// Move multiple items within the same node
+				root.moveRangeToEnd(0, 2);
+				assert.equal(shallowChanges, 4);
+				assert.equal(deepChanges, 4);
+
+				// Remove single item
+				root.removeAt(0);
+				assert.equal(shallowChanges, 5);
+				assert.equal(deepChanges, 5);
+
+				// Remove multiple items
+				root.removeRange(0, 2);
+				assert.equal(shallowChanges, 6);
+				assert.equal(deepChanges, 6);
 			});
 		});
 
@@ -482,7 +506,7 @@ describe("treeNodeApi", () => {
 					}
 					mapEntry.myNumber++;
 				},
-				2,
+				1,
 			);
 
 			it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
@@ -506,7 +530,7 @@ describe("treeNodeApi", () => {
 				root.set("a", { myNumber: 2 });
 
 				assert.equal(shallowChanges, 1, `nodeChanged should fire.`);
-				assert.equal(deepChanges, 2, `treeChanged should fire.`); // Fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
 			it(`change to descendant fields only triggers 'treeChanged'`, () => {
@@ -534,7 +558,7 @@ describe("treeNodeApi", () => {
 				mapEntry.myNumber++;
 
 				assert.equal(shallowChanges, 0, `nodeChanged should NOT fire.`);
-				assert.equal(deepChanges, 2, `treeChanged should fire.`); // treeChanged fires during both the detach and attach visitor passes
+				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 		});
 
@@ -542,11 +566,6 @@ describe("treeNodeApi", () => {
 		// by other leaf nodes.
 
 		it(`all kinds of changes trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-			// This test validates that any kind of change fires the events as expected.
-			// Like noted in other tests, 'treeChanged' fires during both the detach and attach visitor passes so it
-			// normally fires twice for any change. 'nodeChanged' usually fires once, except during moves between
-			// sequences, where it fires when detaching the node from its source, and again while attaching it to the target.
-
 			const sb = new SchemaFactory("object-node-in-root");
 			const innerObject = sb.object("inner-object", { innerProp: sb.number });
 			class map extends sb.map("map", sb.number) {}
@@ -597,50 +616,50 @@ describe("treeNodeApi", () => {
 			}
 
 			// Attach value node
-			actAndVerify(() => (root.rootObject.valueProp = 1), 2, 1);
+			actAndVerify(() => (root.rootObject.valueProp = 1), 1, 1);
 			// Replace value node
-			actAndVerify(() => (root.rootObject.valueProp = 2), 2, 1);
+			actAndVerify(() => (root.rootObject.valueProp = 2), 1, 1);
 			// Detach value node
-			actAndVerify(() => (root.rootObject.valueProp = undefined), 2, 1);
+			actAndVerify(() => (root.rootObject.valueProp = undefined), 1, 1);
 
 			// Attach object node
 			actAndVerify(
 				() => (root.rootObject.objectProp = new innerObject({ innerProp: 1 })),
-				2,
+				1,
 				1,
 			);
 			// Replace object node
 			actAndVerify(
 				() => (root.rootObject.objectProp = new innerObject({ innerProp: 2 })),
-				2,
+				1,
 				1,
 			);
 			// Detach object node
-			actAndVerify(() => (root.rootObject.objectProp = undefined), 2, 1);
+			actAndVerify(() => (root.rootObject.objectProp = undefined), 1, 1);
 
 			// Attach map node
-			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["a", 1]]))), 2, 1);
+			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["a", 1]]))), 1, 1);
 			// Replace map node
-			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["b", 2]]))), 2, 1);
+			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["b", 2]]))), 1, 1);
 			// Set key on map node (we set it above, we know it's good even if it's optional)
-			actAndVerify(() => root.rootObject.mapProp?.set("c", 3), 2, 0); // The node at mapProp isn't changing so no shallow change on rootObject
+			actAndVerify(() => root.rootObject.mapProp?.set("c", 3), 1, 0); // The node at mapProp isn't changing so no shallow change on rootObject
 			// Delete key on map node (we set it above, we know it's good even if it's optional)
-			actAndVerify(() => root.rootObject.mapProp?.delete("c"), 2, 0); // The node at mapProp isn't changing so no shallow change on rootObject
+			actAndVerify(() => root.rootObject.mapProp?.delete("c"), 1, 0); // The node at mapProp isn't changing so no shallow change on rootObject
 			// Detach map node
-			actAndVerify(() => (root.rootObject.mapProp = undefined), 2, 1);
+			actAndVerify(() => (root.rootObject.mapProp = undefined), 1, 1);
 
 			// Attach array node
-			actAndVerify(() => (root.rootObject.arrayProp = new list([1])), 2, 1);
+			actAndVerify(() => (root.rootObject.arrayProp = new list([1])), 1, 1);
 			// Replace array node
-			actAndVerify(() => (root.rootObject.arrayProp = new list([2])), 2, 1);
+			actAndVerify(() => (root.rootObject.arrayProp = new list([2])), 1, 1);
 			// Insert into array node (we set it above, we know it's good even if it's optional)
-			actAndVerify(() => root.rootObject.arrayProp?.insertAtEnd(3), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
+			actAndVerify(() => root.rootObject.arrayProp?.insertAtEnd(3), 1, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
 			// Move within array node (we set it above, we know it's good even if it's optional)
-			actAndVerify(() => root.rootObject.arrayProp?.moveToEnd(0), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
+			actAndVerify(() => root.rootObject.arrayProp?.moveToEnd(0), 1, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
 			// Remove from array node (we set it above, we know it's good even if it's optional)
-			actAndVerify(() => root.rootObject.arrayProp?.removeAt(0), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
+			actAndVerify(() => root.rootObject.arrayProp?.removeAt(0), 1, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
 			// Detach array node
-			actAndVerify(() => (root.rootObject.arrayProp = undefined), 2, 1);
+			actAndVerify(() => (root.rootObject.arrayProp = undefined), 1, 1);
 		});
 
 		it(`batched changes to several direct fields trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
@@ -677,11 +696,8 @@ describe("treeNodeApi", () => {
 
 			assert.equal(root.prop1, 2, "'prop2' value did not change as expected");
 			assert.equal(root.prop2, 2, "'prop2' value did not change as expected");
-			// Changes should be batched so we should only get "one" firing of each event type.
-			// In practice this actually means two for treeChanged, because it fires once during each visitor pass
-			// (detach then attach).
-			// Node replacements only have effects during the attach pass so nodeChanged only fires once.
-			assert.equal(deepChanges, 2, "'treeChanged' should fire twice");
+			// Changes should be batched so we should only get one firing of each event type.
+			assert.equal(deepChanges, 1, "'treeChanged' should only fire once");
 			assert.equal(shallowChanges, 1, "'nodeChanged' should only fire once");
 		});
 	});
