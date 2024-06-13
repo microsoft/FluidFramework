@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import {
 	AllowedUpdateType,
-	Anchor,
-	AnchorNode,
-	IForestSubscription,
-	JsonableTree,
-	TreeStoredSchema,
+	type Anchor,
+	type AnchorNode,
+	type IForestSubscription,
+	type JsonableTree,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
@@ -20,23 +20,23 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	NewFieldContent,
+	type FlexTreeSchema,
+	type NewFieldContent,
 	SchemaBuilderBase,
 	ViewSchema,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import {
+import type {
 	ITreeCheckout,
 	ITreeCheckoutFork,
-	type CheckoutEvents,
-	type ISharedTreeEditor,
-	type ITransaction,
+	CheckoutEvents,
+	ISharedTreeEditor,
+	ITransaction,
 } from "../../shared-tree/index.js";
 import {
-	TreeContent,
+	type TreeContent,
 	UpdateType,
 	canInitialize,
 	ensureSchema,

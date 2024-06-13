@@ -4,10 +4,10 @@
 
 ```ts
 
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
-import { RequestParser } from '@fluidframework/runtime-utils/internal';
+import type { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResponse } from '@fluidframework/core-interfaces';
+import type { RequestParser } from '@fluidframework/runtime-utils/internal';
 
 // (No @packageDocumentation comment for this package)
 

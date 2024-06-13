@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
-import { Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
 import { validateUsageError } from "../utils.js";

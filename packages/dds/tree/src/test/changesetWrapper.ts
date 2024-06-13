@@ -6,16 +6,16 @@
 import { strict } from "assert";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	ChangeAtomIdMap,
-	DeltaFieldChanges,
-	RevisionTag,
-	TaggedChange,
+	type ChangeAtomIdMap,
+	type DeltaFieldChanges,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	tagChange,
 	taggedOptAtomId,
 } from "../core/index.js";
-import {
+import type {
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,

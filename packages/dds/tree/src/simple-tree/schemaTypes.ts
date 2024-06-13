@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	InternalFlexListTypes,
-	LazyItem,
-	NodeKeyManager,
+	type InternalFlexListTypes,
+	type LazyItem,
+	type NodeKeyManager,
 	isLazy,
 } from "../feature-libraries/index.js";
-import { MakeNominal, brand, isReadonlyArray } from "../util/index.js";
-import { InternalTreeNode, Unhydrated } from "./types.js";
-import { FieldKey } from "../core/index.js";
-import { InsertableContent } from "./proxies.js";
+import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
+import type { InternalTreeNode, Unhydrated } from "./types.js";
+import type { FieldKey } from "../core/index.js";
+import type { InsertableContent } from "./proxies.js";
 
 /**
  * Schema for a tree node.

@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ChangeRebaser, GraphCommit, replaceChange } from "../core/index.js";
-import { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
+import { type ChangeRebaser, type GraphCommit, replaceChange } from "../core/index.js";
+import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
 import { TransactionEnricher } from "./transactionEnricher.js";
 
 /**

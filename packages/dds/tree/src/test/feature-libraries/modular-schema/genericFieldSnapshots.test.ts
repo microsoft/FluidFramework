@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GenericChangeset } from "../../../feature-libraries/index.js";
+import type { GenericChangeset } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
