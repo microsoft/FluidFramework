@@ -11,7 +11,11 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger } from "./logger.js";
-import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import {
+	ITelemetryLoggerExt,
+	ITelemetryPropertiesExt,
+	type ITelemetryGenericEventExt,
+} from "./telemetryTypes.js";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
@@ -20,9 +24,14 @@ import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.j
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
+	// TODO: don't expose mutable state
 	events: ITelemetryBaseEvent[] = [];
 
-	constructor(public readonly minLogLevel?: LogLevel) {}
+	public readonly minLogLevel: LogLevel;
+
+	constructor(minLogLevel?: LogLevel) {
+		this.minLogLevel = minLogLevel ?? LogLevel.default;
+	}
 
 	clear(): void {
 		this.events = [];
@@ -32,8 +41,10 @@ export class MockLogger implements ITelemetryBaseLogger {
 		return createChildLogger({ logger: this });
 	}
 
-	send(event: ITelemetryBaseEvent): void {
-		this.events.push(event);
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
+			this.events.push(event);
+		}
 	}
 
 	/**
@@ -244,4 +255,18 @@ function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPrope
 		}
 	}
 	return true;
+}
+
+export class MockLoggerExt extends MockLogger implements ITelemetryLoggerExt {
+	public constructor(minLogLevel?: LogLevel) {
+		super(minLogLevel);
+	}
+
+	public sendTelemetryEvent(
+		event: ITelemetryGenericEventExt,
+		error?: unknown,
+		logLevel?: 10 | 20 | undefined,
+	): void {
+		this.send(event);
+	}
 }
