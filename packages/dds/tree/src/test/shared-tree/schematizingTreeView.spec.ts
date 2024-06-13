@@ -85,8 +85,8 @@ describe("SchematizingSimpleTreeView", () => {
 		const unsubscribe = view.events.on("schemaChanged", () =>
 			log.push(["schemaChanged", getChangeData(view)]),
 		);
-		const unsubscribe2 = view.events.on("afterBatch", () =>
-			log.push(["afterBatch", view.root]),
+		const unsubscribe2 = view.events.on("rootChanged", () =>
+			log.push(["rootChanged", view.root]),
 		);
 
 		// Should be a no op since not in an error state;
@@ -109,16 +109,12 @@ describe("SchematizingSimpleTreeView", () => {
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
-		view.events.on("afterBatch", () => log.push(["afterBatch", view.root]));
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
 		view.root = 6;
 
-		assert.deepEqual(log, [
-			["rootChanged", 6],
-			["afterBatch", 6],
-		]);
+		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
 	// TODO: AB#8121: When adding support for additional optional fields, we may want a variant of this test which does the analogous flow using

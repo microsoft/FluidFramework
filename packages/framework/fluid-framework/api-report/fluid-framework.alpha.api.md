@@ -1294,7 +1294,6 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 // @public
 export interface TreeViewEvents {
-    afterBatch(): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
     schemaChanged(): void;
