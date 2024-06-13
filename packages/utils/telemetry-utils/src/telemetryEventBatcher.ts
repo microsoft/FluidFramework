@@ -11,10 +11,6 @@ import type {
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
-/**
- * Expected type of the custom data passed into the logger.
- */
-// type Data<TKey extends string> = { readonly [key in TKey]: number };
 
 /**
  * Expected type of the custom data passed into the logger.
