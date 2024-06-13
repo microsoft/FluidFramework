@@ -64,7 +64,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
-	protected readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
+	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
 	/**
@@ -80,6 +80,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	public get editor(): TEditor {
 		return this.getLocalBranch().editor;
+	}
+
+	/**
+	 * Gets the revision at the head of the trunk.
+	 */
+	protected get trunkHeadRevision(): RevisionTag {
+		return this.editManager.getTrunkHead().revision;
 	}
 
 	/**

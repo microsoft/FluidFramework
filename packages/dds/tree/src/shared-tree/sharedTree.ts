@@ -315,8 +315,7 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		const latestRevision = this.editManager.getTrunkHead().revision;
-		this.checkout.setRevisionsForLoadedData(latestRevision);
+		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
 	}
 }
