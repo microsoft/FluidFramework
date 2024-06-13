@@ -92,7 +92,7 @@ export abstract class TreeNode implements WithType {
 	public abstract get [type](): string;
 
 	/**
-	 * Provides `instancof` support for testing if a value is a `TreeNode`.
+	 * Provides `instanceof` support for testing if a value is a `TreeNode`.
 	 * @remarks
 	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
 	 * @privateRemarks
@@ -101,7 +101,7 @@ export abstract class TreeNode implements WithType {
 	public static [Symbol.hasInstance](value: unknown): value is TreeNode;
 
 	/**
-	 * Provides `instancof` support for all schema classes with public constructors.
+	 * Provides `instanceof` support for all schema classes with public constructors.
 	 * @remarks
 	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
 	 * @privateRemarks
@@ -112,18 +112,19 @@ export abstract class TreeNode implements WithType {
 		value: unknown,
 	): value is InstanceType<TSchema>;
 
-	public static [Symbol.hasInstance](value: unknown): boolean {
+	public static [Symbol.hasInstance](this: { prototype: object }, value: unknown): boolean {
 		const schema = tryGetSchema(value);
 
 		if (schema === undefined || schema.kind === NodeKind.Leaf) {
 			return false;
 		}
 
-		return inPrototypeChain(schema, this);
+		assert("prototype" in schema, "expected class based schema");
+		return inPrototypeChain(schema.prototype, this.prototype);
 	}
 
 	protected constructor() {
-		if (!inPrototypeChain(Reflect.getPrototypeOf(this), TreeNodeValid)) {
+		if (!inPrototypeChain(Reflect.getPrototypeOf(this), TreeNodeValid.prototype)) {
 			throw new UsageError("TreeNodes must extend schema classes created by SchemaFactory");
 		}
 	}
@@ -136,7 +137,7 @@ export abstract class TreeNode implements WithType {
  * @returns true iff `base` is in the prototype chain starting at `derived`.
  */
 // eslint-disable-next-line @rushstack/no-new-null
-function inPrototypeChain(derived: object | null, base: object): boolean {
+export function inPrototypeChain(derived: object | null, base: object): boolean {
 	let checking = derived;
 	while (checking !== null) {
 		if (base === checking) {
