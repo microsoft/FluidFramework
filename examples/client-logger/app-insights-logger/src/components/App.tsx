@@ -6,17 +6,18 @@
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { SharedCell } from "@fluidframework/cell/internal";
+import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import React, { useEffect } from "react";
+import React from "react";
 
 import {
 	ContainerInfo,
 	createFluidContainer,
 	loadExistingFluidContainer,
 } from "./ClientUtilities.js";
+import { useAppSerializer } from "./useAppSerializer.js";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -27,7 +28,6 @@ const sharedTextKey = "shared-text";
  * Key in the app's `rootMap` under which the SharedCounter object is stored.
  */
 const sharedCounterKey = "shared-counter";
-
 
 /**
  * Key in the app's `rootMap` under which the SharedCell object is stored.
@@ -69,16 +69,16 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
 	// Also set a couple of primitives for testing the debug view
-	rootMap.set("numeric-value", 42);
-	rootMap.set("string-value", "Hello world!");
-	rootMap.set("record-value", {
-		aNumber: 37,
-		aString: "Here is some text content.",
-		anObject: {
-			a: "a",
-			b: "b",
-		},
-	});
+	// rootMap.set("numeric-value", 42);
+	// rootMap.set("string-value", "Hello world!");
+	// rootMap.set("record-value", {
+	// 	aNumber: 37,
+	// 	aString: "Here is some text content.",
+	// 	anObject: {
+	// 		a: "a",
+	// 		b: "b",
+	// 	},
+	// });
 
 	// Set up SharedText for text form
 	const sharedCell = await container.create(SharedCell);
@@ -159,22 +159,26 @@ function AppView(props: AppViewProps): React.ReactElement {
 		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
 
-	useEffect(() => {
-		const intervalId = setInterval(async () => {
-			await logMessage();
-		}, 1000);
+	const sharedCellHandle = rootMap.get(sharedCellKey) as IFluidHandle<ISharedCell>;
 
+	const serializeApp = async (): Promise<string> => {
+		// console.log(sharedTextHandle)
+		// console.log(sharedCounterHandle)
+		// console.log(sharedCellHandle)
 
+		const sharedText = await sharedTextHandle.get();
+		const sharedCounter = await sharedCounterHandle.get();
+		// const sharedCell = await sharedCellHandle.get();
 
-		// Cleanup interval on component unmount
-		return () => clearInterval(intervalId);
-	}, []); // Empty dependency array ensures this effect runs only once after the initial render
+		const appRepresentationMarkdown =
+			`# Employee Signals \n` +
+			`- Number of Happy Employees: ${sharedCounter.value} \n\n` +
+			`- How employees are feeling: "${sharedText.getText()}"`;
 
-	const logMessage = async (): Promise<void> => {
-		// Simulate an async operation
-		await new Promise(resolve => setTimeout(resolve, 100));
-		console.log('Logging every second');
+		return appRepresentationMarkdown;
 	};
+
+	useAppSerializer({ serializer: serializeApp, frequencyMs: 5000, sharedCellHandle });
 
 	return (
 		<div style={{ padding: "10px" }}>
@@ -182,7 +186,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 				<h4>{`Container Id: ${containerId}`}</h4>
 			</div>
 
-			<div style={{ padding: "10px", display: 'flex', flexDirection: 'row' }}>
+			<div style={{ padding: "10px", display: "flex", flexDirection: "row" }}>
 				<h4>Number of happy employees</h4>
 				<CounterView sharedCounterHandle={sharedCounterHandle} />
 			</div>

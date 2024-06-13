@@ -6,7 +6,11 @@
 // eslint-disable-next-line import/no-deprecated
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
+import {
+	IDocumentStorage,
+	MongoManager,
+	type ITenantManager,
+} from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -33,6 +37,7 @@ export function create(
 	config: Provider,
 	storage: IDocumentStorage,
 	mongoManager: MongoManager,
+	tenantManager: ITenantManager,
 	// eslint-disable-next-line import/no-deprecated
 	collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
@@ -65,11 +70,18 @@ export function create(
 	app.use(urlencoded({ limit: requestSize, extended: false }));
 
 	// Bind routes
-	const routes = createRoutes(config, mongoManager, storage, collaborationSessionEventEmitter);
+	const routes = createRoutes(
+		config,
+		mongoManager,
+		storage,
+		tenantManager,
+		collaborationSessionEventEmitter,
+	);
 
 	app.use(cors());
 	app.use(routes.storage);
 	app.use(routes.ordering);
+	app.use(routes.summary);
 
 	// Basic Help Message
 	app.use(

@@ -65,6 +65,7 @@ export class TinyliciousRunner implements IRunner {
 			this.config,
 			this.storage,
 			this.mongoManager,
+			this.tenantManager,
 			this.collaborationSessionEventEmitter,
 		);
 		alfred.set("port", this.port);
