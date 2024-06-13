@@ -20,6 +20,7 @@ import {
 	CommitKind,
 	JsonableTree,
 	Revertible,
+	TreeNavigationResult,
 	UpPath,
 	compareUpPaths,
 	moveToDetachedField,
@@ -1087,6 +1088,14 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get an anchor on the peer to the node we're removing
+				const cursor = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, cursor);
+				cursor.firstNode();
+				assert.equal(cursor.value, "A");
+				const anchor = cursor.buildAnchor();
+				cursor.free();
+
 				// remove in first tree
 				root1.removeAt(0);
 
@@ -1098,8 +1107,8 @@ describe("SharedTree", () => {
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				const result1 = tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1);
+				assert.equal(result1, TreeNavigationResult.Ok);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor1.free();
 
@@ -1117,10 +1126,9 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the peer is destroyed
 				const repairCursor2 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), false);
+				const result2 = tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2);
+				assert.equal(result2, TreeNavigationResult.NotFound);
 				repairCursor2.free();
-				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
@@ -1143,6 +1151,17 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get anchors on the peer to the nodes we're removing
+				const cursor = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, cursor);
+				cursor.firstNode();
+				assert.equal(cursor.value, "A");
+				const anchor1 = cursor.buildAnchor();
+				cursor.nextNode();
+				assert.equal(cursor.value, "B");
+				const anchor2 = cursor.buildAnchor();
+				cursor.free();
+
 				// remove in first tree
 				root1.sequenceEditor().remove(0, 2);
 
@@ -1154,11 +1173,15 @@ describe("SharedTree", () => {
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor1, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "A");
-				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-5"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor2, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "B");
 				repairCursor1.free();
 
@@ -1176,10 +1199,14 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the peer is destroyed
 				const repairCursor2 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), false);
-				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-5"));
-				assert.equal(repairCursor2.firstNode(), false);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor1, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor2, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
 				repairCursor2.free();
 				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
@@ -1208,6 +1235,14 @@ describe("SharedTree", () => {
 				root1.insertAt(1, ["x"]);
 				assert.deepEqual([...root1], ["A", "x", "B", "C", "D"]);
 
+				// get an anchor on the peer to the node we're removing
+				const cursor = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, cursor);
+				cursor.enterNode(2);
+				assert.equal(cursor.value, "C");
+				const anchor = cursor.buildAnchor();
+				cursor.free();
+
 				root2.removeAt(2);
 				assert.deepEqual([...root2], ["A", "B", "D"]);
 
@@ -1221,8 +1256,10 @@ describe("SharedTree", () => {
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "C");
 				repairCursor1.free();
 
@@ -1244,8 +1281,10 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the peer is destroyed
 				const repairCursor2 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), false);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
 				repairCursor2.free();
 				assert.equal(tree2.checkout.getRemovedRoots().length, 2);
 
@@ -1270,6 +1309,14 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get an anchor the node we're removing
+				const cursor = tree1.checkout.forest.allocateCursor();
+				moveToDetachedField(tree1.checkout.forest, cursor);
+				cursor.firstNode();
+				assert.equal(cursor.value, "A");
+				const anchor = cursor.buildAnchor();
+				cursor.free();
+
 				// remove in first tree
 				root1.removeAt(0);
 
@@ -1279,8 +1326,10 @@ describe("SharedTree", () => {
 
 				// check the detached field on the first tree
 				const repairCursor1 = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor1.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
@@ -1296,8 +1345,10 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), false);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
 				repairCursor2.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
 
@@ -1322,6 +1373,17 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get anchors to the nodes we're removing
+				const cursor = tree1.checkout.forest.allocateCursor();
+				moveToDetachedField(tree1.checkout.forest, cursor);
+				cursor.firstNode();
+				assert.equal(cursor.value, "A");
+				const anchor1 = cursor.buildAnchor();
+				cursor.nextNode();
+				assert.equal(cursor.value, "B");
+				const anchor2 = cursor.buildAnchor();
+				cursor.free();
+
 				// remove in first tree
 				root1.sequenceEditor().remove(0, 2);
 
@@ -1331,11 +1393,15 @@ describe("SharedTree", () => {
 
 				// check the detached fields on the first tree
 				const repairCursor1 = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor1, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "A");
-				moveToDetachedField(tree1.checkout.forest, repairCursor1, brand("repair-5"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor2, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "B");
 				repairCursor1.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 2);
@@ -1351,10 +1417,14 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), false);
-				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-5"));
-				assert.equal(repairCursor2.firstNode(), false);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor1, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor2, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
 				repairCursor2.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
 
@@ -1379,6 +1449,14 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get an anchor on the peer to the node we're removing
+				const cursor = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, cursor);
+				cursor.firstNode();
+				assert.equal(cursor.value, "A");
+				const anchor = cursor.buildAnchor();
+				cursor.free();
+
 				// remove in first tree in a transaction
 				tree1.checkout.transaction.start();
 				root1.removeAt(0);
@@ -1395,8 +1473,10 @@ describe("SharedTree", () => {
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor1.free();
 
@@ -1414,8 +1494,10 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the peer is destroyed
 				const repairCursor2 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), false);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
 				repairCursor2.free();
 				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
@@ -1439,6 +1521,14 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get an anchor on the peer to the node we're removing
+				const cursor = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, cursor);
+				cursor.firstNode();
+				assert.equal(cursor.value, "A");
+				const anchor = cursor.buildAnchor();
+				cursor.free();
+
 				// remove in first tree
 				root1.removeAt(0);
 
@@ -1452,8 +1542,10 @@ describe("SharedTree", () => {
 
 				// check the detached field on the peer
 				const repairCursor1 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor1.free();
 				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
@@ -1476,8 +1568,10 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the peer is not destroyed
 				const repairCursor2 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), true);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor2.value, "A");
 				repairCursor2.free();
 				assert.equal(tree2.checkout.getRemovedRoots().length, 3);
@@ -1501,6 +1595,22 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
+				// get an anchor to the node we're removing
+				const cursor1 = tree1.checkout.forest.allocateCursor();
+				moveToDetachedField(tree1.checkout.forest, cursor1);
+				cursor1.firstNode();
+				assert.equal(cursor1.value, "A");
+				const anchor1 = cursor1.buildAnchor();
+				cursor1.free();
+
+				// get an anchor on the peer to the node we're removing
+				const cursor2 = tree2.checkout.forest.allocateCursor();
+				moveToDetachedField(tree2.checkout.forest, cursor2);
+				cursor2.firstNode();
+				assert.equal(cursor2.value, "A");
+				const anchor2 = cursor2.buildAnchor();
+				cursor2.free();
+
 				// remove in first tree
 				root1.removeAt(0);
 
@@ -1511,8 +1621,10 @@ describe("SharedTree", () => {
 
 				// check the detached field on the first tree
 				const repairCursor1 = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, repairCursor1, brand("repair-4"));
-				assert.equal(repairCursor1.firstNode(), true);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor1, repairCursor1),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor1.value, "A");
 				repairCursor1.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
@@ -1535,16 +1647,20 @@ describe("SharedTree", () => {
 
 				// check that the repair data on the first tree is not destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
-				assert.equal(repairCursor2.firstNode(), true);
+				assert.equal(
+					tree1.checkout.forest.tryMoveCursorToNode(anchor1, repairCursor2),
+					TreeNavigationResult.Ok,
+				);
 				assert.equal(repairCursor2.value, "A");
 				repairCursor2.free();
 				assert.equal(tree1.checkout.getRemovedRoots().length, 3);
 
 				// check that the repair data on the second tree is destroyed
 				const repairCursor3 = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, repairCursor3, brand("repair-4"));
-				assert.equal(repairCursor3.firstNode(), false);
+				assert.equal(
+					tree2.checkout.forest.tryMoveCursorToNode(anchor2, repairCursor2),
+					TreeNavigationResult.NotFound,
+				);
 				repairCursor3.free();
 				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
 
