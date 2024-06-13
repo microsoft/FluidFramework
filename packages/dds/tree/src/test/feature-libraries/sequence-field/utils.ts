@@ -8,12 +8,12 @@ import { strict } from "assert";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangesetLocalId,
-	DeltaFieldChanges,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type ChangesetLocalId,
+	type DeltaFieldChanges,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
@@ -21,16 +21,19 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import type {
+	NodeId,
+	RebaseRevisionMetadata,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
-	CellId,
-	Changeset,
-	HasMarkFields,
+	type CellId,
+	type Changeset,
+	type HasMarkFields,
 	MarkListFactory,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
@@ -47,7 +50,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	IdAllocator,
+	type IdAllocator,
 	brand,
 	fail,
 	fakeIdAllocator,

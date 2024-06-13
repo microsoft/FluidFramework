@@ -7,17 +7,17 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Context, TreeStatus } from "../feature-libraries/index.js";
 import {
-	ImplicitFieldSchema,
-	TreeNode,
-	TreeNodeApi,
-	TreeView,
+	type ImplicitFieldSchema,
+	type TreeNode,
+	type TreeNodeApi,
+	type TreeView,
 	getFlexNode,
 	treeNodeApi,
 } from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { TreeCheckout } from "./treeCheckout.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
 
 /**

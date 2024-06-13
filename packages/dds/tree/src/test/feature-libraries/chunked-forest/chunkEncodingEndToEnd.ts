@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
-	ChangesetLocalId,
-	IEditableForest,
+	type ChangesetLocalId,
+	type IEditableForest,
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
@@ -26,12 +26,12 @@ import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDec
 // eslint-disable-next-line import/no-internal-modules
 import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	Context,
+	type Context,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
-	FlexTreeSchema,
+	type FlexTreeSchema,
 	ForestSummarizer,
-	ModularChangeset,
+	type ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	defaultSchemaPolicy,

@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangeAtomId, DeltaDetachedNodeId } from "../../../core/index.js";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import type { ChangeAtomId, DeltaDetachedNodeId } from "../../../core/index.js";
+import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";

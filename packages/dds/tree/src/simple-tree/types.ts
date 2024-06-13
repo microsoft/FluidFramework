@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ErasedType } from "@fluidframework/core-interfaces";
+import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, TreeNodeSchema, WithType, type } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchema, type WithType, type } from "./schemaTypes.js";
 import {
-	FlexTreeNode,
-	MapTreeNode,
+	type FlexTreeNode,
+	type MapTreeNode,
 	isFlexTreeNode,
 	markEager,
 } from "../feature-libraries/index.js";

@@ -7,14 +7,14 @@
 import { DataObject } from '@fluidframework/aqueduct/internal';
 import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ImplicitFieldSchema } from '@fluidframework/tree';
+import type { ImplicitFieldSchema } from '@fluidframework/tree';
 import * as React_2 from 'react';
-import { SchemaIncompatible } from '@fluidframework/tree';
+import type { SchemaCompatibilityStatus } from '@fluidframework/tree';
 import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-import { TreeConfiguration } from '@fluidframework/tree';
-import { TreeFieldFromImplicitField } from '@fluidframework/tree';
+import type { TreeConfiguration } from '@fluidframework/tree';
+import type { TreeFieldFromImplicitField } from '@fluidframework/tree';
 import { TreeNode } from '@fluidframework/tree';
-import { TreeView } from '@fluidframework/tree';
+import type { TreeView } from '@fluidframework/tree';
 
 // @public
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {
@@ -30,7 +30,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 
 // @public
 export interface SchemaIncompatibleProps {
-    readonly error: SchemaIncompatible;
+    readonly compatibility: SchemaCompatibilityStatus;
     readonly upgradeSchema: () => void;
 }
 

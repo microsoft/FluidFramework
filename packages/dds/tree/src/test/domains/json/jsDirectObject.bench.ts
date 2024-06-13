@@ -8,10 +8,10 @@ import { strict as assert } from "assert";
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
 import { averageValues, sumDirect } from "./benchmarks.js";
-import { Canada, generateCanada } from "./canada.js";
+import { type Canada, generateCanada } from "./canada.js";
 import { clone } from "./jsObjectUtil.js";
-import { Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
-import { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { type Twitter, generateTwitterJsonByByteSize } from "./twitter.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 /**
  * Performance test suite that measures a variety of access patterns using the direct JS objects to compare its performance when using ITreeCursor.

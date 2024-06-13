@@ -11,11 +11,11 @@
 import { ValueSchema } from "../../core/index.js";
 import {
 	FieldKinds,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries/index.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 const builder = new SchemaBuilderInternal({

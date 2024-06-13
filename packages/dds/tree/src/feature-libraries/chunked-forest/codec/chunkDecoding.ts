@@ -6,16 +6,16 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
-import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
-import { TreeChunk } from "../chunk.js";
+import type { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
 
 import {
-	ChunkDecoder,
-	StreamCursor,
+	type ChunkDecoder,
+	type StreamCursor,
 	getChecked,
 	readStream,
 	readStreamBoolean,
@@ -29,16 +29,16 @@ import {
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
 import {
-	EncodedAnyShape,
-	EncodedChunkShape,
-	EncodedFieldBatch,
-	EncodedInlineArray,
-	EncodedNestedArray,
-	EncodedTreeShape,
-	EncodedValueShape,
+	type EncodedAnyShape,
+	type EncodedChunkShape,
+	type EncodedFieldBatch,
+	type EncodedInlineArray,
+	type EncodedNestedArray,
+	type EncodedTreeShape,
+	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
-import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 
 /**
  * Decode `chunk` into a TreeChunk.

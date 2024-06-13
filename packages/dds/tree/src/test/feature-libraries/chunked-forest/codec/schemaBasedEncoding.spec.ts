@@ -5,20 +5,20 @@
 
 import { strict as assert, fail } from "assert";
 
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
+import type { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
 import { leaf } from "../../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	FieldBatchEncodingContext,
+	type FieldBatchEncodingContext,
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	AnyShape,
 	EncoderCache,
-	FieldEncoder,
-	NodeEncoder,
+	type FieldEncoder,
+	type NodeEncoder,
 	anyFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
@@ -40,7 +40,7 @@ import {
 	defaultSchemaPolicy,
 	intoStoredSchema,
 } from "../../../../feature-libraries/index.js";
-import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import {

@@ -14,21 +14,28 @@ import {
 	MockNodeKeyManager,
 	SchemaBuilderBase,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { UpdateType } from "../../shared-tree/schematizeTree.js";
 import {
-	SchematizeError,
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeConfiguration,
+	type ImplicitFieldSchema,
+} from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
+import {
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	insert,
+	validateUsageError,
+} from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
+const configGeneralized2 = new TreeConfiguration([schema.number, schema.boolean], () => false);
 const flexConfig = toFlexConfig(config, new MockNodeKeyManager());
 const flexConfigGeneralized = toFlexConfig(configGeneralized, new MockNodeKeyManager());
 
@@ -50,28 +57,36 @@ describe("SchematizingSimpleTreeView", () => {
 		const checkout = checkoutWithContent(emptyContent);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert(error.canInitialize === true);
-		assert(error.canUpgrade === true);
-		assert(error.updateType === UpdateType.Initialize);
+		assert.throws(() => view.root, validateUsageError(/compatibility/));
+		const { compatibility } = view;
+		assert.equal(compatibility.canView, false);
+		assert.equal(compatibility.canUpgrade, false);
+		assert.equal(compatibility.canInitialize, true);
 
-		view.upgradeSchema();
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		view.initialize(5);
+
 		assert.equal(view.root, 5);
 	});
+
+	const getChangeData = <T extends ImplicitFieldSchema>(view: SchematizingSimpleTreeView<T>) => {
+		return view.compatibility.canView
+			? view.root
+			: `SchemaCompatibilityStatus canView: ${view.compatibility.canView} canUpgrade: ${view.compatibility.canUpgrade}`;
+	};
 
 	it("Open and close existing document", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
-		assert.equal(view.error, undefined);
+		assert.equal(view.compatibility.isEquivalent, true);
 		const root = view.root;
 		assert.equal(root, 5);
 		const log: [string, unknown][] = [];
-		const unsubscribe = view.events.on("rootChanged", () =>
-			log.push(["rootChanged", view.error ?? view.root]),
+		const unsubscribe = view.events.on("schemaChanged", () =>
+			log.push(["schemaChanged", getChangeData(view)]),
 		);
-		const unsubscribe2 = view.events.on("afterBatch", () =>
-			log.push(["afterBatch", view.root]),
+		const unsubscribe2 = view.events.on("rootChanged", () =>
+			log.push(["rootChanged", view.root]),
 		);
 
 		// Should be a no op since not in an error state;
@@ -92,41 +107,35 @@ describe("SchematizingSimpleTreeView", () => {
 	it("Modify root", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
-		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
-		view.events.on("afterBatch", () => log.push(["afterBatch", view.root]));
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
 		view.root = 6;
 
-		assert.deepEqual(log, [
-			["rootChanged", 6],
-			["afterBatch", 6],
-		]);
+		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
-	it("Schema becomes incompatible then comparable", () => {
+	// TODO: AB#8121: When adding support for additional optional fields, we may want a variant of this test which does the analogous flow using
+	// an intermediate state where canView is true but canUpgrade is false.
+	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithContent(flexConfig);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
-		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number, schema.string])));
 
-		// typecast is needed here to remove narrowing from previous assert.
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert.deepEqual(log, [["rootChanged", error]]);
+		assert.deepEqual(log, [
+			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
+		]);
 		log.length = 0;
-		assert(error.canInitialize === false);
-		assert(error.canUpgrade === false);
-		assert(error.updateType === UpdateType.Incompatible);
-		assert.throws(
-			() => view.root,
-			(e) => e instanceof UsageError,
-		);
+		assert.equal(view.compatibility.isEquivalent, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.canView, false);
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -135,7 +144,11 @@ describe("SchematizingSimpleTreeView", () => {
 
 		// Modify schema to be compatible again
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
-		assert.deepEqual(log, [["rootChanged", 5]]);
+		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.canUpgrade, true);
+		assert.equal(view.compatibility.canView, true);
+
+		assert.deepEqual(log, [["schemaChanged", 5]]);
 		assert.equal(view.root, 5);
 		view.dispose();
 	});
@@ -148,13 +161,11 @@ describe("SchematizingSimpleTreeView", () => {
 			new MockNodeKeyManager(),
 		);
 		const log: [string, unknown][] = [];
-		view.events.on("rootChanged", () => log.push(["rootChanged", view.error ?? view.root]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
 
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert(error.canInitialize === false);
-		assert(error.canUpgrade === true);
-		assert(error.updateType === UpdateType.SchemaCompatible);
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, true);
+		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,
@@ -164,19 +175,39 @@ describe("SchematizingSimpleTreeView", () => {
 
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
-		assert.equal(view.error, undefined);
+		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.root, 5);
+	});
+
+	it("Attempt to open document using view schema that is incompatible due to being too strict compared to the stored schema", () => {
+		const checkout = checkoutWithContent(flexConfigGeneralized);
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.isEquivalent, false);
+		assert.throws(
+			() => view.root,
+			(e) => e instanceof UsageError,
+		);
+
+		assert.throws(
+			() => view.upgradeSchema(),
+			(e) => e instanceof UsageError,
+		);
 	});
 
 	it("Open incompatible document", () => {
 		const checkout = checkoutWithContent(flexConfigGeneralized);
-		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			configGeneralized2,
+			new MockNodeKeyManager(),
+		);
 
-		const error: SchematizeError | undefined = view.error;
-		assert(error instanceof SchematizeError);
-		assert(error.canInitialize === false);
-		assert(error.canUpgrade === false);
-		assert(error.updateType === UpdateType.Incompatible);
+		assert.equal(view.compatibility.canView, false);
+		assert.equal(view.compatibility.canUpgrade, false);
+		assert.equal(view.compatibility.isEquivalent, false);
 		assert.throws(
 			() => view.root,
 			(e) => e instanceof UsageError,
