@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { CompatibilityMode } from '@fluidframework/fluid-static';
+import { CompatibilityMode } from '@fluidframework/fluid-static';
 import type { ContainerSchema } from '@fluidframework/fluid-static';
 import type { IFluidContainer } from '@fluidframework/fluid-static';
 import type { IMember } from '@fluidframework/fluid-static';
