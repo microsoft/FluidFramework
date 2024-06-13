@@ -53,7 +53,6 @@ import {
 import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-// eslint-disable-next-line import/no-internal-modules
 import { SummaryType } from "@fluidframework/driver-definitions";
 
 const options = {
