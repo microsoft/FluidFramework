@@ -166,7 +166,9 @@ summary: "An open-source client technology stack that enables real-time collabor
                     // Doing this step before attaching is also a good idea as it ensures other clients will never see the
                     // tree in an uninitialized state.
                     view.initialize(new Dice({ value: 1 }));
+                    // Get the root node of the view, which contains the tree's data
                     const dice = view.root;
+                    // Attaching the container gives it a backing file and makes it visible to other clients.
                     const id = await container.attach();
                     renderDiceRoller(dice, root);
                     return id;
