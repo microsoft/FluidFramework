@@ -78,7 +78,7 @@ module.exports = {
 				 */
 				"@typescript-eslint/consistent-type-exports": [
 					"error",
-					{ fixMixedExportsWithInlineTypeSpecifier: true },
+					{ fixMixedExportsWithInlineTypeSpecifier: false },
 				],
 
 				/**
