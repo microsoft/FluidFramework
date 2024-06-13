@@ -77,3 +77,4 @@ export {
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
+export { type IMeasuredCodeResult, TelemetryEventBatcher } from "./telemetryEventBatcher.js";
