@@ -480,7 +480,8 @@ module.exports = {
 		},
 		// Requirements applied to all `public` packages.
 		publicPackageRequirements: {
-			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			// The following scripts combined with npm-package-exports-apis-linted policy are all currently required
+			// to ensure api-extractor is run correctly in local builds and pipelines.
 			requiredScripts: [
 				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
 				// {
@@ -494,10 +495,6 @@ module.exports = {
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
-				},
-				{
-					name: "check:release-tags",
-					body: "api-extractor run --local --config ./api-extractor-lint.json",
 				},
 			],
 			// All of our public packages should be using api-extractor

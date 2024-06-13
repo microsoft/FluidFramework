@@ -55,7 +55,6 @@
 		"check:exports:esm:public": "echo AB#8288 skip api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:prettier",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
