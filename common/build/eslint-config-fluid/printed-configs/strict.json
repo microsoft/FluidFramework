@@ -107,7 +107,7 @@
         "@typescript-eslint/consistent-type-exports": [
             "error",
             {
-                "fixMixedExportsWithInlineTypeSpecifier": false
+                "fixMixedExportsWithInlineTypeSpecifier": true
             }
         ],
         "@typescript-eslint/consistent-type-imports": [
@@ -239,6 +239,9 @@
             "error"
         ],
         "@typescript-eslint/no-implied-eval": [
+            "error"
+        ],
+        "@typescript-eslint/no-import-type-side-effects": [
             "error"
         ],
         "@typescript-eslint/no-inferrable-types": [
