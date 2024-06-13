@@ -40,9 +40,11 @@ import {
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
+	type TelemetryEventBatcher,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { ITelemetryProperties } from "./TelemetryProperties.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -63,6 +65,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 	private readonly opProcessingHelper: SampledTelemetryHelper;
 	private readonly callbacksHelper: SampledTelemetryHelper;
+	private readonly telemetryEventBatcher: TelemetryEventBatcher<keyof ITelemetryProperties>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -534,6 +537,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			},
 			local ? "local" : "remote",
 		);
+
+		this.telemetryEventBatcher.measure(() => {
+			this.processCore(message, local, localOpMetadata);
+		});
 
 		this.emitInternal("op", message, local, this);
 	}
