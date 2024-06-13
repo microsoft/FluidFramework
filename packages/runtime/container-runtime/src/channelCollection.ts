@@ -14,9 +14,11 @@ import {
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	buildSnapshotTree,
 	getSnapshotTree,
@@ -41,11 +43,13 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
 	IInboundSignalMessage,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,
 	SummaryTreeBuilder,
+	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	create404Response,
@@ -88,12 +92,7 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import {
-	GCNodeType,
-	detectOutboundRoutesViaDDSKey,
-	IGCNodeUpdatedProps,
-	urlToGCNodePath,
-} from "./gc/index.js";
+import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
@@ -188,8 +187,8 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		uploadBlob: async (...args) => {
 			return context.uploadBlob(...args);
 		},
-		addedGCOutboundReference: (...args) => {
-			return context.addedGCOutboundReference?.(...args);
+		addedGCOutboundRoute: (...args) => {
+			return context.addedGCOutboundRoute(...args);
 		},
 		getCreateChildSummarizerNodeFn: (...args) => {
 			return context.getCreateChildSummarizerNodeFn?.(...args);
@@ -245,6 +244,13 @@ export function wrapContextForInnerChannel(
 }
 
 /**
+ * Returns the type of the given local data store from its package path.
+ */
+export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext) {
+	return localDataStore.packagePath[localDataStore.packagePath.length - 1];
+}
+
+/**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
@@ -268,12 +274,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		readonly referencedDataStoreCount: number;
 	};
 
-	// Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
-	// root data stores that are added.
-	private dataStoresSinceLastGC: string[] = [];
-	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
-	// the container runtime to other nodes.
-	private readonly containerRuntimeHandle: IFluidHandleInternal;
 	private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<
 		string,
 		Promise<AliasResult>
@@ -293,11 +293,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	) {
 		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.contexts = new DataStoreContexts(baseLogger);
-		this.containerRuntimeHandle = new FluidObjectHandle(
-			this.parentContext,
-			"/",
-			this.parentContext.IFluidHandleContext,
-		);
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
 			new LazyPromise(async () => provideEntryPoint(this)),
 			"",
@@ -401,16 +396,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	private processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
-		this.dataStoresSinceLastGC.push(attachMessage.id);
-
 		// We need to process the GC Data for both local and remote attach messages
 		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-			this.parentContext.addedGCOutboundReference?.(
-				{ absolutePath: fromPath },
-				{ absolutePath: toPath },
-			);
+			this.parentContext.addedGCOutboundRoute(fromPath, toPath);
 		});
 
 		// Only log once per container to avoid noise/cost.
@@ -531,12 +521,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			return false;
 		}
 
-		const handle = new FluidObjectHandle(
-			context,
-			internalId,
-			this.parentContext.IFluidHandleContext,
-		);
-		this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
+		this.parentContext.addedGCOutboundRoute("/", `/${internalId}`);
 
 		this.aliasMap.set(alias, context.id);
 		this.aliasedDataStores.add(context.id);
@@ -549,9 +534,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/** Package up the context's attach summary etc into an IAttachMessage */
-	private generateAttachMessage(localContext: IFluidDataStoreContextInternal): IAttachMessage {
-		const { attachSummary } = localContext.getAttachData(/* includeGCData: */ true);
-		const type = localContext.packagePath[localContext.packagePath.length - 1];
+	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
+		// Get the attach summary.
+		const attachSummary = localContext.getAttachSummary();
+
+		// Get the GC data and add it to the attach summary.
+		const attachGCData = localContext.getAttachGCData();
+		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(attachGCData));
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
@@ -559,7 +548,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return {
 			id: localContext.id,
 			snapshot,
-			type,
+			type: getLocalDataStoreType(localContext),
 		} satisfies IAttachMessage;
 	}
 
@@ -816,7 +805,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
-		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		switch (message.type) {
 			case ContainerMessageType.Attach:
@@ -836,19 +824,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 				this.processChannelOp(envelope.address, transformed, local, localMessageMetadata);
 
-				// By default, we use the new behavior of detecting outbound routes here.
-				// If this setting is true, then DataStoreContext would be notifying GC instead.
-				if (
-					this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true &&
-					addedOutboundReference !== undefined
-				) {
-					// Notify GC of any outbound references that were added by this op.
-					detectOutboundReferences(
-						envelope.address,
-						transformed.contents,
-						addedOutboundReference,
-					);
-				}
+				// Notify GC of any outbound references that were added by this op.
+				detectOutboundReferences(
+					envelope.address,
+					transformed.contents,
+					(fromPath: string, toPath: string) =>
+						this.parentContext.addedGCOutboundRoute(fromPath, toPath),
+				);
 				break;
 			}
 			default:
@@ -989,9 +971,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				: dataStoreNodePath;
 
 		// Log the package details asynchronously since getInitialSnapshotDetails is async
-		const recentelyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
-		if (recentelyDeletedContext !== undefined) {
-			recentelyDeletedContext
+		const recentlyDeletedContext = this.contexts.getRecentlyDeletedContext(id);
+		if (recentlyDeletedContext !== undefined) {
+			recentlyDeletedContext
 				.getInitialSnapshotDetails()
 				.then((details) => {
 					return details.pkg.join("/");
@@ -1157,10 +1139,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				.map(([key, value]) => {
 					let dataStoreSummary: ISummarizeResult;
 					if (value.isLoaded) {
-						dataStoreSummary = value.getAttachData(
-							/* includeGCCData: */ false,
-							telemetryContext,
-						).attachSummary;
+						dataStoreSummary = value.getAttachSummary(telemetryContext);
 					} else {
 						// If this data store is not yet loaded, then there should be no changes in the snapshot from
 						// which it was created as it is detached container. So just use the previous snapshot.
@@ -1180,25 +1159,33 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
-	 * Before GC runs, called by the garbage collector to update any pending GC state.
-	 * The garbage collector needs to know all outbound references that are added. Since root data stores are not
-	 * explicitly marked as referenced, notify GC of new root data stores that were added since the last GC run.
+	 * Gets the GC data. Used when attaching or serializing a detached container.
 	 */
-	public async updateStateBeforeGC(): Promise<void> {
-		for (const id of this.dataStoresSinceLastGC) {
-			const context = this.contexts.get(id);
-			assert(context !== undefined, 0x2b6 /* Missing data store context */);
-			if (await context.isRoot()) {
-				// A root data store is basically a reference from the container runtime to the data store.
-				const handle = new FluidObjectHandle(
-					context,
-					id,
-					this.parentContext.IFluidHandleContext,
-				);
-				this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
-			}
-		}
-		this.dataStoresSinceLastGC = [];
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		const builder = new GCDataBuilder();
+		// Attaching graph of some stores can cause other stores to get bound too.
+		// So keep taking summary until no new stores get bound.
+		let notBoundContextsLength: number;
+		do {
+			notBoundContextsLength = this.contexts.notBoundLength();
+			// Iterate over each data store and ask for its GC data.
+			Array.from(this.contexts)
+				.filter(
+					([key, _]) =>
+						// Take GC data of bounded data stores only.
+						!this.contexts.isNotBound(key),
+				)
+				.map(([key, value]) => {
+					const contextGCData = value.getAttachGCData(telemetryContext);
+					// Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
+					// This also gradually builds the id of each node to be a path from the root.
+					builder.prefixAndAddNodes(key, contextGCData.gcNodes);
+				});
+		} while (notBoundContextsLength !== this.contexts.notBoundLength());
+
+		// Get the outbound routes (aliased data stores) and add a GC node for this channel.
+		builder.addNode("/", Array.from(this.aliasedDataStores));
+		return builder.getGCData();
 	}
 
 	/**

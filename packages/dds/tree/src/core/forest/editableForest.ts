@@ -19,6 +19,7 @@ import {
 } from "../tree/index.js";
 
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Editing APIs.
@@ -49,10 +50,11 @@ export function initializeForest(
 	forest: IEditableForest,
 	content: readonly ITreeCursorSynchronous[],
 	revisionTagCodec: RevisionTagCodec,
+	idCompressor: IIdCompressor,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec));
+	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec, idCompressor));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

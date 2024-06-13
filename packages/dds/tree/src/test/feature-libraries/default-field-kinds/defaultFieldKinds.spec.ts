@@ -30,6 +30,7 @@ import {
 	tagChangeInline,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -200,13 +201,11 @@ describe("defaultFieldKinds", () => {
 		});
 
 		it("can be rebased", () => {
-			const childRebaser = () => assert.fail("Should not be called");
-
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
 					change2.change,
 					change1WithChildChange,
-					childRebaser,
+					TestNodeId.rebaseChild,
 					fakeIdAllocator,
 					failCrossFieldManager,
 					rebaseRevisionMetadataFromInfo([], undefined, []),

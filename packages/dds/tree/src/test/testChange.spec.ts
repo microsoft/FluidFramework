@@ -21,7 +21,7 @@ import { brand } from "../util/index.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
-import { mintRevisionTag } from "./utils.js";
+import { mintRevisionTag, testIdCompressor } from "./utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 describe("TestChange", () => {
@@ -96,6 +96,7 @@ describe("TestChange", () => {
 		const context: ChangeEncodingContext = {
 			originatorId: "session1" as SessionId,
 			revision: undefined,
+			idCompressor: testIdCompressor,
 		};
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty, context), context));

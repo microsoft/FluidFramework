@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IResolvedUrl,
@@ -22,6 +21,7 @@ import {
 	ISnapshotTree,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
@@ -220,10 +220,15 @@ describe("serializedStateManager", () => {
 			() => false,
 		);
 		// equivalent to attach
-		serializedStateManager.setInitialSnapshot({
-			baseSnapshot: snapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
-		});
+		serializedStateManager.setInitialSnapshot(
+			{
+				baseSnapshot: snapshot,
+				snapshotBlobs: {
+					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+				},
+			},
+			false,
+		);
 		await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -515,7 +520,6 @@ describe("serializedStateManager", () => {
 				eventEmitter,
 				isDirtyF,
 			);
-
 			const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
 			const lastProcessedOpSequenceNumber = 40;
 			let seq = firstProcessedOpSequenceNumber;
@@ -816,7 +820,6 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					() => isDirty,
 				);
-
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -868,7 +871,6 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 				);
-
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
