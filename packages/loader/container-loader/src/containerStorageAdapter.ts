@@ -93,6 +93,9 @@ export class ContainerStorageAdapter
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
 		this._summarizeProtocolTree = shouldSummarizeProtocolTree;
+		if (this._summarizeProtocolTree === true) {
+			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
+		}
 	}
 
 	disposed: boolean = false;
@@ -123,8 +126,17 @@ export class ContainerStorageAdapter
 			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
 			// based on the response received from the service after connection is established.
 			() => {
-				this._summarizeProtocolTree =
+				const latestShouldSummarizeProtocolTree =
 					this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false;
+				if (this._summarizeProtocolTree !== latestShouldSummarizeProtocolTree) {
+					// log everytime the summarization preference changes
+					this.logger.sendTelemetryEvent({
+						eventName: "isSummarizeProtocolTreeEnabled",
+						value: latestShouldSummarizeProtocolTree,
+					});
+				}
+				this._summarizeProtocolTree = latestShouldSummarizeProtocolTree;
+
 				return this._summarizeProtocolTree;
 			},
 		);
