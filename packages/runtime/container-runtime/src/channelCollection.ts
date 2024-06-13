@@ -1156,13 +1156,39 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
+	/**
+	 * Helper method for preparing to summarize this channel.
+	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 */
+	private async visitContextsDuringSummary(
+		visitor: (contextId: string, context: FluidDataStoreContext) => Promise<void>,
+	): Promise<void> {
+		for (const [contextId, context] of this.contexts) {
+			// Summarizer client and hence GC works only with clients with no local changes. A data store in
+			// attaching state indicates an op was sent to attach a local data store, and the the attach op
+			// had not yet round tripped back to the client.
+			// Formerly assert 0x589
+			if (context.attachState === AttachState.Attaching) {
+				const error = DataProcessingError.create(
+					"Local data store detected in attaching state",
+					"summarize/getGCData",
+				);
+				throw error;
+			}
+
+			if (context.attachState === AttachState.Attached) {
+				await visitor(contextId, context);
+			}
+		}
+	}
+
 	public async summarize(
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		const summaryBuilder = new SummaryTreeBuilder();
-		await this.visitLocalBoundContextsDuringSummary(
+		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {
 				const contextSummary = await context.summarize(
 					fullTree,
@@ -1190,7 +1216,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
 		const builder = new GCDataBuilder();
-		await this.visitLocalBoundContextsDuringSummary(
+		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {
 				const contextGCData = await context.getGCData(fullGC);
 				// Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
@@ -1202,32 +1228,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Get the outbound routes and add a GC node for this channel.
 		builder.addNode("/", await this.getOutboundRoutes());
 		return builder.getGCData();
-	}
-
-	/**
-	 * Helper method for preparing to summarize this channel.
-	 * Runs the callback for each bound context to incorporate its data however the caller specifies
-	 */
-	private async visitLocalBoundContextsDuringSummary(
-		visitor: (contextId: string, context: FluidDataStoreContext) => Promise<void>,
-	): Promise<void> {
-		for (const [contextId, context] of this.contexts) {
-			// Summarizer client and hence GC works only with clients with no local changes. A data store in
-			// attaching state indicates an op was sent to attach a local data store, and the the attach op
-			// had not yet round tripped back to the client.
-			// Formerly assert 0x589
-			if (context.attachState === AttachState.Attaching) {
-				const error = DataProcessingError.create(
-					"Local data store detected in attaching state",
-					"summarize/getGCData",
-				);
-				throw error;
-			}
-
-			if (context.attachState === AttachState.Attached) {
-				await visitor(contextId, context);
-			}
-		}
 	}
 
 	/**

@@ -755,7 +755,7 @@ export class FluidDataStoreRuntime
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
 		const summaryBuilder = new SummaryTreeBuilder();
-		await this.visitLocalBoundContextsDuringSummary(
+		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
 				const contextSummary = await context.summarize(
 					fullTree,
@@ -785,7 +785,7 @@ export class FluidDataStoreRuntime
 	 */
 	public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
 		const builder = new GCDataBuilder();
-		await this.visitLocalBoundContextsDuringSummary(
+		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
 				const contextGCData = await context.getGCData(fullGC);
 				// Prefix the child's id to the ids of its GC nodes so they can be identified as belonging to the child.
@@ -795,23 +795,6 @@ export class FluidDataStoreRuntime
 		);
 		this.updateGCNodes(builder);
 		return builder.getGCData();
-	}
-
-	/**
-	 * Helper method for preparing to summarize this channel.
-	 * Runs the callback for each bound context to incorporate its data however the caller specifies
-	 */
-	private async visitLocalBoundContextsDuringSummary(
-		visitor: (contextId: string, context: IChannelContext) => Promise<void>,
-	): Promise<void> {
-		for (const [contextId, context] of this.contexts) {
-			const isAttached = this.isChannelAttached(contextId);
-			// We are not expecting local dds! Summary / GC data may not capture local state.
-			assert(isAttached, 0x17f /* "Not expecting detached channels during summarize" */);
-			if (isAttached) {
-				await visitor(contextId, context);
-			}
-		}
 	}
 
 	/**
@@ -887,6 +870,21 @@ export class FluidDataStoreRuntime
 		this.updateGCNodes(gcDataBuilder);
 
 		return gcDataBuilder.getGCData();
+	}
+
+	/**
+	 * Helper method for preparing to summarize this channel.
+	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 */
+	private async visitContextsDuringSummary(
+		visitor: (contextId: string, context: IChannelContext) => Promise<void>,
+	): Promise<void> {
+		for (const [contextId, context] of this.contexts) {
+			const isAttached = this.isChannelAttached(contextId);
+			// We are not expecting local dds! Summary / GC data may not capture local state.
+			assert(isAttached, 0x17f /* "Not expecting detached channels during summarize" */);
+			await visitor(contextId, context);
+		}
 	}
 
 	/**
