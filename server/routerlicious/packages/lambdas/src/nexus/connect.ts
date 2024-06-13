@@ -342,7 +342,6 @@ async function checkClusterDraining(
 				message: "Cluster is not available. Please retry later.",
 				internalErrorCode: InternalErrorCode.ClusterDraining,
 			});
-		console.log(`yunho: error: ${JSON.stringify(error)}`);
 		throw error;
 	}
 }
@@ -717,7 +716,6 @@ export async function connectDocument(
 			if (uncaughtError.internalErrorCode !== undefined) {
 				connectMetric.setProperty(CommonProperties.internalErrorCode, uncaughtError.internalErrorCode);
 			}
-			console.log(`yunho: uncaughtError: ${JSON.stringify(connectMetric)}`);
 			connectMetric.error(`Connect document failed`, uncaughtError);
 		} else {
 			connectMetric.success(`Connect document successful`);
