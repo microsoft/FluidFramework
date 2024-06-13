@@ -41,7 +41,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["check:format", "eslint", "good-fences", "depcruise", "check:release-tags"],
+			dependsOn: [
+				"check:format",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -293,15 +300,9 @@ module.exports = {
 			"npm-package-exports-apis-linted": [
 				// Rollout suppressions - enable only after tools are updated to support policy
 				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^azure/",
 				"^common/",
-				"^examples/",
-				"^experimental/",
-				"^packages/",
 
 				// Packages that violate the API linting rules
-				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
-				"^packages/service-clients/azure-client/",
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support

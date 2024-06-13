@@ -60,7 +60,7 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check . --formatter-enabled=true",
-		"check:exports": "concurrently npm:check:exports:bundle-release-tags npm:check:exports:cjs:legacy npm:check:exports:cjs:public npm:check:exports:esm:legacy npm:check:exports:esm:public",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
