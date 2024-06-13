@@ -15,6 +15,9 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
+// eslint-disable-next-line import/no-internal-modules
+import { reconnectSummarizerToBeElected } from "./gc/gcTestSummaryUtils.js";
+
 describeCompat(
 	"Summarizer closes instead of refreshing",
 	"NoCompat",
@@ -103,12 +106,9 @@ describeCompat(
 				// summary1
 				const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
 
-				await provider.ensureSynchronized();
-				// summary2
-				await summarizeNow(summarizer);
-				summarizer.close();
-				summarizingContainer.close();
-
+				// Create a second summarizer. Note that this is done before posting a summary because the server may
+				// delete this summary when a new one is posted.
+				// This summarizer will be used later to generate a summary and validate that it fetches the latest summary.
 				const { container: summarizingContainer2, summarizer: summarizer2 } =
 					await createSummarizer(
 						provider,
@@ -116,6 +116,14 @@ describeCompat(
 						summarizerContainerConfig,
 						summaryVersion1,
 					);
+
+				// summary2
+				await summarizeNow(summarizer);
+				summarizer.close();
+				summarizingContainer.close();
+
+				// Reconnect the second summarizer's container so that it is elected as the summarizer client.
+				await reconnectSummarizerToBeElected(summarizingContainer2);
 
 				// This tells the summarizer to process the latest summary ack
 				// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not

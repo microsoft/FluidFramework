@@ -7,12 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
@@ -28,27 +28,27 @@ import {
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-	ValueFieldEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import type { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxNodeUnion,
-	FlexibleNodeContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleNodeContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 } from "./flexTreeTypes.js";

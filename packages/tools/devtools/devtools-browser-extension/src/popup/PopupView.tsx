@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
-import { type BackgroundConnection } from "../BackgroundConnection.js";
+import type { BackgroundConnection } from "../BackgroundConnection.js";
 
 // The recipient of the sent message is running on the same machine, just in a different process.
 // We aren't waiting on network requests or anything, so 2s wait time is sufficient.

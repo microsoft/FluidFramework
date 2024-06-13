@@ -7,14 +7,15 @@
 import { DataObject } from '@fluidframework/aqueduct/internal';
 import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ImplicitFieldSchema } from '@fluidframework/tree';
+import type { ImplicitFieldSchema } from '@fluidframework/tree';
+import { InsertableTreeFieldFromImplicitField } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
-import { SchemaIncompatible } from '@fluidframework/tree';
+import type { SchemaCompatibilityStatus } from '@fluidframework/tree';
 import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-import { TreeConfiguration } from '@fluidframework/tree';
-import { TreeFieldFromImplicitField } from '@fluidframework/tree';
+import type { TreeFieldFromImplicitField } from '@fluidframework/tree';
 import { TreeNode } from '@fluidframework/tree';
-import { TreeView } from '@fluidframework/tree';
+import type { TreeView } from '@fluidframework/tree';
+import type { TreeViewConfiguration } from '@fluidframework/tree';
 
 // @public
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {
@@ -23,19 +24,19 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> exten
 
 // @public
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
-    readonly config: TreeConfiguration<TSchema>;
+    readonly config: TreeViewConfiguration<TSchema>;
     readonly key: string;
     readonly tree: TreeView<TSchema>;
 }
 
 // @public
 export interface SchemaIncompatibleProps {
-    readonly error: SchemaIncompatible;
+    readonly compatibility: SchemaCompatibilityStatus;
     readonly upgradeSchema: () => void;
 }
 
 // @public
-export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeConfiguration<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
+export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @public
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {

@@ -5,17 +5,21 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
-import { CursorLocationType, SchemaAndPolicy } from "../../../core/index.js";
-import { JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../../codec/index.js";
+import { CursorLocationType, type SchemaAndPolicy } from "../../../core/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
-import { FieldBatch } from "./fieldBatch.js";
+import type { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;

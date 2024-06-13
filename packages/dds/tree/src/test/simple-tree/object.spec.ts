@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 
 import {
-	ImplicitFieldSchema,
-	NodeKind,
+	type ImplicitFieldSchema,
+	type NodeKind,
 	SchemaFactory,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 
 import { hydrate, pretty } from "./utils.js";
@@ -311,6 +311,18 @@ const tcs: TestCase[] = [
 			foo: 42,
 			bar: "hello world",
 			baz: null,
+		},
+	},
+	// Case with omitted optional property
+	{
+		schema: (() => {
+			const schemaFactoryInner = new SchemaFactory("test-inner");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+			});
+		})(),
+		initialTree: {
+			// `foo` property omitted - property should be implicitly treated as `undefined`.
 		},
 	},
 	{

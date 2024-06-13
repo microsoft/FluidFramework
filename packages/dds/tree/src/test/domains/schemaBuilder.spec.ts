@@ -9,11 +9,11 @@ import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSequenceField,
-	FlexTreeTypedNode,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedNode,
 	schemaIsFieldNode,
 } from "../../feature-libraries/index.js";
-import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
+import type { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {

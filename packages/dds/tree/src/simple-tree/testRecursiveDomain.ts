@@ -16,7 +16,7 @@ import { SchemaFactory } from "./schemaFactory.js";
 // If we let TypeScript generate these includes, they use relative paths which break API extractor's rollup.
 // API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-import { type FieldKind, type NodeKind } from "./schemaTypes.js";
+import type { FieldKind, NodeKind } from "./schemaTypes.js";
 
 const builder = new SchemaFactory("Test Recursive Domain");
 

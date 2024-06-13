@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import { brand } from "../../../util/index.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { Change, inlineRevision } from "./optionalFieldUtils.js";

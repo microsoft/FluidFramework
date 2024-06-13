@@ -7,15 +7,19 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import/no-internal-modules
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "../../simple-tree/types.js";
+import { type InternalTreeNode, TreeNode, TreeNodeValid } from "../../simple-tree/types.js";
 import {
 	NodeKind,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	type,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../simple-tree/index.js";
-import { FlexTreeNode, FlexTreeNodeSchema, MapTreeNode } from "../../feature-libraries/index.js";
+import type {
+	FlexTreeNode,
+	FlexTreeNodeSchema,
+	MapTreeNode,
+} from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules

@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { ChangeAtomId } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import type { ChangeAtomId } from "../../../core/index.js";
+import type { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	areInputCellsEmpty,
 	splitMark,

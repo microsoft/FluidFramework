@@ -8,8 +8,16 @@ import { strict as assert, fail } from "assert";
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../../codec/index.js";
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../../../codec/index.js";
+import type {
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	Value,
+} from "../../../../core/index.js";
 import { typeboxValidator } from "../../../../external-utilities/index.js";
 import {
 	decode,
@@ -17,19 +25,19 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import {
-	BufferFormat,
+	type BufferFormat,
 	IdentifierToken,
 	handleShapesAndIdentifiers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncoderCache,
-	FieldEncoder,
-	FieldShaper,
+	type FieldEncoder,
+	type FieldShaper,
 	InlineArrayShape,
 	NestedArrayShape,
-	NodeEncoder,
-	TreeShaper,
+	type NodeEncoder,
+	type TreeShaper,
 	anyFieldEncoder,
 	anyNodeEncoder,
 	asNodesEncoder,
@@ -38,9 +46,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
-	EncodedChunkShape,
+	type EncodedChunkShape,
 	EncodedFieldBatch,
-	EncodedValueShape,
+	type EncodedValueShape,
 	validVersions,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
@@ -50,11 +58,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
 // eslint-disable-next-line import/no-internal-modules
-import { FieldBatch } from "../../../../feature-libraries/chunked-forest/index.js";
+import type { FieldBatch } from "../../../../feature-libraries/chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { cursorForJsonableTreeField } from "../../../../feature-libraries/index.js";
-import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";

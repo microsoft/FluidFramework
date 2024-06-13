@@ -5,56 +5,56 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	AnchorNode,
+	type AnchorNode,
 	EmptyKey,
-	FieldKey,
-	FieldUpPath,
-	MapTree,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type Value,
 } from "../../core/index.js";
 import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
-	FlexTreeContext,
+	type FlexTreeContext,
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeFieldNode,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeNodeEvents,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNode,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxField,
-	FlexTreeUnboxNodeUnion,
-	FlexibleFieldContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeFieldNode,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeNodeEvents,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNode,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxField,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleFieldContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 	isLazy,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
-import { FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { ComposableEventEmitter, Listenable, Off } from "../../events/index.js";
+import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
+import { ComposableEventEmitter, type Listenable, type Off } from "../../events/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes

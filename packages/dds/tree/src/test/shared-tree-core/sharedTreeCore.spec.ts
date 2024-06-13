@@ -6,11 +6,15 @@
 import { strict as assert } from "assert";
 
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	type ISummaryTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -26,24 +30,24 @@ import {
 
 import {
 	AllowedUpdateType,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
-	DefaultChangeset,
-	DefaultEditBuilder,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
 	FieldKinds,
 	FlexFieldSchema,
-	ModularChangeset,
+	type ModularChangeset,
 	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import {
+import type { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
+import type {
 	ChangeEnricherReadonlyCheckout,
 	EditManager,
 	ResubmitMachine,

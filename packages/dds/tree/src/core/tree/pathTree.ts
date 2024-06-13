@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Brand } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { Brand } from "../../util/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { DetachedField, keyAsDetachedField } from "./types.js";
+import { type DetachedField, keyAsDetachedField } from "./types.js";
 
 /**
  * Identical to {@link UpPath}, but a duplicate declaration is needed to make
