@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import {
+import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	TaggedChange,
-	type ChangeEncodingContext,
+	ChangeEncodingContext,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import type { ICodecFamily } from "../../codec/index.js";

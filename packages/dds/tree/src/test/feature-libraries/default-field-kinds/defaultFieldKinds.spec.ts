@@ -7,20 +7,20 @@ import { strict as assert, fail } from "assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
-	ValueFieldEditor,
+	type ValueFieldEditor,
 	valueChangeHandler,
 	valueFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { CrossFieldManager, FieldChangeHandler } from "../../../feature-libraries/index.js";
+import type { CrossFieldManager, FieldChangeHandler } from "../../../feature-libraries/index.js";
 import {
-	NodeId,
+	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
+import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {

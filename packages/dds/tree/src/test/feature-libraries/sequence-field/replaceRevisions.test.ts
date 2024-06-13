@@ -5,10 +5,10 @@
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
-import { ChangeAtomId, RevisionTag } from "../../../core/index.js";
+import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { mintRevisionTag } from "../../utils.js";
-import { Mutable, brand } from "../../../util/index.js";
+import { type Mutable, brand } from "../../../util/index.js";
 import { assertChangesetsEqual } from "./utils.js";
 import { MarkMaker as Mark } from "./testEdits.js";
 

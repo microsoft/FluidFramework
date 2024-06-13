@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ChangeAtomId,
 	ChangeAtomIdMap,
 	ChangesetLocalId,
@@ -11,8 +11,8 @@ import {
 	FieldKindIdentifier,
 	RevisionInfo,
 } from "../../core/index.js";
-import { Brand } from "../../util/index.js";
-import { TreeChunk } from "../chunked-forest/index.js";
+import type { Brand } from "../../util/index.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
 
 /**
  * @internal

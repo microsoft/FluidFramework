@@ -6,13 +6,13 @@
 import { strict as assert, fail } from "assert";
 
 import {
-	ChangeAtomId,
-	DeltaFieldChanges,
-	TaggedChange,
+	type ChangeAtomId,
+	type DeltaFieldChanges,
+	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
 } from "../../../core/index.js";
-import {
+import type {
 	CrossFieldManager,
 	NodeId,
 	RelevantRemovedRootsFromChild,
@@ -20,7 +20,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeHandler,
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -953,6 +953,30 @@ describe("optionalField", () => {
 			const change = Change.reserve("self", brand(0));
 			const actual = optionalChangeHandler.isEmpty(change);
 			assert.equal(actual, false);
+		});
+	});
+
+	describe("getNestedChanges", () => {
+		it("is empty for an empty change", () => {
+			const change = Change.empty();
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			assert.deepEqual(actual, []);
+		});
+		it("includes changes to the node in the field", () => {
+			const change: OptionalChangeset = Change.child(nodeId1);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			assert.deepEqual(actual, [[nodeId1, 0]]);
+		});
+		it("includes changes to removed nodes", () => {
+			const change: OptionalChangeset = Change.atOnce(
+				Change.childAt(brand(41), nodeId1),
+				Change.childAt(brand(42), nodeId2),
+			);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			assert.deepEqual(actual, [
+				[nodeId1, undefined],
+				[nodeId2, undefined],
+			]);
 		});
 	});
 });

@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
-import { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
-import { Commit, EditManager, SharedTreeBranch } from "../../../shared-tree-core/index.js";
+import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import type { Commit, EditManager, SharedTreeBranch } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";

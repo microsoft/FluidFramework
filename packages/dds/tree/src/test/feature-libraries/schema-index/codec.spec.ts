@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 // Allow importing from this specific file which is being tested:
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
+import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
 import { SchemaBuilder, jsonRoot, jsonSchema, leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
@@ -22,7 +22,7 @@ import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.j
 import { Format } from "../../../feature-libraries/schema-index/format.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { library } from "../../testTrees.js";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
+import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 

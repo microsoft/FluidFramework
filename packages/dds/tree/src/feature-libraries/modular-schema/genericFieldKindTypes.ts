@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId } from "./modularChangeTypes.js";
+import type { NodeId } from "./modularChangeTypes.js";
 
 /**
  * A field-kind-agnostic change to a single node within a field.
