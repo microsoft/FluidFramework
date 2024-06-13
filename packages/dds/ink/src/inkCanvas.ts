@@ -46,15 +46,21 @@ function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
 
 	context.beginPath();
 	// Move to the first point
-	context.moveTo(points[0].x, points[0].y);
+	// Non null asserting, this must exist because the length is not 0
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	context.moveTo(points[0]!.x, points[0]!.y);
 
 	// Draw the rest of the segments
 	for (let i = 1; i < points.length; i++) {
-		context.lineTo(points[i].x, points[i].y);
+		// Non null asserting, this must exist because the we are iterating thought the length of points
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		context.lineTo(points[i]!.x, points[i]!.y);
 	}
 
 	// And then close the shape
-	context.lineTo(points[0].x, points[0].y);
+	// Non null asserting, this must exist because the length is not 0
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	context.lineTo(points[0]!.x, points[0]!.y);
 	context.closePath();
 	context.fill();
 }
@@ -152,7 +158,8 @@ export class InkCanvas {
 		const strokes = this.model.getStrokes();
 
 		// Time of the first operation in stroke 0 is our starting time
-		const startTime = strokes[0].points[0].time;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const startTime = strokes[0]!.points[0]!.time;
 		for (const stroke of strokes) {
 			this.animateStroke(stroke, 0, startTime);
 		}
@@ -224,8 +231,12 @@ export class InkCanvas {
 		}
 
 		// Draw the requested stroke
-		const current = stroke.points[operationIndex];
-		const previous = stroke.points[Math.max(0, operationIndex - 1)];
+		// Non null asserting, this must exist because the operationIndex must be less than the length of stroke.points
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const current = stroke.points[operationIndex]!;
+		// Non null asserting, this must exist because its either the first index or operationIndex minus one which is less than the length of stroke.points
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const previous = stroke.points[Math.max(0, operationIndex - 1)]!;
 		const time = operationIndex === 0 ? current.time - startTime : current.time - previous.time;
 
 		setTimeout(() => {
@@ -246,7 +257,9 @@ export class InkCanvas {
 
 		const strokes = this.model.getStrokes();
 		for (const stroke of strokes) {
-			let previous = stroke.points[0];
+			// TODO Non null asserting, why does stroke.points always have atleast one entry?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let previous = stroke.points[0]!;
 			for (const current of stroke.points) {
 				// For the down, current === previous === stroke.operations[0]
 				this.drawStrokeSegment(stroke.pen, current, previous);
@@ -267,7 +280,10 @@ export class InkCanvas {
 		const dirtyStrokeId = operation.id;
 		const stroke = this.model.getStroke(dirtyStrokeId);
 		// If this is the only point in the stroke, we'll use it for both the start and end of the segment
-		const prevPoint = stroke.points[stroke.points.length - (stroke.points.length >= 2 ? 2 : 1)];
+		const prevPoint =
+			// Non null asserting, this must exist its within the length of stroke.points
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			stroke.points[stroke.points.length - (stroke.points.length >= 2 ? 2 : 1)]!;
 		this.drawStrokeSegment(stroke.pen, prevPoint, operation.point);
 	}
 }

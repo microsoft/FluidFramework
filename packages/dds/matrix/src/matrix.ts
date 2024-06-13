@@ -323,9 +323,12 @@ export class SharedMatrix<T = any>
 		//       yields an ~40% improvement in the case of a cache hit (node v12 x64)
 
 		// Map the logical (row, col) to associated storage handles.
-		const rowHandle = this.rowHandles.getHandle(row);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const rowHandle = this.rowHandles.getHandle(row)!;
 		if (isHandleValid(rowHandle)) {
-			const colHandle = this.colHandles.getHandle(col);
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const colHandle = this.colHandles.getHandle(col)!;
 			if (isHandleValid(colHandle)) {
 				return this.cells.getCell(rowHandle, colHandle);
 			}
@@ -597,7 +600,9 @@ export class SharedMatrix<T = any>
 		const rowCount = inserted.cachedLength;
 		for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
 			for (let col = 0; col < this.colCount; col++) {
-				const colHandle = this.colHandles.getHandle(col);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const colHandle = this.colHandles.getHandle(col)!;
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
 					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
@@ -621,7 +626,9 @@ export class SharedMatrix<T = any>
 		const colCount = inserted.cachedLength;
 		for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
 			for (let row = 0; row < this.rowCount; row++) {
-				const rowHandle = this.rowHandles.getHandle(row);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const rowHandle = this.rowHandles.getHandle(row)!;
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
 					this.sendSetCellOp(row, col, value, rowHandle, colHandle);

@@ -199,7 +199,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
 		for (const key of Object.keys(data)) {
-			const value = data[key];
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const value = data[key]!;
 			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;

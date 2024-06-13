@@ -63,7 +63,8 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in extension) {
 			const v = extension[key];
-			if (v === null) {
+			// TODO Non null asserting, why is this not null?
+			if (v === null || v === undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete base[key];
 			} else {
@@ -87,7 +88,8 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 	// eslint-disable-next-line guard-for-in, no-restricted-syntax
 	for (const key in extension) {
 		const v = extension[key];
-		if (v !== null) {
+		// TODO Non null asserting, why is this not null?
+		if (v !== null && v !== undefined) {
 			cloneMap[key] = v;
 		}
 	}
@@ -118,7 +120,9 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 		// eslint-disable-next-line no-restricted-syntax
 		for (const key in extension) {
 			if (base[key] === undefined) {
-				base[key] = extension[key];
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				base[key] = extension[key]!;
 			}
 		}
 	}

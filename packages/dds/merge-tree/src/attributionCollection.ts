@@ -404,18 +404,28 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
 					);
 				};
-				if (posBreakpoints[curIndex] > cumulativeSegPos) {
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				if (posBreakpoints[curIndex]! > cumulativeSegPos) {
 					curIndex--;
 				}
 
-				while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-					const nextOffset = Math.max(posBreakpoints[curIndex] - cumulativeSegPos, 0);
-					pushEntry(nextOffset, seqs[curIndex]);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				while (posBreakpoints[curIndex]! < cumulativeSegPos + segment.cachedLength) {
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const nextOffset = Math.max(posBreakpoints[curIndex]! - cumulativeSegPos, 0);
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pushEntry(nextOffset, seqs[curIndex]!);
 					curIndex++;
 				}
 
 				if (attribution.offsets.length === 0) {
-					pushEntry(0, seqs[curIndex - 1]);
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pushEntry(0, seqs[curIndex - 1]!);
 				}
 
 				assignToSegment(attribution, segment);

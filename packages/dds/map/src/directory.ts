@@ -853,7 +853,9 @@ export class SharedDirectory
 		const nodeList = absolutePath.split(posix.sep);
 		let start = 1;
 		while (start < nodeList.length) {
-			const subDirName = nodeList[start];
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const subDirName = nodeList[start]!;
 			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
 				return true;
 			}
@@ -1478,7 +1480,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			dirs: this._subdirectories,
 			next(): IteratorResult<[string, IDirectory]> {
 				if (this.index < subdirNames.length) {
-					const subdirName = subdirNames[this.index++];
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const subdirName = subdirNames[this.index++]!;
 					const subdir = this.dirs.get(subdirName);
 					assert(
 						subdir !== undefined,
@@ -2181,18 +2185,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): boolean {
 		if (this.pendingClearMessageIds.length > 0) {
 			if (local) {
+				// Remove all pendingMessageIds lower than first pendingClearMessageId.
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const lowestPendingClearMessageId = this.pendingClearMessageIds[0]!;
 				assert(
 					localOpMetadata !== undefined &&
 						isKeyEditLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						localOpMetadata.pendingMessageId < lowestPendingClearMessageId,
 					0x010 /* "Received out of order storage op when there is an unackd clear message" */,
 				);
-				// Remove all pendingMessageIds lower than first pendingClearMessageId.
-				const lowestPendingClearMessageId = this.pendingClearMessageIds[0];
 				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
 				if (pendingKeyMessageIdArray !== undefined) {
 					let index = 0;
-					while (pendingKeyMessageIdArray[index] < lowestPendingClearMessageId) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					while (pendingKeyMessageIdArray[index]! < lowestPendingClearMessageId) {
 						index += 1;
 					}
 					const newPendingKeyMessageId = pendingKeyMessageIdArray.splice(index);
