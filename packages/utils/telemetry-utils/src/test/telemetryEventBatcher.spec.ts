@@ -169,6 +169,7 @@ describe("TelemetryEventBatcher", () => {
 		assert.strictEqual(loggedEvent.maxpropertyTwo, 20);
 		assert.strictEqual(loggedEvent.maxpropertyThree, 110);
 
+		// More calls to validate that the average and max are "fresh", i.e. the previous data was cleared when the first telemetry event was generated
 		for (let i = 101; i <= threshold + 100; i++) {
 			eventBatcher.measure(() => ({
 				telemetryProperties: {
