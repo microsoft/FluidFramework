@@ -221,6 +221,7 @@ export function createOdspNetworkError(
 	switch (statusCode) {
 		// The location of file can move on Spo. If the redirect:manual header is added to network call
 		// it causes browser to not handle the redirects. Location header in such cases will contain the new location.
+		// Refer: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
 		case 301:
 		case 302:
 		case 303:

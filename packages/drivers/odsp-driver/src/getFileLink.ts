@@ -110,6 +110,7 @@ export async function getFileLink(
  * the redirection as the browser will retry with same auth token which will not work as we need app
  * to regenerate tokens for the new site domain. So when we will make the network calls below we will set
  * the redirect:manual header to manually handle these redirects.
+ * Refer: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
  * @param getToken - token fetcher to fetch the token.
  * @param odspUrlParts - parts of odsp resolved url.
  * @param logger - logger to send events.
