@@ -1076,10 +1076,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
-		// eslint-disable-next-line import/no-deprecated
 		return opList.length === 1 && opList[0] !== undefined
 			? opList[0]
-			: createGroupOp(...opList);
+			: // eslint-disable-next-line import/no-deprecated
+			  createGroupOp(...opList);
 	}
 
 	// eslint-disable-next-line import/no-deprecated
