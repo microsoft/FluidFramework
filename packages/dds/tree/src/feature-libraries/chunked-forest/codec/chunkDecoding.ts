@@ -52,11 +52,11 @@ export interface IdDecodingContext {
  */
 export function decode(
 	chunk: EncodedFieldBatch,
-	idCompressorContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
 ): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idCompressorContext),
+		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext),
 		chunk,
 		anyDecoder,
 	);
@@ -87,7 +87,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 export function readValue(
 	stream: StreamCursor,
 	shape: EncodedValueShape,
-	idCompressorContext: IdDecodingContext,
+	idDecodingContext: IdDecodingContext,
 ): Value {
 	if (shape === undefined) {
 		return readStreamBoolean(stream) ? readStreamValue(stream) : undefined;
@@ -106,12 +106,12 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				"identifier must be string or number.",
 			);
-			const idCompressor = idCompressorContext.idCompressor;
+			const idCompressor = idDecodingContext.idCompressor;
 			return typeof streamValue === "number"
 				? idCompressor.decompress(
 						idCompressor.normalizeToSessionSpace(
 							streamValue as OpSpaceCompressedId,
-							idCompressorContext.originatorId,
+							idDecodingContext.originatorId,
 						),
 				  )
 				: streamValue;
@@ -275,7 +275,7 @@ export class TreeDecoder implements ChunkDecoder {
 			this.type ?? readStreamIdentifier(stream, this.cache);
 		// TODO: Consider typechecking against stored schema in here somewhere.
 
-		const value = readValue(stream, this.shape.value, this.cache.idCompressorContext);
+		const value = readValue(stream, this.shape.value, this.cache.idDecodingContext);
 		const fields: Map<FieldKey, TreeChunk[]> = new Map();
 
 		// Helper to add fields, but with unneeded array chunks removed.

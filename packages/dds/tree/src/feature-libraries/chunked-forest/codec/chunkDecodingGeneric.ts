@@ -52,7 +52,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 	public constructor(
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
-		public readonly idCompressorContext: IdDecodingContext,
+		public readonly idDecodingContext: IdDecodingContext,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(
