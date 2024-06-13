@@ -73,6 +73,7 @@ stages:
     condition: succeededOrFailed()
     dependsOn:
     - ${{ each package in parameters.packages }}:
+      # This list of stages should be kept in sync with the way we generate their ids in tools/pipelines/templates/include-conditionally-run-stress-tests.yml
       - ${{ replace(replace(package.name, '@fluidframework/', ''), '@fluid-experimental/', 'experimental_') }}_stress_tests
     jobs:
     - job: upload_run_telemetry
