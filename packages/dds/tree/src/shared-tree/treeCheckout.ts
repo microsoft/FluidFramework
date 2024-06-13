@@ -5,7 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+	TelemetryEventBatcher,
+} from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
@@ -349,11 +353,11 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 }
 
 /**
- * Metadata derived from a reversion.
+ * Metrics derived from a revert operations.
  *
  * @see {@link TreeCheckout.revertRevertible}.
  */
-export interface ReversionMetadata {
+export interface RevertMetrics {
 	/**
 	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
 	 */
@@ -383,6 +387,18 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
 	>();
 
+	/**
+	 * Batched logger for revert telemetry.
+	 * @remarks Will only be defined if a logger was provided at construction.
+	 */
+	private readonly revertLogger: TelemetryEventBatcher<keyof RevertMetrics> | undefined;
+
+	/**
+	 * The threshold for logging revert telemetry event batches.
+	 * @see {@link @fluidframework/telemetry-utils#TelemetryEventBatcher.threshold}
+	 */
+	private static readonly telemetryBatchThreshold = 5;
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -403,6 +419,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
+		// Instantiate batched logger for revert telemetry if a base logger was provided.
+		this.revertLogger =
+			this.logger === undefined
+				? undefined
+				: new TelemetryEventBatcher(
+						{ eventName: "revert" },
+						this.logger,
+						TreeCheckout.telemetryBatchThreshold,
+				  );
+
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
@@ -480,7 +506,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										"Unable to revert a revertible that has been disposed.",
 									);
 								}
-								this.revertRevertible(revision, data.kind);
+								this.revertLogger?.measure(() => {
+									const metrics = this.revertRevertible(revision, data.kind);
+									return { telemetryProperties: metrics };
+								});
 								if (release) {
 									revertible.dispose();
 								}
@@ -626,7 +655,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): ReversionMetadata {
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		if (this.branch.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
