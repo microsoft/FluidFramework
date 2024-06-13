@@ -203,6 +203,7 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
+			originatorId: runtime.idCompressor.localSessionId,
 			idCompressor: runtime.idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(

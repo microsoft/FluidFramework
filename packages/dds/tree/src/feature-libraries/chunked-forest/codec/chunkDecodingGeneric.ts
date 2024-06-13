@@ -16,7 +16,7 @@ import {
 	readStream,
 } from "./chunkCodecUtilities.js";
 import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IdCompressorContext } from "./chunkDecoding.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
@@ -52,7 +52,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 	public constructor(
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
-		public readonly idCompressor: IIdCompressor,
+		public readonly idCompressorContext: IdCompressorContext,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(

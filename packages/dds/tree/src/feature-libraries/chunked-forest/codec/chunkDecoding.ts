@@ -38,15 +38,22 @@ import {
 	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
-import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 
+export interface IdCompressorContext {
+	idCompressor: IIdCompressor;
+	originatorId: SessionId;
+}
 /**
  * Decode `chunk` into a TreeChunk.
  */
-export function decode(chunk: EncodedFieldBatch, idCompressor: IIdCompressor): TreeChunk[] {
+export function decode(
+	chunk: EncodedFieldBatch,
+	idCompressorContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idCompressor),
+		new DecoderContext(chunk.identifiers, chunk.shapes, idCompressorContext),
 		chunk,
 		anyDecoder,
 	);
@@ -77,7 +84,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 export function readValue(
 	stream: StreamCursor,
 	shape: EncodedValueShape,
-	idCompressor: IIdCompressor,
+	idCompressorContext: IdCompressorContext,
 ): Value {
 	if (shape === undefined) {
 		return readStreamBoolean(stream) ? readStreamValue(stream) : undefined;
@@ -96,8 +103,14 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				"identifier must be string or number.",
 			);
+			const idCompressor = idCompressorContext.idCompressor;
 			return typeof streamValue === "number"
-				? idCompressor.decompress(streamValue as SessionSpaceCompressedId)
+				? idCompressor.decompress(
+						idCompressor.normalizeToSessionSpace(
+							streamValue as OpSpaceCompressedId,
+							idCompressorContext.originatorId,
+						),
+				  )
 				: streamValue;
 		} else {
 			// EncodedCounter case:
@@ -259,7 +272,7 @@ export class TreeDecoder implements ChunkDecoder {
 			this.type ?? readStreamIdentifier(stream, this.cache);
 		// TODO: Consider typechecking against stored schema in here somewhere.
 
-		const value = readValue(stream, this.shape.value, this.cache.idCompressor);
+		const value = readValue(stream, this.shape.value, this.cache.idCompressorContext);
 		const fields: Map<FieldKey, TreeChunk[]> = new Map();
 
 		// Helper to add fields, but with unneeded array chunks removed.
