@@ -500,8 +500,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 								}
 								this.revertRevertible(revision, data.kind);
 								if (release) {
-									this.disposeRevertible(revertible, revision);
-									onRevertibleDisposed?.(revertible);
+									revertible.dispose();
 								}
 							},
 							dispose: () => {
@@ -511,7 +510,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									);
 								}
 								this.disposeRevertible(revertible, revision);
-								this.disposeRevertibleRoots(revision);
 								onRevertibleDisposed?.(revertible);
 							},
 						};
@@ -666,15 +664,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
 		this.revertibles.delete(revertible);
-	}
-
-	private disposeRevertibleRoots(revision: RevisionTag): void {
-		const roots = this.removedRoots.getRoots(revision);
-		this.withCombinedVisitor((visitor) => {
-			for (const root of roots) {
-				visitor.destroy(this.removedRoots.toFieldKey(root), 1);
-			}
-		});
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {

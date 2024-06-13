@@ -1288,12 +1288,18 @@ describe("SharedTree", () => {
 				// dispose the revertible
 				undoStack[0].dispose();
 
+				// send edits to move the collab window up
+				root1.insertAt(0, ["y"]);
+				provider.processMessages();
+				root1.removeAt(0);
+				provider.processMessages();
+
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
 				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
 				assert.equal(repairCursor2.firstNode(), false);
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
@@ -1337,6 +1343,12 @@ describe("SharedTree", () => {
 				// dispose the revertible
 				undoStack[0].dispose();
 
+				// send edits to move the collab window up
+				root1.insertAt(0, ["y"]);
+				provider.processMessages();
+				root1.removeAt(0);
+				provider.processMessages();
+
 				// check that the repair data on the first tree is destroyed
 				const repairCursor2 = tree1.checkout.forest.allocateCursor();
 				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-4"));
@@ -1344,7 +1356,7 @@ describe("SharedTree", () => {
 				moveToDetachedField(tree1.checkout.forest, repairCursor2, brand("repair-5"));
 				assert.equal(repairCursor2.firstNode(), false);
 				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 0);
+				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
 
 				unsubscribe();
 			});
