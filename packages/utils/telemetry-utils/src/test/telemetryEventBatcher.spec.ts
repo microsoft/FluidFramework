@@ -55,7 +55,7 @@ describe("TelemetryEventBatcher", () => {
 		logger = new TestLogger();
 	});
 
-	it("only writes event after correct number of thresholds", () => {
+	it("only writes event after threshold for number of calls is reached", () => {
 		const threshold = 10;
 		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
 			{ eventName: "testEvent" },
