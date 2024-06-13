@@ -15,7 +15,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
@@ -362,15 +362,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					itWorks: _.string,
 				}) {}
 
-				const view = tree.schematize(
-					new TreeConfiguration(
-						RootNode,
-						() =>
-							new RootNode({
-								itWorks: "yes",
-							}),
-					),
-				);
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: RootNode }));
+				view.initialize(new RootNode({ itWorks: "yes" }));
 
 				// Ensure root node is correctly typed.
 				assert.equal(view.root.itWorks, "yes");
