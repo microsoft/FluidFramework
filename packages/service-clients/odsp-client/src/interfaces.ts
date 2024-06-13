@@ -118,7 +118,9 @@ export type IOdspAudience = IServiceAudience<OdspMember>;
  * @beta
  */
 export interface TokenResponse {
-	/** Token value */
+	/**
+	 * Token value
+	 */
 	token: string;
 
 	/**
