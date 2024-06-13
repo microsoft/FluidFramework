@@ -176,7 +176,7 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 3,
+                            "maxId": 5,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
@@ -217,7 +217,7 @@
                                                   "id": 0
                                                 }
                                               },
-                                              "cellId": 0
+                                              "cellId": 2
                                             }
                                           ]
                                         }
