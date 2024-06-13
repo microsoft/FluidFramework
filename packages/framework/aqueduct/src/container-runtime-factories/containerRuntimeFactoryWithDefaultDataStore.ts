@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
+import type {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
-import { type RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntries,
+import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
+import type {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
-import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
+import type { IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 

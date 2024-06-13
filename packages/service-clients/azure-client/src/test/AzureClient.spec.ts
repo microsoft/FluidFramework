@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type ConnectionMode } from "@fluidframework/driver-definitions";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -20,7 +20,7 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
-import { type AzureLocalConnectionConfig } from "../interfaces.js";
+import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(
 	props: {

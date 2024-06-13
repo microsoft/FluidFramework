@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import React from "react";
 
 /**

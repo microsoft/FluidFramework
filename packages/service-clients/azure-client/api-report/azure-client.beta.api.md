@@ -4,13 +4,13 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
+import type { CompatibilityMode } from '@fluidframework/fluid-static';
+import type { ContainerSchema } from '@fluidframework/fluid-static';
+import type { ICompressionStorageConfig } from '@fluidframework/driver-utils';
+import type { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import type { IFluidContainer } from '@fluidframework/fluid-static';
+import type { IMember } from '@fluidframework/fluid-static';
+import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/driver-definitions/internal';

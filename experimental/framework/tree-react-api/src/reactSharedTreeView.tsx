@@ -13,14 +13,14 @@ import {
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import {
-	type ITree,
-	type SchemaCompatibilityStatus,
+import type {
+	ITree,
+	SchemaCompatibilityStatus,
 	// eslint-disable-next-line import/no-deprecated
-	type TreeConfiguration,
-	type TreeFieldFromImplicitField,
-	type TreeView,
-	type ImplicitFieldSchema,
+	TreeConfiguration,
+	TreeFieldFromImplicitField,
+	TreeView,
+	ImplicitFieldSchema,
 } from "@fluidframework/tree";
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
