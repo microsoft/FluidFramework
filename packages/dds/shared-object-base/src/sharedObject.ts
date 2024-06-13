@@ -149,7 +149,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	private setUpTelemetryEventBatcher(): TelemetryEventBatcher<keyof ITelemetryProperties> {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
-			0x349 /* this.mc and/or this.logger has not been set */,
+			0x349a /* this.mc and/or this.logger has not been set */,
 		);
 
 		const telemetryEventBatcher = new TelemetryEventBatcher<keyof ITelemetryProperties>(
