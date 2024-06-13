@@ -158,14 +158,13 @@ describe("getFileLink", () => {
 			[
 				async (): Promise<MockResponse> =>
 					createResponse(
-						{},
+						{ Location: newSiteUrl },
 						{
 							error: {
-								"message": "locationMoved",
-								"@error.redirectLocation": newSiteUrl,
+								message: "locationMoved",
 							},
 						},
-						404,
+						308,
 					),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
 				async (): Promise<MockResponse> =>
@@ -201,25 +200,23 @@ describe("getFileLink", () => {
 			[
 				async (): Promise<MockResponse> =>
 					createResponse(
-						{},
+						{ Location: newSiteUrl },
 						{
 							error: {
-								"message": "locationMoved",
-								"@error.redirectLocation": newSiteUrl,
+								message: "locationMoved",
 							},
 						},
-						404,
+						302,
 					),
 				async (): Promise<MockResponse> =>
 					createResponse(
-						{},
+						{ Location: newSiteUrl },
 						{
 							error: {
-								"message": "locationMoved",
-								"@error.redirectLocation": newSiteUrl,
+								message: "locationMoved",
 							},
 						},
-						404,
+						307,
 					),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
 				async (): Promise<MockResponse> =>
@@ -241,6 +238,80 @@ describe("getFileLink", () => {
 			sharelink2,
 			"sharelink",
 			"File link should match url returned from sharing information from cache",
+		);
+	});
+
+	it("should handle location redirection max 5 times", async () => {
+		await assert.rejects(
+			mockFetchMultiple(async () => {
+				return getFileLink(
+					storageTokenFetcher,
+					{ siteUrl, driveId, itemId: "itemId10" },
+					logger.toTelemetryLogger(),
+				);
+			}, [
+				async (): Promise<MockResponse> =>
+					createResponse(
+						{ Location: newSiteUrl },
+						{
+							error: {
+								message: "locationMoved",
+							},
+						},
+						308,
+					),
+				async (): Promise<MockResponse> =>
+					createResponse(
+						{ Location: newSiteUrl },
+						{
+							error: {
+								message: "locationMoved",
+							},
+						},
+						308,
+					),
+				async (): Promise<MockResponse> =>
+					createResponse(
+						{ Location: newSiteUrl },
+						{
+							error: {
+								message: "locationMoved",
+							},
+						},
+						308,
+					),
+				async (): Promise<MockResponse> =>
+					createResponse(
+						{ Location: newSiteUrl },
+						{
+							error: {
+								message: "locationMoved",
+							},
+						},
+						308,
+					),
+				async (): Promise<MockResponse> =>
+					createResponse(
+						{ Location: newSiteUrl },
+						{
+							error: {
+								message: "locationMoved",
+							},
+						},
+						308,
+					),
+				async (): Promise<MockResponse> =>
+					createResponse(
+						{ Location: newSiteUrl },
+						{
+							error: {
+								message: "locationMoved",
+							},
+						},
+						308,
+					),
+			]),
+			"File link should reject when not found",
 		);
 	});
 });
