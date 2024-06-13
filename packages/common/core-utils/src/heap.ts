@@ -177,8 +177,10 @@ export class Heap<T> {
 	}
 
 	private swap(k: number, j: number): void {
+		// Non null assertig here since this affects perf if we assert
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const resultNodeJ = this.L[k]!;
+		// Non null assertig here since this affects perf if we assert
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const resultNodeK = (this.L[k] = this.L[j]!);
 		resultNodeK.position = k;
