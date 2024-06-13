@@ -47,6 +47,7 @@ import {
 	schematizeFlexTree,
 	treeTestFactory,
 } from "../utils.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -148,6 +149,26 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>,
 		) => Promise<void>;
 	}[] = [
+		{
+			name: "tree-with-identifier-field",
+			runScenario: async (takeSnapshot) => {
+				const provider = new TestTreeProviderLite(2, factory, true);
+				const tree1 = provider.trees[0];
+				const sf = new SchemaFactory("com.example");
+				class SchemaWithIdentifier extends sf.object("parent", {
+					identifier: sf.identifier,
+				}) {}
+
+				const view = tree1.viewWith(
+					new TreeViewConfiguration({ schema: SchemaWithIdentifier }),
+				);
+				view.initialize({});
+
+				provider.processMessages();
+
+				await takeSnapshot(provider.trees[0], "-final");
+			},
+		},
 		{
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
