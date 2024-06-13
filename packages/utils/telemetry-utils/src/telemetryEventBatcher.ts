@@ -29,6 +29,7 @@ interface IMeasuredCodeResult<TKey extends string> {
  * @typeparam TMetrics - The set of keys that should be logged.
  * E.g., `keyof Foo` for logging properties `bar` and `baz` from `type Foo = { bar: number, baz: number }`.
  *
+ * @sealed
  * @internal
  */
 export class TelemetryEventBatcher<TMetrics extends string> {
