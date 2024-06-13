@@ -23,7 +23,7 @@ import React from "react";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
-import { type TransformedAudienceHistoryData } from "./AudienceView.js";
+import type { TransformedAudienceHistoryData } from "./AudienceView.js";
 import { clientIdTooltipText } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
 
