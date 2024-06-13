@@ -40,7 +40,7 @@ import {
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
-	type TelemetryEventBatcher,
+	TelemetryEventBatcher,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -65,9 +65,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 	private readonly opProcessingHelper: SampledTelemetryHelper;
 	private readonly callbacksHelper: SampledTelemetryHelper;
-	private readonly telemetryEventBatcher:
-		| TelemetryEventBatcher<keyof ITelemetryProperties>
-		| undefined;
+	private readonly telemetryEventBatcher: TelemetryEventBatcher<keyof ITelemetryProperties>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -138,6 +136,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.mc = loggerToMonitoringContext(this.logger);
 
 		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+		this.telemetryEventBatcher = this.setUpTelemetryEventBatcher();
 	}
 
 	/**
@@ -145,6 +144,24 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	protected get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 		return toDeltaManagerInternal(this.runtime.deltaManager);
+	}
+
+	private setUpTelemetryEventBatcher(): TelemetryEventBatcher<keyof ITelemetryProperties> {
+		assert(
+			this.mc !== undefined && this.logger !== undefined,
+			0x349 /* this.mc and/or this.logger has not been set */,
+		);
+
+		const telemetryEventBatcher = new TelemetryEventBatcher<keyof ITelemetryProperties>(
+			{
+				eventName: "ddsOpProcessing",
+				category: "performance",
+			},
+			this.logger,
+			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
+		);
+
+		return telemetryEventBatcher;
 	}
 
 	/**
@@ -540,17 +557,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			local ? "local" : "remote",
 		);
 
-		if (this.telemetryEventBatcher !== undefined) {
-			this.telemetryEventBatcher.measure(() => {
-				this.processCore(message, local, localOpMetadata);
-				return {
-					telemetryProperties: {
-						sequenceDifference:
-							message.sequenceNumber - message.referenceSequenceNumber,
-					},
-				};
-			});
-		}
+		this.telemetryEventBatcher.measure(() => {
+			this.processCore(message, local, localOpMetadata);
+			return {
+				telemetryProperties: {
+					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+				},
+			};
+		});
 
 		this.emitInternal("op", message, local, this);
 	}
