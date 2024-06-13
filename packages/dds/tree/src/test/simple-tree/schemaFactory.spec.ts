@@ -14,7 +14,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeConfiguration, type TreeView } from "../../simple-tree/index.js";
+import {
+	treeNodeApi as Tree,
+	TreeViewConfiguration,
+	type TreeView,
+} from "../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
@@ -99,7 +103,7 @@ describe("schemaFactory", () => {
 	it("leaf", () => {
 		const schema = new SchemaFactory("com.example");
 
-		const config = new TreeConfiguration(schema.number, () => 5);
+		const config = new TreeViewConfiguration({ schema: schema.number });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
@@ -223,7 +227,7 @@ describe("schemaFactory", () => {
 				y: schema.number,
 			}) {}
 
-			const config = new TreeConfiguration(Point, () => new Point({ x: 1, y: 2 }));
+			const config = new TreeViewConfiguration({ schema: Point });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
@@ -262,14 +266,16 @@ describe("schemaFactory", () => {
 				}
 			}
 
-			const config = new TreeConfiguration(Point, () => new Point({ x: 1 }));
+			const config = new TreeViewConfiguration({ schema: Point });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const root = tree.schematize(config).root;
+			const view = tree.viewWith(config);
+			view.initialize(new Point({ x: 1 }));
+			const { root } = view;
 			assert.equal(root.x, 1);
 
 			const values: number[] = [];
@@ -413,20 +419,19 @@ describe("schemaFactory", () => {
 
 		class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-		const config = new TreeConfiguration(
-			Canvas,
-			() =>
-				new Canvas({
-					stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
-				}),
-		);
+		const config = new TreeViewConfiguration({ schema: Canvas });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.viewWith(config);
+		view.initialize(
+			new Canvas({
+				stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
+			}),
+		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
 		const item = stuff[0];
@@ -442,20 +447,19 @@ describe("schemaFactory", () => {
 				parts: builder.array(builder.number),
 			}) {}
 
-			const treeConfiguration = new TreeConfiguration(
-				Inventory,
-				() =>
-					new Inventory({
-						parts: [1, 2],
-					}),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = tree.viewWith(treeConfiguration);
+			view.initialize(
+				new Inventory({
+					parts: [1, 2],
+				}),
+			);
 		});
 
 		const treeFactory = new TreeFactory({});
@@ -488,15 +492,13 @@ describe("schemaFactory", () => {
 			class Parent extends factory.object("parent", { child: NamedList }) {}
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the list node:
-			const treeConfiguration = new TreeConfiguration(
-				Parent,
-				() => new Parent({ child: [5] }),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
 			const tree = treeFactory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = tree.viewWith(treeConfiguration);
+			view.initialize(new Parent({ child: [5] }));
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
@@ -546,15 +548,13 @@ describe("schemaFactory", () => {
 			class Parent extends factory.object("parent", { child: NamedMap }) {}
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
-			const treeConfiguration = new TreeConfiguration(
-				Parent,
-				() => new Parent({ child: new Map([["x", 5]]) }),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
 			const tree = treeFactory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = tree.viewWith(treeConfiguration);
+			view.initialize(new Parent({ child: new Map([["x", 5]]) }));
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
@@ -734,13 +734,14 @@ describe("schemaFactory", () => {
 			childType: (typeof objectTypes)[number],
 			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
-			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
+			const config = new TreeViewConfiguration({ schema: ComboRoot });
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(config);
+			const view = tree.viewWith(config);
+			view.initialize({ root: undefined });
 			const { parent, nodes } = createComboTree({
 				parentType,
 				childType,
