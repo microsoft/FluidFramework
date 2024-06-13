@@ -208,16 +208,13 @@ class App extends sf.object('App', {
 }) {}
 ```
 
-The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the second parameter returns an object that initializes the tree with an object that must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+The final step is to create a configuration object that will be used when a `SharedTree` object is created or loaded. See [Creation](#creation). The following is an example of doing this.
 
 ```typescript
-export const appTreeConfiguration = new TreeConfiguration(
-    App, // root node schema
-    () => ({
-        // initial tree
-        items: [],
-    })
-);
+export const appTreeConfiguration = new TreeViewConfiguration({
+    // root node schema
+    schema: App
+});
 ```
 
 #### Map schema
@@ -258,7 +255,7 @@ class Proposal = sf.object('Proposal', {
 
 ### Creation
 
-To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then apply the schema to it. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
+To create a `TreeView` object, create a container with an initial object of type `SharedTree` and then call `viewWith` with some schema. The code in this section continues the sticky note example. Start by creating a container schema with an initial object of type `SharedTree` and use it to create a container.
 
 ```typescript
 const containerSchema: ContainerSchema = {
@@ -270,10 +267,21 @@ const containerSchema: ContainerSchema = {
 const { container, services } = await client.createContainer(containerSchema);
 ```
 
-Apply the schema to the tree by passing the tree configuration object to the `ITree.schematize()` method.
+Use `ITree.viewWith` to create a `TreeView` based on your tree configuration.
+Tree views provide schema-dependent APIs for viewing and editing tree data.
 
 ```typescript
-const stickyNotesTreeView = container.initialObjects.appData.schematize(appTreeConfiguration);
+const stickyNotesTreeView = container.initialObjects.appData.viewWith(appTreeConfiguration);
+```
+
+When the tree is first created, this schema along with some initial data can be applied to the tree using `TreeView.initialize`.
+Note that the parameter to initialize must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+
+```typescript
+stickyNotesTreeView.initialize(
+    // This uses POJO (plain-old javascript object) mode, but `new App({ items: [] })` is also supported and equivalent.
+    { items: [] }
+);
 ```
 
 You can now add child items to the `stickyNotesTreeView` object using the methods described in [API](#api) below.
@@ -305,7 +313,7 @@ Your code reads object nodes and their properties exactly as it would read a Jav
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
 
-const counterHandle: FluidHandle = myTree.myObjectNode.myHandle; 
+const counterHandle: FluidHandle = myTree.myObjectNode.myHandle;
 
 const myItems: Array = stickyNotesTree.items;
 ```
@@ -408,7 +416,7 @@ The `delete()` method removes the item with the specified key. If one client set
 ##### Map node properties
 
 ```typescript
-size: number 
+size: number
 ```
 
 The total number of entries in the map node.

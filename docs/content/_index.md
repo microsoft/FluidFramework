@@ -137,7 +137,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
             <code>
                 {{< highlight typescript >}}
-                import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
+                import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
                 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
                 const client = new TinyliciousClient();
@@ -155,19 +155,18 @@ summary: "An open-source client technology stack that enables real-time collabor
                     value: sf.number,
                 }) {}
 
-                // Here we define the tree schema, which has a single Dice object starting at 1.
-                // We'll call schematize() on the SharedTree using this schema, which will give us a tree view to work with.
-                const treeConfiguration = new TreeConfiguration(
-                    Dice,
-                    () =>
-                        new Dice({
-                            value: 1,
-                        }),
-                );
+                // Here we define the tree schema, which has a single Dice object.
+                // We'll call viewWith() on the SharedTree using this schema, which will give us a tree view to work with.
+                const treeConfiguration = new TreeViewConfiguration({ schema: Dice });
 
                 const createNewDice = async () => {
                     const { container } = await client.createContainer(containerSchema);
-                    const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+                    const view = container.initialObjects.diceTree.viewWith(treeConfiguration);
+                    // Because we're creating a new document, the tree must be initialized with some data.
+                    // Doing this step before attaching is also a good idea as it ensures other clients will never see the
+                    // tree in an uninitialized state.
+                    view.initialize(new Dice({ value: 1 }));
+                    const dice = view.root;
                     const id = await container.attach();
                     renderDiceRoller(dice, root);
                     return id;
@@ -175,7 +174,7 @@ summary: "An open-source client technology stack that enables real-time collabor
 
                 const loadExistingDice = async (id) => {
                     const { container } = await client.getContainer(id, containerSchema);
-                    const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+                    const dice = container.initialObjects.diceTree.viewWith(treeConfiguration).root;
                     renderDiceRoller(dice, root);
                 };
 
