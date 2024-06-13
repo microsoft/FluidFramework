@@ -127,7 +127,7 @@ export class Heap<T> {
 
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {
-			// Non null asserting here since its the removal node's previous position position
+			// Non null asserting here since its the removal node's previous position
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.update(this.L[position]!);
 		}
