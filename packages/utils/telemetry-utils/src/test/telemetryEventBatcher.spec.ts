@@ -7,11 +7,12 @@ import assert from "node:assert";
 
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
-import { IMeasuredCodeResult, TelemetryEventBatcher } from "../telemetryEventBatcher.js";
+import { TelemetryEventBatcher } from "../telemetryEventBatcher.js";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
+	type ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
 
 /**
@@ -28,12 +29,9 @@ interface TestTelemetryProperties {
  * Test logger with only necessary functionality used by the TelemetryEventBatcher
  */
 class TestLogger implements ITelemetryLoggerExt {
-	public events: IMeasuredCodeResult<keyof TestTelemetryProperties>[] = [];
+	public events: ITelemetryPerformanceEventExt[] = [];
 
-	sendPerformanceEvent(
-		event: IMeasuredCodeResult<keyof TestTelemetryProperties>,
-		error?: unknown,
-	): void {
+	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
@@ -56,12 +54,85 @@ describe("TelemetryEventBatcher", () => {
 		logger = new TestLogger();
 	});
 
-	it("only writes event after correct number of samples", () => {
+	it("only writes event after correct number of thresholds", () => {
 		const threshold = 10;
 		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
 			{ eventName: "testEvent" },
 			logger,
 			threshold,
 		);
+
+		for (let i = 0; i < threshold - 1; i++) {
+			eventBatcher.measure(() => ({
+				eventName: "testCall",
+				telemetryProperties: {
+					propertyOne: 1,
+					propertyTwo: 2,
+					propertyThree: 3,
+				},
+			}));
+		}
+
+		assert.strictEqual(logger.events.length, 0);
+		eventBatcher.measure(() => ({
+			telemetryProperties: {
+				propertyOne: 1,
+				propertyTwo: 2,
+				propertyThree: 3,
+			},
+		}));
+		assert.strictEqual(logger.events.length, 1);
+
+		for (let i = 0; i < threshold - 1; i++) {
+			eventBatcher.measure(() => ({
+				eventName: "testCall",
+				telemetryProperties: {
+					propertyOne: 1,
+					propertyTwo: 2,
+					propertyThree: 3,
+				},
+			}));
+		}
+		assert.strictEqual(logger.events.length, 1);
+		eventBatcher.measure(() => ({
+			eventName: "testCall",
+			telemetryProperties: {
+				propertyOne: 1,
+				propertyTwo: 2,
+				propertyThree: 3,
+			},
+		}));
+		assert.strictEqual(logger.events.length, 2);
+	});
+
+	it("returns correct results for each property", () => {
+		const threshold = 10;
+		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			threshold,
+		);
+
+		for (let i = 0; i < threshold - 1; i++) {
+			eventBatcher.measure(() => ({
+				telemetryProperties: {
+					propertyOne: 1,
+					propertyTwo: 2,
+					propertyThree: 3,
+				},
+			}));
+		}
+		const result = eventBatcher.measure(() => ({
+			telemetryProperties: {
+				propertyOne: 1,
+				propertyTwo: 2,
+				propertyThree: 3,
+			},
+		}));
+
+		assert.strictEqual(logger.events.length, 1);
+		assert.strictEqual(result.telemetryProperties.propertyOne, 1);
+		assert.strictEqual(result.telemetryProperties.propertyTwo, 2);
+		assert.strictEqual(result.telemetryProperties.propertyThree, 3);
 	});
 });

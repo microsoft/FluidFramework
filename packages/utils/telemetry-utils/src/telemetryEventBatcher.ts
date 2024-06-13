@@ -19,7 +19,7 @@ import type {
 /**
  * Expected type of the custom data passed into the logger.
  */
-export interface IMeasuredCodeResult<TKey extends string> extends ITelemetryPerformanceEventExt {
+interface IMeasuredCodeResult<TKey extends string> {
 	/**
 	 * Optional properties to log custom data. The set of properties must be the same for all calls to the `measure` function.
 	 */
@@ -74,7 +74,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	) {}
 
 	/**
-	 * Executes the specified code, keeping statistics of its execution time and the telemetry properties it returns, and when the {@link TelemetryEventBatcher.threshold threshold} is reached it logs a performance event which includes the maxes and averages.
+	 * Executes the specified code, keeping statistics of its execution time and the telemetry properties it returns, and when the {@link TelemetryEventBatcher.threshold} is reached it logs a performance event which includes the maxes and averages.
 	 * @param codeToMeasure - The code to be executed and measured.
 	 * @param customData - Custom data to be logged.
 	 *
