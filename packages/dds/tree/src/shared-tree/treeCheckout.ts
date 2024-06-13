@@ -348,20 +348,6 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 }
 
 /**
- * Metadata derived from a reversion.
- *
- * @see {@link TreeCheckout.revertRevertible}.
- */
-export interface ReversionMetadata {
-	/**
-	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
-	 */
-	readonly age: number;
-
-	// TODO: add other stats as needed for telemetry, etc.
-}
-
-/**
  * An implementation of {@link ITreeCheckoutFork}.
  */
 export class TreeCheckout implements ITreeCheckoutFork {
@@ -623,7 +609,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): ReversionMetadata {
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
 		if (this.branch.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
@@ -657,19 +643,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				? CommitKind.Undo
 				: CommitKind.Redo,
 		);
-
-		// Derive some stats about the reversion to return to the caller.
-		let revertAge = 0;
-		let currentCommit = headCommit;
-		while (commitToRevert.revision !== currentCommit.revision) {
-			revertAge++;
-
-			const parentCommit = currentCommit.parent;
-			assert(parentCommit !== undefined, "expected to find a parent commit");
-			currentCommit = parentCommit;
-		}
-
-		return { age: revertAge };
 	}
 }
 
