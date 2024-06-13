@@ -40,7 +40,7 @@ const SharedTree = configuredSharedTree({
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
  * @param key - See {@link ITreeDataObject.key}.
  * @param treeConfiguration - See {@link ITreeDataObject.config}.
- * @param createInitialTree - Function which populates the tree with data on initial document create.
+ * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @public
  */
@@ -56,7 +56,7 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
  * @param key - See {@link ITreeDataObject.key}.
  * @param treeConfiguration - See {@link ITreeDataObject.config}.
- * @param createInitialTree - Function which populates the tree with data on initial document create.
+ * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @internal
  */
