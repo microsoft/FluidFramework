@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { type IUser } from "@fluidframework/driver-definitions";
-import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
-import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
  * Properties for initializing a {@link TinyliciousClient}
