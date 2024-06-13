@@ -40,8 +40,11 @@ import {
 } from "./format.js";
 import type { IIdCompressor, OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 
-export interface IdCompressorContext {
+export interface IdDecodingContext {
 	idCompressor: IIdCompressor;
+	/**
+	 * The creator of any local Ids to be decoded.
+	 */
 	originatorId: SessionId;
 }
 /**
@@ -84,7 +87,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 export function readValue(
 	stream: StreamCursor,
 	shape: EncodedValueShape,
-	idCompressorContext: IdCompressorContext,
+	idCompressorContext: IdDecodingContext,
 ): Value {
 	if (shape === undefined) {
 		return readStreamBoolean(stream) ? readStreamValue(stream) : undefined;
