@@ -275,13 +275,17 @@ const stickyNotesTreeView = container.initialObjects.appData.viewWith(appTreeCon
 ```
 
 When the tree is first created, this schema along with some initial data can be applied to the tree using `TreeView.initialize`.
-Note that the parameter to initialize must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
+Note that the data used to initialize the tree must conform to the root schema, `App`. So in this example, it has a single `items` property. The value of the `items` property specifies that the items array is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
 
 ```typescript
-stickyNotesTreeView.initialize(
-    // This uses POJO (plain-old javascript object) mode, but `new App({ items: [] })` is also supported and equivalent.
-    { items: [] }
-);
+// Both of the following options are equivalent ways to initialize the tree.
+// See documentation about plain-old javascript objects (POJO) on `SchemaFactory` for more details.
+
+// Option 1:
+stickyNotesTreeView.initialize({ items: [] });
+
+// Option 2:
+stickyNotesTreeView.initialize(new App({ items: [] }));
 ```
 
 You can now add child items to the `stickyNotesTreeView` object using the methods described in [API](#api) below.
