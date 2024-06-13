@@ -65,7 +65,6 @@ describe("TelemetryEventBatcher", () => {
 
 		for (let i = 0; i < threshold - 1; i++) {
 			eventBatcher.measure(() => ({
-				eventName: "testCall",
 				telemetryProperties: {
 					propertyOne: 1,
 					propertyTwo: 2,
