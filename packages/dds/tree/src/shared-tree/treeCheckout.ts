@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
@@ -221,6 +221,7 @@ export function createTreeCheckout(
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
+		logger?: ITelemetryLoggerExt;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -399,6 +400,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revisionTagCodec,
 			idCompressor,
 		),
+		/** Optional logger for telemetry. */
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
