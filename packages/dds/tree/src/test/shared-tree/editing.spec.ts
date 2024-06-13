@@ -2751,12 +2751,6 @@ describe("Editing", () => {
 				const tree = makeTreeFromJson([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
-				const bPath = {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 1,
-				};
-
 				insert(tree, 0, "A", "D");
 				const tree2 = tree.fork();
 
@@ -2766,8 +2760,15 @@ describe("Editing", () => {
 				assert(removalRevertible !== undefined);
 
 				tree2.transaction.start();
+
+				const dPath = {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 1,
+				};
+
 				// Put an existence constraint on D
-				tree2.editor.addNodeExistsConstraint(bPath);
+				tree2.editor.addNodeExistsConstraint(dPath);
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
 				// Should not be inserted because D has been concurrently removed
 				tree2RootSequence.insert(
