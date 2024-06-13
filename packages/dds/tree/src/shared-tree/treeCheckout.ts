@@ -650,7 +650,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		return trees;
 	}
 
-	public setRevisionsForLoadedData(revision: RevisionTag): void {
+	/**
+	 * This sets the tip revision as the latest relevant revision for any removed roots that are loaded from a summary.
+	 * This needs to be called right after loading {@link this.removedRoots} from a summary to allow loaded data to be garbage collected.
+	 */
+	public setTipRevisionForLoadedData(revision: RevisionTag): void {
 		this.removedRoots.setRevisionsForLoadedData(revision);
 	}
 
