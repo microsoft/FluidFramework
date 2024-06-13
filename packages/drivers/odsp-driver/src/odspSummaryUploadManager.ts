@@ -42,7 +42,6 @@ export class OdspSummaryUploadManager {
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
 		logger: ITelemetryLoggerExt,
 		private readonly epochTracker: EpochTracker,
-		private readonly forceAccessTokenViaAuthorizationHeader: boolean,
 		private readonly relayServiceTenantAndSessionId: () => string | undefined,
 	) {
 		this.mc = loggerToMonitoringContext(logger);
@@ -104,7 +103,6 @@ export class OdspSummaryUploadManager {
 			const { url, headers } = getUrlAndHeadersWithAuth(
 				`${this.snapshotUrl}/snapshot`,
 				storageToken,
-				this.forceAccessTokenViaAuthorizationHeader,
 			);
 			headers["Content-Type"] = "application/json";
 			const relayServiceTenantAndSessionId = this.relayServiceTenantAndSessionId();

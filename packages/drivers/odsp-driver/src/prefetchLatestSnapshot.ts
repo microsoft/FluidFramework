@@ -41,7 +41,7 @@ import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  * is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
- * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header.
+ * @param forceAccessTokenViaAuthorizationHeader - DEPRECATED: tokens will always be sent through authorization header regardless of the value of this param. Whether to force passing given token via authorization header.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
@@ -67,6 +67,11 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
+	// TODO: How do you tag asserts?
+	assert(
+		forceAccessTokenViaAuthorizationHeader,
+		"forceAccessTokenViaAuthorizationHeader is deprecated and false value will be ignore",
+	);
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
 	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
@@ -133,7 +138,6 @@ export async function prefetchLatestSnapshot(
 				odspResolvedUrl,
 				storageTokenFetcher,
 				hostSnapshotFetchOptions,
-				forceAccessTokenViaAuthorizationHeader,
 				odspLogger,
 				snapshotDownloader,
 				putInCache,

@@ -54,7 +54,6 @@ export async function createNewFluidFile(
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,
 	createNewCaching: boolean,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
@@ -72,13 +71,7 @@ export async function createNewFluidFile(
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		itemId = await createNewEmptyFluidFile(
-			getStorageToken,
-			newFileInfo,
-			logger,
-			epochTracker,
-			forceAccessTokenViaAuthorizationHeader,
-		);
+		itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
 	} else {
 		const content = await createNewFluidFileFromSummary(
 			getStorageToken,
@@ -86,7 +79,6 @@ export async function createNewFluidFile(
 			logger,
 			createNewSummary,
 			epochTracker,
-			forceAccessTokenViaAuthorizationHeader,
 		);
 		itemId = content.itemId;
 		summaryHandle = content.id;
@@ -164,7 +156,6 @@ export async function createNewEmptyFluidFile(
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<string> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
@@ -180,11 +171,7 @@ export async function createNewEmptyFluidFile(
 			logger,
 			{ eventName: "createNewEmptyFile" },
 			async (event) => {
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					initialUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
+				const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
 				headers["Content-Type"] = "application/json";
 
 				const fetchResponse = await runWithRetry(
@@ -228,7 +215,6 @@ export async function createNewFluidFileFromSummary(
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree,
 	epochTracker: EpochTracker,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<ICreateFileResponse> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	const encodedFilename = encodeURIComponent(newFileInfo.filename);
@@ -250,7 +236,6 @@ export async function createNewFluidFileFromSummary(
 		getStorageToken,
 		logger,
 		initialUrl,
-		forceAccessTokenViaAuthorizationHeader,
 		epochTracker,
 		telemetryName: "CreateNewFile",
 		fetchType: "createFile",

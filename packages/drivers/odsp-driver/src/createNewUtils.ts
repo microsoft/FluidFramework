@@ -202,7 +202,6 @@ export async function createNewFluidContainerCore<T>(args: {
 	getStorageToken: InstrumentedStorageTokenFetcher;
 	logger: ITelemetryLoggerExt;
 	initialUrl: string;
-	forceAccessTokenViaAuthorizationHeader: boolean;
 	epochTracker: EpochTracker;
 	telemetryName: string;
 	fetchType: FetchType;
@@ -213,7 +212,6 @@ export async function createNewFluidContainerCore<T>(args: {
 		getStorageToken,
 		logger,
 		initialUrl,
-		forceAccessTokenViaAuthorizationHeader,
 		epochTracker,
 		telemetryName,
 		fetchType,
@@ -249,11 +247,7 @@ export async function createNewFluidContainerCore<T>(args: {
 					};
 					addInBody = true;
 				} else {
-					const parts = getUrlAndHeadersWithAuth(
-						initialUrl,
-						storageToken,
-						forceAccessTokenViaAuthorizationHeader,
-					);
+					const parts = getUrlAndHeadersWithAuth(initialUrl, storageToken);
 					url = parts.url;
 					headers = {
 						...parts.headers,
