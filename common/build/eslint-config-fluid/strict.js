@@ -93,7 +93,7 @@ module.exports = {
 				],
 
 				/**
-				 * Ensures that import statements containing only types do not result in runtime side-effects.
+				 * Ensures that type-only import statements do not result in runtime side-effects.
 				 *
 				 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
 				 */
