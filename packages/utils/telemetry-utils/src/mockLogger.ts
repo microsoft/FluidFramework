@@ -14,12 +14,16 @@ import { createChildLogger } from "./logger.js";
 import {
 	ITelemetryLoggerExt,
 	ITelemetryPropertiesExt,
+	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
+	type ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
 
 /**
- * The MockLogger records events sent to it, and then can walk back over those events
- * searching for a set of expected events to match against the logged events.
+ * Mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} implementation.
+ *
+ * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
+ * match against the logged events.
  *
  * @alpha
  */
@@ -257,6 +261,14 @@ function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPrope
 	return true;
 }
 
+/**
+ * Mock {@link ITelemetryLoggerExt} implementation.
+ *
+ * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
+ * match against the logged events.
+ *
+ * @internal
+ */
 export class MockLoggerExt extends MockLogger implements ITelemetryLoggerExt {
 	public constructor(minLogLevel?: LogLevel) {
 		super(minLogLevel);
@@ -267,6 +279,18 @@ export class MockLoggerExt extends MockLogger implements ITelemetryLoggerExt {
 		error?: unknown,
 		logLevel?: 10 | 20 | undefined,
 	): void {
-		this.send(event);
+		this.send({ eventName: event.eventName, category: event.category ?? "generic" }, logLevel);
+	}
+
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
+		this.send({ eventName: event.eventName, category: "error" }, LogLevel.error);
+	}
+
+	public sendPerformanceEvent(
+		event: ITelemetryPerformanceEventExt,
+		error?: unknown,
+		logLevel?: 10 | 20 | undefined,
+	): void {
+		this.send({ eventName: event.eventName, category: event.category ?? "generic" }, logLevel);
 	}
 }
