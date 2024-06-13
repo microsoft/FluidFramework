@@ -8,16 +8,4 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off",
-	},
-	// overrides: [
-	// 	{
-	// 		files: ["src/test/**"],
-	// 		rules: {
-	// 			// It's fine for tests to use Node.js modules
-	// 			"import/no-nodejs-modules": "off",
-	// 		},
-	// 	},
-	// ],
 };
