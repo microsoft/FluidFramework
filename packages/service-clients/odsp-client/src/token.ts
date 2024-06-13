@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TokenResponse } from "./interfaces.js";
+import type { TokenResponse } from "./interfaces.js";
 
 /**
  * Abstracts the token fetching mechanism for a hosting application.
