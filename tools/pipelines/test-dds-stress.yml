@@ -68,7 +68,7 @@ stages:
       testWorkspace: ${{ variables.testWorkspace }}
 
   # Capture telemetry about pipeline stages
-  - stage: FollowupStage
+  - stage: upload_run_telemetry
     displayName: Upload pipeline run telemetry to Kusto
     condition: succeededOrFailed()
     dependsOn:
