@@ -4,14 +4,16 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/driver-definitions';
+import type { CompatibilityMode } from '@fluidframework/fluid-static';
+import type { ContainerSchema } from '@fluidframework/fluid-static';
+import type { IFluidContainer } from '@fluidframework/fluid-static';
+import type { IMember } from '@fluidframework/fluid-static';
+import type { IServiceAudience } from '@fluidframework/fluid-static';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITokenProvider } from '@fluidframework/routerlicious-driver';
+import type { IUser } from '@fluidframework/driver-definitions';
+
+export { CompatibilityMode }
 
 // @beta
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

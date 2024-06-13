@@ -13,13 +13,13 @@ import {
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import {
-	type ITree,
-	type SchemaCompatibilityStatus,
-	type TreeViewConfiguration,
-	type TreeFieldFromImplicitField,
-	type TreeView,
-	type ImplicitFieldSchema,
+import type {
+	ITree,
+	SchemaCompatibilityStatus,
+	TreeViewConfiguration,
+	TreeFieldFromImplicitField,
+	TreeView,
+	ImplicitFieldSchema,
 } from "@fluidframework/tree";
 import {
 	configuredSharedTree,

@@ -7,15 +7,15 @@
 import { DataObject } from '@fluidframework/aqueduct/internal';
 import type { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ImplicitFieldSchema } from '@fluidframework/tree';
+import type { ImplicitFieldSchema } from '@fluidframework/tree';
 import { InsertableTreeFieldFromImplicitField } from '@fluidframework/tree/internal';
 import * as React_2 from 'react';
-import { SchemaCompatibilityStatus } from '@fluidframework/tree';
+import type { SchemaCompatibilityStatus } from '@fluidframework/tree';
 import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-import { TreeFieldFromImplicitField } from '@fluidframework/tree';
+import type { TreeFieldFromImplicitField } from '@fluidframework/tree';
 import { TreeNode } from '@fluidframework/tree';
-import { TreeView } from '@fluidframework/tree';
-import { TreeViewConfiguration } from '@fluidframework/tree';
+import type { TreeView } from '@fluidframework/tree';
+import type { TreeViewConfiguration } from '@fluidframework/tree';
 
 // @public
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {

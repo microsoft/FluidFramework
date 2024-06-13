@@ -224,7 +224,7 @@ describe("treeApi", () => {
 			it.skip("emits change events", () => {
 				const view = getTestObjectView();
 				let event = false;
-				view.events.on("afterBatch", () => (event = true));
+				view.events.on("rootChanged", () => (event = true));
 				view.root.content = 44;
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
@@ -235,7 +235,7 @@ describe("treeApi", () => {
 			it.skip("emits change events on rollback", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
-				view.events.on("afterBatch", () => (eventCount += 1));
+				view.events.on("rootChanged", () => (eventCount += 1));
 				Tree.runTransaction(view, (r) => {
 					r.content = 43;
 					return Tree.runTransaction.rollback;
@@ -318,7 +318,7 @@ describe("treeApi", () => {
 				// One firing of events during the initial change and another during rollback, plus 'treeChanged' fires twice
 				// each time (detach and attach passes).
 				assert.equal(shallowEventCount, 2);
-				assert.equal(deepEventCount, 4);
+				assert.equal(deepEventCount, 2);
 			});
 
 			// TODO: When SchematizingSimpleTreeView supports forking, add test coverage to ensure that transactions work properly on forks

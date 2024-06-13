@@ -343,11 +343,6 @@ export interface SchemaCompatibilityStatus {
  */
 export interface TreeViewEvents {
 	/**
-	 * A batch of changes has finished processing and the view has been updated.
-	 */
-	afterBatch(): void;
-
-	/**
 	 * Raised whenever {@link TreeView.root} is invalidated.
 	 *
 	 * This includes changes to the document schema.

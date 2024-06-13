@@ -13,7 +13,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type IPactMap } from "../interfaces.js";
+import type { IPactMap } from "../interfaces.js";
 import { PactMapClass } from "../pactMap.js";
 import { PactMapFactory } from "../pactMapFactory.js";
 

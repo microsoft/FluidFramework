@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
-import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
+import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 import {
 	GetTelemetryHistory,
 	type IDevtoolsMessage,
