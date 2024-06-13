@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	LogLevel,
@@ -11,7 +11,7 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger } from "./logger.js";
-import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
@@ -20,19 +20,19 @@ import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.j
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
-	events: ITelemetryBaseEvent[] = [];
+	public events: ITelemetryBaseEvent[] = [];
 
-	constructor(public readonly minLogLevel?: LogLevel) {}
+	public constructor(public readonly minLogLevel?: LogLevel) {}
 
-	clear(): void {
+	public clear(): void {
 		this.events = [];
 	}
 
-	toTelemetryLogger(): ITelemetryLoggerExt {
+	public toTelemetryLogger(): ITelemetryLoggerExt {
 		return createChildLogger({ logger: this });
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		this.events.push(event);
 	}
 
@@ -44,7 +44,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEvents(
+	public matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -60,7 +60,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
 	 */
-	assertMatch(
+	public assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -85,7 +85,7 @@ ${JSON.stringify(actualEvents)}`);
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 * @returns if any of the expected events is found.
 	 */
-	matchAnyEvent(
+	public matchAnyEvent(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -99,7 +99,7 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchAnyEvent is true, and prints the actual/expected output if not.
 	 */
-	assertMatchAny(
+	public assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -123,7 +123,7 @@ ${JSON.stringify(actualEvents)}`);
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEventStrict(
+	public matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -136,7 +136,7 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not
 	 */
-	assertMatchStrict(
+	public assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -155,7 +155,7 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not
 	 */
-	assertMatchNone(
+	public assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -208,7 +208,6 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
-				// eslint-disable-next-line unicorn/numeric-separators-style
 				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

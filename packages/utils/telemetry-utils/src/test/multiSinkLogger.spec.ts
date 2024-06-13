@@ -7,7 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 
-import { MultiSinkLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
+import type { MultiSinkLogger } from "../logger.js";
+import { createChildLogger, createMultiSinkLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 
 describe("MultiSinkLogger", () => {
