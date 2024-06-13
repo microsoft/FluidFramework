@@ -82,6 +82,9 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 // @internal (undocumented)
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes">;
 
+// @internal (undocumented)
+export function hasRedirectionLocation(x: unknown): x is Pick<IOdspErrorAugmentations, "redirectLocation">;
+
 // @alpha (undocumented)
 export interface IOdspAuthRequestInfo {
     // (undocumented)

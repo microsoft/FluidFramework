@@ -232,6 +232,7 @@ export function createOdspNetworkError(
 				error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
 				break;
 			}
+		// Don't break here. Let it be a generic network error if redirectLocation is not there.
 		case 400:
 			if (innerMostErrorCode === "fluidInvalidSchema") {
 				error = new FluidInvalidSchemaError(errorMessage, driverProps);
