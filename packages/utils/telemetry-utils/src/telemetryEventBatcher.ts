@@ -14,8 +14,9 @@ import type {
 
 /**
  * Expected type of the custom data passed into the logger.
+ * @internal
  */
-interface IMeasuredCodeResult<TKey extends string> {
+export interface IMeasuredCodeResult<TKey extends string> {
 	/**
 	 * Optional properties to log custom data. The set of properties must be the same for all calls to the `measure` function.
 	 */
@@ -23,7 +24,7 @@ interface IMeasuredCodeResult<TKey extends string> {
 }
 
 /**
- * Telemetry class that measures the execution time of a given piece of code and accumulates user defined telemetry metrics ({@link ICustomDataMap}), to finally log an event through the {@link TelemetryEventBatcher.logger | logger} provided to this class when the number of calls to the {@link TelemetryEventBatcher.measure | measure} function reaches the specified by {@link TelemetryEventBatcher.threshold | threshold}.
+ * Telemetry class that measures the execution time of a given piece of code and accumulates user defined telemetry metrics, to finally log an event through the {@link TelemetryEventBatcher.logger | logger} provided to this class when the number of calls to the {@link TelemetryEventBatcher.measure | measure} function reaches the specified by {@link TelemetryEventBatcher.threshold | threshold}.
  *
  * @remarks It is expected to be used for a single event type. If the set of `telemetryProperties` is different for different events, a separate `TelemetryEventBatcher` should be created for each event type.
  * @typeparam TMetrics - The set of keys that should be logged.
