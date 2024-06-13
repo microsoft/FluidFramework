@@ -186,9 +186,6 @@
 				"...",
 				"@fluidframework/id-compressor#build:test:esm"
 			],
-			"check:release-tags": [
-				"build:esnext"
-			],
 			"ci:build:docs": [
 				"build:esnext"
 			]
