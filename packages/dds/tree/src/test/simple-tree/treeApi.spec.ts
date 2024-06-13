@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { type UpPath, rootFieldKey } from "../../core/index.js";
 import {
@@ -236,6 +236,28 @@ describe("treeNodeApi", () => {
 			const root = getView(config).root;
 
 			assert.equal(Tree.shortId(root), stableNodeKey);
+		});
+		it("errors if multiple identifiers exist on the same node", () => {
+			const config = new TreeConfiguration(
+				schema.object("parent", {
+					identifier: schema.identifier,
+					identifier2: schema.identifier,
+				}),
+				() => ({
+					identifier: "a",
+					identifier2: "b",
+				}),
+			);
+
+			const root = getView(config).root;
+			assert.throws(
+				() => Tree.shortId(root),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/may not be called on a node with more than one identifier/,
+					),
+			);
 		});
 	});
 
