@@ -129,6 +129,9 @@ describe("schemaFactory", () => {
 		assert(a instanceof TreeNode);
 		assert(!(a instanceof B));
 
+		// @ts-expect-error Nodes should get type based nominal typing.
+		const b: A = new B({});
+
 		const c = new C({});
 		assert(c instanceof C);
 		assert(c instanceof TreeNode);
@@ -146,25 +149,6 @@ describe("schemaFactory", () => {
 		// This case is expressible without type errors, so it is important that it works.
 		assert(s instanceof TreeNode);
 		assert(!(s instanceof B));
-	});
-
-	it("instanceof structural", () => {
-		const schema = new SchemaFactory("com.example");
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
-		class A extends schema.object("A", {}) {}
-		class B extends schema.object("B", {}) {}
-
-		const a = new A({});
-		assert(a instanceof A);
-		assert(!(a instanceof B));
-
-		// @ts-expect-error Nodes should get type based nominal typing.
-		const b: A = new B({});
 	});
 
 	it("Scoped", () => {
