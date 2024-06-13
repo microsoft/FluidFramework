@@ -716,7 +716,7 @@ describe("schemaFactory", () => {
 			// to the tree are not visible in the listener. 'nodeChanged' only fires once we confirmed that a
 			// relevant change was actually applied to the tree so the side effects this test validates already happened.
 			Tree.on(view.root, "nodeChanged", () => validate(view, nodes));
-			view.events.on("afterBatch", () => validate(view, nodes));
+			view.events.on("rootChanged", () => validate(view, nodes));
 			view.root.root = parent;
 			validate(view, nodes);
 		}
