@@ -23,3 +23,5 @@ export {
 	type TinyliciousUser,
 } from "./interfaces.js";
 export { TinyliciousClient } from "./TinyliciousClient.js";
+
+export type { CompatibilityMode } from "@fluidframework/fluid-static";

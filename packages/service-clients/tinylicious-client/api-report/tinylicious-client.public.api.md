@@ -13,4 +13,6 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUser } from '@fluidframework/driver-definitions';
 
+export { CompatibilityMode }
+
 ```
