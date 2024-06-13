@@ -11,16 +11,20 @@ import {
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import {
+	InMemoryApiCounters,
+	type IApiCounters,
+} from "@fluidframework/server-services-client";
 import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
 import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { Cluster, Redis } from "ioredis";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
-import type { Cluster, Redis } from "ioredis";
 
 class SocketIoSocket implements core.IWebSocket {
 	private readonly eventListeners: { event: string; listener: () => void }[] = [];
@@ -93,14 +97,47 @@ function isSocketIoConnectionError(error: unknown): error is ISocketIoConnection
 	);
 }
 
+export interface ISocketIoServerConfig {
+	/**
+	 * Whether to enable "Graceful Shutdown" feature.
+	 * When set to `true`, before closing the server will stop receiving new connections and
+	 * gradually disconnect existing connections.
+	 */
+	gracefulShutdownEnabled: boolean;
+	/**
+	 * The time in milliseconds to fit all graceful disconnects into.
+	 * A shorter time will result in faster disconnection of all connections.
+	 * Default is 30 seconds.
+	 */
+	gracefulShutdownDrainTimeMs: number;
+	/**
+	 * The time in milliseconds to wait between each batch of disconnections.
+	 * Default is 1 second.
+	 */
+	gracefulShutdownDrainIntervalMs: number;
+	/**
+	 * Whether to enable ping-pong latency tracking.
+	 * When set to `true`, the internal Socket.io Ping-Pong mechanism will be used to track latency.
+	 */
+	pingPongLatencyTrackingEnabled: boolean;
+	/**
+	 * The time in milliseconds to wait between each aggregated ping-pong latency telemetry event.
+	 * Default is 1 minute.
+	 */
+	pingPongLatencyTrackingIntervalMs: number;
+}
+
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
+	private readonly pingPongLatencyInterval: NodeJS.Timer | undefined;
+	private readonly pingPongLatencyTrackingIntervalMs: number | undefined;
 
 	constructor(
 		private readonly io: Server,
 		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: Partial<ISocketIoServerConfig>,
+		private readonly apiCounters: IApiCounters = new InMemoryApiCounters(),
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const socketConnectionMetric = Lumberjack.newLumberMetric(
@@ -110,7 +147,8 @@ class SocketIoServer implements core.IWebSocketServer {
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 
-			//
+			this.initPingPongLatencyTracking(socket);
+
 			webSocket.on("disconnect", (reason: DisconnectReason) => {
 				// The following should be considered as normal disconnects and not logged as errors.
 				// For more information about each reason, see https://socket.io/docs/v4/server-socket-instance/#disconnect
@@ -142,6 +180,7 @@ class SocketIoServer implements core.IWebSocketServer {
 				}
 			});
 		});
+
 		this.io.engine.on("connection_error", (error) => {
 			if (isSocketIoConnectionError(error) && error.req.url !== undefined) {
 				const telemetryProperties: Record<string, any> = {
@@ -173,6 +212,15 @@ class SocketIoServer implements core.IWebSocketServer {
 				Lumberjack.error("Socket.io Connection Error", telemetryProperties, error);
 			}
 		});
+
+		if (this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
+			this.pingPongLatencyTrackingIntervalMs =
+				this.socketIoConfig?.pingPongLatencyTrackingIntervalMs ?? 60000;
+			this.pingPongLatencyInterval = setInterval(
+				this.flushPingPongLatencyTracking.bind(this),
+				this.pingPongLatencyTrackingIntervalMs,
+			);
+		}
 	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
@@ -260,6 +308,55 @@ class SocketIoServer implements core.IWebSocketServer {
 			this.redisClientConnectionManagerForPub.getRedisClient().quit(),
 			this.redisClientConnectionManagerForSub.getRedisClient().quit(),
 		]);
+		if (this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
+			clearInterval(this.pingPongLatencyInterval);
+			this.flushPingPongLatencyTracking();
+		}
+	}
+
+	private initPingPongLatencyTracking(socket: Socket) {
+		if (!this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
+			return;
+		}
+
+		let lastPingStartTime: number | undefined;
+		const packetCreateHandler = (packet: any) => {
+			if (packet.type === "ping") {
+				lastPingStartTime = Date.now();
+			}
+		};
+		socket.conn.on("packetCreate", packetCreateHandler);
+		const packetReceivedHandler = (packet: any) => {
+			if (packet.type === "pong") {
+				if (lastPingStartTime !== undefined) {
+					this.apiCounters.incrementCounter("pingPongCount", 1);
+					this.apiCounters.incrementCounter("pingPongLatency", Date.now() - lastPingStartTime);
+					lastPingStartTime = undefined;
+				}
+			}
+		};
+		socket.conn.on("packet", packetReceivedHandler);
+		socket.conn.on("close", () => {
+			socket.conn.off("packetCreate", packetCreateHandler);
+			socket.conn.off("packet", packetReceivedHandler);
+		});
+	}
+
+	private flushPingPongLatencyTracking() {
+		if (!this.apiCounters.countersAreActive) {
+			return;
+		}
+		const pingPongCount = this.apiCounters.getCounter("pingPongCount") ?? 0;
+		const pingPongLatency = this.apiCounters.getCounter("pingPongLatency") ?? 0;
+		if (pingPongCount > 0) {
+			Lumberjack.info("Average Socket.io Ping-Pong Latency", {
+				durationInMs: Math.ceil(pingPongLatency / pingPongCount),
+				aggregateCount: pingPongCount,
+				aggregateLatencyMs: pingPongLatency,
+				aggregateLatencyIntervalMs: this.pingPongLatencyTrackingIntervalMs,
+			});
+		}
+		this.apiCounters.resetAllCounters();
 	}
 }
 
