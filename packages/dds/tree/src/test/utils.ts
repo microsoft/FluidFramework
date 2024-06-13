@@ -1032,13 +1032,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
-		undefined,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
@@ -1049,13 +1050,14 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
-		undefined,
+		revision,
 		deltaProcessor,
 		detachedFieldIndex ??
 			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
