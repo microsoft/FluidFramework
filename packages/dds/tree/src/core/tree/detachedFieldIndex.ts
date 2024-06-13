@@ -41,7 +41,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  * fake revision used to mark that the revision stored in a {@link DetachedFieldIndex} is not yet
  * set after loading data from a summary
  */
-export const fakeRevisionWhenNotSet = 33 as SessionSpaceCompressedId;
+export const fakeRevisionWhenNotSet = Number.NaN as SessionSpaceCompressedId;
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.
