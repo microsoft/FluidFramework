@@ -132,7 +132,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		});
 		this.mc = loggerToMonitoringContext(this.logger);
 
-		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+		const [opProcessingHelper, callbacksHelper] = this.setUpSampledTelemetryHelpers();
+
+		// Non null asserting here since opProcessingHelper and callbacksHelper are defined in setUpSampledTelemetryHelpers
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		[this.opProcessingHelper, this.callbacksHelper] = [opProcessingHelper!, callbacksHelper!];
 	}
 
 	/**
