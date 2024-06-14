@@ -1001,10 +1001,27 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("logs revert metrics", (view, logger) => {
+			let revertPreviousChange: (() => void) | undefined;
+			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+				if (getRevertible === undefined) {
+					assert.fail("Expected commit to be revertible.");
+				}
+				revertPreviousChange = getRevertible().revert;
+			});
+
+			// #region Insert a node, then continuously revert the previous operation to generate revert metrics.
+
 			insertFirstNode(view, "A");
+			assert(revertPreviousChange !== undefined);
 
 			const revertCount = 25;
-			// TODO: continuously revert the last edit <revertCount> times.
+			for (let iRevert = 0; iRevert < revertCount; iRevert++) {
+				revertPreviousChange();
+			}
+
+			// #endregion
+
+			// #region Validate the expected metrics
 			const loggedRevertEvents = logger.events.filter(
 				(event) => event.eventName === "revert",
 			);
@@ -1014,6 +1031,10 @@ describe("sharedTreeView", () => {
 				loggedRevertEvents.length,
 				Math.floor(revertCount / TreeCheckout.telemetryBatchThreshold),
 			);
+
+			// #endregion
+
+			unsubscribe();
 		});
 	});
 });
