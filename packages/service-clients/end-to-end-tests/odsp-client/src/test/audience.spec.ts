@@ -13,7 +13,7 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+import { IOdspLoginCredentials, createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -24,16 +24,27 @@ describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
+	const credentials = getCredentials();
+
+	if (credentials.length === undefined) {
+		throw new Error("Login credentials provided are missing");
+	}
+
+	const [cred1, cred2] = credentials.slice(0, 2);
+
+	if (!cred1 || !cred2) {
+		throw new Error("Invalid login credentials format");
+	}
+
 	const client1Creds: IOdspLoginCredentials = {
-		username: process.env.odsp__client__login__username as string,
-		password: process.env.odsp__client__login__password as string,
+		username: cred1.username,
+		password: cred1.password,
 	};
 
 	const client2Creds: IOdspLoginCredentials = {
-		username: process.env.odsp__client2__login__username as string,
-		password: process.env.odsp__client2__login__password as string,
+		username: cred2.username,
+		password: cred2.password,
 	};
-
 	beforeEach(() => {
 		client = createOdspClient(client1Creds);
 		schema = {

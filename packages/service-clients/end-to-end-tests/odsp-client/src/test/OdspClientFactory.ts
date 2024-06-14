@@ -9,6 +9,19 @@ import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-uti
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
 
+interface LoginTenantRange {
+	prefix: string;
+	start: number;
+	count: number;
+	password: string;
+}
+
+interface LoginTenants {
+	[tenant: string]: {
+		range: LoginTenantRange;
+	};
+}
+
 /**
  * Interface representing the odsp-client login account credentials.
  */
@@ -26,6 +39,42 @@ export interface IOdspCredentials extends IOdspLoginCredentials {
 }
 
 /**
+ * Get set of credential to use from env variable.
+ */
+export const getCredentials = (): IOdspLoginCredentials[] => {
+	const creds: IOdspLoginCredentials[] = [];
+	const loginTenants = process.env.login__odspclient__spe__test__tenants;
+
+	if (loginTenants !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const tenants: LoginTenants = JSON.parse(loginTenants);
+		const tenantNames = Object.keys(tenants);
+		const tenant = tenantNames[0];
+		if (!tenant) {
+			throw new Error("Tenant is undefined");
+		}
+		const tenantInfo = tenants[tenant];
+
+		if (!tenantInfo) {
+			throw new Error("Tenant info is undefined");
+		}
+
+		const range = tenantInfo.range;
+
+		if (range) {
+			for (let i = 0; i < range.count; i++) {
+				creds.push({
+					username: `${range.prefix}${range.start + i}@${tenant}`,
+					password: range.password,
+				});
+			}
+		}
+	}
+
+	return creds;
+};
+
+/**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link OdspClient} instance based on the mode by setting the Connection config accordingly.
  */
@@ -34,9 +83,9 @@ export function createOdspClient(
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
-	const siteUrl = process.env.odsp__client__siteUrl as string;
-	const driveId = process.env.odsp__client__driveId as string;
-	const clientId = process.env.odsp__client__clientId as string;
+	const siteUrl = process.env.odsp__client__siteUrl__test as string;
+	const driveId = process.env.odsp__client__driveId__test as string;
+	const clientId = process.env.odsp__client__clientId__test as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
