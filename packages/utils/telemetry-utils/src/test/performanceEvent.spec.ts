@@ -35,7 +35,7 @@ describe("PerformanceEvent", () => {
 		callbackCalls++;
 	};
 	const asyncCallback = async (event: PerformanceEvent): Promise<string | void> => {
-		const outerPromise: Promise<string> = new Promise((resolve, reject) => {
+		const outerPromise = new Promise<string>((resolve, reject) => {
 			Promise.resolve("A")
 				.finally(() => {
 					reject(new Error("B"));

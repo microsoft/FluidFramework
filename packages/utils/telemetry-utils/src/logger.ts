@@ -60,9 +60,10 @@ export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 /**
  * @alpha
  */
-export interface ITelemetryLoggerPropertyBag {
-	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
+export type ITelemetryLoggerPropertyBag = Record<
+	string,
+	TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)
+>;
 
 /**
  * @alpha

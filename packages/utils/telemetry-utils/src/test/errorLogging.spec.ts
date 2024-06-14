@@ -752,128 +752,126 @@ describe("normalizeError", () => {
 				message,
 				stack: stackHint,
 			});
-		const testCases: { [label: string]: () => { input: any; expectedOutput: TestFluidError } } =
-			{
-				"Fluid Error minus errorType": () => ({
-					input: sampleFluidError().withoutProperty("errorType"),
-					expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+		const testCases: Record<string, () => { input: any; expectedOutput: TestFluidError }> = {
+			"Fluid Error minus errorType": () => ({
+				input: sampleFluidError().withoutProperty("errorType"),
+				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"Fluid Error minus message": () => ({
+				input: sampleFluidError().withoutProperty("message"),
+				expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
+			}),
+			"Fluid Error minus getTelemetryProperties": () => ({
+				input: sampleFluidError().withoutProperty("getTelemetryProperties"),
+				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"Fluid Error minus addTelemetryProperties": () => ({
+				input: sampleFluidError().withoutProperty("addTelemetryProperties"),
+				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+			}),
+			"Fluid Error minus errorType (no stack)": () => ({
+				input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
+				expectedOutput: typicalOutput("Hello", "<<natural stack>>"),
+			}),
+			"Fluid Error minus message (no stack)": () => ({
+				input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
+				expectedOutput: typicalOutput("[object Object]", "<<natural stack>>"),
+			}),
+			"Error object": () => ({
+				input: new NamedError("boom"),
+				expectedOutput: typicalOutput(
+					"boom",
+					"<<stack from input>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"LoggingError": () => ({
+				input: new LoggingError("boom"),
+				expectedOutput: typicalOutput("boom", "<<stack from input>>"),
+			}),
+			"Empty object": () => ({
+				input: {},
+				expectedOutput: typicalOutput(
+					"[object Object]",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"object with stack": () => ({
+				input: { message: "whatever", stack: "fake stack goes here" },
+				expectedOutput: typicalOutput(
+					"whatever",
+					"<<stack from input>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"object with non-string message and name": () => ({
+				input: { message: 42, name: true },
+				expectedOutput: typicalOutput(
+					"[object Object]",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"nullValue": () => ({
+				input: null,
+				expectedOutput: typicalOutput(
+					"null",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+			"undef": () => ({
+				input: undefined,
+				expectedOutput: typicalOutput(
+					"undefined",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "undefined", untrustedOrigin: 1 }),
+			}),
+			"false": () => ({
+				input: false,
+				expectedOutput: typicalOutput(
+					"false",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
+			}),
+			"true": () => ({
+				input: true,
+				expectedOutput: typicalOutput(
+					"true",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
+			}),
+			"number": () => ({
+				input: 3.14,
+				expectedOutput: typicalOutput(
+					"3.14",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "number", untrustedOrigin: 1 }),
+			}),
+			"symbol": () => ({
+				input: Symbol("Unique"),
+				expectedOutput: typicalOutput(
+					"Symbol(Unique)",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
+			}),
+			"function": () => ({
+				input: (): void => {},
+				expectedOutput: typicalOutput(
+					"() => { }",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ typeofError: "function", untrustedOrigin: 1 }),
+			}),
+			"emptyArray": () => ({
+				input: [],
+				expectedOutput: typicalOutput("", "<<natural stack>>").withExpectedTelemetryProps({
+					untrustedOrigin: 1,
 				}),
-				"Fluid Error minus message": () => ({
-					input: sampleFluidError().withoutProperty("message"),
-					expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
-				}),
-				"Fluid Error minus getTelemetryProperties": () => ({
-					input: sampleFluidError().withoutProperty("getTelemetryProperties"),
-					expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
-				}),
-				"Fluid Error minus addTelemetryProperties": () => ({
-					input: sampleFluidError().withoutProperty("addTelemetryProperties"),
-					expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
-				}),
-				"Fluid Error minus errorType (no stack)": () => ({
-					input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
-					expectedOutput: typicalOutput("Hello", "<<natural stack>>"),
-				}),
-				"Fluid Error minus message (no stack)": () => ({
-					input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
-					expectedOutput: typicalOutput("[object Object]", "<<natural stack>>"),
-				}),
-				"Error object": () => ({
-					input: new NamedError("boom"),
-					expectedOutput: typicalOutput(
-						"boom",
-						"<<stack from input>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"LoggingError": () => ({
-					input: new LoggingError("boom"),
-					expectedOutput: typicalOutput("boom", "<<stack from input>>"),
-				}),
-				"Empty object": () => ({
-					input: {},
-					expectedOutput: typicalOutput(
-						"[object Object]",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"object with stack": () => ({
-					input: { message: "whatever", stack: "fake stack goes here" },
-					expectedOutput: typicalOutput(
-						"whatever",
-						"<<stack from input>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"object with non-string message and name": () => ({
-					input: { message: 42, name: true },
-					expectedOutput: typicalOutput(
-						"[object Object]",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"nullValue": () => ({
-					input: null,
-					expectedOutput: typicalOutput(
-						"null",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"undef": () => ({
-					input: undefined,
-					expectedOutput: typicalOutput(
-						"undefined",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "undefined", untrustedOrigin: 1 }),
-				}),
-				"false": () => ({
-					input: false,
-					expectedOutput: typicalOutput(
-						"false",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
-				}),
-				"true": () => ({
-					input: true,
-					expectedOutput: typicalOutput(
-						"true",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
-				}),
-				"number": () => ({
-					input: 3.14,
-					expectedOutput: typicalOutput(
-						"3.14",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "number", untrustedOrigin: 1 }),
-				}),
-				"symbol": () => ({
-					input: Symbol("Unique"),
-					expectedOutput: typicalOutput(
-						"Symbol(Unique)",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "symbol", untrustedOrigin: 1 }),
-				}),
-				"function": () => ({
-					input: (): void => {},
-					expectedOutput: typicalOutput(
-						"() => { }",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ typeofError: "function", untrustedOrigin: 1 }),
-				}),
-				"emptyArray": () => ({
-					input: [],
-					expectedOutput: typicalOutput(
-						"",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-				"array": () => ({
-					input: [1, 2, 3],
-					expectedOutput: typicalOutput(
-						"1,2,3",
-						"<<natural stack>>",
-					).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
-				}),
-			};
+			}),
+			"array": () => ({
+				input: [1, 2, 3],
+				expectedOutput: typicalOutput(
+					"1,2,3",
+					"<<natural stack>>",
+				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+			}),
+		};
 		function assertMatching(
 			actual: IFluidErrorBase,
 			expected: TestFluidError,
