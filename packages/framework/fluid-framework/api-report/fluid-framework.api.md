@@ -2179,7 +2179,7 @@ export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 // @alpha @sealed
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
-// @alpha @deprecated
+// @alpha
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
