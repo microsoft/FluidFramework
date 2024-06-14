@@ -12,7 +12,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { OdspClient } from "@fluidframework/odsp-client";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+import { IOdspLoginCredentials, createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import { mapWait } from "./utils.js";
 
@@ -22,23 +22,18 @@ describe("Fluid data updates", () => {
 
 	const credentials = getCredentials();
 
-	if (!Array.isArray(credentials) || credentials.length === 0) {
-		throw new Error("Login credentials are undefined, not an array, or empty");
-	}
-
 	if (credentials.length < 2) {
 		throw new Error("Insufficient login credentials provided");
 	}
 
 	const [client1, client2] = credentials.slice(0, 2);
 
-
 	if (!client1 || !client2) {
 		throw new Error("Invalid login credentials format");
 	}
 
 	const clientCreds: IOdspLoginCredentials = {
-		username: client1.username,
+		email: client1.email,
 		password: client1.password,
 	};
 

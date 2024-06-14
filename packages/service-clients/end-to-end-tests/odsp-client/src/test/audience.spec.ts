@@ -13,7 +13,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { OdspClient } from "@fluidframework/odsp-client";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { IOdspLoginCredentials, createOdspClient, getCredentails } from "./OdspClientFactory.js";
+import { IOdspLoginCredentials, createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -27,29 +27,24 @@ describe("Fluid audience", () => {
 
 	const credentials = getCredentials();
 
-	if (!Array.isArray(credentials) || credentials.length === 0) {
-		throw new Error("Login credentials are undefined, not an array, or empty");
-	}
-
 	if (credentials.length < 2) {
 		throw new Error("Insufficient login credentials provided");
 	}
 
-	const [client1, client2] = credentials.slice(0, 2);
+	const [cred1, cred2] = credentials.slice(0, 2);
 
-
-	if (!client1 || !client2) {
+	if (!cred1 || !cred2) {
 		throw new Error("Invalid login credentials format");
 	}
 
 	const client1Creds: IOdspLoginCredentials = {
-		username: client1.username,
-		password: client1.password,
+		email: cred1.email,
+		password: cred1.password,
 	};
 
 	const client2Creds: IOdspLoginCredentials = {
-		username: client2.username,
-		password: client2.password,
+		email: cred2.email,
+		password: cred2.password,
 	};
 
 	beforeEach(() => {
@@ -85,7 +80,7 @@ describe("Fluid audience", () => {
 		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const myself = await waitForMember(services.audience, client1Creds.username);
+		const myself = await waitForMember(services.audience, client1Creds.email);
 		assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
 
 		const members = services.audience.getMembers();
@@ -119,7 +114,7 @@ describe("Fluid audience", () => {
 		);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const originalSelf = await waitForMember(services.audience, client1Creds.username);
+		const originalSelf = await waitForMember(services.audience, client1Creds.email);
 		assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
 
 		// pass client2 credentials
@@ -133,7 +128,7 @@ describe("Fluid audience", () => {
 		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const partner = await waitForMember(servicesGet.audience, client2Creds.username);
+		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		const members = servicesGet.audience.getMembers();
@@ -176,7 +171,7 @@ describe("Fluid audience", () => {
 		const { services: servicesGet } = await client2.getContainer(itemId, schema);
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
-		const partner = await waitForMember(servicesGet.audience, client2Creds.username);
+		const partner = await waitForMember(servicesGet.audience, client2Creds.email);
 		assert.notStrictEqual(partner, undefined, "We should have partner at this point.");
 
 		let members = servicesGet.audience.getMembers();

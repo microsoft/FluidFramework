@@ -26,7 +26,7 @@ interface LoginTenants {
  * Interface representing the odsp-client login account credentials.
  */
 export interface IOdspLoginCredentials {
-	username: string;
+	email: string;
 	password: string;
 }
 
@@ -38,25 +38,38 @@ export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
 }
 
-export getCredentials: IOdspLoginCredentials[] = () => {
+export const getCredentials = (): IOdspLoginCredentials[] => {
 	const creds: IOdspLoginCredentials[] = [];
 	const loginTenants = process.env.login__odspclient__spe__test__tenants;
 
 	if (loginTenants !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const tenants: LoginTenants = JSON.parse(loginTenants);
-		const [tenant] = Object.keys(tenants);
-		const { range } = tenants[tenant];
+		const tenantNames = Object.keys(tenants);
+		const tenant = tenantNames[0];
+		if (!tenant) {
+			throw new Error("Tenant is undefined");
+		}
+		const tenantInfo = tenants[tenant];
 
-		for (let i = 0; i < range.count; i++) {
-			creds.push({
-				username: `${range.prefix}${range.start + i}@${tenant}`,
-				password: range.password,
-			})
+		if (!tenantInfo) {
+			throw new Error("Tenant info is undefined");
+		}
+
+		const range = tenantInfo.range;
+
+		if (range) {
+			for (let i = 0; i < range.count; i++) {
+				creds.push({
+					email: `${range.prefix}${range.start + i}@${tenant}`,
+					password: range.password,
+				});
+			}
 		}
 	}
 
 	return creds;
-}
+};
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
@@ -81,7 +94,7 @@ export function createOdspClient(
 		throw new Error("client id is missing");
 	}
 
-	if (creds.username === undefined || creds.password === undefined) {
+	if (creds.email === undefined || creds.password === undefined) {
 		throw new Error("username or password is missing for login account");
 	}
 
