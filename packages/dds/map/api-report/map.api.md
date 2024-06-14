@@ -126,7 +126,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 // @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
-// @alpha @deprecated
+// @alpha
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
