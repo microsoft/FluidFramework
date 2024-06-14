@@ -5,6 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 
+import type { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -31,10 +32,15 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import type { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
+import {
+	TreeCheckout,
+	type ITreeCheckout,
+	type RevertibleFactory,
+	type TreeContent,
+} from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	checkoutWithContent,
+	checkoutWithContentAndLogger,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
 	flexTreeViewWithContent,
@@ -794,6 +800,10 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("revertibles", () => {
+		// Test TODOs:
+		// - unit tests for metrics generated during reversion
+		// - simple acceptance test for resulting logs.
+
 		itView("can be generated for changes made to the local branch", (view) => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
@@ -989,6 +999,22 @@ describe("sharedTreeView", () => {
 
 			stacks.unsubscribe();
 		});
+
+		itView("logs revert metrics", (view, logger) => {
+			insertFirstNode(view, "A");
+
+			const revertCount = 25;
+			// TODO: continuously revert the last edit <revertCount> times.
+			const loggedRevertEvents = logger.events.filter(
+				(event) => event.eventName === "revert",
+			);
+
+			// Simple check to verify the correct number of logs were sent based the batching threshold.
+			assert.equal(
+				loggedRevertEvents.length,
+				Math.floor(revertCount / TreeCheckout.telemetryBatchThreshold),
+			);
+		});
 	});
 });
 
@@ -1042,7 +1068,7 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
  */
 function itView(
 	title: string,
-	fn: (view: ITreeCheckout) => void,
+	fn: (view: ITreeCheckout, logger: MockLogger) => void,
 	initialContent?: TreeContent,
 ): void {
 	const content: TreeContent = initialContent ?? {
@@ -1056,19 +1082,22 @@ function itView(
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(schematizeFlexTree(provider.trees[0], config).checkout);
+		fn(schematizeFlexTree(provider.trees[0], config).checkout, provider.logger);
 	});
 
 	it(`${title} (reference view)`, () => {
-		fn(checkoutWithContent(content));
+		const { checkout, logger } = checkoutWithContentAndLogger(content);
+		fn(checkout, logger);
 	});
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork());
+		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork(), provider.logger);
 	});
 
 	it(`${title} (reference forked view)`, () => {
-		fn(checkoutWithContent(content).fork());
+		const { checkout, logger } = checkoutWithContentAndLogger(content);
+		const fork = checkout.fork();
+		fn(fork, logger);
 	});
 }

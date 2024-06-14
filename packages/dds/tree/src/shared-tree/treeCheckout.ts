@@ -397,7 +397,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 * The threshold for logging revert telemetry event batches.
 	 * @see {@link @fluidframework/telemetry-utils#TelemetryEventBatcher.threshold}
 	 */
-	private static readonly telemetryBatchThreshold = 5;
+	public static readonly telemetryBatchThreshold = 5;
 
 	public constructor(
 		public readonly transaction: ITransaction,

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { MockLoggerExt as MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -351,6 +351,7 @@ export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly logger = new MockLogger();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -380,6 +381,7 @@ export class TestTreeProviderLite {
 				clientId: `test-client-${i}`,
 				id: "test",
 				idCompressor: createIdCompressor(sessionId),
+				logger: this.logger,
 			});
 			const tree = this.factory.create(
 				runtime,
@@ -681,12 +683,28 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
+	const { checkout } = checkoutWithContentAndLogger(content, args);
+	return checkout;
+}
+
+// TODO: a better name :)
+export function checkoutWithContentAndLogger(
+	content: TreeContent,
+	args?: {
+		events?: Listenable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+	},
+): { checkout: TreeCheckout; logger: MockLogger } {
 	const forest = forestWithContent(content);
-	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
+	const logger = new MockLogger();
+	const checkout = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+		logger,
 	});
+	return { checkout, logger };
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
