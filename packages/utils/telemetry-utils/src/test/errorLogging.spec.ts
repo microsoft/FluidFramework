@@ -1099,6 +1099,14 @@ describe("Error Discovery", () => {
 			),
 			"normalized loggingError with errorRunningExternalCode flag is external",
 		);
+
+		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
+		assert(
+			isExternalError(
+				normalizeError(loggingError, { props: { errorRunningExternalCode: "callback" } }),
+			),
+			"normalized loggingError with errorRunningExternalCode string value is external",
+		);
 	});
 
 	it("isFluidError", () => {
