@@ -166,7 +166,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 
 				provider.processMessages();
 
-				await takeSnapshot(provider.trees[0], "-final");
+				await takeSnapshot(provider.trees[0], "final");
 			},
 		},
 		{
