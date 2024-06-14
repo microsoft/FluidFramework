@@ -11,8 +11,11 @@ import {
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { InMemoryApiCounters, type IApiCounters } from "@fluidframework/server-services-client";
+import {
+	IRedisClientConnectionManager,
+	InMemoryApiCounters,
+	type IApiCounters,
+} from "@fluidframework/server-services-utils";
 import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
 import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -327,10 +330,7 @@ class SocketIoServer implements core.IWebSocketServer {
 			if (packet.type === "pong") {
 				if (lastPingStartTime !== undefined) {
 					this.apiCounters.incrementCounter("pingPongCount", 1);
-					this.apiCounters.incrementCounter(
-						"pingPongLatency",
-						Date.now() - lastPingStartTime,
-					);
+					this.apiCounters.incrementCounter("pingPongLatency", Date.now() - lastPingStartTime);
 					lastPingStartTime = undefined;
 				}
 			}
