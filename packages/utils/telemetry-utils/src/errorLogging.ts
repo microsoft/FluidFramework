@@ -331,6 +331,8 @@ export function isTaggedTelemetryPropertyValue(
 	return typeof (x as Partial<Tagged<unknown>>)?.tag === "string";
 }
 
+// TODO: Use `unknown` instead (API breaking change)
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Borrowed from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples}
@@ -340,8 +342,6 @@ export function isTaggedTelemetryPropertyValue(
  *
  * @internal
  */
-// TODO: Use `unknown` instead (API breaking change)
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const getCircularReplacer = (): ((key: string, value: unknown) => any) => {
 	const seen = new WeakSet();
 	return (key: string, value: unknown): any => {
@@ -370,10 +370,10 @@ export class LoggingError
 	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
 {
 	private _errorInstanceId = uuid();
-	get errorInstanceId(): string {
+	public get errorInstanceId(): string {
 		return this._errorInstanceId;
 	}
-	overwriteErrorInstanceId(id: string): void {
+	public overwriteErrorInstanceId(id: string): void {
 		this._errorInstanceId = id;
 	}
 
@@ -383,7 +383,7 @@ export class LoggingError
 	 * @param props - telemetry props to include on the error for when it's logged
 	 * @param omitPropsFromLogging - properties by name to omit from telemetry props
 	 */
-	constructor(
+	public constructor(
 		message: string,
 		props?: ITelemetryBaseProperties,
 		private readonly omitPropsFromLogging: Set<string> = new Set(),
@@ -464,9 +464,9 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
 	// Note that this matches ContainerErrorTypes/DriverErrorTypes' genericError
-	errorType = NORMALIZED_ERROR_TYPE;
+	public readonly errorType = NORMALIZED_ERROR_TYPE;
 
-	constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {
+	public constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {
 		super(errorProps.message);
 
 		if (errorProps.stack !== undefined) {

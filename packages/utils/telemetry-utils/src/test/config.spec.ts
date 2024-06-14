@@ -218,16 +218,16 @@ describe("Config", () => {
 	}
 
 	class HybridSettingsProvider implements SettingsProvider, IConfigProviderBase {
-		constructor(private readonly store: Record<string, SettingType | ConfigTypes>) {}
+		public constructor(private readonly store: Record<string, SettingType | ConfigTypes>) {}
 
-		getRawConfig(name: string): ConfigTypes {
+		public getRawConfig(name: string): ConfigTypes {
 			// The point here is to use `getSetting`
 			// eslint-disable-next-line unicorn/no-null
 			const val = this.getSetting(name, null);
 			return val ?? undefined;
 		}
 
-		getSetting<T extends SettingType>(
+		public getSetting<T extends SettingType>(
 			settingName: string,
 			defaultValue: T,
 			namespace?: string,
@@ -236,7 +236,7 @@ describe("Config", () => {
 			return (this.store[key] as T) ?? defaultValue;
 		}
 
-		SettingsProvider: SettingsProvider = this;
+		public readonly SettingsProvider: SettingsProvider = this;
 	}
 
 	it("Typing - SettingsProvider", () => {

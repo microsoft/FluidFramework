@@ -25,20 +25,20 @@ import type {
 class TestLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
-	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
+	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	supportsTags?: true | undefined;
+	public supportsTags?: true | undefined;
 }
 
 const standardEventProperties = ["eventName", "duration", "count"];

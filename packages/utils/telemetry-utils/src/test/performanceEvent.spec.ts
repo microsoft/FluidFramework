@@ -14,11 +14,11 @@ class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;
 	public eventsLogged: number = 0;
 
-	constructor() {
+	public constructor() {
 		super();
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		if (event.category === "error") {
 			++this.errorsLogged;
 		}
