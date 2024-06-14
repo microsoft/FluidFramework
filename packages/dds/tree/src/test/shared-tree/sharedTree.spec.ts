@@ -1918,28 +1918,29 @@ describe("SharedTree", () => {
 				view.initialize("42");
 			});
 		});
+	});
 
-		it("throws when an invalid type is inserted at runtime", async () => {
-			const provider = new TestTreeProviderLite(1);
-			const [sharedTree] = provider.trees;
-			const sf = new SchemaFactory("test");
+	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	it("throws when an invalid type is inserted at runtime", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		const sf = new SchemaFactory("test");
 
-			// No validation failures when initializing the tree for the first time.
-			// Stored schema is set up so 'foo' is an array of strings.
-			const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
-			const view = sharedTree.viewWith(
-				new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
-			);
-			view.initialize({ foo: ["42"] });
-			assert.throws(
-				() => {
-					// The cast here is necessary as the API provided by `insertAtEnd` is typesafe with respect
-					// to the schema, so in order to insert invalid content we need to bypass the types.
-					view.root.foo.insertAtEnd(3 as unknown as string);
-				},
-				validateUsageError(/Tree does not conform to schema./),
-			);
-		});
+		const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+		);
+		view.initialize({ foo: ["42"] });
+		assert.throws(
+			() => {
+				// The cast here is necessary as the API provided by `insertAtEnd` is typesafe with respect
+				// to the schema, so in order to insert invalid content we need to bypass the types.
+				view.root.foo.insertAtEnd(3 as unknown as string);
+			},
+			validateUsageError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
+		);
 	});
 });
 
