@@ -70,6 +70,7 @@ export interface ObjectWithOptionalNumber {
 	optNumber?: number;
 }
 export const objectWithOptionalNumberNotPresent: ObjectWithOptionalNumber = {};
+// @ts-expect-error exactOptionalPropertyTypes requires `optNumber?: number` to allow `undefined` for this assignment
 export const objectWithOptionalNumberUndefined: ObjectWithOptionalNumber = { optNumber: undefined };
 export const objectWithOptionalNumberDefined: ObjectWithOptionalNumber = { optNumber: 4 };
 export interface ObjectWithNumberOrUndefined {
