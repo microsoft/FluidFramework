@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -31,10 +31,7 @@ export type TelemetryEventPropertyTypeExt =
 	| boolean
 	| undefined
 	| (string | number | boolean)[]
-	| {
-			[key: string]: // Flat objects can have the same properties as the event itself
-			string | number | boolean | undefined | (string | number | boolean)[];
-	  };
+	| Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
 
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
@@ -53,9 +50,10 @@ export interface ITaggedTelemetryPropertyTypeExt {
  * JSON-serializable properties, which will be logged with telemetry.
  * @alpha
  */
-export interface ITelemetryPropertiesExt {
-	[index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
-}
+export type ITelemetryPropertiesExt = Record<
+	string,
+	TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>
+>;
 
 /**
  * Interface for logging telemetry statements.
