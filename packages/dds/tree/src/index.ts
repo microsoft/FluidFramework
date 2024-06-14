@@ -272,7 +272,6 @@ export {
 	type TreeArrayNodeBase,
 	type ITree,
 	type TreeNodeSchema,
-	TreeConfiguration,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type ITreeConfigurationOptions,
