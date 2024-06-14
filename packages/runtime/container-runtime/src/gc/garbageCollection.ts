@@ -1017,8 +1017,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.telemetryTracker.nodeUsed(trackedId, {
 			id: fullPath,
 			usageType: reason,
-			currentReferenceTimestampMs:
-				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
+			currentReferenceTimestampMs: timestampMs,
 			packagePath,
 			completedGCRuns: this.completedRuns,
 			isTombstoned,
@@ -1114,12 +1113,10 @@ export class GarbageCollector implements IGarbageCollector {
 	public addedOutboundReference(
 		fromNodePath: string,
 		toNodePath: string,
-		timestampMs: number | undefined,
+		timestampMs: number,
 		autorecovery?: true,
 	) {
-		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
-		// logging as nothing interesting would have happened worth logging.
-		if (!this.shouldRunGC || timestampMs === undefined) {
+		if (!this.shouldRunGC) {
 			return;
 		}
 

@@ -517,7 +517,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			return false;
 		}
 
-		this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
+		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
+		// because it doesn't run in detached container and doesn't need to know about this route.
+		if (messageTimestampMs) {
+			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
+		}
 
 		this.aliasMap.set(alias, context.id);
 		this.aliasedDataStores.add(context.id);

@@ -3415,11 +3415,15 @@ export class ContainerRuntime
 	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
-		this.garbageCollector.addedOutboundReference(
-			fromPath,
-			toPath,
-			messageTimestampMs ?? this.getCurrentReferenceTimestampMs(),
+		// This is always called when processing an op so messageTimestampMs should exist. Due to back-compat
+		// across the data store runtime / container runtime boundary, this may be undefined and if so, get
+		// the timestamp from the last processed message which must exist.
+		const timestampMs = messageTimestampMs ?? this.getCurrentReferenceTimestampMs();
+		assert(
+			timestampMs !== undefined,
+			"message timestamp must exist when calling addedGCOutboundRoute",
 		);
+		this.garbageCollector.addedOutboundReference(fromPath, toPath, timestampMs);
 	}
 
 	/**

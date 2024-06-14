@@ -368,7 +368,7 @@ export interface IGarbageCollector {
 	addedOutboundReference(
 		fromNodePath: string,
 		toNodePath: string,
-		timestampMs: number | undefined,
+		timestampMs: number,
 		autorecovery?: true,
 	): void;
 	/** Called to process a garbage collection message. */
