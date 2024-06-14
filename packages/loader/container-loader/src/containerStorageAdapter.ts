@@ -93,10 +93,11 @@ export class ContainerStorageAdapter
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
 		this._summarizeProtocolTree = shouldSummarizeProtocolTree;
-		this.logger.sendTelemetryEvent({
-			eventName: "isSummarizeProtocolTreeEnabled",
-			details: { value: this._summarizeProtocolTree ?? false },
-		});
+		if (this._summarizeProtocolTree !== undefined)
+			this.logger.sendTelemetryEvent({
+				eventName: "isSummarizeProtocolTreeEnabled",
+				details: { value: this._summarizeProtocolTree ?? false },
+			});
 	}
 
 	disposed: boolean = false;
