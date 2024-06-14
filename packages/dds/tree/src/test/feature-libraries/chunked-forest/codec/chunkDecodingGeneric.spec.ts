@@ -116,16 +116,21 @@ const rootDecoder: ChunkDecoder = {
 	},
 };
 
+const idDecodingContext = {
+	idCompressor: testIdCompressor,
+	originatorId: testIdCompressor.localSessionId,
+};
+
 describe("chunkDecodingGeneric", () => {
 	it("DecoderContext", () => {
-		const cache = new DecoderContext(["a", "b"], [], testIdCompressor);
+		const cache = new DecoderContext(["a", "b"], [], idDecodingContext);
 		assert.equal(cache.identifier("X"), "X");
 		assert.equal(cache.identifier(0), "a");
 		assert.equal(cache.identifier(1), "b");
 	});
 
 	it("readStreamIdentifier", () => {
-		const cache = new DecoderContext(["a", "b"], [], testIdCompressor);
+		const cache = new DecoderContext(["a", "b"], [], idDecodingContext);
 		const stream: StreamCursor = { data: ["X", 0, 1], offset: 0 };
 		assert.equal(readStreamIdentifier(stream, cache), "X");
 		assert.equal(stream.offset, 1);
@@ -142,7 +147,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ a: 0 }],
 			data: [[0, 5]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, testIdCompressor);
+		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, idDecodingContext);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];
@@ -157,7 +162,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ b: "content" }],
 			data: [[0]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, testIdCompressor);
+		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, idDecodingContext);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];

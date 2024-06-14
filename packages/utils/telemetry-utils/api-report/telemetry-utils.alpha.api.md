@@ -99,9 +99,7 @@ export class MockLogger implements ITelemetryBaseLogger {
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    // (undocumented)
     readonly minLogLevel: LogLevel;
-    // (undocumented)
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     // (undocumented)
     toTelemetryLogger(): ITelemetryLoggerExt;

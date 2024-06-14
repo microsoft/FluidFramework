@@ -829,8 +829,6 @@ export interface ITrace {
 
 // @public
 export interface ITree extends IFluidLoadable {
-    // @deprecated
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -1079,7 +1077,7 @@ export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 // @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind_2<ISharedDirectory>;
 
-// @alpha @deprecated
+// @alpha
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
@@ -1178,16 +1176,6 @@ export interface TreeChangeEvents {
     treeChanged(): void;
 }
 
-// @public @deprecated
-export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
-    readonly enableSchemaValidation: boolean;
-    // (undocumented)
-    readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly schema: TSchema;
-}
-
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
@@ -1215,6 +1203,8 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> e
 
 // @public
 export abstract class TreeNode implements WithType {
+    static [Symbol.hasInstance](value: unknown): value is TreeNode;
+    static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
     abstract get [type](): string;
     protected constructor();
 }

@@ -306,9 +306,11 @@ describe("schemaBasedEncoding", () => {
 
 				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
+					originatorId: testIdCompressor.localSessionId,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 					idCompressor,
 				};
+				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				// End to end test
 				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
