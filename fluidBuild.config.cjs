@@ -41,7 +41,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["check:format", "eslint", "good-fences", "depcruise", "check:release-tags"],
+			dependsOn: [
+				"check:format",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -293,19 +300,15 @@ module.exports = {
 			"npm-package-exports-apis-linted": [
 				// Rollout suppressions - enable only after tools are updated to support policy
 				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^azure/",
 				"^common/",
-				"^examples/",
-				"^experimental/",
-				"^packages/",
 
 				// Packages that violate the API linting rules
-				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
-				"^packages/service-clients/azure-client/",
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
+				// AB#8288 api-extractor Internal Error: symbol has a ts.SyntaxKind.SourceFile declaration
+				"^packages/framework/fluid-framework/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -477,7 +480,8 @@ module.exports = {
 		},
 		// Requirements applied to all `public` packages.
 		publicPackageRequirements: {
-			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			// The following scripts combined with npm-package-exports-apis-linted policy are all currently required
+			// to ensure api-extractor is run correctly in local builds and pipelines.
 			requiredScripts: [
 				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
 				// {
@@ -491,10 +495,6 @@ module.exports = {
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
-				},
-				{
-					name: "check:release-tags",
-					body: "api-extractor run --local --config ./api-extractor-lint.json",
 				},
 			],
 			// All of our public packages should be using api-extractor
