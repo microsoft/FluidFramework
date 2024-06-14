@@ -305,8 +305,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		this.emit("transactionCommitted", this.transactions.size === 0);
 		if (commits.length === 0) {
-			this.emit("transactionCommitted", this.transactions.size === 0);
 			return undefined;
 		}
 
@@ -326,7 +326,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			newCommits: [newHead],
 		} as const;
 
-		this.emit("transactionCommitted", this.transactions.size === 0);
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 
@@ -353,8 +352,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		this.emit("transactionAborted", this.transactions.size === 0);
 		if (commits.length === 0) {
-			this.emit("transactionAborted", this.transactions.size === 0);
 			return [undefined, []];
 		}
 
@@ -378,7 +377,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			removedCommits: commits,
 		} as const;
 
-		this.emit("transactionAborted", this.transactions.size === 0);
 		this.emit("beforeChange", changeEvent);
 		this.head = startCommit;
 		this.emit("afterChange", changeEvent);

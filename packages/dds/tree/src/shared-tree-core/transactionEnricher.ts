@@ -16,7 +16,9 @@ export class TransactionEnricher<TChange> {
 	private readonly transactionCommits: GraphCommit<TChange>[] = [];
 	/**
 	 * The number of commits before the start of each active transaction scope.
-	 * Index 0 is used for the outermost transaction scope, the number of commits before it will always be 0.
+	 * For a stack of `n` transaction scopes, the array will contain `n` integers,
+	 * where the integer at index `i` is the number of commits made before the start of the `i`th transaction scope
+	 * (therefore, the first element in the array, if present, is always 0)
 	 */
 	private readonly transactionScopesStart: number[] = [];
 
