@@ -11,11 +11,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
-import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
+import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
+	ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
 
 /**
@@ -25,20 +25,20 @@ import {
 class TestLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryPerformanceEventExt[] = [];
 
-	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
+	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
+	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	supportsTags?: true | undefined;
+	public supportsTags?: true | undefined;
 }
 
 const standardEventProperties = ["eventName", "duration", "count"];
@@ -179,7 +179,7 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
 		assert.strictEqual(event.count, 1);
-		assert(event.duration !== bucketProperties.get("bucket1")!.duration);
+		assert(event.duration !== bucketProperties.get("bucket1")?.duration);
 	});
 
 	it("generates telemetry event from buffered data when disposed", () => {

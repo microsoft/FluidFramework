@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
@@ -13,8 +13,9 @@ import {
 
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
-import { IEventSampler, createSampledLogger } from "../utils.js";
+import type { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import type { IEventSampler } from "../utils.js";
+import { createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {
@@ -85,7 +86,6 @@ describe("Sampling", () => {
 	/**
 	 * Creates an event sampler that uses a systematic approach to sampling (Sampling every nth event)
 	 */
-	// eslint-disable-next-line unicorn/consistent-function-scoping
 	function createSystematicEventSampler(options: { samplingRate: number }): IEventSampler {
 		let eventCount = -1;
 		return {
@@ -265,7 +265,6 @@ describe("Sampling", () => {
 		let exampleAppDataBoolean1 = true;
 		let exampleAppDataModeString = "ready";
 
-		/* eslint-disable unicorn/consistent-function-scoping */
 		const shouldSampleEvent = (
 			appNumber1: number,
 			appNumber2: number,
@@ -277,7 +276,6 @@ describe("Sampling", () => {
 
 			return shouldSample;
 		};
-		/* eslint-enable */
 
 		const customEventSampler: IEventSampler = {
 			sample: () =>

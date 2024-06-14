@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+export type { MonitoringContext, IConfigProvider } from "./config.js";
 export {
 	createChildMonitoringContext,
-	MonitoringContext,
 	sessionStorageConfigProvider,
 	mixinMonitoringContext,
-	IConfigProvider,
 	loggerToMonitoringContext,
 	wrapConfigProviderWithDefaults,
 } from "./config.js";
@@ -20,12 +19,12 @@ export {
 	UsageError,
 	validatePrecondition,
 } from "./error.js";
+export type { IFluidErrorAnnotations } from "./errorLogging.js";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
 	generateStack,
 	getCircularReplacer,
-	IFluidErrorAnnotations,
 	isExternalError,
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
@@ -43,29 +42,33 @@ export {
 	raiseConnectedEvent,
 	safeRaiseEvent,
 } from "./events.js";
-export { hasErrorInstanceId, IFluidErrorBase, isFluidError } from "./fluidErrorBase.js";
+export type { IFluidErrorBase } from "./fluidErrorBase.js";
+export { hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
+export type {
+	IPerformanceEventMarkers,
+	ITelemetryLoggerPropertyBag,
+	ITelemetryLoggerPropertyBags,
+	MultiSinkLoggerProperties,
+	TelemetryEventPropertyTypes,
+} from "./logger.js";
 export {
 	eventNamespaceSeparator,
 	createChildLogger,
 	createMultiSinkLogger,
 	formatTick,
-	IPerformanceEventMarkers,
-	ITelemetryLoggerPropertyBag,
-	ITelemetryLoggerPropertyBags,
-	MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	tagData,
 	tagCodeArtifacts,
 	TelemetryDataTag,
-	TelemetryEventPropertyTypes,
 } from "./logger.js";
 export { MockLogger } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper.js";
-export { createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils.js";
-export {
+export type { IEventSampler, ISampledTelemetryLogger } from "./utils.js";
+export { createSampledLogger } from "./utils.js";
+export type {
 	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,

@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
-	FluidErrorTypes,
-	IGenericError,
-	IUsageError,
-} from "@fluidframework/core-interfaces/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { IGenericError, IUsageError } from "@fluidframework/core-interfaces/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
 	LoggingError,
@@ -18,8 +15,8 @@ import {
 	normalizeError,
 	wrapError,
 } from "./errorLogging.js";
-import { IFluidErrorBase } from "./fluidErrorBase.js";
-import { ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type { IFluidErrorBase } from "./fluidErrorBase.js";
+import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * Throws a UsageError with the given message if the condition is not met.
@@ -46,7 +43,7 @@ export function validatePrecondition(
  * @internal
  */
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-	readonly errorType = FluidErrorTypes.genericError;
+	public readonly errorType = FluidErrorTypes.genericError;
 
 	/**
 	 * Create a new GenericError
@@ -54,7 +51,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 	 * @param error - inner error object
 	 * @param props - Telemetry props to include when the error is logged
 	 */
-	constructor(
+	public constructor(
 		message: string,
 		// TODO: Use `unknown` instead (API breaking change because error is not just an input parameter, but a public member of the class)
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
@@ -72,9 +69,9 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
  * @internal
  */
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-	readonly errorType = FluidErrorTypes.usageError;
+	public readonly errorType = FluidErrorTypes.usageError;
 
-	constructor(message: string, props?: ITelemetryBaseProperties) {
+	public constructor(message: string, props?: ITelemetryBaseProperties) {
 		super(message, { ...props, usageError: true });
 	}
 }
@@ -86,10 +83,10 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
  * @internal
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	readonly errorType = FluidErrorTypes.dataCorruptionError;
-	readonly canRetry = false;
+	public readonly errorType = FluidErrorTypes.dataCorruptionError;
+	public readonly canRetry = false;
 
-	constructor(message: string, props: ITelemetryBaseProperties) {
+	public constructor(message: string, props: ITelemetryBaseProperties) {
 		super(message, { ...props, dataProcessingError: 1 });
 	}
 }

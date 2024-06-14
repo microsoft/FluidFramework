@@ -4,24 +4,24 @@
 
 ```ts
 
-import { ConfigTypes } from '@fluidframework/core-interfaces';
+import type { ConfigTypes } from '@fluidframework/core-interfaces';
 import type { EventEmitter } from '@fluid-internal/client-utils';
-import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import type { EventEmitterEventType } from '@fluid-internal/client-utils';
+import type { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import type { IDisposable } from '@fluidframework/core-interfaces';
-import { IErrorBase } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces/internal';
+import type { IErrorBase } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IGenericError } from '@fluidframework/core-interfaces/internal';
 import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { IUsageError } from '@fluidframework/core-interfaces/internal';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { IUsageError } from '@fluidframework/core-interfaces/internal';
 import { Lazy } from '@fluidframework/core-utils/internal';
-import { LogLevel } from '@fluidframework/core-interfaces';
-import { Tagged } from '@fluidframework/core-interfaces';
-import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { LogLevel } from '@fluidframework/core-interfaces';
+import type { Tagged } from '@fluidframework/core-interfaces';
+import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
@@ -60,10 +60,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 }
 
 // @alpha (undocumented)
-export interface ITelemetryLoggerPropertyBag {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
+export type ITelemetryLoggerPropertyBag = Record<string, TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)>;
 
 // @alpha (undocumented)
 export interface ITelemetryLoggerPropertyBags {
@@ -80,10 +77,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 }
 
 // @alpha
-export interface ITelemetryPropertiesExt {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
-}
+export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
 // @alpha
 export class MockLogger implements ITelemetryBaseLogger {

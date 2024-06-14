@@ -6,10 +6,10 @@
 import { performance } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
-import {
-	type ITelemetryGenericEventExt,
+import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryGenericEventExt,
+	ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
 
 /**
@@ -58,7 +58,7 @@ interface Measurements {
  * @internal
  */
 export class SampledTelemetryHelper implements IDisposable {
-	disposed: boolean = false;
+	public disposed: boolean = false;
 
 	private readonly measurementsMap = new Map<string, Measurements>();
 
