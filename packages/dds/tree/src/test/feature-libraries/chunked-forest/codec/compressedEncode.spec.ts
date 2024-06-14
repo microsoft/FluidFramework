@@ -57,11 +57,17 @@ import {
 	NodeShape,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { FieldBatch } from "../../../../feature-libraries/chunked-forest/index.js";
+import type {
+	FieldBatch,
+	FieldBatchEncodingContext,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
-import { cursorForJsonableTreeField } from "../../../../feature-libraries/index.js";
+import {
+	TreeCompressionStrategy,
+	cursorForJsonableTreeField,
+} from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
@@ -75,18 +81,20 @@ const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 
 const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
 
-export function makeFieldBatchCodec(
+function makeFieldBatchCodec(
 	options: ICodecOptions,
 	cache: EncoderCache,
-	idCompressor = testIdCompressor,
-): IJsonCodec<FieldBatch, EncodedFieldBatch, JsonCompatibleReadOnly> {
+): IJsonCodec<FieldBatch, EncodedFieldBatch, JsonCompatibleReadOnly, FieldBatchEncodingContext> {
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
-		encode: (data: FieldBatch): EncodedFieldBatch => {
+		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			return compressedEncode(data, cache);
 		},
-		decode: (data: EncodedFieldBatch): FieldBatch => {
+		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, idCompressor).map((chunk) => chunk.cursor());
+			return decode(data, {
+				idCompressor: context.idCompressor,
+				originatorId: context.originatorId,
+			}).map((chunk) => chunk.cursor());
 		},
 	});
 }
@@ -107,13 +115,17 @@ describe("compressedEncode", () => {
 					fieldKinds,
 					testIdCompressor,
 				);
-				const codec = makeFieldBatchCodec(
-					{ jsonValidator: typeboxValidator },
-					cache,
-					testIdCompressor,
-				);
-				const result = codec.encode(input);
-				const decoded = codec.decode(result);
+				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, cache);
+				const result = codec.encode(input, {
+					encodeType: TreeCompressionStrategy.Compressed,
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				});
+				const decoded = codec.decode(result, {
+					encodeType: TreeCompressionStrategy.Compressed,
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				});
 				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
 
@@ -145,7 +157,10 @@ describe("compressedEncode", () => {
 				const processed = handleShapesAndIdentifiers(version, [buffer]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
-				const decoded = readValue(stream, shape, testIdCompressor);
+				const decoded = readValue(stream, shape, {
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				});
 				assert(stream.offset === stream.data.length);
 				assert.deepEqual(decoded, value);
 			});

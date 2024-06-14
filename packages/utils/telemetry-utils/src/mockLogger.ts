@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -14,8 +14,10 @@ import { createChildLogger } from "./logger.js";
 import type { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
- * The MockLogger records events sent to it, and then can walk back over those events
- * searching for a set of expected events to match against the logged events.
+ * Mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} implementation.
+ *
+ * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
+ * match against the logged events.
  *
  * @alpha
  */
@@ -23,7 +25,14 @@ export class MockLogger implements ITelemetryBaseLogger {
 	// TODO: don't expose mutability to external consumers
 	public events: ITelemetryBaseEvent[] = [];
 
-	public constructor(public readonly minLogLevel?: LogLevel) {}
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.minLogLevel}
+	 */
+	public readonly minLogLevel: LogLevel;
+
+	public constructor(minLogLevel?: LogLevel) {
+		this.minLogLevel = minLogLevel ?? LogLevel.default;
+	}
 
 	public clear(): void {
 		this.events = [];
@@ -33,8 +42,13 @@ export class MockLogger implements ITelemetryBaseLogger {
 		return createChildLogger({ logger: this });
 	}
 
-	public send(event: ITelemetryBaseEvent): void {
-		this.events.push(event);
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
+	 */
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
+			this.events.push(event);
+		}
 	}
 
 	/**

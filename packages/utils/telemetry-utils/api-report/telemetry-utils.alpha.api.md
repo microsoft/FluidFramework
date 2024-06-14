@@ -81,7 +81,7 @@ export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeE
 
 // @alpha
 export class MockLogger implements ITelemetryBaseLogger {
-    constructor(minLogLevel?: LogLevel | undefined);
+    constructor(minLogLevel?: LogLevel);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
@@ -93,10 +93,8 @@ export class MockLogger implements ITelemetryBaseLogger {
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    // (undocumented)
-    readonly minLogLevel?: LogLevel | undefined;
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
+    readonly minLogLevel: LogLevel;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     // (undocumented)
     toTelemetryLogger(): ITelemetryLoggerExt;
 }

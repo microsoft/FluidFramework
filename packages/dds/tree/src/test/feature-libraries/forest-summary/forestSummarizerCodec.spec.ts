@@ -37,6 +37,7 @@ const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
+	originatorId: testIdCompressor.localSessionId,
 	idCompressor: testIdCompressor,
 };
 

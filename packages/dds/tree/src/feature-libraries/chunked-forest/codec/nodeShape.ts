@@ -51,9 +51,14 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 
 		if (this.value === 0) {
-			const compressedId =
-				cache.idCompressor.tryRecompress(cursor.value as StableId) ?? cursor.value;
-			encodeValue(compressedId, this.value, outputBuffer);
+			const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(
+				cursor.value as StableId,
+			);
+			const opSpaceCompressedId =
+				sessionSpaceCompressedId !== undefined
+					? cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId)
+					: cursor.value;
+			encodeValue(opSpaceCompressedId, this.value, outputBuffer);
 		} else {
 			encodeValue(cursor.value, this.value, outputBuffer);
 		}

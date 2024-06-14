@@ -587,6 +587,7 @@ declare function get_old_ClassDeclaration_MockLogger():
 declare function use_current_ClassDeclaration_MockLogger(
     use: TypeOnly<current.MockLogger>): void;
 use_current_ClassDeclaration_MockLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockLogger());
 
 /*

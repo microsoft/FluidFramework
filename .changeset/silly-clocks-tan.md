@@ -15,9 +15,9 @@ To make the details of schema compatibilities that SharedTree supports more clea
 `TreeView.error` has been functionally replaced with the `compatibility` property.
 Users desiring the previous strict behavior should use `view.compatibility.isEquivalent` at appropriate places in application logic.
 
-# `ITree.schematize` deprecation
+# `ITree.schematize` removal
 
-`ITree.schematize` has been deprecated in favor of `ITree.viewWith`.
+`ITree.schematize` (and its argument `TreeConfiguration`) has been removed. Instead, call `ITree.viewWith` and provide it a `TreeViewConfiguration`.
 Unlike `schematize`, `viewWith` does not implicitly initialize the document.
 As such, it doesn't take an `initialTree` property.
 Instead, applications should initialize their trees in document creation codepaths using the added `TreeView.initialize` API.
@@ -68,6 +68,15 @@ const view = tree.viewWith(treeConfig);
 
 Besides only making the initial tree required to specify in places that actually perform document initialization, this is beneficial for mutation semantics: `tree.viewWith` never modifies the state of the underlying tree.
 This means applications are free to attempt to view a document using multiple schemas (e.g. legacy versions of their document format) without worrying about altering the document state.
+
+If existing code used schematize in a context where it wasn't known whether the document needed to be initialized, you can leverage `TreeView.compatibility` like so:
+
+```typescript
+const view = tree.viewWith(config);
+if (view.compatibility.canInitialize) {
+	view.initialize(initialTree);
+}
+```
 
 # Separate `schemaChanged` event on `TreeView`
 

@@ -71,11 +71,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
-import {
-	SchemaFactory,
-	TreeConfiguration,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
@@ -96,6 +92,7 @@ import {
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
+	validateUsageError,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -1921,36 +1918,29 @@ describe("SharedTree", () => {
 				view.initialize("42");
 			});
 		});
+	});
 
-		it("schema validation throws as expected", async () => {
-			const provider = new TestTreeProviderLite(1);
-			const [sharedTree] = provider.trees;
-			const sf = new SchemaFactory("test");
+	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	it("throws when an invalid type is inserted at runtime", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		const sf = new SchemaFactory("test");
 
-			// No validation failures when initializing the tree for the first time.
-			// Stored schema is set up so 'foo' is an array of strings.
-			const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
-			const view = sharedTree.viewWith(
-				new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
-			);
-			view.initialize({ foo: ["42"] });
-
-			// Trying to use the tree with a view schema that makes 'foo' an array of strings or numbers
-			// should not cause compile-time errors when inserting a number, but stored schema validation
-			// should kick in and throw an error.
-			const viewschema = sf.object("myObject", {
-				foo: sf.array("foo", [sf.string, sf.number]),
-			});
-			const tree = sharedTree.schematize(
-				new TreeConfiguration(viewschema, () => ({ foo: ["42"] }), {
-					enableSchemaValidation: true,
-				}),
-			);
-
-			assert.throws(() => {
-				tree.root.foo.insertAtEnd(3);
-			}, "Tree does not conform to schema.");
-		});
+		const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+		);
+		view.initialize({ foo: ["42"] });
+		assert.throws(
+			() => {
+				// The cast here is necessary as the API provided by `insertAtEnd` is typesafe with respect
+				// to the schema, so in order to insert invalid content we need to bypass the types.
+				view.root.foo.insertAtEnd(3 as unknown as string);
+			},
+			validateUsageError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
+		);
 	});
 });
 
