@@ -61,7 +61,7 @@ export class SampledTelemetryHelper implements IDisposable {
 	private _disposed: boolean = false;
 
 	/**
-	 * {@inheritDoc IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
