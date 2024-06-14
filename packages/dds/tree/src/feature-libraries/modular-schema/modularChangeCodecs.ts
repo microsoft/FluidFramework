@@ -326,6 +326,7 @@ function makeModularChangeCodec(
 					trees: fieldsCodec.encode(treesToEncode, {
 						encodeType: chunkCompressionStrategy,
 						schema: context.schema,
+						originatorId: context.originatorId,
 						idCompressor: context.idCompressor,
 					}),
 			  };
@@ -341,6 +342,7 @@ function makeModularChangeCodec(
 
 		const chunks = fieldsCodec.decode(encoded.trees, {
 			encodeType: chunkCompressionStrategy,
+			originatorId: context.originatorId,
 			idCompressor: context.idCompressor,
 		});
 		const getChunk = (index: number): TreeChunk => {

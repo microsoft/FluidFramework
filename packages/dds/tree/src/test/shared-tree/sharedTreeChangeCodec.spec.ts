@@ -45,8 +45,11 @@ describe("sharedTreeChangeCodec", () => {
 				assert.equal(context.schema?.schema, dummyTestSchema);
 				return uncompressedEncode(data);
 			},
-			decode: (data: EncodedFieldBatch): FieldBatch => {
-				return decode(data, testIdCompressor).map((chunk) => chunk.cursor());
+			decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+				return decode(data, {
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				}).map((chunk) => chunk.cursor());
 			},
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
