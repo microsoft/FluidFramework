@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils/internal';
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
 	type IDeltaConnection,
 	type IDeltaHandler,
-} from '@fluidframework/datastore-definitions/internal';
+} from "@fluidframework/datastore-definitions/internal";
 
-import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
+import { type IShimDeltaHandler, type IUnstampedContents } from "./types.js";
 
 /**
  * Represents a connection to a Shim data store that can receive and submit deltas.
@@ -25,7 +25,7 @@ import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 export class PreMigrationDeltaConnection implements IDeltaConnection {
 	public constructor(
 		private readonly deltaConnection: IDeltaConnection,
-		private readonly shimDeltaHandler: IShimDeltaHandler
+		private readonly shimDeltaHandler: IShimDeltaHandler,
 	) {}
 
 	public get connected(): boolean {
@@ -69,7 +69,7 @@ export class StampDeltaConnection implements IDeltaConnection {
 	public constructor(
 		private readonly deltaConnection: IDeltaConnection,
 		private readonly shimDeltaHandler: IShimDeltaHandler,
-		private readonly attributes: IChannelAttributes
+		private readonly attributes: IChannelAttributes,
 	) {}
 
 	public get connected(): boolean {
@@ -78,7 +78,10 @@ export class StampDeltaConnection implements IDeltaConnection {
 
 	// This is for submitting v2 ops
 	public submit(messageContent: IUnstampedContents, localOpMetadata: unknown): void {
-		assert(messageContent.fluidMigrationStamp === undefined, 0x835 /* Should not be stamping ops twice! */);
+		assert(
+			messageContent.fluidMigrationStamp === undefined,
+			0x835 /* Should not be stamping ops twice! */,
+		);
 		messageContent.fluidMigrationStamp = {
 			...this.attributes,
 		};

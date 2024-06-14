@@ -162,12 +162,12 @@ export const runRetriableAttachProcess = async ({
 					state: AttachState.Detached,
 					blobs: "outstanding",
 					redirectTable: new Map<string, string>(),
-			  }
+				}
 			: {
 					state: AttachState.Attaching,
 					summary: createAttachmentSummary(),
 					blobs: "none",
-			  };
+				};
 		setAttachmentData(currentData);
 	}
 

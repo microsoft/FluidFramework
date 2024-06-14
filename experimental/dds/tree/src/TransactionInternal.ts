@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils/internal';
+import { assert } from "@fluidframework/core-utils/internal";
 
-import { Result, assertWithMessage, copyPropertyIfDefined, fail } from './Common.js';
+import { Result, assertWithMessage, copyPropertyIfDefined, fail } from "./Common.js";
 import {
 	BadPlaceValidationResult,
 	BadRangeValidationResult,
@@ -15,12 +15,17 @@ import {
 	insertIntoTrait,
 	validateStablePlace,
 	validateStableRange,
-} from './EditUtilities.js';
-import { DetachedSequenceId, NodeId, TraitLabel, isDetachedSequenceId } from './Identifiers.js';
-import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
-import { RevisionView, TransactionView } from './RevisionView.js';
-import { TreeViewNode } from './TreeView.js';
-import { rangeFromStableRange } from './TreeViewUtilities.js';
+} from "./EditUtilities.js";
+import {
+	DetachedSequenceId,
+	NodeId,
+	TraitLabel,
+	isDetachedSequenceId,
+} from "./Identifiers.js";
+import { ReconciliationChange, ReconciliationPath } from "./ReconciliationPath.js";
+import { RevisionView, TransactionView } from "./RevisionView.js";
+import { TreeViewNode } from "./TreeView.js";
+import { rangeFromStableRange } from "./TreeViewUtilities.js";
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -34,7 +39,7 @@ import {
 	SetValueInternal,
 	StablePlaceInternal,
 	StableRangeInternal,
-} from './persisted-types/index.js';
+} from "./persisted-types/index.js";
 
 /**
  * Result of applying a transaction.
@@ -320,8 +325,11 @@ export class GenericTransaction {
 		 * require extensive computation.
 		 */
 		const pathWithOngoingEdit = new Proxy(path, {
-			get: (target: ReconciliationPath, prop: string): ReconciliationPath[number | 'length'] => {
-				if (prop === 'length') {
+			get: (
+				target: ReconciliationPath,
+				prop: string,
+			): ReconciliationPath[number | "length"] => {
+				if (prop === "length") {
 					return target.length + 1;
 				}
 				return prop === String(target.length) ? ongoingEdit : target[prop];
@@ -329,7 +337,9 @@ export class GenericTransaction {
 		});
 
 		while (iterResult.done !== true) {
-			if (this.applyChange(iterResult.value, pathWithOngoingEdit).status !== EditStatus.Applied) {
+			if (
+				this.applyChange(iterResult.value, pathWithOngoingEdit).status !== EditStatus.Applied
+			) {
 				return this;
 			}
 
@@ -351,7 +361,7 @@ export class GenericTransaction {
 	public applyChange(change: ChangeInternal, path: ReconciliationPath = []): this {
 		assert(this.open, 0x639 /* Editor must be open to apply changes. */);
 		if (this.state.status !== EditStatus.Applied) {
-			fail('Cannot apply change to an edit unless all previous changes have applied');
+			fail("Cannot apply change to an edit unless all previous changes have applied");
 		}
 		const resolutionResult = this.policy.tryResolveChange(this.state, change, path);
 		if (Result.isError(resolutionResult)) {
@@ -366,11 +376,11 @@ export class GenericTransaction {
 					view: changeResult.result,
 					changes: this.changes.concat(change),
 					steps: this.steps.concat({ resolvedChange, after: changeResult.result }),
-			  }
+				}
 			: {
 					...this.state,
 					...changeResult.error,
-			  };
+				};
 		return this;
 	}
 }
@@ -400,7 +410,7 @@ export interface GenericTransactionPolicy {
 	tryResolveChange(
 		state: SucceedingTransactionState,
 		change: ChangeInternal,
-		path: ReconciliationPath
+		path: ReconciliationPath,
 	): Result<ChangeInternal, TransactionFailure>;
 
 	/**
@@ -462,7 +472,10 @@ export namespace TransactionInternal {
 		 * @param change - Change to resolve
 		 * @returns Result.Ok which contains change
 		 */
-		public tryResolveChange(state: ValidState, change: ChangeInternal): Result.Ok<ChangeInternal> {
+		public tryResolveChange(
+			state: ValidState,
+			change: ChangeInternal,
+		): Result.Ok<ChangeInternal> {
 			return Result.ok(change);
 		}
 
@@ -481,7 +494,7 @@ export namespace TransactionInternal {
 							kind: FailureKind.UnusedDetachedSequence,
 							sequenceId: this.detached.keys().next().value,
 						},
-				  })
+					})
 				: Result.ok(state.view);
 		}
 
@@ -505,7 +518,7 @@ export namespace TransactionInternal {
 				case ChangeTypeInternal.SetValue:
 					return this.applySetValue(state, change);
 				default:
-					return fail('Attempted to apply unsupported change');
+					return fail("Attempted to apply unsupported change");
 			}
 		}
 
@@ -542,7 +555,7 @@ export namespace TransactionInternal {
 				},
 				(detachedId) => {
 					detachedSequenceNotFound = detachedId;
-				}
+				},
 			);
 
 			if (idAlreadyPresent !== undefined) {
@@ -577,7 +590,7 @@ export namespace TransactionInternal {
 			const view = state.view.addNodes(map.values());
 			this.detached.set(
 				change.destination,
-				newIds ?? fail('Unhandled failure case in Transaction.createViewNodesForTree')
+				newIds ?? fail("Unhandled failure case in Transaction.createViewNodesForTree"),
 			);
 			return Result.ok(view);
 		}
@@ -660,8 +673,14 @@ export namespace TransactionInternal {
 
 		private applyConstraint(state: ValidState, change: ConstraintInternal): ChangeResult {
 			// TODO: Implement identityHash and contentHash
-			assert(change.identityHash === undefined, 0x63a /* identityHash constraint is not implemented */);
-			assert(change.contentHash === undefined, 0x63b /* contentHash constraint is not implemented */);
+			assert(
+				change.identityHash === undefined,
+				0x63a /* identityHash constraint is not implemented */,
+			);
+			assert(
+				change.contentHash === undefined,
+				0x63b /* contentHash constraint is not implemented */,
+			);
 
 			const validatedChange = validateStableRange(state.view, change.toConstrain);
 			if (validatedChange.result !== RangeValidationResultKind.Valid) {
@@ -680,7 +699,7 @@ export namespace TransactionInternal {
 										rangeFailure: validatedChange.result,
 									},
 								},
-						  })
+							})
 					: Result.error({
 							status: EditStatus.Malformed,
 							failure: {
@@ -691,7 +710,7 @@ export namespace TransactionInternal {
 									rangeFailure: validatedChange.result,
 								},
 							},
-					  });
+						});
 			}
 
 			const { start, end } = rangeFromStableRange(state.view, validatedChange);
@@ -764,7 +783,7 @@ export namespace TransactionInternal {
 		protected createViewNodesForTree(
 			sequence: Iterable<BuildNodeInternal>,
 			onCreateNode: (stableId: NodeId, node: TreeViewNode) => boolean,
-			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void
+			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void,
 		): NodeId[] | undefined {
 			const topLevelIds: NodeId[] = [];
 			const unprocessed: BuildNodeInternal[] = [];
@@ -811,7 +830,7 @@ export namespace TransactionInternal {
 					definition: node.definition,
 					traits,
 				};
-				copyPropertyIfDefined(node, newNode, 'payload');
+				copyPropertyIfDefined(node, newNode, "payload");
 				if (onCreateNode(node.identifier, newNode)) {
 					return undefined;
 				}
@@ -821,7 +840,7 @@ export namespace TransactionInternal {
 
 		private getDetachedNodeIds(
 			detachedId: DetachedSequenceId,
-			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void
+			onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void,
 		): readonly NodeId[] | undefined {
 			// Retrieve the detached sequence from the void.
 			const detachedNodeIds = this.detached.get(detachedId);
@@ -843,39 +862,39 @@ export namespace TransactionInternal {
 		/**
 		 * Transaction has an unused DetachedSequenceId
 		 */
-		UnusedDetachedSequence = 'UnusedDetachedSequence',
+		UnusedDetachedSequence = "UnusedDetachedSequence",
 		/**
 		 * Transaction has a build operation using an already in use DetachedSequenceID.
 		 */
-		DetachedSequenceIdAlreadyInUse = 'DetachedSequenceIdAlreadyInUse',
+		DetachedSequenceIdAlreadyInUse = "DetachedSequenceIdAlreadyInUse",
 		/**
 		 * Transaction tries to operate on an unknown DetachedSequenceID
 		 */
-		DetachedSequenceNotFound = 'DetachedSequenceNotFound',
+		DetachedSequenceNotFound = "DetachedSequenceNotFound",
 		/**
 		 * Transaction has a build which uses a duplicated NodeId
 		 */
-		DuplicateIdInBuild = 'DuplicateIdInBuild',
+		DuplicateIdInBuild = "DuplicateIdInBuild",
 		/**
 		 * Transaction tries to build a node using an ID which is already used in the current state
 		 */
-		IdAlreadyInUse = 'IdAlreadyInUse',
+		IdAlreadyInUse = "IdAlreadyInUse",
 		/**
 		 * Transaction tries to set value of an unknown node
 		 */
-		UnknownId = 'UnknownId',
+		UnknownId = "UnknownId",
 		/**
 		 * Transaction tries to insert in an invalid Place
 		 */
-		BadPlace = 'BadPlace',
+		BadPlace = "BadPlace",
 		/**
 		 * Transaction tries to detach an invalid Range
 		 */
-		BadRange = 'BadRange',
+		BadRange = "BadRange",
 		/**
 		 * Transaction has an invalid constraint
 		 */
-		ConstraintViolation = 'ConstraintViolation',
+		ConstraintViolation = "ConstraintViolation",
 	}
 
 	/**
@@ -1098,18 +1117,18 @@ export namespace TransactionInternal {
 		/**
 		 * The constraint failed because it applies to an invalid range
 		 */
-		BadRange = 'BadRange',
+		BadRange = "BadRange",
 		/**
 		 * The constraint failed because the length prescribed by the constraint does not match the length of range being constrained
 		 */
-		BadLength = 'BadLength',
+		BadLength = "BadLength",
 		/**
 		 * The constraint failed because the parent prescribed by the constraint does not match the actual parent of the range being constrained
 		 */
-		BadParent = 'BadParent',
+		BadParent = "BadParent",
 		/**
 		 * The constraint failed because the trait label prescribed by the constraint does not match the actual trait label of the range being constrained
 		 */
-		BadLabel = 'BadLabel',
+		BadLabel = "BadLabel",
 	}
 }

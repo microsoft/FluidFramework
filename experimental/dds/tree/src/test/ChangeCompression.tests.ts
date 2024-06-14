@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
+import { expect } from "chai";
 
-import { ChangeCompressor, compressEdit, decompressEdit } from '../ChangeCompression.js';
-import { StablePlace, StableRange } from '../ChangeTypes.js';
-import { newEdit, newEditId } from '../EditUtilities.js';
-import { convertStableRangeIds } from '../IdConversion.js';
-import { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers.js';
-import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
-import { MutableStringInterner, StringInterner } from '../StringInterner.js';
-import { InterningTreeCompressor, TreeCompressor } from '../TreeCompressor.js';
+import { ChangeCompressor, compressEdit, decompressEdit } from "../ChangeCompression.js";
+import { StablePlace, StableRange } from "../ChangeTypes.js";
+import { newEdit, newEditId } from "../EditUtilities.js";
+import { convertStableRangeIds } from "../IdConversion.js";
+import { DetachedSequenceId, OpSpaceNodeId } from "../Identifiers.js";
+import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from "../NodeIdUtilities.js";
+import { MutableStringInterner, StringInterner } from "../StringInterner.js";
+import { InterningTreeCompressor, TreeCompressor } from "../TreeCompressor.js";
 import {
 	BuildInternal,
 	ChangeInternal,
@@ -26,23 +26,27 @@ import {
 	Edit,
 	PlaceholderTree,
 	SetValueInternal,
-} from '../persisted-types/index.js';
+} from "../persisted-types/index.js";
 
-import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
+import { makeNodeIdContext, setUpTestTree } from "./utilities/TestUtilities.js";
 
 // CompressedChange type for this test suite. It aligns with CompressedChangeInternal but doesn't actually compress trees.
 type TestCompressedChange = CompressedChangeInternal<OpSpaceNodeId>;
 
-class TestTreeCompressor<TPlaceholder extends DetachedSequenceId | never> implements TreeCompressor<TPlaceholder> {
+class TestTreeCompressor<TPlaceholder extends DetachedSequenceId | never>
+	implements TreeCompressor<TPlaceholder>
+{
 	public compressTreeCalls: PlaceholderTree<TPlaceholder>[] = [];
 	public decompressTreeCalls: CompressedPlaceholderTree<OpSpaceNodeId, TPlaceholder>[] = [];
 
-	public constructor(private readonly treeCompressor = new InterningTreeCompressor<TPlaceholder>()) {}
+	public constructor(
+		private readonly treeCompressor = new InterningTreeCompressor<TPlaceholder>(),
+	) {}
 
 	public compress<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
 	): CompressedPlaceholderTree<TId, TPlaceholder> {
 		this.compressTreeCalls.push(node);
 		return this.treeCompressor.compress(node, interner, idNormalizer);
@@ -51,14 +55,14 @@ class TestTreeCompressor<TPlaceholder extends DetachedSequenceId | never> implem
 	public decompress<TId extends OpSpaceNodeId>(
 		node: CompressedPlaceholderTree<TId, TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
 	): PlaceholderTree<TPlaceholder> {
 		this.decompressTreeCalls.push(node);
 		return this.treeCompressor.decompress(node, interner, idNormalizer);
 	}
 }
 
-describe('ChangeCompression', () => {
+describe("ChangeCompression", () => {
 	const treeCompressor = new TestTreeCompressor();
 
 	beforeEach(() => {
@@ -78,7 +82,7 @@ describe('ChangeCompression', () => {
 	function testCompression(
 		edit: Edit<ChangeInternal>,
 		idNormalizer: ContextualizedNodeIdNormalizer<OpSpaceNodeId>,
-		compressed?: Edit<TestCompressedChange>
+		compressed?: Edit<TestCompressedChange>,
 	): void {
 		const interner = new MutableStringInterner();
 		const compressedEdit = compressEdit(compressor, interner, idNormalizer, edit);
@@ -87,7 +91,8 @@ describe('ChangeCompression', () => {
 		}
 
 		const buildChanges = edit.changes.filter<BuildInternal>(
-			(change: ChangeInternal): change is BuildInternal => change.type === ChangeTypeInternal.Build
+			(change: ChangeInternal): change is BuildInternal =>
+				change.type === ChangeTypeInternal.Build,
 		);
 		let treeIndex = 0;
 		for (const buildChange of buildChanges) {
@@ -103,11 +108,18 @@ describe('ChangeCompression', () => {
 
 		const internedStrings = interner.getSerializable();
 		const newInterner = new MutableStringInterner(internedStrings);
-		const decompressedEdit = decompressEdit(compressor, newInterner, idNormalizer, compressedEdit);
+		const decompressedEdit = decompressEdit(
+			compressor,
+			newInterner,
+			idNormalizer,
+			compressedEdit,
+		);
 
-		const compressedBuildChanges = compressedEdit.changes.filter<CompressedBuildInternal<OpSpaceNodeId>>(
+		const compressedBuildChanges = compressedEdit.changes.filter<
+			CompressedBuildInternal<OpSpaceNodeId>
+		>(
 			(change): change is CompressedBuildInternal<OpSpaceNodeId> =>
-				change.type === ChangeTypeInternal.CompressedBuild
+				change.type === ChangeTypeInternal.CompressedBuild,
 		);
 
 		treeIndex = 0;
@@ -122,9 +134,11 @@ describe('ChangeCompression', () => {
 		expect(decompressedEdit).to.deep.equal(edit);
 	}
 
-	it('Compresses the BuildNodes of an edit with Build Changes', () => {
+	it("Compresses the BuildNodes of an edit with Build Changes", () => {
 		const tree = setUpTestTree();
-		const edit = newEdit(ChangeInternal.insertTree([tree.toChangeNode()], StablePlace.after(tree.left)));
+		const edit = newEdit(
+			ChangeInternal.insertTree([tree.toChangeNode()], StablePlace.after(tree.left)),
+		);
 		const expectedCompressedEdit: Edit<TestCompressedChange> = {
 			id: edit.id,
 			changes: [
@@ -134,13 +148,16 @@ describe('ChangeCompression', () => {
 						new InterningTreeCompressor().compress(
 							tree,
 							new MutableStringInterner(),
-							scopeIdNormalizer(tree)
+							scopeIdNormalizer(tree),
 						),
 					],
 					type: ChangeTypeInternal.CompressedBuild,
 				},
 				{
-					destination: { side: 1, referenceSibling: tree.normalizeToOpSpace(tree.left.identifier) },
+					destination: {
+						side: 1,
+						referenceSibling: tree.normalizeToOpSpace(tree.left.identifier),
+					},
 					source: 0 as DetachedSequenceId,
 					type: ChangeTypeInternal.Insert,
 				},
@@ -149,7 +166,7 @@ describe('ChangeCompression', () => {
 		testCompression(edit, scopeIdNormalizer(tree), expectedCompressedEdit);
 	});
 
-	it('compresses id references in Detach changes to op space', () => {
+	it("compresses id references in Detach changes to op space", () => {
 		const tree = setUpTestTree();
 		const detach: DetachInternal = {
 			destination: 0 as DetachedSequenceId,
@@ -162,11 +179,16 @@ describe('ChangeCompression', () => {
 		};
 		testCompression(edit, scopeIdNormalizer(tree), {
 			...edit,
-			changes: [{ ...detach, source: convertStableRangeIds(detach.source, (id) => tree.normalizeToOpSpace(id)) }],
+			changes: [
+				{
+					...detach,
+					source: convertStableRangeIds(detach.source, (id) => tree.normalizeToOpSpace(id)),
+				},
+			],
 		});
 	});
 
-	it('compresses id references in SetValue changes to op space', () => {
+	it("compresses id references in SetValue changes to op space", () => {
 		const context = makeNodeIdContext();
 		const id = context.generateNodeId();
 		const setValue: SetValueInternal = {
@@ -184,7 +206,7 @@ describe('ChangeCompression', () => {
 		});
 	});
 
-	it('compresses id references in Constraint changes to op space', () => {
+	it("compresses id references in Constraint changes to op space", () => {
 		const tree = setUpTestTree();
 		const constraint: ConstraintInternal = {
 			toConstrain: StableRange.only(tree),
@@ -201,7 +223,9 @@ describe('ChangeCompression', () => {
 				{
 					type: constraint.type,
 					effect: constraint.effect,
-					toConstrain: convertStableRangeIds(constraint.toConstrain, (id) => tree.normalizeToOpSpace(id)),
+					toConstrain: convertStableRangeIds(constraint.toConstrain, (id) =>
+						tree.normalizeToOpSpace(id),
+					),
 				},
 			],
 		});

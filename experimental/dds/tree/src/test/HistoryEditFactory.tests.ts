@@ -3,19 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
+import { expect } from "chai";
 
-import { HistoryEditFactoryEvents, revert } from '../HistoryEditFactory.js';
-import { DetachedSequenceId, TraitLabel } from '../Identifiers.js';
-import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types/index.js';
+import { HistoryEditFactoryEvents, revert } from "../HistoryEditFactory.js";
+import { DetachedSequenceId, TraitLabel } from "../Identifiers.js";
+import {
+	ChangeInternal,
+	DetachInternal,
+	StablePlaceInternal,
+	StableRangeInternal,
+} from "../persisted-types/index.js";
 
-import { expectDefined } from './utilities/TestCommon.js';
-import { refreshTestTree } from './utilities/TestUtilities.js';
+import { expectDefined } from "./utilities/TestCommon.js";
+import { refreshTestTree } from "./utilities/TestUtilities.js";
 
-describe('revert', () => {
+describe("revert", () => {
 	const testTree = refreshTestTree();
 
-	it('can revert a single detached node', () => {
+	it("can revert a single detached node", () => {
 		const firstDetachedId = 0 as DetachedSequenceId;
 		const node = testTree.buildLeafInternal();
 		const firstBuild = ChangeInternal.build([node], firstDetachedId);
@@ -23,16 +28,18 @@ describe('revert', () => {
 		const insertedBuild = ChangeInternal.build([firstDetachedId], insertedNodeId);
 		const insertChange = ChangeInternal.insert(
 			insertedNodeId,
-			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 		);
-		const result = expectDefined(revert([firstBuild, insertedBuild, insertChange], testTree.view));
+		const result = expectDefined(
+			revert([firstBuild, insertedBuild, insertChange], testTree.view),
+		);
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
 		expect(revertedChange.source.start.referenceSibling).to.deep.equal(node.identifier);
 		expect(revertedChange.source.end.referenceSibling).to.deep.equal(node.identifier);
 	});
 
-	it('can revert multiple detached nodes', () => {
+	it("can revert multiple detached nodes", () => {
 		const firstDetachedId = 0 as DetachedSequenceId;
 		const firstNode = testTree.buildLeafInternal();
 		const firstBuild = ChangeInternal.build([firstNode], firstDetachedId);
@@ -40,25 +47,30 @@ describe('revert', () => {
 		const secondNode = testTree.buildLeafInternal();
 		const secondBuild = ChangeInternal.build([secondNode], secondDetachedId);
 		const insertedNodeId = 2 as DetachedSequenceId;
-		const insertedBuild = ChangeInternal.build([firstDetachedId, secondDetachedId], insertedNodeId);
+		const insertedBuild = ChangeInternal.build(
+			[firstDetachedId, secondDetachedId],
+			insertedNodeId,
+		);
 		const insertChange = ChangeInternal.insert(
 			insertedNodeId,
-			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 		);
-		const result = expectDefined(revert([firstBuild, secondBuild, insertedBuild, insertChange], testTree.view));
+		const result = expectDefined(
+			revert([firstBuild, secondBuild, insertedBuild, insertChange], testTree.view),
+		);
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
 		expect(revertedChange.source.start.referenceSibling).to.deep.equal(firstNode.identifier);
 		expect(revertedChange.source.end.referenceSibling).to.deep.equal(secondNode.identifier);
 	});
 
-	it('handles reverting the insert of empty nodes, with subsequent non-empty nodes', () => {
+	it("handles reverting the insert of empty nodes, with subsequent non-empty nodes", () => {
 		// build and insert of empty traits
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
 		const emptyTraitInsert = ChangeInternal.insert(
 			emptyTraitNodeId,
-			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 		);
 
 		// build and insert of non-empty traits
@@ -69,10 +81,13 @@ describe('revert', () => {
 		const insertedBuild = ChangeInternal.build([firstDetachedId], insertedNodeId);
 		const insertChange = ChangeInternal.insert(
 			insertedNodeId,
-			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 		);
 		const result = expectDefined(
-			revert([emptyTraitBuild, emptyTraitInsert, firstBuild, insertedBuild, insertChange], testTree.view)
+			revert(
+				[emptyTraitBuild, emptyTraitInsert, firstBuild, insertedBuild, insertChange],
+				testTree.view,
+			),
 		);
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
@@ -83,50 +98,53 @@ describe('revert', () => {
 	 * empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
 	 * empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
 	 */
-	it('handles reverting the insert of empty nodes, with subsequent empty nodes of same DetachedSequenceId', () => {
+	it("handles reverting the insert of empty nodes, with subsequent empty nodes of same DetachedSequenceId", () => {
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
 		const emptyTraitInsert = ChangeInternal.insert(
 			emptyTraitNodeId,
-			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 		);
-		const result = revert([emptyTraitBuild, emptyTraitInsert, emptyTraitInsert], testTree.view);
+		const result = revert(
+			[emptyTraitBuild, emptyTraitInsert, emptyTraitInsert],
+			testTree.view,
+		);
 		expect(result).to.be.undefined;
 	});
 
-	it('handles reverting the detach of an empty trait', () => {
+	it("handles reverting the detach of an empty trait", () => {
 		const insertedNodeId = 0 as DetachedSequenceId;
 		const result = expectDefined(
 			revert(
 				[
 					ChangeInternal.detach(
 						StableRangeInternal.all({
-							label: 'someNonExistentTraitLabel' as TraitLabel,
+							label: "someNonExistentTraitLabel" as TraitLabel,
 							parent: testTree.identifier,
 						}),
-						insertedNodeId
+						insertedNodeId,
 					),
 				],
-				testTree.view
-			)
+				testTree.view,
+			),
 		);
 		expect(result).to.have.lengthOf(0);
 	});
 
-	it('handles reverting the insert of an empty trait', () => {
+	it("handles reverting the insert of an empty trait", () => {
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
 		const emptyTraitInsert = ChangeInternal.insert(
 			emptyTraitNodeId,
-			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 		);
 		const result = expectDefined(revert([emptyTraitBuild, emptyTraitInsert], testTree.view));
 		expect(result).to.have.lengthOf(0);
 	});
 
-	describe('returns undefined for reverts that require more context than the view directly before the edit', () => {
-		describe('because the edit conflicted', () => {
-			it('when reverting a detach of a node that is not in the tree', () => {
+	describe("returns undefined for reverts that require more context than the view directly before the edit", () => {
+		describe("because the edit conflicted", () => {
+			it("when reverting a detach of a node that is not in the tree", () => {
 				let missingNodeEvents = 0;
 				const nodeNotInTree = testTree.buildLeafInternal();
 				const change = ChangeInternal.detach(StableRangeInternal.only(nodeNotInTree));
@@ -139,10 +157,10 @@ describe('revert', () => {
 				expect(result).to.be.undefined;
 			});
 
-			it('when reverting a set value of a node that is not in the tree', () => {
+			it("when reverting a set value of a node that is not in the tree", () => {
 				let missingNodeEvents = 0;
 				const nodeNotInTree = testTree.buildLeafInternal();
-				const change = ChangeInternal.setPayload(nodeNotInTree, '42');
+				const change = ChangeInternal.setPayload(nodeNotInTree, "42");
 				const result = revert([change], testTree.view, undefined, (event) => {
 					if (event === HistoryEditFactoryEvents.MissingNodes) {
 						missingNodeEvents++;
@@ -153,22 +171,27 @@ describe('revert', () => {
 			});
 		});
 
-		describe('because the edit was malformed', () => {
-			it('when reverting an insert whose source is not insertable', () => {
+		describe("because the edit was malformed", () => {
+			it("when reverting an insert whose source is not insertable", () => {
 				const detachedId = 0 as DetachedSequenceId;
 				let missingNodeEvents = 0;
 				// Revert an insert where the source is not a valid detached sequence ID (nothing has been built/detached with that ID)
 				expect(
 					revert(
-						[ChangeInternal.insert(detachedId, StablePlaceInternal.atStartOf(testTree.left.traitLocation))],
+						[
+							ChangeInternal.insert(
+								detachedId,
+								StablePlaceInternal.atStartOf(testTree.left.traitLocation),
+							),
+						],
 						testTree.view,
 						undefined,
 						(event) => {
 							if (event === HistoryEditFactoryEvents.MissingNodes) {
 								missingNodeEvents++;
 							}
-						}
-					)
+						},
+					),
 				).to.be.undefined;
 				expect(missingNodeEvents).to.equal(1);
 				// Revert a duplicate insert (the source has already been inserted by a previous insert in the same edit)
@@ -178,11 +201,11 @@ describe('revert', () => {
 							ChangeInternal.build([testTree.buildLeafInternal()], detachedId),
 							ChangeInternal.insert(
 								detachedId,
-								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+								StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 							),
 							ChangeInternal.insert(
 								detachedId,
-								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+								StablePlaceInternal.atStartOf(testTree.left.traitLocation),
 							),
 						],
 						testTree.view,
@@ -191,13 +214,13 @@ describe('revert', () => {
 							if (event === HistoryEditFactoryEvents.MissingNodes) {
 								missingNodeEvents++;
 							}
-						}
-					)
+						},
+					),
 				).to.be.undefined;
 				expect(missingNodeEvents).to.equal(2);
 			});
 
-			it('when reverting a detach whose destination is already occupied', () => {
+			it("when reverting a detach whose destination is already occupied", () => {
 				const detachedId = 0 as DetachedSequenceId;
 				let malformedEditEvents = 0;
 				let missingNodeEvents = 0;
@@ -218,8 +241,8 @@ describe('revert', () => {
 							if (event === HistoryEditFactoryEvents.MissingNodes) {
 								missingNodeEvents++;
 							}
-						}
-					)
+						},
+					),
 				).to.be.undefined;
 				expect(missingNodeEvents).to.equal(1);
 				// Revert a detach where the destination is already occupied due to a prior build
@@ -239,8 +262,8 @@ describe('revert', () => {
 							if (event === HistoryEditFactoryEvents.MissingNodes) {
 								missingNodeEvents++;
 							}
-						}
-					)
+						},
+					),
 				).to.be.undefined;
 				expect(malformedEditEvents).to.equal(1);
 			});

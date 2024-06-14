@@ -18,7 +18,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { type IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	type IFluidSerializer,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {

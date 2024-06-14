@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { NIL, v4 } from 'uuid';
+import { NIL, v4 } from "uuid";
 
-import { assertWithMessage } from './Common.js';
-import { StableId, UuidString } from './Identifiers.js';
+import { assertWithMessage } from "./Common.js";
+import { StableId, UuidString } from "./Identifiers.js";
 
-const hexadecimalCharCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as [
+const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
 	zero: number,
 	nine: number,
 	a: number,
@@ -47,7 +47,7 @@ export function isUuidString(str: string): str is UuidString {
 			case 13:
 			case 18:
 			case 23:
-				if (str.charAt(i) !== '-') {
+				if (str.charAt(i) !== "-") {
 					return false;
 				}
 				break;
@@ -93,20 +93,20 @@ export function isStableId(str: string): str is StableId {
 			case 13:
 			case 18:
 			case 23:
-				if (str.charAt(i) !== '-') {
+				if (str.charAt(i) !== "-") {
 					return false;
 				}
 				break;
 
 			case 14:
-				if (str.charAt(i) !== '4') {
+				if (str.charAt(i) !== "4") {
 					return false;
 				}
 				break;
 
 			case 19: {
 				const char = str.charAt(i);
-				if (char !== '8' && char !== '9' && char !== 'a' && char !== 'b') {
+				if (char !== "8" && char !== "9" && char !== "a" && char !== "b") {
 					return false;
 				}
 				break;

@@ -132,7 +132,12 @@
 			"packages/tools/devtools/devtools-browser-extension/dist/bundle/**"
 		],
 		"exclude-after-remap": false,
-		"extension": [".ts", ".tsx", ".js", ".jsx"],
+		"extension": [
+			".ts",
+			".tsx",
+			".js",
+			".jsx"
+		],
 		"include": [
 			"packages/**/src/**/*.*ts",
 			"packages/**/dist/**/*.*js",
@@ -141,7 +146,11 @@
 		],
 		"merge-async": true,
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
@@ -183,15 +192,27 @@
 	"fluidBuild": {
 		"tasks": {
 			"build": {
-				"dependsOn": ["^build", "build:docs", "build:gendocs:client", "checks"],
+				"dependsOn": [
+					"^build",
+					"build:docs",
+					"build:gendocs:client",
+					"checks"
+				],
 				"script": false
 			},
 			"build:api": {
-				"dependsOn": ["^build:docs", "build:gendocs:client"],
+				"dependsOn": [
+					"^build:docs",
+					"build:gendocs:client"
+				],
 				"script": false
 			},
 			"build:docs": {
-				"dependsOn": ["^build:docs", "build:gendocs:client", "build:readme"],
+				"dependsOn": [
+					"^build:docs",
+					"build:gendocs:client",
+					"build:readme"
+				],
 				"script": false
 			},
 			"build:gendocs:client": {
@@ -204,22 +225,36 @@
 				"script": false
 			},
 			"build:gendocs:client:azure": {
-				"after": ["^build:docs", "^ci:build:docs"]
+				"after": [
+					"^build:docs",
+					"^ci:build:docs"
+				]
 			},
 			"build:gendocs:client:examples": {
-				"after": ["^build:docs", "^ci:build:docs"]
+				"after": [
+					"^build:docs",
+					"^ci:build:docs"
+				]
 			},
 			"build:gendocs:client:experimental": {
-				"after": ["^build:docs", "^ci:build:docs"]
+				"after": [
+					"^build:docs",
+					"^ci:build:docs"
+				]
 			},
 			"build:gendocs:client:packages": {
-				"after": ["^build:docs", "^ci:build:docs"]
+				"after": [
+					"^build:docs",
+					"^ci:build:docs"
+				]
 			},
 			"build:readme": {
 				"dependsOn": []
 			},
 			"check:format": {
-				"dependsOn": ["check:format:repo"],
+				"dependsOn": [
+					"check:format:repo"
+				],
 				"script": false
 			},
 			"checks": {
@@ -248,25 +283,42 @@
 				"script": false
 			},
 			"ci:build": {
-				"dependsOn": ["^ci:build", "ci:build:docs"],
+				"dependsOn": [
+					"^ci:build",
+					"ci:build:docs"
+				],
 				"script": false
 			},
 			"ci:build:docs": {
-				"dependsOn": ["^ci:build:docs", "build:gendocs:client"],
+				"dependsOn": [
+					"^ci:build:docs",
+					"build:gendocs:client"
+				],
 				"script": false
 			},
 			"clean": {
-				"dependsOn": ["^clean", "clean:root", "clean:docs", "clean:nyc"],
+				"dependsOn": [
+					"^clean",
+					"clean:root",
+					"clean:docs",
+					"clean:nyc"
+				],
 				"script": false
 			},
 			"clean:docs": {
-				"before": ["*"]
+				"before": [
+					"*"
+				]
 			},
 			"clean:nyc": {
-				"before": ["*"]
+				"before": [
+					"*"
+				]
 			},
 			"format": {
-				"dependsOn": ["format:repo"],
+				"dependsOn": [
+					"format:repo"
+				],
 				"script": false
 			},
 			"generate:packageList": {
@@ -279,19 +331,29 @@
 				"script": false
 			},
 			"lint": {
-				"dependsOn": ["checks"],
+				"dependsOn": [
+					"checks"
+				],
 				"script": false
 			},
 			"lint:fix": {
-				"dependsOn": ["checks:fix"],
+				"dependsOn": [
+					"checks:fix"
+				],
 				"script": false
 			},
 			"prettier": {
-				"dependsOn": ["prettier:root", "^prettier"],
+				"dependsOn": [
+					"prettier:root",
+					"^prettier"
+				],
 				"script": false
 			},
 			"prettier:fix": {
-				"dependsOn": ["prettier:root:fix", "^prettier:fix"],
+				"dependsOn": [
+					"prettier:root:fix",
+					"^prettier:fix"
+				],
 				"script": false
 			}
 		}

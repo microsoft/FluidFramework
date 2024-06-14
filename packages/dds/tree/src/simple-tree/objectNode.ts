@@ -45,7 +45,11 @@ import {
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
-import { type RestrictiveReadonlyRecord, fail, type InternalUtilTypes } from "../util/index.js";
+import {
+	type RestrictiveReadonlyRecord,
+	fail,
+	type InternalUtilTypes,
+} from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
 /**

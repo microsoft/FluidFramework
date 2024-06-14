@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Result } from '../../Common.js';
-import { RevisionView } from '../../RevisionView.js';
+import { Result } from "../../Common.js";
+import { RevisionView } from "../../RevisionView.js";
 import {
 	ChangeResult,
 	GenericTransaction,
 	GenericTransactionPolicy,
 	TransactionInternal,
-} from '../../TransactionInternal.js';
-import { ChangeInternal, EditStatus } from '../../persisted-types/index.js';
+} from "../../TransactionInternal.js";
+import { ChangeInternal, EditStatus } from "../../persisted-types/index.js";
 
 /**
  * @internal
@@ -31,7 +31,10 @@ export namespace MockTransaction {
 	 *
 	 * @internal
 	 */
-	export function factory(view: RevisionView, options: Options = defaultOptions): GenericTransaction {
+	export function factory(
+		view: RevisionView,
+		options: Options = defaultOptions,
+	): GenericTransaction {
 		return new GenericTransaction(view, new Policy(options));
 	}
 
@@ -56,7 +59,7 @@ export namespace MockTransaction {
 				: Result.error({
 						status: this.options.statusOnClose,
 						failure: undefined as unknown as TransactionInternal.Failure,
-				  });
+					});
 		}
 
 		public dispatchChange(state): ChangeResult {

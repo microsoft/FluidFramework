@@ -127,7 +127,7 @@ describe("SchemaFactory Recursive methods", () => {
 						TreeNodeFromImplicitAllowedTypes<Types>,
 						Kind,
 						false
-				  >
+					>
 				: "Not a FieldSchema";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types
@@ -190,7 +190,7 @@ describe("SchemaFactory Recursive methods", () => {
 						TreeNodeFromImplicitAllowedTypes<Types>,
 						Kind,
 						false
-				  >
+					>
 				: "Not a FieldSchema";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 				? Types

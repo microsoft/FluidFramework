@@ -3,19 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils/internal';
-import Denque from 'denque';
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import Denque from "denque";
 
-import { fail, noop } from './Common.js';
-import { EditLog, SequencedOrderedEditId } from './EditLog.js';
-import { EditId } from './Identifiers.js';
-import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath.js';
-import { Revision, RevisionValueCache } from './RevisionValueCache.js';
-import { RevisionView } from './RevisionView.js';
-import { EditingResult, TransactionInternal } from './TransactionInternal.js';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import { fail, noop } from "./Common.js";
+import { EditLog, SequencedOrderedEditId } from "./EditLog.js";
+import { EditId } from "./Identifiers.js";
+import {
+	ReconciliationChange,
+	ReconciliationEdit,
+	ReconciliationPath,
+} from "./ReconciliationPath.js";
+import { Revision, RevisionValueCache } from "./RevisionValueCache.js";
+import { RevisionView } from "./RevisionView.js";
+import { EditingResult, TransactionInternal } from "./TransactionInternal.js";
+import { ChangeInternal, Edit, EditStatus } from "./persisted-types/index.js";
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).
@@ -36,7 +40,11 @@ import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
  * skipping the first evaluation of an edit in a particular context due to setKnownEditingResult is still considered applying.
  * To use this call back to track when the actual computational work of applying edits is done, only count cases when `wasCached` is false.
  */
-export type EditStatusCallback = (editResult: EditStatus, editId: EditId, wasCached: boolean) => void;
+export type EditStatusCallback = (
+	editResult: EditStatus,
+	editId: EditId,
+	wasCached: boolean,
+) => void;
 
 /**
  * Callback for when a sequenced edit is applied.
@@ -73,12 +81,17 @@ export interface SequencedEditResult {
 /**
  * The data cached by `CachingLogViewer` for an edit.
  */
-export type EditCacheEntry = SuccessfulEditCacheEntry | UnsuccessfulEditCacheEntry | SummarizedEditResultCacheEntry;
+export type EditCacheEntry =
+	| SuccessfulEditCacheEntry
+	| UnsuccessfulEditCacheEntry
+	| SummarizedEditResultCacheEntry;
 
 /**
  * The data cached by `CachingLogViewer` for an edit that it has attempted to apply locally.
  */
-export type AttemptedEditResultCacheEntry = SuccessfulEditCacheEntry | UnsuccessfulEditCacheEntry;
+export type AttemptedEditResultCacheEntry =
+	| SuccessfulEditCacheEntry
+	| UnsuccessfulEditCacheEntry;
 
 /**
  * The data cached by `CachingLogViewer` for an edit that it has successfully applied locally.
@@ -197,7 +210,7 @@ export interface LogViewer {
  * Events reported by {@link CachingLogViewer} for diagnostics or testing purposes.
  */
 export enum CachingLogViewerDiagnosticEvents {
-	RevisionRetained = 'revisionRetained',
+	RevisionRetained = "revisionRetained",
 }
 
 /**
@@ -205,7 +218,10 @@ export enum CachingLogViewerDiagnosticEvents {
  * @public
  */
 export interface ICachingLogViewerEvents extends IEvent {
-	(event: CachingLogViewerDiagnosticEvents.RevisionRetained, listener: (revision: Revision) => void);
+	(
+		event: CachingLogViewerDiagnosticEvents.RevisionRetained,
+		listener: (revision: Revision) => void,
+	);
 }
 
 /**
@@ -215,7 +231,10 @@ export interface ICachingLogViewerEvents extends IEvent {
  * a CachingLogViewer instance, that instance should be disposed with `detachFromEditLog` to ensure it is garbage-collectable.
  * @alpha
  */
-export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents> implements LogViewer {
+export class CachingLogViewer
+	extends TypedEventEmitter<ICachingLogViewerEvents>
+	implements LogViewer
+{
 	public readonly log: EditLog<ChangeInternal>;
 
 	/**
@@ -299,7 +318,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		initialRevision?: [Revision, EditCacheEntry],
 		processEditStatus: EditStatusCallback = noop,
 		processSequencedEditResult: SequencedEditResultCallback = noop,
-		minimumSequenceNumber = 0
+		minimumSequenceNumber = 0,
 	) {
 		super();
 		this.log = log;
@@ -307,18 +326,20 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 			assert(Number.isInteger(initialRevision[0]), 0x628 /* revision must be an integer */);
 			assert(
 				this.log.isSequencedRevision(initialRevision[0]),
-				0x629 /* revision must correspond to the result of a SequencedEdit */
+				0x629 /* revision must correspond to the result of a SequencedEdit */,
 			);
 		}
 
 		this.sequencedRevisionCache = new RevisionValueCache(
 			CachingLogViewer.sequencedCacheSizeMax,
 			minimumSequenceNumber,
-			initialRevision ?? [0, { view: baseView }]
+			initialRevision ?? [0, { view: baseView }],
 		);
 		this.processEditStatus = processEditStatus ?? noop;
 		this.processSequencedEditResult = processSequencedEditResult ?? noop;
-		this.detachFromEditLog = this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
+		this.detachFromEditLog = this.log.registerEditAddedHandler(
+			this.handleEditAdded.bind(this),
+		);
 
 		// Registers a handler that is called when edits are evicted
 		this.log.registerEditEvictionHandler(this.evictCachedRevisions.bind(this));
@@ -328,7 +349,11 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * As a performance optimization, this method caches views generated by local edits if they are sequenced without
 	 * being interleaved with remote edits.
 	 */
-	private handleEditAdded(edit: Edit<ChangeInternal>, isLocal: boolean, wasLocal: boolean): void {
+	private handleEditAdded(
+		edit: Edit<ChangeInternal>,
+		isLocal: boolean,
+		wasLocal: boolean,
+	): void {
 		// Clear highestRevisionCacheEntry, since what revision is highest might change.
 		// Note that as an optimization we could skip clearing this when a local edit is sequenced.
 		this.highestRevisionCacheEntry = undefined;
@@ -350,12 +375,12 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 								view,
 								status: entry.status,
 								steps: entry.steps,
-						  }
+							}
 						: {
 								view,
 								status: entry.status,
 								failure: entry.failure,
-						  }
+							},
 				);
 				this.handleSequencedEditResult(edit, entry, []);
 			}
@@ -376,12 +401,15 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns the {@link EditCacheEntry} for the requested revision
 	 */
 	public getEditResultInMemory(revision: Revision): EditCacheEntry {
-		assert(revision >= this.log.earliestAvailableEditIndex, 0x62a /* revision not stored in memory */);
+		assert(
+			revision >= this.log.earliestAvailableEditIndex,
+			0x62a /* revision not stored in memory */,
+		);
 		const startingPoint = this.getStartingPoint(revision);
 		const { startRevision } = startingPoint;
 		let current: EditCacheEntry = startingPoint;
 		for (let i = startRevision; i < revision && i < this.log.length; i++) {
-			const edit = this.log.tryGetEditAtIndex(i) ?? fail('edit not found');
+			const edit = this.log.tryGetEditAtIndex(i) ?? fail("edit not found");
 			current = this.applyEdit(current.view, edit, i);
 		}
 		return current;
@@ -443,19 +471,22 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 			const localCacheIndex = revisionClamped - 1 - numberOfSequencedEdits;
 			if (localCacheIndex < length) {
 				const cached =
-					this.localRevisionCache.peekAt(localCacheIndex) ?? fail('missing tail of localRevisionViewCache');
+					this.localRevisionCache.peekAt(localCacheIndex) ??
+					fail("missing tail of localRevisionViewCache");
 				return {
 					...cached,
 					startRevision: revisionClamped,
 				};
 			} else {
-				current = this.localRevisionCache.peekAt(length - 1) ?? fail('missing tail of localRevisionViewCache');
+				current =
+					this.localRevisionCache.peekAt(length - 1) ??
+					fail("missing tail of localRevisionViewCache");
 				startRevision = numberOfSequencedEdits + length;
 			}
 		} else {
 			const [cachedRevision, cachedView] =
 				this.sequencedRevisionCache.getClosestEntry(revisionClamped) ??
-				fail('No preceding revision view cached.');
+				fail("No preceding revision view cached.");
 
 			startRevision = cachedRevision;
 			current = cachedView;
@@ -473,7 +504,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	private applyEdit(
 		prevView: RevisionView,
 		edit: Edit<ChangeInternal>,
-		editIndex: number
+		editIndex: number,
 	): AttemptedEditResultCacheEntry {
 		let editingResult: EditingResult;
 		let cached;
@@ -494,7 +525,8 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		}
 
 		const revision = editIndex + 1;
-		const nextView: RevisionView = editingResult.status === EditStatus.Applied ? editingResult.after : prevView;
+		const nextView: RevisionView =
+			editingResult.status === EditStatus.Applied ? editingResult.after : prevView;
 
 		const computedCacheEntry =
 			editingResult.status === EditStatus.Applied
@@ -510,7 +542,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 			// calls to this method for all local revisions prior, guaranteeing the correct push order.
 			assert(
 				revision === this.log.numberOfSequencedEdits + this.localRevisionCache.length + 1,
-				0x62b /* Local revision view cached out of order. */
+				0x62b /* Local revision view cached out of order. */,
 			);
 			this.localRevisionCache.push(computedCacheEntry);
 		}
@@ -532,7 +564,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	private handleSequencedEditResult(
 		edit: Edit<ChangeInternal>,
 		result: AttemptedEditResultCacheEntry,
-		reconciliationPath: ReconciliationPath
+		reconciliationPath: ReconciliationPath,
 	): void {
 		let wasLocal = false;
 		// This is the first time this sequenced edit has been processed by this LogViewer. If it was a local edit, log telemetry
@@ -566,14 +598,14 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 							const earliestEditSequenceNumber = earliestSequenced.sequenceNumber;
 							const targetSequenceNumber = Math.max(
 								earliestEditSequenceNumber,
-								orderedId.sequenceInfo.referenceSequenceNumber
+								orderedId.sequenceInfo.referenceSequenceNumber,
 							);
 							if (targetSequenceNumber < orderedId.sequenceInfo.sequenceNumber) {
 								const firstEdit = this.getEditResultFromSequenceNumber(targetSequenceNumber);
 								if (firstEdit !== undefined) {
 									if (firstEdit.status === EditStatus.Applied) {
 										const firstEditInfo = this.log.getOrderedEditId(
-											firstEdit.id
+											firstEdit.id,
 										) as SequencedOrderedEditId;
 										if (
 											firstEditInfo.sequenceInfo !== undefined &&
@@ -614,7 +646,9 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	/**
 	 * @returns Edit information for the earliest known sequenced edit.
 	 */
-	public earliestSequencedEditInMemory(): { edit: Edit<ChangeInternal>; sequenceNumber: number } | undefined {
+	public earliestSequencedEditInMemory():
+		| { edit: Edit<ChangeInternal>; sequenceNumber: number }
+		| undefined {
 		const earliestEditIndex = this.log.earliestAvailableEditIndex;
 		const lastSequencedEdit = this.log.numberOfSequencedEdits + earliestEditIndex - 1;
 		for (let index = earliestEditIndex; index <= lastSequencedEdit; ++index) {
@@ -633,11 +667,11 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns Edit result information for the edit at the given `index`.
 	 */
 	private getEditResultFromIndex(index: number): CachedEditingResult {
-		const edit = this.log.tryGetEditAtIndex(index) ?? fail('edit does not exist in memory');
+		const edit = this.log.tryGetEditAtIndex(index) ?? fail("edit does not exist in memory");
 		const before = this.getRevisionViewInMemory(index);
 		const resultAfter = this.getEditResultInMemory(index + 1);
 		if (resultAfter.status === undefined) {
-			fail('The status of every edit in memory should be known');
+			fail("The status of every edit in memory should be known");
 		}
 		return resultAfter.status === EditStatus.Applied
 			? {
@@ -647,7 +681,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 					changes: edit.changes,
 					view: resultAfter.view,
 					steps: resultAfter.steps,
-			  }
+				}
 			: {
 					id: edit.id,
 					status: resultAfter.status,
@@ -655,7 +689,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 					before,
 					view: resultAfter.view,
 					changes: edit.changes,
-			  };
+				};
 	}
 
 	/**
@@ -663,9 +697,14 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 	 * @returns Edit result information for the edit with the given sequence number or the nearest sequenced edit before that.
 	 * Undefined if no sequenced edit occurred at or prior to the given sequenceNumber.
 	 */
-	public getEditResultFromSequenceNumber(sequenceNumber: number): CachedEditingResult | undefined {
+	public getEditResultFromSequenceNumber(
+		sequenceNumber: number,
+	): CachedEditingResult | undefined {
 		const earliestSequenced = this.earliestSequencedEditInMemory();
-		if (earliestSequenced !== undefined && sequenceNumber >= earliestSequenced.sequenceNumber) {
+		if (
+			earliestSequenced !== undefined &&
+			sequenceNumber >= earliestSequenced.sequenceNumber
+		) {
 			const lowestIndex = this.log.getIndexOfId(earliestSequenced.edit.id);
 			const highestIndex = this.log.numberOfSequencedEdits - 1;
 			for (let index = highestIndex; index >= lowestIndex; --index) {
@@ -678,11 +717,14 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 					// `sequenceNumber`. This can happen when the edit for the requested `sequenceNumber` has either not yet been received or
 					// has been processed by a different DDS (several DDSes can share the same stream of operations and will only see those
 					// relevant to them). In such cases, we return the edit info for the last known edit before that.
-					if (orderedId.sequenceInfo && orderedId.sequenceInfo.sequenceNumber <= sequenceNumber) {
+					if (
+						orderedId.sequenceInfo &&
+						orderedId.sequenceInfo.sequenceNumber <= sequenceNumber
+					) {
 						const before = this.getRevisionViewInMemory(index);
 						const resultAfter = this.getEditResultInMemory(index + 1);
 						if (resultAfter.status === undefined) {
-							fail('The status of every edit in session should be known');
+							fail("The status of every edit in session should be known");
 						}
 						return resultAfter.status === EditStatus.Applied
 							? {
@@ -692,7 +734,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 									changes: edit.changes,
 									view: resultAfter.view,
 									steps: resultAfter.steps,
-							  }
+								}
 							: {
 									id: edit.id,
 									status: resultAfter.status,
@@ -700,7 +742,7 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 									before,
 									view: resultAfter.view,
 									changes: edit.changes,
-							  };
+								};
 					}
 				}
 			}

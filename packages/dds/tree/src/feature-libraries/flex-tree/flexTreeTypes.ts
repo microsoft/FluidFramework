@@ -301,7 +301,8 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
  *
  * @internal
  */
-export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema> extends FlexTreeNode {
+export interface FlexTreeMapNode<in out TSchema extends FlexMapNodeSchema>
+	extends FlexTreeNode {
 	readonly schema: TSchema;
 
 	/**
@@ -672,8 +673,8 @@ export type PropertyNameFromFieldKey<T extends string> =
 	T extends ReservedObjectNodeFieldPropertyNames
 		? `field${Capitalize<T>}`
 		: T extends `${ReservedObjectNodeFieldPropertyNamePrefixes}${Capitalize<string>}`
-		? `field${Capitalize<T>}`
-		: T;
+			? `field${Capitalize<T>}`
+			: T;
 
 /**
  * Field kinds that allow value assignment.
@@ -1019,10 +1020,10 @@ export type FlexTreeTypedFieldInner<
 > = Kind extends typeof FieldKinds.sequence
 	? FlexTreeSequenceField<Types>
 	: Kind extends typeof FieldKinds.required
-	? FlexTreeRequiredField<Types>
-	: Kind extends typeof FieldKinds.optional
-	? FlexTreeOptionalField<Types>
-	: FlexTreeField;
+		? FlexTreeRequiredField<Types>
+		: Kind extends typeof FieldKinds.optional
+			? FlexTreeOptionalField<Types>
+			: FlexTreeField;
 
 /**
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexAllowedTypes}.
@@ -1037,15 +1038,16 @@ export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> =
  * Schema aware specialization of {@link FlexTreeNode} for a given {@link FlexTreeNodeSchema}.
  * @internal
  */
-export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema
-	? FlexTreeLeafNode<TSchema>
-	: TSchema extends FlexMapNodeSchema
-	? FlexTreeMapNode<TSchema>
-	: TSchema extends FlexFieldNodeSchema
-	? FlexTreeFieldNode<TSchema>
-	: TSchema extends FlexObjectNodeSchema
-	? FlexTreeObjectNodeTyped<TSchema>
-	: FlexTreeNode;
+export type FlexTreeTypedNode<TSchema extends FlexTreeNodeSchema> =
+	TSchema extends LeafNodeSchema
+		? FlexTreeLeafNode<TSchema>
+		: TSchema extends FlexMapNodeSchema
+			? FlexTreeMapNode<TSchema>
+			: TSchema extends FlexFieldNodeSchema
+				? FlexTreeFieldNode<TSchema>
+				: TSchema extends FlexObjectNodeSchema
+					? FlexTreeObjectNodeTyped<TSchema>
+					: FlexTreeNode;
 
 // #endregion
 
@@ -1075,11 +1077,11 @@ export type FlexTreeUnboxFieldInner<
 > = Kind extends typeof FieldKinds.sequence
 	? FlexTreeSequenceField<TTypes>
 	: Kind extends typeof FieldKinds.required
-	? FlexTreeUnboxNodeUnion<TTypes>
-	: Kind extends typeof FieldKinds.optional
-	? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // TODO: forbidden
-	  unknown;
+		? FlexTreeUnboxNodeUnion<TTypes>
+		: Kind extends typeof FieldKinds.optional
+			? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
+			: // TODO: forbidden
+				unknown;
 
 /**
  * Schema aware unboxed union of tree types.
@@ -1094,12 +1096,12 @@ export type FlexTreeUnboxNodeUnion<TTypes extends FlexAllowedTypes> = TTypes ext
 	? InnerType extends FlexTreeNodeSchema
 		? FlexTreeUnboxNode<InnerType>
 		: InnerType extends Any
-		? FlexTreeNode
-		: // This case should not occur. If the result ever ends up unknown, look at places like this to debug.
-		  unknown
+			? FlexTreeNode
+			: // This case should not occur. If the result ever ends up unknown, look at places like this to debug.
+				unknown
 	: boolean extends IsArrayOfOne<TTypes>
-	? FlexTreeUnknownUnboxed // Unknown if this will unbox. This should mainly happen when TTypes is AllowedTypes.
-	: FlexTreeTypedNodeUnion<TTypes>; // Known to not be a single type, so known not to unbox.
+		? FlexTreeUnknownUnboxed // Unknown if this will unbox. This should mainly happen when TTypes is AllowedTypes.
+		: FlexTreeTypedNodeUnion<TTypes>; // Known to not be a single type, so known not to unbox.
 
 /**
  * `true` if T is known to be an array of one item.
@@ -1110,8 +1112,8 @@ export type FlexTreeUnboxNodeUnion<TTypes extends FlexAllowedTypes> = TTypes ext
 export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
 	? true
 	: 1 extends T["length"]
-	? boolean
-	: false;
+		? boolean
+		: false;
 
 /**
  * Schema aware unboxed tree type.
@@ -1120,15 +1122,16 @@ export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
  * Recursively unboxes that content as well if it does unboxing.
  * @internal
  */
-export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> = TSchema extends LeafNodeSchema
-	? TreeValue<TSchema["info"]>
-	: TSchema extends FlexMapNodeSchema
-	? FlexTreeMapNode<TSchema>
-	: TSchema extends FlexFieldNodeSchema
-	? FlexTreeFieldNode<TSchema>
-	: TSchema extends FlexObjectNodeSchema
-	? FlexTreeObjectNodeTyped<TSchema>
-	: FlexTreeUnknownUnboxed;
+export type FlexTreeUnboxNode<TSchema extends FlexTreeNodeSchema> =
+	TSchema extends LeafNodeSchema
+		? TreeValue<TSchema["info"]>
+		: TSchema extends FlexMapNodeSchema
+			? FlexTreeMapNode<TSchema>
+			: TSchema extends FlexFieldNodeSchema
+				? FlexTreeFieldNode<TSchema>
+				: TSchema extends FlexObjectNodeSchema
+					? FlexTreeObjectNodeTyped<TSchema>
+					: FlexTreeUnknownUnboxed;
 
 /**
  * Unboxed tree type for unknown schema cases.

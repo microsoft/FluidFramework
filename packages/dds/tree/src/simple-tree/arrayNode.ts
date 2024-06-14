@@ -215,8 +215,9 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @public
  */
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeArrayNodeBase<
+export interface TreeArrayNode<
+	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		TreeArrayNode
@@ -377,30 +378,106 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
 	entries(): IterableIterator<[number, T]>;
-	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
-	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
-	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
-	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+	every<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): this is readonly S[];
+	every(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
+	filter<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): S[];
+	filter(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): T[];
+	find<S extends T>(
+		predicate: (value: T, index: number, obj: readonly T[]) => value is S,
+		thisArg?: any,
+	): S | undefined;
+	find(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): T | undefined;
+	findIndex(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): number;
 	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
-	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
-	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+	flatMap<U, This = undefined>(
+		callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
+		thisArg?: This | undefined,
+	): U[];
+	forEach(
+		callbackfn: (value: T, index: number, array: readonly T[]) => void,
+		thisArg?: any,
+	): void;
 	includes(searchElement: T, fromIndex?: number | undefined): boolean;
 	indexOf(searchElement: T, fromIndex?: number | undefined): number;
 	join(separator?: string | undefined): string;
 	keys(): IterableIterator<number>;
 	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
 	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduceRight<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
 	slice(start?: number | undefined, end?: number | undefined): T[];
-	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	some(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
 	toLocaleString(): string;
 	toString(): string;
 	values(): IterableIterator<T>;
@@ -701,7 +778,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			getSequenceField(this).moveToIndex(index, sourceIndex);
 		}
 	}
-	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+	public moveRangeToStart(
+		sourceStart: number,
+		sourceEnd: number,
+		source?: TreeArrayNode,
+	): void {
 		if (source !== undefined) {
 			getSequenceField(this).moveRangeToStart(
 				sourceStart,

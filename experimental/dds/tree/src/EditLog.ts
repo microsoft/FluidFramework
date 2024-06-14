@@ -3,17 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import { assert, compareArrays } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-import { BTree } from '@tylerbu/sorted-btree-es6';
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import { assert, compareArrays } from "@fluidframework/core-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import type { ChangeCompressor } from './ChangeCompression.js';
-import { fail } from './Common.js';
-import type { EditId } from './Identifiers.js';
-import type { StringInterner } from './StringInterner.js';
-import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types/index.js';
+import type { ChangeCompressor } from "./ChangeCompression.js";
+import { fail } from "./Common.js";
+import type { EditId } from "./Identifiers.js";
+import type { StringInterner } from "./StringInterner.js";
+import {
+	Edit,
+	EditLogSummary,
+	EditWithoutId,
+	FluidEditHandle,
+} from "./persisted-types/index.js";
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -172,7 +177,9 @@ export function separateEditAndId<TChange>(edit: Edit<TChange>): {
  * @returns the number of handles saved to the provided edit log summary.
  * @deprecated Edit virtualization is no longer supported.
  */
-export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unknown, unknown>): number {
+export function getNumberOfHandlesFromEditLogSummary(
+	summary: EditLogSummary<unknown, unknown>,
+): number {
 	const { editChunks } = summary;
 
 	let numberOfHandles = 0;
@@ -190,7 +197,11 @@ export function getNumberOfHandlesFromEditLogSummary(summary: EditLogSummary<unk
  * @param edit - The edit that was added to the log
  * @param isLocal - true iff this edit was generated locally
  */
-export type EditAddedHandler<TChange> = (edit: Edit<TChange>, isLocal: boolean, wasLocal: boolean) => void;
+export type EditAddedHandler<TChange> = (
+	edit: Edit<TChange>,
+	isLocal: boolean,
+	wasLocal: boolean,
+) => void;
 
 /**
  * Event fired before edits are evicted from the edit log. It takes in a count of the number of edits to evict
@@ -204,7 +215,7 @@ export type EditEvictionHandler = (editsToEvict: number) => void;
  * @alpha
  */
 export interface IEditLogEvents extends IEvent {
-	(event: 'unexpectedHistoryChunk', listener: () => void);
+	(event: "unexpectedHistoryChunk", listener: () => void);
 }
 
 /**
@@ -215,7 +226,10 @@ export interface IEditLogEvents extends IEvent {
  * @sealed
  * @alpha
  */
-export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents> implements OrderedEditSet<TChange> {
+export class EditLog<TChange = unknown>
+	extends TypedEventEmitter<IEditLogEvents>
+	implements OrderedEditSet<TChange>
+{
 	private localEditSequence = 0;
 
 	private readonly sequenceNumberToIndex?: BTree<number, number>;
@@ -264,7 +278,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		private readonly targetLength = Infinity,
 		private readonly evictionFrequency = targetLength * 2,
-		editEvictionHandlers: readonly EditEvictionHandler[] = []
+		editEvictionHandlers: readonly EditEvictionHandler[] = [],
 	) {
 		super();
 		const { editChunks, editIds } = summary;
@@ -275,7 +289,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		if (targetLength !== Infinity) {
 			if (targetLength < 0 || evictionFrequency < 0) {
-				fail('targetLength and evictionFrequency should not be negative');
+				fail("targetLength and evictionFrequency should not be negative");
 			}
 			this.sequenceNumberToIndex = new BTree([[0, 0]]);
 			for (const handler of editEvictionHandlers) {
@@ -299,7 +313,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 				// Ignore any edit handles, these edits are now unrecoverable.
 				// This should instead download the edit chunk and store them but history is not
 				// being used so we're going with the simpler solution.
-				this.logger?.sendErrorEvent({ eventName: 'UnexpectedEditHandleInSummary' });
+				this.logger?.sendErrorEvent({ eventName: "UnexpectedEditHandleInSummary" });
 			}
 		});
 	}
@@ -389,7 +403,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		}
 
 		if (orderedEdit.isLocal) {
-			const firstLocal = this.allEditIds.get(this.localEdits[0].id) ?? fail('edit not found');
+			const firstLocal = this.allEditIds.get(this.localEdits[0].id) ?? fail("edit not found");
 			assert(firstLocal.isLocal, 0x60b /* local edit should be local */);
 			return (
 				this._earliestAvailableEditIndex +
@@ -405,14 +419,14 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @returns Edit metadata for the edit with the given `editId`.
 	 */
 	public getOrderedEditId(editId: EditId): OrderedEditId {
-		return this.allEditIds.get(editId) ?? fail('All edits should exist in this map');
+		return this.allEditIds.get(editId) ?? fail("All edits should exist in this map");
 	}
 
 	/**
 	 * {@inheritDoc OrderedEditSet.getIndexOfId}
 	 */
 	public getIndexOfId(editId: EditId): number {
-		return this.tryGetIndexOfId(editId) ?? fail('edit not found');
+		return this.tryGetIndexOfId(editId) ?? fail("edit not found");
 	}
 
 	/**
@@ -479,11 +493,11 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private addSequencedEditInternal(
 		edit: Edit<TChange>,
 		info?: EditSequencingInfo,
-		minSequenceNumber: number = 0
+		minSequenceNumber: number = 0,
 	): void {
 		assert(
 			minSequenceNumber >= this._minSequenceNumber,
-			0x60c /* Sequenced edits should carry a monotonically increasing min number */
+			0x60c /* Sequenced edits should carry a monotonically increasing min number */,
 		);
 		this._minSequenceNumber = minSequenceNumber;
 
@@ -497,7 +511,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 			// New edit already exits: it must have been a local edit.
 			assert(encounteredEditId.isLocal, 0x60d /* Duplicate acked edit. */);
 			// Remove it from localEdits. Due to ordering requirements, it must be first.
-			const oldLocalEditId = this.localEdits.shift()?.id ?? fail('Local edit should exist');
+			const oldLocalEditId = this.localEdits.shift()?.id ?? fail("Local edit should exist");
 			assert(oldLocalEditId === id, 0x60e /* Causal ordering should be upheld */);
 		}
 
@@ -515,7 +529,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 		this.emitAdd(edit, false, encounteredEditId !== undefined);
 
 		// Check if any edits need to be evicted due to this addition
-		if (this.sequenceNumberToIndex !== undefined && this.numberOfSequencedEdits >= this.evictionFrequency) {
+		if (
+			this.sequenceNumberToIndex !== undefined &&
+			this.numberOfSequencedEdits >= this.evictionFrequency
+		) {
 			this.evictEdits();
 		}
 	}
@@ -526,7 +543,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public addLocalEdit(edit: Edit<TChange>): void {
 		this.localEdits.push(edit);
-		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
+		const localEditId: LocalOrderedEditId = {
+			localSequence: this.localEditSequence++,
+			isLocal: true,
+		};
 		this.allEditIds.set(edit.id, localEditId);
 		this.emitAdd(edit, true, false);
 	}
@@ -540,19 +560,22 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private evictEdits(): void {
 		assert(
 			this.sequenceNumberToIndex !== undefined,
-			0x60f /* Edits should never be evicted if the target length is set to infinity */
+			0x60f /* Edits should never be evicted if the target length is set to infinity */,
 		);
 
 		const minSequenceIndex =
 			this.sequenceNumberToIndex.getPairOrNextHigher(this._minSequenceNumber)?.[1] ??
-			fail('No index associated with that sequence number.');
+			fail("No index associated with that sequence number.");
 		// Exclude any edits in the collab window from being evicted
 		const numberOfEvictableEdits = minSequenceIndex - this.earliestAvailableEditIndex;
 
 		if (numberOfEvictableEdits > 0) {
 			// Evict either all but the target log size or the number of evictable edits, whichever is smaller
 			const numberOfDesiredEditsToEvict = this.numberOfSequencedEdits - this.targetLength;
-			const numberOfEditsToEvict = Math.min(numberOfEvictableEdits, numberOfDesiredEditsToEvict);
+			const numberOfEditsToEvict = Math.min(
+				numberOfEvictableEdits,
+				numberOfDesiredEditsToEvict,
+			);
 			for (const handler of this._editEvictionHandlers) {
 				handler(numberOfEditsToEvict);
 			}
@@ -572,7 +595,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	/**
 	 * @returns true iff this `EditLog` and `other` are equivalent, regardless of locality.
 	 */
-	public equals<TOtherChangeTypesInternal>(other: EditLog<TOtherChangeTypesInternal>): boolean {
+	public equals<TOtherChangeTypesInternal>(
+		other: EditLog<TOtherChangeTypesInternal>,
+	): boolean {
 		// TODO #45414: We should also be deep comparing the list of changes in the edit. This is not straightforward.
 		// We can use our edit validation code when we write it since it will need to do deep walks of the changes.
 		return compareArrays(this.editIds, other.editIds);
@@ -588,11 +613,17 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
 	 */
 	public getEditLogSummary<TCompressedChange>(
-		compressEdit: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
+		compressEdit: (
+			edit: Pick<Edit<TChange>, "changes">,
+		) => Pick<Edit<TCompressedChange>, "changes">,
 	): EditLogSummary<TCompressedChange, FluidEditHandle>;
 	public getEditLogSummary<TCompressedChange>(
-		compressEdit?: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
-	): EditLogSummary<TChange, FluidEditHandle> | EditLogSummary<TCompressedChange, FluidEditHandle> {
+		compressEdit?: (
+			edit: Pick<Edit<TChange>, "changes">,
+		) => Pick<Edit<TCompressedChange>, "changes">,
+	):
+		| EditLogSummary<TChange, FluidEditHandle>
+		| EditLogSummary<TCompressedChange, FluidEditHandle> {
 		const editIds = this.sequencedEdits.map(({ id }) => id);
 		return compressEdit !== undefined
 			? {
@@ -605,9 +636,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 										startRevision: 0,
 										chunk: this.sequencedEdits.map((edit) => compressEdit(edit)),
 									},
-							  ],
+								],
 					editIds,
-			  }
+				}
 			: {
 					editChunks:
 						this.sequencedEdits.length === 0
@@ -618,9 +649,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 										startRevision: 0,
 										chunk: this.sequencedEdits.map(({ changes }) => ({ changes })),
 									},
-							  ],
+								],
 					editIds,
-			  };
+				};
 	}
 
 	// APIS DEPRECATED DUE TO HISTORY'S PEACEFUL DEATH
@@ -636,13 +667,13 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 * @deprecated Edit virtualization is no longer supported. Don't use the asynchronous APIs. Instead, use {@link OrderedEditSet.tryGetEditFromId}.
 	 */
 	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
-		return this.tryGetEditAtIndex(index) ?? fail('Edit not found');
+		return this.tryGetEditAtIndex(index) ?? fail("Edit not found");
 	}
 
 	/**
 	 * @deprecated Edit virtualization is no longer supported. Instead, use {@link OrderedEditSet.tryGetEditFromId}.
 	 */
 	public getEditInSessionAtIndex(index: number): Edit<TChange> {
-		return this.tryGetEditAtIndex(index) ?? fail('Edit not found');
+		return this.tryGetEditAtIndex(index) ?? fail("Edit not found");
 	}
 }

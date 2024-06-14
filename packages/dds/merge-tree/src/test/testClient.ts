@@ -25,9 +25,23 @@ import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
-import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
-import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
+import {
+	backwardExcursion,
+	forwardExcursion,
+	walkAllChildSegments,
+} from "../mergeTreeNodeWalk.js";
+import {
+	MergeBlock,
+	ISegment,
+	ISegmentLeaf,
+	Marker,
+	MaxNodesInBlock,
+} from "../mergeTreeNodes.js";
+import {
+	createAnnotateRangeOp,
+	createInsertSegmentOp,
+	createRemoveRangeOp,
+} from "../opBuilder.js";
 import {
 	IJSONSegment,
 	IMarkerDef,
@@ -301,10 +315,9 @@ export class TestClient extends Client {
 	}
 
 	public relText(clientId: number, refSeq: number) {
-		return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${this.textHelper.getText(
-			refSeq,
+		return `cli: ${this.getLongClientId(
 			clientId,
-		)}`;
+		)} refSeq: ${refSeq}: ${this.textHelper.getText(refSeq, clientId)}`;
 	}
 
 	public makeOpMessage(

@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { FluidHandleBase, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import {
+	FluidHandleBase,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 
-import { type IShim } from './types.js';
+import { type IShim } from "./types.js";
 
 /**
  * ShimHandle is a special class to handle the fact that we are essentially creating a proxy for a DDS.

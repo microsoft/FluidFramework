@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
+import { expect } from "chai";
 
-import { Change, StableRange } from '../ChangeTypes.js';
-import { LazyCheckout } from '../LazyCheckout.js';
+import { Change, StableRange } from "../ChangeTypes.js";
+import { LazyCheckout } from "../LazyCheckout.js";
 
-import { checkoutTests } from './Checkout.tests.js';
-import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
+import { checkoutTests } from "./Checkout.tests.js";
+import { setUpTestSharedTree, setUpTestTree } from "./utilities/TestUtilities.js";
 
 checkoutTests(
-	'LazyCheckout',
+	"LazyCheckout",
 	async (tree) => Promise.resolve(new LazyCheckout(tree)),
 	() => {
-		it('updates lazily', async () => {
+		it("updates lazily", async () => {
 			const { tree } = setUpTestSharedTree();
 			const testTree = setUpTestTree(tree);
 			const checkout = new LazyCheckout(tree);
@@ -25,5 +25,5 @@ checkoutTests(
 			await checkout.waitForPendingUpdates();
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
 		});
-	}
+	},
 );

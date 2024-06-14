@@ -162,7 +162,7 @@ export function normalizeError(
 				// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
 				// Consider using a string to distinguish cases like "dependency" v. "callback"
 				// errorRunningExternalCode: 1,
-		  };
+			};
 
 	fluidError.addTelemetryProperties({
 		...errorTelemetryProps,
@@ -226,7 +226,10 @@ export function wrapError<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
 ): T {
-	const { message, stack } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
+	const { message, stack } = extractLogSafeErrorProperties(
+		innerError,
+		false /* sanitizeStack */,
+	);
 
 	const newError = newErrorFn(message);
 

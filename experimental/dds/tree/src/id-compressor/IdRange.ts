@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils/internal';
+import { assert } from "@fluidframework/core-utils/internal";
 
-import type { IdCreationRange, UnackedLocalId } from './persisted-types/index.js';
+import type { IdCreationRange, UnackedLocalId } from "./persisted-types/index.js";
 
 export function getIds(
-	range: IdCreationRange
-): { first: UnackedLocalId; last: UnackedLocalId; overrides?: IdCreationRange.Overrides } | undefined {
+	range: IdCreationRange,
+):
+	| { first: UnackedLocalId; last: UnackedLocalId; overrides?: IdCreationRange.Overrides }
+	| undefined {
 	const { ids } = range;
 	if (ids === undefined) {
 		return undefined;

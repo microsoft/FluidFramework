@@ -983,10 +983,7 @@ describe("DataBinder.registerOnPath()", function () {
 			expect(pathSpy2).toHaveBeenCalledTimes(0);
 			// add nested array
 			var parentProp = workspace.root.get(["child1", "childArray", "1"]);
-			parentProp.insert(
-				"nestedArray",
-				PropertyFactory.create(ParentTemplate.typeid, "array"),
-			);
+			parentProp.insert("nestedArray", PropertyFactory.create(ParentTemplate.typeid, "array"));
 			var nestedArray = parentProp.get("nestedArray");
 			nestedArray.insertRange(
 				0,
@@ -1236,10 +1233,7 @@ describe("DataBinder.registerOnPath()", function () {
 				.push(PropertyFactory.create(ParentTemplate.typeid, "single"));
 			// add nested array
 			var parentProp = workspace.root.get(["child1", "childArray", "1"]);
-			parentProp.insert(
-				"nestedArray",
-				PropertyFactory.create(ParentTemplate.typeid, "array"),
-			);
+			parentProp.insert("nestedArray", PropertyFactory.create(ParentTemplate.typeid, "array"));
 			var nestedArray = parentProp.get("nestedArray");
 			nestedArray.insertRange(
 				0,
@@ -1317,10 +1311,7 @@ describe("DataBinder.registerOnPath()", function () {
 				.push(PropertyFactory.create(ParentTemplate.typeid, "single"));
 			// add nested array
 			var parentProp = workspace.root.get(["child1", "childArray", "1"]);
-			parentProp.insert(
-				"nestedArray",
-				PropertyFactory.create(ParentTemplate.typeid, "array"),
-			);
+			parentProp.insert("nestedArray", PropertyFactory.create(ParentTemplate.typeid, "array"));
 			var nestedArray = parentProp.get("nestedArray");
 			nestedArray.insertRange(
 				0,

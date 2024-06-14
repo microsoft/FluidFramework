@@ -279,9 +279,9 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
  *
  * @internal
  */
-export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	obj: L,
-): obj is L & MonitoringContext<L> {
+export function loggerIsMonitoringContext<
+	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
+>(obj: L): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
@@ -291,9 +291,9 @@ export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITele
  *
  * @internal
  */
-export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
-	logger: L,
-): MonitoringContext<L> {
+export function loggerToMonitoringContext<
+	L extends ITelemetryBaseLogger = ITelemetryLoggerExt,
+>(logger: L): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
 		return logger;
 	}

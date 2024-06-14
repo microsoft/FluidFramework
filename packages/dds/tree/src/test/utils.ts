@@ -132,7 +132,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
+import {
+	SchematizingSimpleTreeView,
+	requireSchema,
+} from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import type { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
@@ -230,9 +233,7 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled
-								? { state: "disabled" }
-								: undefined,
+							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -841,7 +842,10 @@ export function expectJsonTree(
 	}
 }
 
-export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+export function expectEqualPaths(
+	path: UpPath | undefined,
+	expectedPath: UpPath | undefined,
+): void {
 	if (!compareUpPaths(path, expectedPath)) {
 		// This is slower than above compare, so only do it in the error case.
 		// Make a nice error message:
@@ -1196,10 +1200,15 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const checkout = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		forest: buildForest(),
-		schema: new TreeStoredSchemaRepository(),
-	});
+	const checkout = createTreeCheckout(
+		testIdCompressor,
+		mintRevisionTag,
+		testRevisionTagCodec,
+		{
+			forest: buildForest(),
+			schema: new TreeStoredSchemaRepository(),
+		},
+	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

@@ -234,9 +234,7 @@ class RebaseQueue {
 		return {
 			baseMark: sizedBaseMark,
 			newMark:
-				movedMark === undefined
-					? sizedNewMark
-					: addMovedMarkEffect(sizedNewMark, movedMark),
+				movedMark === undefined ? sizedNewMark : addMovedMarkEffect(sizedNewMark, movedMark),
 		};
 	}
 }
@@ -359,7 +357,10 @@ function rebaseMarkIgnoreChild(
  * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follows?: MarkEffect } {
+function separateEffectsForMove(mark: MarkEffect): {
+	remains?: MarkEffect;
+	follows?: MarkEffect;
+} {
 	const type = mark.type;
 	switch (type) {
 		case "Remove":
@@ -457,7 +458,11 @@ function moveRebasedChanges(
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1, newEffect);
 }
 
-function rebaseNodeChange(currMark: Mark, baseMark: Mark, nodeRebaser: NodeChangeRebaser): Mark {
+function rebaseNodeChange(
+	currMark: Mark,
+	baseMark: Mark,
+	nodeRebaser: NodeChangeRebaser,
+): Mark {
 	const baseChange = baseMark.changes;
 	const currChange = currMark.changes;
 

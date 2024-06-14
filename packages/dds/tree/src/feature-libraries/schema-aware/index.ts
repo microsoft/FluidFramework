@@ -8,7 +8,6 @@ export type {
 	InsertableFlexField,
 	AllowedTypesToFlexInsertableTree,
 	ApplyMultiplicity,
-
 	// Internal
 	CollectOptions,
 	TypedFields,

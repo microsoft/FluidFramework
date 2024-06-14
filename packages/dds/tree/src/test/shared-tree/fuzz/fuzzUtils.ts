@@ -169,13 +169,15 @@ export const createOrDeserializeCompressor = (
 	return summary === undefined
 		? createIdCompressor(sessionId)
 		: summary.withSession
-		? deserializeIdCompressor(summary.serializedCompressor)
-		: deserializeIdCompressor(summary.serializedCompressor, sessionId);
+			? deserializeIdCompressor(summary.serializedCompressor)
+			: deserializeIdCompressor(summary.serializedCompressor, sessionId);
 };
 
 export const deterministicIdCompressorFactory: (
 	seed: number,
-) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (seed) => {
+) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (
+	seed,
+) => {
 	const random = makeRandom(seed);
 	return (summary?: FuzzSerializedIdCompressor) => {
 		const sessionId = random.uuid4() as SessionId;
@@ -183,29 +185,30 @@ export const deterministicIdCompressorFactory: (
 	};
 };
 
-export const populatedInitialState: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] =
-	{
-		[typeNameSymbol]: fuzzNode.name,
-		sequenceChildren: [
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: ["AA", "AB", "AC"],
-				requiredChild: "A",
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: ["BA", "BB", "BC"],
-				requiredChild: "B",
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: ["CA", "CB", "CC"],
-				requiredChild: "C",
-				optionalChild: undefined,
-			},
-		],
-		requiredChild: "R",
-		optionalChild: undefined,
-	};
+export const populatedInitialState: TreeContent<
+	typeof fuzzSchema.rootFieldSchema
+>["initialTree"] = {
+	[typeNameSymbol]: fuzzNode.name,
+	sequenceChildren: [
+		{
+			[typeNameSymbol]: fuzzNode.name,
+			sequenceChildren: ["AA", "AB", "AC"],
+			requiredChild: "A",
+			optionalChild: undefined,
+		},
+		{
+			[typeNameSymbol]: fuzzNode.name,
+			sequenceChildren: ["BA", "BB", "BC"],
+			requiredChild: "B",
+			optionalChild: undefined,
+		},
+		{
+			[typeNameSymbol]: fuzzNode.name,
+			sequenceChildren: ["CA", "CB", "CC"],
+			requiredChild: "C",
+			optionalChild: undefined,
+		},
+	],
+	requiredChild: "R",
+	optionalChild: undefined,
+};
