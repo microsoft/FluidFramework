@@ -191,7 +191,7 @@ ${JSON.stringify(actualEvents)}`);
 		}
 
 		// Remove the events so far; next call will just compare subsequent events from here
-		this._events = [];
+		this.clear();
 
 		// Return the count of matched events.
 		return iExpectedEvent;
