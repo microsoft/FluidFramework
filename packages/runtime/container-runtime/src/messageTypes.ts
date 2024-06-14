@@ -17,6 +17,7 @@ import { IChunkedOp } from "./opLifecycle/index.js";
 import { IDocumentSchemaChangeMessage } from "./summary/index.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum ContainerMessageType {

@@ -31,6 +31,7 @@ import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetr
 import { v4 as uuid } from "uuid";
 
 /**
+ * @legacy
  * @alpha
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {

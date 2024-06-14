@@ -234,6 +234,7 @@ function compatBehaviorAllowsMessageType(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryBaseConfiguration {
@@ -256,6 +257,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
@@ -319,6 +321,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryConfigurationDisableSummarizer {
@@ -326,6 +329,7 @@ export interface ISummaryConfigurationDisableSummarizer {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
@@ -333,6 +337,7 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type ISummaryConfiguration =
@@ -341,6 +346,7 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationHeuristics;
 
 /**
+ * @legacy
  * @alpha
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
@@ -370,6 +376,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISummaryRuntimeOptions {
@@ -387,6 +394,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
+ * @legacy
  * @alpha
  */
 export interface ICompressionRuntimeOptions {
@@ -405,6 +413,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeOptions {
@@ -483,16 +492,19 @@ export interface IContainerRuntimeOptions {
 
 /**
  * Error responses when requesting a deleted object will have this header set to true
+ * @legacy
  * @alpha
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
+ * @legacy
  * @alpha
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
+ * @legacy
  * @alpha
  */
 export const InactiveResponseHeaderKey = "isInactive";
@@ -518,13 +530,17 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
+ * @legacy
  * @alpha
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
 }
 
-/** @alpha */
+/**
+ * @legacy
+ * @alpha
+ */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	minimumBatchSizeInBytes: Infinity,
 	compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -725,6 +741,7 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
+ * @legacy
  * @alpha
  */
 export class ContainerRuntime

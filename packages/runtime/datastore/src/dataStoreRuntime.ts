@@ -91,6 +91,7 @@ import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum DataStoreMessageType {
@@ -100,6 +101,7 @@ export enum DataStoreMessageType {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectRegistry {
@@ -110,6 +112,7 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
+ * @legacy
  * @alpha
  */
 export class FluidDataStoreRuntime
@@ -1247,6 +1250,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
+ * @legacy
  * @alpha
  */
 export const mixinRequestHandler = (
@@ -1268,6 +1272,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @legacy
  * @alpha
  */
 export const mixinSummaryHandler = (

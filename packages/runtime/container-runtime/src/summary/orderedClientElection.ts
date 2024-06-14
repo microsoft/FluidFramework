@@ -230,6 +230,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
 
 /**
  * Serialized state of IOrderedClientElection.
+ * @legacy
  * @alpha
  */
 export interface ISerializedElection {

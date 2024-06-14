@@ -65,6 +65,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
+ * @legacy
  * @alpha
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
@@ -107,7 +108,10 @@ interface CellLastWriteTrackerItem {
 	clientId: string; // clientId of the client which last modified this cell
 }
 
-/** @alpha */
+/**
+ * @legacy
+ * @alpha
+ */
 export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
@@ -200,6 +204,7 @@ export interface ISharedMatrix<T = any>
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
+ * @legacy
  * @alpha
  */
 export class SharedMatrix<T = any>

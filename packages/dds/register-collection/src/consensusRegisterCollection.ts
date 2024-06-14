@@ -107,6 +107,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @legacy
  * @alpha
  */
 export class ConsensusRegisterCollection<T>

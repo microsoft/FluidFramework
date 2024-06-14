@@ -59,12 +59,14 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @legacy
  * @alpha
  */
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
  * {@inheritDoc ConsensusQueueClass}
+ * @legacy
  * @alpha
  */
 export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

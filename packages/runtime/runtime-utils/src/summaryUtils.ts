@@ -147,6 +147,7 @@ export function addSummarizeResultToSummary(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
@@ -217,6 +218,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
+ * @legacy
  * @alpha
  */
 export function convertToSummaryTreeWithStats(

@@ -18,6 +18,7 @@ import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
+ * @legacy
  * @alpha
  */
 export interface IInterval {
@@ -83,6 +84,7 @@ export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof Inte
 
 /**
  * Values are used in revertibles.
+ * @legacy
  * @alpha
  */
 export const IntervalOpType = {
@@ -91,11 +93,13 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
+ * @legacy
  * @alpha
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
+ * @legacy
  * @alpha
  */
 export enum IntervalType {
@@ -119,6 +123,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
+ * @legacy
  * @alpha
  */
 export interface ISerializedInterval {
@@ -147,6 +152,7 @@ export interface ISerializedInterval {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISerializableInterval extends IInterval {
@@ -249,6 +255,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
+ * @legacy
  * @alpha
  */
 export const IntervalStickiness = {
@@ -281,6 +288,7 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
+ * @legacy
  * @alpha
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];

@@ -71,6 +71,7 @@ import { MockHandle } from "./mockHandle.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
+ * @legacy
  * @alpha
  */
 export class MockDeltaConnection implements IDeltaConnection {
@@ -119,6 +120,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 /**
+ * @legacy
  * @alpha
  */
 export interface IMockContainerRuntimePendingMessage {
@@ -139,6 +141,7 @@ export interface IMockContainerRuntimeIdAllocationMessage {
 
 /**
  * Options for the container runtime mock.
+ * @legacy
  * @alpha
  */
 export interface IMockContainerRuntimeOptions {
@@ -172,6 +175,7 @@ const makeContainerRuntimeOptions = (
 });
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IInternalMockRuntimeMessage {
@@ -183,6 +187,7 @@ export interface IInternalMockRuntimeMessage {
  * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
+ * @legacy
  * @alpha
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
@@ -470,6 +475,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
+ * @legacy
  * @alpha
  */
 export class MockContainerRuntimeFactory {
@@ -618,6 +624,7 @@ export class MockContainerRuntimeFactory {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
@@ -713,6 +720,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
@@ -773,6 +781,7 @@ const attachStatesToComparableNumbers = {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
+ * @legacy
  * @alpha
  */
 export class MockFluidDataStoreRuntime
@@ -1126,6 +1135,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
+ * @legacy
  * @alpha
  */
 export class MockObjectStorageService implements IChannelStorageService {
@@ -1149,6 +1159,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
+ * @legacy
  * @alpha
  */
 export class MockSharedObjectServices implements IChannelServices {

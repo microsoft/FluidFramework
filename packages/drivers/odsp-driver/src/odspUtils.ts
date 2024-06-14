@@ -52,6 +52,7 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOdspResponse<T> {

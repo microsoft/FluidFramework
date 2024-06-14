@@ -66,6 +66,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 
 /**
  * Downcast an IFluidHandle to an IFluidHandleInternal.
+ * @legacy
  * @alpha
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
@@ -83,6 +84,7 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
 
 /**
  * Type erase IFluidHandleInternal for use with {@link @fluidframework/core-interfaces#fluidHandleSymbol}.
+ * @legacy
  * @alpha
  */
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
@@ -91,6 +93,7 @@ export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidH
 
 /**
  * Base class which can be uses to assist implementing IFluidHandleInternal.
+ * @legacy
  * @alpha
  */
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {

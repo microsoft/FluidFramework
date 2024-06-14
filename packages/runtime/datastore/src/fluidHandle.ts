@@ -10,6 +10,7 @@ import { generateHandleContextPath, FluidHandleBase } from "@fluidframework/runt
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
+ * @legacy
  * @alpha
  */
 export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {

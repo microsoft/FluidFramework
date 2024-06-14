@@ -51,6 +51,7 @@ import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Base class from which all shared objects derive.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
@@ -605,6 +606,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObject<
@@ -788,6 +790,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {

@@ -113,6 +113,7 @@ export enum RuntimeHeaders {
 }
 
 /** True if a tombstoned object should be returned without erroring
+ * @legacy
  * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change

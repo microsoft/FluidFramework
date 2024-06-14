@@ -24,6 +24,7 @@ import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManage
 
 /**
  * Common properties for a node in a merge tree.
+ * @legacy
  * @alpha
  */
 export interface IMergeNodeCommon {
@@ -47,6 +48,7 @@ export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
  * Contains removal information associated to an {@link ISegment}.
+ * @legacy
  * @alpha
  */
 export interface IRemovalInfo {
@@ -86,6 +88,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
+ * @legacy
  * @alpha
  */
 export interface IMoveInfo {
@@ -162,6 +165,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
+ * @legacy
  * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
@@ -280,6 +284,7 @@ export interface IMarkerModifiedAction {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISegmentAction<TClientData> {
@@ -355,6 +360,7 @@ export interface SegmentActions<TClientData> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export interface SegmentGroup {
@@ -365,6 +371,7 @@ export interface SegmentGroup {
 }
 
 /**
+ * @legacy
  * @alpha
  * @deprecated - unused and will be removed
  */
@@ -461,6 +468,7 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export abstract class BaseSegment implements ISegment {
@@ -688,6 +696,7 @@ export abstract class BaseSegment implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
+ * @legacy
  * @alpha
  */
 export const reservedMarkerIdKey = "markerId";
@@ -698,6 +707,7 @@ export const reservedMarkerIdKey = "markerId";
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
@@ -713,6 +723,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
+ * @legacy
  * @alpha
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
@@ -789,6 +800,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export class CollaborationWindow {

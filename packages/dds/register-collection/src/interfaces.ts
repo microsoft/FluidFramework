@@ -11,6 +11,7 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  *
  * Extends the base IChannelFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel.
+ * @legacy
  * @alpha
  * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
@@ -18,6 +19,7 @@ export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegi
 
 /**
  * Events emitted by {@link IConsensusRegisterCollection}.
+ * @legacy
  * @alpha
  */
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
@@ -43,6 +45,7 @@ export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents 
  * the value. So we can safely return the first value.
  *
  * LWW: The last write to a key always wins.
+ * @legacy
  * @alpha
  */
 export interface IConsensusRegisterCollection<T = any>
@@ -73,6 +76,7 @@ export interface IConsensusRegisterCollection<T = any>
 
 /**
  * Read policies used when reading the map value.
+ * @legacy
  * @alpha
  */
 export enum ReadPolicy {
