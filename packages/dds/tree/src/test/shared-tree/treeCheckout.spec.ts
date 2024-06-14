@@ -1022,8 +1022,9 @@ describe("sharedTreeView", () => {
 			// #endregion
 
 			// #region Validate the expected metrics
-			const loggedRevertEvents = logger.events.filter(
-				(event) => event.eventName === "revert",
+
+			const loggedRevertEvents = logger.events.filter((event) =>
+				event.eventName.endsWith("revert"),
 			);
 
 			// Simple check to verify the correct number of logs were sent based the batching threshold.
