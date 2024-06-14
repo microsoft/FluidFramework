@@ -40,15 +40,12 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
 
 // @alpha
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
     eventName: string;
 }
 
 // @alpha
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
     category?: TelemetryEventCategory;
-    // (undocumented)
     eventName: string;
 }
 
@@ -72,7 +69,6 @@ export interface ITelemetryLoggerPropertyBags {
 
 // @alpha
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
-    // (undocumented)
     duration?: number;
 }
 
