@@ -11,11 +11,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
-import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
 
 /**

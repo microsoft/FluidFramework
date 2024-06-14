@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
@@ -11,7 +11,7 @@ import {
 import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
-import { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Explicitly typed interface for reading configurations.

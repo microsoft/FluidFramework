@@ -7,7 +7,7 @@ import type { ITelemetryBaseProperties, Tagged } from "@fluidframework/core-inte
 import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
 
-import { IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
+import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
 	ITelemetryLoggerExt,

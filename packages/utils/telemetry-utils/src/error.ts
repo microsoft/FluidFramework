@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	FluidErrorTypes,
-	IGenericError,
-	IUsageError,
+	type IGenericError,
+	type IUsageError,
 } from "@fluidframework/core-interfaces/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import {
 	LoggingError,
@@ -18,8 +18,8 @@ import {
 	normalizeError,
 	wrapError,
 } from "./errorLogging.js";
-import { IFluidErrorBase } from "./fluidErrorBase.js";
-import { ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type { IFluidErrorBase } from "./fluidErrorBase.js";
+import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * Throws a UsageError with the given message if the condition is not met.

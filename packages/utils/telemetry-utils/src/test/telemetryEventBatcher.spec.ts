@@ -9,11 +9,11 @@ import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 
 import { TelemetryEventBatcher } from "../telemetryEventBatcher.js";
-import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
 
 /**

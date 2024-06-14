@@ -21,7 +21,7 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
-	IFluidErrorAnnotations,
+	type IFluidErrorAnnotations,
 	LoggingError,
 	extractLogSafeErrorProperties,
 	isExternalError,
@@ -30,7 +30,7 @@ import {
 	wrapError,
 	wrapErrorAndLog,
 } from "../errorLogging.js";
-import { IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
+import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";

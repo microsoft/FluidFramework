@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	LogLevel,
@@ -11,7 +11,7 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger } from "./logger.js";
-import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { type EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEvent } from "@fluidframework/core-interfaces";
 
 /**
  * Event Emitter helper class

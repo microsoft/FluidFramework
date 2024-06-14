@@ -6,10 +6,10 @@
 import { performance } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
-import {
-	type ITelemetryGenericEventExt,
+import type {
+	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
 
 /**

@@ -5,11 +5,11 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
-	Tagged,
-	TelemetryBaseEventPropertyType,
+	type Tagged,
+	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 
 import {
@@ -23,8 +23,8 @@ import {
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
-import {
-	type ITelemetryErrorEventExt,
+import type {
+	ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
