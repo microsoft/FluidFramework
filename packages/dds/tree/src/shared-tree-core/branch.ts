@@ -120,6 +120,27 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired after this branch is disposed
 	 */
 	dispose(): void;
+
+	/**
+	 * Fired after a new transaction is started.
+	 * @param isOuterTransaction - true iff the transaction being started is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionStarted(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is aborted.
+	 * @param isOuterTransaction - true iff the transaction being aborted is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionAborted(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is committed.
+	 * @param isOuterTransaction - true iff the transaction being committed is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionCommitted(isOuterTransaction: boolean): void;
 }
 
 /**
@@ -267,6 +288,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			onForkUnSubscribe();
 		});
 		this.editor.enterTransaction();
+		this.emit("transactionStarted", this.transactions.size === 1);
 	}
 
 	/**
@@ -284,6 +306,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.editor.exitTransaction();
 
 		if (commits.length === 0) {
+			this.emit("transactionCommitted", this.transactions.size === 0);
 			return undefined;
 		}
 
@@ -303,6 +326,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			newCommits: [newHead],
 		} as const;
 
+		this.emit("transactionCommitted", this.transactions.size === 0);
 		this.emit("beforeChange", changeEvent);
 		this.head = newHead;
 
@@ -330,6 +354,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.editor.exitTransaction();
 
 		if (commits.length === 0) {
+			this.emit("transactionAborted", this.transactions.size === 0);
 			return [undefined, []];
 		}
 
@@ -353,6 +378,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			removedCommits: commits,
 		} as const;
 
+		this.emit("transactionAborted", this.transactions.size === 0);
 		this.emit("beforeChange", changeEvent);
 		this.head = startCommit;
 		this.emit("afterChange", changeEvent);
