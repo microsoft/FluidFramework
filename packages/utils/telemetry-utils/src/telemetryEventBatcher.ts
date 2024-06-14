@@ -93,6 +93,20 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	}
 
 	/**
+	 * TODO
+	 */
+	public measureResult(
+		duration: number,
+		customTelemetryProperties: Record<TMetrics, number>,
+	): void {
+		this.accumulatedDuration += duration;
+
+		if (customTelemetryProperties) {
+			this.accumulateAndLog(customTelemetryProperties);
+		}
+	}
+
+	/**
 	 * Accumulates the custom data and sends it to the logger every {@link TelemetryEventBatcher.threshold} calls.
 	 *
 	 * @param customData -

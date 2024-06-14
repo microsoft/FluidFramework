@@ -124,6 +124,11 @@ export class SampledTelemetryHelper implements IDisposable {
 		return returnValue;
 	}
 
+	public getDuration(bucket: string): number | undefined {
+		const measurement = this.measurementsMap.get(bucket);
+		return measurement ? measurement.duration : undefined;
+	}
+
 	private flushBucket(bucket: string): void {
 		const measurements = this.measurementsMap.get(bucket);
 		if (measurements === undefined) {

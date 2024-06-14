@@ -557,14 +557,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			local ? "local" : "remote",
 		);
 
-		this.telemetryEventBatcher.measure(() => {
-			this.processCore(message, local, localOpMetadata);
-			return {
-				telemetryProperties: {
-					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-				},
-			};
-		});
+		const duration = this.opProcessingHelper.getDuration(local ? "local" : "remote");
+
+		if (duration !== undefined) {
+			this.telemetryEventBatcher.measureResult(duration, {
+				sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+			});
+		}
 
 		this.emitInternal("op", message, local, this);
 	}
