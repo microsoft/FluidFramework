@@ -20,20 +20,24 @@ import type { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTy
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
-	events: ITelemetryBaseEvent[] = [];
+	private _events: ITelemetryBaseEvent[] = [];
 
-	constructor(public readonly minLogLevel?: LogLevel) {}
-
-	clear(): void {
-		this.events = [];
+	public get events(): readonly ITelemetryBaseEvent[] {
+		return this._events;
 	}
 
-	toTelemetryLogger(): ITelemetryLoggerExt {
+	public constructor(public readonly minLogLevel?: LogLevel) {}
+
+	public clear(): void {
+		this._events = [];
+	}
+
+	public toTelemetryLogger(): ITelemetryLoggerExt {
 		return createChildLogger({ logger: this });
 	}
 
-	send(event: ITelemetryBaseEvent): void {
-		this.events.push(event);
+	public send(event: ITelemetryBaseEvent): void {
+		this._events.push(event);
 	}
 
 	/**
@@ -44,7 +48,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEvents(
+	public matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -60,12 +64,12 @@ export class MockLogger implements ITelemetryBaseLogger {
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
 	 */
-	assertMatch(
+	public assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this.events;
+		const actualEvents = this._events;
 		if (!this.matchEvents(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -85,7 +89,7 @@ ${JSON.stringify(actualEvents)}`);
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 * @returns if any of the expected events is found.
 	 */
-	matchAnyEvent(
+	public matchAnyEvent(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -99,12 +103,12 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchAnyEvent is true, and prints the actual/expected output if not.
 	 */
-	assertMatchAny(
+	public assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this.events;
+		const actualEvents = this._events;
 		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -123,12 +127,12 @@ ${JSON.stringify(actualEvents)}`);
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEventStrict(
+	public matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
 		return (
-			expectedEvents.length === this.events.length &&
+			expectedEvents.length === this._events.length &&
 			this.matchEvents(expectedEvents, inlineDetailsProp)
 		);
 	}
@@ -136,12 +140,12 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not
 	 */
-	assertMatchStrict(
+	public assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this.events;
+		const actualEvents = this._events;
 		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -155,12 +159,12 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not
 	 */
-	assertMatchNone(
+	public assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this.events;
+		const actualEvents = this._events;
 		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 disallowed events:
@@ -176,7 +180,7 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean,
 	): number {
 		let iExpectedEvent = 0;
-		for (const event of this.events) {
+		for (const event of this._events) {
 			if (
 				iExpectedEvent < expectedEvents.length &&
 				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
@@ -187,7 +191,7 @@ ${JSON.stringify(actualEvents)}`);
 		}
 
 		// Remove the events so far; next call will just compare subsequent events from here
-		this.events = [];
+		this._events = [];
 
 		// Return the count of matched events.
 		return iExpectedEvent;
@@ -208,7 +212,6 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
-				// eslint-disable-next-line unicorn/numeric-separators-style
 				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
