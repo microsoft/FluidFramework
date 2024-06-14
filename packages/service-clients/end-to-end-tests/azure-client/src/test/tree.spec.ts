@@ -96,7 +96,6 @@ for (const testOpts of testMatrix) {
 				treeData = (container1.initialObjects.tree1 as ITree).viewWith(
 					treeConfiguration, // This is defined in schema.ts
 				);
-				treeData.initialize(new StringArray([]));
 			} else {
 				({ container: container1 } = await client.createContainer(schema, "2"));
 
@@ -151,7 +150,6 @@ for (const testOpts of testMatrix) {
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
 				treeData1 = (container1.initialObjects.tree1 as ITree).viewWith(treeConfiguration);
-				treeData1.initialize(new StringArray([]));
 			} else {
 				({ container: container1 } = await client.createContainer(schema, "2"));
 
