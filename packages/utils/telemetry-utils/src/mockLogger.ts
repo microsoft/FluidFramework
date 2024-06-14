@@ -24,7 +24,11 @@ import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.j
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
 
-	constructor(public readonly minLogLevel?: LogLevel) {}
+	public readonly minLogLevel: LogLevel;
+
+	constructor(minLogLevel?: LogLevel) {
+		this.minLogLevel = minLogLevel ?? LogLevel.default;
+	}
 
 	clear(): void {
 		this.events = [];
@@ -34,8 +38,10 @@ export class MockLogger implements ITelemetryBaseLogger {
 		return createChildLogger({ logger: this });
 	}
 
-	send(event: ITelemetryBaseEvent): void {
-		this.events.push(event);
+	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
+			this.events.push(event);
+		}
 	}
 
 	/**
