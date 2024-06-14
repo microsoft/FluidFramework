@@ -397,8 +397,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	/**
 	 * The threshold for logging revert telemetry event batches.
 	 * @see {@link @fluidframework/telemetry-utils#TelemetryEventBatcher.threshold}
+	 * @privateRemarks Exposed for testing purposes.
 	 */
 	public static readonly telemetryBatchThreshold = 5;
+
+	/**
+	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly revertTelemetryEventName = "RevertRevertible";
 
 	public constructor(
 		public readonly transaction: ITransaction,
@@ -425,7 +432,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.logger === undefined
 				? undefined
 				: new TelemetryEventBatcher(
-						{ eventName: "revert" },
+						{ eventName: TreeCheckout.revertTelemetryEventName },
 						this.logger,
 						TreeCheckout.telemetryBatchThreshold,
 				  );
