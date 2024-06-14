@@ -278,6 +278,9 @@
 			},
 			"TypeAliasDeclaration_SubmitSummaryResult": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IGCNodeUpdatedProps": {
+				"forwardCompat": false
 			}
 		}
 	}

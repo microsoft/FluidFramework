@@ -653,7 +653,11 @@ export class FluidDataStoreRuntime
 					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
 						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-						this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath);
+						this.dataStoreContext.addedGCOutboundRoute(
+							fromPath,
+							toPath,
+							message.timestamp,
+						);
 					});
 
 					// If a non-local operation then go and create the object
