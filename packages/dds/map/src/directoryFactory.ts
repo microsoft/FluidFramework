@@ -85,7 +85,6 @@ export const SharedDirectory = createSharedObjectKind<ISharedDirectory>(Director
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
  * @alpha
- * @deprecated Use ISharedDirectory instead.
  * @privateRemarks
  * This alias is for legacy compat from when the SharedDirectory class was exported as public.
  */

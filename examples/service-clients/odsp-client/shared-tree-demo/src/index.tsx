@@ -31,8 +31,14 @@ async function start(): Promise<void> {
 		({ container } = await loadFluidData(itemId, containerSchema));
 	}
 
-	// Initialize the SharedTree Data Structure
-	const appData = (container.initialObjects.appData as ITree).schematize(treeConfiguration);
+	const tree = container.initialObjects.appData as ITree;
+	const appData = tree.viewWith(treeConfiguration);
+	if (createNew) {
+		appData.initialize({
+			letters: [],
+			word: [],
+		});
+	}
 
 	const cellSize = { x: 32, y: 32 };
 	const canvasSize = { x: 10, y: 10 }; // characters across and down

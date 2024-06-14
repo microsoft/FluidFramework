@@ -80,7 +80,7 @@ export interface ITree extends IFluidLoadable {
 }
 
 /**
- * Options when schematizing a tree.
+ * Options when constructing a tree view.
  * @public
  */
 export interface ITreeConfigurationOptions {
@@ -342,11 +342,6 @@ export interface SchemaCompatibilityStatus {
  * @public
  */
 export interface TreeViewEvents {
-	/**
-	 * A batch of changes has finished processing and the view has been updated.
-	 */
-	afterBatch(): void;
-
 	/**
 	 * Raised whenever {@link TreeView.root} is invalidated.
 	 *

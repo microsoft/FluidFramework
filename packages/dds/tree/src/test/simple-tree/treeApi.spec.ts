@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { type UpPath, rootFieldKey } from "../../core/index.js";
 import {
@@ -17,7 +17,7 @@ import {
 	SchemaFactory,
 	treeNodeApi as Tree,
 	type TreeChangeEvents,
-	TreeConfiguration,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import { hydrate } from "./utils.js";
@@ -42,8 +42,10 @@ class Point extends schema.object("Point", {}) {}
 describe("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
-			const config = new TreeConfiguration([Point, schema.number], () => ({}));
-			const root = getView(config).root;
+			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
+			const view = getView(config);
+			view.initialize({});
+			const { root } = view;
 			assert(Tree.is(root, Point));
 			assert(root instanceof Point);
 			assert(!Tree.is(root, schema.number));
@@ -57,9 +59,10 @@ describe("treeNodeApi", () => {
 		});
 
 		it("`is` can narrow polymorphic leaf field content", () => {
-			const config = new TreeConfiguration([schema.number, schema.string], () => "x");
-			const root = getView(config).root;
-
+			const config = new TreeViewConfiguration({ schema: [schema.number, schema.string] });
+			const view = getView(config);
+			view.initialize("x");
+			const { root } = view;
 			if (Tree.is(root, schema.number)) {
 				const _check: number = root;
 				assert.fail();
@@ -70,9 +73,10 @@ describe("treeNodeApi", () => {
 		});
 
 		it("`is` can narrow polymorphic combinations of value and objects", () => {
-			const config = new TreeConfiguration([Point, schema.string], () => "x");
-			const root = getView(config).root;
-
+			const config = new TreeViewConfiguration({ schema: [Point, schema.string] });
+			const view = getView(config);
+			view.initialize("x");
+			const { root } = view;
 			if (Tree.is(root, Point)) {
 				const _check: Point = root;
 				assert.fail();
@@ -135,16 +139,13 @@ describe("treeNodeApi", () => {
 			y: schema.optional(Point, { key: "stable-y" }),
 		}) {}
 		const Root = schema.array(Child);
-		const config = new TreeConfiguration(Root, (): Child[] => [
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			{
-				x: {},
-				y: undefined,
-			} as Child,
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			{ x: {}, y: {} } as Child,
+		const config = new TreeViewConfiguration({ schema: Root });
+		const view = getView(config);
+		view.initialize([
+			{ x: {}, y: undefined },
+			{ x: {}, y: {} },
 		]);
-		const root = getView(config).root;
+		const { root } = view;
 		assert.equal(Tree.key(root), rootFieldKey);
 		assert.equal(Tree.key(root[0]), 0);
 		assert.equal(Tree.key(root[0].x), "x");
@@ -157,8 +158,10 @@ describe("treeNodeApi", () => {
 	it("parent", () => {
 		class Child extends schema.object("Child", { x: Point }) {}
 		const Root = schema.array(Child);
-		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
-		const root = getView(config).root;
+		const config = new TreeViewConfiguration({ schema: Root });
+		const view = getView(config);
+		view.initialize([{ x: {} }, { x: {} }]);
+		const { root } = view;
 		assert.equal(Tree.parent(root), undefined);
 		assert.equal(Tree.parent(root[0]), root);
 		assert.equal(Tree.parent(root[1]), root);
@@ -167,8 +170,10 @@ describe("treeNodeApi", () => {
 
 	it("treeStatus", () => {
 		class Root extends schema.object("Root", { x: Point }) {}
-		const config = new TreeConfiguration(Root, () => ({ x: {} }));
-		const root = getView(config).root;
+		const config = new TreeViewConfiguration({ schema: Root });
+		const view = getView(config);
+		view.initialize({ x: {} });
+		const { root } = view;
 		const child = root.x;
 		const newChild = new Point({});
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
@@ -189,35 +194,31 @@ describe("treeNodeApi", () => {
 			});
 			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: id,
-			}));
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config, nodeKeyManager);
+			view.initialize({ identifier: id });
 
-			const root = getView(config, nodeKeyManager).root;
-
-			assert.equal(Tree.shortId(root), nodeKeyManager.localizeNodeKey(id));
+			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeKey(id));
 		});
 		it("returns undefined when an identifier fieldkind does not exist.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.string,
 			});
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: "testID",
-			}));
-			const root = getView(config).root;
-			assert.equal(Tree.shortId(root), undefined);
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			view.initialize({ identifier: "testID" });
+
+			assert.equal(Tree.shortId(view.root), undefined);
 		});
 		it("returns the uncompressed identifier value when the provided identifier is an invalid stable id.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: "invalidUUID",
-			}));
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			view.initialize({ identifier: "invalidUUID" });
 
-			const root = getView(config).root;
-
-			assert.equal(Tree.shortId(root), "invalidUUID");
+			assert.equal(Tree.shortId(view.root), "invalidUUID");
 		});
 		it("returns the uncompressed identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
 			const schemaWithIdentifier = schema.object("parent", {
@@ -229,13 +230,33 @@ describe("treeNodeApi", () => {
 				nodeKeyManager.generateLocalNodeKey(),
 			);
 
-			const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-				identifier: stableNodeKey,
-			}));
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			view.initialize({ identifier: stableNodeKey });
 
-			const root = getView(config).root;
+			assert.equal(Tree.shortId(view.root), stableNodeKey);
+		});
+		it("errors if multiple identifiers exist on the same node", () => {
+			const config = new TreeViewConfiguration({
+				schema: schema.object("parent", {
+					identifier: schema.identifier,
+					identifier2: schema.identifier,
+				}),
+			});
 
-			assert.equal(Tree.shortId(root), stableNodeKey);
+			const view = getView(config);
+			view.initialize({
+				identifier: "a",
+				identifier2: "b",
+			});
+			assert.throws(
+				() => Tree.shortId(view.root),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/may not be called on a node with more than one identifier/,
+					),
+			);
 		});
 	});
 
@@ -675,9 +696,9 @@ describe("treeNodeApi", () => {
 				prop2: sb.number,
 			});
 
-			const { root, checkout } = getView(
-				new TreeConfiguration(treeSchema, () => ({ prop1: 1, prop2: 1 })),
-			);
+			const view = getView(new TreeViewConfiguration({ schema: treeSchema }));
+			view.initialize({ prop1: 1, prop2: 1 });
+			const { root, checkout } = view;
 
 			let shallowChanges = 0;
 			let deepChanges = 0;

@@ -14,7 +14,16 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { treeNodeApi as Tree, TreeConfiguration, type TreeView } from "../../simple-tree/index.js";
+import {
+	treeNodeApi as Tree,
+	TreeViewConfiguration,
+	type TreeView,
+} from "../../simple-tree/index.js";
+import {
+	// Import directly to get the non-type import to allow testing of the package only instanceof
+	TreeNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
@@ -94,7 +103,7 @@ describe("schemaFactory", () => {
 	it("leaf", () => {
 		const schema = new SchemaFactory("com.example");
 
-		const config = new TreeConfiguration(schema.number, () => 5);
+		const config = new TreeViewConfiguration({ schema: schema.number });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
@@ -109,23 +118,37 @@ describe("schemaFactory", () => {
 	it("instanceof", () => {
 		const schema = new SchemaFactory("com.example");
 
-		const config = new TreeConfiguration(schema.number, () => 5);
-
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
 		class A extends schema.object("A", {}) {}
 		class B extends schema.object("B", {}) {}
+		const C = schema.object("C", {});
+		const StructuralArray = schema.array(A);
+		const NominalArray = schema.array("D", A);
 
 		const a = new A({});
 		assert(a instanceof A);
+		assert(a instanceof TreeNode);
 		assert(!(a instanceof B));
 
 		// @ts-expect-error Nodes should get type based nominal typing.
 		const b: A = new B({});
+
+		const c = new C({});
+		assert(c instanceof C);
+		assert(c instanceof TreeNode);
+		assert(!(c instanceof B));
+
+		const n = new NominalArray([]);
+		assert(n instanceof NominalArray);
+		assert(n instanceof TreeNode);
+		assert(!(n instanceof B));
+
+		// Structurally typed and/or POJO mode types:
+		const s = hydrate(StructuralArray, []);
+		// This works correctly, but is currently rejected by the type system. This is fine as Tree.is can be used instead.
+		assert(s instanceof (StructuralArray as never));
+		// This case is expressible without type errors, so it is important that it works.
+		assert(s instanceof TreeNode);
+		assert(!(s instanceof B));
 	});
 
 	it("Scoped", () => {
@@ -188,7 +211,7 @@ describe("schemaFactory", () => {
 				y: schema.number,
 			}) {}
 
-			const config = new TreeConfiguration(Point, () => new Point({ x: 1, y: 2 }));
+			const config = new TreeViewConfiguration({ schema: Point });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
@@ -227,14 +250,16 @@ describe("schemaFactory", () => {
 				}
 			}
 
-			const config = new TreeConfiguration(Point, () => new Point({ x: 1 }));
+			const config = new TreeViewConfiguration({ schema: Point });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const root = tree.schematize(config).root;
+			const view = tree.viewWith(config);
+			view.initialize(new Point({ x: 1 }));
+			const { root } = view;
 			assert.equal(root.x, 1);
 
 			const values: number[] = [];
@@ -378,20 +403,19 @@ describe("schemaFactory", () => {
 
 		class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
-		const config = new TreeConfiguration(
-			Canvas,
-			() =>
-				new Canvas({
-					stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
-				}),
-		);
+		const config = new TreeViewConfiguration({ schema: Canvas });
 
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const view: TreeView<typeof Canvas> = tree.schematize(config);
+		const view: TreeView<typeof Canvas> = tree.viewWith(config);
+		view.initialize(
+			new Canvas({
+				stuff: new NodeList([new Note({ text: "hi", location: undefined })]),
+			}),
+		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
 		const item = stuff[0];
@@ -407,20 +431,19 @@ describe("schemaFactory", () => {
 				parts: builder.array(builder.number),
 			}) {}
 
-			const treeConfiguration = new TreeConfiguration(
-				Inventory,
-				() =>
-					new Inventory({
-						parts: [1, 2],
-					}),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });
 
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = tree.viewWith(treeConfiguration);
+			view.initialize(
+				new Inventory({
+					parts: [1, 2],
+				}),
+			);
 		});
 
 		const treeFactory = new TreeFactory({});
@@ -453,15 +476,13 @@ describe("schemaFactory", () => {
 			class Parent extends factory.object("parent", { child: NamedList }) {}
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the list node:
-			const treeConfiguration = new TreeConfiguration(
-				Parent,
-				() => new Parent({ child: [5] }),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
 			const tree = treeFactory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = tree.viewWith(treeConfiguration);
+			view.initialize(new Parent({ child: [5] }));
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
@@ -511,15 +532,13 @@ describe("schemaFactory", () => {
 			class Parent extends factory.object("parent", { child: NamedMap }) {}
 
 			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
-			const treeConfiguration = new TreeConfiguration(
-				Parent,
-				() => new Parent({ child: new Map([["x", 5]]) }),
-			);
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
 			const tree = treeFactory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(treeConfiguration);
+			const view = tree.viewWith(treeConfiguration);
+			view.initialize(new Parent({ child: new Map([["x", 5]]) }));
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
@@ -699,13 +718,14 @@ describe("schemaFactory", () => {
 			childType: (typeof objectTypes)[number],
 			validate: (view: TreeView<typeof ComboRoot>, nodes: ComboNode[]) => void,
 		) {
-			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
+			const config = new TreeViewConfiguration({ schema: ComboRoot });
 			const factory = new TreeFactory({});
 			const tree = factory.create(
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
-			const view = tree.schematize(config);
+			const view = tree.viewWith(config);
+			view.initialize({ root: undefined });
 			const { parent, nodes } = createComboTree({
 				parentType,
 				childType,
@@ -716,7 +736,7 @@ describe("schemaFactory", () => {
 			// to the tree are not visible in the listener. 'nodeChanged' only fires once we confirmed that a
 			// relevant change was actually applied to the tree so the side effects this test validates already happened.
 			Tree.on(view.root, "nodeChanged", () => validate(view, nodes));
-			view.events.on("afterBatch", () => validate(view, nodes));
+			view.events.on("rootChanged", () => validate(view, nodes));
 			view.root.root = parent;
 			validate(view, nodes);
 		}

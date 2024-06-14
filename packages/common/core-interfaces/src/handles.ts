@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ErasedType } from "./erasedType.js";
+import type { ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**

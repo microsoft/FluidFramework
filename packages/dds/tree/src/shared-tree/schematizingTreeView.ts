@@ -233,8 +233,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 					lastRoot = this.root;
 					this.events.emit("rootChanged");
 				}
-
-				this.events.emit("afterBatch");
 			});
 
 			const onViewDispose = (): void => {

@@ -22,7 +22,7 @@ import {
 	PlugDisconnected20Regular,
 	Warning20Regular,
 } from "@fluentui/react-icons";
-import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
+import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";

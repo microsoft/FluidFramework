@@ -19,7 +19,6 @@ import {
 	ISummarizeResults,
 	ISummarizer,
 	ISummaryRuntimeOptions,
-	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -391,11 +390,6 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	it("should not violate incremental summary principles on first summary", async () => {
 		const loader = provider.makeTestLoader(testContainerConfig);
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		const summaryCollection = new SummaryCollection(
-			container.deltaManager,
-			createChildLogger(),
-		);
-
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
@@ -417,10 +411,12 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 
 		await waitForContainerConnection(container);
 
+		const { summarizer } = await createSummarizer(provider, container);
+
 		// Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
-		await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+		await summarizeNow(summarizer);
 	});
 
 	async function getNackPromise(container: IContainer) {

@@ -426,6 +426,8 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> e
 
 // @public
 export abstract class TreeNode implements WithType {
+    static [Symbol.hasInstance](value: unknown): value is TreeNode;
+    static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
     abstract get [type](): string;
     protected constructor();
 }
@@ -505,7 +507,6 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 // @public
 export interface TreeViewEvents {
-    afterBatch(): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
     schemaChanged(): void;
