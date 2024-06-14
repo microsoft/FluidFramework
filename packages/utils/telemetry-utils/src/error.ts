@@ -72,9 +72,9 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
  * @internal
  */
 export class UsageError extends LoggingError implements IUsageError, IFluidErrorBase {
-	readonly errorType = FluidErrorTypes.usageError;
+	public readonly errorType = FluidErrorTypes.usageError;
 
-	constructor(message: string, props?: ITelemetryBaseProperties) {
+	public constructor(message: string, props?: ITelemetryBaseProperties) {
 		super(message, { ...props, usageError: true });
 	}
 }
@@ -86,10 +86,10 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
  * @internal
  */
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-	readonly errorType = FluidErrorTypes.dataCorruptionError;
-	readonly canRetry = false;
+	public readonly errorType = FluidErrorTypes.dataCorruptionError;
+	public readonly canRetry = false;
 
-	constructor(message: string, props: ITelemetryBaseProperties) {
+	public constructor(message: string, props: ITelemetryBaseProperties) {
 		super(message, { ...props, dataProcessingError: 1 });
 	}
 }
