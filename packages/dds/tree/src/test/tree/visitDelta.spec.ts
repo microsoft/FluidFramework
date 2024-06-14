@@ -16,26 +16,33 @@ import {
 	DeltaVisitor,
 	DetachedFieldIndex,
 	FieldKey,
+	RevisionTag,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { rootFromDeltaFieldMap, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import {
+	mintRevisionTag,
+	rootFromDeltaFieldMap,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 function visit(
 	delta: DeltaRoot,
 	visitor: DeltaVisitor,
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 ): void {
 	deepFreeze(delta);
 	visitDelta(
 		delta,
 		visitor,
 		detachedFieldIndex ?? makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor),
-		undefined,
+		revision,
 	);
 }
 
@@ -63,6 +70,7 @@ function testVisit(
 	delta: DeltaRoot,
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 ): void {
 	let callIndex = 0;
 	const result: VisitScript = [];
@@ -78,7 +86,7 @@ function testVisit(
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
-	visit(delta, visitor, detachedFieldIndex);
+	visit(delta, visitor, detachedFieldIndex, revision);
 	assert.deepEqual(result, expected);
 }
 
@@ -86,11 +94,12 @@ function testTreeVisit(
 	marks: DeltaFieldChanges,
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
+	revision?: RevisionTag,
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
 	const rootDelta = rootFromDeltaFieldMap(new Map([[rootKey, marks]]), build, destroy);
-	testVisit(rootDelta, expected, detachedFieldIndex);
+	testVisit(rootDelta, expected, detachedFieldIndex, revision);
 }
 
 const rootKey: FieldKey = brand("root");
@@ -274,7 +283,7 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index, [{ id: { minor: 43 }, trees: [content] }]);
+		testTreeVisit(delta, expected, index, undefined, [{ id: { minor: 43 }, trees: [content] }]);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move node to the right", () => {
@@ -460,7 +469,7 @@ describe("visitDelta", () => {
 			["exitField", field0],
 			["destroy", field0, 1],
 		];
-		testTreeVisit(delta, expected, index, undefined, [{ id: node1, count: 1 }]);
+		testTreeVisit(delta, expected, index, undefined, undefined, [{ id: node1, count: 1 }]);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("destroy (root level)", () => {
@@ -499,6 +508,7 @@ describe("visitDelta", () => {
 			delta,
 			expected,
 			index,
+			undefined,
 			[{ id: buildId, trees: [content] }],
 			[{ id: detachId, count: 1 }],
 		);
@@ -738,7 +748,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index, [{ id: { minor: 42 }, trees: [content] }]);
+		testTreeVisit(delta, expected, index, undefined, [{ id: { minor: 42 }, trees: [content] }]);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 43 }, root: 1 }]);
 	});
 	it("changes under transient", () => {
@@ -782,7 +792,7 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", field2],
 		];
-		testTreeVisit(delta, expected, index, [{ id: buildId, trees: [content] }]);
+		testTreeVisit(delta, expected, index, undefined, [{ id: buildId, trees: [content] }]);
 		assert.deepEqual(Array.from(index.entries()), [{ id: detachId, root: 2 }]);
 	});
 	it("restore", () => {
@@ -981,7 +991,7 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index, [{ id: buildId, trees: [content] }]);
+		testTreeVisit(delta, expected, index, undefined, [{ id: buildId, trees: [content] }]);
 		assert.deepEqual(Array.from(index.entries()), [
 			{ id: detachId, root: 2 },
 			{ id: node1, root: 3 },
@@ -1107,6 +1117,132 @@ describe("visitDelta", () => {
 				fields: new Map([[rootKey, rootFieldDelta]]),
 			};
 			testVisit(delta, expected, index);
+		});
+	});
+
+	it("creates refreshers and updates latest revision for root transfers", () => {
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
+		const node1 = { minor: 1 };
+		index.createEntry(node1);
+		const moveId = { minor: 2 };
+		const rename: DeltaDetachedNodeRename = {
+			count: 1,
+			oldId: node1,
+			newId: moveId,
+		};
+		const delta = {
+			refreshers: [{ id: node1, trees: [content] }],
+			rename: [rename],
+		};
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", field0],
+			["detach", { start: 0, end: 1 }, field1],
+			["exitField", field0],
+			["enterField", rootKey],
+			["exitField", rootKey],
+		];
+		const revision = mintRevisionTag();
+		testTreeVisit(delta, expected, index, revision);
+		const iteratorResult = index.entries().next();
+		assert.equal(iteratorResult.done, false);
+		assert.deepEqual(iteratorResult.value.id, moveId);
+		assert.equal(iteratorResult.value.latestRelevantRevision, revision);
+	});
+
+	describe("updates latest revision", () => {
+		it("when building a detached tree", () => {
+			const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
+			const node = { minor: 42 };
+			const delta: DeltaRoot = {
+				build: [{ id: node, trees: [content] }],
+			};
+			const expected: VisitScript = [["create", [content], field0]];
+			const revision = mintRevisionTag();
+			testVisit(delta, expected, index, revision);
+			assert.deepEqual(Array.from(index.entries()), [
+				{ id: node, root: 0, latestRelevantRevision: revision },
+			]);
+		});
+
+		it("when applying changes to detached trees", () => {
+			const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
+			const node1 = { minor: 1 };
+			index.createEntry(node1);
+			const moveId = { minor: 2 };
+			const moveOut: DeltaMark = {
+				count: 1,
+				detach: moveId,
+			};
+			const moveIn: DeltaMark = {
+				count: 1,
+				attach: moveId,
+			};
+			const modify: DeltaDetachedNodeChanges = {
+				id: node1,
+				fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
+			};
+			const delta = { global: [modify] };
+			const expected: VisitScript = [
+				["enterField", rootKey],
+				["exitField", rootKey],
+				["enterField", field0],
+				["enterNode", 0],
+				["enterField", fooKey],
+				["detach", { start: 0, end: 1 }, field1],
+				["exitField", fooKey],
+				["exitNode", 0],
+				["exitField", field0],
+				["enterField", rootKey],
+				["exitField", rootKey],
+				["enterField", field0],
+				["enterNode", 0],
+				["enterField", fooKey],
+				["attach", field1, 1, 0],
+				["exitField", fooKey],
+				["exitNode", 0],
+				["exitField", field0],
+			];
+			const revision = mintRevisionTag();
+			testTreeVisit(delta, expected, index, revision);
+			assert.deepEqual(Array.from(index.entries()), [
+				{ id: node1, root: 0, latestRelevantRevision: revision },
+			]);
+		});
+
+		it("for detached trees created during replaces", () => {
+			const buildId = { minor: 0 };
+
+			const replace: DeltaMark = {
+				count: 2,
+				detach: { minor: 2 },
+			};
+
+			const rootChanges: DeltaFieldChanges = { local: [replace] };
+			const delta: DeltaRoot = {
+				build: [{ id: buildId, trees: [content, content] }],
+				fields: new Map([[rootKey, rootChanges]]),
+			};
+
+			const expected: VisitScript = [
+				["create", [content], field0],
+				["create", [content], field1],
+				["enterField", rootKey],
+				["detach", { start: 0, end: 1 }, field2],
+				["detach", { start: 0, end: 1 }, field3],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["exitField", rootKey],
+			];
+
+			const revision = mintRevisionTag();
+			const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
+			testVisit(delta, expected, index, revision);
+			const iteratorResult = index.entries().next();
+			assert.equal(iteratorResult.done, false);
+			assert.deepEqual(iteratorResult.value.id, buildId);
+			assert.equal(iteratorResult.value.latestRelevantRevision, revision);
 		});
 	});
 

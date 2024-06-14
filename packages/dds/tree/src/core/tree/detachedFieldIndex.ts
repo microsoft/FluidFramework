@@ -104,15 +104,23 @@ export class DetachedFieldIndex {
 		return clone;
 	}
 
-	public *entries(): Generator<{ root: ForestRootId } & { id: Delta.DetachedNodeId }> {
+	public *entries(): Generator<
+		{ root: ForestRootId; latestRelevantRevision?: RevisionTag } & {
+			id: Delta.DetachedNodeId;
+		}
+	> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
 			if (major !== undefined) {
-				for (const [minor, { root }] of innerMap) {
-					yield { id: { major, minor }, root };
+				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
+					yield latestRelevantRevision !== undefined
+						? { id: { major, minor }, root, latestRelevantRevision }
+						: { id: { major, minor }, root };
 				}
 			} else {
-				for (const [minor, { root }] of innerMap) {
-					yield { id: { minor }, root };
+				for (const [minor, { root, latestRelevantRevision }] of innerMap) {
+					yield latestRelevantRevision !== undefined
+						? { id: { minor }, root, latestRelevantRevision }
+						: { id: { minor }, root };
 				}
 			}
 		}
