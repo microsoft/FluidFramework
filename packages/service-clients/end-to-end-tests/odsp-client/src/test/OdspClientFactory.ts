@@ -38,6 +38,9 @@ export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
 }
 
+/**
+ * Get set of credential to use from env variable.
+ */
 export const getCredentials = (): IOdspLoginCredentials[] => {
 	const creds: IOdspLoginCredentials[] = [];
 	const loginTenants = process.env.login__odspclient__spe__test__tenants;
