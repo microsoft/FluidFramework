@@ -89,7 +89,7 @@ export class MockLogger implements ITelemetryBaseLogger {
     // (undocumented)
     clear(): void;
     // (undocumented)
-    get events(): readonly ITelemetryBaseEvent[];
+    events: ITelemetryBaseEvent[];
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
