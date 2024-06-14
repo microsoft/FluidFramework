@@ -14,26 +14,40 @@ import { createChildLogger } from "./logger.js";
 import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
- * The MockLogger records events sent to it, and then can walk back over those events
- * searching for a set of expected events to match against the logged events.
+ * Mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} implementation.
+ *
+ * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
+ * match against the logged events.
  *
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	events: ITelemetryBaseEvent[] = [];
 
-	constructor(public readonly minLogLevel?: LogLevel) {}
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.minLogLevel}
+	 */
+	public readonly minLogLevel: LogLevel;
 
-	clear(): void {
+	public constructor(minLogLevel?: LogLevel) {
+		this.minLogLevel = minLogLevel ?? LogLevel.default;
+	}
+
+	public clear(): void {
 		this.events = [];
 	}
 
-	toTelemetryLogger(): ITelemetryLoggerExt {
+	public toTelemetryLogger(): ITelemetryLoggerExt {
 		return createChildLogger({ logger: this });
 	}
 
-	send(event: ITelemetryBaseEvent): void {
-		this.events.push(event);
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
+	 */
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
+			this.events.push(event);
+		}
 	}
 
 	/**

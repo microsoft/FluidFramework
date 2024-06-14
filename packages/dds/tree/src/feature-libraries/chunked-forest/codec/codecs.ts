@@ -19,11 +19,12 @@ import type { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
+	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
 }
 /**
@@ -81,7 +82,10 @@ export function makeFieldBatchCodec(options: ICodecOptions, writeVersion: number
 		},
 		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, context.idCompressor).map((chunk) => chunk.cursor());
+			return decode(data, {
+				idCompressor: context.idCompressor,
+				originatorId: context.originatorId,
+			}).map((chunk) => chunk.cursor());
 		},
 	});
 }

@@ -1084,7 +1084,29 @@ describe("Error Discovery", () => {
 		const wrappedError = wrapError("wrap me", createTestError);
 		assert(!isExternalError(wrappedError));
 		assert(wrappedError.getTelemetryProperties().untrustedOrigin === 1); // But it should still say untrustedOrigin
-		assert(!isExternalError(new LoggingError("testLoggingError")));
+
+		const loggingError = new LoggingError("testLoggingError");
+		assert(!isExternalError(loggingError), "new LoggingError is not external");
+		assert(
+			!isExternalError(normalizeError(loggingError)),
+			"normalized LoggingError is not external",
+		);
+
+		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
+		assert(
+			isExternalError(
+				normalizeError(loggingError, { props: { errorRunningExternalCode: 1 } }),
+			),
+			"normalized loggingError with errorRunningExternalCode flag is external",
+		);
+
+		// Future compat - Eventually we want to switch untrustedOrigin to errorRunningExternalCode, so set up "read" code now in 2.0
+		assert(
+			isExternalError(
+				normalizeError(loggingError, { props: { errorRunningExternalCode: "callback" } }),
+			),
+			"normalized loggingError with errorRunningExternalCode string value is external",
+		);
 	});
 
 	it("isFluidError", () => {

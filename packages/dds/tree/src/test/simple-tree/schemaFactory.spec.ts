@@ -19,6 +19,11 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../simple-tree/index.js";
+import {
+	// Import directly to get the non-type import to allow testing of the package only instanceof
+	TreeNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/types.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
@@ -112,21 +117,38 @@ describe("schemaFactory", () => {
 
 	it("instanceof", () => {
 		const schema = new SchemaFactory("com.example");
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
 
 		class A extends schema.object("A", {}) {}
 		class B extends schema.object("B", {}) {}
+		const C = schema.object("C", {});
+		const StructuralArray = schema.array(A);
+		const NominalArray = schema.array("D", A);
 
 		const a = new A({});
 		assert(a instanceof A);
+		assert(a instanceof TreeNode);
 		assert(!(a instanceof B));
 
 		// @ts-expect-error Nodes should get type based nominal typing.
 		const b: A = new B({});
+
+		const c = new C({});
+		assert(c instanceof C);
+		assert(c instanceof TreeNode);
+		assert(!(c instanceof B));
+
+		const n = new NominalArray([]);
+		assert(n instanceof NominalArray);
+		assert(n instanceof TreeNode);
+		assert(!(n instanceof B));
+
+		// Structurally typed and/or POJO mode types:
+		const s = hydrate(StructuralArray, []);
+		// This works correctly, but is currently rejected by the type system. This is fine as Tree.is can be used instead.
+		assert(s instanceof (StructuralArray as never));
+		// This case is expressible without type errors, so it is important that it works.
+		assert(s instanceof TreeNode);
+		assert(!(s instanceof B));
 	});
 
 	it("Scoped", () => {
