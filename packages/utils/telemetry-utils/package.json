@@ -141,6 +141,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_MockLogger": {
+				"backCompat": false
+			},
 			"RemovedFunctionDeclaration_isValidLegacyError": {
 				"forwardCompat": false,
 				"backCompat": false

@@ -440,13 +440,13 @@ use_old_InterfaceDeclaration_ITelemetryLoggerExt(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag():
     TypeOnly<old.ITelemetryLoggerPropertyBag>;
-declare function use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
+declare function use_current_RemovedInterfaceDeclaration_ITelemetryLoggerPropertyBag(
     use: TypeOnly<current.ITelemetryLoggerPropertyBag>): void;
-use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
+use_current_RemovedInterfaceDeclaration_ITelemetryLoggerPropertyBag(
     get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag());
 
 /*
@@ -454,14 +454,14 @@ use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerPropertyBag": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryLoggerPropertyBag": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag():
+declare function get_current_RemovedInterfaceDeclaration_ITelemetryLoggerPropertyBag():
     TypeOnly<current.ITelemetryLoggerPropertyBag>;
 declare function use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
     use: TypeOnly<old.ITelemetryLoggerPropertyBag>): void;
 use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
-    get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag());
+    get_current_RemovedInterfaceDeclaration_ITelemetryLoggerPropertyBag());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -524,13 +524,13 @@ use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_ITelemetryPropertiesExt():
     TypeOnly<old.ITelemetryPropertiesExt>;
-declare function use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
+declare function use_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<current.ITelemetryPropertiesExt>): void;
-use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
+use_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt(
     get_old_InterfaceDeclaration_ITelemetryPropertiesExt());
 
 /*
@@ -538,14 +538,14 @@ use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITelemetryPropertiesExt():
+declare function get_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt():
     TypeOnly<current.ITelemetryPropertiesExt>;
 declare function use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<old.ITelemetryPropertiesExt>): void;
 use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
-    get_current_InterfaceDeclaration_ITelemetryPropertiesExt());
+    get_current_RemovedInterfaceDeclaration_ITelemetryPropertiesExt());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -601,6 +601,7 @@ declare function get_current_ClassDeclaration_MockLogger():
 declare function use_old_ClassDeclaration_MockLogger(
     use: TypeOnly<old.MockLogger>): void;
 use_old_ClassDeclaration_MockLogger(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockLogger());
 
 /*
