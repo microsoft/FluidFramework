@@ -971,8 +971,8 @@ export class Container
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
 		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context or supportedFeatures flag by the service.
-		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
-		const shouldSummarizeProtocolTree =
+		// Note Even if not forced on via this flag, combined summaries may still be enabled by service policy.
+		const enableSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree;
 
@@ -982,7 +982,7 @@ export class Container
 			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
-			shouldSummarizeProtocolTree,
+			enableSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
