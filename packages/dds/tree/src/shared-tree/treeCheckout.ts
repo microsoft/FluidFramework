@@ -266,6 +266,7 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
+		args?.logger,
 	);
 }
 
@@ -506,10 +507,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										"Unable to revert a revertible that has been disposed.",
 									);
 								}
-								this.revertLogger?.measure(() => {
-									const metrics = this.revertRevertible(revision, data.kind);
-									return { telemetryProperties: metrics };
-								});
+								if (this.revertLogger === undefined) {
+									this.revertRevertible(revision, data.kind);
+								} else {
+									this.revertLogger.measure(() => {
+										const metrics = this.revertRevertible(revision, data.kind);
+										return { telemetryProperties: metrics };
+									});
+								}
+
 								if (release) {
 									revertible.dispose();
 								}
