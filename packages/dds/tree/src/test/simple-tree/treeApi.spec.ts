@@ -237,20 +237,20 @@ describe("treeNodeApi", () => {
 			assert.equal(Tree.shortId(view.root), stableNodeKey);
 		});
 		it("errors if multiple identifiers exist on the same node", () => {
-			const config = new TreeConfiguration(
-				schema.object("parent", {
+			const config = new TreeViewConfiguration({
+				schema: schema.object("parent", {
 					identifier: schema.identifier,
 					identifier2: schema.identifier,
 				}),
-				() => ({
-					identifier: "a",
-					identifier2: "b",
-				}),
-			);
+			});
 
-			const root = getView(config).root;
+			const view = getView(config);
+			view.initialize({
+				identifier: "a",
+				identifier2: "b",
+			});
 			assert.throws(
-				() => Tree.shortId(root),
+				() => Tree.shortId(view.root),
 				(error: Error) =>
 					validateAssertionError(
 						error,
