@@ -580,6 +580,8 @@ export class SchemaFactory<
 	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into the tree.
 	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
+	 * In that case, it is up to the user to ensure that the identifier is unique within the current tree - no other node should have the same identifier at the same time.
+	 * If the identifier is not unique, it may be read, but may cause libraries or features which operate over node identifiers to misbehave.
 	 * User-supplied identifiers may be read immediately, even before insertion into the tree.
 	 *
 	 * A node may have more than one identifier field (though note that this precludes the use of the `Tree.shortId()` API).
