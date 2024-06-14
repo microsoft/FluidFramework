@@ -121,6 +121,7 @@ import {
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
 	wrapError,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -3417,12 +3418,19 @@ export class ContainerRuntime
 	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
 		// This is always called when processing an op so messageTimestampMs should exist. Due to back-compat
 		// across the data store runtime / container runtime boundary, this may be undefined and if so, get
-		// the timestamp from the last processed message which must exist.
+		// the timestamp from the last processed message which should exist.
+		// If a timestamp doesn't exist, log so we can learn about these cases and return.
 		const timestampMs = messageTimestampMs ?? this.getCurrentReferenceTimestampMs();
-		assert(
-			timestampMs !== undefined,
-			"message timestamp must exist when calling addedGCOutboundRoute",
-		);
+		if (timestampMs === undefined) {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "NoTimestampInGCOutboundRoute",
+				...tagCodeArtifacts({
+					id: toPath,
+					fromId: fromPath,
+				}),
+			});
+			return;
+		}
 		this.garbageCollector.addedOutboundReference(fromPath, toPath, timestampMs);
 	}
 
