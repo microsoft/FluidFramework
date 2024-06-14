@@ -19,7 +19,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces/internal';
 import { Lazy } from '@fluidframework/core-utils/internal';
-import type { LogLevel } from '@fluidframework/core-interfaces';
+import { LogLevel } from '@fluidframework/core-interfaces';
 import type { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
