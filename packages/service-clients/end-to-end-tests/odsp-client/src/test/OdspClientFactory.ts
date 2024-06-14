@@ -9,6 +9,19 @@ import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-uti
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
 
+interface LoginTenantRange {
+	prefix: string;
+	start: number;
+	count: number;
+	password: string;
+}
+
+interface LoginTenants {
+	[tenant: string]: {
+		range: LoginTenantRange;
+	};
+}
+
 /**
  * Interface representing the odsp-client login account credentials.
  */
@@ -23,6 +36,26 @@ export interface IOdspLoginCredentials {
  */
 export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
+}
+
+export getCredentials: IOdspLoginCredentials[] = () => {
+	const creds: IOdspLoginCredentials[] = [];
+	const loginTenants = process.env.login__odspclient__spe__test__tenants;
+
+	if (loginTenants !== undefined) {
+		const tenants: LoginTenants = JSON.parse(loginTenants);
+		const [tenant] = Object.keys(tenants);
+		const { range } = tenants[tenant];
+
+		for (let i = 0; i < range.count; i++) {
+			creds.push({
+				username: `${range.prefix}${range.start + i}@${tenant}`,
+				password: range.password,
+			})
+		}
+	}
+
+	return creds;
 }
 
 /**

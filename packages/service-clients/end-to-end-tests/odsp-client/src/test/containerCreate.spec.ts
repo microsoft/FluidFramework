@@ -14,15 +14,32 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 
-const clientCreds: IOdspLoginCredentials = {
-	username: process.env.odsp__client__login__username as string,
-	password: process.env.odsp__client__login__password as string,
-};
-
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
+
+	const credentials = getCredentials();
+
+	if (!Array.isArray(credentials) || credentials.length === 0) {
+		throw new Error("Login credentials are undefined, not an array, or empty");
+	}
+
+	if (credentials.length < 2) {
+		throw new Error("Insufficient login credentials provided");
+	}
+
+	const [client1, client2] = credentials.slice(0, 2);
+
+
+	if (!client1 || !client2) {
+		throw new Error("Invalid login credentials format");
+	}
+
+	const clientCreds: IOdspLoginCredentials = {
+		username: client1.username,
+		password: client1.password,
+	};
 
 	beforeEach(() => {
 		client = createOdspClient(clientCreds);

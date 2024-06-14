@@ -13,45 +13,12 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { OdspClient } from "@fluidframework/odsp-client";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+import { IOdspLoginCredentials, createOdspClient, getCredentails } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
-
-interface LoginTenantRange {
-	prefix: string;
-	start: number;
-	count: number;
-	password: string;
-}
-
-interface LoginTenants {
-	[tenant: string]: {
-		range: LoginTenantRange;
-	};
-}
-
-function getCredentials(): IOdspLoginCredentials[] {
-	const creds: IOdspLoginCredentials[] = [];
-	const loginTenants = process.env.login__odspclient__spe__test__tenants;
-
-	if (loginTenants !== undefined) {
-		const tenants: LoginTenants = JSON.parse(loginTenants);
-		const [tenant] = Object.keys(tenants);
-		const { range } = tenants[tenant];
-
-		for (let i = 0; i < range.count; i++) {
-			creds.push({
-				username: `${range.prefix}${range.start + i}@${tenant}`,
-				password: range.password,
-			})
-		}
-	}
-
-	return creds;
-}
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
