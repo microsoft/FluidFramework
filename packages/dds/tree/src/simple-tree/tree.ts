@@ -57,26 +57,6 @@ export interface ITree extends IFluidLoadable {
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
-
-	/**
-	 * Returns a {@link TreeView} using the provided schema.
-	 * If the stored schema is view-compatible with the view schema specified by `config`,
-	 * the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
-	 * See {@link TreeView.compatibility} for information about the compatibility between the view and stored schemas.
-	 *
-	 * @remarks
-	 * If the tree is uninitialized, it will be implicitly initialized by this function.
-	 *
-	 * Note that other clients can modify the document at any time, causing the view to change its compatibility status: see {@link TreeView.events} for how to handle invalidation in these cases.
-	 *
-	 * Only one schematized view may exist for a given ITree at a time.
-	 * If creating a second, the first must be disposed before calling `schematize` again.
-	 * @deprecated Replaced by {@link ITree.viewWith}. Use that method instead. Note that `viewWith` does not implicitly initialize the tree:
-	 * to initialize it, call {@link TreeView.initialize} on the returned view.
-	 */
-	schematize<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot>;
 }
 
 /**

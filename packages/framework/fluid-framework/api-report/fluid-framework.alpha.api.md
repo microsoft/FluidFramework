@@ -829,8 +829,6 @@ export interface ITrace {
 
 // @public
 export interface ITree extends IFluidLoadable {
-    // @deprecated
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -1176,16 +1174,6 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 export interface TreeChangeEvents {
     nodeChanged(): void;
     treeChanged(): void;
-}
-
-// @public @deprecated
-export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
-    readonly enableSchemaValidation: boolean;
-    // (undocumented)
-    readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    // (undocumented)
-    readonly schema: TSchema;
 }
 
 // @public
