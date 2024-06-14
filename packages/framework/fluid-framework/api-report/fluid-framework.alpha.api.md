@@ -1079,7 +1079,7 @@ export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 // @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind_2<ISharedDirectory>;
 
-// @alpha @deprecated
+// @alpha
 export type SharedDirectory = ISharedDirectory;
 
 // @alpha
@@ -1294,7 +1294,6 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 // @public
 export interface TreeViewEvents {
-    afterBatch(): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
     schemaChanged(): void;

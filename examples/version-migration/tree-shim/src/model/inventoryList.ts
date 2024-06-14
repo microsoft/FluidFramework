@@ -20,7 +20,11 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
 
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
-import { NewTreeInventoryListController } from "./newTreeInventoryListController.js";
+import {
+	InventoryItem,
+	InventorySchema,
+	NewTreeInventoryListController,
+} from "./newTreeInventoryListController.js";
 
 const isMigratedKey = "isMigrated";
 const treeKey = "tree";
@@ -41,18 +45,17 @@ function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
 	const legacyTreeData = new LegacyTreeInventoryListController(legacyTree);
 	const items = legacyTreeData.getItems();
 
-	const initialTree = {
-		inventoryItemList: {
-			// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
-			"": items.map((item) => {
-				return {
+	const initialTree = new InventorySchema({
+		inventoryItemList: items.map(
+			(item): InventoryItem =>
+				new InventoryItem({
 					id: item.id,
 					name: item.name,
 					quantity: item.quantity,
-				};
-			}),
-		},
-	};
+				}),
+		),
+	});
+
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 

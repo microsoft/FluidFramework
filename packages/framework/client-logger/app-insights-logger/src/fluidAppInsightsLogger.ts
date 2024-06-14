@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import { type ApplicationInsights } from "@microsoft/applicationinsights-web";
+import type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import structuredClone from "@ungap/structured-clone";
 
 /**

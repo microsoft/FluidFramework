@@ -8,19 +8,19 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type ConnectionMode } from "@fluidframework/driver-definitions";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
-import { type AzureLocalConnectionConfig } from "../interfaces.js";
+import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(
 	props: {
@@ -362,15 +362,8 @@ for (const compatibilityMode of ["1", "2"] as const) {
 					itWorks: _.string,
 				}) {}
 
-				const view = tree.schematize(
-					new TreeConfiguration(
-						RootNode,
-						() =>
-							new RootNode({
-								itWorks: "yes",
-							}),
-					),
-				);
+				const view = tree.viewWith(new TreeViewConfiguration({ schema: RootNode }));
+				view.initialize(new RootNode({ itWorks: "yes" }));
 
 				// Ensure root node is correctly typed.
 				assert.equal(view.root.itWorks, "yes");
