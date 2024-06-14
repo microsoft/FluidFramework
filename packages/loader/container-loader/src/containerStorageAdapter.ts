@@ -95,7 +95,7 @@ export class ContainerStorageAdapter
 		this._summarizeProtocolTree = shouldSummarizeProtocolTree;
 		this.logger.sendTelemetryEvent({
 			eventName: "isSummarizeProtocolTreeEnabled",
-			value: this._summarizeProtocolTree,
+			details: { value: this._summarizeProtocolTree ?? false },
 		});
 	}
 
@@ -133,7 +133,7 @@ export class ContainerStorageAdapter
 					// log everytime the summarization preference changes
 					this.logger.sendTelemetryEvent({
 						eventName: "isSummarizeProtocolTreeEnabled",
-						value: latestShouldSummarizeProtocolTree,
+						details: { value: latestShouldSummarizeProtocolTree },
 					});
 				}
 				this._summarizeProtocolTree = latestShouldSummarizeProtocolTree;
