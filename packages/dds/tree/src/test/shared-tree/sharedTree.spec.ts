@@ -71,7 +71,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeConfiguration,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
@@ -199,8 +203,10 @@ describe("SharedTree", () => {
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: Foo }));
 			const unhydratedInitialTree = new Foo({});
-			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			view.initialize(unhydratedInitialTree);
+
 			assert(view.root === unhydratedInitialTree);
 		});
 	});
@@ -1908,13 +1914,12 @@ describe("SharedTree", () => {
 			const [sharedTree] = provider.trees;
 			const sf = new SchemaFactory("test");
 			const schema = sf.string;
-			assert.doesNotThrow(() =>
-				sharedTree.schematize(
-					new TreeConfiguration(schema, () => "42", {
-						enableSchemaValidation: true,
-					}),
-				),
-			);
+			assert.doesNotThrow(() => {
+				const view = sharedTree.viewWith(
+					new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+				);
+				view.initialize("42");
+			});
 		});
 
 		it("schema validation throws as expected", async () => {
@@ -1925,11 +1930,10 @@ describe("SharedTree", () => {
 			// No validation failures when initializing the tree for the first time.
 			// Stored schema is set up so 'foo' is an array of strings.
 			const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
-			sharedTree.schematize(
-				new TreeConfiguration(schema, () => ({ foo: ["42"] }), {
-					enableSchemaValidation: true,
-				}),
+			const view = sharedTree.viewWith(
+				new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
 			);
+			view.initialize({ foo: ["42"] });
 
 			// Trying to use the tree with a view schema that makes 'foo' an array of strings or numbers
 			// should not cause compile-time errors when inserting a number, but stored schema validation

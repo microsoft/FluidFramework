@@ -13,7 +13,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeConfiguration,
+	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 	type TreeView,
 	type InsertableTypedNode,
@@ -36,12 +36,12 @@ describe("treeApi", () => {
 		}) {}
 
 		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			return getView(
-				new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child,
-				})),
-			);
+			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+			view.initialize({
+				content: 42,
+				child,
+			});
+			return view;
 		}
 
 		/**
@@ -140,14 +140,15 @@ describe("treeApi", () => {
 
 			it("respects a violated node existence constraint after sequencing", () => {
 				// Create two connected trees with child nodes
-				const config = new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child: {},
-				}));
+				const config = new TreeViewConfiguration({ schema: TestObject });
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
-				const viewA = treeA.schematize(config);
-				const viewB = treeB.schematize(config);
+				const viewA = treeA.viewWith(config);
+				const viewB = treeB.viewWith(config);
+				viewA.initialize({
+					content: 42,
+					child: {},
+				});
 				provider.processMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
@@ -224,7 +225,7 @@ describe("treeApi", () => {
 			it.skip("emits change events", () => {
 				const view = getTestObjectView();
 				let event = false;
-				view.events.on("afterBatch", () => (event = true));
+				view.events.on("rootChanged", () => (event = true));
 				view.root.content = 44;
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
@@ -235,7 +236,7 @@ describe("treeApi", () => {
 			it.skip("emits change events on rollback", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
-				view.events.on("afterBatch", () => (eventCount += 1));
+				view.events.on("rootChanged", () => (eventCount += 1));
 				Tree.runTransaction(view, (r) => {
 					r.content = 43;
 					return Tree.runTransaction.rollback;

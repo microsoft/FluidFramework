@@ -4,10 +4,10 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	type IDevtoolsMessage,
-	type IMessageRelay,
-	type IMessageRelayEvents,
+import type {
+	IDevtoolsMessage,
+	IMessageRelay,
+	IMessageRelayEvents,
 } from "@fluidframework/devtools-core/internal";
 
 /**

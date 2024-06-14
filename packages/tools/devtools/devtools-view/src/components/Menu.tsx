@@ -12,10 +12,10 @@ import {
 	Tooltip,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
-import {
-	type HasContainerKey,
-	type DevtoolsFeatureFlags,
-	type ContainerKey,
+import type {
+	HasContainerKey,
+	DevtoolsFeatureFlags,
+	ContainerKey,
 } from "@fluidframework/devtools-core/internal";
 import { GetContainerList } from "@fluidframework/devtools-core/internal";
 import React from "react";

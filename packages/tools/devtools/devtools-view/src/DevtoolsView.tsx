@@ -4,7 +4,7 @@
  */
 
 import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type ContainerKey,
 	ContainerList,
