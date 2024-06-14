@@ -89,7 +89,7 @@
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -121,11 +121,21 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -180,7 +190,10 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": ["...", "@fluidframework/merge-tree#build:test"]
+			"build:test": [
+				"...",
+				"@fluidframework/merge-tree#build:test"
+			]
 		}
 	},
 	"typeValidation": {

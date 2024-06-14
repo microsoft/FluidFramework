@@ -36,7 +36,7 @@
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:index": "api-extractor run --config api-extractor/api-extractor-lint-index.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp node_modules/.legacy nyc",
@@ -55,11 +55,21 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {

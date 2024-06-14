@@ -35,7 +35,7 @@
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check . --formatter-enabled=true",
 		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",

@@ -62,7 +62,7 @@
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run",
@@ -103,7 +103,9 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"tsc": ["typetests:gen"]
+			"tsc": [
+				"typetests:gen"
+			]
 		}
 	},
 	"typeValidation": {

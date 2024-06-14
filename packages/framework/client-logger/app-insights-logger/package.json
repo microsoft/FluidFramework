@@ -63,7 +63,7 @@
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib \"*.d.ts\" nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -120,14 +120,18 @@
 	"fluid": {
 		"browser": {
 			"umd": {
-				"files": ["dist/main.bundle.js"],
+				"files": [
+					"dist/main.bundle.js"
+				],
 				"library": "main"
 			}
 		}
 	},
 	"fluidBuild": {
 		"tasks": {
-			"tsc": ["typetests:gen"]
+			"tsc": [
+				"typetests:gen"
+			]
 		}
 	},
 	"typeValidation": {

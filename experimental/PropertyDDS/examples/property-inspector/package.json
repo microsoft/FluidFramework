@@ -113,7 +113,10 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": ["...", "webpack"],
+				"dependsOn": [
+					"...",
+					"webpack"
+				],
 				"script": false
 			},
 			"build:esnext": [
@@ -128,7 +131,9 @@
 		"buildDependencies": {
 			"merge": {
 				"build:esnext": {
-					"@fluid-experimental/property-inspector-table": ["build:webpack"]
+					"@fluid-experimental/property-inspector-table": [
+						"build:webpack"
+					]
 				}
 			}
 		}

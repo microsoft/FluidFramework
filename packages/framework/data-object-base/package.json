@@ -26,7 +26,12 @@
 	},
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
-	"files": ["dist/**/*", "!dist/test/**", "lib/**/*", "es5/**/*"],
+	"files": [
+		"dist/**/*",
+		"!dist/test/**",
+		"lib/**/*",
+		"es5/**/*"
+	],
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -41,7 +46,7 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib es5 \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
