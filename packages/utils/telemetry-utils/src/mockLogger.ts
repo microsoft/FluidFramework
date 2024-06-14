@@ -20,16 +20,13 @@ import type { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTy
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
-	private _events: ITelemetryBaseEvent[] = [];
-
-	public get events(): readonly ITelemetryBaseEvent[] {
-		return this._events;
-	}
+	// TODO: don't expose mutability to external consumers
+	public events: ITelemetryBaseEvent[] = [];
 
 	public constructor(public readonly minLogLevel?: LogLevel) {}
 
 	public clear(): void {
-		this._events = [];
+		this.events = [];
 	}
 
 	public toTelemetryLogger(): ITelemetryLoggerExt {
@@ -37,7 +34,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	}
 
 	public send(event: ITelemetryBaseEvent): void {
-		this._events.push(event);
+		this.events.push(event);
 	}
 
 	/**
@@ -69,7 +66,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this._events;
+		const actualEvents = this.events;
 		if (!this.matchEvents(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -108,7 +105,7 @@ ${JSON.stringify(actualEvents)}`);
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this._events;
+		const actualEvents = this.events;
 		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -132,7 +129,7 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean = false,
 	): boolean {
 		return (
-			expectedEvents.length === this._events.length &&
+			expectedEvents.length === this.events.length &&
 			this.matchEvents(expectedEvents, inlineDetailsProp)
 		);
 	}
@@ -145,7 +142,7 @@ ${JSON.stringify(actualEvents)}`);
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this._events;
+		const actualEvents = this.events;
 		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -164,7 +161,7 @@ ${JSON.stringify(actualEvents)}`);
 		message?: string,
 		inlineDetailsProp: boolean = false,
 	): void {
-		const actualEvents = this._events;
+		const actualEvents = this.events;
 		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp)) {
 			throw new Error(`${message ?? "Logs don't match"}
 disallowed events:
@@ -180,7 +177,7 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean,
 	): number {
 		let iExpectedEvent = 0;
-		for (const event of this._events) {
+		for (const event of this.events) {
 			if (
 				iExpectedEvent < expectedEvents.length &&
 				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
