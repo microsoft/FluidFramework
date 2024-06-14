@@ -8,16 +8,14 @@
 		{
 			// This tag indicates API is part of a legacy API set.
 			"tagName": "@legacy",
-			"syntaxKind": "modifier",
-			"allowMultiple": true
+			"syntaxKind": "modifier"
 		},
 		{
 			// This tag indicates API is part of reserved system types
 			// and should not be inspected by external parties. It may
 			// change version to version.
 			"tagName": "@system",
-			"syntaxKind": "modifier",
-			"allowMultiple": true
+			"syntaxKind": "modifier"
 		}
 	],
 
