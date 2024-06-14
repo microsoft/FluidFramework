@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, makeCodecFamily, unitCodec } from "../../codec/index.js";
-import { FieldChangeEncodingContext } from "../index.js";
+import { type ICodecFamily, makeCodecFamily, unitCodec } from "../../codec/index.js";
+import type { FieldChangeEncodingContext } from "../index.js";
 
 export const noChangeCodecFamily: ICodecFamily<0, FieldChangeEncodingContext> = makeCodecFamily<
 	0,

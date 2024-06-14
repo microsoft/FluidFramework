@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { OdspClient } from "@fluid-experimental/odsp-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
+import { OdspClient } from "@fluidframework/odsp-client";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { IOdspLoginCredentials, createOdspClient, getCredentials } from "./OdspClientFactory.js";
@@ -20,19 +20,15 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-describe("Fluid audience", () => {
+describe("Fluid audience New", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
 	const credentials = getCredentials();
 
-	if (credentials.length === undefined) {
-		throw new Error("Login credentials provided are missing");
-	}
-
 	const [cred1, cred2] = credentials.slice(0, 2);
 
-	if (!cred1 || !cred2) {
+	if (cred1 === undefined || cred2 === undefined) {
 		throw new Error("Invalid login credentials format");
 	}
 

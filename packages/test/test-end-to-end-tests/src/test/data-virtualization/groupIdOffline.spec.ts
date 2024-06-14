@@ -21,7 +21,8 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "./testSnapshotCache.js";
+import { TestSnapshotCache } from "../../testSnapshotCache.js";
+
 import { clearCacheIfOdsp, supportsDataVirtualization } from "./utils.js";
 
 const interceptResult = <T>(
@@ -67,7 +68,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	};
 	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch", true);
+	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2", true);
 	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";

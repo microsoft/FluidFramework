@@ -6,14 +6,14 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	BranchRebaseResult,
-	ChangeFamily,
-	ChangeFamilyEditor,
+	type BranchRebaseResult,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
-	CommitMetadata,
-	GraphCommit,
-	RevisionTag,
-	TaggedChange,
+	type CommitMetadata,
+	type GraphCommit,
+	type RevisionTag,
+	type TaggedChange,
 	findAncestor,
 	makeAnonChange,
 	mintCommit,
@@ -21,7 +21,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../core/index.js";
-import { EventEmitter, Listenable } from "../events/index.js";
+import { EventEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
 

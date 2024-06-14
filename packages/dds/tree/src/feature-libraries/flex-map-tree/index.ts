@@ -4,7 +4,8 @@
  */
 
 export {
-	MapTreeNode,
+	type MapTreeNode,
+	isMapTreeNode,
 	getOrCreateNode,
 	getOrCreateMapTreeNode,
 	tryGetMapTreeNode,

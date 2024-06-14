@@ -19,15 +19,12 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
-import type {
-	IClientDetails,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -295,7 +292,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
 	 */
-	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.

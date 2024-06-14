@@ -8,24 +8,24 @@ import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	AnchorNode,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
+	type AnchorNode,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
 	EmptyKey,
-	FieldUpPath,
-	PathVisitor,
-	PlaceUpPath,
-	ProtoNodes,
-	RangeUpPath,
+	type FieldUpPath,
+	type PathVisitor,
+	type PlaceUpPath,
+	type ProtoNodes,
+	type RangeUpPath,
 	TreeNavigationResult,
-	UpPath,
+	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { JsonCompatible, brand, makeArray } from "../../util/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectJsonTree,

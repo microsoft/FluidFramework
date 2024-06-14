@@ -7,15 +7,15 @@ import { strict as assert } from "assert";
 
 import {
 	EmptyKey,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	JsonableTree,
-	TreeNodeSchemaIdentifier,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type JsonableTree,
+	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-import {
+import type {
 	ChunkedCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunk.js";
@@ -30,14 +30,14 @@ import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
-	TreeChunk,
+	type TreeChunk,
 	chunkTree,
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { ReferenceCountedBase, brand } from "../../../util/index.js";
 import {
-	TestField,
+	type TestField,
 	mapSchema,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,

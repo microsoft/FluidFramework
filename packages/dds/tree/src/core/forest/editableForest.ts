@@ -5,20 +5,21 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { RevisionTagCodec } from "../rebase/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { RevisionTagCodec } from "../rebase/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 import {
-	Anchor,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedField,
-	ITreeCursorSynchronous,
+	type Anchor,
+	type DeltaRoot,
+	type DeltaVisitor,
+	type DetachedField,
+	type ITreeCursorSynchronous,
 	applyDelta,
 	deltaForRootInitialization,
 	makeDetachedFieldIndex,
 } from "../tree/index.js";
 
-import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import type { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Editing APIs.
@@ -49,10 +50,11 @@ export function initializeForest(
 	forest: IEditableForest,
 	content: readonly ITreeCursorSynchronous[],
 	revisionTagCodec: RevisionTagCodec,
+	idCompressor: IIdCompressor,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
 	const delta: DeltaRoot = deltaForRootInitialization(content);
-	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec));
+	applyDelta(delta, forest, makeDetachedFieldIndex("init", revisionTagCodec, idCompressor));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

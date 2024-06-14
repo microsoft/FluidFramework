@@ -4,30 +4,30 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
-	Anchor,
-	AnchorLocator,
-	AnchorNode,
+	type Anchor,
+	type AnchorLocator,
+	type AnchorNode,
 	AnchorSet,
-	AnchorSetRootEvents,
-	ChangeFamily,
+	type AnchorSetRootEvents,
+	type ChangeFamily,
 	CommitKind,
-	CommitMetadata,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	IEditableForest,
-	IForestSubscription,
-	JsonableTree,
-	Revertible,
+	type CommitMetadata,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type IEditableForest,
+	type IForestSubscription,
+	type JsonableTree,
+	type Revertible,
 	RevertibleStatus,
-	RevisionTag,
-	RevisionTagCodec,
-	TreeStoredSchema,
+	type RevisionTag,
+	type RevisionTagCodec,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	combineVisitors,
 	makeAnonChange,
 	makeDetachedFieldIndex,
@@ -35,21 +35,26 @@ import {
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
-	FieldBatchCodec,
-	TreeCompressionStrategy,
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
+import {
+	type FieldBatchCodec,
+	type TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -254,6 +259,7 @@ export function createTreeCheckout(
 		events,
 		mintRevisionTag,
 		revisionTagCodec,
+		idCompressor,
 		args?.removedRoots,
 	);
 }
@@ -373,9 +379,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			HasListeners<CheckoutEvents>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly idCompressor: IIdCompressor,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
+			idCompressor,
 		),
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
@@ -525,6 +533,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			createEmitter(),
 			this.mintRevisionTag,
 			this.revisionTagCodec,
+			this.idCompressor,
 			this.removedRoots.clone(),
 		);
 	}
@@ -623,7 +632,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
-				),
+				).change,
 			);
 		}
 

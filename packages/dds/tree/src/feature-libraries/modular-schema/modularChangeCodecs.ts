@@ -4,18 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { TAnySchema } from "@sinclair/typebox";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
-	IMultiFormatCodec,
-	SchemaValidationFunction,
+	type ICodecOptions,
+	type IJsonCodec,
+	type IMultiFormatCodec,
+	type SchemaValidationFunction,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import {
+import type {
 	ChangeAtomIdMap,
 	ChangeEncodingContext,
 	ChangesetLocalId,
@@ -27,9 +27,9 @@ import {
 	RevisionTag,
 } from "../../core/index.js";
 import {
-	IdAllocator,
-	JsonCompatibleReadOnly,
-	Mutable,
+	type IdAllocator,
+	type JsonCompatibleReadOnly,
+	type Mutable,
 	brand,
 	fail,
 	idAllocatorFromMaxId,
@@ -37,32 +37,35 @@ import {
 	tryGetFromNestedMap,
 } from "../../util/index.js";
 import {
-	FieldBatchCodec,
-	TreeChunk,
+	type FieldBatchCodec,
+	type TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";
+import type {
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
+} from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
-	EncodedBuilds,
-	EncodedBuildsArray,
-	EncodedFieldChange,
-	EncodedFieldChangeMap,
+	type EncodedBuilds,
+	type EncodedBuildsArray,
+	type EncodedFieldChange,
+	type EncodedFieldChangeMap,
 	EncodedModularChangeset,
-	EncodedNodeChangeset,
-	EncodedRevisionInfo,
+	type EncodedNodeChangeset,
+	type EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
-import {
+import type {
 	FieldChangeMap,
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -323,6 +326,8 @@ function makeModularChangeCodec(
 					trees: fieldsCodec.encode(treesToEncode, {
 						encodeType: chunkCompressionStrategy,
 						schema: context.schema,
+						originatorId: context.originatorId,
+						idCompressor: context.idCompressor,
 					}),
 			  };
 	}
@@ -337,6 +342,8 @@ function makeModularChangeCodec(
 
 		const chunks = fieldsCodec.decode(encoded.trees, {
 			encodeType: chunkCompressionStrategy,
+			originatorId: context.originatorId,
+			idCompressor: context.idCompressor,
 		});
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);

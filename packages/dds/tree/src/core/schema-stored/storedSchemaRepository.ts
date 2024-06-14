@@ -5,15 +5,15 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { Listenable, createEmitter } from "../../events/index.js";
+import { type Listenable, createEmitter } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
 
-import { TreeNodeSchemaIdentifier } from "./format.js";
+import type { TreeNodeSchemaIdentifier } from "./format.js";
 import {
-	StoredSchemaCollection,
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type StoredSchemaCollection,
+	type TreeFieldStoredSchema,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "./schema.js";
 

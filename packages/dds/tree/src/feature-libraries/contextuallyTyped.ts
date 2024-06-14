@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	CursorLocationType,
 	EmptyKey,
-	FieldKey,
-	ITreeCursorSynchronous,
-	MapTree,
-	Value,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type MapTree,
+	type Value,
 	isCursor,
 	Multiplicity,
 } from "../core/index.js";
@@ -21,24 +21,24 @@ import { fail, isReadonlyArray } from "../util/index.js";
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema/index.js";
-import { TreeDataContext } from "./fieldGenerator.js";
+import type { TreeDataContext } from "./fieldGenerator.js";
 import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
-import {
+import type { FlexFieldKind } from "./modular-schema/index.js";
+import type {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
 	InsertableFlexNode,
 } from "./schema-aware/index.js";
 import {
-	AllowedTypeSet,
+	type AllowedTypeSet,
 	Any,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldNodeSchema,
-	FlexFieldSchema,
+	type FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
 	LeafNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";

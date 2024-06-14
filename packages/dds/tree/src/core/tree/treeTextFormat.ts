@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { NodeData } from "./types.js";
+import type { NodeData } from "./types.js";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.

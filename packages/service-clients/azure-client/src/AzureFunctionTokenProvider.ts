@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type ITokenProvider, type ITokenResponse } from "@fluidframework/routerlicious-driver";
+import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
-import { type AzureMember } from "./interfaces.js";
+import type { AzureMember } from "./interfaces.js";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for

@@ -4,19 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
+import type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.

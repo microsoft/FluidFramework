@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { ChangeAtomId } from "../../../core/index.js";
+import type { ChangeAtomId } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellMark } from "../../../feature-libraries/sequence-field/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Attach, Detach, MarkEffect } from "../../../feature-libraries/sequence-field/types.js";
+import type { CellMark } from "../../../feature-libraries/sequence-field/index.js";
+import type {
+	Attach,
+	Detach,
+	MarkEffect,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/types.js";
 import { TestNodeId } from "../../testNodeId.js";
-import { Populated, brand } from "../../../util/index.js";
+import { type Populated, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 
 export type PopulatedMark = Populated<CellMark<Populated<MarkEffect>>>;

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
 import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
@@ -16,7 +16,7 @@ interface LoginTenantRange {
 	password: string;
 }
 
-interface LoginTenants {
+export interface LoginTenants {
 	[tenant: string]: {
 		range: LoginTenantRange;
 	};
@@ -43,19 +43,21 @@ export interface IOdspCredentials extends IOdspLoginCredentials {
  */
 export const getCredentials = (): IOdspLoginCredentials[] => {
 	const creds: IOdspLoginCredentials[] = [];
-	const loginTenants = process.env.login__odspclient__spe__test__tenants;
+	const loginTenants = process.env.login__odspclient__spe__test__tenants as string;
+
+	console.log(typeof loginTenants);
 
 	if (loginTenants !== undefined) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const tenants: LoginTenants = JSON.parse(loginTenants);
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[0];
-		if (!tenant) {
+		if (tenant === undefined) {
 			throw new Error("Tenant is undefined");
 		}
 		const tenantInfo = tenants[tenant];
 
-		if (!tenantInfo) {
+		if (tenantInfo === undefined) {
 			throw new Error("Tenant info is undefined");
 		}
 
@@ -90,7 +92,7 @@ export function createOdspClient(
 		throw new Error("site url is missing");
 	}
 	if (driveId === "" || driveId === undefined) {
-		throw new Error("RaaS drive id is missing");
+		throw new Error("SharePoint Embedded container id is missing");
 	}
 
 	if (clientId === "" || clientId === undefined) {

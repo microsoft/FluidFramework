@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { OdspClient } from "@fluid-experimental/odsp-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
+import { OdspClient } from "@fluidframework/odsp-client";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { IOdspLoginCredentials, createOdspClient, getCredentials } from "./OdspClientFactory.js";
@@ -21,13 +21,13 @@ describe("Container create scenarios", () => {
 
 	const credentials = getCredentials();
 
-	if (credentials === undefined) {
-		throw new Error("Login credentials provided are missing");
+	if (credentials.length === 0) {
+		throw new Error("Login credentials are missing");
 	}
 
 	const [cred1, cred2] = credentials.slice(0, 2);
 
-	if (!cred1 || !cred2) {
+	if (cred1 === undefined || cred2 === undefined) {
 		throw new Error("Invalid login credentials format");
 	}
 

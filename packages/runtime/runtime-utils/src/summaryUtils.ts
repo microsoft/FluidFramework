@@ -30,6 +30,7 @@ import {
 	IGarbageCollectionData,
 	ISummarizeResult,
 	ITelemetryContextExt,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -386,7 +387,7 @@ export function processAttachMessageGCData(
 	snapshot: ITree | null,
 	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
 ): boolean {
-	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === gcDataBlobKey);
 
 	// Old attach messages won't have GC Data
 	// (And REALLY old DataStore Attach messages won't even have a snapshot!)

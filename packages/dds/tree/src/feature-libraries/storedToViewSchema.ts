@@ -9,22 +9,22 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldSchema,
-	FlexMapFieldSchema,
+	type FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
 	LeafNodeSchema,
 } from "./typed-schema/index.js";
 
