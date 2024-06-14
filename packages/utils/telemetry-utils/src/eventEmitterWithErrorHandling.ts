@@ -20,7 +20,7 @@ import type { IEvent } from "@fluidframework/core-interfaces";
 export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,
 > extends TypedEventEmitter<TEvent> {
-	constructor(
+	public constructor(
 		// TODO: use `unknown` instead (breaking API change)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void,

@@ -534,7 +534,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * @param loggers - The list of loggers to use as sinks
 	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
-	constructor(
+	public constructor(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 		loggers: ITelemetryBaseLogger[] = [],
