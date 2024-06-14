@@ -25,6 +25,7 @@ import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
+import { performance } from "perf_hooks";
 
 class SocketIoSocket implements core.IWebSocket {
 	private readonly eventListeners: { event: string; listener: () => void }[] = [];
@@ -327,7 +328,7 @@ class SocketIoServer implements core.IWebSocketServer {
 		let lastPingStartTime: number | undefined;
 		const packetCreateHandler = (packet: any) => {
 			if (packet.type === "ping") {
-				lastPingStartTime = Date.now();
+				lastPingStartTime = performance.now();
 			}
 		};
 		socket.conn.on("packetCreate", packetCreateHandler);
@@ -337,7 +338,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					this.apiCounters.incrementCounter("pingPongCount", 1);
 					this.apiCounters.incrementCounter(
 						"pingPongLatency",
-						Date.now() - lastPingStartTime,
+						performance.now() - lastPingStartTime,
 					);
 					lastPingStartTime = undefined;
 				}
