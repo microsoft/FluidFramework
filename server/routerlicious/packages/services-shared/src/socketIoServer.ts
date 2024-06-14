@@ -125,6 +125,11 @@ export interface ISocketIoServerConfig {
 	 * Default is 1 minute.
 	 */
 	pingPongLatencyTrackingIntervalMs: number;
+	/**
+	 * Whether to enable Socket.io [perMessageDeflate](https://socket.io/docs/v4/server-options/#permessagedeflate) option.
+	 * Default is `true`.
+	 */
+	perMessageDeflate: boolean;
 }
 
 class SocketIoServer implements core.IWebSocketServer {
@@ -330,7 +335,10 @@ class SocketIoServer implements core.IWebSocketServer {
 			if (packet.type === "pong") {
 				if (lastPingStartTime !== undefined) {
 					this.apiCounters.incrementCounter("pingPongCount", 1);
-					this.apiCounters.incrementCounter("pingPongLatency", Date.now() - lastPingStartTime);
+					this.apiCounters.incrementCounter(
+						"pingPongLatency",
+						Date.now() - lastPingStartTime,
+					);
 					lastPingStartTime = undefined;
 				}
 			}
@@ -413,7 +421,7 @@ export function create(
 	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 	server: http.Server,
 	socketIoAdapterConfig?: any,
-	socketIoConfig?: any,
+	socketIoConfig?: ISocketIoServerConfig,
 	ioSetup?: (io: Server) => void,
 	customCreateAdapter?: SocketIoAdapterCreator,
 ): core.IWebSocketServer {
