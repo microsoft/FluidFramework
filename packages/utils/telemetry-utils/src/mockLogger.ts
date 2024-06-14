@@ -26,19 +26,19 @@ export class MockLogger implements ITelemetryBaseLogger {
 
 	public readonly minLogLevel: LogLevel;
 
-	constructor(minLogLevel?: LogLevel) {
+	public constructor(minLogLevel?: LogLevel) {
 		this.minLogLevel = minLogLevel ?? LogLevel.default;
 	}
 
-	clear(): void {
+	public clear(): void {
 		this.events = [];
 	}
 
-	toTelemetryLogger(): ITelemetryLoggerExt {
+	public toTelemetryLogger(): ITelemetryLoggerExt {
 		return createChildLogger({ logger: this });
 	}
 
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
 			this.events.push(event);
 		}
