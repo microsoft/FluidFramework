@@ -160,6 +160,7 @@ export function normalizeError(
 		: {
 				untrustedOrigin: 1, // This will let us filter errors that did not originate from our own codebase
 				// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
+				// Consider using a string to distinguish cases like "dependency" v. "callback"
 				// errorRunningExternalCode: 1,
 		  };
 
@@ -238,6 +239,7 @@ export function wrapError<T extends LoggingError>(
 		newError.addTelemetryProperties({
 			untrustedOrigin: 1,
 			// FUTURE: Once 2.0 becomes LTS, switch to this more explicit property name
+			// Consider using a string to distinguish cases like "dependency" v. "callback"
 			// errorRunningExternalCode: 1,
 		});
 	}
@@ -251,7 +253,7 @@ export function wrapError<T extends LoggingError>(
 	}
 
 	// Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
-	// This will include the untrustedOrigin/errorRunningExternalCode flag if the inner error itself was created from an external error
+	// This will include the untrustedOrigin/errorRunningExternalCode info if the inner error itself was created from an external error
 	if (isILoggingError(innerError)) {
 		newError.addTelemetryProperties(innerError.getTelemetryProperties());
 	}
@@ -322,8 +324,8 @@ export function isExternalError(error: unknown): boolean {
 		if ((error as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
 			const props = error.getTelemetryProperties();
 			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
-			// we can switch to writing this more explicit property name
-			return props.untrustedOrigin === 1 || props.errorRunningExternalCode === 1;
+			// we can switch to writing this more explicit property
+			return props.untrustedOrigin === 1 || !!props.errorRunningExternalCode;
 		}
 		return false;
 	}
