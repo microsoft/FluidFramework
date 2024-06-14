@@ -20,18 +20,69 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
+interface LoginTenantRange {
+	prefix: string;
+	start: number;
+	count: number;
+	password: string;
+}
+
+interface LoginTenants {
+	[tenant: string]: {
+		range: LoginTenantRange;
+	};
+}
+
+function getCredentials(): IOdspLoginCredentials[] {
+	const creds: IOdspLoginCredentials[] = [];
+	const loginTenants = process.env.login__odspclient__spe__test__tenants;
+
+	if (loginTenants !== undefined) {
+		const tenants: LoginTenants = JSON.parse(loginTenants);
+		const [tenant] = Object.keys(tenants);
+		const { range } = tenants[tenant];
+
+		for (let i = 0; i < range.count; i++) {
+			creds.push({
+				username: `${range.prefix}${range.start + i}@${tenant}`,
+				password: range.password,
+			})
+		}
+	}
+
+	return creds;
+}
+
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
+
+	const credentials = getCredentials();
+
+	if (!Array.isArray(credentials) || credentials.length === 0) {
+		throw new Error("Login credentials are undefined, not an array, or empty");
+	}
+
+	if (credentials.length < 2) {
+		throw new Error("Insufficient login credentials provided");
+	}
+
+	const [client1, client2] = credentials.slice(0, 2);
+
+
+	if (!client1 || !client2) {
+		throw new Error("Invalid login credentials format");
+	}
+
 	const client1Creds: IOdspLoginCredentials = {
-		username: process.env.odsp__client__login__username as string,
-		password: process.env.odsp__client__login__password as string,
+		username: client1.username,
+		password: client1.password,
 	};
 
 	const client2Creds: IOdspLoginCredentials = {
-		username: process.env.odsp__client2__login__username as string,
-		password: process.env.odsp__client2__login__password as string,
+		username: client2.username,
+		password: client2.password,
 	};
 
 	beforeEach(() => {
