@@ -75,6 +75,11 @@ import {
 } from "../pendingStateManager.js";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
 
+// Type test:
+declare const outboundMessage: OutboundContainerRuntimeMessage;
+// @ts-expect-error Outbound type does not support adding compat behavior
+console.log(outboundMessage.compatDetails);
+
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
@@ -1033,22 +1038,6 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
-
-			it("cannot create op with compat behavior (type test)", async () => {
-				const runtimeCompatMessage: Omit<
-					OutboundContainerRuntimeMessage,
-					"type" | "contents"
-				> & {
-					type: string;
-					contents: any;
-				} = {
-					type: "NEW",
-					contents: "Hello",
-					// @ts-expect-error Outbound type does not support adding compat behavior
-					compatDetails: { behavior: "Ignore" },
-				};
-			});
-
 			/** Overwrites channelCollection property and exposes private submit function with modified typing */
 			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
 				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
