@@ -41,40 +41,41 @@ export interface IOdspCredentials extends IOdspLoginCredentials {
 /**
  * Get set of credential to use from env variable.
  */
-export const getCredentials = (): IOdspLoginCredentials[] => {
+export function getCredentials(): IOdspLoginCredentials[] {
 	const creds: IOdspLoginCredentials[] = [];
 	const loginTenants = process.env.login__odspclient__spe__test__tenants as string;
 
 	console.log(typeof loginTenants);
 
-	if (loginTenants !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const tenants: LoginTenants = JSON.parse(loginTenants);
-		const tenantNames = Object.keys(tenants);
-		const tenant = tenantNames[0];
-		if (tenant === undefined) {
-			throw new Error("Tenant is undefined");
-		}
-		const tenantInfo = tenants[tenant];
+	if (loginTenants === undefined) {
+		throw new Error("Login tenant is undefined");
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const tenants: LoginTenants = JSON.parse(loginTenants);
+	const tenantNames = Object.keys(tenants);
+	const tenant = tenantNames[0];
+	if (tenant === undefined) {
+		throw new Error("Tenant is undefined");
+	}
+	const tenantInfo = tenants[tenant];
 
-		if (tenantInfo === undefined) {
-			throw new Error("Tenant info is undefined");
-		}
+	if (tenantInfo === undefined) {
+		throw new Error("Tenant info is undefined");
+	}
 
-		const range = tenantInfo.range;
+	const range = tenantInfo.range;
 
-		if (range) {
-			for (let i = 0; i < range.count; i++) {
-				creds.push({
-					username: `${range.prefix}${range.start + i}@${tenant}`,
-					password: range.password,
-				});
-			}
+	if (range) {
+		for (let i = 0; i < range.count; i++) {
+			creds.push({
+				username: `${range.prefix}${range.start + i}@${tenant}`,
+				password: range.password,
+			});
 		}
 	}
 
 	return creds;
-};
+}
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
