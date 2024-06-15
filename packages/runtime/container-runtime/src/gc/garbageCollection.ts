@@ -899,7 +899,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param local - Whether it was send by this client.
 	 */
 	public processMessage(
-		message: ContainerRuntimeGCMessage & InboundSequencedRecentlyAddedContainerRuntimeMessage,
+		message: ContainerRuntimeGCMessage,
 		messageTimestampMs: number,
 		local: boolean,
 	) {
@@ -934,7 +934,9 @@ export class GarbageCollector implements IGarbageCollector {
 				if (
 					!compatBehaviorAllowsGCMessageType(
 						gcMessageType,
-						message.compatDetails?.behavior,
+						// TODO: Reevaluate if GC still wants to use compat details for sub-types
+						(message as InboundSequencedRecentlyAddedContainerRuntimeMessage)
+							.compatDetails?.behavior,
 					)
 				) {
 					const error = DataProcessingError.create(

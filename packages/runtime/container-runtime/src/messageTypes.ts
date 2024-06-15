@@ -60,7 +60,7 @@ export enum ContainerMessageType {
 /**
  * How should an older client handle an unrecognized remote op type?
  *
- * @deprecated //*
+ * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
  * @internal
  */
 export type CompatModeBehavior =
@@ -72,7 +72,7 @@ export type CompatModeBehavior =
 /**
  * All the info an older client would need to know how to handle an unrecognized remote op type
  *
- * @deprecated //*
+ * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
  * @internal
  */
 export interface IContainerRuntimeMessageCompatDetails {
@@ -96,7 +96,7 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 
 /**
  * Additional details expected for any recently added message.
- * @deprecated //*
+ * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
  * @internal
  */
 export interface RecentlyAddedContainerRuntimeMessageDetails {
