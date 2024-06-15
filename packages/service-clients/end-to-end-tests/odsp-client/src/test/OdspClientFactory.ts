@@ -45,10 +45,8 @@ export function getCredentials(): IOdspLoginCredentials[] {
 	const creds: IOdspLoginCredentials[] = [];
 	const loginTenants = process.env.login__odspclient__spe__test__tenants as string;
 
-	console.log(typeof loginTenants);
-
-	if (loginTenants === undefined) {
-		throw new Error("Login tenant is undefined");
+	if (loginTenants === "" || loginTenants === undefined) {
+		throw new Error("Login tenant is missing");
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const tenants: LoginTenants = JSON.parse(loginTenants);
@@ -64,6 +62,10 @@ export function getCredentials(): IOdspLoginCredentials[] {
 	}
 
 	const range = tenantInfo.range;
+
+	if (range === undefined) {
+		throw new Error("range is undefined");
+	}
 
 	if (range) {
 		for (let i = 0; i < range.count; i++) {
@@ -86,9 +88,9 @@ export function createOdspClient(
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 ): OdspClient {
-	const siteUrl = process.env.odsp__client__siteUrl__test as string;
-	const driveId = process.env.odsp__client__driveId__test as string;
-	const clientId = process.env.odsp__client__clientId__test as string;
+	const siteUrl = process.env.odsp__client__siteUrl as string;
+	const driveId = process.env.odsp__client__driveId as string;
+	const clientId = process.env.odsp__client__clientId as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}

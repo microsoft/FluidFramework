@@ -25,15 +25,9 @@ describe("Fluid data updates", () => {
 		},
 	} satisfies ContainerSchema;
 
-	const credentials = getCredentials();
+	const [cred1] = getCredentials();
 
-	if (credentials.length === 0) {
-		throw new Error("Login credentials are missing");
-	}
-
-	const [cred1, cred2] = credentials.slice(0, 2);
-
-	if (cred1 === undefined || cred2 === undefined) {
+	if (cred1 === undefined) {
 		throw new Error("Invalid login credentials format");
 	}
 

@@ -20,13 +20,11 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-describe("Fluid audience New", () => {
+describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
-	const credentials = getCredentials();
-
-	const [cred1, cred2] = credentials.slice(0, 2);
+	const [cred1, cred2] = getCredentials();
 
 	if (cred1 === undefined || cred2 === undefined) {
 		throw new Error("Invalid login credentials format");

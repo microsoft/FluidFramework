@@ -80,13 +80,10 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          odsp__client__clientId: $(odsp-client-clientId)
-          odsp__client__siteUrl: $(odsp-client-siteUrl)
-          odsp__client__driveId: $(odsp-client-driveId)
-          odsp__client__login__username: $(odsp-client-login-username)
-          odsp__client__login__password: $(odsp-client-login-password)
-          odsp__client2__login__username: $(odsp-client2-login-username)
-          odsp__client2__login__password: $(odsp-client2-login-password)
+          odsp__client__clientId: $(odsp-client-clientId-test)
+          odsp__client__siteUrl: $(odsp-client-siteUrl-test)
+          odsp__client__driveId: $(odsp-client-driveId-test)
+          login__odspclient__spe__test__tenants: $(login-odspclient-spe-test-tenants)
 
   # Capture pipeline stage results
   - stage: upload_run_telemetry
