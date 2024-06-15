@@ -22,11 +22,11 @@ describe("Container create scenarios", () => {
 	const [cred1] = getCredentials();
 
 	if (cred1 === undefined) {
-		throw new Error("Invalid login credentials format");
+		throw new Error("Invalid login credentials");
 	}
 
 	const clientCreds: IOdspLoginCredentials = {
-		username: cred1.username,
+		email: cred1.email,
 		password: cred1.password,
 	};
 

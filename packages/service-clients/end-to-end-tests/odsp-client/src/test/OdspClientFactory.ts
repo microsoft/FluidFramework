@@ -9,6 +9,9 @@ import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-uti
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
 
+/**
+ * Interface representing the range of login credentials for a tenant.
+ */
 interface LoginTenantRange {
 	prefix: string;
 	start: number;
@@ -16,6 +19,13 @@ interface LoginTenantRange {
 	password: string;
 }
 
+/**
+ * Interface representing a collection of tenants with their respective login ranges.
+ * @example
+ * ```string
+ * {"tenantName":{"range":{"prefix":"prefixName","password":"XYZ","start":0,"count":2}
+ * ```
+ */
 export interface LoginTenants {
 	[tenant: string]: {
 		range: LoginTenantRange;
@@ -26,7 +36,7 @@ export interface LoginTenants {
  * Interface representing the odsp-client login account credentials.
  */
 export interface IOdspLoginCredentials {
-	username: string;
+	email: string;
 	password: string;
 }
 
@@ -50,12 +60,12 @@ export function getCredentials(): IOdspLoginCredentials[] {
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const tenants: LoginTenants = JSON.parse(loginTenants);
-	const tenantNames = Object.keys(tenants);
-	const tenant = tenantNames[0];
-	if (tenant === undefined) {
+	const tenantKey = Object.keys(tenants);
+	const tenantName = tenantKey[0];
+	if (tenantName === undefined) {
 		throw new Error("Tenant is undefined");
 	}
-	const tenantInfo = tenants[tenant];
+	const tenantInfo = tenants[tenantName];
 
 	if (tenantInfo === undefined) {
 		throw new Error("Tenant info is undefined");
@@ -67,13 +77,15 @@ export function getCredentials(): IOdspLoginCredentials[] {
 		throw new Error("range is undefined");
 	}
 
-	if (range) {
-		for (let i = 0; i < range.count; i++) {
-			creds.push({
-				username: `${range.prefix}${range.start + i}@${tenant}`,
-				password: range.password,
-			});
-		}
+	for (let i = 0; i < range.count; i++) {
+		creds.push({
+			email: `${range.prefix}${range.start + i}@${tenantName}`,
+			password: range.password,
+		});
+	}
+
+	if (creds.length < 2) {
+		throw new Error("Insufficient number of login credentials");
 	}
 
 	return creds;
@@ -102,7 +114,7 @@ export function createOdspClient(
 		throw new Error("client id is missing");
 	}
 
-	if (creds.username === undefined || creds.password === undefined) {
+	if (creds.email === undefined || creds.password === undefined) {
 		throw new Error("username or password is missing for login account");
 	}
 
