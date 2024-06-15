@@ -1,11 +1,12 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "./api-extractor-base.esm.json",
+	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
 	"apiReport": {
 		// Preferred:
 		// "reportFileName": "<unscopedPackageName>.legacy",
 		// "reportVariants": ["public", "alpha"] // "beta" is not included to reduce noise
-		// Currently generate a single <>.alpha.api.md report using main entrypoint.
+		// Currently generate a single <>.alpha.api.md report using legacy rollup.
 		"reportFileName": "<unscopedPackageName>",
 		"reportVariants": ["alpha"]
 	}
