@@ -45,14 +45,42 @@ interface Measurements {
 	 * Max duration across all the executions since the last event was generated.
 	 */
 	maxDuration?: number;
+
+	/**
+	 * Average duration across all the executions since the last event was generated.
+	 */
+	averageDuration?: number;
 }
 
 /**
- * TODO
+ * Expected type of the custom data passed into the logger.
+ *
+ * @internal
  */
-interface LoggerData<TCustomDataKey extends string> {
+export interface ICustomData<TKey extends string> {
+	/**
+	 * Optional properties to log custom data. The set of properties must be the same for all calls to the `measure` function.
+	 */
+	customData?: { readonly [key in TKey]: number };
+}
+
+/**
+ * The data that will be logged in the telemetry event.
+ */
+interface LoggerData<TCustomDataKey extends string> extends ICustomData<TCustomDataKey> {
 	measurements: Measurements;
-	customData?: { readonly [key in TCustomDataKey]: number };
+
+	/**
+	 * The sum of the custom data passed into the logger.
+	 * This will be an empty object if `customData` is not provided in the `ICustomData` object.
+	 */
+	dataSums: { [key in TCustomDataKey]?: number };
+
+	/**
+	 * The max of the custom data passed into the logger.
+	 * This will be an empty object if `customData` is not provided in the `ICustomData` object.
+	 */
+	dataMaxes: { [key in TCustomDataKey]?: number };
 }
 
 /**
@@ -70,8 +98,6 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	disposed: boolean = false;
 
 	private readonly measurementsMap = new Map<string, LoggerData<TCustomMetrics>>();
-	private readonly dataSums: { [key in TCustomMetrics]?: number } = {};
-	private readonly dataMaxes: { [key in TCustomMetrics]?: number } = {};
 
 	/**
 	 * @param eventBase -
@@ -109,7 +135,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	 * If no such distinction needs to be made, do not provide a value.
 	 * @returns Whatever the passed-in code block returns.
 	 */
-	public measure<T extends LoggerData<TCustomMetrics>>(
+	public measure<T = TCustomMetrics extends string ? ICustomData<TCustomMetrics> : void>(
 		codeToMeasure: () => T,
 		bucket: string = "",
 	): T {
@@ -121,12 +147,18 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 		if (loggerData === undefined) {
 			loggerData = {
 				measurements: { count: 0, duration: -1 },
+				dataSums: {},
+				dataMaxes: {},
 			};
 			this.measurementsMap.set(bucket, loggerData);
 		}
 
-		if (returnValue.customData) {
-			this.accumulateCustomData(returnValue.customData);
+		if (returnValue !== undefined && returnValue !== null) {
+			const telemetryProperties = returnValue as ICustomData<TCustomMetrics>;
+
+			if (telemetryProperties.customData !== undefined) {
+				loggerData = this.accumulateCustomData(telemetryProperties.customData, loggerData);
+			}
 		}
 
 		const m = loggerData.measurements;
@@ -137,6 +169,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 			m.totalDuration = (m.totalDuration ?? 0) + duration;
 			m.minDuration = Math.min(m.minDuration ?? duration, duration);
 			m.maxDuration = Math.max(m.maxDuration ?? 0, duration);
+			m.averageDuration = m.totalDuration / m.count;
 		}
 
 		if (m.count >= this.sampleThreshold) {
@@ -152,14 +185,19 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	 * @param customData -
 	 * A record storing the custom data to be accumulated and eventually logged.
 	 */
-	private accumulateCustomData(customData: Record<TCustomMetrics, number>): void {
+	private accumulateCustomData(
+		customData: Record<TCustomMetrics, number>,
+		loggerData: LoggerData<TCustomMetrics>,
+	): LoggerData<TCustomMetrics> {
 		for (const key of Object.keys(customData) as TCustomMetrics[]) {
-			this.dataSums[key] = (this.dataSums[key] ?? 0) + customData[key];
-			this.dataMaxes[key] = Math.max(
-				this.dataMaxes[key] ?? Number.NEGATIVE_INFINITY,
+			loggerData.dataSums[key] = (loggerData.dataSums[key] ?? 0) + customData[key];
+			loggerData.dataMaxes[key] = Math.max(
+				loggerData.dataMaxes[key] ?? Number.NEGATIVE_INFINITY,
 				customData[key],
 			);
 		}
+
+		return loggerData;
 	}
 
 	/**
@@ -170,21 +208,17 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	 * @returns A record with the average and maximum values of the custom data.
 	 */
 	private processCustomData(
-		customData: Record<TCustomMetrics, number>,
+		loggerData: LoggerData<TCustomMetrics>,
 		counts: number,
 	): Record<string, number> {
 		const processedCustomData: Record<string, number> = {};
 
-		for (const key of Object.keys(customData) as TCustomMetrics[]) {
-			if (this.dataSums[key] !== undefined) {
-				processedCustomData[`avg${key}`] = roundToDecimalPlaces(
-					this.dataSums[key]! / counts,
-					6,
-				);
-			}
-			if (this.dataMaxes[key] !== undefined) {
-				processedCustomData[`max${key}`] = this.dataMaxes[key] ?? 0; // Added a default value to prevent undefined. But trying to verify why this can be undefined.
-			}
+		const dataSums = loggerData.dataSums;
+		const dataMaxes = loggerData.dataMaxes;
+
+		for (const key of Object.keys(dataSums) as TCustomMetrics[]) {
+			processedCustomData[`avg_${key}`] = roundToDecimalPlaces(dataSums[key]! / counts, 6);
+			processedCustomData[`max_${key}`] = dataMaxes[key] ?? 0;
 		}
 
 		return processedCustomData;
@@ -196,22 +230,21 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 			return;
 		}
 
-		const { measurements, customData } = loggerData;
+		const measurements = loggerData.measurements;
 
-		// TODO: I believe the check on `customData` is unnecessary.
+		let processedCustomData: Record<string, number> = {};
+		if (loggerData.dataSums !== undefined && loggerData.dataMaxes !== undefined) {
+			processedCustomData = this.processCustomData(loggerData, measurements.count);
+		}
+
 		if (measurements.count !== 0) {
 			const bucketProperties = this.perBucketProperties.get(bucket);
-
-			let processedCustomData: Record<string, number> = {};
-			if (customData !== undefined) {
-				processedCustomData = this.processCustomData(customData, measurements.count);
-			}
 
 			const telemetryEvent: ITelemetryPerformanceEventExt = {
 				...this.eventBase,
 				...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
 				...measurements,
-				...processedCustomData, // If the customData doesn't exist and this is an empty object, things work as expected
+				...processedCustomData, // If the processedCustomData doesn't exist and this is undefined, things work as expected
 			};
 
 			this.logger.sendPerformanceEvent(telemetryEvent);

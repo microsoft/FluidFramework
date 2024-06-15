@@ -307,6 +307,8 @@ describe("TelemetryEventBatcher", () => {
 			});
 		}
 
+		clock.restore();
+
 		assert.strictEqual(logger.events.length, 1);
 		assert.strictEqual(logger.events[0].duration, totalTime / threshold);
 	});
