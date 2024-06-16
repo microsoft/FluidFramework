@@ -2186,20 +2186,20 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (this.pendingClearMessageIds.length > 0) {
 			if (local) {
 				// Remove all pendingMessageIds lower than first pendingClearMessageId.
-				// TODO Non null asserting, why is this not null?
+				// Non null asserting, because of pendingClearMessageIds length check above
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const lowestPendingClearMessageId = this.pendingClearMessageIds[0]!;
+				const firstPendingClearMessageId = this.pendingClearMessageIds[0]!;
 				assert(
 					localOpMetadata !== undefined &&
 						isKeyEditLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < lowestPendingClearMessageId,
+						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x010 /* "Received out of order storage op when there is an unackd clear message" */,
 				);
 				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
 				if (pendingKeyMessageIdArray !== undefined) {
 					let index = 0;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					while (pendingKeyMessageIdArray[index]! < lowestPendingClearMessageId) {
+					while (pendingKeyMessageIdArray[index]! < firstPendingClearMessageId) {
 						index += 1;
 					}
 					const newPendingKeyMessageId = pendingKeyMessageIdArray.splice(index);
