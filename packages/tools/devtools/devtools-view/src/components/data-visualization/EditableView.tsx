@@ -14,7 +14,7 @@ import {
 	shorthands,
 	tokens,
 } from "@fluentui/react-components";
-import { type Serializable } from "@fluidframework/datastore-definitions/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	DataEdit,
 	type EditData,
@@ -26,7 +26,7 @@ import React from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
-import { type HasLabel } from "./CommonInterfaces.js";
+import type { HasLabel } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
 
 /**

@@ -29,7 +29,7 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 /**
@@ -140,11 +140,10 @@ describe("DDS Handle Encoding", () => {
 					h: builder.optional(builder.handle),
 				}) {}
 
-				const config = new TreeConfiguration(Bar, () => ({
-					h: undefined,
-				}));
+				const config = new TreeViewConfiguration({ schema: Bar });
 
-				const treeView = dds.schematize(config);
+				const treeView = dds.viewWith(config);
+				treeView.initialize({ h: undefined });
 
 				treeView.root.h = handle;
 			},

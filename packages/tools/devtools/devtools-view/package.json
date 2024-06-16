@@ -38,9 +38,9 @@
 		"build:test:esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check . --formatter-enabled=true",
+		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
 		"check:format": "npm run check:prettier",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
@@ -144,6 +144,13 @@
 				],
 				"library": "main"
 			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:exports": [
+				"build:esnext"
+			]
 		}
 	},
 	"typeValidation": {

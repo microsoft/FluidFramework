@@ -219,6 +219,20 @@ export function createOdspNetworkError(
 	const driverProps = { driverVersion, statusCode, ...props };
 
 	switch (statusCode) {
+		// The location of file can move on Spo. If the redirect:manual header is added to network call
+		// it causes browser to not handle the redirects. Location header in such cases will contain the new location.
+		// Refer: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
+		case 301:
+		case 302:
+		case 303:
+		case 307:
+		case 308:
+			redirectLocation = response?.headers.get("Location") ?? undefined;
+			if (redirectLocation !== undefined) {
+				error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
+				break;
+			}
+		// Don't break here. Let it be a generic network error if redirectLocation is not there.
 		case 400:
 			if (innerMostErrorCode === "fluidInvalidSchema") {
 				error = new FluidInvalidSchemaError(errorMessage, driverProps);
@@ -445,4 +459,18 @@ function numberFromHeader(header: string | null): number | undefined {
  */
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
 	return Array.isArray(x?.facetCodes);
+}
+
+/**
+ * @internal
+ */
+export function hasRedirectionLocation(
+	x: unknown,
+): x is Pick<IOdspErrorAugmentations, "redirectLocation"> {
+	return (
+		x !== null &&
+		typeof x === "object" &&
+		"redirectLocation" in x &&
+		typeof x?.redirectLocation === "string"
+	);
 }

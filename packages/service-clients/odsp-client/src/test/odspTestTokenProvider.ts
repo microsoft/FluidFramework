@@ -10,8 +10,8 @@ import {
 	getFetchTokenUrl,
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
 
+import { TokenResponse } from "../interfaces.js";
 import { IOdspTokenProvider } from "../token.js";
 
 import { OdspTestCredentials } from "./odspClient.spec.js";
