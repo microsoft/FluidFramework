@@ -39,7 +39,7 @@ export {
 	type RebaseRevisionMetadata,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	NodeExistenceState,
+	NodeAttachState,
 	type FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
 export type {
