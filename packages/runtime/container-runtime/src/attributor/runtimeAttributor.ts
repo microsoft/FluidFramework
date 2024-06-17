@@ -22,53 +22,7 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
 import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
-
-// Summary tree keys
-export const attributorTreeName = ".attributor";
-const opBlobName = "op";
-
-/**
- * @alpha
- */
-export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
-
-/**
- * @alpha
- */
-export const IRuntimeAttributor: keyof IProvideRuntimeAttributor = "IRuntimeAttributor";
-
-/**
- * @alpha
- */
-export interface IProvideRuntimeAttributor {
-	readonly IRuntimeAttributor: IRuntimeAttributor;
-}
-
-/**
- * Provides access to attribution information stored on the container runtime.
- *
- * @remarks Attributors are only populated after the container runtime into which they are being injected has initialized.
- *
- * @sealed
- * @alpha
- */
-export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
-	/**
-	 * @throws - If no AttributionInfo exists for this key.
-	 */
-	get(key: AttributionKey): AttributionInfo;
-
-	/**
-	 * @returns Whether any AttributionInfo exists for the provided key.
-	 */
-	has(key: AttributionKey): boolean;
-
-	/**
-	 * @returns Whether the runtime is currently tracking attribution information for the loaded container.
-	 * If enabled, the runtime attributor can be asked for the attribution info for different keys.
-	 */
-	readonly isEnabled: boolean;
-}
+import { attributorTreeName, opBlobName, type IRuntimeAttributor } from "./utils.js";
 
 /**
  * @alpha
