@@ -77,8 +77,7 @@ export class ContainerStorageAdapter
 	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param enableSummarizeProtocolTree  - Enable uploading a protocol summary. If false, protocol tree is never included in summaries. If true or undefined,
-	 * service's policy "summarizeProtocolTree" is also taken into account.
+	 * @param enableSummarizeProtocolTree  - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
 	 */
 	public constructor(
 		// eslint-disable-next-line import/no-deprecated
@@ -90,17 +89,9 @@ export class ContainerStorageAdapter
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		enableSummarizeProtocolTree: boolean | undefined,
+		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		this._summarizeProtocolTree = enableSummarizeProtocolTree;
-		if (enableSummarizeProtocolTree === false) {
-			// summarizeProtocolTree was disabled
-			this.logger.sendTelemetryEvent({
-				eventName: "isSummarizeProtocolTreeEnabled",
-				details: { value: false },
-			});
-		}
 	}
 
 	disposed: boolean = false;
@@ -131,12 +122,13 @@ export class ContainerStorageAdapter
 			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
 			// based on the response received from the service after connection is established.
 			() => {
-				// If the enableSummarizeProtocolTree has disabled the single-commit summaries, then it is given a higher priority than driver policy.
-				// Driver policy is accounted for only when enableSummarizeProtocolTree was undefined or true.
+				// Determine whether or not container should upload the protocol summary along with the summary.
+				// This is determined based on what value is set for serve policy's summariProtocolTree value or the enableSummarizeProtocolTree
+				// retrievd from the loader options or monitoring context config.
 				const shouldSummarize =
-					this._summarizeProtocolTree === false
-						? false
-						: service.policies?.summarizeProtocolTree ?? false;
+					service.policies?.summarizeProtocolTree ??
+					this.enableSummarizeProtocolTree ??
+					false;
 
 				if (this._summarizeProtocolTree !== shouldSummarize) {
 					this.logger.sendTelemetryEvent({
