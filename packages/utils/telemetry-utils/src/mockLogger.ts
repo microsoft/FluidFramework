@@ -92,7 +92,9 @@ export class MockLogger implements ITelemetryBaseLogger {
 		inlineDetailsProp: boolean = false,
 		clearEventsAfterCheck: boolean = true,
 	): void {
-		const actualEvents = this._events;
+		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
+		const actualEvents = this.events;
+
 		if (!this.matchEvents(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -134,7 +136,9 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean = false,
 		clearEventsAfterCheck: boolean = true,
 	): void {
-		const actualEvents = this._events;
+		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
+		const actualEvents = this.events;
+
 		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -178,7 +182,9 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean = false,
 		clearEventsAfterCheck: boolean = true,
 	): void {
-		const actualEvents = this._events;
+		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
+		const actualEvents = this.events;
+
 		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
@@ -198,7 +204,9 @@ ${JSON.stringify(actualEvents)}`);
 		inlineDetailsProp: boolean = false,
 		clearEventsAfterCheck: boolean = true,
 	): void {
-		const actualEvents = this._events;
+		// Use copy to ensure events aren't cleared out from under us before we (potentially) throw
+		const actualEvents = this.events;
+
 		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 disallowed events:
