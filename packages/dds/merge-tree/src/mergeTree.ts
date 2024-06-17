@@ -262,6 +262,8 @@ export function findRootMergeBlock(
 }
 
 /**
+ * Find the segment to which a reference will slide if it needs to slide.
+ * 
  * @param segment - The segment to slide from.
  * @param cache - Optional cache mapping segments to their sliding destinations.
  * Excursions will be avoided for segments in the cache, and the cache will be populated with
@@ -292,7 +294,7 @@ function getSlideToSegment(
 	}
 	const result: { seg?: ISegment } = {};
 	cache?.set(segment, result);
-	const goFurtherToFindSlideToSegment = (seg: ISegment) => {
+	const goFurtherToFindSlideToSegment = (seg: ISegment): boolean => {
 		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAckedOrMovedAndAcked(seg)) {
 			result.seg = seg;
 			return false;
@@ -353,7 +355,10 @@ export function getSlideToSegoff(
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	useNewSlidingBehavior: boolean = false,
-) {
+): {
+    segment: ISegment | undefined;
+    offset: number | undefined;
+} {
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
@@ -452,12 +457,12 @@ export class MergeTree {
 		return this._root;
 	}
 
-	public set root(value) {
+	public set root(value: IRootMergeBlock) {
 		this._root = value;
 		value.mergeTree = this;
 	}
 
-	public makeBlock(childCount: number) {
+	public makeBlock(childCount: number): MergeBlock {
 		const block = new MergeBlock(childCount);
 		block.ordinal = "";
 		return block;
@@ -510,7 +515,8 @@ export class MergeTree {
 			) {
 				return 0;
 			}
-			return segment.cachedLength;
+			const { cachedLength } = segment;
+			return cachedLength;
 		} else {
 			// inserted remotely
 			if (
@@ -530,20 +536,20 @@ export class MergeTree {
 		}
 	}
 
-	public unlinkMarker(marker: Marker) {
+	public unlinkMarker(marker: Marker): void {
 		const id = marker.getId();
 		if (id) {
 			this.idToMarker.delete(id);
 		}
 	}
 
-	private addNode(block: MergeBlock, node: IMergeNode) {
+	private addNode(block: MergeBlock, node: IMergeNode): number {
 		const index = block.childCount++;
 		block.assignChild(node, index, false);
 		return index;
 	}
 
-	public reloadFromSegments(segments: ISegment[]) {
+	public reloadFromSegments(segments: ISegment[]): void {
 		// This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
 		assert(
 			!this.collabWindow.collaborating,
@@ -555,7 +561,7 @@ export class MergeTree {
 		// Starting with the leaf segments, recursively builds the B-Tree layer by layer from the bottom up.
 		const buildMergeBlock = (nodes: IMergeNode[]): IRootMergeBlock => {
 			const blockCount = Math.ceil(nodes.length / maxChildren); // Compute # blocks require for this level of B-Tree
-			const blocks: MergeBlock[] = new Array(blockCount); // Pre-alloc array to collect nodes
+			const blocks: MergeBlock[] = Array.from({length: blockCount}); // Pre-alloc array to collect nodes
 
 			// For each block in this level of the B-Tree...
 			for (
@@ -595,7 +601,7 @@ export class MergeTree {
 	}
 
 	// For now assume min starts at zero
-	public startCollaboration(localClientId: number, minSeq: number, currentSeq: number) {
+	public startCollaboration(localClientId: number, minSeq: number, currentSeq: number): void {
 		this.collabWindow.clientId = localClientId;
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
