@@ -131,10 +131,10 @@ import {
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	SchematizingSimpleTreeView,
 	requireSchema,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";

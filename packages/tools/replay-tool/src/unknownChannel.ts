@@ -9,10 +9,6 @@ import {
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
 import {
-	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
-} from "@fluidframework/datastore/internal";
-import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,

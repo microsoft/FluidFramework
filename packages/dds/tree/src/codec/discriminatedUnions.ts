@@ -80,9 +80,9 @@ export const unionOptions: ObjectOptions = {
  * ```
  * where only a single property of `EncodedOperation` is populated for a given encoded value.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class DiscriminatedUnionDispatcher<
 	TUnion extends object,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TArgs extends any[],
 	TResult,
 > {

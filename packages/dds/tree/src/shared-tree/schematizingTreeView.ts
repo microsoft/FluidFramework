@@ -88,10 +88,8 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		// eslint-disable-next-line import/no-deprecated
-		public readonly config:
-			| TreeConfiguration<TRootSchema>
-			| TreeViewConfiguration<TRootSchema>,
+		public readonly config: // eslint-disable-next-line import/no-deprecated
+		TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
 		const policy = {
