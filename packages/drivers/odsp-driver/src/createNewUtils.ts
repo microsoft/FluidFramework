@@ -29,7 +29,7 @@ import {
 } from "./contracts.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
 import { EpochTracker, FetchType } from "./epochTracker.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { runWithRetry } from "./retryUtils.js";
 
 /**
@@ -213,7 +213,6 @@ export async function createNewFluidContainerCore<T>(args: {
 		getStorageToken,
 		logger,
 		initialUrl,
-		forceAccessTokenViaAuthorizationHeader,
 		epochTracker,
 		telemetryName,
 		fetchType,
@@ -221,42 +220,49 @@ export async function createNewFluidContainerCore<T>(args: {
 	} = args;
 
 	return getWithRetryForTokenRefresh(async (options) => {
-		const storageToken = await getStorageToken(options, telemetryName);
-
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: telemetryName },
 			async (event) => {
+				// TODO: get rid of the double token fetch in this function
 				const snapshotBody = JSON.stringify(containerSnapshot);
 				let url: string;
 				let headers: { [index: string]: string };
 				let addInBody = false;
 				const formBoundary = uuid();
-				let postBody = `--${formBoundary}\r\n`;
-				postBody += `Authorization: Bearer ${storageToken}\r\n`;
-				postBody += `X-HTTP-Method-Override: POST\r\n`;
-				postBody += `Content-Type: application/json\r\n`;
-				postBody += `_post: 1\r\n`;
-				postBody += `\r\n${snapshotBody}\r\n`;
-				postBody += `\r\n--${formBoundary}--`;
+				const urlObj = new URL(initialUrl);
+				urlObj.searchParams.set("ump", "1");
+				const authInBodyUrl = urlObj.href;
+				const method = "POST";
+				const authHeader = await getStorageToken(
+					{ ...options, request: { url: authInBodyUrl, method } },
+					telemetryName,
+				);
+				const postBodyWithAuth =
+					`--${formBoundary}\r\n` +
+					`Authorization: ${authHeader}\r\n` +
+					`X-HTTP-Method-Override: POST\r\n` +
+					`Content-Type: application/json\r\n` +
+					`_post: 1\r\n` +
+					`\r\n${snapshotBody}\r\n` +
+					`\r\n--${formBoundary}--`;
 
-				if (postBody.length <= maxUmpPostBodySize) {
-					const urlObj = new URL(initialUrl);
-					urlObj.searchParams.set("ump", "1");
-					url = urlObj.href;
+				let postBody = snapshotBody;
+				if (postBodyWithAuth.length <= maxUmpPostBodySize) {
+					url = authInBodyUrl;
 					headers = {
 						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 					};
 					addInBody = true;
+					postBody = postBodyWithAuth;
 				} else {
-					const parts = getUrlAndHeadersWithAuth(
-						initialUrl,
-						storageToken,
-						forceAccessTokenViaAuthorizationHeader,
+					url = initialUrl;
+					const authHeaderNoUmp = await getStorageToken(
+						{ ...options, request: { url, method } },
+						telemetryName,
 					);
-					url = parts.url;
 					headers = {
-						...parts.headers,
+						...getHeadersWithAuth(authHeaderNoUmp),
 						"Content-Type": "application/json",
 					};
 					postBody = snapshotBody;

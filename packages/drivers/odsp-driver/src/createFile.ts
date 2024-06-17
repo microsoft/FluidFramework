@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ICreateFileResponse } from "./contracts.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
@@ -72,13 +72,7 @@ export async function createNewFluidFile(
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		itemId = await createNewEmptyFluidFile(
-			getStorageToken,
-			newFileInfo,
-			logger,
-			epochTracker,
-			forceAccessTokenViaAuthorizationHeader,
-		);
+		itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
 	} else {
 		const content = await createNewFluidFileFromSummary(
 			getStorageToken,
@@ -164,7 +158,6 @@ export async function createNewEmptyFluidFile(
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<string> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
@@ -174,17 +167,18 @@ export async function createNewEmptyFluidFile(
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
-		const storageToken = await getStorageToken(options, "CreateNewFile");
+		const url = initialUrl;
+		const method = "PUT";
+		const authHeader = await getStorageToken(
+			{ ...options, request: { url, method } },
+			"CreateNewFile",
+		);
 
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "createNewEmptyFile" },
 			async (event) => {
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					initialUrl,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
+				const headers = getHeadersWithAuth(authHeader);
 				headers["Content-Type"] = "application/json";
 
 				const fetchResponse = await runWithRetry(
@@ -194,7 +188,7 @@ export async function createNewEmptyFluidFile(
 							{
 								body: undefined,
 								headers,
-								method: "PUT",
+								method,
 							},
 							"createFile",
 						),

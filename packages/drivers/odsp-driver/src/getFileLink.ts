@@ -13,7 +13,7 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -116,11 +116,6 @@ async function getFileLinkCore(
 					getToken,
 					true /* throwOnNullToken */,
 				);
-				const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
-				assert(
-					storageToken !== null,
-					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
-				);
 
 				// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
 				// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
@@ -128,17 +123,23 @@ async function getFileLinkCore(
 				// where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
 				// GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
 				// unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					`${
-						odspUrlParts.siteUrl
-					}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
-						`'${fileItem.sharepointIds.listItemUniqueId}'`,
-					)}`,
-					storageToken,
-					true,
+				const url = `${
+					odspUrlParts.siteUrl
+				}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
+					`'${fileItem.sharepointIds.listItemUniqueId}'`,
+				)}`;
+				const method = "POST";
+				const authHeader = await storageTokenFetcher(
+					{ ...options, request: { url, method } },
+					"GetFileLinkCore",
 				);
+				assert(
+					authHeader !== null,
+					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
+				);
+				const headers = getHeadersWithAuth(authHeader);
 				const requestInit = {
-					method: "POST",
+					method,
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
 						"Accept": "application/json;odata=verbose",
@@ -217,18 +218,19 @@ async function getFileItemLite(
 					getToken,
 					true /* throwOnNullToken */,
 				);
-				const storageToken = await storageTokenFetcher(options, "GetFileItemLite");
+				const url = `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`;
+				const method = "GET";
+				const authHeader = await storageTokenFetcher(
+					{ ...options, request: { url, method } },
+					"GetFileItemLite",
+				);
 				assert(
-					storageToken !== null,
+					authHeader !== null,
 					0x2bc /* "Instrumented token fetcher with throwOnNullToken =true should never return null" */,
 				);
 
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					`${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`,
-					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
-				);
-				const requestInit = { method: "GET", headers };
+				const headers = getHeadersWithAuth(authHeader);
+				const requestInit = { method, headers };
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 

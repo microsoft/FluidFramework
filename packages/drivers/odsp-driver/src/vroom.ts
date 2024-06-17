@@ -40,7 +40,7 @@ interface IJoinSessionBody {
 export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
 	path: string,
-	method: string,
+	method: "GET" | "POST",
 	logger: ITelemetryLoggerExt,
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	epochTracker: EpochTracker,
@@ -50,7 +50,14 @@ export async function fetchJoinSession(
 	isRefreshingJoinSession: boolean,
 	guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
-	const token = await getStorageToken(options, "JoinSession");
+	const siteOrigin = getOrigin(urlParts.siteUrl);
+	const url = `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${
+		urlParts.itemId
+	}/${path}?ump=1`;
+	const authHeader = await getStorageToken(
+		{ ...options, request: { url, method } },
+		"JoinSession",
+	);
 
 	const tokenRefreshProps = options.refresh
 		? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
@@ -71,10 +78,9 @@ export async function fetchJoinSession(
 			...tokenRefreshProps,
 		},
 		async (event) => {
-			const siteOrigin = getOrigin(urlParts.siteUrl);
 			const formBoundary = uuid();
 			let postBody = `--${formBoundary}\r\n`;
-			postBody += `Authorization: Bearer ${token}\r\n`;
+			postBody += `Authorization: ${authHeader}\r\n`;
 			postBody += `X-HTTP-Method-Override: POST\r\n`;
 			postBody += `Content-Type: application/json\r\n`;
 			if (!disableJoinSessionRefresh) {
@@ -97,9 +103,7 @@ export async function fetchJoinSession(
 			const response = await runWithRetry(
 				async () =>
 					epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-						`${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${
-							urlParts.itemId
-						}/${path}?ump=1`,
+						url,
 						{ method, headers, body: postBody },
 						"joinSession",
 						true,
