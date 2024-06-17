@@ -350,7 +350,7 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 }
 
 /**
- * Metrics derived from a revert operations.
+ * Metrics derived from a revert operation.
  *
  * @see {@link TreeCheckout.revertRevertible}.
  */
