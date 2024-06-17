@@ -13,7 +13,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { OdspClient } from "@fluidframework/odsp-client";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { IOdspLoginCredentials, createOdspClient, getCredentials } from "./OdspClientFactory.js";
+import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -24,21 +24,12 @@ describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
 	let schema: ContainerSchema;
-	const [cred1, cred2] = getCredentials();
+	const [client1Creds, client2Creds] = getCredentials();
 
-	if (cred1 === undefined || cred2 === undefined) {
+	if (client1Creds === undefined || client2Creds === undefined) {
 		throw new Error("Invalid login credentials");
 	}
 
-	const client1Creds: IOdspLoginCredentials = {
-		email: cred1.email,
-		password: cred1.password,
-	};
-
-	const client2Creds: IOdspLoginCredentials = {
-		email: cred2.email,
-		password: cred2.password,
-	};
 	beforeEach(() => {
 		client = createOdspClient(client1Creds);
 		schema = {
