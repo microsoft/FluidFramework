@@ -37,6 +37,7 @@ export {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	TokenFetchOptions,
+	authHeaderFromResponse,
 	tokenFromResponse,
 	TokenResponse,
 } from "./tokenFetch.js";

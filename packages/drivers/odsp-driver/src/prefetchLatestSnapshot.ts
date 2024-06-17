@@ -15,6 +15,7 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	getKeyForCacheEntry,
+	type InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	PerformanceEvent,
@@ -35,6 +36,7 @@ import {
 	createOdspLogger,
 	getOdspResolvedUrl,
 	toInstrumentedOdspStorageTokenFetcher,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 
 /**
@@ -45,7 +47,7 @@ import {
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  * is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
- * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header.
+ * @param forceAccessTokenViaAuthorizationHeader - DEPRECATED (true value always used instead): whether to force passing given token via authorization header.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
@@ -86,7 +88,7 @@ export async function prefetchLatestSnapshot(
 		driveId: odspResolvedUrl.driveId,
 		itemId: odspResolvedUrl.itemId,
 	};
-	const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
+	const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
 		odspLogger,
 		resolvedUrlData,
 		getStorageToken,
@@ -94,14 +96,16 @@ export async function prefetchLatestSnapshot(
 
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
-		storageToken: string,
+		storageTokenFetcher: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
-			storageToken,
+			storageTokenFetcher,
+			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
 			undefined,
@@ -134,7 +138,7 @@ export async function prefetchLatestSnapshot(
 			);
 			await fetchSnapshotWithRedeem(
 				odspResolvedUrl,
-				storageTokenFetcher,
+				getAuthHeader,
 				hostSnapshotFetchOptions,
 				forceAccessTokenViaAuthorizationHeader,
 				odspLogger,

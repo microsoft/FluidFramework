@@ -64,6 +64,7 @@ export interface IOpsCachingPolicy {
  */
 export interface ICollabSessionOptions {
 	/**
+	 * @deprecated No longer needed
 	 * Value indicating the display name for session that admits unauthenticated user.
 	 * This name will be used in attribution associated with edits made by such user.
 	 */

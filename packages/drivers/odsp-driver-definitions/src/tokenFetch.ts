@@ -12,6 +12,13 @@ export interface TokenResponse {
 	token: string;
 
 	/**
+	 * Authorization header value will be used verbatim when making network call that requires the token.
+	 * If not returned the token value will be assumed to be a Bearer token and will be used to generate the
+	 * Authorization header value in the following format: `Bearer ${token}`.
+	 */
+	readonly authorizationHeader?: string;
+
+	/**
 	 * Whether or not the token was obtained from local cache.
 	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
 	 */
@@ -41,6 +48,14 @@ export interface TokenFetchOptions {
 	 * to use to issue access token.
 	 */
 	tenantId?: string;
+
+	/**
+	 * Request that will be made using the fetched token.
+	 * - url: full request url, including query params
+	 * - method: method type
+	 * Request info may be encoded into the returned token that the receiver can use to validate that caller is allowed to make specific call.
+	 */
+	readonly request?: { url: string; method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT" };
 }
 
 /**
@@ -73,6 +88,7 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
  * @param tokenResponse - return value for TokenFetcher method
  * @returns Token value
  * @internal
+ * @deprecated - Use authHeaderFromResponse instead
  */
 export const tokenFromResponse = (
 	tokenResponse: string | TokenResponse | null | undefined,
@@ -82,6 +98,29 @@ export const tokenFromResponse = (
 		: tokenResponse === undefined
 		? null
 		: tokenResponse.token;
+
+/**
+ * Helper method which transforms return value for TokenFetcher method to Authorization header value
+ * @param tokenResponse - return value for TokenFetcher method
+ * @returns Authorization header value
+ * @internal
+ */
+export const authHeaderFromResponse = (
+	tokenResponse: string | TokenResponse | null | undefined,
+): string | null => {
+	if (
+		tokenResponse !== null &&
+		typeof tokenResponse === "object" &&
+		tokenResponse.authorizationHeader !== undefined
+	) {
+		return tokenResponse.authorizationHeader;
+	}
+	const token = tokenFromResponse(tokenResponse);
+	if (token !== null) {
+		return `Bearer ${token}`;
+	}
+	return null;
+};
 
 /**
  * Helper method which returns flag indicating whether token response comes from local cache
@@ -106,6 +145,7 @@ export const isTokenFromCache = (
 export type IdentityType = "Consumer" | "Enterprise";
 
 /**
+ * @returns Authorization header value
  * @internal
  */
 export type InstrumentedStorageTokenFetcher = (
