@@ -5,23 +5,23 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
+import { type ICodecOptions, noopValidator } from "../../codec/index.js";
 import {
-	DeltaDetachedNodeBuild,
-	DeltaFieldChanges,
-	FieldKey,
-	IEditableForest,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	RevisionTagCodec,
+	type DeltaDetachedNodeBuild,
+	type DeltaFieldChanges,
+	type FieldKey,
+	type IEditableForest,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
 	fakeRevisionWhenNotSet,
@@ -29,7 +29,7 @@ import {
 	makeDetachedFieldIndex,
 	mapCursorField,
 } from "../../core/index.js";
-import {
+import type {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
@@ -37,11 +37,11 @@ import {
 import { idAllocatorFromMaxId } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
-import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
-import { Format } from "./format.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import type { Format } from "./format.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 /**
  * The storage key for the blob in the summary containing tree data
  */

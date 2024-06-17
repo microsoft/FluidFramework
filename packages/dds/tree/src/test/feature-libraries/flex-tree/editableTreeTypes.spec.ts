@@ -7,16 +7,16 @@ import { strict as assert } from "assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { EmptyKey, FieldKey } from "../../../core/index.js";
+import { EmptyKey, type FieldKey } from "../../../core/index.js";
 import {
 	SchemaBuilder,
 	jsonArray,
 	jsonObject,
-	jsonRoot,
+	type jsonRoot,
 	jsonSchema,
 	leaf,
 } from "../../../domains/index.js";
-import {
+import type {
 	FlexTreeField,
 	FlexTreeMapNode,
 	FlexTreeNode,
@@ -34,17 +34,17 @@ import {
 import {
 	Any,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
-import {
+import type { ConstantFlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList.js";
+import type {
 	areSafelyAssignable,
 	isAssignableTo,
 	requireAssignableTo,

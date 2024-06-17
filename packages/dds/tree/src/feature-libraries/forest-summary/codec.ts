@@ -5,9 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
-import { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+import {
+	type ICodecOptions,
+	type IJsonCodec,
+	makeVersionedValidatedCodec,
+} from "../../codec/index.js";
+import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
+import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
 

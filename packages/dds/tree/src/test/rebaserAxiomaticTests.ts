@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	tagChange,
@@ -19,10 +19,10 @@ import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-sch
 import { fail } from "../util/index.js";
 
 import {
-	BoundFieldChangeRebaser,
-	ChildStateGenerator,
-	FieldStateTree,
-	NamedChangeset,
+	type BoundFieldChangeRebaser,
+	type ChildStateGenerator,
+	type FieldStateTree,
+	type NamedChangeset,
 	generatePossibleSequenceOfEdits,
 	makeIntentionMinter,
 } from "./exhaustiveRebaserUtils.js";

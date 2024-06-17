@@ -6,16 +6,16 @@
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AnchorSet,
-	DeltaDetachedNodeId,
-	DetachedFieldIndex,
-	IEditableForest,
-	RevisionTag,
-	TreeStoredSchemaRepository,
+	type DeltaDetachedNodeId,
+	type DetachedFieldIndex,
+	type IEditableForest,
+	type RevisionTag,
+	type TreeStoredSchemaRepository,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
 import {
-	TreeChunk,
+	type TreeChunk,
 	chunkTree,
 	defaultChunkPolicy,
 	intoDelta,
@@ -24,8 +24,8 @@ import {
 } from "../feature-libraries/index.js";
 import { disposeSymbol } from "../util/index.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import {
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type {
 	ChangeEnricherMutableCheckout,
 	ChangeEnricherReadonlyCheckout,
 } from "../shared-tree-core/index.js";

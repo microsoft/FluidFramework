@@ -274,7 +274,7 @@ export interface TokenFetchOptions {
     tenantId?: string;
 }
 
-// @beta
+// @alpha
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;

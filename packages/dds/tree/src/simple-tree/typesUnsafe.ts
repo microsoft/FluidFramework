@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
-import {
+import type {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
-	type FieldSchema,
+	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
@@ -19,8 +19,8 @@ import {
 	TreeNodeSchema,
 	WithType,
 } from "./schemaTypes.js";
-import { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
-import { TreeNode, Unhydrated } from "./types.js";
+import type { TreeArrayNodeBase, TreeArrayNode } from "./arrayNode.js";
+import type { TreeNode, Unhydrated } from "./types.js";
 
 /*
  * TODO:
@@ -151,13 +151,34 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 }
 
 /**
+ * {@link Unenforced} version of {@link FieldHasDefault}.
+ * @public
+ */
+export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
+	T extends FieldSchemaUnsafe<
+		FieldKind.Optional | FieldKind.Identifier,
+		Unenforced<ImplicitAllowedTypes>
+	>
+		? true
+		: false;
+
+/**
  * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
  * @public
  */
 export type InsertableObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 > = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+	// Field might not have a default, so make it required:
+	readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false
+		? Property
+		: never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+} & {
+	// Field might have a default, so allow optional.
+	// Note that if the field could be either, this returns boolean, causing both fields to exist, resulting in required.
+	readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends true
+		? Property
+		: never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
 /**

@@ -4,17 +4,17 @@
  */
 
 import {
-	Context,
-	FlexFieldSchema,
-	FlexTreeContext,
-	FlexTreeSchema,
-	FlexTreeTypedField,
-	NodeKeyManager,
+	type Context,
+	type FlexFieldSchema,
+	type FlexTreeContext,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
+	type NodeKeyManager,
 	getTreeContext,
 } from "../feature-libraries/index.js";
-import { IDisposable, disposeSymbol } from "../util/index.js";
+import { type IDisposable, disposeSymbol } from "../util/index.js";
 
-import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.

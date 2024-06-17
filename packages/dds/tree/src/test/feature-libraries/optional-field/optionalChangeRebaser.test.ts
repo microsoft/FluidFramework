@@ -6,30 +6,30 @@
 import { strict as assert } from "assert";
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { CrossFieldManager } from "../../../feature-libraries/index.js";
+import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
-	ChangeAtomIdMap,
-	ChangesetLocalId,
-	DeltaFieldChanges,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
-	TreeNodeSchemaIdentifier,
+	type ChangeAtomIdMap,
+	type ChangesetLocalId,
+	type DeltaFieldChanges,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
+	type TreeNodeSchemaIdentifier,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import {
-	NodeChangeComposer,
-	NodeChangeRebaser,
-	NodeId,
-	RebaseRevisionMetadata,
-	ToDelta,
+	type NodeChangeComposer,
+	type NodeChangeRebaser,
+	type NodeId,
+	type RebaseRevisionMetadata,
+	type ToDelta,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
@@ -42,8 +42,8 @@ import {
 	setInNestedMap,
 } from "../../../util/index.js";
 import {
-	ChildStateGenerator,
-	FieldStateTree,
+	type ChildStateGenerator,
+	type FieldStateTree,
 	generatePossibleSequenceOfEdits,
 	getSequentialEdits,
 	getSequentialStates,
@@ -190,7 +190,6 @@ function rebase(
 		idAllocator,
 		moveEffects,
 		metadata,
-		undefined,
 	);
 	verifyContextChain(base, makeAnonChange(rebased));
 	return rebased;

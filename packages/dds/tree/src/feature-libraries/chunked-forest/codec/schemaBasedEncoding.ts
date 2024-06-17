@@ -9,30 +9,30 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	StoredSchemaCollection,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
+	type StoredSchemaCollection,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
 } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
-import { FullSchemaPolicy } from "../../modular-schema/index.js";
+import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {
 	EncoderCache,
-	FieldEncoder,
-	FieldShaper,
-	KeyedFieldEncoder,
-	TreeShaper,
+	type FieldEncoder,
+	type FieldShaper,
+	type KeyedFieldEncoder,
+	type TreeShaper,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
 } from "./compressedEncode.js";
-import { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, EncodedValueShape, SpecialField } from "./format.js";
+import type { FieldBatch } from "./fieldBatch.js";
+import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.

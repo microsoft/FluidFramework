@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { TAnySchema } from "@sinclair/typebox";
+import type { TAnySchema } from "@sinclair/typebox";
 
-import { IJsonCodec } from "../../codec/index.js";
-import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
-import { Mutable } from "../../util/index.js";
+import type { IJsonCodec } from "../../codec/index.js";
+import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import { EncodedNodeChangeset, type FieldChangeEncodingContext } from "../modular-schema/index.js";
 

@@ -4,18 +4,22 @@
  */
 
 import {
-	AnchorNode,
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeValue,
+	type AnchorNode,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
-import { Assume, FlattenKeys } from "../../util/index.js";
-import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
-import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
-import {
+import type { Assume, FlattenKeys } from "../../util/index.js";
+import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import type { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
+import type {
+	AllowedTypesToFlexInsertableTree,
+	InsertableFlexField,
+} from "../schema-aware/index.js";
+import type {
 	Any,
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
@@ -30,8 +34,8 @@ import {
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
 
-import { FlexTreeContext } from "./context.js";
-import { FlexTreeNodeEvents } from "./treeEvents.js";
+import type { FlexTreeContext } from "./context.js";
+import type { FlexTreeNodeEvents } from "./treeEvents.js";
 
 /**
  * An anchor slot which records the {@link FlexTreeNode} associated with that anchor, if there is one.
@@ -795,18 +799,21 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
 
@@ -814,6 +821,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	removeAt(index: number): void;
 
@@ -821,6 +829,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * Moves the specified item to the start of the sequence.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveToStart(sourceIndex: number): void;
 
@@ -829,6 +838,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source sequence to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
 
@@ -836,6 +846,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * Moves the specified item to the end of the sequence.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveToEnd(sourceIndex: number): void;
 
@@ -844,6 +855,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source sequence to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
 
@@ -853,6 +865,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * This is based on the state of the sequence before moving the source item.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveToIndex(index: number, sourceIndex: number): void;
 
@@ -862,6 +875,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param sourceIndex - The index of the item to move.
 	 * @param source - The source sequence to move the item out of.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveToIndex(
 		index: number,
@@ -874,6 +888,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
@@ -884,6 +899,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param source - The source sequence to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveRangeToStart(
 		sourceStart: number,
@@ -896,6 +912,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
@@ -906,6 +923,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param source - The source sequence to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveRangeToEnd(
 		sourceStart: number,
@@ -920,6 +938,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
@@ -931,6 +950,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	 * @param source - The source sequence to move items out of.
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
 	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 * @deprecated Migrate to using simple-tree layer editing APIs, or directly use the field editors.
 	 */
 	moveRangeToIndex(
 		index: number,
@@ -942,6 +962,11 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 	// #endregion
 
 	boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
+
+	/**
+	 * Gets the FieldUpPath of a field.
+	 */
+	getFieldPath(): FieldUpPath;
 
 	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
 }

@@ -4,44 +4,44 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
+import { type IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 
-import { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
-	RevisionTag,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type GraphCommit,
+	type RevisionTag,
 	RevisionTagCodec,
-	SchemaAndPolicy,
-	SchemaPolicy,
-	TreeStoredSchemaRepository,
+	type SchemaAndPolicy,
+	type SchemaPolicy,
+	type TreeStoredSchemaRepository,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, brand } from "../util/index.js";
+import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
 
-import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
+import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
-import { SeqNumber } from "./editManagerFormat.js";
+import type { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
-import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
-import { DecodedMessage } from "./messageTypes.js";
-import { ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
-import { ResubmitMachine } from "./resubmitMachine.js";
+import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
+import type { DecodedMessage } from "./messageTypes.js";
+import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
+import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 
@@ -158,6 +158,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
+		this.editManager.localBranch.on("transactionStarted", () => {
+			this.commitEnricher.startNewTransaction();
+		});
+		this.editManager.localBranch.on("transactionAborted", () => {
+			this.commitEnricher.abortCurrentTransaction();
+		});
+		this.editManager.localBranch.on("transactionCommitted", () => {
+			this.commitEnricher.commitCurrentTransaction();
+		});
 		this.editManager.localBranch.on("beforeChange", (change) => {
 			// Ensure that any previously prepared commits that have not been sent are purged.
 			this.commitEnricher.purgePreparedCommits();

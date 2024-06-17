@@ -121,6 +121,7 @@ import {
 	loggerToMonitoringContext,
 	raiseConnectedEvent,
 	wrapError,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -1663,7 +1664,11 @@ export class ContainerRuntime
 			snapshot,
 			parentContext,
 			this.mc.logger,
-			(props) => this.garbageCollector.nodeUpdated(props),
+			(props) =>
+				this.garbageCollector.nodeUpdated({
+					...props,
+					timestampMs: props.timestampMs ?? this.getCurrentReferenceTimestampMs(),
+				}),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: ChannelCollection) => provideEntryPoint,
@@ -1689,6 +1694,7 @@ export class ContainerRuntime
 				this.garbageCollector.nodeUpdated({
 					node: { type: "Blob", path: blobPath },
 					reason: "Loaded",
+					timestampMs: this.getCurrentReferenceTimestampMs(),
 				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
@@ -2715,7 +2721,11 @@ export class ContainerRuntime
 				}
 				break;
 			case ContainerMessageType.GC:
-				this.garbageCollector.processMessage(messageWithContext.message, local);
+				this.garbageCollector.processMessage(
+					messageWithContext.message,
+					messageWithContext.message.timestamp,
+					local,
+				);
 				break;
 			case ContainerMessageType.ChunkedOp:
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
@@ -2949,6 +2959,7 @@ export class ContainerRuntime
 			node: { type: "DataStore", path: `/${internalId}` },
 			reason: "Loaded",
 			packagePath: context.packagePath,
+			timestampMs: this.getCurrentReferenceTimestampMs(),
 		});
 		return channel.entryPoint;
 	}
@@ -3402,9 +3413,25 @@ export class ContainerRuntime
 	 * all references added in the system.
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.garbageCollector.addedOutboundReference(fromPath, toPath);
+	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+		// This is always called when processing an op so messageTimestampMs should exist. Due to back-compat
+		// across the data store runtime / container runtime boundary, this may be undefined and if so, get
+		// the timestamp from the last processed message which should exist.
+		// If a timestamp doesn't exist, log so we can learn about these cases and return.
+		const timestampMs = messageTimestampMs ?? this.getCurrentReferenceTimestampMs();
+		if (timestampMs === undefined) {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "NoTimestampInGCOutboundRoute",
+				...tagCodeArtifacts({
+					id: toPath,
+					fromId: fromPath,
+				}),
+			});
+			return;
+		}
+		this.garbageCollector.addedOutboundReference(fromPath, toPath, timestampMs);
 	}
 
 	/**

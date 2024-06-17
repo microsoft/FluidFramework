@@ -6,17 +6,17 @@
 import { strict as assert } from "assert";
 
 import {
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeDestruction,
-	DeltaDetachedNodeRename,
-	DeltaFieldChanges,
-	DeltaMark,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	FieldKey,
-	RevisionTag,
+	type DeltaDetachedNodeBuild,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeDestruction,
+	type DeltaDetachedNodeRename,
+	type DeltaFieldChanges,
+	type DeltaMark,
+	type DeltaRoot,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type FieldKey,
+	type RevisionTag,
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../core/index.js";

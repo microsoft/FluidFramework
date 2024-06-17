@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../../../biome.json"],
+	"extends": ["../../../biome.jsonc"],
 	"files": {
 		"ignoreUnknown": true,
 		"ignore": ["content/**"],

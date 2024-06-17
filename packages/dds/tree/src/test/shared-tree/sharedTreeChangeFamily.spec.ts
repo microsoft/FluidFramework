@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
-import { ICodecOptions } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import {
-	DeltaDetachedNodeId,
-	TreeStoredSchema,
+	type DeltaDetachedNodeId,
+	type TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
@@ -20,8 +20,8 @@ import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKi
 import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
-	ModularChangeset,
-	TreeChunk,
+	type ModularChangeset,
+	type TreeChunk,
 	cursorForJsonableTreeNode,
 	fieldKinds,
 	type SchemaChange,
@@ -31,7 +31,7 @@ import {
 	updateRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeFamily.js";
-import {
+import type {
 	SharedTreeChange,
 	SharedTreeInnerChange,
 	// eslint-disable-next-line import/no-internal-modules
