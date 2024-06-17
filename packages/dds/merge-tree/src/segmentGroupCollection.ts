@@ -66,7 +66,9 @@ export class SegmentGroupCollection {
 			// duplicate the previousProps for this segment
 			const index = segmentGroup.segments.indexOf(sourceSegment);
 			if (index !== -1) {
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segmentGroup.previousProps.push(segmentGroup.previousProps[index]!);
 			}
 		}
 	}
