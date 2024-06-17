@@ -220,5 +220,25 @@ describe("MockLogger", () => {
 				),
 			);
 		});
+
+		it("Events are cleared after match check", () => {
+			function assertCleared(): void {
+				assert.equal(
+					mockLogger.events.length,
+					0,
+					"Events should have been cleared post match check.",
+				);
+			}
+
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "B", b: 2 });
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "C", c: 3 });
+			mockLogger.matchAnyEvent([{ eventName: "B", b: 2 }]);
+			assertCleared();
+
+			// Should also be cleared even when match check fails
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+			mockLogger.matchEvents([]);
+			assertCleared();
+		});
 	});
 });
