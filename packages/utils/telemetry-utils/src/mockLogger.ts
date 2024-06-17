@@ -267,7 +267,7 @@ function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPrope
 /**
  * Mock {@link ITelemetryLoggerExt} implementation.
  *
- * @remarks Can be created via {@link IMockLoggerExt}.
+ * @remarks Can be created via {@link createMockLoggerExt}.
  *
  * @internal
  */
