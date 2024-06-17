@@ -4,29 +4,29 @@
  */
 
 export {
-	FlexTreeNodeSchema,
+	type FlexTreeNodeSchema,
 	FlexFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
-	FlexAllowedTypes,
-	LazyTreeNodeSchema,
+	type FlexAllowedTypes,
+	type LazyTreeNodeSchema,
 	LeafNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexFieldNodeSchema,
-	FlexTreeSchema,
-	Unenforced,
-	AllowedTypeSet,
-	FlexMapFieldSchema,
-	SchemaCollection,
+	type FlexTreeSchema,
+	type Unenforced,
+	type AllowedTypeSet,
+	type FlexMapFieldSchema,
+	type SchemaCollection,
 	TreeNodeSchemaBase,
-	FlexObjectNodeFields,
+	type FlexObjectNodeFields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	NormalizeObjectNodeFields,
-	NormalizeField,
+	type NormalizeObjectNodeFields,
+	type NormalizeField,
 	intoStoredSchema,
 	allowedTypesSchemaSet,
 	intoStoredSchemaCollection,
@@ -35,13 +35,18 @@ export {
 export { ViewSchema } from "./view.js";
 
 export {
-	SchemaLibraryData,
-	SchemaLintConfiguration,
+	type SchemaLibraryData,
+	type SchemaLintConfiguration,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./schemaCollection.js";
 
-export { FlexList, markEager, LazyItem, isLazy, NormalizeLazyItem } from "./flexList.js";
-
-import * as InternalFlexListTypes from "./internalTypes.js";
-export { InternalFlexListTypes };
+export {
+	type FlexList,
+	markEager,
+	type LazyItem,
+	isLazy,
+	type NormalizeLazyItem,
+	type FlexListToUnion,
+	type ExtractItemType,
+} from "./flexList.js";

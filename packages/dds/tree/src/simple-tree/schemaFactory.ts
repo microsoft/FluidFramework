@@ -9,15 +9,15 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line unused-imports/no-unused-imports
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
-import { TreeValue } from "../core/index.js";
+import type { TreeValue } from "../core/index.js";
 import {
-	FlexTreeNode,
-	NodeKeyManager,
-	Unenforced,
+	type FlexTreeNode,
+	type NodeKeyManager,
+	type Unenforced,
 	isFlexTreeNode,
 	isLazy,
 } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { type RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
 import {
 	booleanSchema,
@@ -28,25 +28,37 @@ import {
 } from "./leafNodeSchema.js";
 import {
 	FieldKind,
-	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	WithType,
+	type FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
 	type FieldProps,
 	createFieldSchema,
-	DefaultProvider,
+	type DefaultProvider,
 	getDefaultProvider,
 } from "./schemaTypes.js";
-import { TreeArrayNode, arraySchema } from "./arrayNode.js";
+import { type TreeArrayNode, arraySchema } from "./arrayNode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { InsertableObjectFromSchemaRecord, TreeObjectNode, objectSchema } from "./objectNode.js";
-import { TreeMapNode, mapSchema } from "./mapNode.js";
 import {
+	type InsertableObjectFromSchemaRecord,
+	type TreeObjectNode,
+	objectSchema,
+} from "./objectNode.js";
+import { type TreeMapNode, mapSchema } from "./mapNode.js";
+import type {
 	FieldSchemaUnsafe,
+	// Adding these unused imports makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
+	// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
+	// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
+	// API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	FieldHasDefaultUnsafe,
+	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+	InsertableTreeFieldFromImplicitFieldUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
@@ -555,11 +567,24 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Make a field of type identifier instead of the default, which is required.
-	 * @remarks Identifiers may be optionally supplied at node construction time.
-	 * If not supplied, they will be generated automatically when the node is inserted into the tree.
-	 * Attempting to read an automatically generated identifier before the node is inserted into the tree will throw an error.
-	 * An automatically generated identifier will not be present when iterating the nodes's fields until after the node is inserted into the tree.
+	 * A special field which holds a unique identifier for an object node.
+	 * @remarks
+	 * The value of this field, a "node identifier", uniquely identifies a node among all other nodes in the tree.
+	 * Node identifiers are strings, and can therefore be used as lookup keys in maps or written to a database.
+	 * When the node is constructed, the identifier field does not need to be populated.
+	 * The SharedTree will provide an identifier for the node automatically.
+	 * An identifier provided automatically by the SharedTree has the following properties:
+	 * - It is a UUID.
+	 * - It is compressed to a space-efficient representation when stored in the document.
+	 * - A compressed form of the identifier can be accessed at runtime via the `Tree.shortId()` API.
+	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into the tree.
+	 *
+	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
+	 * In that case, it is up to the user to ensure that the identifier is unique within the current tree - no other node should have the same identifier at the same time.
+	 * If the identifier is not unique, it may be read, but may cause libraries or features which operate over node identifiers to misbehave.
+	 * User-supplied identifiers may be read immediately, even before insertion into the tree.
+	 *
+	 * A node may have more than one identifier field (though note that this precludes the use of the `Tree.shortId()` API).
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(

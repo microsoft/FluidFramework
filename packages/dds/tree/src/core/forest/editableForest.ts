@@ -5,21 +5,21 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { RevisionTagCodec } from "../rebase/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { RevisionTagCodec } from "../rebase/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 import {
-	Anchor,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedField,
-	ITreeCursorSynchronous,
+	type Anchor,
+	type DeltaRoot,
+	type DeltaVisitor,
+	type DetachedField,
+	type ITreeCursorSynchronous,
 	applyDelta,
 	deltaForRootInitialization,
 	makeDetachedFieldIndex,
 } from "../tree/index.js";
 
-import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Editing APIs.

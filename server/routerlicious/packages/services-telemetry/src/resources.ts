@@ -119,6 +119,7 @@ export enum CommonProperties {
 	restartReason = "restartReason",
 	errorLabel = "errorLabel",
 	isGlobalDb = "isGlobalDb",
+	internalErrorCode = "internalErrorCode",
 }
 
 /**

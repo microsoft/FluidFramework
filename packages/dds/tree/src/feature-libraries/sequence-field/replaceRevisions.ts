@@ -4,17 +4,17 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { RevisionTag, replaceAtomRevisions } from "../../core/index.js";
+import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
-	Changeset,
-	HasMoveFields,
-	HasRevisionTag,
-	Mark,
-	MarkEffect,
+	type Changeset,
+	type HasMoveFields,
+	type HasRevisionTag,
+	type Mark,
+	type MarkEffect,
 	NoopMarkType,
 } from "./types.js";
-import { MoveMarkEffect } from "./helperTypes.js";
+import type { MoveMarkEffect } from "./helperTypes.js";
 
 export function replaceRevisions(
 	changeset: Changeset,

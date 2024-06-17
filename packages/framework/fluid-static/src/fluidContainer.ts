@@ -9,12 +9,8 @@ import {
 	type ConnectionState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { type IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	type IEvent,
-	type IEventProvider,
-	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import type { ContainerAttachProps, ContainerSchema, IRootDataObject } from "./types.js";

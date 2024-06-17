@@ -20,13 +20,13 @@ import {
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
-import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
+import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
 	determineNodeKind,
 	toVisualTree,

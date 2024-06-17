@@ -5,16 +5,16 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { MakeNominal, brand, fail, invertMap } from "../../util/index.js";
+import { type MakeNominal, brand, fail, invertMap } from "../../util/index.js";
 import {
-	FieldKey,
-	FieldKindIdentifier,
-	FieldSchemaFormat,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type FieldSchemaFormat,
 	PersistedValueSchema,
-	TreeNodeSchemaDataFormat,
-	TreeNodeSchemaIdentifier,
+	type TreeNodeSchemaDataFormat,
+	type TreeNodeSchemaIdentifier,
 } from "./format.js";
-import { Multiplicity } from "./multiplicity.js";
+import type { Multiplicity } from "./multiplicity.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.

@@ -5,18 +5,18 @@
 
 import {
 	FieldKinds,
-	FlexFieldKind,
+	type FlexFieldKind,
 	FlexFieldNodeSchema,
-	FlexFieldSchema,
-	FlexImplicitAllowedTypes,
-	FlexImplicitFieldSchema,
-	FlexObjectNodeSchema,
-	NormalizeAllowedTypes,
+	type FlexFieldSchema,
+	type FlexImplicitAllowedTypes,
+	type FlexImplicitFieldSchema,
+	type FlexObjectNodeSchema,
+	type NormalizeAllowedTypes,
 	SchemaBuilderBase,
-	SchemaBuilderOptions,
-	Unenforced,
+	type SchemaBuilderOptions,
+	type Unenforced,
 } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 import { leaf } from "./leafDomain.js";
 

@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 
 import {
 	EmptyKey,
-	FieldKey,
+	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
@@ -23,7 +23,7 @@ import {
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
+	type FlexTreeNodeSchema,
 	LeafNodeSchema,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";

@@ -5,27 +5,27 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
-import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+import type { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { type Assume, type RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
+import type { FlexFieldKind } from "./modular-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexList,
-	FlexMapFieldSchema,
+	type FlexList,
+	type FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	SchemaCollection,
-	SchemaLibraryData,
-	SchemaLintConfiguration,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type SchemaCollection,
+	type SchemaLibraryData,
+	type SchemaLintConfiguration,
 	TreeNodeSchemaBase,
-	Unenforced,
+	type Unenforced,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./typed-schema/index.js";

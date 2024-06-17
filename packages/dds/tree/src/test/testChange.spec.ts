@@ -5,20 +5,20 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 
 import {
-	ChangeEncodingContext,
-	FieldKey,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type FieldKey,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
 
-import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
+import type { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
 import { mintRevisionTag, testIdCompressor } from "./utils.js";
