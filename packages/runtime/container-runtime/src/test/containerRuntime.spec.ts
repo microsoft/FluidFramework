@@ -82,7 +82,6 @@ const outboundMessage: OutboundContainerRuntimeMessage =
 // @ts-expect-error Outbound type should not include compat behavior
 (() => {})(outboundMessage.compatDetails);
 
-
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
