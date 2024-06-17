@@ -7,16 +7,16 @@ import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangesetLocalId,
-	RevisionInfo,
-	RevisionTag,
-	TaggedChange,
+	type ChangesetLocalId,
+	type RevisionInfo,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import {
+import type { SequenceField as SF } from "../../../feature-libraries/index.js";
+import type {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
 	FieldStateTree,
@@ -24,9 +24,12 @@ import {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { type IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
+import type {
+	NodeId,
+	RebaseRevisionMetadata,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
@@ -45,7 +48,7 @@ import {
 	assertWrappedChangesetsEqual,
 	composeDeep,
 	pruneDeep,
-	WrappedChange,
+	type WrappedChange,
 	withoutTombstones,
 	tagChangeInline,
 	inlineRevision,

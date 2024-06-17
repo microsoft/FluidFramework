@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MapTree } from "../../core/index.js";
+import type { MapTree } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
-	ContextuallyTypedNodeDataObject,
+	type ContextuallyTypedNodeDataObject,
 	applyTypesFromContext,
 	cursorFromContextualData,
 	// Allow importing from this specific file which is being tested:

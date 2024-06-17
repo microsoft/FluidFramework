@@ -10,28 +10,28 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	AllowedUpdateType,
 	CommitKind,
-	FieldUpPath,
-	Revertible,
+	type FieldUpPath,
+	type Revertible,
 	RevertibleStatus,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-	TreeValue,
-	Value,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeValue,
+	type Value,
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
-	ContextuallyTypedNodeData,
+	type ContextuallyTypedNodeData,
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
+import type { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
 	checkoutWithContent,

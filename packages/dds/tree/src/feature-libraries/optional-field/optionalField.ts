@@ -6,22 +6,22 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	ChangeAtomIdMap,
-	ChangesetLocalId,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaMark,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangeAtomIdMap,
+	type ChangesetLocalId,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaMark,
+	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 	replaceAtomRevisions,
 	taggedAtomId,
 } from "../../core/index.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	setInNestedMap,
@@ -29,19 +29,19 @@ import {
 } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
-	FieldChangeHandler,
-	FieldChangeRebaser,
-	FieldEditor,
-	NodeChangeComposer,
-	NodeChangePruner,
-	NodeChangeRebaser,
-	NodeExistenceState,
-	NodeId,
-	RelevantRemovedRootsFromChild,
-	ToDelta,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NodeChangeComposer,
+	type NodeChangePruner,
+	type NodeChangeRebaser,
+	NodeAttachState,
+	type NodeId,
+	type RelevantRemovedRootsFromChild,
+	type ToDelta,
 } from "../modular-schema/index.js";
 
-import {
+import type {
 	ChildChange,
 	Move,
 	OptionalChangeset,
@@ -373,7 +373,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const rebasedChildChange = rebaseChild(
 				childChange,
 				overChildChange,
-				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
 			);
 			if (rebasedChildChange !== undefined) {
 				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
@@ -385,7 +385,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const rebasedChildChange = rebaseChild(
 				undefined,
 				overChildChange,
-				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
 			);
 			if (rebasedChildChange !== undefined) {
 				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
@@ -714,8 +714,17 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 		change.moves.length === 0 &&
 		change.valueReplace === undefined,
 
+	getNestedChanges,
+
 	createEmpty: () => ({ moves: [], childChanges: [] }),
 };
+
+function getNestedChanges(change: OptionalChangeset): [NodeId, number | undefined][] {
+	return change.childChanges.map(([register, nodeId]) => [
+		nodeId,
+		register === "self" ? 0 : undefined,
+	]);
+}
 
 function* relevantRemovedRoots(
 	change: OptionalChangeset,

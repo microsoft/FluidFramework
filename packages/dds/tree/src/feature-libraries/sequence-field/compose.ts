@@ -6,25 +6,25 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	RevisionMetadataSource,
-	RevisionTag,
+	type ChangeAtomId,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	offsetChangeAtomId,
 } from "../../core/index.js";
-import { IdAllocator, fail } from "../../util/index.js";
+import { type IdAllocator, fail } from "../../util/index.js";
 import {
-	CrossFieldManager,
+	type CrossFieldManager,
 	CrossFieldTarget,
-	NodeChangeComposer,
-	NodeId,
+	type NodeChangeComposer,
+	type NodeId,
 } from "../modular-schema/index.js";
 
-import { MoveMarkEffect } from "./helperTypes.js";
+import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	MoveEffect,
-	MoveEffectTable,
+	type MoveEffect,
+	type MoveEffectTable,
 	getCrossFieldTargetFromMove,
 	getMoveEffect,
 	getMoveIn,
@@ -34,14 +34,14 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	CellMark,
-	Changeset,
-	Detach,
-	Mark,
-	MarkEffect,
-	MarkList,
-	MoveId,
-	NoopMark,
+	type CellMark,
+	type Changeset,
+	type Detach,
+	type Mark,
+	type MarkEffect,
+	type MarkList,
+	type MoveId,
+	type NoopMark,
 	NoopMarkType,
 } from "./types.js";
 import {

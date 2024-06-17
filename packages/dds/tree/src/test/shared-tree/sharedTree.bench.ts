@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
-	BenchmarkTimer,
+	type BenchmarkTimer,
 	BenchmarkType,
 	benchmark,
 	isInPerformanceTestingMode,
@@ -22,10 +22,10 @@ import {
 	cursorForTypedTreeData,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
+import { type FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
 import {
-	JSDeepTree,
-	JSWideTree,
+	type JSDeepTree,
+	type JSWideTree,
 	deepPath,
 	deepSchema,
 	localFieldKey,

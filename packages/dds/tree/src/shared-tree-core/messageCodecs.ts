@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema, Type } from "@sinclair/typebox";
+import { type TAnySchema, Type } from "@sinclair/typebox";
 
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
+	type ICodecOptions,
+	type IJsonCodec,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../codec/index.js";
-import {
+import type {
 	ChangeEncodingContext,
 	ChangeFamilyCodec,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly } from "../util/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { Message } from "./messageFormat.js";
-import { DecodedMessage } from "./messageTypes.js";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { DecodedMessage } from "./messageTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;

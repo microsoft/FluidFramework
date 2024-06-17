@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -13,14 +13,17 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	type ITestFluidObject,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,
 	CommitKind,
-	JsonableTree,
-	Revertible,
-	UpPath,
+	type JsonableTree,
+	type Revertible,
+	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
@@ -38,8 +41,8 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	FlexTreeTypedField,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
 	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
@@ -56,25 +59,25 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	CheckoutFlexTreeView,
-	FlexTreeView,
+	type CheckoutFlexTreeView,
+	type FlexTreeView,
 	ForestType,
-	ISharedTree,
-	InitializeAndSchematizeConfiguration,
-	SharedTree,
+	type ISharedTree,
+	type InitializeAndSchematizeConfiguration,
+	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
-import { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import type { EditManager } from "../../shared-tree-core/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
-	ConnectionSetter,
+	type ConnectionSetter,
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
-	SharedTreeWithConnectionStateSetter,
+	type SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -89,9 +92,10 @@ import {
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
+	validateUsageError,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -196,8 +200,10 @@ describe("SharedTree", () => {
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: Foo }));
 			const unhydratedInitialTree = new Foo({});
-			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			view.initialize(unhydratedInitialTree);
+
 			assert(view.root === unhydratedInitialTree);
 		});
 	});
@@ -531,7 +537,7 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				const view1 = assertSchema(tree1, stringSequenceRootSchema, () => {});
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
@@ -1905,45 +1911,36 @@ describe("SharedTree", () => {
 			const [sharedTree] = provider.trees;
 			const sf = new SchemaFactory("test");
 			const schema = sf.string;
-			assert.doesNotThrow(() =>
-				sharedTree.schematize(
-					new TreeConfiguration(schema, () => "42", {
-						enableSchemaValidation: true,
-					}),
-				),
-			);
-		});
-
-		it("schema validation throws as expected", async () => {
-			const provider = new TestTreeProviderLite(1);
-			const [sharedTree] = provider.trees;
-			const sf = new SchemaFactory("test");
-
-			// No validation failures when initializing the tree for the first time.
-			// Stored schema is set up so 'foo' is an array of strings.
-			const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
-			sharedTree.schematize(
-				new TreeConfiguration(schema, () => ({ foo: ["42"] }), {
-					enableSchemaValidation: true,
-				}),
-			);
-
-			// Trying to use the tree with a view schema that makes 'foo' an array of strings or numbers
-			// should not cause compile-time errors when inserting a number, but stored schema validation
-			// should kick in and throw an error.
-			const viewschema = sf.object("myObject", {
-				foo: sf.array("foo", [sf.string, sf.number]),
+			assert.doesNotThrow(() => {
+				const view = sharedTree.viewWith(
+					new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+				);
+				view.initialize("42");
 			});
-			const tree = sharedTree.schematize(
-				new TreeConfiguration(viewschema, () => ({ foo: ["42"] }), {
-					enableSchemaValidation: true,
-				}),
-			);
-
-			assert.throws(() => {
-				tree.root.foo.insertAtEnd(3);
-			}, "Tree does not conform to schema.");
 		});
+	});
+
+	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	it("throws when an invalid type is inserted at runtime", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		const sf = new SchemaFactory("test");
+
+		const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+		);
+		view.initialize({ foo: ["42"] });
+		assert.throws(
+			() => {
+				// The cast here is necessary as the API provided by `insertAtEnd` is typesafe with respect
+				// to the schema, so in order to insert invalid content we need to bypass the types.
+				view.root.foo.insertAtEnd(3 as unknown as string);
+			},
+			validateUsageError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
+		);
 	});
 });
 

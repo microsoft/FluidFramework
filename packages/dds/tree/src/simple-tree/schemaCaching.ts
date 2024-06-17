@@ -5,17 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	type FlexFieldSchema,
-	type FlexTreeNodeSchema,
+import type {
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
 import {
-	FieldSchema,
+	type FieldSchema,
 	type ImplicitFieldSchema,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 

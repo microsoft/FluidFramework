@@ -5,17 +5,17 @@
 
 import {
 	AdaptedViewSchema,
-	Adapters,
+	type Adapters,
 	Compatibility,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 } from "../../core/index.js";
-import { Named, fail } from "../../util/index.js";
-import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema/index.js";
+import { type Named, fail } from "../../util/index.js";
+import { type FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema/index.js";
 
-import { FlexFieldSchema, FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
+import { type FlexFieldSchema, type FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
 
 /**
  * A collection of View information for schema, including policy.

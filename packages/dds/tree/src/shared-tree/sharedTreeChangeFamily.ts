@@ -5,32 +5,38 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ICodecFamily, ICodecOptions } from "../codec/index.js";
+import type { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeRebaser,
-	DeltaDetachedNodeId,
-	RevisionMetadataSource,
-	RevisionTag,
-	RevisionTagCodec,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeRebaser,
+	type DeltaDetachedNodeId,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type RevisionTagCodec,
+	type TaggedChange,
 	mapTaggedChange,
 } from "../core/index.js";
 import {
-	FieldBatchCodec,
+	type FieldBatchCodec,
 	ModularChangeFamily,
-	ModularChangeset,
-	TreeChunk,
-	TreeCompressionStrategy,
+	type ModularChangeset,
+	type TreeChunk,
+	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
-import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
+import {
+	type Mutable,
+	type NestedSet,
+	addToNestedSet,
+	fail,
+	nestedSetContains,
+} from "../util/index.js";
 
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**

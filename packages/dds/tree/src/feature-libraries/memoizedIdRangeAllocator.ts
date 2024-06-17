@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../core/index.js";
+import type { ChangesetLocalId, RevisionTag } from "../core/index.js";
 import {
-	Mutable,
-	RangeMap,
+	type Mutable,
+	type RangeMap,
 	brand,
 	getFirstEntryFromRangeMap,
 	getOrAddEmptyToMap,

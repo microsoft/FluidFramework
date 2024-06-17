@@ -8,23 +8,23 @@ import { strict as assert } from "assert";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { DetachedFieldIndex, ForestRootId, RevisionTagCodec } from "../../core/index.js";
+import { DetachedFieldIndex, type ForestRootId, RevisionTagCodec } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
+import type { Format } from "../../core/tree/detachedFieldIndexFormat.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
+import type { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
-	IdAllocator,
-	JsonCompatibleReadOnly,
+	type IdAllocator,
+	type JsonCompatibleReadOnly,
 	brand,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createSnapshotCompressor } from "../snapshots/testTrees.js";
+import { createSnapshotCompressor } from "../snapshots/testTreeScenarios.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();

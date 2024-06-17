@@ -8,7 +8,7 @@ import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframew
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
-import { type DataObjectTypes } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It

@@ -292,7 +292,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
 	 */
-	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.
@@ -505,8 +505,9 @@ export interface IFluidParentContext
 	 *
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	addedGCOutboundRoute(fromPath: string, toPath: string): void;
+	addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
 }
 
 /**
