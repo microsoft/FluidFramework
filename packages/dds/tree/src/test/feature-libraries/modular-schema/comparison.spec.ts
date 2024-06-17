@@ -239,12 +239,10 @@ describe("Schema Comparison", () => {
 			];
 
 			const repos = testTrees.map((testTree) => {
-				const repo = new TreeStoredSchemaRepository();
-				repo.apply({
+				return new TreeStoredSchemaRepository({
 					rootFieldSchema,
 					nodeSchema: new Map([[testTree.name, testTree.schema]]),
 				});
-				return repo;
 			});
 
 			testOrder(compareTwoRepo, repos);
@@ -263,20 +261,17 @@ describe("Schema Comparison", () => {
 			};
 
 			const repos = rootFieldSchemas.map((rootFieldSchema) => {
-				const repo = new TreeStoredSchemaRepository();
-				repo.apply({
+				return new TreeStoredSchemaRepository({
 					rootFieldSchema,
 					nodeSchema: new Map([[testTree.name, testTree.schema]]),
 				});
-				return repo;
 			});
 
 			testOrder(compareTwoRepo, repos);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {
-			// TODO: There seems to be a bug in allowsRepoSuperset or allowsFieldSuperset,
-			// as the identifiers are never compared.
+			// TODO: AB#8357, Improve allowsTreeSuperset to ensure it can distinguish between different identifiers.
 			const root = fieldSchema(FieldKinds.optional);
 			const node1 = {
 				name: brand<TreeNodeSchemaIdentifier>("testTree"),
@@ -286,13 +281,11 @@ describe("Schema Comparison", () => {
 				name: brand<TreeNodeSchemaIdentifier>("testTree2"),
 				schema: new ObjectNodeStoredSchema(new Map()),
 			};
-			const repo1 = new TreeStoredSchemaRepository();
-			const repo2 = new TreeStoredSchemaRepository();
-			repo1.apply({
+			const repo1 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
 				nodeSchema: new Map([[node1.name, node1.schema]]),
 			});
-			repo2.apply({
+			const repo2 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
 				nodeSchema: new Map([[node2.name, node2.schema]]),
 			});
@@ -314,26 +307,20 @@ describe("Schema Comparison", () => {
 					new Map([[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])]]),
 				),
 			};
-
 			const testTree2 = {
 				name: brand<TreeNodeSchemaIdentifier>("testTree"),
 				schema: new ObjectNodeStoredSchema(
 					new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
 				),
 			};
-
-			const repo1 = new TreeStoredSchemaRepository();
-			const repo2 = new TreeStoredSchemaRepository();
-
-			repo1.apply({
+			const repo1 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root1,
 				nodeSchema: new Map([[testTree1.name, testTree1.schema]]),
 			});
-			repo2.apply({
+			const repo2 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root2,
 				nodeSchema: new Map([[testTree2.name, testTree2.schema]]),
 			});
-
 			assert.equal(getOrdering(repo1, repo2, compareTwoRepo), Ordering.Incomparable);
 		});
 
@@ -349,26 +336,20 @@ describe("Schema Comparison", () => {
 					]),
 				),
 			};
-
 			const testTree2 = {
 				name: brand<TreeNodeSchemaIdentifier>("testTree"),
 				schema: new ObjectNodeStoredSchema(
 					new Map([[brand("x"), fieldSchema(FieldKinds.sequence, [emptyTree.name])]]),
 				),
 			};
-
-			const repo1 = new TreeStoredSchemaRepository();
-			const repo2 = new TreeStoredSchemaRepository();
-
-			repo1.apply({
+			const repo1 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
 				nodeSchema: new Map([[testTree1.name, testTree1.schema]]),
 			});
-			repo2.apply({
+			const repo2 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
 				nodeSchema: new Map([[testTree2.name, testTree2.schema]]),
 			});
-
 			assert.equal(getOrdering(repo1, repo2, compareTwoRepo), Ordering.Incomparable);
 		});
 	});
