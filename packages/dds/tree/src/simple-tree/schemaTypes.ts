@@ -8,10 +8,10 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type InternalFlexListTypes,
 	type LazyItem,
 	type NodeKeyManager,
 	isLazy,
+	type FlexListToUnion,
 } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -472,8 +472,8 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-		? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
-		: unknown;
+	? NodeFromSchema<FlexListToUnion<TSchema>>
+	: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
@@ -484,8 +484,8 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-		? InsertableTypedNode<InternalFlexListTypes.FlexListToUnion<TSchema>>
-		: never;
+	? InsertableTypedNode<FlexListToUnion<TSchema>>
+	: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

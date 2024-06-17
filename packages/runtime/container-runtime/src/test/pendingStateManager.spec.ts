@@ -302,7 +302,7 @@ describe("Pending State Manager", () => {
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					contents: { prop1: true },
-					sequenceNumber: i,
+					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
 				process(messages);
