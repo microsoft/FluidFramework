@@ -6,8 +6,8 @@
 
 The following rules have been disabled in all configs because they conflict with formatter settings:
 
--  [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
--  [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
+-   [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
+-   [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
 
 ### @typescript-eslint/explicit-function-return-type changes
 
