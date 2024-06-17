@@ -23,12 +23,12 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type IProvideRuntimeAttributor,
 	enableOnNewFileKey,
-	Attributor,
+	type IAttributor,
 	AttributorSerializer,
 	chain,
 	deltaEncoder,
 	makeLZ4Encoder,
-	type IAttributor,
+	Attributor,
 } from "../../attributor/index.js";
 import { ContainerRuntime } from "../../index.js";
 

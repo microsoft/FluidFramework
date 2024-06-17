@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { type IAttributor } from "./attributor.js";
 export { RuntimeAttributor } from "./runtimeAttributor.js";
 export {
 	type IProvideRuntimeAttributor,
@@ -11,3 +10,13 @@ export {
 	type IRuntimeAttributor,
 	attributorTreeName,
 } from "./utils.js";
+export { MutableStringInterner, InternedStringId } from "./stringInterner.js";
+export { makeLZ4Encoder } from "./lz4Encoder.js";
+export {
+	AttributorSerializer,
+	chain,
+	deltaEncoder,
+	SerializedAttributor,
+	Encoder,
+} from "./encoders.js";
+export { type IAttributor, Attributor, OpStreamAttributor } from "./attributor.js";
