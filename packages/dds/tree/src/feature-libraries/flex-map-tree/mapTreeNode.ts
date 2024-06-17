@@ -8,6 +8,7 @@ import {
 	type AnchorNode,
 	EmptyKey,
 	type FieldKey,
+	type FieldUpPath,
 	type MapTree,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
@@ -613,6 +614,9 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		sourceEnd: unknown,
 		source?: unknown,
 	): void {
+		throw unsupportedUsageError("Editing a sequence");
+	}
+	public getFieldPath(): FieldUpPath {
 		throw unsupportedUsageError("Editing a sequence");
 	}
 }

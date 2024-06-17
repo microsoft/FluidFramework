@@ -9,7 +9,7 @@ import type {
 	ValueSchema,
 	Multiplicity,
 } from "../../core/index.js";
-import type { Assume, InternalUtilTypes } from "../../util/index.js";
+import type { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
 import type {
 	ContextuallyTypedNodeData,
 	typeNameSymbol,
@@ -19,11 +19,11 @@ import type {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
+	FlexListToUnion,
 	FlexMapNodeSchema,
 	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
-	InternalFlexListTypes,
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
@@ -46,7 +46,7 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema | undefined,
 	TName,
 > = TValueSchema extends undefined
-	? InternalUtilTypes.FlattenKeys<
+	? FlattenKeys<
 			{ [typeNameSymbol]?: UnbrandedName<TName> } & (TValueSchema extends ValueSchema
 				? { [valueSymbol]: TreeValue<TValueSchema> }
 				: EmptyObject)
@@ -62,7 +62,7 @@ export type CollectOptions<
  */
 export type UnbrandedName<TName> = [
 	TName extends TreeNodeSchemaIdentifier<infer S> ? S : string,
-][InternalUtilTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -76,7 +76,7 @@ export type TypedFields<TFields extends undefined | { readonly [key: string]: Fl
 				-readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
 		  }
 		: EmptyObject,
-][InternalUtilTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on FieldKind.
@@ -87,7 +87,7 @@ export type InsertableFlexField<TField extends FlexFieldSchema> = [
 		TField["kind"]["multiplicity"],
 		AllowedTypesToFlexInsertableTree<TField["allowedTypes"]>
 	>,
-][InternalUtilTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -106,15 +106,15 @@ export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = 
  */
 export type AllowedTypesToFlexInsertableTree<T extends FlexAllowedTypes> = [
 	T extends readonly LazyItem<FlexTreeNodeSchema>[]
-		? InsertableFlexNode<Assume<InternalFlexListTypes.FlexListToUnion<T>, FlexTreeNodeSchema>>
+		? InsertableFlexNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: ContextuallyTypedNodeData,
-][InternalUtilTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Generate a schema aware API for a single tree schema.
  * @internal
  */
-export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = InternalUtilTypes.FlattenKeys<
+export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys<
 	CollectOptions<
 		TSchema extends FlexObjectNodeSchema<string, infer TFields extends FlexObjectNodeFields>
 			? TypedFields<TFields>
