@@ -29,7 +29,7 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/inter
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import lodash from "lodash";
 import { Packr } from "msgpackr";
 import { v4 as uuidv4 } from "uuid";

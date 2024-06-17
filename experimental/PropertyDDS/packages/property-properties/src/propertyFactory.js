@@ -12,8 +12,7 @@
  */
 
 const _ = require("lodash");
-const fastestJSONCopy = require("fastest-json-copy");
-const deepCopy = fastestJSONCopy.copy;
+const { deepCopy } = _;
 
 const {
 	Collection,

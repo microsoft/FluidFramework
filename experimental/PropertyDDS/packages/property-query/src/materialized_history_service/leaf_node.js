@@ -20,8 +20,7 @@
 		OperationError = require("@fluid-experimental/property-common").OperationError,
 		HTTPStatus = require("http-status"),
 		{ ChangeSet } = require("@fluid-experimental/property-changeset");
-	const fastestJSONCopy = require("fastest-json-copy");
-	const deepCopy = fastestJSONCopy.copy;
+	const { deepCopy } = _;
 
 	let NodeStatus = NodeDependencyManager.NodeStatus;
 

@@ -8,7 +8,7 @@
  */
 
 import { assert, expect } from "chai";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import isEmpty from "lodash/isEmpty.js";
 import isNumber from "lodash/isNumber.js";
 import range from "lodash/range.js";
