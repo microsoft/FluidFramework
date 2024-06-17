@@ -233,7 +233,7 @@ describe("Summarizer Client Election", () => {
 	}
 
 	afterEach(() => {
-		mockLogger.events = [];
+		mockLogger.clear();
 		testQuorum.reset();
 		summaryCollectionEmitter.removeAllListeners();
 		summarizer.removeAllListeners();

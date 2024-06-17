@@ -892,9 +892,14 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Process a GC message.
 	 * @param message - The GC message from the container runtime.
+	 * @param messageTimestampMs - The timestamp of the message.
 	 * @param local - Whether it was send by this client.
 	 */
-	public processMessage(message: ContainerRuntimeGCMessage, local: boolean) {
+	public processMessage(
+		message: ContainerRuntimeGCMessage,
+		messageTimestampMs: number,
+		local: boolean,
+	) {
 		const gcMessageType = message.contents.type;
 		switch (gcMessageType) {
 			case GarbageCollectionMessageType.Sweep: {
@@ -909,7 +914,12 @@ export class GarbageCollector implements IGarbageCollector {
 
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
-				this.addedOutboundReference("/", tombstonedNodePath, true /* autorecovery */);
+				this.addedOutboundReference(
+					"/",
+					tombstonedNodePath,
+					messageTimestampMs,
+					true /* autorecovery */,
+				);
 
 				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
@@ -990,7 +1000,9 @@ export class GarbageCollector implements IGarbageCollector {
 		request,
 		headerData,
 	}: IGCNodeUpdatedProps) {
-		if (!this.shouldRunGC) {
+		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
+		// logging as nothing interesting would have happened worth logging.
+		if (!this.shouldRunGC || timestampMs === undefined) {
 			return;
 		}
 
@@ -1005,8 +1017,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.telemetryTracker.nodeUsed(trackedId, {
 			id: fullPath,
 			usageType: reason,
-			currentReferenceTimestampMs:
-				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
+			currentReferenceTimestampMs: timestampMs,
 			packagePath,
 			completedGCRuns: this.completedRuns,
 			isTombstoned,
@@ -1096,9 +1107,15 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * @param fromNodePath - The node from which the reference is added.
 	 * @param toNodePath - The node to which the reference is added.
+	 * @param timestampMs - The timestamp of the message that added the reference.
 	 * @param autorecovery - This reference is added artificially, for autorecovery. Used for logging.
 	 */
-	public addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true) {
+	public addedOutboundReference(
+		fromNodePath: string,
+		toNodePath: string,
+		timestampMs: number,
+		autorecovery?: true,
+	) {
 		if (!this.shouldRunGC) {
 			return;
 		}
@@ -1129,7 +1146,7 @@ export class GarbageCollector implements IGarbageCollector {
 			id: toNodePath,
 			fromId: fromNodePath,
 			usageType: "Revived",
-			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
+			currentReferenceTimestampMs: timestampMs,
 			packagePath: undefined,
 			completedGCRuns: this.completedRuns,
 			isTombstoned: this.tombstones.includes(trackedId),
