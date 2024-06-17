@@ -138,12 +138,12 @@ describe("TelemetryEventBatcher", () => {
 
 		assert.strictEqual(logger.events.length, 1);
 
-		assert.strictEqual(logger.events[0].avgpropertyOne, 1);
-		assert.strictEqual(logger.events[0].avgpropertyTwo, 2);
-		assert.strictEqual(logger.events[0].avgpropertyThree, 3);
-		assert.strictEqual(logger.events[0].maxpropertyOne, 1);
-		assert.strictEqual(logger.events[0].maxpropertyTwo, 2);
-		assert.strictEqual(logger.events[0].maxpropertyThree, 3);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 1);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 2);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 3);
+		assert.strictEqual(logger.events[0].max_propertyOne, 1);
+		assert.strictEqual(logger.events[0].max_propertyTwo, 2);
+		assert.strictEqual(logger.events[0].max_propertyThree, 3);
 	});
 
 	it("correctly calculates average and max values for multiple events", () => {
@@ -167,12 +167,12 @@ describe("TelemetryEventBatcher", () => {
 
 		assert.strictEqual(logger.events.length, 1);
 
-		assert.strictEqual(logger.events[0].avgpropertyOne, 5.5);
-		assert.strictEqual(logger.events[0].avgpropertyTwo, 15.5);
-		assert.strictEqual(logger.events[0].avgpropertyThree, 105.5);
-		assert.strictEqual(logger.events[0].maxpropertyOne, 10);
-		assert.strictEqual(logger.events[0].maxpropertyTwo, 20);
-		assert.strictEqual(logger.events[0].maxpropertyThree, 110);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 5.5);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 15.5);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 105.5);
+		assert.strictEqual(logger.events[0].max_propertyOne, 10);
+		assert.strictEqual(logger.events[0].max_propertyTwo, 20);
+		assert.strictEqual(logger.events[0].max_propertyThree, 110);
 
 		// More calls to validate that the average and max are "fresh", i.e. the previous data was cleared when the first telemetry event was generated
 		for (let i = 101; i <= threshold + 100; i++) {
@@ -188,12 +188,12 @@ describe("TelemetryEventBatcher", () => {
 
 		assert.strictEqual(logger.events.length, 2);
 
-		assert.strictEqual(logger.events[1].avgpropertyOne, 105.5);
-		assert.strictEqual(logger.events[1].avgpropertyTwo, 115.5);
-		assert.strictEqual(logger.events[1].avgpropertyThree, 205.5);
-		assert.strictEqual(logger.events[1].maxpropertyOne, 110);
-		assert.strictEqual(logger.events[1].maxpropertyTwo, 120);
-		assert.strictEqual(logger.events[1].maxpropertyThree, 210);
+		assert.strictEqual(logger.events[1].avg_propertyOne, 105.5);
+		assert.strictEqual(logger.events[1].avg_propertyTwo, 115.5);
+		assert.strictEqual(logger.events[1].avg_propertyThree, 205.5);
+		assert.strictEqual(logger.events[1].max_propertyOne, 110);
+		assert.strictEqual(logger.events[1].max_propertyTwo, 120);
+		assert.strictEqual(logger.events[1].max_propertyThree, 210);
 	});
 
 	it("separately emits event in different instances", () => {
@@ -297,6 +297,6 @@ describe("TelemetryEventBatcher", () => {
 		}
 
 		assert.strictEqual(logger.events.length, 1);
-		assert.strictEqual(logger.events[0].duration, totalTime / threshold);
+		assert.strictEqual(logger.events[0].avg_duration, totalTime / threshold);
 	});
 });
