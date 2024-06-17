@@ -565,6 +565,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this.removedRoots.clone(),
+			this.logger,
 		);
 	}
 
