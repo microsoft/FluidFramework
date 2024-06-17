@@ -26,7 +26,7 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	type,
+	typeNameSymbol,
 	type WithType,
 	type AllowedTypes,
 	FieldKind,
