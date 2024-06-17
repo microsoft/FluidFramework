@@ -54,7 +54,7 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 	let previousNode = node;
 	const oldNext = previousNode._next;
 	let newRange: ListNodeRange<T> | undefined;
-	items.forEach((n) => {
+	for (const n of items) {
 		const newNode = new DataNode<T>(node.headNode, n);
 		if (newRange === undefined) {
 			newRange = { first: newNode, last: newNode };
@@ -64,7 +64,7 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 		newNode._prev = previousNode;
 		previousNode._next = newNode;
 		previousNode = newNode;
-	});
+	}
 	oldNext._prev = previousNode;
 	previousNode._next = oldNext;
 	// explicitly prevent newRange from being undefined without casting,

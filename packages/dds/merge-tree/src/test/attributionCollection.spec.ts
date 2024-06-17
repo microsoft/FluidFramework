@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	Generator,
@@ -25,7 +25,13 @@ const opKey = (seq: number): AttributionKey => ({ type: "op", seq });
 const detachedKey: AttributionKey = { type: "detached", id: 0 };
 
 describe("AttributionCollection", () => {
-	const makeCollectionWithChannel = ({ length, seq }: { length: number; seq: number }) => {
+	const makeCollectionWithChannel = ({
+		length,
+		seq,
+	}: {
+		length: number;
+		seq: number;
+	}): AttributionCollection => {
 		const collection = new AttributionCollection(length, null);
 		collection.update("foo", new AttributionCollection(length, opKey(seq)));
 		return collection;

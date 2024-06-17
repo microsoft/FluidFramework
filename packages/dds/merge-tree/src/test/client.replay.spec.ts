@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import assert from "assert";
-import * as fs from "fs";
+import assert from "node:assert";
+import * as fs from "node:fs";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -61,14 +61,14 @@ describe("MergeTree.Client", () => {
 					msgClient.client.localTransaction(
 						op.type === MergeTreeDeltaType.GROUP ? op : createGroupOp(op),
 					);
-					msgClients.forEach((mc) => mc.msgs.push(msg));
+					for (const mc of msgClients) mc.msgs.push(msg);
 				}
 
-				msgClients.forEach((mc) => {
+				for (const mc of msgClients) {
 					while (mc.msgs.length > 0) {
 						mc.client.applyMsg(mc.msgs.shift()!);
 					}
-				});
+				}
 				const result = logger.validate();
 				assert.strictEqual(result, group.resultText, "Result text not as expected");
 				logger.dispose();

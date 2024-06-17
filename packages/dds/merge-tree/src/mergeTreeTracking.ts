@@ -75,7 +75,7 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 	}
 
 	public get tracked(): readonly Trackable[] {
-		return Array.from(this.trackedSet);
+		return [...this.trackedSet];
 	}
 
 	public get size(): number {
@@ -145,9 +145,9 @@ export class TrackingGroupCollection {
 	}
 
 	public copyTo(trackable: Trackable): void {
-		this._trackingGroups.forEach((sg) => {
+		for (const sg of this._trackingGroups) {
 			trackable.trackingCollection.link(sg);
-		});
+		}
 	}
 
 	public get empty(): boolean {

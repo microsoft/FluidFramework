@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { LocalReferencePosition } from "../localReference.js";
 import { ISegment } from "../mergeTreeNodes.js";
@@ -18,7 +18,7 @@ function validateSorted<T extends SortedSegmentSetItem>(
 	set: SortedSegmentSet<T>,
 	getOrdinal: (item: T) => string | undefined,
 	prefix: string,
-) {
+): void {
 	for (let i = 0; i < set.size - 1; i++) {
 		const a = getOrdinal(set.items[i]);
 		const b = getOrdinal(set.items[i + 1]);
@@ -32,7 +32,7 @@ function validateSet<T extends SortedSegmentSetItem>(
 	client: TestClient,
 	set: SortedSegmentSet<T>,
 	getOrdinal: (item: T) => string | undefined,
-) {
+): void {
 	validateSorted(set, getOrdinal, "initial");
 
 	// add content to shift ordinals in tree

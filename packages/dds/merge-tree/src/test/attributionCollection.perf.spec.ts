@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	AttributionKey,
+	type DetachedAttributionKey,
+	type LocalAttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
 
 import {
 	IAttributionCollection,
@@ -155,7 +159,7 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 		}
 	}
 
-	public get channelNames() {
+	public get channelNames(): [] {
 		return [];
 	}
 
@@ -235,7 +239,14 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 		let curIndex = 0;
 		let cumulativeSegPos = 0;
 		let currentInfo = seqs[curIndex];
-		const getCurrentKey = () =>
+		const getCurrentKey = ():
+			| DetachedAttributionKey
+			| LocalAttributionKey
+			| {
+					readonly type: "op";
+					readonly seq: number;
+			  }
+			| null =>
 			typeof currentInfo === "object"
 				? currentInfo
 				: ({ type: "op", seq: currentInfo } as const);
@@ -288,7 +299,7 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 						!areEqualAttributionKeys(info, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(!info ? null : info.type === "op" ? info.seq : info);
+						seqs.push(info ? (info.type === "op" ? info.seq : info) : null);
 					}
 					mostRecentAttributionKey = info;
 				}

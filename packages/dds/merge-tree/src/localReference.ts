@@ -111,14 +111,14 @@ class LocalReference implements LocalReferencePosition {
 
 		if (segment !== this.segment) {
 			const groups: TrackingGroup[] = [];
-			this.trackingCollection.trackingGroups.forEach((tg) => {
+			for (const tg of this.trackingCollection.trackingGroups) {
 				tg.unlink(this);
 				groups.push(tg);
-			});
+			}
 
 			this.segment = segment;
 
-			groups.forEach((tg) => tg.link(this));
+			for (const tg of groups) tg.link(this);
 		}
 		this.offset = offset;
 	}
@@ -246,7 +246,9 @@ export class LocalReferenceCollection {
 
 	/***/
 	private constructor(
-		/** Segment this `LocalReferenceCollection` is associated to. */
+		/**
+		 * Segment this `LocalReferenceCollection` is associated to.
+		 */
 		private readonly segment: ISegment,
 		initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength),
 	) {
@@ -439,7 +441,10 @@ export class LocalReferenceCollection {
 	 * @remarks This method should only be called by mergeTree.
 	 */
 	public split(offset: number, splitSeg: ISegment) {
-		if (!this.empty) {
+		if (this.empty) {
+			// shrink the offset array when empty and splitting
+			this.refsByOffset.length = offset;
+		} else {
 			const localRefs = new LocalReferenceCollection(
 				splitSeg,
 				this.refsByOffset.splice(offset, this.refsByOffset.length - offset),
@@ -452,9 +457,6 @@ export class LocalReferenceCollection {
 				this.refCount--;
 				localRefs.refCount++;
 			}
-		} else {
-			// shrink the offset array when empty and splitting
-			this.refsByOffset.length = offset;
 		}
 		validateRefCount?.(this);
 	}
@@ -586,10 +588,8 @@ export class LocalReferenceCollection {
 		while (offset >= 0 && offset < this.refsByOffset.length) {
 			while (offsetPositions.length > 0) {
 				const offsetPos = forward ? offsetPositions.shift() : offsetPositions.pop();
-				if (offsetPos?.data !== undefined) {
-					if (listWalker(offsetPos.data) === false) {
-						return false;
-					}
+				if (offsetPos?.data !== undefined && listWalker(offsetPos.data) === false) {
+					return false;
 				}
 			}
 			offset += increment;

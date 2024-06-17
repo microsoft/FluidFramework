@@ -26,7 +26,7 @@ const defaultOptions = {
 	rounds: 10,
 	opsPerRound: 10,
 	operations: allOperations,
-	growthFunc: (input: number) => input * 2,
+	growthFunc: (input: number): number => input * 2,
 };
 
 describe("MergeTree.Client", () => {
@@ -39,7 +39,7 @@ describe("MergeTree.Client", () => {
 			let seq = 0;
 
 			for (let round = 0; round < defaultOptions.rounds; round++) {
-				clients.all.forEach((c) => c.updateMinSeq(seq));
+				for (const c of clients.all) c.updateMinSeq(seq);
 
 				const logger = new TestClientLogger(clients.all, `Round ${round}`);
 

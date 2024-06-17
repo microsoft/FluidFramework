@@ -196,7 +196,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			return node?.data;
 		}
 		// eslint-disable-next-line import/no-deprecated
-		const taken: SegmentGroup[] = new Array(Math.min(count, pending.length));
+		const taken: SegmentGroup[] = Array.from({ length: Math.min(count, pending.length) });
 		for (let i = taken.length - 1; i >= 0; i--) {
 			taken[i] = node!.data;
 			node = node!.prev;
@@ -604,10 +604,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 			// Validate end if not insert, or insert has end
 			//
-			if (op.type !== MergeTreeDeltaType.INSERT || end !== undefined) {
-				if (end === undefined || end <= start!) {
-					invalidPositions.push("end");
-				}
+			if (
+				(op.type !== MergeTreeDeltaType.INSERT || end !== undefined) &&
+				(end === undefined || end <= start!)
+			) {
+				invalidPositions.push("end");
 			}
 
 			if (op.type === MergeTreeDeltaType.OBLITERATE && end !== undefined && end > length) {
@@ -647,20 +648,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// If there this no sequenced message, then the op is local
 		// and unacked, so use this clients sequenced args
 		//
-		if (!sequencedMessage) {
-			const segWindow = this.getCollabWindow();
-			return {
-				clientId: segWindow.clientId,
-				referenceSequenceNumber: segWindow.currentSeq,
-				sequenceNumber: this.getLocalSequenceNumber(),
-			};
-		} else {
+		if (sequencedMessage) {
 			return {
 				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
 				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
 				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
 				// return value isn't expected to have it either.
 				sequenceNumber: (sequencedMessage as ISequencedDocumentMessage).sequenceNumber,
+			};
+		} else {
+			const segWindow = this.getCollabWindow();
+			return {
+				clientId: segWindow.clientId,
+				referenceSequenceNumber: segWindow.currentSeq,
+				sequenceNumber: this.getLocalSequenceNumber(),
 			};
 		}
 	}
@@ -772,7 +773,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
 			let newOp: IMergeTreeDeltaOp | undefined;
 			switch (resetOp.type) {
-				case MergeTreeDeltaType.ANNOTATE:
+				case MergeTreeDeltaType.ANNOTATE: {
 					assert(
 						segment.propertyManager?.hasPendingProperties() === true,
 						0x036 /* "Segment has no pending properties" */,
@@ -795,8 +796,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						);
 					}
 					break;
+				}
 
-				case MergeTreeDeltaType.INSERT:
+				case MergeTreeDeltaType.INSERT: {
 					assert(
 						segment.seq === UnassignedSequenceNumber,
 						0x037 /* "Segment already has assigned sequence number" */,
@@ -813,8 +815,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					}
 					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
 					break;
+				}
 
-				case MergeTreeDeltaType.REMOVE:
+				case MergeTreeDeltaType.REMOVE: {
 					if (
 						segment.localRemovedSeq !== undefined &&
 						segment.removedSeq === UnassignedSequenceNumber &&
@@ -828,7 +831,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						);
 					}
 					break;
-				case MergeTreeDeltaType.OBLITERATE:
+				}
+				case MergeTreeDeltaType.OBLITERATE: {
 					if (
 						segment.localMovedSeq !== undefined &&
 						segment.movedSeq === UnassignedSequenceNumber &&
@@ -842,8 +846,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						);
 					}
 					break;
-				default:
+				}
+				default: {
 					throw new Error(`Invalid op type`);
+				}
 			}
 
 			if (newOp && resetOp.type === MergeTreeDeltaType.OBLITERATE) {
@@ -886,18 +892,22 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const msg = opArgs.sequencedMessage;
 		this.getOrAddShortClientIdFromMessage(msg);
 		switch (op.type) {
-			case MergeTreeDeltaType.INSERT:
+			case MergeTreeDeltaType.INSERT: {
 				this.applyInsertOp(opArgs);
 				break;
-			case MergeTreeDeltaType.REMOVE:
+			}
+			case MergeTreeDeltaType.REMOVE: {
 				this.applyRemoveRangeOp(opArgs);
 				break;
-			case MergeTreeDeltaType.ANNOTATE:
+			}
+			case MergeTreeDeltaType.ANNOTATE: {
 				this.applyAnnotateRangeOp(opArgs);
 				break;
-			case MergeTreeDeltaType.OBLITERATE:
+			}
+			case MergeTreeDeltaType.OBLITERATE: {
 				this.applyObliterateRangeOp(opArgs);
 				break;
+			}
 			case MergeTreeDeltaType.GROUP: {
 				for (const memberOp of op.ops) {
 					this.applyRemoteOp({
@@ -908,30 +918,37 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				}
 				break;
 			}
-			default:
+			default: {
 				break;
+			}
 		}
 	}
 
 	public applyStashedOp(op: IMergeTreeOp): void {
 		switch (op.type) {
-			case MergeTreeDeltaType.INSERT:
+			case MergeTreeDeltaType.INSERT: {
 				this.applyInsertOp({ op });
 				break;
-			case MergeTreeDeltaType.REMOVE:
+			}
+			case MergeTreeDeltaType.REMOVE: {
 				this.applyRemoveRangeOp({ op });
 				break;
-			case MergeTreeDeltaType.ANNOTATE:
+			}
+			case MergeTreeDeltaType.ANNOTATE: {
 				this.applyAnnotateRangeOp({ op });
 				break;
-			case MergeTreeDeltaType.OBLITERATE:
+			}
+			case MergeTreeDeltaType.OBLITERATE: {
 				this.applyObliterateRangeOp({ op });
 				break;
-			case MergeTreeDeltaType.GROUP:
+			}
+			case MergeTreeDeltaType.GROUP: {
 				op.ops.map((o) => this.applyStashedOp(o));
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(op, "unrecognized op type");
+			}
 		}
 	}
 
@@ -1141,20 +1158,25 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				groupOp,
 			};
 			switch (op.type) {
-				case MergeTreeDeltaType.INSERT:
+				case MergeTreeDeltaType.INSERT: {
 					this.applyInsertOp(opArgs);
 					break;
-				case MergeTreeDeltaType.ANNOTATE:
+				}
+				case MergeTreeDeltaType.ANNOTATE: {
 					this.applyAnnotateRangeOp(opArgs);
 					break;
-				case MergeTreeDeltaType.REMOVE:
+				}
+				case MergeTreeDeltaType.REMOVE: {
 					this.applyRemoveRangeOp(opArgs);
 					break;
-				case MergeTreeDeltaType.OBLITERATE:
+				}
+				case MergeTreeDeltaType.OBLITERATE: {
 					this.applyObliterateRangeOp(opArgs);
 					break;
-				default:
+				}
+				default: {
 					break;
+				}
 			}
 		}
 	}

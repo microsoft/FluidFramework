@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
@@ -42,25 +42,35 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 	const clientNames = generateClientNames();
 	const rangeOptions = resolveRanges(defaultOptions, defaultOptions.growthFunc);
 	for (let extraSeed = 0; extraSeed < testCount; extraSeed++) {
-		generatePairwiseOptions(rangeOptions).forEach(({ initLen, modLen, opsPerRoundRange }) => {
+		for (const { initLen, modLen, opsPerRoundRange } of generatePairwiseOptions(rangeOptions)) {
 			it(`AttributionFarm_${initLen}_${modLen}_${opsPerRoundRange}`, async () => {
 				const random = makeRandom(0xdeadbeef, initLen, modLen, extraSeed ?? 0);
 
-				const clients: TestClient[] = new Array(3).fill(0).map(
-					() =>
-						new TestClient({
-							attribution: {
-								track: true,
-								policyFactory:
-									createPropertyTrackingAndInsertionAttributionPolicyFactory(
-										"trackedProp",
-									),
-							},
-						}),
-				);
-				clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+				const clients: TestClient[] = Array.from({ length: 3 })
+					.fill(0)
+					.map(
+						() =>
+							new TestClient({
+								attribution: {
+									track: true,
+									policyFactory:
+										createPropertyTrackingAndInsertionAttributionPolicyFactory(
+											"trackedProp",
+										),
+								},
+							}),
+					);
+				for (const [i, c] of clients.entries())
+					c.startOrUpdateCollaboration(clientNames[i]);
 
-				const getAttributionAtPosition = (client: TestClient, pos: number) => {
+				const getAttributionAtPosition = (
+					client: TestClient,
+					pos: number,
+				):
+					| {
+							[name: string]: AttributionKey | undefined;
+					  }
+					| undefined => {
 					const { segment, offset } = client.getContainingSegment(pos);
 					if (segment?.attribution === undefined || offset === undefined) {
 						return undefined;
@@ -80,7 +90,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 					return channels;
 				};
 
-				const validateAnnotation = (reason: string, workload: () => void) => {
+				const validateAnnotation = (reason: string, workload: () => void): void => {
 					const preWorkload = TestClientLogger.toString(clients);
 					workload();
 					const attributions = Array.from({ length: clients[0].getLength() }).map(
@@ -119,7 +129,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				validateAnnotation("After Init Zamboni", () => {
 					// trigger zamboni multiple times as it is incremental
 					for (let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
-						clients.forEach((c) => c.updateMinSeq(i));
+						for (const c of clients) c.updateMinSeq(i);
 					}
 				});
 
@@ -130,10 +140,10 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				validateAnnotation("After Final Zamboni", () => {
 					// trigger zamboni multiple times as it is incremental
 					for (let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
-						clients.forEach((c) => c.updateMinSeq(i));
+						for (const c of clients) c.updateMinSeq(i);
 					}
 				});
 			});
-		});
+		}
 	}
 });

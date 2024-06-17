@@ -26,6 +26,7 @@ import {
 	MergeTreeHeaderMetadata,
 	serializeAsMaxSupportedVersion,
 	toLatestVersion,
+	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 
@@ -144,7 +145,7 @@ export class SnapshotV1 {
 		headerChunk.headerMetadata = this.header;
 		headerChunk.headerMetadata.orderedChunkMetadata = [{ id: SnapshotLegacy.header }];
 		const blobs: [key: string, content: string][] = [];
-		chunks.forEach((chunk, index) => {
+		for (const [index, chunk] of chunks.entries()) {
 			const id = `${SnapshotLegacy.body}_${index}`;
 			this.header.orderedChunkMetadata.push({ id });
 			blobs.push([
@@ -158,7 +159,7 @@ export class SnapshotV1 {
 					bind,
 				),
 			]);
-		});
+		}
 
 		const builder = new SummaryTreeBuilder();
 		builder.addBlob(
@@ -172,14 +173,14 @@ export class SnapshotV1 {
 				bind,
 			),
 		);
-		blobs.forEach((value) => {
+		for (const value of blobs) {
 			builder.addBlob(value[0], value[1]);
-		});
+		}
 
 		return builder.getSummaryTree();
 	}
 
-	extractSync() {
+	extractSync(): JsonSegmentSpecs[] {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
 
@@ -191,7 +192,7 @@ export class SnapshotV1 {
 			json: JsonSegmentSpecs,
 			length: number,
 			attribution: IAttributionCollection<AttributionKey> | undefined,
-		) => {
+		): void => {
 			segmentsAfterCombine += 1;
 			this.segments.push(json);
 			this.segmentLengths.push(length);
@@ -201,7 +202,7 @@ export class SnapshotV1 {
 		};
 
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
-		const pushSeg = (segment?: ISegment) => {
+		const pushSeg = (segment?: ISegment): void => {
 			if (segment) {
 				if (
 					segment.properties !== undefined &&
@@ -215,7 +216,7 @@ export class SnapshotV1 {
 		};
 
 		let prev: ISegment | undefined;
-		const extractSegment = (segment: ISegment) => {
+		const extractSegment = (segment: ISegment): boolean => {
 			// Elide segments that do not need to be included in the snapshot.  A segment may be elided if
 			// either condition is true:
 			//   a) The segment has not yet been ACKed.  We do not need to snapshot unACKed segments because
@@ -300,9 +301,9 @@ export class SnapshotV1 {
 
 					// back compat for when we split overlap and removed client
 					raw.removedClient =
-						segment.removedClientIds !== undefined
-							? this.getLongClientId(segment.removedClientIds[0])
-							: undefined;
+						segment.removedClientIds === undefined
+							? undefined
+							: this.getLongClientId(segment.removedClientIds[0]);
 
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
 						this.getLongClientId(id),
@@ -377,7 +378,7 @@ export class SnapshotV1 {
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {
-		const chunkObj = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
+		const chunkObj: VersionedMergeTreeChunk = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
 		return toLatestVersion(path, chunkObj, logger, options);
 	}
 }

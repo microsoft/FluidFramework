@@ -310,9 +310,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 		conflict?: ConflictAction<TKey, TData>,
 	) {
 		let _node = node;
-		if (!_node) {
-			return this.makeNode(key, data, RBColor.RED, 1);
-		} else {
+		if (_node) {
 			const cmp = this.compareKeys(key, _node.key);
 			if (cmp < 0) {
 				_node.left = this.nodePut(_node.left, key, data, conflict);
@@ -344,6 +342,8 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 				this.updateLocal(_node);
 			}
 			return _node;
+		} else {
+			return this.makeNode(key, data, RBColor.RED, 1);
 		}
 	}
 
@@ -490,7 +490,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 	}
 
 	private nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
-		return !node.left ? node : this.nodeMin(node.left);
+		return node.left ? this.nodeMin(node.left) : node;
 	}
 
 	public max() {
@@ -500,7 +500,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 	}
 
 	private nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
-		return !node.right ? node : this.nodeMax(node.right);
+		return node.right ? this.nodeMax(node.right) : node;
 	}
 
 	private rotateRight(node: RBNode<TKey, TData>) {
@@ -636,26 +636,20 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 	): boolean {
 		let go = true;
 		if (node) {
-			if (actions.pre) {
-				if (!!actions.showStructure || node.color === RBColor.BLACK) {
-					go = actions.pre(node);
-				}
+			if (actions.pre && (!!actions.showStructure || node.color === RBColor.BLACK)) {
+				go = actions.pre(node);
 			}
 			if (node.left) {
 				go = this.nodeWalk(node.left, actions);
 			}
-			if (go && actions.infix) {
-				if (!!actions.showStructure || node.color === RBColor.BLACK) {
-					go = actions.infix(node);
-				}
+			if (go && actions.infix && (!!actions.showStructure || node.color === RBColor.BLACK)) {
+				go = actions.infix(node);
 			}
 			if (go) {
 				go = this.nodeWalk(node.right, actions);
 			}
-			if (go && actions.post) {
-				if (!!actions.showStructure || node.color === RBColor.BLACK) {
-					go = actions.post(node);
-				}
+			if (go && actions.post && (!!actions.showStructure || node.color === RBColor.BLACK)) {
+				go = actions.post(node);
 			}
 		}
 		return go;
@@ -667,26 +661,20 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 	): boolean {
 		let go = true;
 		if (node) {
-			if (actions.pre) {
-				if (!!actions.showStructure || node.color === RBColor.BLACK) {
-					go = actions.pre(node);
-				}
+			if (actions.pre && (!!actions.showStructure || node.color === RBColor.BLACK)) {
+				go = actions.pre(node);
 			}
 			if (node.right) {
 				go = this.nodeWalkBackward(node.right, actions);
 			}
-			if (go && actions.infix) {
-				if (!!actions.showStructure || node.color === RBColor.BLACK) {
-					go = actions.infix(node);
-				}
+			if (go && actions.infix && (!!actions.showStructure || node.color === RBColor.BLACK)) {
+				go = actions.infix(node);
 			}
 			if (go) {
 				go = this.nodeWalkBackward(node.left, actions);
 			}
-			if (go && actions.post) {
-				if (!!actions.showStructure || node.color === RBColor.BLACK) {
-					go = actions.post(node);
-				}
+			if (go && actions.post && (!!actions.showStructure || node.color === RBColor.BLACK)) {
+				go = actions.post(node);
 			}
 		}
 		return go;

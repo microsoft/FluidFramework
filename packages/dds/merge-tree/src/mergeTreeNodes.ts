@@ -425,7 +425,7 @@ export class MergeBlock implements IMergeNodeCommon {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		this.children = new Array<IMergeNode>(MaxNodesInBlock);
+		this.children = Array.from({ length: MaxNodesInBlock });
 		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
 		// eslint-disable-next-line import/no-deprecated
@@ -550,15 +550,16 @@ export abstract class BaseSegment implements ISegment {
 			0x043 /* "On ack, unexpected segmentGroup!" */,
 		);
 		switch (opArgs.op.type) {
-			case MergeTreeDeltaType.ANNOTATE:
+			case MergeTreeDeltaType.ANNOTATE: {
 				assert(
 					!!this.propertyManager,
 					0x044 /* "On annotate ack, missing segment property manager!" */,
 				);
 				this.propertyManager.ackPendingProperties(opArgs.op);
 				return true;
+			}
 
-			case MergeTreeDeltaType.INSERT:
+			case MergeTreeDeltaType.INSERT: {
 				assert(
 					this.seq === UnassignedSequenceNumber,
 					0x045 /* "On insert, seq number already assigned!" */,
@@ -566,8 +567,9 @@ export abstract class BaseSegment implements ISegment {
 				this.seq = opArgs.sequencedMessage!.sequenceNumber;
 				this.localSeq = undefined;
 				return true;
+			}
 
-			case MergeTreeDeltaType.REMOVE:
+			case MergeTreeDeltaType.REMOVE: {
 				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
 				assert(
 					removalInfo !== undefined,
@@ -579,8 +581,9 @@ export abstract class BaseSegment implements ISegment {
 					return true;
 				}
 				return false;
+			}
 
-			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
 				this.localMovedSeq = undefined;
@@ -594,9 +597,11 @@ export abstract class BaseSegment implements ISegment {
 				}
 
 				return false;
+			}
 
-			default:
+			default: {
 				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+			}
 		}
 	}
 
@@ -645,15 +650,13 @@ export abstract class BaseSegment implements ISegment {
 	}
 
 	private copyPropertiesTo(other: ISegment) {
-		if (this.propertyManager) {
-			if (this.properties) {
-				other.propertyManager = new PropertiesManager();
-				other.properties = this.propertyManager.copyTo(
-					this.properties,
-					other.properties,
-					other.propertyManager,
-				);
-			}
+		if (this.propertyManager && this.properties) {
+			other.propertyManager = new PropertiesManager();
+			other.properties = this.propertyManager.copyTo(
+				this.properties,
+				other.properties,
+				other.propertyManager,
+			);
 		}
 	}
 

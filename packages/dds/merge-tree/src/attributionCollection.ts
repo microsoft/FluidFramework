@@ -140,14 +140,18 @@ export function areEqualAttributionKeys(
 
 	// Note: TS can't narrow the type of b inside this switch statement, hence the need for casting.
 	switch (a.type) {
-		case "op":
+		case "op": {
 			return a.seq === (b as OpAttributionKey).seq;
-		case "detached":
+		}
+		case "detached": {
 			return a.id === (b as DetachedAttributionKey).id;
-		case "local":
+		}
+		case "local": {
 			return true;
-		default:
+		}
+		default: {
 			unreachableCase(a, "Unhandled AttributionKey type");
+		}
 	}
 }
 
@@ -262,7 +266,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
 		type ExtractGeneric<T> = T extends Iterable<infer Q> ? Q : unknown;
 		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
-			new Array(this.keys.length);
+			Array.from({ length: this.keys.length });
 		for (let i = 0; i < this.keys.length; i++) {
 			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
@@ -281,8 +285,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public clone(): AttributionCollection {
 		const copy = new AttributionCollection(this.length);
-		copy.keys = this.keys.slice();
-		copy.offsets = this.offsets.slice();
+		copy.keys = [...this.keys];
+		copy.offsets = [...this.offsets];
 		if (this.channels !== undefined) {
 			const channelsCopy: Record<string, AttributionCollection> = {};
 			for (const [key, collection] of this.channelEntries) {
@@ -303,10 +307,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			this.keys = [...channel.keys];
 		} else {
 			this.channels ??= {};
-			if (this.channels[name] !== undefined) {
-				this.channels[name].update(undefined, channel);
-			} else {
+			if (this.channels[name] === undefined) {
 				this.channels[name] = channel;
+			} else {
+				this.channels[name].update(undefined, channel);
 			}
 		}
 	}
@@ -420,7 +424,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
-						seqs.push(!key ? null : key.type === "op" ? key.seq : key);
+						seqs.push(key ? (key.type === "op" ? key.seq : key) : null);
 					}
 					mostRecentAttributionKey = key;
 				}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	IConfigRange,
@@ -14,10 +14,10 @@ import {
 } from "./mergeTreeOperationRunner.js";
 
 describe("MergeTreeOperationRunner combinatorial utils", () => {
-	const constant = (i: number) => i;
-	const plusOne = (i: number) => i + 1;
-	const plusTwo = (i: number) => i + 2;
-	const timesTwo = (i: number) => i * 2;
+	const constant = (i: number): number => i;
+	const plusOne = (i: number): number => i + 1;
+	const plusTwo = (i: number): number => i + 2;
+	const timesTwo = (i: number): number => i * 2;
 
 	const oneRangeTestCases: {
 		name: string;

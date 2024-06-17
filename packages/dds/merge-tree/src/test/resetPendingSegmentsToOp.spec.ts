@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
@@ -32,7 +32,7 @@ describe("resetPendingSegmentsToOp", () => {
 		let opList: { op: IMergeTreeOp; refSeq: number }[];
 		let opCount: number = 0;
 
-		function applyOpList(cli: TestClient) {
+		function applyOpList(cli: TestClient): void {
 			while (opList.length > 0) {
 				const op = opList.shift();
 				if (op) {
@@ -87,7 +87,7 @@ describe("resetPendingSegmentsToOp", () => {
 				},
 			);
 			const oldops = opList;
-			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
+			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -98,7 +98,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment", async () => {
 			const oldops = opList;
-			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
+			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -152,7 +152,7 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
-			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
+			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -206,7 +206,7 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
-			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
+			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -298,7 +298,7 @@ describe("resetPendingSegmentsToOp.rebase", () => {
 				]),
 		);
 
-		ops.forEach(([op]) => clients.all.forEach((c) => c.applyMsg(op)));
+		for (const [op] of ops) for (const c of clients.all) c.applyMsg(op);
 		logger.validate();
 	});
 });

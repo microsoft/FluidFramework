@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
@@ -51,8 +51,10 @@ describe("MergeTree.Client", () => {
 		it(`LocalReferenceFarm_${initLen}_${modLen}`, async () => {
 			const random = makeRandom(0xdeadbeef, 0xfeedbed, initLen, modLen);
 
-			const clients: TestClient[] = new Array(3).fill(0).map(() => new TestClient());
-			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+			const clients: TestClient[] = Array.from({ length: 3 })
+				.fill(0)
+				.map(() => new TestClient());
+			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;
 			// init with random values
@@ -60,7 +62,7 @@ describe("MergeTree.Client", () => {
 			// add local references
 			const refs: ReferencePosition[][] = [];
 
-			const validateRefs = (reason: string, workload: () => void) => {
+			const validateRefs = (reason: string, workload: () => void): void => {
 				const preWorkload = TestClientLogger.toString(clients);
 				workload();
 				for (let c = 1; c < clients.length; c++) {
@@ -80,7 +82,7 @@ describe("MergeTree.Client", () => {
 			};
 
 			validateRefs("Initialize", () => {
-				clients.forEach((c, i) => {
+				for (const [i, c] of clients.entries()) {
 					refs.push([]);
 					for (let t = 0; t < c.getLength(); t++) {
 						const seg = c.getContainingSegment(t);
@@ -98,16 +100,15 @@ describe("MergeTree.Client", () => {
 							{ t },
 							SlidingPreference.BACKWARD,
 						);
-						refs[i].push(forwardLref);
-						refs[i].push(backwardLref);
+						refs[i].push(forwardLref, backwardLref);
 					}
-				});
+				}
 			});
 
 			validateRefs("After Init Zamboni", () => {
 				// trigger zamboni multiple times as it is incremental
 				for (let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
-					clients.forEach((c) => c.updateMinSeq(i));
+					for (const c of clients) c.updateMinSeq(i);
 				}
 			});
 
@@ -119,7 +120,7 @@ describe("MergeTree.Client", () => {
 			validateRefs("After Final Zamboni", () => {
 				// trigger zamboni multiple times as it is incremental
 				for (let i = clients[0].getCollabWindow().minSeq; i <= seq; i++) {
-					clients.forEach((c) => c.updateMinSeq(i));
+					for (const c of clients) c.updateMinSeq(i);
 				}
 			});
 		});

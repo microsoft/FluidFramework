@@ -191,8 +191,12 @@ function createPropertyTrackingMergeTreeCallbacks(...propNames: string[]): Attri
 
 function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): AttributionCallbacks {
 	return {
-		delta: (...args) => callbacks.forEach(({ delta }) => delta(...args)),
-		maintenance: (...args) => callbacks.forEach(({ maintenance }) => maintenance(...args)),
+		delta: (...args) => {
+			for (const { delta } of callbacks) delta(...args);
+		},
+		maintenance: (...args) => {
+			for (const { maintenance } of callbacks) maintenance(...args);
+		},
 	};
 }
 

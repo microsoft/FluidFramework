@@ -16,10 +16,14 @@ import { MapLike, PropertySet, createMap } from "./properties.js";
  * @alpha
  */
 export enum PropertiesRollback {
-	/** Not in a rollback */
+	/**
+	 * Not in a rollback
+	 */
 	None,
 
-	/** Rollback */
+	/**
+	 * Rollback
+	 */
 	Rollback,
 }
 
@@ -29,11 +33,11 @@ export enum PropertiesRollback {
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;
 
-	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
+	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void {
 		this.decrementPendingCounts(annotateOp.props);
 	}
 
-	private decrementPendingCounts(props: PropertySet) {
+	private decrementPendingCounts(props: PropertySet): void {
 		for (const key of Object.keys(props)) {
 			if (this.pendingKeyUpdateCount?.[key] !== undefined) {
 				assert(
@@ -127,7 +131,7 @@ export class PropertiesManager {
 		return newProps;
 	}
 
-	public hasPendingProperties() {
+	public hasPendingProperties(): boolean {
 		return Object.keys(this.pendingKeyUpdateCount!).length > 0;
 	}
 

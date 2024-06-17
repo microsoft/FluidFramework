@@ -88,7 +88,7 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
-	seg.movedClientIds = moveInfo.movedClientIds.slice();
+	seg.movedClientIds = [...moveInfo.movedClientIds];
 	seg.movedSeqs = [moveInfo.movedSeq];
 	seg.movedSeq = moveInfo.movedSeq;
 	seg.localMovedSeq = moveInfo.localMovedSeq;
@@ -258,7 +258,7 @@ export function findRootMergeBlock(
 		maybeRoot = maybeRoot.parent;
 	}
 
-	return maybeRoot?.mergeTree !== undefined ? maybeRoot : undefined;
+	return maybeRoot?.mergeTree === undefined ? undefined : maybeRoot;
 }
 
 /**
@@ -497,7 +497,21 @@ export class MergeTree {
 		assert(refSeq !== undefined, 0x398 /* localSeq provided for local length without refSeq */);
 		assert(segment.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
 		const { seq, removedSeq, localRemovedSeq, movedSeq, localMovedSeq } = segment;
-		if (seq !== UnassignedSequenceNumber) {
+		if (seq === UnassignedSequenceNumber) {
+			assert(
+				segment.localSeq !== undefined,
+				0x39a /* unacked segment with undefined localSeq */,
+			);
+			// inserted locally, still un-acked
+			if (
+				segment.localSeq > localSeq ||
+				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq) ||
+				(localMovedSeq !== undefined && localMovedSeq <= localSeq)
+			) {
+				return 0;
+			}
+			return segment.cachedLength;
+		} else {
 			// inserted remotely
 			if (
 				seq > refSeq ||
@@ -507,20 +521,6 @@ export class MergeTree {
 				(movedSeq !== undefined &&
 					movedSeq !== UnassignedSequenceNumber &&
 					movedSeq <= refSeq) ||
-				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq) ||
-				(localMovedSeq !== undefined && localMovedSeq <= localSeq)
-			) {
-				return 0;
-			}
-			return segment.cachedLength;
-		} else {
-			assert(
-				segment.localSeq !== undefined,
-				0x39a /* unacked segment with undefined localSeq */,
-			);
-			// inserted locally, still un-acked
-			if (
-				segment.localSeq > localSeq ||
 				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq) ||
 				(localMovedSeq !== undefined && localMovedSeq <= localSeq)
 			) {
@@ -754,14 +754,7 @@ export class MergeTree {
 				}
 			}
 
-			if (currentSlideDestination !== undefined) {
-				const localRefs = LocalReferenceCollection.setOrGet(currentSlideDestination);
-				if (currentSlideIsForward) {
-					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
-				} else {
-					localRefs.addAfterTombstones(...nonEndpointRefsToAdd);
-				}
-			} else {
+			if (currentSlideDestination === undefined) {
 				for (const collection of currentSlideGroup) {
 					for (const ref of collection) {
 						if (pred(ref) && !refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
@@ -770,6 +763,13 @@ export class MergeTree {
 							ref.callbacks?.afterSlide?.(ref);
 						}
 					}
+				}
+			} else {
+				const localRefs = LocalReferenceCollection.setOrGet(currentSlideDestination);
+				if (currentSlideIsForward) {
+					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
+				} else {
+					localRefs.addAfterTombstones(...nonEndpointRefsToAdd);
 				}
 			}
 		};
@@ -954,13 +954,7 @@ export class MergeTree {
 			}
 		} else {
 			// Sequence number within window
-			if (!node.isLeaf()) {
-				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
-
-				PartialSequenceLengths.options.verifyExpected?.(this, node, refSeq, clientId);
-
-				return partialLen;
-			} else {
+			if (node.isLeaf()) {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -992,6 +986,12 @@ export class MergeTree {
 				return seqLTE(node.seq ?? 0, refSeq) || segment.clientId === clientId
 					? segment.cachedLength
 					: 0;
+			} else {
+				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
+
+				PartialSequenceLengths.options.verifyExpected?.(this, node, refSeq, clientId);
+
+				return partialLen;
 			}
 		}
 	}
@@ -1089,7 +1089,7 @@ export class MergeTree {
 						foundMarker = marker;
 					}
 				}
-				return foundMarker !== undefined ? NodeAction.Exit : NodeAction.Skip;
+				return foundMarker === undefined ? NodeAction.Skip : NodeAction.Exit;
 			},
 			undefined,
 			undefined,
@@ -1261,14 +1261,14 @@ export class MergeTree {
 		}
 		if (marker) {
 			pos = this.getPosition(marker, refseq, clientId);
-			if (!relativePos.before) {
+			if (relativePos.before) {
+				if (relativePos.offset !== undefined) {
+					pos -= relativePos.offset;
+				}
+			} else {
 				pos += marker.cachedLength;
 				if (relativePos.offset !== undefined) {
 					pos += relativePos.offset;
-				}
-			} else {
-				if (relativePos.offset !== undefined) {
-					pos -= relativePos.offset;
 				}
 			}
 		}
@@ -1428,7 +1428,7 @@ export class MergeTree {
 				if (newSegment.parent === undefined) {
 					// Indicates an attempt to insert past the end of the merge-tree's content.
 					const errorConstructor =
-						localSeq !== undefined ? UsageError : DataProcessingError;
+						localSeq === undefined ? DataProcessingError : UsageError;
 					throw new errorConstructor("MergeTree insert failed", {
 						currentSeq: this.collabWindow.currentSeq,
 						minSeq: this.collabWindow.minSeq,
@@ -1675,7 +1675,21 @@ export class MergeTree {
 
 			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
 				// Found entry containing pos
-				if (!child.isLeaf()) {
+				if (child.isLeaf()) {
+					const segment = child;
+					const segmentChanges = context.leaf(segment, _pos, context);
+					if (segmentChanges.replaceCurrent) {
+						block.assignChild(segmentChanges.replaceCurrent, childIndex, false);
+						segmentChanges.replaceCurrent.ordinal = child.ordinal;
+					}
+					if (segmentChanges.next) {
+						newNode = segmentChanges.next;
+						childIndex++; // Insert after
+					} else {
+						// No change
+						return undefined;
+					}
+				} else {
 					const childBlock = child;
 					// Internal node
 					const splitNode = this.insertingWalk(
@@ -1698,35 +1712,19 @@ export class MergeTree {
 						fromSplit = splitNode;
 						childIndex++; // Insert after
 					}
-				} else {
-					const segment = child;
-					const segmentChanges = context.leaf(segment, _pos, context);
-					if (segmentChanges.replaceCurrent) {
-						block.assignChild(segmentChanges.replaceCurrent, childIndex, false);
-						segmentChanges.replaceCurrent.ordinal = child.ordinal;
-					}
-					if (segmentChanges.next) {
-						newNode = segmentChanges.next;
-						childIndex++; // Insert after
-					} else {
-						// No change
-						return undefined;
-					}
 				}
 				break;
 			} else {
 				_pos -= len;
 			}
 		}
-		if (!newNode) {
-			if (_pos === 0) {
-				if (context.continuePredicate?.(block)) {
-					return MergeTree.theUnfinishedNode;
-				} else {
-					const segmentChanges = context.leaf(undefined, _pos, context);
-					newNode = segmentChanges.next;
-					// Assert segmentChanges.replaceCurrent === undefined
-				}
+		if (!newNode && _pos === 0) {
+			if (context.continuePredicate?.(block)) {
+				return MergeTree.theUnfinishedNode;
+			} else {
+				const segmentChanges = context.leaf(undefined, _pos, context);
+				newNode = segmentChanges.next;
+				// Assert segmentChanges.replaceCurrent === undefined
 			}
 		}
 		if (newNode) {
@@ -1855,10 +1853,12 @@ export class MergeTree {
 				deltaSegments,
 			});
 		}
-		if (this.collabWindow.collaborating && seq !== UnassignedSequenceNumber) {
-			if (MergeTree.options.zamboniSegments) {
-				zamboniSegments(this);
-			}
+		if (
+			this.collabWindow.collaborating &&
+			seq !== UnassignedSequenceNumber &&
+			MergeTree.options.zamboniSegments
+		) {
+			zamboniSegments(this);
 		}
 	}
 
@@ -1902,7 +1902,16 @@ export class MergeTree {
 				segment.wasMovedOnInsert = true;
 			}
 
-			if (existingMoveInfo !== undefined) {
+			if (existingMoveInfo === undefined) {
+				segment.movedClientIds = [clientId];
+				segment.movedSeq = seq;
+				segment.localMovedSeq = localSeq;
+				segment.movedSeqs = [seq];
+
+				if (!toRemovalInfo(segment)) {
+					movedSegments.push({ segment });
+				}
+			} else {
 				_overwrite = true;
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
 					// we moved this locally, but someone else moved it first
@@ -1920,15 +1929,6 @@ export class MergeTree {
 					// Do not replace earlier sequence number for move
 					existingMoveInfo.movedClientIds.push(clientId);
 					existingMoveInfo.movedSeqs.push(seq);
-				}
-			} else {
-				segment.movedClientIds = [clientId];
-				segment.movedSeq = seq;
-				segment.localMovedSeq = localSeq;
-				segment.movedSeqs = [seq];
-
-				if (!toRemovalInfo(segment)) {
-					movedSegments.push({ segment });
 				}
 			}
 
@@ -1966,7 +1966,7 @@ export class MergeTree {
 			start,
 			end,
 			undefined,
-			seq !== UnassignedSequenceNumber ? seq : undefined,
+			seq === UnassignedSequenceNumber ? undefined : seq,
 		);
 
 		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
@@ -1989,10 +1989,12 @@ export class MergeTree {
 			this.slideAckedRemovedSegmentReferences(movedSegments.map(({ segment }) => segment));
 		}
 
-		if (this.collabWindow.collaborating && seq !== UnassignedSequenceNumber) {
-			if (MergeTree.options.zamboniSegments) {
-				zamboniSegments(this);
-			}
+		if (
+			this.collabWindow.collaborating &&
+			seq !== UnassignedSequenceNumber &&
+			MergeTree.options.zamboniSegments
+		) {
+			zamboniSegments(this);
 		}
 	}
 
@@ -2017,7 +2019,15 @@ export class MergeTree {
 		const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
 			const existingRemovalInfo = toRemovalInfo(segment);
 
-			if (existingRemovalInfo !== undefined) {
+			if (existingRemovalInfo === undefined) {
+				segment.removedClientIds = [clientId];
+				segment.removedSeq = seq;
+				segment.localRemovedSeq = localSeq;
+
+				if (!toMoveInfo(segment)) {
+					removedSegments.push({ segment });
+				}
+			} else {
 				_overwrite = true;
 				if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
 					// we removed this locally, but someone else removed it first
@@ -2033,14 +2043,6 @@ export class MergeTree {
 				} else {
 					// Do not replace earlier sequence number for remove
 					existingRemovalInfo.removedClientIds.push(clientId);
-				}
-			} else {
-				segment.removedClientIds = [clientId];
-				segment.removedSeq = seq;
-				segment.localRemovedSeq = localSeq;
-
-				if (!toMoveInfo(segment)) {
-					removedSegments.push({ segment });
 				}
 			}
 
@@ -2085,10 +2087,12 @@ export class MergeTree {
 			this.slideAckedRemovedSegmentReferences(removedSegments.map(({ segment }) => segment));
 		}
 
-		if (this.collabWindow.collaborating && seq !== UnassignedSequenceNumber) {
-			if (MergeTree.options.zamboniSegments) {
-				zamboniSegments(this);
-			}
+		if (
+			this.collabWindow.collaborating &&
+			seq !== UnassignedSequenceNumber &&
+			MergeTree.options.zamboniSegments
+		) {
+			zamboniSegments(this);
 		}
 	}
 
@@ -2337,14 +2341,13 @@ export class MergeTree {
 			}
 		}
 
-		const newOrder = Array.from(affectedSegments.map(({ data }) => data));
-		newOrder.forEach(
-			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
-		);
+		const newOrder = affectedSegments.map(({ data }) => data);
+		for (const seg of newOrder)
+			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref));
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
 		for (const segment of newOrder) {
 			const { trackingCollection } = segment;
-			const trackingGroups = Array.from(trackingCollection.trackingGroups);
+			const trackingGroups = [...trackingCollection.trackingGroups];
 			perSegmentTrackingGroups.set(segment, trackingGroups);
 			for (const group of trackingCollection.trackingGroups) {
 				trackingCollection.unlink(group);
@@ -2374,14 +2377,13 @@ export class MergeTree {
 			return depths.get(block)!;
 		};
 		newOrder.forEach(computeDepth);
-		for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
+		for (const [node] of [...depths.entries()].sort((a, b) => b[1] - a[1])) {
 			if (!node.isLeaf()) {
 				this.nodeUpdateLengthNewStructure(node);
 			}
 		}
-		newOrder.forEach(
-			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
-		);
+		for (const seg of newOrder)
+			seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref));
 	}
 
 	/**
