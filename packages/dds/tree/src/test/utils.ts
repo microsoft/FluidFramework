@@ -683,12 +683,11 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
-	const { checkout } = checkoutWithContentAndLogger(content, args);
+	const { checkout } = createCheckoutWithContent(content, args);
 	return checkout;
 }
 
-// TODO: a better name :)
-export function checkoutWithContentAndLogger(
+export function createCheckoutWithContent(
 	content: TreeContent,
 	args?: {
 		events?: Listenable<CheckoutEvents> &

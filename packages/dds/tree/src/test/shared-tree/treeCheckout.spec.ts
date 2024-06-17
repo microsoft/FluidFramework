@@ -40,7 +40,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	checkoutWithContentAndLogger,
+	createCheckoutWithContent,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
 	flexTreeViewWithContent,
@@ -1100,7 +1100,7 @@ function itView(
 	});
 
 	it(`${title} (reference view)`, () => {
-		const { checkout, logger } = checkoutWithContentAndLogger(content);
+		const { checkout, logger } = createCheckoutWithContent(content);
 		fn(checkout, logger);
 	});
 
@@ -1110,7 +1110,7 @@ function itView(
 	});
 
 	it(`${title} (reference forked view)`, () => {
-		const { checkout, logger } = checkoutWithContentAndLogger(content);
+		const { checkout, logger } = createCheckoutWithContent(content);
 		const fork = checkout.fork();
 		fn(fork, logger);
 	});
