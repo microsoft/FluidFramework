@@ -82,13 +82,13 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 
 		for (const key of Object.keys(this.dataSums) as TMetrics[]) {
 			if (this.dataSums[key] !== undefined) {
-				telemetryEvent[`avg${key}`] = roundToDecimalPlaces(
+				telemetryEvent[`avg_${key}`] = roundToDecimalPlaces(
 					this.dataSums[key]! / this.counter,
 					6,
 				);
 			}
 			if (this.dataMaxes[key] !== undefined) {
-				telemetryEvent[`max${key}`] = this.dataMaxes[key];
+				telemetryEvent[`max_${key}`] = this.dataMaxes[key];
 			}
 		}
 

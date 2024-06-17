@@ -62,7 +62,7 @@ export interface RebasedCommits<TChange> {
 }
 
 /**
- * TODO
+ * Telemetry metrics for a rebase operation.
  */
 export interface RebaseStats {
 	/**
