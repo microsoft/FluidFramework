@@ -24,6 +24,12 @@ import type { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
+// @public
+export function measure<T>(codeToMeasure: () => T): {
+    duration: number;
+    output: T;
+};
+
 // (No @packageDocumentation comment for this package)
 
 ```

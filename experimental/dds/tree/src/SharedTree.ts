@@ -384,6 +384,7 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
  * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
+	rebaseLogger: ITelemetryLoggerExt;
 	/**
 	 * Create a new SharedTree. It will contain the default value (see initialTree).
 	 */
@@ -557,6 +558,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		this.sequencedEditAppliedLogger = createChildLogger({
 			logger: this.logger,
 			namespace: 'SequencedEditApplied',
+			properties: sharedTreeTelemetryProperties,
+		});
+		this.rebaseLogger = createChildLogger({
+			logger: this.logger,
+			namespace: 'Rebase',
 			properties: sharedTreeTelemetryProperties,
 		});
 

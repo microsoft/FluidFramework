@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type BranchRebaseResult,
@@ -20,6 +21,7 @@ import {
 	rebaseBranch,
 	tagChange,
 	tagRollbackInverse,
+	type RebaseStatsWithDuration,
 } from "../core/index.js";
 import { EventEmitter, type Listenable } from "../events/index.js";
 
@@ -205,6 +207,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
+		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
+			keyof RebaseStatsWithDuration
+		>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -529,18 +534,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(
-			this.mintRevisionTag,
-			this.changeFamily.rebaser,
-			head,
-			upTo,
-			onto.getHead(),
+		const { duration, output } = measure(() =>
+			rebaseBranch(
+				this.mintRevisionTag,
+				this.changeFamily.rebaser,
+				head,
+				upTo,
+				onto.getHead(),
+			),
 		);
-		if (this.head === rebaseResult.newSourceHead) {
+
+		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });
+
+		if (this.head === output.newSourceHead) {
 			return undefined;
 		}
 
-		return rebaseResult;
+		return output;
 	}
 
 	/**

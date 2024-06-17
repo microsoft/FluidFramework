@@ -64,7 +64,12 @@ export {
 export { MockLogger } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper.js";
-export { createSampledLogger, type IEventSampler, type ISampledTelemetryLogger } from "./utils.js";
+export {
+	createSampledLogger,
+	type IEventSampler,
+	type ISampledTelemetryLogger,
+	measure,
+} from "./utils.js";
 export type {
 	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
@@ -76,4 +81,4 @@ export type {
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
-export { type IMeasuredCodeResult, TelemetryEventBatcher } from "./telemetryEventBatcher.js";
+export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";

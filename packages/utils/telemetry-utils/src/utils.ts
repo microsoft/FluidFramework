@@ -104,3 +104,14 @@ export function createSampledLogger(
 
 	return sampledLogger;
 }
+
+/**
+ * TODO
+ * @public
+ */
+export function measure<T>(codeToMeasure: () => T): { duration: number; output: T } {
+	const start = performance.now();
+	const output = codeToMeasure();
+	const duration = performance.now() - start;
+	return { duration, output };
+}

@@ -16,6 +16,7 @@ import {
 	findCommonAncestor,
 	mintCommit,
 	rebaseChange,
+	type RebaseStats,
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
@@ -40,6 +41,10 @@ import {
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
 import { createEmitter } from "../events/index.js";
+import {
+	TelemetryEventBatcher,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
@@ -124,6 +129,7 @@ export class EditManager<
 	 * When a local commit is sequenced, the first commit in this list shifted onto the tip of the trunk.
 	 */
 	private readonly localCommits: GraphCommit<TChangeset>[] = [];
+	private readonly telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStats> | undefined;
 
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
@@ -133,23 +139,38 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
 			revision: "root",
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
+
+		if (this.logger !== undefined) {
+			this.telemetryEventBatcher = new TelemetryEventBatcher(
+				{
+					eventName: "rebaseProcessing",
+					category: "performance",
+				},
+				this.logger,
+				1000, // TODO: Replace pattern.
+			);
+		}
+
 		this.trunk = new SharedTreeBranch(
 			this.trunkBase,
 			changeFamily,
 			mintRevisionTag,
 			this._events,
+			this.telemetryEventBatcher,
 		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
 			this._events,
+			this.telemetryEventBatcher,
 		);
 
 		this.localBranch.on("afterChange", (event) => {
