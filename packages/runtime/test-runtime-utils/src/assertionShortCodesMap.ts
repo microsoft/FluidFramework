@@ -1175,7 +1175,6 @@ export const shortCodeMap = {
 	"0x77c": "Narrowing must be done to a kind that exists in this context",
 	"0x77d": "Content from different flex trees should not be used together",
 	"0x77e": "parentAnchorNode must exist.",
-	"0x77f": "Editing only allowed on fields with TreeStatus.InDocument status",
 	"0x780": "value field content should normalize to one item",
 	"0x781": "optional field content should normalize at most one item",
 	"0x782": "contexts must match",
