@@ -64,24 +64,59 @@ export interface IFluidBuildConfig {
 	changesetConfig?: ChangesetConfig;
 }
 
+/**
+ * A type representing an npm package name.
+ */
 export type PackageName = string;
 
+/**
+ * A type representing an npm package scope. It is any string that begins with an `@` symbol.
+ */
 export type PackageScope = `${"@"}${string}`;
 
+/**
+ * A type guard used to determine if a string is a valid {@link PackageScope}.
+ *
+ * @param value - the value to check
+ * @returns - `true` if the string is a valid {@link PackageScope}; `false` otherwise.
+ */
 export function isPackageScope(value: string): value is PackageScope {
 	return value.startsWith("@") && !value.includes("/");
 }
 
+/**
+ * A type representing a package scope or name.
+ */
 export type PackageNameOrScope = PackageName | PackageScope;
 
+/**
+ * A type that corresponds to the written changeset config in .changeset/config.json. This type merely extends the type
+ * from the changesets package itself, adding the optional schema field.
+ */
 export interface ChangesetConfigWritten extends WrittenConfig {
 	$schema?: string;
 }
 
+/**
+ * A type mapping a string to a package name or scope string. This type is useful for configuration fields that are used
+ * for selecting packages. Such fields can be used to select poackages based on scope or name.
+ */
 export type PackageScopeSelectors = Record<string, PackageNameOrScope[]>;
 
+/**
+ * The changeset configuration used in the fluid-build config file.
+ */
 export interface ChangesetConfig extends Omit<ChangesetConfigWritten, "fixed" | "linked"> {
+	/**
+	 * An array of package scopes or names that should be included in the "fixed" setting in the changesets config. If a
+	 * scope is provided, then all packages of that scope will be included.
+	 */
 	fixed?: PackageScopeSelectors;
+
+	/**
+	 * An array of package scopes or names that should be included in the "fixed" setting in the changesets config. If a
+	 * scope is provided, then all packages of that scope will be included.
+	 */
 	linked?: PackageScopeSelectors;
 }
 
@@ -335,10 +370,7 @@ export interface IFluidRepoPackage {
 	defaultInterdependencyRange: InterdependencyRange;
 }
 
-export type IFluidRepoPackageEntry =
-	| string
-	| IFluidRepoPackage
-	| (string | IFluidRepoPackage)[];
+export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
 	private readonly _releaseGroups = new Map<string, MonoRepo>();
