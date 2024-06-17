@@ -104,11 +104,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			// If the root is in the groupIds, we don't need to filter the tree.
 			// We can just strip the  of all groupIds as in collect the blobIds so that we can
 			// return blob contents only for those ids.
-			await this.collectBlobContentsForUngroupedSnapshot(
-				snapshotTree,
-				groupIds,
-				blobContents,
-			);
+			await this.collectBlobContentsForUngroupedSnapshot(snapshotTree, groupIds, blobContents);
 		} else {
 			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
 				snapshotTree,
@@ -195,7 +191,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const groupIdInLoadingGroupIds = groupId !== undefined && loadingGroupIds.has(groupId);
 
 		// Keep tree if it has an ancestor that has a groupId that is in loadingGroupIds and it doesn't have groupId
-		const isChildOfAncestorWithGroupId = ancestorGroupIdInLoadingGroup && groupId === undefined;
+		const isChildOfAncestorWithGroupId =
+			ancestorGroupIdInLoadingGroup && groupId === undefined;
 
 		// Collect blobsIds so that we can return blob contents only for these blobs.
 		if (groupIdInLoadingGroupIds || isChildOfAncestorWithGroupId) {
@@ -327,7 +324,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 					// Clear the cache as the getSnapshotTree call will fill the cache.
 					this.blobsShaCache.clear();
 					return this.getSnapshotTree(versions[0]);
-			  })
+				})
 			: undefined;
 	}
 }
