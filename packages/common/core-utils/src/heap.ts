@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -84,7 +85,6 @@ export class Heap<T> {
 		this.swap(1, this.count());
 		const x = this.L.pop();
 		this.fixdown(1);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return x!.value;
 	}
 
@@ -128,7 +128,6 @@ export class Heap<T> {
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {
 			// Non null asserting here since its the removal node's previous position
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.update(this.L[position]!);
 		}
 	}
@@ -153,7 +152,7 @@ export class Heap<T> {
 	}
 
 	private isGreaterThanParent(k: number): boolean {
-		// eslint-disable-next-line no-bitwise, @typescript-eslint/no-non-null-assertion
+		// eslint-disable-next-line no-bitwise
 		return k > 1 && this.comp.compare(this.L[k >> 1]!.value, this.L[k]!.value) > 0;
 	}
 
@@ -163,11 +162,9 @@ export class Heap<T> {
 		while (k << 1 <= this.count()) {
 			// eslint-disable-next-line no-bitwise
 			let j = k << 1;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			if (j < this.count() && this.comp.compare(this.L[j]!.value, this.L[j + 1]!.value) > 0) {
 				j++;
 			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			if (this.comp.compare(this.L[k]!.value, this.L[j]!.value) <= 0) {
 				break;
 			}
@@ -177,11 +174,9 @@ export class Heap<T> {
 	}
 
 	private swap(k: number, j: number): void {
-		// Non null assertig here since this affects perf if we assert
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// Non null asserting here since array is always filled and indices are within range
 		const resultNodeJ = this.L[k]!;
-		// Non null assertig here since this affects perf if we assert
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// Non null asserting here since this affects perf if we assert
 		const resultNodeK = (this.L[k] = this.L[j]!);
 		resultNodeK.position = k;
 		this.L[j] = resultNodeJ;
