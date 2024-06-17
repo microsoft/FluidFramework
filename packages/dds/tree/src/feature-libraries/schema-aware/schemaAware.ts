@@ -121,12 +121,12 @@ export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys
 		TSchema extends FlexObjectNodeSchema<string, infer TFields extends FlexObjectNodeFields>
 			? TypedFields<TFields>
 			: TSchema extends FlexFieldNodeSchema<string, infer TField extends FlexFieldSchema>
-			? InsertableFlexField<TField>
-			: TSchema extends FlexMapNodeSchema<string, infer TField extends FlexFieldSchema>
-			? {
-					readonly [P in string]: InsertableFlexField<TField>;
-			  }
-			: EmptyObject,
+				? InsertableFlexField<TField>
+				: TSchema extends FlexMapNodeSchema<string, infer TField extends FlexFieldSchema>
+					? {
+							readonly [P in string]: InsertableFlexField<TField>;
+						}
+					: EmptyObject,
 		TSchema extends LeafNodeSchema<string, infer TValueSchema extends ValueSchema>
 			? TValueSchema
 			: undefined,

@@ -73,10 +73,10 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 > = TSchema extends ImplicitAllowedTypes
 	? TreeNodeFromImplicitAllowedTypes<TSchema>
 	: TSchema extends TreeNodeSchema
-	? NodeFromSchema<TSchema>
-	: TSchema extends AllowedTypes
-	? NodeFromSchema<FlexListToUnion<TSchema>>
-	: unknown;
+		? NodeFromSchema<TSchema>
+		: TSchema extends AllowedTypes
+			? NodeFromSchema<FlexListToUnion<TSchema>>
+			: unknown;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
