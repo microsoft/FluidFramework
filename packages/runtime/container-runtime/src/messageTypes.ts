@@ -139,7 +139,9 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
->;
+> &
+	// While deprecating: GC messages may still contain compat details for now
+	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
 export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
 	IDocumentSchemaChangeMessage

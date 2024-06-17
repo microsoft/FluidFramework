@@ -26,11 +26,7 @@ import {
 import { BlobManager } from "../blobManager.js";
 import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import {
-	ContainerMessageType,
-	ContainerRuntimeGCMessage,
-	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
-} from "../messageTypes.js";
+import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
 import { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
@@ -750,6 +746,7 @@ export class GarbageCollector implements IGarbageCollector {
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
+				compatDetails: { behavior: "Ignore" },
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -934,9 +931,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (
 					!compatBehaviorAllowsGCMessageType(
 						gcMessageType,
-						// TODO: Reevaluate if GC still wants to use compat details for sub-types
-						(message as InboundSequencedRecentlyAddedContainerRuntimeMessage)
-							.compatDetails?.behavior,
+						message.compatDetails?.behavior,
 					)
 				) {
 					const error = DataProcessingError.create(
@@ -1101,6 +1096,7 @@ export class GarbageCollector implements IGarbageCollector {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
+			compatDetails: { behavior: "Ignore" },
 		};
 		this.submitMessage(containerGCMessage);
 	}
