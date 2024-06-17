@@ -221,6 +221,14 @@ describe("MockLogger", () => {
 			);
 		});
 
+		it("Assertion exceptions", () => {
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+			assert.throws(
+				() => mockLogger.assertMatchStrict([{ eventName: "A", a: 1 }]),
+				'expected:\n[]\n\nactual:\n[{"eventName":"A","a":1}]',
+			);
+		});
+
 		it("Events are cleared after match check", () => {
 			function assertCleared(): void {
 				assert.equal(
@@ -230,14 +238,14 @@ describe("MockLogger", () => {
 				);
 			}
 
+			// Whether or not the match check succeeds should not affect the clearing of events.
+			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
+			mockLogger.matchEvents([]);
+			assertCleared();
+
 			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "B", b: 2 });
 			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "C", c: 3 });
 			mockLogger.matchAnyEvent([{ eventName: "B", b: 2 }]);
-			assertCleared();
-
-			// Should also be cleared even when match check fails
-			mockLogger.toTelemetryLogger().sendTelemetryEvent({ eventName: "A", a: 1 });
-			mockLogger.matchEvents([]);
 			assertCleared();
 		});
 	});
