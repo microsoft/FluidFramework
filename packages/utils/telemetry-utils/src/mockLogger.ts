@@ -14,9 +14,7 @@ import { createChildLogger } from "./logger.js";
 import {
 	ITelemetryLoggerExt,
 	ITelemetryPropertiesExt,
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
-	type ITelemetryPerformanceEventExt,
+	type ITelemetryEventExt,
 } from "./telemetryTypes.js";
 
 /**
@@ -65,7 +63,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEvents(
+	public matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -81,7 +79,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
 	 */
-	assertMatch(
+	public assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -270,33 +268,28 @@ function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPrope
 /**
  * Mock {@link ITelemetryLoggerExt} implementation.
  *
- * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
- * match against the logged events.
+ * @remarks Can be created via {@link IMockLoggerExt}.
  *
  * @internal
  */
-export class MockLoggerExt extends MockLogger implements ITelemetryLoggerExt {
-	public constructor(minLogLevel?: LogLevel) {
-		super(minLogLevel);
-	}
+export interface IMockLoggerExt extends ITelemetryLoggerExt {
+	/**
+	 * Gets the events that have been logged so far.
+	 */
+	events(): readonly ITelemetryEventExt[];
+}
 
-	public sendTelemetryEvent(
-		event: ITelemetryGenericEventExt,
-		error?: unknown,
-		logLevel?: 10 | 20 | undefined,
-	): void {
-		this.send({ eventName: event.eventName, category: event.category ?? "generic" }, logLevel);
-	}
-
-	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
-		this.send({ eventName: event.eventName, category: "error" }, LogLevel.error);
-	}
-
-	public sendPerformanceEvent(
-		event: ITelemetryPerformanceEventExt,
-		error?: unknown,
-		logLevel?: 10 | 20 | undefined,
-	): void {
-		this.send({ eventName: event.eventName, category: event.category ?? "generic" }, logLevel);
-	}
+/**
+ * Creates an {@link IMockLoggerExt}.
+ *
+ * @internal
+ */
+export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
+	const mockLogger = new MockLogger(minLogLevel);
+	const childLogger = createChildLogger({ logger: mockLogger });
+	Object.assign(childLogger, {
+		events: (): readonly ITelemetryEventExt[] =>
+			mockLogger.events.map((e) => e as ITelemetryEventExt),
+	});
+	return childLogger as IMockLoggerExt;
 }
