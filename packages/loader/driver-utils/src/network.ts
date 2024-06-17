@@ -113,8 +113,8 @@ export class AuthorizationError
 
 	constructor(
 		message: string,
-		readonly claims: string | undefined,
-		readonly tenantId: string | undefined,
+		readonly claims: string,
+		readonly tenantId: string,
 		props: DriverErrorTelemetryProps,
 	) {
 		// don't log claims or tenantId
