@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionSpaceCompressedId } from "@fluidframework/id-compressor";
+import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTagCodec } from "../rebase/index.js";

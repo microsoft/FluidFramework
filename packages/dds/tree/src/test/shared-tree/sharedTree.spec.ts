@@ -23,7 +23,7 @@ import {
 	CommitKind,
 	type JsonableTree,
 	type Revertible,
-	type TreeNavigationResult,
+	TreeNavigationResult,
 	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,

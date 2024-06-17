@@ -36,7 +36,6 @@ import {
 	visitDelta,
 } from "../core/index.js";
 import {
-	type EventEmitter,
 	type HasListeners,
 	type IEmitter,
 	type Listenable,
@@ -310,34 +309,23 @@ export interface ITransaction {
 	inProgress(): boolean;
 }
 
-interface TransactionEvents {
-	transactionStarted(): void;
-	transactionCommitted(): void;
-	transactionAborted(): void;
-}
-
-class Transaction extends EventEmitter<TransactionEvents> implements ITransaction {
+class Transaction implements ITransaction {
 	public constructor(
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	) {
-		super();
-	}
+	) {}
 
 	public start(): void {
 		this.branch.startTransaction();
 		this.branch.editor.enterTransaction();
-		this.emit("transactionStarted");
 	}
 	public commit(): TransactionResult.Commit {
 		this.branch.commitTransaction();
 		this.branch.editor.exitTransaction();
-		this.emit("transactionCommitted");
 		return TransactionResult.Commit;
 	}
 	public abort(): TransactionResult.Abort {
 		this.branch.abortTransaction();
 		this.branch.editor.exitTransaction();
-		this.emit("transactionAborted");
 		return TransactionResult.Abort;
 	}
 	public inProgress(): boolean {
@@ -386,7 +374,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	private readonly removedRootsSnapshots: DetachedFieldIndex[] = [];
 
 	public constructor(
-		public readonly transaction: ITransaction & EventEmitter<TransactionEvents>,
+		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
@@ -404,15 +392,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		),
 	) {
 		// when a transaction is started, take a snapshot of the current state of removed roots
-		transaction.on("transactionStarted", () => {
+		branch.on("transactionStarted", () => {
 			this.removedRootsSnapshots.push(this.removedRoots.clone());
 		});
 		// when a transaction is committed, the latest snapshot of removed roots can be discarded
-		transaction.on("transactionCommitted", () => {
+		branch.on("transactionCommitted", () => {
 			this.removedRootsSnapshots.pop();
 		});
 		// when a transaction is aborted, revert removed roots back to the latest snapshot
-		transaction.on("transactionAborted", () => {
+		branch.on("transactionAborted", () => {
 			const snapshot = this.removedRootsSnapshots.pop();
 			assert(snapshot !== undefined, "a snapshot for removed roots does not exist");
 			this.removedRoots.loadIndex(snapshot);
