@@ -40,15 +40,14 @@ class Vector {
 }
 
 function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
-	if (points.length === 0) {
+	const firstPoint = points[0];
+	if (firstPoint === undefined) {
 		return;
 	}
 
 	context.beginPath();
 	// Move to the first point
-	// Non null asserting, this must exist because the length is not 0
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	context.moveTo(points[0]!.x, points[0]!.y);
+	context.moveTo(firstPoint.x, firstPoint.y);
 
 	// Draw the rest of the segments
 	for (let i = 1; i < points.length; i++) {
