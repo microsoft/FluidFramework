@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import { MockLoggerExt as MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -347,7 +351,7 @@ export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
-	public readonly logger = new MockLogger();
+	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -691,9 +695,9 @@ export function checkoutWithContentAndLogger(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): { checkout: TreeCheckout; logger: MockLogger } {
+): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const forest = forestWithContent(content);
-	const logger = new MockLogger();
+	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
 		...args,
 		forest,

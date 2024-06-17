@@ -61,7 +61,7 @@ export {
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
 } from "./logger.js";
-export { MockLogger, MockLoggerExt } from "./mockLogger.js";
+export { createMockLoggerExt, type IMockLoggerExt, MockLogger } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper.js";
 export { createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils.js";

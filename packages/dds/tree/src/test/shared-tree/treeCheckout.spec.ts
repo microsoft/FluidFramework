@@ -5,15 +5,13 @@
 
 import { strict as assert, fail } from "assert";
 
-import type { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import type { IMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,
-	CommitKind,
 	type FieldUpPath,
 	type Revertible,
-	RevertibleStatus,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -22,6 +20,8 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
+	RevertibleStatus,
+	CommitKind,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
@@ -799,11 +799,7 @@ describe("sharedTreeView", () => {
 		});
 	});
 
-	describe.only("revertibles", () => {
-		// Test TODOs:
-		// - unit tests for metrics generated during reversion
-		// - simple acceptance test for resulting logs.
-
+	describe("revertibles", () => {
 		itView("can be generated for changes made to the local branch", (view) => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
@@ -1021,9 +1017,11 @@ describe("sharedTreeView", () => {
 				assert(revertible !== undefined, "Expected revertible to be created.");
 				revertible.revert();
 
-				const revertEvents = logger.events.filter((event) =>
-					event.eventName.endsWith(TreeCheckout.revertTelemetryEventName),
-				);
+				const revertEvents = logger
+					.events()
+					.filter((event) =>
+						event.eventName.endsWith(TreeCheckout.revertTelemetryEventName),
+					);
 				assert.equal(revertEvents.length, 1);
 				assert.equal(revertEvents[0].age, ageToTest);
 
@@ -1083,7 +1081,7 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
  */
 function itView(
 	title: string,
-	fn: (view: ITreeCheckout, logger: MockLogger) => void,
+	fn: (view: ITreeCheckout, logger: IMockLoggerExt) => void,
 	initialContent?: TreeContent,
 ): void {
 	const content: TreeContent = initialContent ?? {
@@ -1094,6 +1092,7 @@ function itView(
 		...content,
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
+
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
