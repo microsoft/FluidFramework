@@ -4,7 +4,7 @@
 		"enabled": true,
 		"clientKind": "git",
 		"root": ".",
-		"useIgnoreFile": true,
+		"useIgnoreFile": true
 	},
 	"files": {
 		"ignoreUnknown": true,
@@ -23,18 +23,18 @@
 			"common/**",
 			"docs/**",
 			"server/**",
-			"tools/**",
+			"tools/**"
 		],
-		"maxSize": 2097152,
+		"maxSize": 2097152
 	},
 	"organizeImports": {
-		"enabled": false,
+		"enabled": false
 	},
 	"linter": {
 		"enabled": false,
 		"rules": {
-			"recommended": true,
-		},
+			"recommended": true
+		}
 	},
 	"formatter": {
 		"enabled": true,
@@ -42,7 +42,7 @@
 		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"lineWidth": 95,
-		"lineEnding": "lf",
+		"lineEnding": "lf"
 	},
 	"javascript": {
 		"formatter": {
@@ -52,41 +52,67 @@
 			"trailingComma": "all",
 			"quoteProperties": "preserve",
 			"quoteStyle": "double",
-			"bracketSpacing": true,
-		},
+			"bracketSpacing": true
+		}
 	},
 	"json": {
 		"formatter": {
-			"indentStyle": "tab",
-		},
+			"indentStyle": "tab"
+		}
 	},
 	"overrides": [
 		{
+			// JSONC WITHOUT TRAILING COMMAS JSONC is not a standard, and support for trailing commas is not universal. For
+			// simplicity and safety, we parse most JSONC files in a liberal way -- allowing comments and trailing commas, but
+			// format them conservatively without trailing commas.
+			//
+			// See also: https://github.com/microsoft/vscode/issues/102061
 			"include": [
 				"**/*.jsonc",
-				"**/.vscode/*.json",
-				"**/tsconfig*.json",
-				"**/api-extractor*.json",
+
+				// Tools reading api-extractor config files do not consistently support trailing commas.
+				"**/api-extractor*.json"
 			],
 			"json": {
 				"parser": {
 					"allowComments": true,
-					"allowTrailingCommas": true,
+					"allowTrailingCommas": true
 				},
 				"formatter": {
-					"trailingCommas": "all",
-				},
-			},
+					"trailingCommas": "none"
+				}
+			}
 		},
 		{
-			"include": ["**/package.json"],
+			// JSONC WITH TRAILING COMMAS
+			// These JSONC files are known to support trailing commas.
+			"include": [
+				// vscode config files all support trailing commas.
+				"**/.vscode/*.json",
+
+				// tsconfig files support trailing commas.
+				"**/tsconfig*.json"
+			],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
+				}
+			}
+		},
+		{
+			// PACKAGE.JSON
 			// These settings are used to format package.json files in the way npm itself does, with the exception of using
 			// tabs instead of spaces.
+			"include": ["**/package.json"],
 			"json": {
 				"formatter": {
-					"lineWidth": 1,
-				},
-			},
-		},
-	],
+					"lineWidth": 1
+				}
+			}
+		}
+	]
 }
