@@ -3,6 +3,6 @@
 	"extends": ["../../../biome.jsonc"],
 	"files": {
 		"ignoreUnknown": true,
-		"ignore": ["content/**"],
-	},
+		"ignore": ["content/**"]
+	}
 }
