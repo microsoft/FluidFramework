@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -12,15 +12,15 @@ import {
 	createWeightedAsyncGenerator,
 	done,
 	makeRandom,
-} from "@fluid-private/stochastic-test-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+} from '@fluid-private/stochastic-test-utils';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 
-import { BuildNode, ChangeType, StablePlace, StableRange } from "../../ChangeTypes.js";
-import { fail } from "../../Common.js";
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from "../../Identifiers.js";
-import { TraitLocation, TreeView, TreeViewRange } from "../../TreeView.js";
-import { rangeFromStableRange } from "../../TreeViewUtilities.js";
-import { Side, TraitMap, WriteFormat } from "../../persisted-types/index.js";
+import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { fail } from '../../Common.js';
+import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView.js';
+import { rangeFromStableRange } from '../../TreeViewUtilities.js';
+import { Side, TraitMap, WriteFormat } from '../../persisted-types/index.js';
 
 import {
 	EditGenerationConfig,
@@ -35,7 +35,7 @@ import {
 	OperationGenerationConfig,
 	TreeContext,
 	TreeLeave,
-} from "./Types.js";
+} from './Types.js';
 
 const defaultJoinConfig: Required<JoinGenerationConfig> = {
 	maximumActiveCollaborators: 10,
@@ -44,9 +44,7 @@ const defaultJoinConfig: Required<JoinGenerationConfig> = {
 	summarizeHistory: [false],
 };
 
-function makeJoinGenerator(
-	passedConfig: JoinGenerationConfig,
-): AsyncGenerator<Operation, FuzzTestState> {
+function makeJoinGenerator(passedConfig: JoinGenerationConfig): AsyncGenerator<Operation, FuzzTestState> {
 	const config = { ...defaultJoinConfig, ...passedConfig };
 	return async ({ random, activeCollaborators, passiveCollaborators }) => {
 		const activeAllowed = activeCollaborators.length < config.maximumActiveCollaborators;
@@ -58,11 +56,9 @@ function makeJoinGenerator(
 					? false
 					: passiveAllowed
 						? true
-						: fail(
-								"Cannot generate join op when both active and passive collaborators are at the configured limit.",
-							);
+						: fail('Cannot generate join op when both active and passive collaborators are at the configured limit.');
 		return {
-			type: "join",
+			type: 'join',
 			summarizeHistory: random.pick(config.summarizeHistory),
 			writeFormat: random.pick(config.writeFormat),
 			isObserver,
@@ -84,12 +80,9 @@ async function leaveGenerator({
 				? true
 				: canUseActive
 					? false
-					: fail("Cannot generate a leave op when there are no clients.");
-	const index = random.integer(
-		0,
-		(isObserver ? passiveCollaborators : activeCollaborators).length - 1,
-	);
-	return { type: "leave", isObserver, index };
+					: fail('Cannot generate a leave op when there are no clients.');
+	const index = random.integer(0, (isObserver ? passiveCollaborators : activeCollaborators).length - 1);
+	return { type: 'leave', isObserver, index };
 }
 
 const defaultInsertConfig: Required<InsertGenerationConfig> = {
@@ -110,21 +103,15 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 const makeEditGenerator = (
 	passedConfig: EditGenerationConfig,
 	passedJoinConfig: JoinGenerationConfig,
-	stashOps = false,
+	stashOps = false
 ): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
 	const poolRand = makeRandom(0);
-	const traitLabelPool = Array.from(
-		{ length: config.traitLabelPoolSize },
-		() => poolRand.uuid4() as TraitLabel,
-	);
+	const traitLabelPool = Array.from({ length: config.traitLabelPoolSize }, () => poolRand.uuid4() as TraitLabel);
 	const traitLabelGenerator = ({ random }: FuzzTestState) => random.pick(traitLabelPool);
 
-	const definitionPool = Array.from(
-		{ length: insertConfig.definitionPoolSize },
-		() => poolRand.uuid4() as Definition,
-	);
+	const definitionPool = Array.from({ length: insertConfig.definitionPoolSize }, () => poolRand.uuid4() as Definition);
 	const definitionGenerator = ({ random }: FuzzTestState) => random.pick(definitionPool);
 	type EditState = FuzzTestState & TreeContext;
 
@@ -156,9 +143,7 @@ const makeEditGenerator = (
 		const descriptor = makeDescriptor();
 
 		const placeFromDescriptor = ({ index, side }: Descriptor): StablePlace =>
-			index === trait.length
-				? { referenceTrait: traitLocation, side }
-				: { referenceSibling: trait[index], side };
+			index === trait.length ? { referenceTrait: traitLocation, side } : { referenceSibling: trait[index], side };
 		return placeFromDescriptor(descriptor);
 	}
 
@@ -206,9 +191,7 @@ const makeEditGenerator = (
 		});
 		const [startDescriptor, endDescriptor] = sortedDescriptors;
 		const placeFromDescriptor = ({ index, side }: Descriptor): StablePlace =>
-			index === trait.length
-				? { referenceTrait: traitLocation, side }
-				: { referenceSibling: trait[index], side };
+			index === trait.length ? { referenceTrait: traitLocation, side } : { referenceSibling: trait[index], side };
 		const start = placeFromDescriptor(startDescriptor);
 		const end = placeFromDescriptor(endDescriptor);
 		return StableRange.from(start).to(end);
@@ -216,22 +199,20 @@ const makeEditGenerator = (
 
 	function treeGenerator(state: EditState): BuildNode {
 		const { random, idGenerator } = state;
-		const treeType = random.pick(["leaf", "stick", "balanced"]);
+		const treeType = random.pick(['leaf', 'stick', 'balanced']);
 		const makeNode = (traits?: TraitMap<BuildNode>): BuildNode => ({
 			identifier: idGenerator.generateNodeId(),
 			definition: definitionGenerator(state),
 			traits: traits ?? {},
 		});
 		switch (treeType) {
-			case "leaf":
+			case 'leaf':
 				return makeNode();
-			case "stick":
+			case 'stick':
 				return makeNode({
-					[traitLabelGenerator(state)]: [
-						makeNode({ [traitLabelGenerator(state)]: [makeNode()] }),
-					],
+					[traitLabelGenerator(state)]: [makeNode({ [traitLabelGenerator(state)]: [makeNode()] })],
 				});
-			case "balanced":
+			case 'balanced':
 				return makeNode({
 					[traitLabelGenerator(state)]: [makeNode()],
 					[traitLabelGenerator(state)]: [makeNode()],
@@ -260,13 +241,11 @@ const makeEditGenerator = (
 		} while (!isValidInsertPlace(destination));
 
 		return {
-			fuzzType: "insert",
+			fuzzType: 'insert',
 			build: {
 				type: ChangeType.Build,
 				destination: id,
-				source: Array.from({ length: state.random.integer(1, maxTreeSequenceSize) }, () =>
-					treeGenerator(state),
-				),
+				source: Array.from({ length: state.random.integer(1, maxTreeSequenceSize) }, () => treeGenerator(state)),
 			},
 			insert: {
 				type: ChangeType.Insert,
@@ -280,10 +259,7 @@ const makeEditGenerator = (
 		const { view } = state;
 		const isValidDeleteRange = (source: StableRange): boolean => {
 			// Disallow deletion of the root node.
-			if (
-				source.start.referenceSibling === view.root ||
-				source.end.referenceSibling === view.root
-			) {
+			if (source.start.referenceSibling === view.root || source.end.referenceSibling === view.root) {
 				return false;
 			}
 
@@ -296,7 +272,7 @@ const makeEditGenerator = (
 		} while (!isValidDeleteRange(source));
 
 		return {
-			fuzzType: "delete",
+			fuzzType: 'delete',
 			type: ChangeType.Detach,
 			source,
 		};
@@ -306,15 +282,10 @@ const makeEditGenerator = (
 		const id = 1 as DetachedSequenceId;
 		const { view } = state;
 
-		const isValidMoveRange = (
-			{ start, end }: TreeViewRange,
-			destination: StablePlace,
-		): boolean => {
+		const isValidMoveRange = ({ start, end }: TreeViewRange, destination: StablePlace): boolean => {
 			// An ancestor cannot be moved to be a sibling of its descendant.
 			const forbiddenDescendantId =
-				destination.referenceTrait?.parent ??
-				destination.referenceSibling ??
-				fail("Invalid place");
+				destination.referenceTrait?.parent ?? destination.referenceSibling ?? fail('Invalid place');
 
 			const startIndex = view.findIndexWithinTrait(start);
 			const endIndex = view.findIndexWithinTrait(end);
@@ -339,7 +310,7 @@ const makeEditGenerator = (
 		} while (!isValidMoveRange(rangeFromStableRange(view, source), destination));
 
 		return {
-			fuzzType: "move",
+			fuzzType: 'move',
 			detach: {
 				type: ChangeType.Detach,
 				destination: id,
@@ -353,16 +324,9 @@ const makeEditGenerator = (
 		};
 	}
 
-	async function setPayloadGenerator({
-		dataStoreRuntime,
-		idList,
-		random,
-		view,
-	}: EditState): Promise<FuzzChange> {
+	async function setPayloadGenerator({ dataStoreRuntime, idList, random, view }: EditState): Promise<FuzzChange> {
 		const nodeToModify = random.pick(idList);
-		const getPayloadContents = async (
-			random: IRandom,
-		): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
+		const getPayloadContents = async (random: IRandom): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
 			if (random.bool()) {
 				return random.string(4);
 			}
@@ -372,13 +336,9 @@ const makeEditGenerator = (
 
 		const viewNode = view.getViewNode(nodeToModify);
 		const payload =
-			viewNode.payload !== undefined
-				? random.bool()
-					? await getPayloadContents(random)
-					: undefined
-				: undefined;
+			viewNode.payload !== undefined ? (random.bool() ? await getPayloadContents(random) : undefined) : undefined;
 		return {
-			fuzzType: "setPayload",
+			fuzzType: 'setPayload',
 			type: ChangeType.SetValue,
 			nodeToModify: random.pick(idList),
 			payload,
@@ -412,7 +372,7 @@ const makeEditGenerator = (
 		if (stashOps) {
 			const joinConfig = { ...defaultJoinConfig, ...passedJoinConfig };
 			return {
-				type: "stash",
+				type: 'stash',
 				contents,
 				index,
 				summarizeHistory: random.pick(joinConfig.summarizeHistory),
@@ -420,7 +380,7 @@ const makeEditGenerator = (
 			};
 		}
 
-		return { type: "edit", contents, index };
+		return { type: 'edit', contents, index };
 	};
 };
 
@@ -434,9 +394,7 @@ const defaultOpConfig: Required<OperationGenerationConfig> = {
 	synchronizeWeight: 10,
 };
 
-export function makeOpGenerator(
-	passedConfig: OperationGenerationConfig,
-): AsyncGenerator<Operation, FuzzTestState> {
+export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncGenerator<Operation, FuzzTestState> {
 	const config = {
 		...defaultOpConfig,
 		...passedConfig,
@@ -453,15 +411,10 @@ export function makeOpGenerator(
 		({ activeCollaborators, passiveCollaborators }) =>
 			criteria(activeCollaborators.length + passiveCollaborators.length);
 	const atLeastOneClient = collaboratorsMatches((count) => count > 0);
-	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({
-		activeCollaborators,
-	}) => activeCollaborators.length > 0;
+	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ activeCollaborators }) =>
+		activeCollaborators.length > 0;
 	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[
-			makeEditGenerator(config.editConfig, config.joinConfig),
-			config.editWeight,
-			atLeastOneActiveClient,
-		],
+		[makeEditGenerator(config.editConfig, config.joinConfig), config.editWeight, atLeastOneActiveClient],
 		[
 			makeJoinGenerator(config.joinConfig),
 			config.joinWeight,
@@ -470,7 +423,7 @@ export function makeOpGenerator(
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
 		// TODO:#5357: Re-enable stashed ops tests
 		// [makeEditGenerator(config.editConfig, config.joinConfig, true), config.stashWeight, atLeastOneActiveClient],
-		[{ type: "synchronize" }, config.synchronizeWeight, atLeastOneClient],
+		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
 	return createWeightedAsyncGenerator(opWeights);
 }

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { expect } from 'chai';
 
-import { Change, StableRange } from "../ChangeTypes.js";
-import { EagerCheckout } from "../EagerCheckout.js";
+import { Change, StableRange } from '../ChangeTypes.js';
+import { EagerCheckout } from '../EagerCheckout.js';
 
-import { checkoutTests } from "./Checkout.tests.js";
-import { setUpTestSharedTree, setUpTestTree } from "./utilities/TestUtilities.js";
+import { checkoutTests } from './Checkout.tests.js';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 checkoutTests(
-	"EagerCheckout",
+	'EagerCheckout',
 	async (tree) => Promise.resolve(new EagerCheckout(tree)),
 	() => {
-		it("updates eagerly", () => {
+		it('updates eagerly', () => {
 			const { tree } = setUpTestSharedTree();
 			const testTree = setUpTestTree(tree);
 			const checkout = new EagerCheckout(tree);
@@ -24,5 +24,5 @@ checkoutTests(
 			tree.applyEdit(Change.delete(StableRange.only(testTree.left)));
 			expect(tree.currentView.equals(checkout.currentView)).to.be.true;
 		});
-	},
+	}
 );

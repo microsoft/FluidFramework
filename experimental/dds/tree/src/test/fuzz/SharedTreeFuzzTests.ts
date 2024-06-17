@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, mkdirSync } from "fs";
-import { join } from "path";
+import { existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 import {
 	AsyncGenerator,
@@ -14,23 +14,23 @@ import {
 	performFuzzActionsAsync as performFuzzActionsBase,
 	takeAsync as take,
 	type SaveInfo,
-} from "@fluid-private/stochastic-test-utils";
-import { expect } from "chai";
+} from '@fluid-private/stochastic-test-utils';
+import { expect } from 'chai';
 
-import { fail } from "../../Common.js";
-import { areRevisionViewsSemanticallyEqual } from "../../EditUtilities.js";
-import { SharedTree } from "../../SharedTree.js";
-import { WriteFormat } from "../../persisted-types/index.js";
+import { fail } from '../../Common.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTree } from '../../SharedTree.js';
+import { WriteFormat } from '../../persisted-types/index.js';
 import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,
 	withContainerOffline,
-} from "../utilities/TestUtilities.js";
+} from '../utilities/TestUtilities.js';
 
-import { makeOpGenerator } from "./Generators.js";
-import { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from "./Types.js";
+import { makeOpGenerator } from './Generators.js';
+import { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from './Types.js';
 
-const directory = join(testDocumentsPathBase, "fuzz-tests");
+const directory = join(testDocumentsPathBase, 'fuzz-tests');
 
 // TODO: Kludge: Use this to change the seed such that the tests avoid hitting bugs in the Fluid Framework.
 // Should be removed once fuzz tests pass reliably with any seed.
@@ -50,7 +50,7 @@ export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
 	seed: number,
 	synchronizeAtEnd: boolean = true,
-	saveInfo?: SaveInfo,
+	saveInfo?: SaveInfo
 ): Promise<Required<FuzzTestState>> {
 	const random = makeRandom(seed);
 
@@ -92,18 +92,13 @@ export async function performFuzzActions(
 			stash: async (state, operation) => {
 				const { index, contents, writeFormat, summarizeHistory } = operation;
 				const testObjectProvider =
-					state.testObjectProvider ??
-					fail("Attempted to synchronize with undefined testObjectProvider");
+					state.testObjectProvider ?? fail('Attempted to synchronize with undefined testObjectProvider');
 
 				const { container, tree } = state.activeCollaborators[index];
 				await testObjectProvider.ensureSynchronized();
-				const { pendingLocalState } = await withContainerOffline(
-					testObjectProvider,
-					container,
-					() => {
-						applyFuzzChange(tree, contents);
-					},
-				);
+				const { pendingLocalState } = await withContainerOffline(testObjectProvider, container, () => {
+					applyFuzzChange(tree, contents);
+				});
 
 				const {
 					container: newContainer,
@@ -124,7 +119,7 @@ export async function performFuzzActions(
 			synchronize: async (state) => {
 				const { testObjectProvider } = state;
 				if (testObjectProvider === undefined) {
-					fail("Attempted to synchronize with undefined testObjectProvider");
+					fail('Attempted to synchronize with undefined testObjectProvider');
 				}
 				await testObjectProvider.ensureSynchronized();
 				const trees = [...state.activeCollaborators, ...state.passiveCollaborators];
@@ -141,20 +136,11 @@ export async function performFuzzActions(
 							expect(editA).to.not.be.undefined;
 							expect(editA?.id).to.equal(editB?.id);
 						}
-						expect(
-							areRevisionViewsSemanticallyEqual(
-								tree.currentView,
-								tree,
-								first.currentView,
-								first,
-							),
-						).to.be.true;
+						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to.be.true;
 
 						for (const node of tree.currentView) {
 							expect(tree.attributeNodeId(node.identifier)).to.equal(
-								first.attributeNodeId(
-									first.convertToNodeId(tree.convertToStableNodeId(node.identifier)),
-								),
+								first.attributeNodeId(first.convertToNodeId(tree.convertToStableNodeId(node.identifier)))
 							);
 						}
 					}
@@ -163,7 +149,7 @@ export async function performFuzzActions(
 			},
 		},
 		initialState,
-		saveInfo,
+		saveInfo
 	);
 
 	if (synchronizeAtEnd) {
@@ -174,13 +160,13 @@ export async function performFuzzActions(
 			for (const event of events.unexpectedErrors) {
 				switch (event.eventName) {
 					// Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
-					case "fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure":
+					case 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure':
 					// TODO:#1120
-					case "fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound":
+					case 'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound':
 					// Summary nacks can happen as part of normal operation and are handled by the framework
-					case "fluid:telemetry:Summarizer:Running:SummaryNack":
-					case "fluid:telemetry:Summarizer:summarizingError":
-					case "fluid:telemetry:Summarizer:Running:Summarize_cancel":
+					case 'fluid:telemetry:Summarizer:Running:SummaryNack':
+					case 'fluid:telemetry:Summarizer:summarizingError':
+					case 'fluid:telemetry:Summarizer:Running:Summarize_cancel':
 						break;
 					default:
 						expect.fail(`Unexpected error event: ${event.eventName}`);
@@ -207,7 +193,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 		function runTest(
 			generatorFactory: () => AsyncGenerator<Operation, FuzzTestState>,
 			seed: number,
-			saveOnFailure?: boolean,
+			saveOnFailure?: boolean
 		): void {
 			it(`with seed ${seed}`, async () => {
 				const saveInfo: SaveInfo | undefined =
@@ -224,25 +210,17 @@ export function runSharedTreeFuzzTests(title: string): void {
 			}).timeout(10000);
 		}
 
-		function runMixedVersionTests(
-			summarizeHistory: boolean,
-			testsPerSuite: number,
-			testLength: number,
-		): void {
-			describe("using 0.0.2 and 0.1.1 trees", () => {
+		function runMixedVersionTests(summarizeHistory: boolean, testsPerSuite: number, testLength: number): void {
+			describe('using 0.0.2 and 0.1.1 trees', () => {
 				for (let seed = 0; seed < testsPerSuite; seed++) {
 					runTest(
-						() =>
-							take(
-								testLength,
-								makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } }),
-							),
-						seed,
+						() => take(testLength, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
+						seed
 					);
 				}
 			});
 
-			describe("using only version 0.0.2", () => {
+			describe('using only version 0.0.2', () => {
 				for (let seed = 0; seed < testsPerSuite; seed++) {
 					runTest(
 						() =>
@@ -253,14 +231,14 @@ export function runSharedTreeFuzzTests(title: string): void {
 										writeFormat: [WriteFormat.v0_0_2],
 										summarizeHistory: [summarizeHistory],
 									},
-								}),
+								})
 							),
-						seed,
+						seed
 					);
 				}
 			});
 
-			describe("using only version 0.1.1", () => {
+			describe('using only version 0.1.1', () => {
 				for (let seed = 0; seed < testsPerSuite; seed++) {
 					runTest(
 						() =>
@@ -271,14 +249,14 @@ export function runSharedTreeFuzzTests(title: string): void {
 										writeFormat: [WriteFormat.v0_1_1],
 										summarizeHistory: [summarizeHistory],
 									},
-								}),
+								})
 							),
-						seed,
+						seed
 					);
 				}
 			});
 
-			describe("upgrading halfway through", () => {
+			describe('upgrading halfway through', () => {
 				const maximumActiveCollaborators = 10;
 				const maximumPassiveCollaborators = 5;
 				const editConfig: EditGenerationConfig = { maxTreeSize: 1000 };
@@ -294,7 +272,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 									writeFormat: [WriteFormat.v0_0_2],
 									summarizeHistory: [summarizeHistory],
 								},
-							}),
+							})
 						),
 						take(
 							1,
@@ -309,7 +287,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 								joinWeight: 1,
 								leaveWeight: 0,
 								synchronizeWeight: 0,
-							}),
+							})
 						),
 						take(
 							testLength / 2,
@@ -320,8 +298,8 @@ export function runSharedTreeFuzzTests(title: string): void {
 									maximumPassiveCollaborators,
 									summarizeHistory: [summarizeHistory],
 								},
-							}),
-						),
+							})
+						)
 					);
 				for (let seed = 0; seed < testsPerSuite; seed++) {
 					runTest(generatorFactory, seed);
@@ -330,11 +308,11 @@ export function runSharedTreeFuzzTests(title: string): void {
 		}
 
 		const testLength = 200;
-		describe("with no-history summarization", () => {
+		describe('with no-history summarization', () => {
 			runMixedVersionTests(false, testCount, testLength);
 		});
 
-		describe("with history summarization", () => {
+		describe('with history summarization', () => {
 			runMixedVersionTests(true, testCount, testLength);
 		});
 	});
@@ -342,22 +320,22 @@ export function runSharedTreeFuzzTests(title: string): void {
 
 function applyFuzzChange(tree: SharedTree, contents: FuzzChange): void {
 	switch (contents.fuzzType) {
-		case "insert":
+		case 'insert':
 			tree.applyEdit(contents.build, contents.insert);
 			break;
 
-		case "delete":
+		case 'delete':
 			tree.applyEdit(contents);
 			break;
 
-		case "move":
+		case 'move':
 			tree.applyEdit(contents.detach, contents.insert);
 			break;
 
-		case "setPayload":
+		case 'setPayload':
 			tree.applyEdit(contents);
 			break;
 		default:
-			fail("Invalid edit.");
+			fail('Invalid edit.');
 	}
 }

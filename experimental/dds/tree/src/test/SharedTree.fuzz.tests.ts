@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { runSharedTreeFuzzTests } from "./fuzz/SharedTreeFuzzTests.js";
+import { runSharedTreeFuzzTests } from './fuzz/SharedTreeFuzzTests.js';
 
-describe("SharedTree", () => {
-	runSharedTreeFuzzTests("Fuzz tests with local server");
+describe('SharedTree', () => {
+	runSharedTreeFuzzTests('Fuzz tests with local server');
 });

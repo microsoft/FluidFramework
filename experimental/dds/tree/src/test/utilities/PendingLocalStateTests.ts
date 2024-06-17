@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { TestObjectProvider } from "@fluidframework/test-utils/internal";
-import { expect } from "chai";
+import { IContainer } from '@fluidframework/container-definitions/internal';
+import { TestObjectProvider } from '@fluidframework/test-utils/internal';
+import { expect } from 'chai';
 
-import { Change, StablePlace } from "../../ChangeTypes.js";
-import { fail } from "../../Common.js";
-import type { EditLog } from "../../EditLog.js";
-import { EditId, NodeId, TraitLabel } from "../../Identifiers.js";
-import { SharedTree } from "../../SharedTree.js";
-import { TreeView } from "../../TreeView.js";
-import { ChangeInternal, Edit, WriteFormat } from "../../persisted-types/index.js";
+import { Change, StablePlace } from '../../ChangeTypes.js';
+import { fail } from '../../Common.js';
+import type { EditLog } from '../../EditLog.js';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeView } from '../../TreeView.js';
+import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
 
-import { SimpleTestTree } from "./TestNode.js";
+import { SimpleTestTree } from './TestNode.js';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -24,7 +24,7 @@ import {
 	setUpTestTree,
 	stabilizeEdit,
 	withContainerOffline,
-} from "./TestUtilities.js";
+} from './TestUtilities.js';
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.
@@ -34,36 +34,33 @@ import {
 export function runPendingLocalStateTests(
 	title: string,
 	setUpLocalServerTestSharedTree: (
-		options: LocalServerSharedTreeTestingOptions,
-	) => Promise<LocalServerSharedTreeTestingComponents>,
+		options: LocalServerSharedTreeTestingOptions
+	) => Promise<LocalServerSharedTreeTestingComponents>
 ) {
 	describe(title, () => {
-		const documentId = "documentId";
+		const documentId = 'documentId';
 
-		it("applies and submits ops from 0.0.2 in 0.0.2", async () =>
+		it('applies and submits ops from 0.0.2 in 0.0.2', async () =>
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_0_2));
 		// TODO:#5357: Re-enable stashed ops tests
-		it.skip("applies and submits ops from 0.0.2 in 0.1.1", async () =>
+		it.skip('applies and submits ops from 0.0.2 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_0_2, WriteFormat.v0_1_1));
 		// TODO:#5357: Re-enable stashed ops tests
-		it.skip("applies and submits ops from 0.1.1 in 0.0.2 (via upgrade)", async () => {
+		it.skip('applies and submits ops from 0.1.1 in 0.0.2 (via upgrade)', async () => {
 			const testObjectProvider = await applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_0_2);
 
 			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
 			const events = testObjectProvider.tracker.reportAndClearTrackedEvents();
 			expect(events.unexpectedErrors.length).to.equal(1);
 			expect(events.unexpectedErrors[0].eventName).to.equal(
-				"fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
+				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
 			);
 		});
 		// TODO:#5357: Re-enable stashed ops tests
-		it.skip("applies and submits ops from 0.1.1 in 0.1.1", async () =>
+		it.skip('applies and submits ops from 0.1.1 in 0.1.1', async () =>
 			applyStashedOp(WriteFormat.v0_1_1, WriteFormat.v0_1_1));
 
-		async function applyStashedOp(
-			treeVersion: WriteFormat,
-			opVersion: WriteFormat,
-		): Promise<TestObjectProvider> {
+		async function applyStashedOp(treeVersion: WriteFormat, opVersion: WriteFormat): Promise<TestObjectProvider> {
 			const {
 				container: stashingContainer,
 				tree: stashingTree,
@@ -81,8 +78,8 @@ export function runPendingLocalStateTests(
 			await testObjectProvider.ensureSynchronized();
 			const initialEditLogLength = stashingTree.edits.length;
 
-			const insertedLeafLabel = "leaf" as TraitLabel;
-			const insertedLeafNodeId = stashingTestTree.generateNodeId("insertedLeafId");
+			const insertedLeafLabel = 'leaf' as TraitLabel;
+			const insertedLeafNodeId = stashingTestTree.generateNodeId('insertedLeafId');
 			const insertedLeafStableId = stashingTestTree.convertToStableNodeId(insertedLeafNodeId);
 			const { pendingLocalState, actionReturn: edit } = await withContainerOffline(
 				testObjectProvider,
@@ -96,9 +93,9 @@ export function runPendingLocalStateTests(
 									[insertedLeafLabel]: stashingTestTree.buildLeaf(insertedLeafNodeId),
 								},
 							},
-							StablePlace.after(stashingTestTree.left),
-						),
-					),
+							StablePlace.after(stashingTestTree.left)
+						)
+					)
 			);
 			await testObjectProvider.ensureSynchronized();
 			const observerAfterStash = observerTree.currentView;
@@ -112,16 +109,13 @@ export function runPendingLocalStateTests(
 				writeFormat: treeVersion,
 			});
 
-			expect((stashingTree2.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id))
-				.to.be.true; // Kludge
+			expect((stashingTree2.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
 
 			await testObjectProvider.ensureSynchronized();
 			await testObjectProvider.ensureSynchronized(); // Synchronize twice in case stashed ops caused an upgrade round-trip
 
 			function tryGetInsertedLeafId(view: TreeView): NodeId | undefined {
-				const rootNode = view.getViewNode(
-					view.getTrait({ parent: view.root, label: SimpleTestTree.traitLabel })[0],
-				);
+				const rootNode = view.getViewNode(view.getTrait({ parent: view.root, label: SimpleTestTree.traitLabel })[0]);
 				const leftTrait = view.getTrait({
 					parent: rootNode.identifier,
 					label: SimpleTestTree.leftTraitLabel,
@@ -141,30 +135,24 @@ export function runPendingLocalStateTests(
 
 			expect(tryGetInsertedLeafId(observerAfterStash)).to.equal(
 				undefined,
-				"Observing tree should not receive edits made by the stashing tree after it went offline.",
+				'Observing tree should not receive edits made by the stashing tree after it went offline.'
 			);
 			expect(tryGetInsertedLeafId(stashingTree2.currentView)).to.equal(
 				stashingTree2.convertToNodeId(insertedLeafStableId),
-				"Tree which loaded with stashed pending edits should apply them correctly.",
+				'Tree which loaded with stashed pending edits should apply them correctly.'
 			);
 			expect(tryGetInsertedLeafId(stashingTree.currentView)).to.equal(
 				stashingTree.convertToNodeId(insertedLeafStableId),
-				"Tree collaborating with a client that applies stashed pending edits should also apply them.",
+				'Tree collaborating with a client that applies stashed pending edits should also apply them.'
 			);
 
 			const stableEdit = stabilizeEdit(stashingTree, edit as unknown as Edit<ChangeInternal>);
 			expect(
-				stabilizeEdit(
-					observerTree,
-					getEditLogInternal(observerTree).tryGetEditFromId(edit.id) ?? fail(),
-				),
+				stabilizeEdit(observerTree, getEditLogInternal(observerTree).tryGetEditFromId(edit.id) ?? fail())
 			).to.deep.equal(stableEdit);
 
 			expect(
-				stabilizeEdit(
-					stashingTree2,
-					getEditLogInternal(stashingTree2).tryGetEditFromId(edit.id) ?? fail(),
-				),
+				stabilizeEdit(stashingTree2, getEditLogInternal(stashingTree2).tryGetEditFromId(edit.id) ?? fail())
 			).to.deep.equal(stableEdit);
 
 			expect(observerTree.edits.length).to.equal(initialEditLogLength + 1);
@@ -173,8 +161,8 @@ export function runPendingLocalStateTests(
 			return testObjectProvider;
 		}
 
-		it("works across summaries", async () => {
-			const smallTreeTraitLabel = "3b9e2dd8-def4-45fb-88bc-0df48df62314" as TraitLabel;
+		it('works across summaries', async () => {
+			const smallTreeTraitLabel = '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel;
 
 			// 1. Create a client
 			const { testObjectProvider, tree: tree0 } = await setUpLocalServerTestSharedTree({
@@ -191,7 +179,7 @@ export function runPendingLocalStateTests(
 				writeFormat: WriteFormat.v0_0_2,
 				// To be removed ADO:5463
 				featureGates: {
-					"Fluid.Container.ForceWriteConnection": true,
+					'Fluid.Container.ForceWriteConnection': true,
 				},
 			}));
 
@@ -223,15 +211,11 @@ export function runPendingLocalStateTests(
 			/** Go offline, do something, then rejoin with pending local state */
 			async function stash(
 				container: IContainer,
-				action: () => void,
+				action: () => void
 			): Promise<{ tree: SharedTree; container: IContainer }> {
-				const { pendingLocalState } = await withContainerOffline(
-					testObjectProvider,
-					container,
-					() => {
-						action();
-					},
-				);
+				const { pendingLocalState } = await withContainerOffline(testObjectProvider, container, () => {
+					action();
+				});
 				return setUpLocalServerTestSharedTree({
 					id: documentId,
 					testObjectProvider,
@@ -243,13 +227,13 @@ export function runPendingLocalStateTests(
 			async function waitForSummary(container: IContainer): Promise<void> {
 				return new Promise((resolve, reject) => {
 					let summarized = false;
-					container.on("op", (op) => {
-						if (op.type === "summarize") {
+					container.on('op', (op) => {
+						if (op.type === 'summarize') {
 							summarized = true;
-						} else if (summarized && op.type === "summaryAck") {
+						} else if (summarized && op.type === 'summaryAck') {
 							resolve();
-						} else if (op.type === "summaryNack") {
-							reject(new Error("summaryNack"));
+						} else if (op.type === 'summaryNack') {
+							reject(new Error('summaryNack'));
 						}
 					});
 				});
@@ -261,15 +245,15 @@ export function runPendingLocalStateTests(
 					Change.insertTree(
 						[
 							{
-								definition: "7335ea74-c92f-47f4-8f00-376a306796f4",
+								definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
 								traits: {
-									"e0901ba4-14c4-48e4-91a7-22a3068dc274": [
+									'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
 										{
-											definition: "7335ea74-c92f-47f4-8f00-376a306796f4",
+											definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
 											traits: {
-												"e0901ba4-14c4-48e4-91a7-22a3068dc274": [
+												'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
 													{
-														definition: "7335ea74-c92f-47f4-8f00-376a306796f4",
+														definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
 													},
 												],
 											},
@@ -278,15 +262,15 @@ export function runPendingLocalStateTests(
 								},
 							},
 							{
-								definition: "7335ea74-c92f-47f4-8f00-376a306796f4",
+								definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
 								traits: {
-									"e0901ba4-14c4-48e4-91a7-22a3068dc274": [
+									'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
 										{
-											definition: "7335ea74-c92f-47f4-8f00-376a306796f4",
+											definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
 											traits: {
-												"e0901ba4-14c4-48e4-91a7-22a3068dc274": [
+												'e0901ba4-14c4-48e4-91a7-22a3068dc274': [
 													{
-														definition: "7335ea74-c92f-47f4-8f00-376a306796f4",
+														definition: '7335ea74-c92f-47f4-8f00-376a306796f4',
 													},
 												],
 											},
@@ -298,8 +282,8 @@ export function runPendingLocalStateTests(
 						StablePlace.atEndOf({
 							label: smallTreeTraitLabel,
 							parent: tree.currentView.root,
-						}),
-					),
+						})
+					)
 				).id;
 			}
 
@@ -314,26 +298,18 @@ export function runPendingLocalStateTests(
 			}
 		});
 
-		it("cleans up temporary translation state", async () => {
+		it('cleans up temporary translation state', async () => {
 			// Glass box test to ensure that SharedTree doesn't hold on to temporary stashed op
 			// translation state for longer than necessary
 			function clearedTemporaryStashState(tree: SharedTree): boolean {
-				return (
-					(tree as unknown as { stashedIdCompressor?: unknown }).stashedIdCompressor === null
-				);
+				return (tree as unknown as { stashedIdCompressor?: unknown }).stashedIdCompressor === null;
 			}
 
-			const {
-				container: stashingContainer,
-				tree,
-				testObjectProvider,
-			} = await setUpLocalServerTestSharedTree({});
+			const { container: stashingContainer, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({});
 			await testObjectProvider.ensureSynchronized();
 
-			const { pendingLocalState } = await withContainerOffline(
-				testObjectProvider,
-				stashingContainer,
-				() => applyNoop(tree),
+			const { pendingLocalState } = await withContainerOffline(testObjectProvider, stashingContainer, () =>
+				applyNoop(tree)
 			);
 			await testObjectProvider.ensureSynchronized();
 

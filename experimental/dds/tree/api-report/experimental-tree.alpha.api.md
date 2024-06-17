@@ -49,7 +49,7 @@ export interface Build {
 }
 
 // @alpha
-export interface BuildInternal extends Omit<BuildInternal_0_0_2, "source"> {
+export interface BuildInternal extends Omit<BuildInternal_0_0_2, 'source'> {
     // (undocumented)
     readonly source: TreeNodeSequence<BuildNodeInternal>;
 }
@@ -219,7 +219,7 @@ export enum ConstraintEffect {
 }
 
 // @alpha
-export interface ConstraintInternal extends Omit<ConstraintInternal_0_0_2, "toConstrain" | "parentNode"> {
+export interface ConstraintInternal extends Omit<ConstraintInternal_0_0_2, 'toConstrain' | 'parentNode'> {
     readonly parentNode?: NodeId;
     readonly toConstrain: StableRangeInternal;
 }
@@ -238,7 +238,7 @@ export interface ConstraintInternal_0_0_2 {
 
 // @alpha
 export type Definition = UuidString & {
-    readonly Definition: "c0ef9488-2a78-482d-aeed-37fba996354c";
+    readonly Definition: 'c0ef9488-2a78-482d-aeed-37fba996354c';
 };
 
 // @alpha
@@ -260,11 +260,11 @@ export interface Detach {
 
 // @alpha
 export type DetachedSequenceId = number & {
-    readonly DetachedSequenceId: "f7d7903a-194e-45e7-8e82-c9ef4333577d";
+    readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
 };
 
 // @alpha
-export interface DetachInternal extends Omit<DetachInternal_0_0_2, "source"> {
+export interface DetachInternal extends Omit<DetachInternal_0_0_2, 'source'> {
     // (undocumented)
     readonly source: StableRangeInternal;
 }
@@ -322,7 +322,7 @@ export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
 // @alpha
 export type EditId = UuidString & {
-    readonly EditId: "56897beb-53e4-4e66-85da-4bf5cd5d0d49";
+    readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49';
 };
 
 // @alpha
@@ -349,8 +349,8 @@ export enum EditValidationResult {
 
 // @alpha
 export type FinalCompressedId = number & {
-    readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
-    readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+    readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';
+    readonly OpNormalized: '9209432d-a959-4df7-b2ad-767ead4dbcae';
 };
 
 // @alpha
@@ -406,7 +406,7 @@ export interface HasVariadicTraits<TChild> {
 // @alpha
 export interface ICheckoutEvents extends IErrorEvent {
     // (undocumented)
-    (event: "viewChange", listener: (before: TreeView, after: TreeView) => void): any;
+    (event: 'viewChange', listener: (before: TreeView, after: TreeView) => void): any;
 }
 
 // @alpha
@@ -423,7 +423,7 @@ export interface Insert {
 }
 
 // @alpha
-export interface InsertInternal extends Omit<InsertInternal_0_0_2, "destination"> {
+export interface InsertInternal extends Omit<InsertInternal_0_0_2, 'destination'> {
     // (undocumented)
     readonly destination: StablePlaceInternal;
 }
@@ -441,20 +441,20 @@ export interface InsertInternal_0_0_2 {
 // @alpha
 export interface InternalizedChange {
     // (undocumented)
-    InternalChangeBrand: "2cae1045-61cf-4ef7-a6a3-8ad920cb7ab3";
+    InternalChangeBrand: '2cae1045-61cf-4ef7-a6a3-8ad920cb7ab3';
 }
 
 // @alpha
 export interface ISharedTreeEvents extends ISharedObjectEvents {
     // (undocumented)
-    (event: "committedEdit", listener: EditCommittedHandler): any;
+    (event: 'committedEdit', listener: EditCommittedHandler): any;
     // (undocumented)
-    (event: "appliedSequencedEdit", listener: SequencedEditAppliedHandler): any;
+    (event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler): any;
 }
 
 // @alpha
 export type LocalCompressedId = number & {
-    readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
+    readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
 } & SessionUnique;
 
 // @alpha
@@ -479,7 +479,7 @@ export type NodeId = number & SessionSpaceCompressedId & NodeIdBrand;
 // @alpha (undocumented)
 export interface NodeIdBrand {
     // (undocumented)
-    readonly NodeId: "e53e7d6b-c8b9-431a-8805-4843fc639342";
+    readonly NodeId: 'e53e7d6b-c8b9-431a-8805-4843fc639342';
 }
 
 // @alpha
@@ -621,7 +621,7 @@ export type SessionSpaceCompressedId = CompressedId & SessionUnique;
 // @alpha
 export interface SessionUnique {
     // (undocumented)
-    readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+    readonly SessionUnique: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
 }
 
 // @alpha
@@ -634,7 +634,7 @@ export interface SetValue {
 }
 
 // @alpha
-export interface SetValueInternal extends Omit<SetValueInternal_0_0_2, "nodeToModify"> {
+export interface SetValueInternal extends Omit<SetValueInternal_0_0_2, 'nodeToModify'> {
     // (undocumented)
     readonly nodeToModify: NodeId;
 }
@@ -700,10 +700,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 }
 
 // @alpha
-export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [
-writeFormat: WF,
-options?: SharedTreeOptions<WF>
-];
+export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
 // @alpha
 export interface SharedTreeBaseOptions {
@@ -729,7 +726,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
-export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends "Forwards" | "None" = "Forwards"> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends "Forwards" ? "summarizeHistory" : never>;
+export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
 
 // @alpha
 export interface SharedTreeOptions_0_0_2 {
@@ -759,7 +756,7 @@ export enum Side {
 
 // @alpha
 export type StableNodeId = string & {
-    readonly StableNodeId: "a0843b38-699d-4bb2-aa7a-16c502a71151";
+    readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151';
 };
 
 // @alpha
@@ -778,7 +775,7 @@ export const StablePlace: {
 };
 
 // @alpha
-export interface StablePlaceInternal extends Omit<StablePlaceInternal_0_0_2, "referenceSibling" | "referenceTrait"> {
+export interface StablePlaceInternal extends Omit<StablePlaceInternal_0_0_2, 'referenceSibling' | 'referenceTrait'> {
     readonly referenceSibling?: NodeId;
     readonly referenceTrait?: TraitLocationInternal;
 }
@@ -855,7 +852,7 @@ export interface SucceedingTransactionState {
 
 // @alpha
 export type TraitLabel = UuidString & {
-    readonly TraitLabel: "613826ed-49cc-4df3-b2b8-bfc6866af8e3";
+    readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3';
 };
 
 // @alpha
@@ -867,7 +864,7 @@ export interface TraitLocation {
 }
 
 // @alpha
-export interface TraitLocationInternal extends Omit<TraitLocationInternal_0_0_2, "parent"> {
+export interface TraitLocationInternal extends Omit<TraitLocationInternal_0_0_2, 'parent'> {
     // (undocumented)
     readonly parent: NodeId;
 }
@@ -1094,7 +1091,7 @@ export interface TreeViewRange {
 
 // @alpha
 export type UuidString = string & {
-    readonly UuidString: "9d40d0ae-90d9-44b1-9482-9f55d59d5465";
+    readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
 
 // @alpha

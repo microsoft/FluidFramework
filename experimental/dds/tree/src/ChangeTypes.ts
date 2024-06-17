@@ -3,19 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 
-import { assertNotUndefined } from "./Common.js";
-import { NodeId, TraitLabel, UuidString } from "./Identifiers.js";
-import { getNodeId } from "./NodeIdUtilities.js";
-import { TraitLocation } from "./TreeView.js";
-import {
-	ConstraintEffect,
-	NodeData,
-	Payload,
-	Side,
-	TreeNodeSequence,
-} from "./persisted-types/index.js";
+import { assertNotUndefined } from './Common.js';
+import { NodeId, TraitLabel, UuidString } from './Identifiers.js';
+import { getNodeId } from './NodeIdUtilities.js';
+import { TraitLocation } from './TreeView.js';
+import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types/index.js';
 
 /**
  * An object which may have traits with children of the given type underneath it
@@ -237,7 +231,7 @@ export const Change = {
 		length?: number,
 		contentHash?: UuidString,
 		parentNode?: NodeId,
-		label?: TraitLabel,
+		label?: TraitLabel
 	): Constraint => ({
 		toConstrain,
 		effect,
@@ -259,10 +253,7 @@ export const Change = {
 	/**
 	 * @returns changes that insert 'nodes' into the specified location in the tree.
 	 */
-	insertTree: (
-		nodes: BuildNode | TreeNodeSequence<BuildNode>,
-		destination: StablePlace,
-	): Change[] => {
+	insertTree: (nodes: BuildNode | TreeNodeSequence<BuildNode>, destination: StablePlace): Change[] => {
 		const build = Change.build(nodes, 0);
 		return [build, Change.insert(build.destination, destination)];
 	},
@@ -405,11 +396,11 @@ export const StableRange = {
 			if (start.referenceTrait && end.referenceTrait) {
 				assert(
 					start.referenceTrait.parent === end.referenceTrait.parent,
-					0x5fe /* StableRange must be constructed with endpoints from the same trait */,
+					0x5fe /* StableRange must be constructed with endpoints from the same trait */
 				);
 				assert(
 					start.referenceTrait.label === end.referenceTrait.label,
-					0x5ff /* StableRange must be constructed with endpoints from the same trait */,
+					0x5ff /* StableRange must be constructed with endpoints from the same trait */
 				);
 			}
 			return { start, end };

@@ -3,32 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from 'assert';
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { expect } from "chai";
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { expect } from 'chai';
 
-import { Forest, ForestNode, compareForestNodes } from "../Forest.js";
-import { NodeId, TraitLabel } from "../Identifiers.js";
-import { Payload } from "../persisted-types/index.js";
+import { Forest, ForestNode, compareForestNodes } from '../Forest.js';
+import { NodeId, TraitLabel } from '../Identifiers.js';
+import { Payload } from '../persisted-types/index.js';
 
-import { TestTree } from "./utilities/TestNode.js";
-import { refreshTestTree } from "./utilities/TestUtilities.js";
+import { TestTree } from './utilities/TestNode.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
-const mainTraitLabel = "main" as TraitLabel;
+const mainTraitLabel = 'main' as TraitLabel;
 
-function makeForestNodeWithChildren(
-	testTree: TestTree,
-	id: NodeId,
-	...children: NodeId[]
-): ForestNode {
+function makeForestNodeWithChildren(testTree: TestTree, id: NodeId, ...children: NodeId[]): ForestNode {
 	return {
 		...testTree.buildLeaf(id),
 		traits: new Map(children.length > 0 ? [[mainTraitLabel, [...children]]] : []),
 	};
 }
 
-describe("Forest", () => {
+describe('Forest', () => {
 	let parentId: NodeId;
 	let childId: NodeId;
 	let secondChildId: NodeId;
@@ -52,49 +48,42 @@ describe("Forest", () => {
 		parentNode = makeForestNodeWithChildren(t, parentId);
 		emptyForest = Forest.create(true);
 		oneNodeForest = emptyForest.add([parentNode]);
-		parentForest = oneNodeForest
-			.add([childNode])
-			.attachRangeOfChildren(parentId, mainTraitLabel, 0, [childId]);
+		parentForest = oneNodeForest.add([childNode]).attachRangeOfChildren(parentId, mainTraitLabel, 0, [childId]);
 		grandparentForest = parentForest
 			.add([makeForestNodeWithChildren(t, secondChildId)])
 			.attachRangeOfChildren(childId, mainTraitLabel, 0, [secondChildId]);
 
 		threeLeafForest = parentForest
-			.add([
-				makeForestNodeWithChildren(t, secondChildId),
-				makeForestNodeWithChildren(t, thirdChildId),
-			])
+			.add([makeForestNodeWithChildren(t, secondChildId), makeForestNodeWithChildren(t, thirdChildId)])
 			.attachRangeOfChildren(parentId, mainTraitLabel, 1, [secondChildId, thirdChildId]);
 	});
 
-	it("test forests are consistent", () => {
+	it('test forests are consistent', () => {
 		emptyForest.assertConsistent();
 		parentForest.assertConsistent();
 		expect(emptyForest.size).equals(0);
 		expect(parentForest.size).equals(2);
 	});
 
-	it("fails on multiparenting", () => {
-		assert.throws(() =>
-			oneNodeForest.add([makeForestNodeWithChildren(testTree, parentId, childId, childId)]),
-		);
+	it('fails on multiparenting', () => {
+		assert.throws(() => oneNodeForest.add([makeForestNodeWithChildren(testTree, parentId, childId, childId)]));
 	});
 
-	it("cannot add a node with a duplicate ID", () => {
+	it('cannot add a node with a duplicate ID', () => {
 		assert.throws(() => oneNodeForest.add([makeForestNodeWithChildren(testTree, parentId)]));
 	});
 
-	it("can get nodes in the forest", () => {
+	it('can get nodes in the forest', () => {
 		expect(compareForestNodes(parentForest.get(childId), childNode));
 		expect(compareForestNodes(parentForest.get(parentId), parentNode));
 	});
 
-	it("can get parents in the forest", () => {
+	it('can get parents in the forest', () => {
 		expect(parentForest.tryGetParent(parentId)).to.be.undefined;
 		expect(parentForest.tryGetParent(childId)?.parentId).to.equal(parentId);
 	});
 
-	it("can add nodes", () => {
+	it('can add nodes', () => {
 		let forestA = emptyForest;
 		const children: ForestNode[] = [];
 		const numToAdd = 10;
@@ -111,16 +100,12 @@ describe("Forest", () => {
 	});
 
 	// Test that Forest.add() adds descendants and ancestors correctly regardless of the order in which they are supplied
-	it("can add nodes in any order", () => {
+	it('can add nodes in any order', () => {
 		const childId = testTree.generateNodeId();
 		const parentId = testTree.generateNodeId();
 		const child = makeForestNodeWithChildren(testTree, childId);
 		const parent = makeForestNodeWithChildren(testTree, parentId, childId);
-		const grandparent = makeForestNodeWithChildren(
-			testTree,
-			testTree.generateNodeId(),
-			parentId,
-		);
+		const grandparent = makeForestNodeWithChildren(testTree, testTree.generateNodeId(), parentId);
 		const forestA = emptyForest.add([child, parent, grandparent]);
 		const forestB = emptyForest.add([grandparent, parent, child]);
 		forestA.assertConsistent();
@@ -129,24 +114,21 @@ describe("Forest", () => {
 		expect(forestA.equals(forestB)).to.be.true;
 	});
 
-	it("can replace payloads", () => {
+	it('can replace payloads', () => {
 		expectSuccessfulReplace(oneNodeForest, parentId, 0); // Set a payload when there was none
 		expectSuccessfulReplace(oneNodeForest, parentId, 1); // Change a payload
 	});
 
-	it("can correctly attach a range to an empty trait on a root", () => {
+	it('can correctly attach a range to an empty trait on a root', () => {
 		const moreChildrenForest = oneNodeForest.add([
 			makeForestNodeWithChildren(testTree, childId),
 			makeForestNodeWithChildren(testTree, secondChildId),
 		]);
 
-		expectSuccessfulAttach(moreChildrenForest, parentId, mainTraitLabel, 0, [
-			childId,
-			secondChildId,
-		]);
+		expectSuccessfulAttach(moreChildrenForest, parentId, mainTraitLabel, 0, [childId, secondChildId]);
 	});
 
-	it("can correctly attach ranges to a populated trait on a root", () => {
+	it('can correctly attach ranges to a populated trait on a root', () => {
 		const twoLeafForest = parentForest.add([
 			makeForestNodeWithChildren(testTree, secondChildId),
 			makeForestNodeWithChildren(testTree, thirdChildId),
@@ -156,92 +138,85 @@ describe("Forest", () => {
 		expectSuccessfulAttach(twoLeafForest, parentId, mainTraitLabel, 1, [thirdChildId]);
 	});
 
-	it("can correctly attach ranges under a leaf", () => {
-		const threeNodeForest = parentForest.add([
-			makeForestNodeWithChildren(testTree, secondChildId),
-		]);
+	it('can correctly attach ranges under a leaf', () => {
+		const threeNodeForest = parentForest.add([makeForestNodeWithChildren(testTree, secondChildId)]);
 		expectSuccessfulAttach(threeNodeForest, childId, mainTraitLabel, 0, [secondChildId]);
 	});
 
-	it("only accepts valid indices for attaches", () => {
+	it('only accepts valid indices for attaches', () => {
 		const twoNodeForest = oneNodeForest.add([makeForestNodeWithChildren(testTree, childId)]);
 		assert.throws(
 			() => twoNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, -1, [childId]),
-			(e: Error) => validateAssertionError(e, "invalid attach index"),
+			(e: Error) => validateAssertionError(e, 'invalid attach index')
 		);
 		assert.throws(
 			() => twoNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, 1, [childId]),
-			(e: Error) => validateAssertionError(e, "invalid attach index"),
+			(e: Error) => validateAssertionError(e, 'invalid attach index')
 		);
 	});
 
-	it("does not add trait when attaching empty range to empty trait", () => {
-		const forestWithAttach = oneNodeForest.attachRangeOfChildren(
-			parentId,
-			mainTraitLabel,
-			0,
-			[],
-		);
+	it('does not add trait when attaching empty range to empty trait', () => {
+		const forestWithAttach = oneNodeForest.attachRangeOfChildren(parentId, mainTraitLabel, 0, []);
 		const newParent = forestWithAttach.get(parentId);
 		expect(newParent.traits.get(mainTraitLabel)).equals(undefined);
 	});
 
-	it("can correctly detach a range on a root node", () => {
+	it('can correctly detach a range on a root node', () => {
 		expectSuccessfulDetach(threeLeafForest, parentId, mainTraitLabel, 1, 2);
 	});
 
-	it("can correctly detach a range on a leaf node", () => {
+	it('can correctly detach a range on a leaf node', () => {
 		expectSuccessfulDetach(grandparentForest, childId, mainTraitLabel, 0, 1);
 	});
 
-	it("can correctly detach an entire trait", () => {
+	it('can correctly detach an entire trait', () => {
 		expectSuccessfulDetach(threeLeafForest, parentId, mainTraitLabel, 0, 2);
 	});
 
-	it("only accepts valid indices for detaches", () => {
+	it('only accepts valid indices for detaches', () => {
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, -1, -1),
-			(e: Error) => validateAssertionError(e, "invalid detach index range"),
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, -1, 0),
-			(e: Error) => validateAssertionError(e, "invalid detach index range"),
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, 1, 0),
-			(e: Error) => validateAssertionError(e, "invalid detach index range"),
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, 0, 2),
-			(e: Error) => validateAssertionError(e, "invalid detach index range"),
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 		assert.throws(
 			() => parentForest.detachRangeOfChildren(parentId, mainTraitLabel, 1, 2),
-			(e: Error) => validateAssertionError(e, "invalid detach index range"),
+			(e: Error) => validateAssertionError(e, 'invalid detach index range')
 		);
 	});
 
-	it("cannot delete parented nodes", () => {
+	it('cannot delete parented nodes', () => {
 		assert.throws(
 			() => parentForest.delete([childId], false),
-			(e: Error) => validateAssertionError(e, "deleted nodes must be unparented"),
+			(e: Error) => validateAssertionError(e, 'deleted nodes must be unparented')
 		);
 	});
 
-	it("can delete a root", () => {
+	it('can delete a root', () => {
 		const deleteRoot = parentForest.delete([parentId], false);
 		deleteRoot.assertConsistent();
 		expect(deleteRoot.size).to.equal(1);
 		expect(deleteRoot.tryGet(childId)).to.not.be.undefined;
 	});
 
-	it("can delete a subtree", () => {
+	it('can delete a subtree', () => {
 		const deleteLeaf = parentForest.delete([parentId], true);
 		deleteLeaf.assertConsistent();
 		expect(deleteLeaf.size).to.equal(0);
 	});
 
-	it("calculates deltas correctly", () => {
+	it('calculates deltas correctly', () => {
 		const add = emptyForest.delta(oneNodeForest);
 		const remove = oneNodeForest.delta(emptyForest);
 		const same = parentForest.delta(parentForest);
@@ -254,7 +229,7 @@ describe("Forest", () => {
 		expect(modify).deep.equals({ changed: [childId], added: [], removed: [] });
 	});
 
-	it("calculates equality correctly", () => {
+	it('calculates equality correctly', () => {
 		const modified = parentForest.setValue(parentId, -1);
 
 		expect(oneNodeForest.equals(emptyForest)).false;
@@ -268,7 +243,7 @@ describe("Forest", () => {
 		parentId: NodeId,
 		label: TraitLabel,
 		index: number,
-		childIds: NodeId[],
+		childIds: NodeId[]
 	): void {
 		const parent = forest.get(parentId);
 		const expectedTrait = [...(parent.traits.get(label) ?? [])];
@@ -288,17 +263,12 @@ describe("Forest", () => {
 		parentId: NodeId,
 		label: TraitLabel,
 		startIndex: number,
-		endIndex: number,
+		endIndex: number
 	): void {
 		const parent = forest.get(parentId);
 		const expectedTrait = [...(parent.traits.get(label) ?? [])];
 		const spliced = expectedTrait.splice(startIndex, endIndex - startIndex);
-		const { forest: forestWithDetach, detached } = forest.detachRangeOfChildren(
-			parentId,
-			label,
-			startIndex,
-			endIndex,
-		);
+		const { forest: forestWithDetach, detached } = forest.detachRangeOfChildren(parentId, label, startIndex, endIndex);
 
 		const newParent = forestWithDetach.get(parentId);
 		const trait = newParent.traits.get(label);
@@ -314,11 +284,7 @@ describe("Forest", () => {
 		}
 	}
 
-	function expectSuccessfulReplace(
-		forest: Forest,
-		nodeId: NodeId,
-		payload: Payload | null,
-	): void {
+	function expectSuccessfulReplace(forest: Forest, nodeId: NodeId, payload: Payload | null): void {
 		const forestWithReplace = forest.setValue(nodeId, payload);
 		const newNode = forestWithReplace.get(nodeId);
 		expect(newNode.payload).equals(payload);

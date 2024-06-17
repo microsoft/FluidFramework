@@ -3,39 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from 'assert';
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { expect } from "chai";
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { expect } from 'chai';
 
-import { fail } from "../Common.js";
-import { RevisionValueCache } from "../RevisionValueCache.js";
+import { fail } from '../Common.js';
+import { RevisionValueCache } from '../RevisionValueCache.js';
 
 type DummyValue = number;
 const dummyValue = -1;
 
-describe("RevisionValueCache", () => {
+describe('RevisionValueCache', () => {
 	function closestEntry(cache: RevisionValueCache<DummyValue>, revision: number): number {
-		return (cache.getClosestEntry(revision) ?? fail("No prior revision"))[0];
+		return (cache.getClosestEntry(revision) ?? fail('No prior revision'))[0];
 	}
 
-	it("cannot be created with a negative retention window", () => {
+	it('cannot be created with a negative retention window', () => {
 		assert.throws(
 			() => new RevisionValueCache<DummyValue>(1, -1),
-			(e: Error) => validateAssertionError(e, "retentionWindowStart must be initialized >= 0"),
+			(e: Error) => validateAssertionError(e, 'retentionWindowStart must be initialized >= 0')
 		);
 	});
 
-	it("cannot move the retention window backwards", () => {
+	it('cannot move the retention window backwards', () => {
 		const cache = new RevisionValueCache<DummyValue>(1, 0);
 		assert.throws(
 			() => cache.updateRetentionWindow(-1),
-			(e: Error) =>
-				validateAssertionError(e, "retention window boundary must not move backwards"),
+			(e: Error) => validateAssertionError(e, 'retention window boundary must not move backwards')
 		);
 	});
 
-	it("can find closest entry to a queried revision", () => {
+	it('can find closest entry to a queried revision', () => {
 		const cache = new RevisionValueCache<DummyValue>(1, 0, [0, dummyValue]);
 		cache.cacheValue(2, dummyValue);
 		expect(closestEntry(cache, 1)).to.equal(0);
@@ -43,13 +42,12 @@ describe("RevisionValueCache", () => {
 		expect(closestEntry(cache, 3)).to.equal(2);
 	});
 
-	it("evicts entries when full", () => {
+	it('evicts entries when full', () => {
 		const size = 3;
-		const cache = new RevisionValueCache<DummyValue>(
-			size,
-			size * 3 /* ensure all entries are outside of window */,
-			[0, dummyValue],
-		);
+		const cache = new RevisionValueCache<DummyValue>(size, size * 3 /* ensure all entries are outside of window */, [
+			0,
+			dummyValue,
+		]);
 
 		// Fill the cache
 		// Start at 1 because the initial revision is never evicted
@@ -66,7 +64,7 @@ describe("RevisionValueCache", () => {
 		}
 	});
 
-	it("retains entries within the retention window", () => {
+	it('retains entries within the retention window', () => {
 		const windowStart = 3;
 		const windowEnd = windowStart + 3;
 		const cache = new RevisionValueCache<DummyValue>(1, windowStart, [0, dummyValue]);
@@ -87,7 +85,7 @@ describe("RevisionValueCache", () => {
 		}
 	});
 
-	it("can evict entries that move out of the retention window", () => {
+	it('can evict entries that move out of the retention window', () => {
 		const cache = new RevisionValueCache<DummyValue>(1, 0);
 		cache.cacheValue(5, dummyValue);
 		cache.cacheValue(1, dummyValue);
@@ -97,7 +95,7 @@ describe("RevisionValueCache", () => {
 		expect(closestEntry(cache, 5)).to.equal(2);
 	});
 
-	it("only keeps one explicitly retained value", () => {
+	it('only keeps one explicitly retained value', () => {
 		const cache = new RevisionValueCache<DummyValue>(1, 3, [0, dummyValue]);
 		cache.cacheValue(1, dummyValue);
 		// Add a retained entry outside of the retention window
@@ -114,7 +112,7 @@ describe("RevisionValueCache", () => {
 		expect(closestEntry(cache, 5)).to.equal(5);
 	});
 
-	it("can update retention window to a new range that moves > evictableSize entries", () => {
+	it('can update retention window to a new range that moves > evictableSize entries', () => {
 		const cacheSize = 5;
 		const cache = new RevisionValueCache<DummyValue>(cacheSize, 0);
 		cache.cacheRetainedValue(0, dummyValue);

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { expect } from 'chai';
 
-import { ReconciliationEdit } from "../ReconciliationPath.js";
-import { ChangeInternal, EditStatus } from "../persisted-types/index.js";
+import { ReconciliationEdit } from '../ReconciliationPath.js';
+import { ChangeInternal, EditStatus } from '../persisted-types/index.js';
 
-import { MockTransaction } from "./utilities/MockTransaction.js";
-import { refreshTestTree } from "./utilities/TestUtilities.js";
+import { MockTransaction } from './utilities/MockTransaction.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
-describe("GenericTransaction", () => {
+describe('GenericTransaction', () => {
 	const testTree = refreshTestTree();
-	it("does not read the reconciliation path when change resolution does not require it", () => {
+	it('does not read the reconciliation path when change resolution does not require it', () => {
 		const trappedPath = new Proxy([] as ReconciliationEdit[], {
 			get: (target, prop): unknown => {
-				expect("the path was read").equals("the path should not be read");
+				expect('the path was read').equals('the path should not be read');
 				return target[prop];
 			},
 		});
@@ -25,7 +25,7 @@ describe("GenericTransaction", () => {
 		expect(transaction.status).equals(EditStatus.Applied);
 	});
 
-	it("reflects failure status when validateOnClose is not successful", () => {
+	it('reflects failure status when validateOnClose is not successful', () => {
 		const transaction = MockTransaction.factory(testTree.view, {
 			statusOnClose: EditStatus.Invalid,
 		});

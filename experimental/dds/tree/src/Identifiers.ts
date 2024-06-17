@@ -14,7 +14,7 @@
  * @alpha
  */
 export type UuidString = string & {
-	readonly UuidString: "9d40d0ae-90d9-44b1-9482-9f55d59d5465";
+	readonly UuidString: '9d40d0ae-90d9-44b1-9482-9f55d59d5465';
 };
 
 /**
@@ -28,7 +28,7 @@ export type AttributionId = UuidString;
  * @internal
  */
 export type StableId = UuidString & {
-	readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
+	readonly StableId: '53172b0d-a3d5-41ea-bd75-b43839c97f5a';
 };
 
 /**
@@ -36,14 +36,14 @@ export type StableId = UuidString & {
  * @internal
  */
 export type SessionId = StableId & {
-	readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+	readonly SessionId: '4498f850-e14e-4be9-8db0-89ec00997e58';
 };
 
 /**
  * Edit identifier
  * @alpha
  */
-export type EditId = UuidString & { readonly EditId: "56897beb-53e4-4e66-85da-4bf5cd5d0d49" };
+export type EditId = UuidString & { readonly EditId: '56897beb-53e4-4e66-85da-4bf5cd5d0d49' };
 
 /**
  * Scoped to a single edit: identifies a sequences of nodes that can be moved into a trait.
@@ -54,7 +54,7 @@ export type EditId = UuidString & { readonly EditId: "56897beb-53e4-4e66-85da-4b
  * @alpha
  */
 export type DetachedSequenceId = number & {
-	readonly DetachedSequenceId: "f7d7903a-194e-45e7-8e82-c9ef4333577d";
+	readonly DetachedSequenceId: 'f7d7903a-194e-45e7-8e82-c9ef4333577d';
 };
 
 /**
@@ -68,7 +68,7 @@ export type CompressedId = FinalCompressedId | LocalCompressedId;
  * @internal
  */
 export type InternedStringId = number & {
-	readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
+	readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c';
 };
 
 /**
@@ -76,7 +76,7 @@ export type InternedStringId = number & {
  * @alpha
  */
 export interface SessionUnique {
-	readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+	readonly SessionUnique: 'cea55054-6b82-4cbf-ad19-1fa645ea3b3e';
 }
 
 /**
@@ -94,7 +94,7 @@ export type SessionSpaceCompressedId = CompressedId & SessionUnique;
  * @internal
  */
 export type OpSpaceCompressedId = CompressedId & {
-	readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+	readonly OpNormalized: '9209432d-a959-4df7-b2ad-767ead4dbcae';
 };
 
 /**
@@ -104,10 +104,10 @@ export type OpSpaceCompressedId = CompressedId & {
  * @alpha
  */
 export type FinalCompressedId = number & {
-	readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
+	readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';
 
 	// Same brand as OpNormalizedCompressedId, as final IDs are always finally normalized
-	readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+	readonly OpNormalized: '9209432d-a959-4df7-b2ad-767ead4dbcae';
 };
 
 /**
@@ -117,14 +117,14 @@ export type FinalCompressedId = number & {
  * @alpha
  */
 export type LocalCompressedId = number & {
-	readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";
+	readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
 } & SessionUnique; // Same brand as CompressedId, as local IDs are always locally normalized
 
 /**
  * @alpha
  */
 export interface NodeIdBrand {
-	readonly NodeId: "e53e7d6b-c8b9-431a-8805-4843fc639342";
+	readonly NodeId: 'e53e7d6b-c8b9-431a-8805-4843fc639342';
 }
 
 /**
@@ -148,7 +148,7 @@ export type OpSpaceNodeId = number & OpSpaceCompressedId & NodeIdBrand;
  * @alpha
  */
 export type StableNodeId = string & {
-	readonly StableNodeId: "a0843b38-699d-4bb2-aa7a-16c502a71151";
+	readonly StableNodeId: 'a0843b38-699d-4bb2-aa7a-16c502a71151';
 };
 
 /**
@@ -157,7 +157,7 @@ export type StableNodeId = string & {
  * @alpha
  */
 export type Definition = UuidString & {
-	readonly Definition: "c0ef9488-2a78-482d-aeed-37fba996354c";
+	readonly Definition: 'c0ef9488-2a78-482d-aeed-37fba996354c';
 };
 
 /**
@@ -166,7 +166,7 @@ export type Definition = UuidString & {
  * @alpha
  */
 export type TraitLabel = UuidString & {
-	readonly TraitLabel: "613826ed-49cc-4df3-b2b8-bfc6866af8e3";
+	readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3';
 };
 
 /**
@@ -174,8 +174,6 @@ export type TraitLabel = UuidString & {
  * @internal
  */
 // Nodes can be an `object` type which is a banned type.
-export function isDetachedSequenceId(
-	node: DetachedSequenceId | object,
-): node is DetachedSequenceId {
-	return typeof node !== "object";
+export function isDetachedSequenceId(node: DetachedSequenceId | object): node is DetachedSequenceId {
+	return typeof node !== 'object';
 }

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 
-import { Change, StablePlace } from "../ChangeTypes.js";
-import { EditLog } from "../EditLog.js";
-import { newEdit } from "../EditUtilities.js";
-import { Edit } from "../persisted-types/index.js";
+import { Change, StablePlace } from '../ChangeTypes.js';
+import { EditLog } from '../EditLog.js';
+import { newEdit } from '../EditUtilities.js';
+import { Edit } from '../persisted-types/index.js';
 
-import { setUpTestTree } from "./utilities/TestUtilities.js";
+import { setUpTestTree } from './utilities/TestUtilities.js';
 
-describe("EditLog Perf", () => {
+describe('EditLog Perf', () => {
 	const insertNumbers = [10, 50, 100, 500, 1000];
 
 	insertNumbers.forEach((numberOfInserts) => {
@@ -20,11 +20,7 @@ describe("EditLog Perf", () => {
 
 		const testTree = setUpTestTree();
 		for (let i = 0; i < numberOfInserts; i++) {
-			edits.push(
-				newEdit(
-					Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.traitLocation)),
-				),
-			);
+			edits.push(newEdit(Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.traitLocation))));
 		}
 
 		benchmark({

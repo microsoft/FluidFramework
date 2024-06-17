@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assertNotUndefined } from "./Common.js";
-import { SharedTreeEvent } from "./EventTypes.js";
-import { EditId } from "./Identifiers.js";
-import { EditCommittedEventArguments, SharedTree } from "./SharedTree.js";
+import { assertNotUndefined } from './Common.js';
+import { SharedTreeEvent } from './EventTypes.js';
+import { EditId } from './Identifiers.js';
+import { EditCommittedEventArguments, SharedTree } from './SharedTree.js';
 
 // TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development
 // while we decide on the correct layering for undo.
@@ -43,9 +43,9 @@ export class SharedTreeUndoRedoHandler {
 					editId,
 					assertNotUndefined(
 						tree,
-						"An edit committed event for a revertible edit should include the target SharedTree in its arguments.",
-					),
-				),
+						'An edit committed event for a revertible edit should include the target SharedTree in its arguments.'
+					)
+				)
 			);
 		}
 	};
@@ -57,7 +57,7 @@ export class SharedTreeUndoRedoHandler {
 export class SharedTreeRevertible implements IRevertible {
 	constructor(
 		private readonly editId: EditId,
-		private readonly tree: SharedTree,
+		private readonly tree: SharedTree
 	) {}
 
 	public revert() {

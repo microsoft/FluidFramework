@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
-import { assertNotUndefined, fail } from "./Common.js";
-import { PlaceValidationResult, RangeValidationResultKind } from "./EditUtilities.js";
-import { SharedTreeEvent } from "./EventTypes.js";
-import { SequencedEditAppliedEventArguments, SharedTree } from "./SharedTree.js";
-import { TransactionInternal } from "./TransactionInternal.js";
-import { EditStatus } from "./persisted-types/index.js";
+import { assertNotUndefined, fail } from './Common.js';
+import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
+import { SharedTreeEvent } from './EventTypes.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from './SharedTree.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { EditStatus } from './persisted-types/index.js';
 
 /**
  * Logs generic telemetry for failed sequenced edits.
@@ -22,11 +22,8 @@ export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: ()
 	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments): void {
 		if (wasLocal && outcome.status !== EditStatus.Applied) {
 			logger.send({
-				category: "generic",
-				eventName:
-					outcome.status === EditStatus.Malformed
-						? "MalformedSharedTreeEdit"
-						: "InvalidSharedTreeEdit",
+				category: 'generic',
+				eventName: outcome.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
 			});
 		}
 	}
@@ -213,10 +210,7 @@ export interface MergeHealthStats {
  */
 export class SharedTreeMergeHealthTelemetryHeartbeat {
 	private heartbeatTimerId = 0;
-	private readonly treeData = new Map<
-		SharedTree,
-		{ tally: MergeHealthStats; logger?: ITelemetryLoggerExt }
-	>();
+	private readonly treeData = new Map<SharedTree, { tally: MergeHealthStats; logger?: ITelemetryLoggerExt }>();
 
 	/**
 	 * Adds a tree to the set of tree to log merge health telemetry for.
@@ -248,10 +242,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	 * @returns Aggregated statistics about merge health for the given tree.
 	 */
 	public getStats(tree: SharedTree): MergeHealthStats {
-		return assertNotUndefined(
-			this.treeData.get(tree),
-			"No such tree was attached to the logger",
-		).tally;
+		return assertNotUndefined(this.treeData.get(tree), 'No such tree was attached to the logger').tally;
 	}
 
 	/**
@@ -344,17 +335,12 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 	private readonly sequencedEditHandler = (params: SequencedEditAppliedEventArguments) => {
 		const { edit, tree, wasLocal, logger, outcome, reconciliationPath } = params;
 		if (wasLocal) {
-			const tallyAndLogger =
-				this.treeData.get(tree) ?? fail("Should only receive events for registered trees");
+			const tallyAndLogger = this.treeData.get(tree) ?? fail('Should only receive events for registered trees');
 			tallyAndLogger.logger = logger;
 			const tally = tallyAndLogger.tally;
 			tally.editCount += 1;
-			tally.pathLengths[reconciliationPath.length] =
-				(tally.pathLengths[reconciliationPath.length] ?? 0) + 1;
-			if (
-				edit.pastAttemptCount !== undefined &&
-				edit.pastAttemptCount > tally.maxAttemptCount
-			) {
+			tally.pathLengths[reconciliationPath.length] = (tally.pathLengths[reconciliationPath.length] ?? 0) + 1;
+			if (edit.pastAttemptCount !== undefined && edit.pastAttemptCount > tally.maxAttemptCount) {
 				tally.maxAttemptCount = edit.pastAttemptCount;
 			}
 			if (outcome.status !== EditStatus.Applied) {
@@ -448,8 +434,8 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 			if (logger && tally.editCount > 0) {
 				// Note: all this data is for sequenced edits that were originally produced by the local client.
 				logger.send({
-					category: "Heartbeat",
-					eventName: "EditMergeHealth",
+					category: 'Heartbeat',
+					eventName: 'EditMergeHealth',
 					...tally,
 					// The counts of occurrences for a given path length.
 					// '1:2' means two occurrences of length one.
@@ -465,5 +451,5 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 function pathLengthsCounts(lengths: readonly number[]): string {
 	return Object.entries(lengths)
 		.map(([length, count]) => `${length}:${count}`)
-		.join(",");
+		.join(',');
 }

@@ -3,34 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from 'assert';
 
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import {
-	MockFluidDataStoreRuntime,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
-import { expect } from "chai";
+import { LoaderHeader } from '@fluidframework/container-definitions/internal';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
+import { expect } from 'chai';
 
-import { BuildNode, Change, StablePlace, StableRange } from "../../ChangeTypes.js";
-import { Mutable } from "../../Common.js";
-import { EditLog } from "../../EditLog.js";
-import { areRevisionViewsSemanticallyEqual } from "../../EditUtilities.js";
-import { SharedTreeDiagnosticEvent } from "../../EventTypes.js";
-import { NodeId, StableNodeId, TraitLabel } from "../../Identifiers.js";
-import { SharedTree } from "../../SharedTree.js";
-import { TreeNodeHandle } from "../../TreeNodeHandle.js";
-import { nilUuid } from "../../UuidUtilities.js";
-import {
-	SharedTreeOpType,
-	SharedTreeUpdateOp,
-	TreeNodeSequence,
-	WriteFormat,
-} from "../../persisted-types/index.js";
-import { applyTestEdits } from "../Summary.tests.js";
+import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { Mutable } from '../../Common.js';
+import { EditLog } from '../../EditLog.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
+import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { nilUuid } from '../../UuidUtilities.js';
+import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
+import { applyTestEdits } from '../Summary.tests.js';
 
-import { buildLeaf } from "./TestNode.js";
+import { buildLeaf } from './TestNode.js';
 import {
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
@@ -40,7 +32,7 @@ import {
 	spyOnSubmittedOps,
 	testTrait,
 	waitForSummary,
-} from "./TestUtilities.js";
+} from './TestUtilities.js';
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
 	const versions: WriteFormat[] = [];
@@ -53,28 +45,28 @@ function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
  */
 export function runSharedTreeVersioningTests(
 	title: string,
-	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents,
+	setUpTestSharedTree: (options?: SharedTreeTestingOptions) => SharedTreeTestingComponents
 ) {
 	describe(title, () => {
 		const oldVersion = WriteFormat.v0_0_2;
 		const newVersion = WriteFormat.v0_1_1;
 		const treeOptions = { localMode: false, writeFormat: oldVersion };
 		const secondTreeOptions = {
-			id: "secondTestSharedTree",
+			id: 'secondTestSharedTree',
 			localMode: false,
 			writeFormat: newVersion,
 		};
 
-		it("defaults to latest version if no version is specified when creating factory", () => {
+		it('defaults to latest version if no version is specified when creating factory', () => {
 			const sharedTree = SharedTree.create(
 				new MockFluidDataStoreRuntime({ registry: [SharedTree.getFactory()] }),
-				"SharedTree",
+				'SharedTree'
 			);
 			const writeFormats = Object.values(WriteFormat);
 			expect(sharedTree.getWriteFormat()).to.equal(writeFormats[writeFormats.length - 1]);
 		});
 
-		it("only processes edit ops if they have the same version", () => {
+		it('only processes edit ops if they have the same version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const { tree: newerTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
@@ -93,7 +85,7 @@ export function runSharedTreeVersioningTests(
 			expect(newerTree.edits.length).to.equal(0);
 		});
 
-		it("resubmits ops concurrent to an update op using the new format", () => {
+		it('resubmits ops concurrent to an update op using the new format', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const { tree: newerTree } = setUpTestSharedTree({
 				...treeOptions,
@@ -107,18 +99,12 @@ export function runSharedTreeVersioningTests(
 			const summary = tree.saveSummary();
 			const ops = spyOnSubmittedOps(containerRuntimeFactory);
 			newerTree.loadSummary(summary);
-			tree.applyEdit(
-				...Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right)),
-			);
+			tree.applyEdit(...Change.move(StableRange.only(testTree.left), StablePlace.after(testTree.right)));
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify even though one edit was applied, 2 edit ops were sent due to the version upgrade.
 			expect(ops.length).to.equal(3);
-			expect(ops.map((op) => op.type)).to.eql([
-				SharedTreeOpType.Update,
-				SharedTreeOpType.Edit,
-				SharedTreeOpType.Edit,
-			]);
+			expect(ops.map((op) => op.type)).to.eql([SharedTreeOpType.Update, SharedTreeOpType.Edit, SharedTreeOpType.Edit]);
 
 			expect(ops[1].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
@@ -127,15 +113,12 @@ export function runSharedTreeVersioningTests(
 			const handle = new TreeNodeHandle(tree.currentView, tree.convertToNodeId(rootStableId));
 			expect(handle.traits[testTree.left.traitLabel]).to.equal(undefined);
 			expect(handle.traits[testTree.right.traitLabel].length).to.equal(2);
-			const handle2 = new TreeNodeHandle(
-				newerTree.currentView,
-				newerTree.convertToNodeId(rootStableId),
-			);
+			const handle2 = new TreeNodeHandle(newerTree.currentView, newerTree.convertToNodeId(rootStableId));
 			expect(handle2.traits[testTree.left.traitLabel]).to.equal(undefined);
 			expect(handle2.traits[testTree.right.traitLabel].length).to.equal(2);
 		});
 
-		it("throws if an edit op with a newer version than the write version is received", () => {
+		it('throws if an edit op with a newer version than the write version is received', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const { tree: newerTree } = setUpTestSharedTree({
 				containerRuntimeFactory,
@@ -149,15 +132,11 @@ export function runSharedTreeVersioningTests(
 			applyNoop(newerTree);
 			assert.throws(
 				() => containerRuntimeFactory.processAllMessages(),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						"Newer op version received by a client that has yet to be updated.",
-					),
+				(e: Error) => validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
 			);
 		});
 
-		it("ignores duplicate update ops", () => {
+		it('ignores duplicate update ops', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			// Process an edit
 			applyNoop(tree);
@@ -192,7 +171,7 @@ export function runSharedTreeVersioningTests(
 			expect(versions3).to.deep.equal([oldVersion, newVersion]);
 		});
 
-		it("maintains custom EditLog and LogViewer callbacks when updating", () => {
+		it('maintains custom EditLog and LogViewer callbacks when updating', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			containerRuntimeFactory.processAllMessages();
 
@@ -228,7 +207,7 @@ export function runSharedTreeVersioningTests(
 			expect(editAdded).to.equal(additionalEdits * 2);
 		});
 
-		it("begins writing the new version only after updating", () => {
+		it('begins writing the new version only after updating', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			// Process an edit
 			applyNoop(tree);
@@ -262,7 +241,7 @@ export function runSharedTreeVersioningTests(
 			expect(ops[3].version).to.equal(newVersion);
 		});
 
-		it("Existing client can update to a write version higher than the initialized write version", () => {
+		it('Existing client can update to a write version higher than the initialized write version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
 			const versions = spyOnVersionChanges(tree);
 			const ops = spyOnSubmittedOps(containerRuntimeFactory);
@@ -288,17 +267,13 @@ export function runSharedTreeVersioningTests(
 
 			expect(versions).to.eql([newVersion]);
 			expect(ops.length).to.equal(3);
-			expect(ops.map((op) => op.type)).to.eql([
-				SharedTreeOpType.Edit,
-				SharedTreeOpType.Update,
-				SharedTreeOpType.Edit,
-			]);
+			expect(ops.map((op) => op.type)).to.eql([SharedTreeOpType.Edit, SharedTreeOpType.Update, SharedTreeOpType.Edit]);
 
 			expect(ops[0].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
 		});
 
-		it("New client can update to a write version higher than the initialized version on summary load", () => {
+		it('New client can update to a write version higher than the initialized version on summary load', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 				...treeOptions,
 				writeFormat: newVersion,
@@ -326,7 +301,7 @@ export function runSharedTreeVersioningTests(
 			expect(ops.map((op) => op.version)).to.eql([newVersion, newVersion]);
 		});
 
-		it("can load a 0.1.1 summary and access the current view", () => {
+		it('can load a 0.1.1 summary and access the current view', () => {
 			// This is a regression test for the logic initializing SharedTree's EditLog from a summary.
 			// The 0.1.1 format omits `currentTree`, but EditLog should still tolerate synchronous access
 			// of the first edit in the session (which is a single insert containing that tree).
@@ -345,7 +320,7 @@ export function runSharedTreeVersioningTests(
 			expect(() => newTree.currentView).to.not.throw();
 		});
 
-		it("upgrades properly when no edits are sent", async () => {
+		it('upgrades properly when no edits are sent', async () => {
 			// Starts in 0.0.2 (so no upgrade)
 			const { testObjectProvider, tree: tree1 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
@@ -366,7 +341,7 @@ export function runSharedTreeVersioningTests(
 			expect(tree1.equals(tree2)).to.be.true;
 		});
 
-		it("generates unique IDs after upgrading from 0.0.2", async () => {
+		it('generates unique IDs after upgrading from 0.0.2', async () => {
 			const idCount = 100;
 
 			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
@@ -401,7 +376,7 @@ export function runSharedTreeVersioningTests(
 			expect(tree.equals(tree)).to.be.true;
 		});
 
-		it("converts IDs correctly after upgrading from 0.0.2", async () => {
+		it('converts IDs correctly after upgrading from 0.0.2', async () => {
 			const { testObjectProvider, tree: tree1 } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
 			});
@@ -422,8 +397,8 @@ export function runSharedTreeVersioningTests(
 			tree1.applyEdit(
 				...Change.insertTree(
 					builds,
-					StablePlace.atEndOf({ parent: tree1.currentView.root, label: "foo" as TraitLabel }),
-				),
+					StablePlace.atEndOf({ parent: tree1.currentView.root, label: 'foo' as TraitLabel })
+				)
 			);
 
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
@@ -431,7 +406,7 @@ export function runSharedTreeVersioningTests(
 				testObjectProvider,
 				// To be removed ADO:5464
 				featureGates: {
-					"Fluid.Container.ForceWriteConnection": true,
+					'Fluid.Container.ForceWriteConnection': true,
 				},
 			});
 
@@ -454,7 +429,7 @@ export function runSharedTreeVersioningTests(
 			expect(tree1.equals(tree2)).to.be.true;
 		});
 
-		it("interns strings correctly after upgrading from 0.0.2", async () => {
+		it('interns strings correctly after upgrading from 0.0.2', async () => {
 			const {
 				testObjectProvider,
 				tree: tree1,
@@ -464,14 +439,14 @@ export function runSharedTreeVersioningTests(
 				summarizeHistory: false,
 			});
 
-			const internedDefinition = "internedDefinition";
+			const internedDefinition = 'internedDefinition';
 
 			const id = tree1.generateNodeId();
 			tree1.applyEdit(
 				...Change.insertTree(
 					{ definition: internedDefinition, identifier: id },
-					StablePlace.atStartOf(testTrait(tree1.currentView)),
-				),
+					StablePlace.atStartOf(testTrait(tree1.currentView))
+				)
 			);
 			tree1.applyEdit(Change.delete(StableRange.only(id)));
 
@@ -491,17 +466,15 @@ export function runSharedTreeVersioningTests(
 			tree1.applyEdit(
 				...Change.insertTree(
 					{ definition: internedDefinition, identifier: tree1.generateNodeId() },
-					StablePlace.atStartOf(testTrait(tree1.currentView)),
-				),
+					StablePlace.atStartOf(testTrait(tree1.currentView))
+				)
 			);
 
 			await testObjectProvider.ensureSynchronized();
-			expect(
-				areRevisionViewsSemanticallyEqual(tree1.currentView, tree1, tree2.currentView, tree2),
-			).to.be.true;
+			expect(areRevisionViewsSemanticallyEqual(tree1.currentView, tree1, tree2.currentView, tree2)).to.be.true;
 		}).timeout(10000);
 
-		it("attributes all pre-upgrade IDs to the nil UUID after upgrading from 0.0.2", async () => {
+		it('attributes all pre-upgrade IDs to the nil UUID after upgrading from 0.0.2', async () => {
 			const { testObjectProvider, tree: tree } = await setUpLocalServerTestSharedTree({
 				writeFormat: WriteFormat.v0_0_2,
 			});
@@ -511,12 +484,7 @@ export function runSharedTreeVersioningTests(
 			const nodeId = tree.generateNodeId();
 			const stableNodeId = tree.convertToStableNodeId(nodeId);
 
-			tree.applyEdit(
-				Change.insertTree(
-					buildLeaf(nodeId),
-					StablePlace.atStartOf(testTrait(tree.currentView)),
-				),
-			);
+			tree.applyEdit(Change.insertTree(buildLeaf(nodeId), StablePlace.atStartOf(testTrait(tree.currentView))));
 
 			// New tree joins, causes an upgrade
 			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
@@ -524,26 +492,24 @@ export function runSharedTreeVersioningTests(
 				testObjectProvider,
 				// To be removed ADO:5464
 				featureGates: {
-					"Fluid.Container.ForceWriteConnection": true,
+					'Fluid.Container.ForceWriteConnection': true,
 				},
 			});
 
 			await testObjectProvider.ensureSynchronized();
 			expect(tree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 			expect(tree.attributeNodeId(nodeId)).to.equal(attributionId);
-			expect(tree2.attributeNodeId(tree2.convertToNodeId(stableNodeId))).to.equal(
-				attributionId,
-			);
+			expect(tree2.attributeNodeId(tree2.convertToNodeId(stableNodeId))).to.equal(attributionId);
 		});
 
-		describe("telemetry", () => {
+		describe('telemetry', () => {
 			const events: ITelemetryBaseEvent[] = [];
 			const logger = { send: (event) => events.push(event) };
 			beforeEach(() => {
 				events.length = 0;
 			});
 
-			it("emits RequestVersionUpdate events", () => {
+			it('emits RequestVersionUpdate events', () => {
 				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 					...treeOptions,
 					logger,
@@ -558,15 +524,15 @@ export function runSharedTreeVersioningTests(
 				expect(
 					events.some(
 						(event) =>
-							event.eventName === "SharedTree:RequestVersionUpdate" &&
+							event.eventName === 'SharedTree:RequestVersionUpdate' &&
 							event.versionTo === newVersion &&
 							event.versionFrom === oldVersion &&
-							event.category === "generic",
-					),
+							event.category === 'generic'
+					)
 				).to.equal(true);
 			});
 
-			it("emits VersionUpdate events", () => {
+			it('emits VersionUpdate events', () => {
 				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 					...treeOptions,
 					logger,
@@ -579,17 +545,17 @@ export function runSharedTreeVersioningTests(
 
 				newerTree.loadSummary(tree.saveSummary());
 				const matchesVersionUpdate = (event: ITelemetryBaseEvent) =>
-					event.eventName === "SharedTree:VersionUpdate_end" &&
+					event.eventName === 'SharedTree:VersionUpdate_end' &&
 					event.version === newVersion &&
-					event.category === "performance" &&
-					typeof event.duration === "number";
+					event.category === 'performance' &&
+					typeof event.duration === 'number';
 
 				expect(events.some(matchesVersionUpdate)).to.equal(false);
 				containerRuntimeFactory.processAllMessages();
 				expect(events.some(matchesVersionUpdate)).to.equal(true);
 			});
 
-			it("emits error events on VersionUpdate failure", () => {
+			it('emits error events on VersionUpdate failure', () => {
 				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
 					...treeOptions,
 					logger,
@@ -600,17 +566,17 @@ export function runSharedTreeVersioningTests(
 				};
 				containerRuntimeFactory.pushMessage({ contents: op });
 				(tree.edits as EditLog).getLocalEdits = () => {
-					throw new Error("Simulated issue in update");
+					throw new Error('Simulated issue in update');
 				};
 				const matchesFailedVersionUpdate = (event: ITelemetryBaseEvent) =>
-					event.eventName === "SharedTree:VersionUpdate_cancel" &&
-					event.category === "error" &&
-					event.error === "Simulated issue in update";
+					event.eventName === 'SharedTree:VersionUpdate_cancel' &&
+					event.category === 'error' &&
+					event.error === 'Simulated issue in update';
 
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(false);
 				assert.throws(
 					() => containerRuntimeFactory.processAllMessages(),
-					(e: Error) => validateAssertionError(e, /Simulated issue in update/),
+					(e: Error) => validateAssertionError(e, /Simulated issue in update/)
 				);
 				expect(events.some(matchesFailedVersionUpdate)).to.equal(true);
 			});

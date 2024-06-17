@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
-import { BTree } from "@tylerbu/sorted-btree-es6";
+import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { BTree } from '@tylerbu/sorted-btree-es6';
 
-const defaultFailMessage = "Assertion failed";
+const defaultFailMessage = 'Assertion failed';
 
 /**
  * Assertion failures in SharedTree will throw an exception containing this value as an `errorType`. The Fluid runtime propagates this field
@@ -19,7 +16,7 @@ const defaultFailMessage = "Assertion failed";
  * Exporting this enables users to safely filter telemetry handling of errors based on their type.
  * @internal
  */
-export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
+export const sharedTreeAssertionErrorType = 'SharedTreeAssertion';
 
 /**
  * Telemetry properties decorated on all SharedTree events.
@@ -44,7 +41,7 @@ class SharedTreeAssertionError extends Error {
 
 	public constructor(message: string) {
 		super(message);
-		this.name = "Assertion error";
+		this.name = 'Assertion error';
 		// Note: conditional as `captureStackTrace` isn't defined in all browsers (e.g. Safari).
 		Error.captureStackTrace?.(this);
 	}
@@ -86,11 +83,7 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  * To avoid collisions with assertShortCode tagging in Fluid Framework, this cannot be named "assert".
  * When a non constant message is not needed, use `assert` from `@fluidframework/core-utils`;
  */
-export function assertWithMessage(
-	condition: unknown,
-	message?: string,
-	notLogSafe = false,
-): asserts condition {
+export function assertWithMessage(condition: unknown, message?: string, notLogSafe = false): asserts condition {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, notLogSafe);
@@ -104,12 +97,12 @@ export function assertWithMessage(
  * @param notLogSafe - boolean flag for whether the message passed in contains data that shouldn't be logged for privacy reasons.
  */
 export function fail(message: string = defaultFailMessage, notLogSafe = false): never {
-	if (process.env.NODE_ENV !== "production") {
+	if (process.env.NODE_ENV !== 'production') {
 		debugger;
 		console.error(message);
 	}
 
-	throw new SharedTreeAssertionError(notLogSafe ? "Assertion failed" : message);
+	throw new SharedTreeAssertionError(notLogSafe ? 'Assertion failed' : message);
 }
 
 /**
@@ -135,10 +128,7 @@ export function fail(message: string = defaultFailMessage, notLogSafe = false): 
  * @param value - Value to assert against is non undefined.
  * @param message - Message to be printed if assertion fails.
  */
-export function assertNotUndefined<T>(
-	value: T | undefined,
-	message = "value must not be undefined",
-): T {
+export function assertNotUndefined<T>(value: T | undefined, message = 'value must not be undefined'): T {
 	assertWithMessage(value !== undefined, message);
 	return value;
 }
@@ -148,10 +138,7 @@ export function assertNotUndefined<T>(
  * @param array - Array to assert contains a single value.
  * @param message - Message to be printed if assertion fails.
  */
-export function assertArrayOfOne<T>(
-	array: readonly T[],
-	message = "array value must contain exactly one item",
-): T {
+export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
 	assertWithMessage(array.length === 1, message);
 	return array[0];
 }
@@ -175,11 +162,7 @@ export function assertArrayOfOne<T>(
  * @param propName - The name of the property on the object
  * @param value - The value of the property
  */
-export function memoizeGetter<T, K extends keyof T>(
-	object: T,
-	propName: K,
-	value: T[K],
-): T[K] {
+export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
 	Object.defineProperty(object, propName, {
 		value,
 		enumerable: true,
@@ -215,7 +198,7 @@ export function* filter<T>(sequence: Iterable<T>, filter: (t: T) => boolean): It
 export function reduce<T>(
 	sequence: Iterable<T>,
 	reduce: (previous: T, current: T) => T,
-	initialValue?: T,
+	initialValue?: T
 ): T | undefined {
 	let previous: T | undefined;
 	let current: T | undefined;
@@ -255,13 +238,9 @@ export function find<T>(sequence: Iterable<T>, find: (t: T) => boolean): T | und
 export function compareIterables<T>(
 	iterableA: Iterable<T>,
 	iterableB: Iterable<T>,
-	elementComparator: (a: T, b: T) => boolean = Object.is,
+	elementComparator: (a: T, b: T) => boolean = Object.is
 ): boolean {
-	return compareIterators<T>(
-		iterableA[Symbol.iterator](),
-		iterableB[Symbol.iterator](),
-		elementComparator,
-	);
+	return compareIterators<T>(iterableA[Symbol.iterator](), iterableB[Symbol.iterator](), elementComparator);
 }
 
 /**
@@ -274,7 +253,7 @@ export function compareIterables<T>(
 function compareIterators<T, TReturn extends T = T>(
 	iteratorA: Iterator<T, TReturn>,
 	iteratorB: Iterator<T, TReturn>,
-	elementComparator: (a: T, b: T) => boolean = Object.is,
+	elementComparator: (a: T, b: T) => boolean = Object.is
 ): boolean {
 	let a: IteratorResult<T, TReturn>;
 	let b: IteratorResult<T, TReturn>;
@@ -303,7 +282,7 @@ function compareIterators<T, TReturn extends T = T>(
 export function compareMaps<K, V>(
 	mapA: ReadonlyMap<K, V>,
 	mapB: ReadonlyMap<K, V>,
-	elementComparator: (a: V, b: V) => boolean = Object.is,
+	elementComparator: (a: V, b: V) => boolean = Object.is
 ): boolean {
 	if (mapA.size !== mapB.size) {
 		return false;
@@ -353,11 +332,7 @@ export function identity<T>(t: T): T {
  * Copies a property in such a way that it is only set on `destination` if it is present on `source`.
  * This avoids having explicit undefined values under properties that would cause `Object.hasOwnProperty` to return true.
  */
-export function copyPropertyIfDefined<TSrc, TDst>(
-	source: TSrc,
-	destination: TDst,
-	property: keyof TSrc,
-): void {
+export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDst, property: keyof TSrc): void {
 	const value = source[property];
 	if (value !== undefined) {
 		(destination as any)[property] = value;
@@ -371,7 +346,7 @@ export function copyPropertyIfDefined<TSrc, TDst>(
 export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 	value: TDst[P] | undefined,
 	destination: TDst,
-	property: P,
+	property: P
 ): void {
 	if (value !== undefined) {
 		destination[property] = value;
@@ -400,22 +375,13 @@ function breakOnDifference(): { break: boolean } {
  * Helper that returns whether two b-trees are equal.
  * Accelerated when large portions of the tree are shared between the two.
  */
-export function compareBtrees<K, V>(
-	treeA: BTree<K, V>,
-	treeB: BTree<K, V>,
-	compare: (valA: V, valB: V) => boolean,
-) {
-	const diff = treeA.diffAgainst(
-		treeB,
-		breakOnDifference,
-		breakOnDifference,
-		(_, valA, valB) => {
-			if (!compare(valA, valB)) {
-				return { break: true };
-			}
-			return undefined;
-		},
-	);
+export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, compare: (valA: V, valB: V) => boolean) {
+	const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
+		if (!compare(valA, valB)) {
+			return { break: true };
+		}
+		return undefined;
+	});
 
 	return diff === undefined;
 }
@@ -482,7 +448,7 @@ export namespace Result {
 	 */
 	export function mapOk<TOkIn, TOkOut, TError>(
 		result: Result<TOkIn, TError>,
-		map: (ok: TOkIn) => TOkOut,
+		map: (ok: TOkIn) => TOkOut
 	): Result<TOkOut, TError> {
 		return isOk(result) ? ok(map(result.result)) : result;
 	}
@@ -495,7 +461,7 @@ export namespace Result {
 	 */
 	export function mapError<TOk, TErrorIn, TErrorOut>(
 		result: Result<TOk, TErrorIn>,
-		map: (error: TErrorIn) => TErrorOut,
+		map: (error: TErrorIn) => TErrorOut
 	): Result<TOk, TErrorOut> {
 		return isError(result) ? error(map(result.error)) : result;
 	}
@@ -536,10 +502,7 @@ export type RecursiveMutable<T> = {
 };
 
 /** Type that produces a writeable map from a readonly map. */
-export type MutableMap<T extends ReadonlyMap<unknown, unknown>> = T extends ReadonlyMap<
-	infer K,
-	infer V
->
+export type MutableMap<T extends ReadonlyMap<unknown, unknown>> = T extends ReadonlyMap<infer K, infer V>
 	? Map<K, V>
 	: never;
 
@@ -549,7 +512,7 @@ export type With<T, K extends keyof never, V> = T & { [key in K]: V };
 /**
  * A readonly `Map` which is known to contain a value for every possible key
  */
-export interface ClosedMap<K, V> extends Omit<Map<K, V>, "delete" | "clear"> {
+export interface ClosedMap<K, V> extends Omit<Map<K, V>, 'delete' | 'clear'> {
 	get(key: K): V;
 }
 
@@ -575,21 +538,19 @@ export type ReplaceRecursive<T, TReplace, TWith> = T extends TReplace
 			};
 
 /** A union type of the first `N` positive integers */
-export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A["length"]
+export type TakeWholeNumbers<N extends number, A extends never[] = []> = N extends A['length']
 	? never
-	: A["length"] | TakeWholeNumbers<N, [never, ...A]>;
+	: A['length'] | TakeWholeNumbers<N, [never, ...A]>;
 /** Returns a tuple type with exactly `Length` elements of type `T` */
-export type ArrayOfLength<
-	T,
-	Length extends number,
-	A extends T[] = [],
-> = Length extends A["length"] ? A : ArrayOfLength<T, Length, [T, ...A]>;
+export type ArrayOfLength<T, Length extends number, A extends T[] = []> = Length extends A['length']
+	? A
+	: ArrayOfLength<T, Length, [T, ...A]>;
 /**
  * Fails if `array` does not have exactly `length` elements
  */
 export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
 	array: readonly T[],
-	length: Len,
+	length: Len
 ): array is ArrayOfLength<T, Len> {
 	return array.length === length;
 }
@@ -598,7 +559,7 @@ export function hasExactlyLength<T, Len extends TakeWholeNumbers<16>>(
  */
 export function hasLength<T, Len extends TakeWholeNumbers<16>>(
 	array: readonly T[],
-	length: Len,
+	length: Len
 ): array is [...ArrayOfLength<T, Len>, ...T[]] {
 	return array.length >= length;
 }
@@ -616,8 +577,6 @@ export type RestOrArray<T> = readonly T[] | [readonly T[]];
  * Useful for implementing functions with a `RestOrArray` parameter.
  * T must not be implemented with an array (`Array.isArray(t)` must return false)
  */
-export function unwrapRestOrArray<T>(
-	value: [any[]] extends [T] ? never : RestOrArray<T>,
-): readonly T[] {
+export function unwrapRestOrArray<T>(value: [any[]] extends [T] ? never : RestOrArray<T>): readonly T[] {
 	return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
 }

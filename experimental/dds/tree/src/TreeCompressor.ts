@@ -3,25 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 
-import { Mutable, fail } from "./Common.js";
-import { isDetachedSequenceId } from "./Identifiers.js";
-import type {
-	Definition,
-	DetachedSequenceId,
-	InternedStringId,
-	OpSpaceNodeId,
-	TraitLabel,
-} from "./Identifiers.js";
-import type { ContextualizedNodeIdNormalizer } from "./NodeIdUtilities.js";
-import type { StringInterner } from "./StringInterner.js";
-import type {
-	CompressedPlaceholderTree,
-	CompressedTraits,
-	Payload,
-	PlaceholderTree,
-} from "./persisted-types/index.js";
+import { Mutable, fail } from './Common.js';
+import { isDetachedSequenceId } from './Identifiers.js';
+import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
+import type { StringInterner } from './StringInterner.js';
+import type { CompressedPlaceholderTree, CompressedTraits, Payload, PlaceholderTree } from './persisted-types/index.js';
 
 /**
  * Compresses a given {@link PlaceholderTree} into a more compact serializable format.
@@ -35,7 +24,7 @@ export interface TreeCompressor<TPlaceholder extends DetachedSequenceId | never>
 	compress<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): CompressedPlaceholderTree<TId, TPlaceholder>;
 
 	/**
@@ -46,7 +35,7 @@ export interface TreeCompressor<TPlaceholder extends DetachedSequenceId | never>
 	decompress<TId extends OpSpaceNodeId>(
 		node: CompressedPlaceholderTree<TId, TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): PlaceholderTree<TPlaceholder>;
 }
 
@@ -62,7 +51,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 	public compress<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): CompressedPlaceholderTree<TId, TPlaceholder> {
 		this.previousId = undefined;
 		return this.compressI(node, interner, idNormalizer);
@@ -71,7 +60,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 	private compressI<TId extends OpSpaceNodeId>(
 		node: PlaceholderTree<TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): CompressedPlaceholderTree<TId, TPlaceholder> {
 		if (isDetachedSequenceId(node)) {
 			return node;
@@ -89,13 +78,12 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 			for (const [label, trait] of traits) {
 				compressedTraits.push(
 					interner.getInternedId(label) ?? (label as TraitLabel),
-					trait.map((child) => this.compressI(child, interner, idNormalizer)),
+					trait.map((child) => this.compressI(child, interner, idNormalizer))
 				);
 			}
 		}
 
-		const payloadTraits =
-			node.payload !== undefined ? [node.payload, ...compressedTraits] : compressedTraits;
+		const payloadTraits = node.payload !== undefined ? [node.payload, ...compressedTraits] : compressedTraits;
 		if (payloadTraits.length > 0) {
 			if (compressedId !== undefined) {
 				return [internedDefinition, compressedId, payloadTraits];
@@ -116,13 +104,13 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 	public decompress<TId extends OpSpaceNodeId>(
 		node: CompressedPlaceholderTree<TId, TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): PlaceholderTree<TPlaceholder> {
 		if (isDetachedSequenceId(node)) {
 			return node;
 		}
 		const rootId = node[1];
-		assert(typeof rootId === "number", 0x63c /* Root node was compressed with no ID */);
+		assert(typeof rootId === 'number', 0x63c /* Root node was compressed with no ID */);
 		this.previousId = rootId;
 		return this.decompressI(node, interner, idNormalizer);
 	}
@@ -130,7 +118,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 	private decompressI<TId extends OpSpaceNodeId>(
 		node: CompressedPlaceholderTree<TId, TPlaceholder>,
 		interner: StringInterner,
-		idNormalizer: ContextualizedNodeIdNormalizer<TId>,
+		idNormalizer: ContextualizedNodeIdNormalizer<TId>
 	): PlaceholderTree<TPlaceholder> {
 		if (isDetachedSequenceId(node)) {
 			return node;
@@ -144,7 +132,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 		let payload: Payload | undefined;
 		const [maybeInternedDefinition, idOrPayloadTraits, payloadTraits] = node;
 		if (idOrPayloadTraits !== undefined) {
-			if (typeof idOrPayloadTraits === "number") {
+			if (typeof idOrPayloadTraits === 'number') {
 				compressedId = idOrPayloadTraits;
 				if (payloadTraits !== undefined) {
 					compressedTraits = payloadTraits;
@@ -155,7 +143,7 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 		}
 
 		const definition =
-			typeof maybeInternedDefinition === "string"
+			typeof maybeInternedDefinition === 'string'
 				? maybeInternedDefinition
 				: (interner.getString(maybeInternedDefinition) as Definition);
 
@@ -186,12 +174,10 @@ export class InterningTreeCompressor<TPlaceholder extends DetachedSequenceId | n
 					| CompressedPlaceholderTree<TId, TPlaceholder>
 				)[];
 
-				const decompressedTraits = compressedChildren.map((child) =>
-					this.decompressI(child, interner, idNormalizer),
-				);
+				const decompressedTraits = compressedChildren.map((child) => this.decompressI(child, interner, idNormalizer));
 
 				const label =
-					typeof maybeCompressedLabel === "string"
+					typeof maybeCompressedLabel === 'string'
 						? maybeCompressedLabel
 						: (interner.getString(maybeCompressedLabel) as TraitLabel);
 				traits[label] = decompressedTraits;

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { expect } from 'chai';
 
-import { Change, StablePlace, StableRange } from "../ChangeTypes.js";
-import { SharedTree } from "../SharedTree.js";
-import { Transaction, TransactionEvent } from "../Transaction.js";
-import { TreeView } from "../TreeView.js";
-import { EditStatus, WriteFormat } from "../persisted-types/index.js";
+import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
+import { SharedTree } from '../SharedTree.js';
+import { Transaction, TransactionEvent } from '../Transaction.js';
+import { TreeView } from '../TreeView.js';
+import { EditStatus, WriteFormat } from '../persisted-types/index.js';
 
-import { expectDefined } from "./utilities/TestCommon.js";
-import { TestTree } from "./utilities/TestNode.js";
-import { setUpTestSharedTree, setUpTestTree } from "./utilities/TestUtilities.js";
+import { expectDefined } from './utilities/TestCommon.js';
+import { TestTree } from './utilities/TestNode.js';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
-describe("Transaction", () => {
+describe('Transaction', () => {
 	function createTestTransaction(): {
 		tree: SharedTree;
 		testTree: TestTree;
@@ -42,7 +42,7 @@ describe("Transaction", () => {
 		return Change.insert(Number.NaN, StablePlace.after(testTree.left));
 	}
 
-	it("can apply an edit to the tree", () => {
+	it('can apply an edit to the tree', () => {
 		const { tree, testTree, transaction } = createTestTransaction();
 		const editCountBefore = tree.edits.length;
 		transaction.apply(createValidChange(testTree));
@@ -51,28 +51,28 @@ describe("Transaction", () => {
 		expect(tree.currentView.getTrait(testTree.left.traitLocation).length).to.equal(0);
 	});
 
-	it("has correct edit status when applied", () => {
+	it('has correct edit status when applied', () => {
 		const { testTree, transaction } = createTestTransaction();
 		expect(transaction.apply(createValidChange(testTree))).to.equal(EditStatus.Applied);
 		expect(transaction.status).to.equal(EditStatus.Applied);
 		transaction.closeAndCommit();
 	});
 
-	it("has correct edit status when invalid", () => {
+	it('has correct edit status when invalid', () => {
 		const { testTree, transaction } = createTestTransaction();
 		expect(transaction.apply(createInvalidChange(testTree))).to.equal(EditStatus.Invalid);
 		expect(transaction.status).to.equal(EditStatus.Invalid);
 		transaction.closeAndCommit();
 	});
 
-	it("has correct edit status when malformed", () => {
+	it('has correct edit status when malformed', () => {
 		const { testTree, transaction } = createTestTransaction();
 		expect(transaction.apply(createMalformedChange(testTree))).to.equal(EditStatus.Malformed);
 		expect(transaction.status).to.equal(EditStatus.Malformed);
 		transaction.closeAndCommit();
 	});
 
-	it("can apply multiple changes at once", () => {
+	it('can apply multiple changes at once', () => {
 		const { tree, testTree, transaction } = createTestTransaction();
 		transaction.apply(createValidChanges(testTree));
 		transaction.closeAndCommit();
@@ -80,7 +80,7 @@ describe("Transaction", () => {
 		expect(tree.currentView.getTrait(testTree.right.traitLocation).length).to.equal(2);
 	});
 
-	it("does not apply empty edits", () => {
+	it('does not apply empty edits', () => {
 		const { tree, transaction } = createTestTransaction();
 		const editCountBefore = tree.edits.length;
 		transaction.apply([]);
@@ -88,7 +88,7 @@ describe("Transaction", () => {
 		expect(tree.edits.length).to.equal(editCountBefore);
 	});
 
-	it("does not apply a batch of changes if any of them fail", () => {
+	it('does not apply a batch of changes if any of them fail', () => {
 		const { testTree, transaction } = createTestTransaction();
 		const change = createValidChange(testTree);
 		expect(transaction.apply(change, change)).to.equal(EditStatus.Invalid); // Second change is invalid
@@ -96,18 +96,18 @@ describe("Transaction", () => {
 		transaction.closeAndCommit();
 	});
 
-	it("is open when created", () => {
+	it('is open when created', () => {
 		const { transaction } = createTestTransaction();
 		expect(transaction.isOpen).to.be.true;
 	});
 
-	it("closes when a change fails to apply", () => {
+	it('closes when a change fails to apply', () => {
 		const { testTree, transaction } = createTestTransaction();
 		transaction.apply(createInvalidChange(testTree));
 		expect(transaction.isOpen).to.be.false;
 	});
 
-	it("closes when an edit is applied", () => {
+	it('closes when an edit is applied', () => {
 		const { testTree, transaction } = createTestTransaction();
 		expect(transaction.isOpen).to.be.true;
 		transaction.apply(createValidChange(testTree));
@@ -116,7 +116,7 @@ describe("Transaction", () => {
 		expect(transaction.isOpen).to.be.false;
 	});
 
-	it("emits view change events", () => {
+	it('emits view change events', () => {
 		const { testTree, transaction } = createTestTransaction();
 		let beforeView: TreeView | undefined;
 		let afterView: TreeView | undefined;
@@ -131,7 +131,7 @@ describe("Transaction", () => {
 		expect(expectDefined(afterView).equals(afterViewExpected)).to.be.true;
 	});
 
-	it("emits only one view change event per apply", () => {
+	it('emits only one view change event per apply', () => {
 		const { testTree, transaction } = createTestTransaction();
 		let eventCount = 0;
 		transaction.addListener(TransactionEvent.ViewChange, () => {
@@ -141,7 +141,7 @@ describe("Transaction", () => {
 		expect(eventCount).to.equal(1);
 	});
 
-	it("does not emit view change events when there are no changes", () => {
+	it('does not emit view change events when there are no changes', () => {
 		const { transaction } = createTestTransaction();
 		transaction.on(TransactionEvent.ViewChange, () => {
 			expect.fail();

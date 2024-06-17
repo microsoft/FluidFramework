@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { BaseFuzzTestState } from "@fluid-private/stochastic-test-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import type { TestObjectProvider } from "@fluidframework/test-utils/internal";
+import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
+import type { IContainer } from '@fluidframework/container-definitions/internal';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import type { TestObjectProvider } from '@fluidframework/test-utils/internal';
 
-import type { Build, Detach, Insert, SetValue } from "../../ChangeTypes.js";
-import type { NodeId } from "../../Identifiers.js";
-import type { NodeIdGenerator } from "../../NodeIdUtilities.js";
-import type { SharedTree } from "../../SharedTree.js";
-import type { TreeView } from "../../TreeView.js";
-import type { WriteFormat } from "../../persisted-types/index.js";
+import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes.js';
+import type { NodeId } from '../../Identifiers.js';
+import type { NodeIdGenerator } from '../../NodeIdUtilities.js';
+import type { SharedTree } from '../../SharedTree.js';
+import type { TreeView } from '../../TreeView.js';
+import type { WriteFormat } from '../../persisted-types/index.js';
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;
@@ -27,28 +27,28 @@ export interface Collaborator {
 }
 
 export interface TreeEdit {
-	type: "edit";
+	type: 'edit';
 	contents: FuzzChange;
 	/** index of the tree to apply the edit to. */
 	index: number;
 }
 
 export interface TreeJoin {
-	type: "join";
+	type: 'join';
 	summarizeHistory: boolean;
 	writeFormat: WriteFormat;
 	isObserver: boolean;
 }
 
 export interface TreeLeave {
-	type: "leave";
+	type: 'leave';
 	isObserver: boolean;
 	index: number;
 }
 
 /** Applies an edit after disconnecting the container, then rejoins */
 export interface TreeStash {
-	type: "stash";
+	type: 'stash';
 	contents: FuzzChange;
 	summarizeHistory: boolean;
 	writeFormat: WriteFormat;
@@ -56,7 +56,7 @@ export interface TreeStash {
 }
 
 export interface Synchronize {
-	type: "synchronize";
+	type: 'synchronize';
 }
 
 /**
@@ -73,20 +73,20 @@ export interface Synchronize {
 export type Operation = TreeEdit | TreeJoin | TreeLeave | TreeStash | Synchronize;
 
 export interface FuzzInsert {
-	fuzzType: "insert";
+	fuzzType: 'insert';
 	build: Build;
 	insert: Insert;
 }
 
-export type FuzzDelete = Detach & { fuzzType: "delete" };
+export type FuzzDelete = Detach & { fuzzType: 'delete' };
 
 export interface FuzzMove {
-	fuzzType: "move";
+	fuzzType: 'move';
 	detach: Detach;
 	insert: Insert;
 }
 
-export type FuzzSetPayload = SetValue & { fuzzType: "setPayload" };
+export type FuzzSetPayload = SetValue & { fuzzType: 'setPayload' };
 
 export type FuzzChange = FuzzInsert | FuzzDelete | FuzzMove | FuzzSetPayload;
 

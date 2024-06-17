@@ -9,7 +9,7 @@ import type {
 	LocalCompressedId,
 	OpSpaceCompressedId,
 	SessionId,
-} from "../../Identifiers.js";
+} from '../../Identifiers.js';
 
 /**
  * A serialized ID allocation session for an `IdCompressor`.
@@ -102,7 +102,7 @@ export interface SerializedSessionIdNormalizer {
  * The minimal required contents of a serialized IdCompressor.
  */
 export interface VersionedSerializedIdCompressor {
-	readonly _versionedSerializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
+	readonly _versionedSerializedIdCompressor: '8c73c57c-1cf4-4278-8915-6444cb4f6af5';
 	readonly version: string;
 }
 
@@ -126,14 +126,14 @@ export interface SerializedIdCompressor extends VersionedSerializedIdCompressor 
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  */
 export interface SerializedIdCompressorWithNoSession extends SerializedIdCompressor {
-	readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
+	readonly _noLocalState: '3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb';
 }
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.
  */
 export interface SerializedIdCompressorWithOngoingSession extends SerializedIdCompressor {
-	readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
+	readonly _hasLocalState: '1281acae-6d14-47e7-bc92-71c8ee0819cb';
 	/** The session ID of the local session, by index into `sessions`. */
 	readonly localSessionIndex: number;
 	/** This is only present if the local session made any IDs. */

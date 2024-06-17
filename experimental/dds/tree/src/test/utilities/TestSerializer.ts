@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
+import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 
 export class TestFluidSerializer implements IFluidSerializer {
 	public constructor() {}
@@ -15,11 +15,11 @@ export class TestFluidSerializer implements IFluidSerializer {
 	}
 
 	public encode(value: any, bind: IFluidHandle): void {
-		throw new Error("Method not implemented.");
+		throw new Error('Method not implemented.');
 	}
 
 	public decode(input: any): any {
-		throw new Error("Method not implemented.");
+		throw new Error('Method not implemented.');
 	}
 
 	public stringify(value: any, bind: IFluidHandle): string {
@@ -36,18 +36,18 @@ export class TestFluidHandle extends FluidHandleBase<unknown> {
 	public isAttached;
 
 	public async get(): Promise<any> {
-		throw new Error("Method not implemented.");
+		throw new Error('Method not implemented.');
 	}
 
 	public bind(handle: IFluidHandle): void {
-		throw new Error("Method not implemented.");
+		throw new Error('Method not implemented.');
 	}
 
 	public attachGraph(): void {
-		throw new Error("Method not implemented.");
+		throw new Error('Method not implemented.');
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
-		throw new Error("Method not implemented.");
+		throw new Error('Method not implemented.');
 	}
 }

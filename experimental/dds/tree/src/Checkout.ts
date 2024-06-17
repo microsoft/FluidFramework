@@ -3,34 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IErrorEvent,
-	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+} from '@fluidframework/telemetry-utils/internal';
 
-import { Change } from "./ChangeTypes.js";
-import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from "./Common.js";
-import { newEditId } from "./EditUtilities.js";
-import { SharedTreeEvent } from "./EventTypes.js";
-import { EditId } from "./Identifiers.js";
-import { CachingLogViewer } from "./LogViewer.js";
-import { RevisionView } from "./RevisionView.js";
-import { EditCommittedHandler, SharedTree } from "./SharedTree.js";
-import {
-	EditingResult,
-	GenericTransaction,
-	TransactionInternal,
-	ValidEditingResult,
-} from "./TransactionInternal.js";
-import { TreeView } from "./TreeView.js";
-import { ChangeInternal, Edit, EditStatus } from "./persisted-types/index.js";
+import { Change } from './ChangeTypes.js';
+import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
+import { newEditId } from './EditUtilities.js';
+import { SharedTreeEvent } from './EventTypes.js';
+import { EditId } from './Identifiers.js';
+import { CachingLogViewer } from './LogViewer.js';
+import { RevisionView } from './RevisionView.js';
+import { EditCommittedHandler, SharedTree } from './SharedTree.js';
+import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
@@ -41,7 +32,7 @@ export enum CheckoutEvent {
 	 * `currentView` has changed.
 	 * Passed a before and after TreeView.
 	 */
-	ViewChange = "viewChange",
+	ViewChange = 'viewChange',
 }
 
 /**
@@ -49,7 +40,7 @@ export enum CheckoutEvent {
  * @alpha
  */
 export interface ICheckoutEvents extends IErrorEvent {
-	(event: "viewChange", listener: (before: TreeView, after: TreeView) => void);
+	(event: 'viewChange', listener: (before: TreeView, after: TreeView) => void);
 }
 
 /**
@@ -90,10 +81,7 @@ export enum EditValidationResult {
  * `SharedTree` used at construction time.
  * @alpha
  */
-export abstract class Checkout
-	extends EventEmitterWithErrorHandling<ICheckoutEvents>
-	implements IDisposable
-{
+export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.
@@ -137,16 +125,12 @@ export abstract class Checkout
 
 	public disposed: boolean = false;
 
-	protected constructor(
-		tree: SharedTree,
-		currentView: RevisionView,
-		onEditCommitted: EditCommittedHandler,
-	) {
+	protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
 		super((_event, error: unknown) => {
-			this.tree.emit("error", error);
+			this.tree.emit('error', error);
 		});
 		this.tree = tree;
-		this.logger = createChildLogger({ logger: this.tree.logger, namespace: "Checkout" });
+		this.logger = createChildLogger({ logger: this.tree.logger, namespace: 'Checkout' });
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;
 		}
@@ -195,7 +179,7 @@ export abstract class Checkout
 		this.currentEdit = undefined;
 		assert(
 			currentEdit.failure === undefined,
-			0x66d /* Cannot close a transaction that has already failed. Use abortEdit instead. */,
+			0x66d /* Cannot close a transaction that has already failed. Use abortEdit instead. */
 		);
 
 		const editingResult = currentEdit.close();
@@ -211,9 +195,7 @@ export abstract class Checkout
 		failure: TransactionInternal.Failure | undefined;
 	}): asserts result is { status: EditStatus.Applied; failure: undefined };
 	private validateChangesApplied(
-		result:
-			| EditingResult
-			| { status: EditStatus; failure: TransactionInternal.Failure | undefined },
+		result: EditingResult | { status: EditStatus; failure: TransactionInternal.Failure | undefined }
 	) {
 		if (result.status === EditStatus.Applied) {
 			return;
@@ -227,7 +209,7 @@ export abstract class Checkout
 				break;
 			case TransactionInternal.FailureKind.BadRange: {
 				const { rangeFailure } = failure;
-				if (typeof rangeFailure === "string") {
+				if (typeof rangeFailure === 'string') {
 					additionalProps.rangeFailure = rangeFailure;
 				} else {
 					additionalProps.rangeFailure = rangeFailure.kind;
@@ -240,22 +222,19 @@ export abstract class Checkout
 		}
 
 		this.logger.sendErrorEvent({
-			eventName: "FailedLocalEdit",
-			status: result.status === 0 ? "Malformed" : "Invalid",
+			eventName: 'FailedLocalEdit',
+			status: result.status === 0 ? 'Malformed' : 'Invalid',
 			failureKind: failure.kind,
 			...additionalProps,
 		});
-		fail("Locally constructed edits must be well-formed and valid.");
+		fail('Locally constructed edits must be well-formed and valid.');
 	}
 
 	/**
 	 * Inform the Checkout that a particular edit is know to have a specific result when applied to a particular TreeView.
 	 * This may be used as a caching hint to avoid recomputation.
 	 */
-	protected hintKnownEditingResult(
-		edit: Edit<ChangeInternal>,
-		result: ValidEditingResult,
-	): void {
+	protected hintKnownEditingResult(edit: Edit<ChangeInternal>, result: ValidEditingResult): void {
 		// As an optimization, inform logViewer of this editing result so it can reuse it if applied to the same before revision.
 		this.cachingLogViewer?.setKnownEditingResult(edit, result);
 	}
@@ -285,14 +264,9 @@ export abstract class Checkout
 	public applyChanges(changes: readonly Change[]): void;
 	public applyChanges(...changes: readonly Change[]): void;
 	public applyChanges(...changes: RestOrArray<Change>): void {
-		assert(
-			this.currentEdit !== undefined,
-			0x602 /* Changes must be applied as part of an ongoing edit. */,
-		);
+		assert(this.currentEdit !== undefined, 0x602 /* Changes must be applied as part of an ongoing edit. */);
 		const changeArray = unwrapRestOrArray(changes);
-		const { status } = this.currentEdit.applyChanges(
-			changeArray.map((c) => this.tree.internalizeChange(c)),
-		);
+		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
 		this.validateChangesApplied({ status, failure: this.currentEdit.failure });
 		this.emitChange();
 	}
@@ -305,10 +279,7 @@ export abstract class Checkout
 	protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
 	protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
 	protected tryApplyChangesInternal(...changes: RestOrArray<ChangeInternal>): EditStatus {
-		assert(
-			this.currentEdit !== undefined,
-			0x603 /* Changes must be applied as part of an ongoing edit. */,
-		);
+		assert(this.currentEdit !== undefined, 0x603 /* Changes must be applied as part of an ongoing edit. */);
 		const changeArray = unwrapRestOrArray(changes);
 		const { status } = this.currentEdit.applyChanges(changeArray);
 		if (status === EditStatus.Applied) {
@@ -340,14 +311,9 @@ export abstract class Checkout
 	public tryApplyEdit(...changes: RestOrArray<Change>): EditId | undefined {
 		this.openEdit();
 
-		assert(
-			this.currentEdit !== undefined,
-			0x604 /* Changes must be applied as part of an ongoing edit. */,
-		);
+		assert(this.currentEdit !== undefined, 0x604 /* Changes must be applied as part of an ongoing edit. */);
 		const changeArray = unwrapRestOrArray(changes);
-		const { status } = this.currentEdit.applyChanges(
-			changeArray.map((c) => this.tree.internalizeChange(c)),
-		);
+		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
 		if (status === EditStatus.Applied) {
 			this.emitChange();
 			return this.closeEdit();
@@ -372,19 +338,14 @@ export abstract class Checkout
 	 */
 	public rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid {
 		assert(this.currentEdit !== undefined, 0x605 /* An edit is not open. */);
-		assert(
-			this.currentEdit.status === EditStatus.Applied,
-			0x606 /* Local edits should always be valid. */,
-		);
+		assert(this.currentEdit.status === EditStatus.Applied, 0x606 /* Local edits should always be valid. */);
 		// When closed, the result might indicate Malformed due to unused detached entities.
 		// This is not an error, as the edit was still open and can still use those entities.
 		const priorResults = this.currentEdit.close();
-		const rebasedEdit = TransactionInternal.factory(this.latestCommittedView).applyChanges(
-			priorResults.changes,
-		);
+		const rebasedEdit = TransactionInternal.factory(this.latestCommittedView).applyChanges(priorResults.changes);
 		assert(
 			rebasedEdit.status !== EditStatus.Malformed,
-			0x607 /* Malformed changes should have been caught on original application. */,
+			0x607 /* Malformed changes should have been caught on original application. */
 		);
 		let status: EditValidationResult.Valid | EditValidationResult.Invalid;
 		if (rebasedEdit.status === EditStatus.Invalid) {
@@ -430,8 +391,7 @@ export abstract class Checkout
 		assertWithMessage(this.currentEdit !== undefined);
 		const index = this.tree.edits.getIndexOfId(editId);
 		const edit =
-			this.tree.edits.tryGetEditAtIndex(index) ??
-			fail("Edit with the specified ID does not exist in memory");
+			this.tree.edits.tryGetEditAtIndex(index) ?? fail('Edit with the specified ID does not exist in memory');
 		const before = this.tree.logViewer.getRevisionViewInMemory(index);
 		const changes = this.tree.revertChanges(edit.changes, before);
 		if (changes !== undefined) {

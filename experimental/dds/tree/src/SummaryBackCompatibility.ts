@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 
-import { fail } from "./Common.js";
-import { getNumberOfHandlesFromEditLogSummary } from "./EditLog.js";
+import { fail } from './Common.js';
+import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';
 import {
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
-} from "./persisted-types/index.js";
+} from './persisted-types/index.js';
 
 /**
  * Deserializes a JSON object produced by `serialize()` and uses it to initialize the tree with the encoded state.
@@ -25,19 +25,16 @@ import {
  * @throws If the summary could not be interpreted.
  *
  */
-export function deserialize(
-	jsonSummary: string,
-	serializer: IFluidSerializer,
-): SharedTreeSummaryBase {
+export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase {
 	let summary: Partial<SharedTreeSummaryBase>;
 	try {
 		summary = serializer.parse(jsonSummary);
 	} catch {
-		fail("Json syntax error in Summary");
+		fail('Json syntax error in Summary');
 	}
 
-	if (typeof summary !== "object") {
-		fail("Summary is not an object");
+	if (typeof summary !== 'object') {
+		fail('Summary is not an object');
 	}
 
 	const { version } = summary;
@@ -46,7 +43,7 @@ export function deserialize(
 		return { version, ...summary };
 	}
 
-	fail("Missing fields on summary");
+	fail('Missing fields on summary');
 }
 
 /**
@@ -74,8 +71,8 @@ export function getSummaryStatistics(summary: SharedTreeSummaryBase): SummarySta
 		const { editHistory } = summary as SharedTreeSummary;
 
 		if (editHistory !== undefined) {
-			if (typeof editHistory !== "object") {
-				fail("Edit history is not an object");
+			if (typeof editHistory !== 'object') {
+				fail('Edit history is not an object');
 			}
 
 			const { editChunks, editIds } = editHistory;
@@ -90,7 +87,7 @@ export function getSummaryStatistics(summary: SharedTreeSummaryBase): SummarySta
 				};
 			}
 
-			fail("Missing fields on edit log summary");
+			fail('Missing fields on edit log summary');
 		}
 	} else if (version === WriteFormat.v0_0_2) {
 		const { sequencedEdits } = summary as SharedTreeSummary_0_0_2;
@@ -100,8 +97,8 @@ export function getSummaryStatistics(summary: SharedTreeSummaryBase): SummarySta
 			historySize: sequencedEdits.length,
 		};
 	} else {
-		fail("Format version is not supported");
+		fail('Format version is not supported');
 	}
 
-	fail("Missing fields on summary");
+	fail('Missing fields on summary');
 }

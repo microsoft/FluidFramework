@@ -3,49 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { type EventEmitterEventType } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IEvent,
-	type IFluidHandle,
-	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { type EventEmitterEventType } from '@fluid-internal/client-utils';
+import { AttachState } from '@fluidframework/container-definitions';
+import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
 	type IFluidDataStoreRuntime,
 	type IChannel,
 	type IChannelServices,
-} from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import type { SessionId } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+} from '@fluidframework/datastore-definitions/internal';
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { SessionId } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	DataProcessingError,
-	EventEmitterWithErrorHandling,
-} from "@fluidframework/telemetry-utils/internal";
-import { type ITree } from "@fluidframework/tree";
+} from '@fluidframework/runtime-definitions/internal';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
+import { type ITree } from '@fluidframework/tree';
 
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,
-} from "../SharedTree.js";
+} from '../SharedTree.js';
 
-import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
-import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
-import { PreMigrationDeltaConnection, StampDeltaConnection } from "./shimDeltaConnection.js";
-import { ShimHandle } from "./shimHandle.js";
-import { type IOpContents, type IShim } from "./types.js";
+import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
+import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
+import { ShimHandle } from './shimHandle.js';
+import { type IOpContents, type IShim } from './types.js';
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -56,7 +46,7 @@ export interface IMigrationEvent extends IEvent {
 	/**
 	 * Event that is emitted when the migration is complete.
 	 */
-	(event: "migrated", listener: () => void);
+	(event: 'migrated', listener: () => void);
 }
 
 /**
@@ -66,7 +56,7 @@ export interface IMigrationOp {
 	/**
 	 * Type of the migration operation.
 	 */
-	type: "barrier";
+	type: 'barrier';
 	/**
 	 * Old channel attributes so we can do verification and understand what changed. This will allow future clients to
 	 * accurately reason about what state of the document was before the migration op initiated at.
@@ -79,7 +69,7 @@ export interface IMigrationOp {
 	newAttributes: IChannelAttributes;
 }
 
-const ghostSessionId = "3692b242-46c0-4076-abea-c2ac1e896dee" as SessionId;
+const ghostSessionId = '3692b242-46c0-4076-abea-c2ac1e896dee' as SessionId;
 
 /**
  * The MigrationShim loads in place of the legacy SharedTree.  It provides API surface for migrating it to the new SharedTree, while also providing access to the current SharedTree for usage.
@@ -96,37 +86,26 @@ const ghostSessionId = "3692b242-46c0-4076-abea-c2ac1e896dee" as SessionId;
  *
  * @internal
  */
-export class MigrationShim
-	extends EventEmitterWithErrorHandling<IMigrationEvent>
-	implements IShim
-{
+export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent> implements IShim {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly legacyTreeFactory: LegacySharedTreeFactory,
 		private readonly newTreeFactory: IChannelFactory<ITree>,
-		private readonly populateNewSharedObjectFn: (
-			legacyTree: LegacySharedTree,
-			newTree: ITree,
-		) => void,
+		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ITree) => void
 	) {
-		super((event: EventEmitterEventType, e: unknown) =>
-			this.eventListenerErrorHandler(event, e),
-		);
+		super((event: EventEmitterEventType, e: unknown) => this.eventListenerErrorHandler(event, e));
 		// TODO: consider flattening this class
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(
 			this.processMigrateOp,
 			this.submitLocalMessage,
-			this.newTreeFactory.attributes,
+			this.newTreeFactory.attributes
 		);
 		this.handle = new ShimHandle<MigrationShim>(this);
 	}
 
 	private readonly processMigrateOp = (message: ISequencedDocumentMessage): boolean => {
-		if (
-			message.type !== MessageType.Operation ||
-			(message.contents as Partial<IMigrationOp>).type !== "barrier"
-		) {
+		if (message.type !== MessageType.Operation || (message.contents as Partial<IMigrationOp>).type !== 'barrier') {
 			return false;
 		}
 		const newTree = this.newTreeFactory.create(this.runtime, this.id);
@@ -135,14 +114,14 @@ export class MigrationShim
 		const { idCompressor } = this.runtime;
 		if (idCompressor !== undefined) {
 			(idCompressor as unknown as IIdCompressorCore).beginGhostSession(ghostSessionId, () =>
-				this.populateNewSharedObjectFn(this.legacyTree, newTree),
+				this.populateNewSharedObjectFn(this.legacyTree, newTree)
 			);
 		} else {
 			this.populateNewSharedObjectFn(this.legacyTree, newTree);
 		}
 		this.newTree = newTree;
 		this.reconnect();
-		this.emit("migrated");
+		this.emit('migrated');
 		return true;
 	};
 
@@ -168,10 +147,7 @@ export class MigrationShim
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.eventListenerErrorHandler}
 	 */
 	private eventListenerErrorHandler(event: EventEmitterEventType, e: unknown): void {
-		const error = DataProcessingError.wrapIfUnrecognized(
-			e,
-			"SharedObjectEventListenerException",
-		);
+		const error = DataProcessingError.wrapIfUnrecognized(e, 'SharedObjectEventListenerException');
 		error.addTelemetryProperties({ emittedEventName: String(event) });
 
 		this.closeWithError(error);
@@ -181,9 +157,7 @@ export class MigrationShim
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeWithError}
 	 */
-	private closeWithError(
-		error: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>,
-	): void {
+	private closeWithError(error: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>): void {
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -213,7 +187,7 @@ export class MigrationShim
 	// Migration occurs once this op is read.
 	public submitMigrateOp(): void {
 		const migrateOp: IMigrationOp = {
-			type: "barrier",
+			type: 'barrier',
 			oldAttributes: this.legacyTreeFactory.attributes,
 			newAttributes: this.newTreeFactory.attributes,
 		};
@@ -234,7 +208,7 @@ export class MigrationShim
 			this.runtime,
 			this.id,
 			shimServices,
-			this.legacyTreeFactory.attributes,
+			this.legacyTreeFactory.attributes
 		);
 	}
 	public create(): void {
@@ -247,7 +221,7 @@ export class MigrationShim
 	public getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
+		telemetryContext?: ITelemetryContext | undefined
 	): ISummaryTreeWithStats {
 		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
@@ -255,14 +229,9 @@ export class MigrationShim
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined
 	): Promise<ISummaryTreeWithStats> {
-		return this.currentTree.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-			incrementalSummaryContext,
-		);
+		return this.currentTree.summarize(fullTree, trackState, telemetryContext, incrementalSummaryContext);
 	}
 	public isAttached(): boolean {
 		return this.currentTree.isAttached();
@@ -285,7 +254,7 @@ export class MigrationShim
 			deltaConnection: new StampDeltaConnection(
 				this.services.deltaConnection,
 				this.migrationDeltaHandler,
-				this.newTree.attributes,
+				this.newTree.attributes
 			),
 		};
 		this.newTree.connect(this.postMigrationServices);
@@ -301,12 +270,12 @@ export class MigrationShim
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(
 			this.services === undefined && this.preMigrationDeltaConnection === undefined,
-			0x7e9 /* Already connected */,
+			0x7e9 /* Already connected */
 		);
 		this.services = services;
 		this.preMigrationDeltaConnection = new PreMigrationDeltaConnection(
 			this.services.deltaConnection,
-			this.migrationDeltaHandler,
+			this.migrationDeltaHandler
 		);
 		const shimServices: IShimChannelServices = {
 			objectStorage: this.services.objectStorage,

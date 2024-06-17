@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { expect } from 'chai';
 
 /**
  * Check if the given value is defined using mocha's `expect`. Return the defined value;

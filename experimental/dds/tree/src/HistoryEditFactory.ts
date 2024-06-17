@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
-import { StablePlace } from "./ChangeTypes.js";
-import { fail } from "./Common.js";
-import { RangeValidationResultKind, validateStableRange } from "./EditUtilities.js";
-import { DetachedSequenceId, NodeId, isDetachedSequenceId } from "./Identifiers.js";
-import { RevisionView } from "./RevisionView.js";
-import { getChangeNodeFromViewNode } from "./SerializationUtilities.js";
-import { TransactionInternal } from "./TransactionInternal.js";
-import { TreeView } from "./TreeView.js";
-import { rangeFromStableRange } from "./TreeViewUtilities.js";
+import { StablePlace } from './ChangeTypes.js';
+import { fail } from './Common.js';
+import { RangeValidationResultKind, validateStableRange } from './EditUtilities.js';
+import { DetachedSequenceId, NodeId, isDetachedSequenceId } from './Identifiers.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromViewNode } from './SerializationUtilities.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -25,14 +25,14 @@ import {
 	SetValueInternal,
 	Side,
 	StableRangeInternal,
-} from "./persisted-types/index.js";
+} from './persisted-types/index.js';
 
 /**
  * Events emitted from the history edit factory
  */
 export enum HistoryEditFactoryEvents {
-	MalformedEdit = "malformedEdit",
-	MissingNodes = "missingNodes",
+	MalformedEdit = 'malformedEdit',
+	MissingNodes = 'missingNodes',
 }
 
 /**
@@ -54,7 +54,7 @@ export function revert(
 	changes: readonly ChangeInternal[],
 	before: RevisionView,
 	logger?: ITelemetryLoggerExt,
-	emit?: (event: string, ...args: any[]) => void,
+	emit?: (event: string, ...args: any[]) => void
 ): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
@@ -70,28 +70,24 @@ export function revert(
 			case ChangeTypeInternal.Build: {
 				// Save nodes added to the detached state for use in future changes
 				const { destination, source } = change;
-				assert(
-					!builtNodes.has(destination),
-					0x626 /* Cannot revert Build: destination is already used by a Build */,
-				);
+				assert(!builtNodes.has(destination), 0x626 /* Cannot revert Build: destination is already used by a Build */);
 				assert(
 					!detachedNodes.has(destination),
-					0x627 /* Cannot revert Build: destination is already used by a Detach */,
+					0x627 /* Cannot revert Build: destination is already used by a Detach */
 				);
 				builtNodes.set(
 					destination,
 					source.reduce((ids: NodeId[], curr: BuildNodeInternal) => {
 						if (isDetachedSequenceId(curr)) {
 							const nodesForDetachedSequence =
-								builtNodes.get(curr) ??
-								fail("detached sequence must have associated built nodes");
+								builtNodes.get(curr) ?? fail('detached sequence must have associated built nodes');
 
 							ids.push(...nodesForDetachedSequence);
 						} else {
 							ids.push(curr.identifier);
 						}
 						return ids;
-					}, []),
+					}, [])
 				);
 				break;
 			}
@@ -103,7 +99,7 @@ export function revert(
 				if (nodesBuilt !== undefined) {
 					if (nodesBuilt.length === 0) {
 						builtNodes.delete(source);
-						logger?.sendTelemetryEvent({ eventName: "reverting insertion of empty traits" });
+						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
 						continue;
 					}
 					result.unshift(createInvertedInsert(change, nodesBuilt));
@@ -111,7 +107,7 @@ export function revert(
 				} else if (nodesDetached !== undefined) {
 					if (nodesDetached.length === 0) {
 						detachedNodes.delete(source);
-						logger?.sendTelemetryEvent({ eventName: "reverting insertion of empty traits" });
+						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
 						continue;
 					}
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
@@ -140,7 +136,7 @@ export function revert(
 				const { invertedDetach, detachedNodeIds } = invert;
 
 				if (detachedNodeIds.length === 0) {
-					logger?.sendTelemetryEvent({ eventName: "reverting detachment of empty traits" });
+					logger?.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
 					continue;
 				}
 
@@ -173,9 +169,9 @@ export function revert(
 			}
 			case ChangeTypeInternal.Constraint:
 				// TODO:#46759: Support Constraint in reverts
-				fail("Revert currently does not support Constraints");
+				fail('Revert currently does not support Constraints');
 			default:
-				fail("Revert does not support the change type.");
+				fail('Revert does not support the change type.');
 		}
 
 		// Abort the entire revert if this change can't be applied successfully.
@@ -194,7 +190,7 @@ export function revert(
 function createInvertedInsert(
 	insert: InsertInternal,
 	nodesInserted: readonly NodeId[],
-	saveDetached = false,
+	saveDetached = false
 ): ChangeInternal {
 	const leftmostNode = nodesInserted[0];
 	const rightmostNode = nodesInserted[nodesInserted.length - 1];
@@ -247,7 +243,7 @@ function createInvertedInsert(
  */
 function createInvertedDetach(
 	detach: DetachInternal,
-	viewBeforeChange: TreeView,
+	viewBeforeChange: TreeView
 ): { invertedDetach: ChangeInternal[]; detachedNodeIds: NodeId[] } | undefined {
 	const validatedSource = validateStableRange(viewBeforeChange, detach.source);
 	if (validatedSource.result !== RangeValidationResultKind.Valid) {
@@ -298,7 +294,7 @@ function createInvertedDetach(
 		invertedDetach: [
 			ChangeInternal.build(
 				detachedNodeIds.map((id) => getChangeNodeFromViewNode(viewBeforeChange, id)),
-				detachedSequenceId,
+				detachedSequenceId
 			),
 			ChangeInternal.insert(detachedSequenceId, insertDestination),
 		],
@@ -309,10 +305,7 @@ function createInvertedDetach(
 /**
  * The inverse of a SetValue is a SetValue that sets the value to what it was prior to the change.
  */
-function createInvertedSetValue(
-	setValue: SetValueInternal,
-	viewBeforeChange: TreeView,
-): ChangeInternal[] | undefined {
+function createInvertedSetValue(setValue: SetValueInternal, viewBeforeChange: TreeView): ChangeInternal[] | undefined {
 	const { nodeToModify } = setValue;
 	const node = viewBeforeChange.tryGetViewNode(nodeToModify);
 	if (node === undefined) {
