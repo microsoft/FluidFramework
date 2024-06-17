@@ -384,12 +384,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			this.keys = [...channel.keys];
 		} else {
 			this.channels ??= {};
-			if (this.channels[name] !== undefined) {
-				// Non null asserting because of the check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.channels[name]!.update(undefined, channel);
-			} else {
+			const existingChannel = this.channels[name];
+			if (existingChannel === undefined) {
 				this.channels[name] = channel;
+			} else {
+				existingChannel.update(undefined, channel);
 			}
 		}
 	}
