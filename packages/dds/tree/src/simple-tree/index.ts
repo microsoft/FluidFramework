@@ -37,9 +37,8 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	type ApplyKind,
 } from "./schemaTypes.js";
-import * as InternalSimpleTreeTypes from "./internalTypes.js";
-export { InternalSimpleTreeTypes };
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
