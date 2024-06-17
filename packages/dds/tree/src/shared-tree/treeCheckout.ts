@@ -5,11 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-	TelemetryEventBatcher,
-} from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
@@ -389,19 +385,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	>();
 
 	/**
-	 * Batched logger for revert telemetry.
-	 * @remarks Will only be defined if a logger was provided at construction.
-	 */
-	private readonly revertLogger: TelemetryEventBatcher<keyof RevertMetrics> | undefined;
-
-	/**
-	 * The threshold for logging revert telemetry event batches.
-	 * @see {@link @fluidframework/telemetry-utils#TelemetryEventBatcher.threshold}
-	 * @privateRemarks Exposed for testing purposes.
-	 */
-	public static readonly telemetryBatchThreshold = 5;
-
-	/**
 	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
 	 * @privateRemarks Exposed for testing purposes.
 	 */
@@ -427,16 +410,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
-		// Instantiate batched logger for revert telemetry if a base logger was provided.
-		this.revertLogger =
-			this.logger === undefined
-				? undefined
-				: new TelemetryEventBatcher(
-						{ eventName: TreeCheckout.revertTelemetryEventName },
-						this.logger,
-						TreeCheckout.telemetryBatchThreshold,
-				  );
-
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
 		// In such a case we will crash here, preventing the change from being added to the commit graph, and preventing `afterChange` from firing.
@@ -514,14 +487,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										"Unable to revert a revertible that has been disposed.",
 									);
 								}
-								if (this.revertLogger === undefined) {
-									this.revertRevertible(revision, data.kind);
-								} else {
-									this.revertLogger.measure(() => {
-										const metrics = this.revertRevertible(revision, data.kind);
-										return { telemetryProperties: metrics };
-									});
-								}
+
+								const revertMetrics = this.revertRevertible(revision, data.kind);
+								this.logger?.sendTelemetryEvent({
+									eventName: TreeCheckout.revertTelemetryEventName,
+									...revertMetrics,
+								});
 
 								if (release) {
 									revertible.dispose();

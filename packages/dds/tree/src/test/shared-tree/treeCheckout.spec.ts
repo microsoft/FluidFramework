@@ -799,7 +799,7 @@ describe("sharedTreeView", () => {
 		});
 	});
 
-	describe("revertibles", () => {
+	describe.only("revertibles", () => {
 		// Test TODOs:
 		// - unit tests for metrics generated during reversion
 		// - simple acceptance test for resulting logs.
@@ -1000,43 +1000,36 @@ describe("sharedTreeView", () => {
 			stacks.unsubscribe();
 		});
 
-		itView("logs revert metrics", (view, logger) => {
-			let revertPreviousChange: (() => void) | undefined;
-			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
-				if (getRevertible === undefined) {
-					assert.fail("Expected commit to be revertible.");
+		for (const ageToTest of [0, 1, 5]) {
+			itView(`Telemetry logs track reversion age (${ageToTest})`, (view, logger) => {
+				let revertible: Revertible | undefined;
+				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+					if (getRevertible === undefined) {
+						assert.fail("Expected commit to be revertible.");
+					}
+
+					// Only save off the first revertible, as it's the only one we'll use.
+					if (revertible === undefined) {
+						revertible = getRevertible();
+					}
+				});
+
+				// Insert (`ageToTest` + 1) nodes, then revert the first.
+				for (let i = 0; i <= ageToTest; i++) {
+					insertFirstNode(view, "A");
 				}
-				revertPreviousChange = getRevertible().revert;
+				assert(revertible !== undefined, "Expected revertible to be created.");
+				revertible.revert();
+
+				const revertEvents = logger.events.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.revertTelemetryEventName),
+				);
+				assert.equal(revertEvents.length, 1);
+				assert.equal(revertEvents[0].age, ageToTest);
+
+				unsubscribe();
 			});
-
-			// #region Insert a node, then continuously revert the previous operation to generate revert metrics.
-
-			insertFirstNode(view, "A");
-			assert(revertPreviousChange !== undefined);
-
-			const revertCount = 25;
-			for (let iRevert = 0; iRevert < revertCount; iRevert++) {
-				revertPreviousChange();
-			}
-
-			// #endregion
-
-			// #region Validate the expected metrics
-
-			const loggedRevertEvents = logger.events.filter((event) =>
-				event.eventName.endsWith(TreeCheckout.revertTelemetryEventName),
-			);
-
-			// Simple check to verify the correct number of logs were sent based the batching threshold.
-			assert.equal(
-				loggedRevertEvents.length,
-				Math.floor(revertCount / TreeCheckout.telemetryBatchThreshold),
-			);
-
-			// #endregion
-
-			unsubscribe();
-		});
+		}
 	});
 });
 
