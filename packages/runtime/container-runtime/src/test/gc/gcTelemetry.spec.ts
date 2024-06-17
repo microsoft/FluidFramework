@@ -216,7 +216,7 @@ describe("GC Telemetry Tracker", () => {
 				expectedEvents,
 				message,
 				true /* inlineDetailsProp */,
-				false /* clearEventsAfterCheck */,
+				false /* clearEventsAfterCheck */, // Don't clear events so we can run another check.
 			);
 			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
