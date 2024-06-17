@@ -78,15 +78,15 @@ export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeE
 // @alpha
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel);
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
     clear(): void;
     get events(): readonly ITelemetryBaseEvent[];
-    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
+    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
     readonly minLogLevel: LogLevel;
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     // (undocumented)

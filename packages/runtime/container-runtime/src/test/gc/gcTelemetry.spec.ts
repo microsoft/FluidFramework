@@ -212,11 +212,12 @@ describe("GC Telemetry Tracker", () => {
 				}
 			}
 
-			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
-			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
-			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
-			mockLogger.events = cachedEvents;
+			mockLogger.assertMatch(
+				expectedEvents,
+				message,
+				true /* inlineDetailsProp */,
+				false /* clearEventsAfterCheck */,
+			);
 			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
 

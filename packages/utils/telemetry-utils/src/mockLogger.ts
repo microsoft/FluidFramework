@@ -71,10 +71,12 @@ export class MockLogger implements ITelemetryBaseLogger {
 	public matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): boolean {
 		const matchedExpectedEventCount = this.getMatchedEventsCount(
 			expectedEvents,
 			inlineDetailsProp,
+			clearEventsAfterCheck,
 		);
 		// How many expected events were left over? Hopefully none.
 		const unmatchedExpectedEventCount = expectedEvents.length - matchedExpectedEventCount;
@@ -88,9 +90,10 @@ export class MockLogger implements ITelemetryBaseLogger {
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): void {
 		const actualEvents = this._events;
-		if (!this.matchEvents(expectedEvents, inlineDetailsProp)) {
+		if (!this.matchEvents(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
@@ -112,10 +115,12 @@ ${JSON.stringify(actualEvents)}`);
 	public matchAnyEvent(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): boolean {
 		const matchedExpectedEventCount = this.getMatchedEventsCount(
 			expectedEvents,
 			inlineDetailsProp,
+			clearEventsAfterCheck,
 		);
 		return matchedExpectedEventCount > 0;
 	}
@@ -127,9 +132,10 @@ ${JSON.stringify(actualEvents)}`);
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): void {
 		const actualEvents = this._events;
-		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp)) {
+		if (!this.matchAnyEvent(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
@@ -150,11 +156,17 @@ ${JSON.stringify(actualEvents)}`);
 	public matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): boolean {
-		return (
-			expectedEvents.length === this._events.length &&
-			this.matchEvents(expectedEvents, inlineDetailsProp)
-		);
+		if (expectedEvents.length !== this._events.length) {
+			if (clearEventsAfterCheck) {
+				this.clear();
+			}
+			return false;
+		}
+
+		// `events` will be cleared by the below check if requested.
+		return this.matchEvents(expectedEvents, inlineDetailsProp, clearEventsAfterCheck);
 	}
 
 	/**
@@ -164,9 +176,10 @@ ${JSON.stringify(actualEvents)}`);
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): void {
 		const actualEvents = this._events;
-		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp)) {
+		if (!this.matchEventStrict(expectedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 expected:
 ${JSON.stringify(expectedEvents)}
@@ -183,9 +196,10 @@ ${JSON.stringify(actualEvents)}`);
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
+		clearEventsAfterCheck: boolean = true,
 	): void {
 		const actualEvents = this._events;
-		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp)) {
+		if (this.matchAnyEvent(disallowedEvents, inlineDetailsProp, clearEventsAfterCheck)) {
 			throw new Error(`${message ?? "Logs don't match"}
 disallowed events:
 ${JSON.stringify(disallowedEvents)}
@@ -198,6 +212,7 @@ ${JSON.stringify(actualEvents)}`);
 	private getMatchedEventsCount(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean,
+		clearEventsAfterCheck: boolean,
 	): number {
 		let iExpectedEvent = 0;
 		for (const event of this._events) {
@@ -211,7 +226,9 @@ ${JSON.stringify(actualEvents)}`);
 		}
 
 		// Remove the events so far; next call will just compare subsequent events from here
-		this.clear();
+		if (clearEventsAfterCheck) {
+			this.clear();
+		}
 
 		// Return the count of matched events.
 		return iExpectedEvent;
