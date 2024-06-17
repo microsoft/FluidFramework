@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Jsonable } from "@fluidframework/runtime-definitions/internal";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**

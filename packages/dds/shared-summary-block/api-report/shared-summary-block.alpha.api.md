@@ -6,7 +6,7 @@
 
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import type { Jsonable } from '@fluidframework/runtime-definitions/internal';
+import { Jsonable } from '@fluidframework/datastore-definitions/internal';
 import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha
