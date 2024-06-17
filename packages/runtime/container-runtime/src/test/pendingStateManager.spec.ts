@@ -7,7 +7,10 @@ import assert from "assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
@@ -299,7 +302,7 @@ describe("Pending State Manager", () => {
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					contents: { prop1: true },
-					sequenceNumber: i,
+					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
 				process(messages);

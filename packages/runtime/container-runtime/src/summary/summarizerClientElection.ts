@@ -5,7 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
+import { IClientDetails } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {

@@ -5,27 +5,27 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
-import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+import type { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { type Assume, type RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
 
 import { defaultSchemaPolicy } from "./default-schema/index.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
+import type { FlexFieldKind } from "./modular-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexList,
-	FlexMapFieldSchema,
+	type FlexList,
+	type FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	SchemaCollection,
-	SchemaLibraryData,
-	SchemaLintConfiguration,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type SchemaCollection,
+	type SchemaLibraryData,
+	type SchemaLintConfiguration,
 	TreeNodeSchemaBase,
-	Unenforced,
+	type Unenforced,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./typed-schema/index.js";
@@ -127,7 +127,7 @@ export class SchemaBuilderBase<
 	 * Contents within the added libraries can still conflict however.
 	 * Such errors will be reported when finalizing this builder into a library of document schema.
 	 */
-	private addLibraries(...libraries: SchemaLibrary[]) {
+	private addLibraries(...libraries: SchemaLibrary[]): void {
 		for (const libs of libraries) {
 			for (const lib of libs.libraries) {
 				this.libraries.add(lib);

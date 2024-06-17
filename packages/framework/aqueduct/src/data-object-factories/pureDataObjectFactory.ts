@@ -4,41 +4,37 @@
  */
 
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import {
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import {
-	type IContainerRuntimeBase,
-	type IDataStore,
-	type IFluidDataStoreChannel,
-	type IFluidDataStoreContext,
-	type IFluidDataStoreContextDetached,
-	type IFluidDataStoreFactory,
-	type IFluidDataStoreRegistry,
-	type IProvideFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
-	type NamedFluidDataStoreRegistryEntry,
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import type {
+	IContainerRuntimeBase,
+	IDataStore,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IProvideFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
+	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	type AsyncFluidObjectProvider,
-	type FluidObjectSymbolProvider,
-	type IFluidDependencySynthesizer,
+import type {
+	AsyncFluidObjectProvider,
+	FluidObjectSymbolProvider,
+	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize/internal";
 
-import {
-	type DataObjectTypes,
-	type IDataObjectProps,
-	type PureDataObject,
-} from "../data-objects/index.js";
+import type { DataObjectTypes, IDataObjectProps, PureDataObject } from "../data-objects/index.js";
 
 /**
  * Proxy over PureDataObject

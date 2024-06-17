@@ -6,13 +6,13 @@
 import { strict as assert, fail } from "assert";
 
 import {
-	ChangeAtomId,
-	DeltaFieldChanges,
-	TaggedChange,
+	type ChangeAtomId,
+	type DeltaFieldChanges,
+	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
 } from "../../../core/index.js";
-import {
+import type {
 	CrossFieldManager,
 	NodeId,
 	RelevantRemovedRootsFromChild,
@@ -20,7 +20,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeHandler,
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -41,6 +41,7 @@ import { testSnapshots } from "./optionalFieldSnapshots.test.js";
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+import { testReplaceRevisions } from "./replaceRevisions.test.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -100,6 +101,7 @@ describe("optionalField", () => {
 	testSnapshots();
 	testRebaserAxioms();
 	testCodecs();
+	testReplaceRevisions();
 
 	// TODO: more editor tests
 	describe("editor", () => {
@@ -117,30 +119,134 @@ describe("optionalField", () => {
 	});
 
 	describe("Rebaser", () => {
-		it("can be composed", () => {
-			const composed = optionalChangeRebaser.compose(
-				change1.change,
-				change2.change,
-				TestNodeId.composeChild,
-				fakeIdAllocator,
-				failCrossFieldManager,
-				defaultRevisionMetadataFromChanges([change1, change2]),
-			);
+		describe("Compose", () => {
+			it("a bit of everything", () => {
+				const composed = optionalChangeRebaser.compose(
+					change1.change,
+					change2.change,
+					TestNodeId.composeChild,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([change1, change2]),
+				);
 
-			const change1And2 = Change.atOnce(
-				Change.move(
-					{ localId: brand(41), revision: change1.revision },
-					{ localId: brand(2), revision: change2.revision },
-				),
-				Change.move({ localId: brand(42), revision: change2.revision }, "self"),
-				Change.reserve("self", { localId: brand(1), revision: change1.revision }),
-				Change.childAt(
-					{ localId: brand(41), revision: change1.revision },
-					{ ...nodeChange1, revision: change1.revision },
-				),
-			);
+				const change1And2 = Change.atOnce(
+					Change.move(
+						{ localId: brand(41), revision: change1.revision },
+						{ localId: brand(2), revision: change2.revision },
+					),
+					Change.move({ localId: brand(42), revision: change2.revision }, "self"),
+					Change.reserve("self", { localId: brand(1), revision: change1.revision }),
+					Change.childAt(
+						{ localId: brand(41), revision: change1.revision },
+						{ ...nodeChange1, revision: change1.revision },
+					),
+				);
 
-			assertEqual(composed, change1And2);
+				assertEqual(composed, change1And2);
+			});
+
+			it("invokes child composer when both changeset have changes for a node", () => {
+				const changeA = tagChangeInline(
+					Change.atOnce(
+						Change.child(TestNodeId.create(nodeId1, TestChange.mint([], 1))),
+						Change.clear("self", { localId: brand(0) }),
+					),
+					tag,
+				);
+				const changeB = tagChangeInline(
+					Change.childAt(
+						{ localId: brand(0), revision: tag },
+						TestNodeId.create(nodeId2, TestChange.mint([1], 2)),
+					),
+					change2Tag,
+				);
+				const composed = optionalChangeRebaser.compose(
+					changeA.change,
+					changeB.change,
+					TestNodeId.composeChild,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([changeA, changeB]),
+				);
+
+				const expected = Change.atOnce(
+					Change.child(
+						TestNodeId.create(
+							{ ...nodeId1, revision: tag },
+							TestChange.mint([], [1, 2]),
+						),
+					),
+					Change.clear("self", { localId: brand(0), revision: tag }),
+				);
+
+				assertEqual(composed, expected);
+			});
+
+			it("invokes child composer when only the first changeset has changes for a node", () => {
+				const changeA = tagChangeInline(
+					Change.atOnce(
+						Change.child(nodeId1),
+						Change.clear("self", { localId: brand(0) }),
+					),
+					tag,
+				);
+				const changeB = tagChangeInline(Change.empty(), change2Tag);
+				const childComposerCalls: [ChangeAtomId | undefined, ChangeAtomId | undefined][] =
+					[];
+
+				const composed = optionalChangeRebaser.compose(
+					changeA.change,
+					changeB.change,
+					(fst, snd) => {
+						childComposerCalls.push([fst, snd]);
+						return fst ?? snd ?? fail("At least one node should be defined");
+					},
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([changeA, changeB]),
+				);
+
+				const taggedNodeId1 = { ...nodeId1, revision: tag };
+				const expected = Change.atOnce(
+					Change.child(taggedNodeId1),
+					Change.clear("self", { localId: brand(0), revision: tag }),
+				);
+
+				assertEqual(composed, expected);
+				assert.deepEqual(childComposerCalls, [[taggedNodeId1, undefined]]);
+			});
+
+			it("invokes child composer when only the second changeset has changes for a node", () => {
+				const changeA = tagChangeInline(Change.clear("self", { localId: brand(0) }), tag);
+				const changeB = tagChangeInline(
+					Change.childAt({ localId: brand(0), revision: tag }, nodeId2),
+					change2Tag,
+				);
+				const childComposerCalls: [ChangeAtomId | undefined, ChangeAtomId | undefined][] =
+					[];
+
+				const composed = optionalChangeRebaser.compose(
+					changeA.change,
+					changeB.change,
+					(fst, snd) => {
+						childComposerCalls.push([fst, snd]);
+						return fst ?? snd ?? fail("At least one node should be defined");
+					},
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([changeA, changeB]),
+				);
+
+				const taggedNodeId2 = { ...nodeId2, revision: change2Tag };
+				const expected = Change.atOnce(
+					Change.child(taggedNodeId2),
+					Change.clear("self", { localId: brand(0), revision: tag }),
+				);
+
+				assertEqual(composed, expected);
+				assert.deepEqual(childComposerCalls, [[undefined, taggedNodeId2]]);
+			});
 		});
 
 		it("pin ○ child change", () => {
@@ -311,7 +417,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.rebase(
 						change2PreChange1.change,
 						change1.change,
-						failingDelegate,
+						TestNodeId.rebaseChild,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(
@@ -324,12 +430,11 @@ describe("optionalField", () => {
 				);
 			});
 
-			it("can rebase child change", () => {
+			it("invokes child rebaser when both changeset have changes for a node", () => {
 				const baseChange = Change.child(TestNodeId.create(nodeId1, TestChange.mint([], 1)));
 				const changeToRebase = Change.child(
 					TestNodeId.create(nodeId2, TestChange.mint([], 2)),
 				);
-
 				const expected = Change.child(TestNodeId.create(nodeId2, TestChange.mint([1], 2)));
 
 				assert.deepEqual(
@@ -347,6 +452,69 @@ describe("optionalField", () => {
 					),
 					expected,
 				);
+			});
+
+			it("invokes child rebaser when only the current changeset has changes for a node", () => {
+				const baseChange = Change.clear("self", { localId: brand(0) });
+				const changeToRebase = Change.child(nodeId1);
+				const expected = Change.childAt({ localId: brand(0) }, nodeId1);
+
+				const childRebaserCalls: [ChangeAtomId | undefined, ChangeAtomId | undefined][] =
+					[];
+
+				assert.deepEqual(
+					optionalChangeRebaser.rebase(
+						changeToRebase,
+						baseChange,
+						(curr, base) => {
+							childRebaserCalls.push([curr, base]);
+							return curr ?? base;
+						},
+						fakeIdAllocator,
+						failCrossFieldManager,
+						rebaseRevisionMetadataFromInfo(
+							defaultRevInfosFromChanges([]),
+							undefined,
+							[],
+						),
+					),
+					expected,
+				);
+
+				assert.deepEqual(childRebaserCalls, [[nodeId1, undefined]]);
+			});
+
+			it("invokes child rebaser when only the base changeset has changes for a node", () => {
+				const baseChange = Change.atOnce(
+					Change.child(nodeId1),
+					Change.clear("self", { localId: brand(0) }),
+				);
+				const changeToRebase = Change.empty();
+				const childRebaserCalls: [ChangeAtomId | undefined, ChangeAtomId | undefined][] =
+					[];
+
+				const expected = Change.childAt({ localId: brand(0) }, nodeId1);
+
+				assert.deepEqual(
+					optionalChangeRebaser.rebase(
+						changeToRebase,
+						baseChange,
+						(curr, base) => {
+							childRebaserCalls.push([curr, base]);
+							return curr ?? base;
+						},
+						fakeIdAllocator,
+						failCrossFieldManager,
+						rebaseRevisionMetadataFromInfo(
+							defaultRevInfosFromChanges([]),
+							undefined,
+							[],
+						),
+					),
+					expected,
+				);
+
+				assert.deepEqual(childRebaserCalls, [[undefined, nodeId1]]);
 			});
 
 			it("can rebase a child change over a remove and revive of target node", () => {
@@ -785,6 +953,30 @@ describe("optionalField", () => {
 			const change = Change.reserve("self", brand(0));
 			const actual = optionalChangeHandler.isEmpty(change);
 			assert.equal(actual, false);
+		});
+	});
+
+	describe("getNestedChanges", () => {
+		it("is empty for an empty change", () => {
+			const change = Change.empty();
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			assert.deepEqual(actual, []);
+		});
+		it("includes changes to the node in the field", () => {
+			const change: OptionalChangeset = Change.child(nodeId1);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			assert.deepEqual(actual, [[nodeId1, 0]]);
+		});
+		it("includes changes to removed nodes", () => {
+			const change: OptionalChangeset = Change.atOnce(
+				Change.childAt(brand(41), nodeId1),
+				Change.childAt(brand(42), nodeId2),
+			);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			assert.deepEqual(actual, [
+				[nodeId1, undefined],
+				[nodeId2, undefined],
+			]);
 		});
 	});
 });

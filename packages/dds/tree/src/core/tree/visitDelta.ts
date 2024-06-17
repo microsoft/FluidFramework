@@ -5,12 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { ITreeCursorSynchronous } from "./cursor.js";
-import * as Delta from "./delta.js";
-import { ProtoNodes } from "./delta.js";
+import type { ITreeCursorSynchronous } from "./cursor.js";
+import type * as Delta from "./delta.js";
+// Since ProtoNodes is reexported, import it directly to avoid forcing Delta to be reexported.
+// eslint-disable-next-line import/no-duplicates
+import type { ProtoNodes } from "./delta.js";
 import {
 	areDetachedNodeIdsEqual,
 	isAttachMark,
@@ -18,9 +20,9 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil.js";
-import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
-import { Major, Minor } from "./detachedFieldIndexTypes.js";
-import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import type { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
+import type { Major, Minor } from "./detachedFieldIndexTypes.js";
+import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
 
 /**
  * Implementation notes:
@@ -136,7 +138,7 @@ function fixedPointVisitOfRoots(
 	visitor: DeltaVisitor,
 	roots: Map<ForestRootId, Delta.FieldMap>,
 	config: PassConfig,
-) {
+): void {
 	while (roots.size > 0) {
 		for (const [root, modifications] of roots) {
 			roots.delete(root);
@@ -431,7 +433,7 @@ function buildTrees(
 	trees: readonly ITreeCursorSynchronous[],
 	config: PassConfig,
 	visitor: DeltaVisitor,
-) {
+): void {
 	for (let i = 0; i < trees.length; i += 1) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
@@ -446,7 +448,7 @@ function processBuilds(
 	builds: readonly Delta.DetachedNodeBuild[] | undefined,
 	config: PassConfig,
 	visitor: DeltaVisitor,
-) {
+): void {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
 			buildTrees(id, trees, config, visitor);
@@ -457,7 +459,7 @@ function processBuilds(
 function collectDestroys(
 	destroys: readonly Delta.DetachedNodeDestruction[] | undefined,
 	config: PassConfig,
-) {
+): void {
 	if (destroys !== undefined) {
 		config.rootDestructions.push(...destroys);
 	}

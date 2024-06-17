@@ -5,22 +5,22 @@
 
 import { strict as assert, fail } from "assert";
 
-import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
+import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
 	AnchorSet,
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyCodec,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	DeltaFieldMap,
-	DeltaRoot,
-	FieldKey,
-	RevisionTag,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyCodec,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaFieldMap,
+	type DeltaRoot,
+	type FieldKey,
+	type RevisionTag,
+	type TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
@@ -231,6 +231,7 @@ export const TestChange = {
 	codecs: makeCodecFamily([
 		[1, codec],
 		[2, codec],
+		[3, codec],
 	]),
 };
 deepFreeze(TestChange);

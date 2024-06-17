@@ -8,15 +8,16 @@
 /* eslint-disable unicorn/no-null */
 
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
@@ -391,7 +392,8 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		sharedTree.schematize(new TreeConfiguration(builder.number, () => 0));
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.number }));
+		view.initialize(0);
 
 		const result = await visualizeSharedTree(
 			sharedTree as unknown as ISharedObject,
@@ -432,14 +434,11 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.array([builder.number, builder.string]),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: [0, 1, 2, 3, "hello", "world"],
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: [0, 1, 2, 3, "hello", "world"],
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -596,18 +595,15 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.map([builder.string, builder.number, builder.handle]),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: new Map([
-							["apple", 1],
-							["banana", 2],
-							["cherry", 3],
-						]),
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: new Map([
+					["apple", 1],
+					["banana", 2],
+					["cherry", 3],
+				]),
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -722,17 +718,14 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: {
-							apple: false,
-							banana: "Taro Bubble Tea",
-						},
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: {
+					apple: false,
+					banana: "Taro Bubble Tea",
+				},
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -829,7 +822,8 @@ describe("DefaultVisualizers unit tests", () => {
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
-		sharedTree.schematize(new TreeConfiguration(builder.handle, () => sharedString.handle));
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.handle }));
+		view.initialize(sharedString.handle);
 
 		const result = await visualizeSharedTree(
 			sharedTree as unknown as ISharedObject,
@@ -875,16 +869,13 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: {
-							apple: sharedString.handle,
-						},
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: {
+					apple: sharedString.handle,
+				},
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -1003,55 +994,50 @@ describe("DefaultVisualizers unit tests", () => {
 			]),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: [
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: [
+					{
+						apple: [{ avocado: 16, broccoli: [{ alpaca: "Llama but cuter." }] }],
+						banana: {
+							miniBanana: true,
+						},
+						cherry: 32,
+					},
+					{
+						apple: [
 							{
-								apple: [
-									{ avocado: 16, broccoli: [{ alpaca: "Llama but cuter." }] },
-								],
-								banana: {
-									miniBanana: true,
-								},
-								cherry: 32,
-							},
-							{
-								apple: [
-									{
-										avocado: "Avacado Advocate.",
-										broccoli: [{ alpaca: "Llama but not LLM." }],
-									},
-								],
-								banana: {
-									miniBanana: false,
-								},
-								cherry: undefined,
+								avocado: "Avacado Advocate.",
+								broccoli: [{ alpaca: "Llama but not LLM." }],
 							},
 						],
-						bar: {
-							americano: false,
-							bubbleTea: "Taro Bubble Tea",
-							chaiLatte: {
-								appleCider: true,
-							},
-							dalgona: [
-								{
-									avengers: true,
-								},
-							],
-							espresso: [256, "FiveHundredTwelve"],
+						banana: {
+							miniBanana: false,
 						},
-						baz: 128,
-						foobar: new Map([
-							["anthropology", 1],
-							["biology", 2],
-							["choreography", 3],
-						]),
-					}),
-			),
+						cherry: undefined,
+					},
+				],
+				bar: {
+					americano: false,
+					bubbleTea: "Taro Bubble Tea",
+					chaiLatte: {
+						appleCider: true,
+					},
+					dalgona: [
+						{
+							avengers: true,
+						},
+					],
+					espresso: [256, "FiveHundredTwelve"],
+				},
+				baz: 128,
+				foobar: new Map([
+					["anthropology", 1],
+					["biology", 2],
+					["choreography", 3],
+				]),
+			}),
 		);
 
 		const result = await visualizeSharedTree(

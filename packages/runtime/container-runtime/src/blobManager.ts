@@ -14,18 +14,18 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
+	IDocumentStorageService,
 	ICreateBlobResponse,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
 	SummaryTreeBuilder,
@@ -96,7 +96,7 @@ export interface IBlobManagerLoadInfo {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "logger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
@@ -166,14 +166,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
 
-	/**
-	 * This stores IDs of tombstoned blobs.
-	 *
-	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
-	 * Tombstoned objects are eventually deleted by GC.
-	 */
-	private readonly tombstonedBlobs: Set<string> = new Set();
-
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
 	private stopAttaching: boolean = false;
 
@@ -233,7 +225,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.closeContainer = closeContainer;
 
 		this.mc = createChildMonitoringContext({
-			logger: this.runtime.logger,
+			logger: this.runtime.baseLogger,
 			namespace: "BlobManager",
 		});
 
@@ -824,36 +816,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// This way they'll be absent from the next summary, and the service is free to delete them from storage.
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
-		}
-	}
-
-	/**
-	 * This is called to update blobs whose routes are tombstones.
-	 *
-	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
-	 * Tombstoned objects are eventually deleted by GC.
-	 *
-	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
-	 */
-	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
-		const tombstonedBlobsSet: Set<string> = new Set();
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of tombstonedRoutes) {
-			const blobId = getBlobIdFromGCNodePath(route);
-			tombstonedBlobsSet.add(blobId);
-		}
-
-		// Remove blobs from the tombstone list that were tombstoned but aren't anymore as per the tombstoneRoutes.
-		for (const blobId of this.tombstonedBlobs) {
-			if (!tombstonedBlobsSet.has(blobId)) {
-				this.tombstonedBlobs.delete(blobId);
-			}
-		}
-
-		// Mark blobs that are now tombstoned by adding them to the tombstone list.
-		for (const blobId of tombstonedBlobsSet) {
-			this.tombstonedBlobs.add(blobId);
 		}
 	}
 

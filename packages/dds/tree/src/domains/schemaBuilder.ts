@@ -5,18 +5,18 @@
 
 import {
 	FieldKinds,
-	FlexFieldKind,
+	type FlexFieldKind,
 	FlexFieldNodeSchema,
-	FlexFieldSchema,
-	FlexImplicitAllowedTypes,
-	FlexImplicitFieldSchema,
-	FlexObjectNodeSchema,
-	NormalizeAllowedTypes,
+	type FlexFieldSchema,
+	type FlexImplicitAllowedTypes,
+	type FlexImplicitFieldSchema,
+	type FlexObjectNodeSchema,
+	type NormalizeAllowedTypes,
 	SchemaBuilderBase,
-	SchemaBuilderOptions,
-	Unenforced,
+	type SchemaBuilderOptions,
+	type Unenforced,
 } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 import { leaf } from "./leafDomain.js";
 
@@ -53,6 +53,7 @@ export class SchemaBuilder<
 		});
 	}
 
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>>,

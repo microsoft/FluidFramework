@@ -6,13 +6,13 @@
 import fs from "fs";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
-	ISequencedDocumentMessage,
+	IDocumentService,
 	MessageType,
 	ScopeType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import { printMessageStats } from "./fluidAnalyzeMessages.js";
 import {

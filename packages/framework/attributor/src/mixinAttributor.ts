@@ -13,17 +13,15 @@ import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { type IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
-	type IQuorumClients,
-	type ISequencedDocumentMessage,
 	type ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
 	type AttributionInfo,
 	type AttributionKey,
 	type NamedFluidDataStoreRegistryEntries,
@@ -187,7 +185,10 @@ export const mixinAttributor = (
 			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
-			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });
+			const logger = createChildLogger({
+				logger: runtime.baseLogger,
+				namespace: "Attributor",
+			});
 
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution

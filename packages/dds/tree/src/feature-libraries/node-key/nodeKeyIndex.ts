@@ -5,16 +5,16 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { FieldKey, ValueSchema } from "../../core/index.js";
-import {
+import { type FieldKey, ValueSchema } from "../../core/index.js";
+import type {
 	FlexTreeContext,
 	FlexTreeField,
 	FlexTreeNode,
 	FlexTreeObjectNode,
 } from "../flex-tree/index.js";
-import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
+import { type FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
 
-import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
+import { type LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
 
 /**
  * The node key index records nodes with {@link LocalNodeKey}s and allows them to be looked up by key.
@@ -77,7 +77,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 			key: LocalNodeKey,
 			map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}

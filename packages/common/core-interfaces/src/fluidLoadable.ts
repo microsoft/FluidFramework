@@ -22,7 +22,7 @@ export interface IProvideFluidLoadable {
  */
 export interface IFluidLoadable extends IProvideFluidLoadable {
 	// Handle to the loadable FluidObject
-	handle: IFluidHandle;
+	readonly handle: IFluidHandle;
 }
 
 /**

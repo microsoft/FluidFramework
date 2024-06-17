@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
 import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
@@ -23,7 +23,6 @@ export interface IOdspLoginCredentials {
  */
 export interface IOdspCredentials extends IOdspLoginCredentials {
 	clientId: string;
-	clientSecret: string;
 }
 
 /**
@@ -38,20 +37,15 @@ export function createOdspClient(
 	const siteUrl = process.env.odsp__client__siteUrl as string;
 	const driveId = process.env.odsp__client__driveId as string;
 	const clientId = process.env.odsp__client__clientId as string;
-	const clientSecret = process.env.odsp__client__clientSecret as string;
 	if (siteUrl === "" || siteUrl === undefined) {
 		throw new Error("site url is missing");
 	}
 	if (driveId === "" || driveId === undefined) {
-		throw new Error("RaaS drive id is missing");
+		throw new Error("SharePoint Embedded container id is missing");
 	}
 
 	if (clientId === "" || clientId === undefined) {
 		throw new Error("client id is missing");
-	}
-
-	if (clientSecret === "" || clientSecret === undefined) {
-		throw new Error("client secret is missing");
 	}
 
 	if (creds.username === undefined || creds.password === undefined) {
@@ -60,7 +54,6 @@ export function createOdspClient(
 
 	const credentials: IOdspCredentials = {
 		clientId,
-		clientSecret,
 		...creds,
 	};
 

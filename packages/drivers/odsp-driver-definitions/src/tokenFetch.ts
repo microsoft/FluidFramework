@@ -5,7 +5,7 @@
 
 /**
  * Represents token response
- * @beta
+ * @alpha
  */
 export interface TokenResponse {
 	/** Token value */

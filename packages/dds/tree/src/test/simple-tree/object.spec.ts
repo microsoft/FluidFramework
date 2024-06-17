@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 
 import {
-	ImplicitFieldSchema,
-	NodeKind,
+	type ImplicitFieldSchema,
+	type NodeKind,
 	SchemaFactory,
-	TreeFieldFromImplicitField,
-	TreeNodeSchema,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 
 import { hydrate, pretty } from "./utils.js";
@@ -313,6 +313,18 @@ const tcs: TestCase[] = [
 			baz: null,
 		},
 	},
+	// Case with omitted optional property
+	{
+		schema: (() => {
+			const schemaFactoryInner = new SchemaFactory("test-inner");
+			return schemaFactoryInner.object("object", {
+				foo: schemaFactoryInner.optional(schemaFactoryInner.number),
+			});
+		})(),
+		initialTree: {
+			// `foo` property omitted - property should be implicitly treated as `undefined`.
+		},
+	},
 	{
 		schema: (() => {
 			const _ = new SchemaFactory("testF");
@@ -380,6 +392,7 @@ describe("Object-like-2", () => {
 			const root = hydrate(schemaFactory.object("no fields", {}), {});
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
 		});

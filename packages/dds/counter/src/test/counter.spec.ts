@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -16,9 +16,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { SharedCounter as SharedCounterClass } from "../counter.js";
 import { CounterFactory } from "../counterFactory.js";
 import { type ISharedCounter, SharedCounter } from "../index.js";
-import { SharedCounter as SharedCounterClass } from "../counter.js";
 
 class TestSharedCounter extends SharedCounterClass {
 	public testApplyStashedOp(content: unknown): void {

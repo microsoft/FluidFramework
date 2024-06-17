@@ -7,12 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
@@ -28,27 +28,27 @@ import {
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-	ValueFieldEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import type { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxNodeUnion,
-	FlexibleNodeContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleNodeContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 } from "./flexTreeTypes.js";
@@ -62,31 +62,8 @@ import {
 } from "./lazyEntity.js";
 import { makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
-
-/**
- * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
- * usage of negative indices, which regular indexing using `[` and `]` does not.
- *
- * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
- * for additional context on the semantics.
- *
- * @returns A positive index that can be used in regular indexing. Returns
- * undefined if that index would be out-of-bounds.
- */
-function indexForAt(index: number, length: number): number | undefined {
-	let finalIndex = Math.trunc(+index);
-	if (isNaN(finalIndex)) {
-		finalIndex = 0;
-	}
-	if (finalIndex < -length || finalIndex >= length) {
-		return undefined;
-	}
-	if (finalIndex < 0) {
-		finalIndex = finalIndex + length;
-	}
-	return finalIndex;
-}
+import { indexForAt, treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 export function makeField(
 	context: Context,
@@ -258,10 +235,11 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
-		assert(
-			this.treeStatus() === TreeStatus.InDocument,
-			0x77f /* Editing only allowed on fields with TreeStatus.InDocument status */,
-		);
+		if (this.treeStatus() !== TreeStatus.InDocument) {
+			throw new UsageError(
+				"Editing only allowed on fields with TreeStatus.InDocument status",
+			);
+		}
 		return this.getFieldPath();
 	}
 }
@@ -562,9 +540,13 @@ export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyFie
 
 type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	schema: FlexFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
+	// TODO: use something other than `any`
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => LazyField<any, TTypes>;
 
 const builderList: [FlexFieldKind, Builder][] = [

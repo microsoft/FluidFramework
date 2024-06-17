@@ -5,16 +5,16 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { MakeNominal, brand, fail, invertMap } from "../../util/index.js";
+import { type MakeNominal, brand, fail, invertMap } from "../../util/index.js";
 import {
-	FieldKey,
-	FieldKindIdentifier,
-	FieldSchemaFormat,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type FieldSchemaFormat,
 	PersistedValueSchema,
-	TreeNodeSchemaDataFormat,
-	TreeNodeSchemaIdentifier,
+	type TreeNodeSchemaDataFormat,
+	type TreeNodeSchemaIdentifier,
 } from "./format.js";
-import { Multiplicity } from "./multiplicity.js";
+import type { Multiplicity } from "./multiplicity.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
@@ -94,6 +94,11 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
+
+	/**
+	 * If true, new content inserted into the tree should be validated against the stored schema.
+	 */
+	readonly validateSchema: boolean;
 }
 
 /**
@@ -132,6 +137,13 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
 };
+
+/**
+ * Identifier used for the FieldKind for fields of type identifier.
+ *
+ * @internal
+ */
+export const identifierFieldKindIdentifier = "Identifier";
 
 /**
  * Opaque type erased handle to the encoded representation of the contents of a stored schema.

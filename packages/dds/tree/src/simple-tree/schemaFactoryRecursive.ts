@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { Unenforced } from "../feature-libraries/index.js";
-import { RestrictiveReadonlyRecord } from "../util/index.js";
-import { InsertableObjectFromSchemaRecord } from "./objectNode.js";
+import type { Unenforced } from "../feature-libraries/index.js";
+import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { InsertableObjectFromSchemaRecord } from "./objectNode.js";
 
 import {
-	FieldKind,
-	FieldProps,
+	type FieldKind,
+	type FieldProps,
 	createFieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeKind,
-	TreeNodeSchemaClass,
-	WithType,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeKind,
+	type TreeNodeSchemaClass,
+	type WithType,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
-import { FieldSchemaUnsafe } from "./typesUnsafe.js";
+import type { TreeNode } from "./types.js";
+import type { FieldSchemaUnsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,

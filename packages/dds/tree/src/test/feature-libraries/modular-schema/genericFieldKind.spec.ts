@@ -5,24 +5,25 @@
 
 import { strict as assert } from "assert";
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import {
-	GenericChangeset,
-	CrossFieldManager,
+	type GenericChangeset,
+	type CrossFieldManager,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries/index.js";
-import { DeltaFieldChanges } from "../../../core/index.js";
+import type { DeltaFieldChanges } from "../../../core/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
-	FieldChangeEncodingContext,
-	NodeId,
-	RebaseRevisionMetadata,
+	type FieldChangeEncodingContext,
+	type NodeId,
+	type RebaseRevisionMetadata,
 	genericChangeHandler,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -295,7 +296,11 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
-		const baseContext = { originatorId: "session1" as SessionId, revision: undefined };
+		const baseContext = {
+			originatorId: "session1" as SessionId,
+			revision: undefined,
+			idCompressor: testIdCompressor,
+		};
 
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,

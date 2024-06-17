@@ -8,30 +8,31 @@ import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	AnchorNode,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
+	type AnchorNode,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
 	EmptyKey,
-	FieldUpPath,
-	PathVisitor,
-	PlaceUpPath,
-	ProtoNodes,
-	RangeUpPath,
+	type FieldUpPath,
+	type PathVisitor,
+	type PlaceUpPath,
+	type ProtoNodes,
+	type RangeUpPath,
 	TreeNavigationResult,
-	UpPath,
+	type UpPath,
 	moveToDetachedField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { JsonCompatible, brand, makeArray } from "../../util/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectJsonTree,
 	insert,
 	makeTreeFromJson,
 	remove,
+	validateUsageError,
 } from "../utils.js";
 
 const rootField: FieldUpPath = {
@@ -43,6 +44,12 @@ const rootNode: UpPath = {
 	parent: undefined,
 	parentField: rootFieldKey,
 	parentIndex: 0,
+};
+
+const rootNode2: UpPath = {
+	parent: undefined,
+	parentField: rootFieldKey,
+	parentIndex: 1,
 };
 
 describe("Editing", () => {
@@ -79,6 +86,29 @@ describe("Editing", () => {
 
 			const expected = ["a"];
 			expectJsonTree([tree1, tree2], expected);
+		});
+
+		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
+			const tree1 = makeTreeFromJson([[], ["X", "Y"]]);
+			const tree2 = tree1.fork();
+
+			tree1.transaction.start();
+			tree1.editor.move(
+				{ parent: rootNode2, field: brand("") },
+				0,
+				1,
+				{ parent: rootNode, field: brand("") },
+				0,
+			);
+			tree1.editor.sequenceField(rootField).move(1, 1, 0);
+			tree1.transaction.commit();
+
+			tree2.editor.sequenceField({ parent: rootNode2, field: brand("") }).move(0, 1, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			expectJsonTree([tree1, tree2], [["X", "Y"], []]);
 		});
 
 		it("can rebase remove over cross-field move", () => {
@@ -1528,11 +1558,6 @@ describe("Editing", () => {
 		});
 
 		it("can move a node out from a field and into a field under a sibling", () => {
-			const rootNode2: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 1,
-			};
 			const tree = makeTreeFromJson(["A", {}]);
 			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
 			const expectedState: JsonCompatible = [{ foo: "A" }];
@@ -1755,13 +1780,17 @@ describe("Editing", () => {
 				parentField: brand("foo"),
 				parentIndex: 0,
 			};
-			assert.throws(() =>
-				tree.editor.move(
-					{ parent: rootNode, field: brand("foo") },
-					0,
-					1,
-					{ parent: fooPath, field: brand("bar") },
-					0,
+			assert.throws(
+				() =>
+					tree.editor.move(
+						{ parent: rootNode, field: brand("foo") },
+						0,
+						1,
+						{ parent: fooPath, field: brand("bar") },
+						0,
+					),
+				validateUsageError(
+					/Invalid move operation: the destination is located under one of the moved elements/,
 				),
 			);
 		});
@@ -2680,25 +2709,35 @@ describe("Editing", () => {
 				});
 				treeSequence.insert(
 					0,
-					cursorForJsonableTreeNode({ type: leaf.string.name, value: "bar" }),
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "A" }),
 				);
 
 				const tree2 = tree.fork();
 
-				// Remove a
+				const fooPath: FieldUpPath = { parent: rootNode, field: brand("foo") };
+
+				// Modify the field containing the node existence constraint then remove its ancestor
+				tree.transaction.start();
+				tree.editor
+					.sequenceField(fooPath)
+					.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "C" }));
 				remove(tree, 0, 1);
+				tree.transaction.commit();
 
 				tree2.transaction.start();
-				// Put existence constraint on child field of a
+
+				// Put existence constraint on child of A
 				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
 					parentField: brand("foo"),
 					parentIndex: 0,
 				});
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
+
+				// Insert B if the child of A is still attached
 				tree2Sequence.insert(
 					1,
-					cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }),
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "B" }),
 				);
 				tree2.transaction.commit();
 
@@ -2710,64 +2749,50 @@ describe("Editing", () => {
 
 			it("sequence field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
-				const bPath = {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 1,
-				};
-
-				insert(tree, 0, "a", "b");
-				const tree2 = tree.fork();
-
-				// Remove b
-				remove(tree, 1, 1);
-
-				tree2.transaction.start();
-				// Put an existence constraint on b
-				tree2.editor.addNodeExistsConstraint(bPath);
-				const tree2RootSequence = tree2.editor.sequenceField(rootField);
-				// Should not be inserted because b has been concurrently removed
-				tree2RootSequence.insert(
-					0,
-					cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }),
-				);
-				tree2.transaction.commit();
-
-				tree.merge(tree2, false);
-				tree2.rebaseOnto(tree);
-
-				expectJsonTree([tree, tree2], ["a"]);
-			});
-
-			it("revived sequence field node exists constraint", () => {
-				const tree = makeTreeFromJson([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-				const bPath = {
+
+				insert(tree, 0, "A", "D");
+				const tree2 = tree.fork();
+
+				// Remove D
+				remove(tree, 1, 1);
+				const removalRevertible = undoStack.at(-1);
+				assert(removalRevertible !== undefined);
+
+				tree2.transaction.start();
+
+				const dPath = {
 					parent: undefined,
 					parentField: rootFieldKey,
 					parentIndex: 1,
 				};
 
-				insert(tree, 0, "a", "b");
-				const tree2 = tree.fork();
-
-				// Remove and revive second object in root sequence
-				remove(tree, 1, 1);
-				undoStack.pop()?.revert();
-
-				tree2.transaction.start();
-				tree2.editor.addNodeExistsConstraint(bPath);
-				const sequence = tree2.editor.sequenceField(rootField);
-				sequence.insert(
-					0,
-					cursorForJsonableTreeNode({ type: leaf.string.name, value: "c" }),
+				// Put an existence constraint on D
+				tree2.editor.addNodeExistsConstraint(dPath);
+				const tree2RootSequence = tree2.editor.sequenceField(rootField);
+				// Should not be inserted because D has been concurrently removed
+				tree2RootSequence.insert(
+					1,
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "B" }),
 				);
 				tree2.transaction.commit();
 
+				tree2.rebaseOnto(tree);
+				expectJsonTree([tree2], ["A"]);
+
+				insert(tree, 1, "C");
+				tree2.rebaseOnto(tree);
+
+				// The insert of B should still fail after rebasing over an unrelated change.
+				expectJsonTree([tree2], ["A", "C"]);
+
+				removalRevertible.revert();
 				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
 
-				expectJsonTree([tree, tree2], ["c", "a", "b"]);
+				// The insert of B should succeed after rebasing over the revive of D.
+				expectJsonTree([tree, tree2], ["A", "B", "C", "D"]);
+
 				unsubscribe();
 			});
 

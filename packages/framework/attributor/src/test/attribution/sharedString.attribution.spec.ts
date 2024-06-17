@@ -23,18 +23,19 @@ import {
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	type IChannelServices,
+	type Jsonable,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { type Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+	type IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	type ISequencedDocumentMessage,
 	type ISummaryTree,
 	SummaryType,
 	type IQuorumClients,
 	type ISequencedClient,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -43,7 +44,6 @@ import {
 	MockStorage,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {

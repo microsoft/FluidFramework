@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike, Stats } from "fs";
+import { PathLike, Stats, type BigIntStats } from "fs";
 import * as path from "path";
 import { inflate, deflate } from "pako";
 import { Request } from "express";
@@ -96,7 +96,7 @@ export function getRepoManagerParamsFromRequest(request: Request): IRepoManagerP
 export async function exists(
 	fileSystemManager: IFileSystemManager,
 	fileOrDirectoryPath: PathLike,
-): Promise<Stats | false> {
+): Promise<Stats | BigIntStats | false> {
 	try {
 		const fileOrDirectoryStats = await fileSystemManager.promises.stat(fileOrDirectoryPath);
 		return fileOrDirectoryStats;

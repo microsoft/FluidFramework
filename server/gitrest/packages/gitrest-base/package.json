@@ -69,7 +69,7 @@
 		"debug": "^4.3.4",
 		"express": "^4.19.2",
 		"ioredis": "^5.2.3",
-		"isomorphic-git": "^1.14.0",
+		"isomorphic-git": "^1.25.10",
 		"json-stringify-safe": "^5.0.1",
 		"memfs": "^3.4.12",
 		"nconf": "^0.11.4",

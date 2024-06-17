@@ -17,19 +17,17 @@ export {
 } from "./fluidContainer.js";
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
-export {
-	type ContainerSchema,
-	type ContainerAttachProps,
-	type DataObjectClass,
-	type IConnection,
-	type IMember,
-	type IRootDataObject,
-	type IServiceAudience,
-	type IServiceAudienceEvents,
-	type LoadableObjectClass,
-	type LoadableObjectClassRecord,
-	type LoadableObjectRecord,
-	type MemberChangedListener,
-	type Myself,
-	type IProvideRootDataObject,
+export type {
+	CompatibilityMode,
+	ContainerSchema,
+	ContainerAttachProps,
+	IConnection,
+	IMember,
+	IProvideRootDataObject,
+	IRootDataObject,
+	IServiceAudience,
+	IServiceAudienceEvents,
+	LoadableObjectRecord,
+	MemberChangedListener,
+	Myself,
 } from "./types.js";

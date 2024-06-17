@@ -59,6 +59,8 @@ nexus:
     shouldDisableDefaultNamespace: false
   socketIo:
     perMessageDeflate: true
+    gracefulShutdownEnabled: false
+    pingPongLatencyTrackingEnabled: false
 
 storage:
   enableWholeSummaryUpload: false
@@ -83,6 +85,7 @@ deli:
   restartOnCheckpointFailure: true
   enableEphemeralContainerSummaryCleanup: true
   enableLeaveOpNoClientServerMetadata: false
+  noOpConsolidationTimeout: 250
 
 scriptorium:
   name: scriptorium

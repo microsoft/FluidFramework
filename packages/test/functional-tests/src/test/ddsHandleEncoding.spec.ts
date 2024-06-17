@@ -15,8 +15,9 @@ import {
 } from "@fluid-experimental/tree";
 import { CellFactory } from "@fluidframework/cell/internal";
 import { detectOutboundReferences } from "@fluidframework/container-runtime/internal";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { SessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
 import { SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection/internal";
@@ -28,7 +29,8 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -138,11 +140,10 @@ describe("DDS Handle Encoding", () => {
 					h: builder.optional(builder.handle),
 				}) {}
 
-				const config = new TreeConfiguration(Bar, () => ({
-					h: undefined,
-				}));
+				const config = new TreeViewConfiguration({ schema: Bar });
 
-				const treeView = dds.schematize(config);
+				const treeView = dds.viewWith(config);
+				treeView.initialize({ h: undefined });
 
 				treeView.root.h = handle;
 			},

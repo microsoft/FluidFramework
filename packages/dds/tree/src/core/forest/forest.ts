@@ -5,15 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ISubscribable } from "../../events/index.js";
-import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
+import type { Listenable } from "../../events/index.js";
+import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
-	Anchor,
-	AnchorSet,
-	DetachedField,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	UpPath,
+	type Anchor,
+	type AnchorSet,
+	type DetachedField,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type UpPath,
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";
@@ -43,15 +43,13 @@ export interface ForestEvents {
 
 	/**
 	 * The forest is about to be changed.
-	 * Emitted before the first change in a batch of changes.
+	 * Emitted before each change in a batch of changes.
+	 * @remarks
+	 * This is the last chance for users of the forest to remove cursors from the forest before the edit.
+	 * Removing these cursors is important since they are not allowed to live across edits and
+	 * not clearing them can lead to corruption of in memory structures.
 	 */
 	beforeChange(): void;
-
-	/**
-	 * The forest was just changed.
-	 * Emitted after the last change in a batch of changes.
-	 */
-	afterChange(): void;
 }
 
 /**
@@ -62,7 +60,7 @@ export interface ForestEvents {
  * When invalidating, all outstanding cursors must be freed or cleared.
  * @internal
  */
-export interface IForestSubscription extends ISubscribable<ForestEvents> {
+export interface IForestSubscription extends Listenable<ForestEvents> {
 	/**
 	 * Set of anchors this forest is tracking.
 	 *
@@ -82,8 +80,9 @@ export interface IForestSubscription extends ISubscribable<ForestEvents> {
 
 	/**
 	 * Allocates a cursor in the "cleared" state.
+	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
 	 */
-	allocateCursor(): ITreeSubscriptionCursor;
+	allocateCursor(source?: string): ITreeSubscriptionCursor;
 
 	/**
 	 * Frees an Anchor, stopping tracking its position across edits.
@@ -180,9 +179,10 @@ export interface FieldAnchor {
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
 	/**
+	 * @param source - optional string identifying the source of the cursor for debugging purposes when cursors are not properly cleaned up.
 	 * @returns an independent copy of this cursor at the same location in the tree.
 	 */
-	fork(): ITreeSubscriptionCursor;
+	fork(source?: string): ITreeSubscriptionCursor;
 
 	/**
 	 * Release any resources this cursor is holding onto.

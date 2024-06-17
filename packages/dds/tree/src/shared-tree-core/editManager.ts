@@ -4,28 +4,28 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
-	RevisionTag,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type GraphCommit,
+	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	mintCommit,
 	rebaseChange,
 } from "../core/index.js";
-import { Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
+import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
 import {
 	SharedTreeBranch,
-	BranchTrimmingEvents,
+	type BranchTrimmingEvents,
 	getChangeReplaceType,
 	onForkTransitive,
 } from "./branch.js";
-import {
+import type {
 	Commit,
 	SeqNumber,
 	SequenceId,
@@ -83,7 +83,6 @@ export class EditManager<
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	// TODO:#4593: Add test to ensure that peer branches are never initialized with a repairDataStoreProvider
 	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
 		new Map();
 
@@ -608,7 +607,7 @@ export class EditManager<
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);
 			this.pushCommitToTrunk(sequenceId, {
 				...newCommit,
-				change: newChangeFullyRebased,
+				change: newChangeFullyRebased.change,
 			});
 		}
 

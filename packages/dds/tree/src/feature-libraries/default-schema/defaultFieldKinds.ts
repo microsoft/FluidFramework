@@ -4,27 +4,27 @@
  */
 
 import {
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	FieldKindIdentifier,
+	type ChangesetLocalId,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
-	FieldChangeHandler,
-	FieldEditor,
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
+	type FieldChangeHandler,
+	type FieldEditor,
+	type FieldKindConfiguration,
+	type FieldKindConfigurationEntry,
 	FieldKindWithEditor,
-	FlexFieldKind,
-	ToDelta,
+	type FlexFieldKind,
+	type ToDelta,
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
@@ -46,6 +46,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
+	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,
 };
 
@@ -209,6 +210,17 @@ export const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration
 			[required.identifier, { kind: required, formatVersion: 2 }],
 			[optional.identifier, { kind: optional, formatVersion: 2 }],
 			[sequence.identifier, { kind: sequence, formatVersion: 1 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
+			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
+		]),
+	],
+	[
+		3,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
+			[required.identifier, { kind: required, formatVersion: 2 }],
+			[optional.identifier, { kind: optional, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
 			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),

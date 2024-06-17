@@ -5,21 +5,20 @@
 
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	FluidObject,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	IDocumentMessage,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import {
-	IClientDetails,
-	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -40,7 +39,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
-	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
+	public clientDetails: IClientDetails;
 	public connected: boolean = true;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
@@ -67,11 +66,13 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLoggerExt = createChildLogger({
+		public readonly baseLogger: ITelemetryLoggerExt = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
-		private readonly interactive: boolean = true,
-	) {}
+		interactive: boolean = true,
+	) {
+		this.clientDetails = { capabilities: { interactive } };
+	}
 
 	on(event: string | symbol, listener: (...args: any[]) => void): this {
 		switch (event) {
@@ -140,6 +141,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+		throw new Error("Method not implemented.");
+	}
+
+	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
 		throw new Error("Method not implemented.");
 	}
 }

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience } from "@fluidframework/container-definitions";
-import { type IContainer } from "@fluidframework/container-definitions/internal";
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import type { IAudience } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IClient } from "@fluidframework/driver-definitions";
 
-import { type AudienceClientMetadata } from "./AudienceMetadata.js";
-import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
+import type { AudienceClientMetadata } from "./AudienceMetadata.js";
+import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
-import { type ContainerStateMetadata } from "./ContainerMetadata.js";
-import { type ContainerDevtoolsFeatureFlags } from "./Features.js";
-import { type IContainerDevtools } from "./IContainerDevtools.js";
-import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs.js";
+import type { ContainerStateMetadata } from "./ContainerMetadata.js";
+import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
+import type { IContainerDevtools } from "./IContainerDevtools.js";
+import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
 	type FluidObjectNode,

@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base";
-import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import {
+	type ISharedObjectKind,
+	createSharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
-import { ITree } from "./simple-tree/index.js";
+import { SharedTree as SharedTreeImpl, type SharedTreeOptions } from "./shared-tree/index.js";
+import type { ITree } from "./simple-tree/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
@@ -53,9 +56,9 @@ export class TreeFactory implements IChannelFactory<ITree> {
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- * @public
+ * @alpha
  */
-export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
+export const SharedTree = configuredSharedTree({});
 
 /**
  * {@link SharedTree} but allowing a non-default configuration.
@@ -82,11 +85,13 @@ export const SharedTree: ISharedObjectKind<ITree> = configuredSharedTree({});
  * Maybe as part of a test utils or dev-tool package?
  * @internal
  */
-export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree> {
+export function configuredSharedTree(
+	options: SharedTreeOptions,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
 	class ConfiguredFactory extends TreeFactory {
 		public constructor() {
 			super(options);
 		}
 	}
-	return createSharedObjectKind(ConfiguredFactory);
+	return createSharedObjectKind<ITree>(ConfiguredFactory);
 }

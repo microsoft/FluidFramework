@@ -7,18 +7,19 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	type IDisposable,
-	type IEvent,
-	type IFluidHandle,
-	type IFluidLoadable,
-	type IProvideFluidHandle,
-} from "@fluidframework/core-interfaces/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import type {
+	IDisposable,
+	IEvent,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
+import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
-import { type FluidObjectId } from "../CommonInterfaces.js";
+import type { FluidObjectId } from "../CommonInterfaces.js";
 
-import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing.js";
+import type { Edit, EditSharedObject, SharedObjectEdit } from "./DataEditing.js";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {
 	type FluidObjectNode,
@@ -498,6 +499,7 @@ export async function visualizeChildData(
 		};
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;

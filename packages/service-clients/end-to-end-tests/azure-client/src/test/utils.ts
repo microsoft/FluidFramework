@@ -48,3 +48,34 @@ export const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
 export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
+
+/**
+ * This function creates a test matrix which allows the Azure Client to run the same tests against different sets of parameters.
+ * Currently, there is only a test-set for Durable containers and one for Ephemeral containers.
+ * The Ephemeral container tests will not run for local tests.
+ *
+ * @returns - The test matrix
+ */
+export function getTestMatrix(): { variant: string; options: { isEphemeral: boolean } }[] {
+	const testMatrix = [
+		{
+			variant: "Durable Container",
+			options: {
+				isEphemeral: false,
+			},
+		},
+	];
+
+	// We only need to test ephemeral container behaviors when running against an azure container
+	const useAzure = process.env.FLUID_CLIENT === "azure";
+	if (useAzure) {
+		testMatrix.push({
+			variant: "Ephemeral Container",
+			options: {
+				isEphemeral: true,
+			},
+		});
+	}
+
+	return testMatrix;
+}
