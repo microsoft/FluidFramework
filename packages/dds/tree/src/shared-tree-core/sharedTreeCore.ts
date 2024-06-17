@@ -182,7 +182,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			) {
 				assert(
 					change.newCommits.length === 1,
-					"Unexpected number of commits when committing transaction",
+					0x983 /* Unexpected number of commits when committing transaction */,
 				);
 				this.commitEnricher.prepareCommit(change.newCommits[0], true);
 			}
@@ -399,7 +399,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		assert(
 			this.resubmitMachine.isInResubmitPhase !== false,
-			"Invalid resubmit outside of resubmit phase",
+			0x984 /* Invalid resubmit outside of resubmit phase */,
 		);
 		const enrichedCommit = this.resubmitMachine.peekNextCommit();
 		this.submitCommit(enrichedCommit, localOpMetadata, true);

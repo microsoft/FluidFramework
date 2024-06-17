@@ -73,7 +73,7 @@ export class BranchCommitEnricher<TChange> {
 		if (concludesOuterTransaction) {
 			assert(
 				this.transactionEnricher !== undefined,
-				"Unexpected transaction commit without transaction steps",
+				0x97f /* Unexpected transaction commit without transaction steps */,
 			);
 			enrichedChange = this.transactionEnricher.getComposedChange(commit.revision);
 		} else {
@@ -88,7 +88,7 @@ export class BranchCommitEnricher<TChange> {
 	 */
 	public getPreparedCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
 		const prepared = this.preparedCommits.get(commit);
-		assert(prepared !== undefined, "Unknown commit");
+		assert(prepared !== undefined, 0x980 /* Unknown commit */);
 		this.preparedCommits.delete(commit);
 		return prepared;
 	}

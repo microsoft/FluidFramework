@@ -50,9 +50,9 @@ export function tryInitializeMemoryDetachedBlobStorage(
 		);
 	}
 
-	assert(detachedStorage.size === 0, "Blob storage already initialized");
+	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
 	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
-	assert(Array.isArray(maybeAttachmentBlobs), "Invalid attachmentBlobs");
+	assert(Array.isArray(maybeAttachmentBlobs), 0x99f /* Invalid attachmentBlobs */);
 
 	detachedStorage.initialize(maybeAttachmentBlobs);
 }

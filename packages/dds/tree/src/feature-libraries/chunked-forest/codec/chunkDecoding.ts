@@ -104,7 +104,7 @@ export function readValue(
 			const streamValue = readStream(stream);
 			assert(
 				typeof streamValue === "number" || typeof streamValue === "string",
-				"identifier must be string or number.",
+				0x997 /* identifier must be string or number. */,
 			);
 			const idCompressor = idDecodingContext.idCompressor;
 			return typeof streamValue === "number"

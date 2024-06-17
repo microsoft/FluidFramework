@@ -760,7 +760,7 @@ export abstract class SharedObject<
 			// TelemetryContext needs to implment a get function
 			assert(
 				"get" in telemetryContext && typeof telemetryContext.get === "function",
-				"received context must have a get function",
+				0x97e /* received context must have a get function */,
 			);
 
 			const prevTotal = ((telemetryContext as TelemetryContext).get(
