@@ -153,7 +153,7 @@ export class PendingStateManager implements IDisposable {
 				message.sequenceNumber !== undefined,
 				0x97c /* saved op should already have a sequence number */,
 			);
-			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
+			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
 			if (

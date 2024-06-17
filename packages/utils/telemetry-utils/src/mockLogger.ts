@@ -11,7 +11,11 @@ import {
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger } from "./logger.js";
-import type { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type {
+	ITelemetryEventExt,
+	ITelemetryLoggerExt,
+	ITelemetryPropertiesExt,
+} from "./telemetryTypes.js";
 
 /**
  * Mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} implementation.
@@ -258,4 +262,33 @@ function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPrope
 		}
 	}
 	return true;
+}
+
+/**
+ * Mock {@link ITelemetryLoggerExt} implementation.
+ *
+ * @remarks Can be created via {@link createMockLoggerExt}.
+ *
+ * @internal
+ */
+export interface IMockLoggerExt extends ITelemetryLoggerExt {
+	/**
+	 * Gets the events that have been logged so far.
+	 */
+	events(): readonly ITelemetryEventExt[];
+}
+
+/**
+ * Creates an {@link IMockLoggerExt}.
+ *
+ * @internal
+ */
+export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
+	const mockLogger = new MockLogger(minLogLevel);
+	const childLogger = createChildLogger({ logger: mockLogger });
+	Object.assign(childLogger, {
+		events: (): readonly ITelemetryEventExt[] =>
+			mockLogger.events.map((e) => e as ITelemetryEventExt),
+	});
+	return childLogger as IMockLoggerExt;
 }
