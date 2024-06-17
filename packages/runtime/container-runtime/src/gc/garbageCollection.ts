@@ -746,7 +746,7 @@ export class GarbageCollector implements IGarbageCollector {
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
-				compatDetails: { behavior: "Ignore" },
+				compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -1096,7 +1096,7 @@ export class GarbageCollector implements IGarbageCollector {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
-			compatDetails: { behavior: "Ignore" },
+			compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 		};
 		this.submitMessage(containerGCMessage);
 	}

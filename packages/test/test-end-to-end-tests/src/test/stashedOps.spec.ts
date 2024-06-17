@@ -372,6 +372,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
+				// [DEPRECATED]
 				// Submit a message with an unrecognized type
 				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
 				(
