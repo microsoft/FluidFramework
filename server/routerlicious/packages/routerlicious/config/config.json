@@ -162,7 +162,8 @@
 		},
 		"socketIo": {
 			"perMessageDeflate": false,
-			"gracefulShutdownEnabled": false
+			"gracefulShutdownEnabled": false,
+			"pingPongLatencyTrackingEnabled": false
 		},
 		"jwtTokenCache": {
 			"enable": true

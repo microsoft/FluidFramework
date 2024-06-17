@@ -81,7 +81,7 @@ describe("Ordered Client Collection", () => {
 	}
 
 	afterEach(() => {
-		mockLogger.events = [];
+		mockLogger.clear();
 		testQuorum.reset();
 		currentSequenceNumber = 0;
 	});

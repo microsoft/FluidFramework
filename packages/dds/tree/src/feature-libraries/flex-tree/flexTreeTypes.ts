@@ -10,7 +10,7 @@ import {
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
-import type { Assume, InternalUtilTypes } from "../../util/index.js";
+import type { Assume, FlattenKeys } from "../../util/index.js";
 import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 import type { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
@@ -24,11 +24,11 @@ import type {
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexList,
+	FlexListToUnion,
 	FlexMapNodeSchema,
 	FlexObjectNodeFields,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
-	InternalFlexListTypes,
 	LazyItem,
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
@@ -553,7 +553,7 @@ export type FlexTreeObjectNodeTyped<TSchema extends FlexObjectNodeSchema> =
  */
 export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
 	FlexTreeObjectNodeFieldsInner<
-		InternalUtilTypes.FlattenKeys<
+		FlattenKeys<
 			{
 				// When the key does not need to be escaped, map it from the input TFields in a way that doesn't break navigate to declaration
 				[key in keyof TFields as key extends PropertyNameFromFieldKey<key & string>
@@ -576,34 +576,33 @@ export type FlexTreeObjectNodeFields<TFields extends FlexObjectNodeFields> =
  *
  * @internal
  */
-export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> =
-	InternalUtilTypes.FlattenKeys<
-		{
-			// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-			readonly [key in keyof TFields as `boxed${Capitalize<
-				key & string
-			>}`]: FlexTreeTypedField<TFields[key]>;
-		} & {
-			// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-			// If we could map to getters and setters separately, we would preferably do that, but we can't.
-			// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-			readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-				? never
-				: key]: FlexTreeUnboxField<TFields[key]>;
-		} & {
-			// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-			// If we could map to getters and setters separately, we would preferably do that, but we can't.
-			// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-			-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-				? key
-				: never]: FlexTreeUnboxField<TFields[key]>;
-		} & {
-			// Setter method (when the field is of a kind that has a logical set operation).
-			readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-				? `set${Capitalize<key & string>}`
-				: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
-		}
-	>;
+export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> = FlattenKeys<
+	{
+		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
+			TFields[key]
+		>;
+	} & {
+		// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
+		// If we could map to getters and setters separately, we would preferably do that, but we can't.
+		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+			? never
+			: key]: FlexTreeUnboxField<TFields[key]>;
+	} & {
+		// Add setter (make property writable) when the field is of a kind that has a logical set operation.
+		// If we could map to getters and setters separately, we would preferably do that, but we can't.
+		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+		-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+			? key
+			: never]: FlexTreeUnboxField<TFields[key]>;
+	} & {
+		// Setter method (when the field is of a kind that has a logical set operation).
+		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+			? `set${Capitalize<key & string>}`
+			: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+	}
+>;
 
 /**
  * Reserved object node field property names to avoid collisions with the rest of the object node API.
@@ -1030,7 +1029,7 @@ export type FlexTreeTypedFieldInner<
  */
 export type FlexTreeTypedNodeUnion<T extends FlexAllowedTypes> =
 	T extends FlexList<FlexTreeNodeSchema>
-		? FlexTreeTypedNode<Assume<InternalFlexListTypes.FlexListToUnion<T>, FlexTreeNodeSchema>>
+		? FlexTreeTypedNode<Assume<FlexListToUnion<T>, FlexTreeNodeSchema>>
 		: FlexTreeNode;
 
 /**

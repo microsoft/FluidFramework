@@ -8,10 +8,10 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type InternalFlexListTypes,
 	type LazyItem,
 	type NodeKeyManager,
 	isLazy,
+	type FlexListToUnion,
 } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -464,7 +464,7 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
+	? NodeFromSchema<FlexListToUnion<TSchema>>
 	: unknown;
 
 /**
@@ -476,7 +476,7 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-	? InsertableTypedNode<InternalFlexListTypes.FlexListToUnion<TSchema>>
+	? InsertableTypedNode<FlexListToUnion<TSchema>>
 	: never;
 
 /**

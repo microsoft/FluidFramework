@@ -400,7 +400,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-			this.parentContext.addedGCOutboundRoute(fromPath, toPath);
+			this.parentContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
 		});
 
 		// Only log once per container to avoid noise/cost.
@@ -495,13 +495,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const aliasResult = this.processAliasMessageCore(
 			aliasMessage.internalId,
 			aliasMessage.alias,
+			message.timestamp,
 		);
 		if (local) {
 			resolve(aliasResult);
 		}
 	}
 
-	public processAliasMessageCore(internalId: string, alias: string): boolean {
+	public processAliasMessageCore(
+		internalId: string,
+		alias: string,
+		messageTimestampMs?: number,
+	): boolean {
 		if (this.alreadyProcessed(alias)) {
 			return false;
 		}
@@ -521,7 +526,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			return false;
 		}
 
-		this.parentContext.addedGCOutboundRoute("/", `/${internalId}`);
+		// If message timestamp doesn't exist, this is called in a detached container. Don't notify GC in that case
+		// because it doesn't run in detached container and doesn't need to know about this route.
+		if (messageTimestampMs) {
+			this.parentContext.addedGCOutboundRoute("/", `/${internalId}`, messageTimestampMs);
+		}
 
 		this.aliasMap.set(alias, context.id);
 		this.aliasedDataStores.add(context.id);
@@ -829,7 +838,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					envelope.address,
 					transformed.contents,
 					(fromPath: string, toPath: string) =>
-						this.parentContext.addedGCOutboundRoute(fromPath, toPath),
+						this.parentContext.addedGCOutboundRoute(
+							fromPath,
+							toPath,
+							message.timestamp,
+						),
 				);
 				break;
 			}
@@ -1428,6 +1441,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			packagePath: details.pkg,
 			request,
 			headerData,
+			timestampMs: undefined, // This will be added by the parent context if needed.
 		});
 
 		const dataStore = await dataStoreContext.realize();
