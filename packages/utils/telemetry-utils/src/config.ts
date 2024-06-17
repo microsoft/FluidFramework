@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
@@ -11,7 +11,7 @@ import {
 import { Lazy } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger, tagCodeArtifacts } from "./logger.js";
-import { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Explicitly typed interface for reading configurations.
@@ -193,7 +193,7 @@ export class CachedConfigProvider implements IConfigProvider {
 	private readonly configCache = new Map<string, StronglyTypedValue>();
 	private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
 
-	constructor(
+	public constructor(
 		private readonly logger?: ITelemetryBaseLogger,
 		...orderedBaseProviders: (IConfigProviderBase | undefined)[]
 	) {
@@ -216,26 +216,26 @@ export class CachedConfigProvider implements IConfigProvider {
 			}
 		}
 	}
-	getBoolean(name: string): boolean | undefined {
+	public getBoolean(name: string): boolean | undefined {
 		return this.getCacheEntry(name)?.boolean;
 	}
-	getNumber(name: string): number | undefined {
+	public getNumber(name: string): number | undefined {
 		return this.getCacheEntry(name)?.number;
 	}
-	getString(name: string): string | undefined {
+	public getString(name: string): string | undefined {
 		return this.getCacheEntry(name)?.string;
 	}
-	getBooleanArray(name: string): boolean[] | undefined {
+	public getBooleanArray(name: string): boolean[] | undefined {
 		return this.getCacheEntry(name)?.["boolean[]"];
 	}
-	getNumberArray(name: string): number[] | undefined {
+	public getNumberArray(name: string): number[] | undefined {
 		return this.getCacheEntry(name)?.["number[]"];
 	}
-	getStringArray(name: string): string[] | undefined {
+	public getStringArray(name: string): string[] | undefined {
 		return this.getCacheEntry(name)?.["string[]"];
 	}
 
-	getRawConfig(name: string): ConfigTypes {
+	public getRawConfig(name: string): ConfigTypes {
 		return this.getCacheEntry(name)?.raw;
 	}
 

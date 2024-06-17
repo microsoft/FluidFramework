@@ -9,13 +9,6 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
-// These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
-// define the list here so we can re-use it in multiple task definitions.
-//
-// The "prettier" task should be replaced by "check:prettier" eventually. Once the conversion is done, then the
-// "prettier" task can be removed from this list.
-const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
-
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -49,7 +42,7 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				...checkFormatTasks,
+				"check:format",
 				"eslint",
 				"good-fences",
 				"depcruise",
@@ -59,7 +52,7 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: [...checkFormatTasks],
+			dependsOn: ["check:format"],
 			script: false,
 		},
 		"checks:fix": {
@@ -108,12 +101,12 @@ module.exports = {
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
 		"check:format": {
-			dependsOn: [...checkFormatTasks],
-			script: false,
+			dependencies: [],
+			script: true,
 		},
 		"format": {
-			dependsOn: ["prettier:fix", "format:prettier", "format:biome"],
-			script: false,
+			dependencies: [],
+			script: true,
 		},
 		"check:biome": [],
 		"check:prettier": [],
@@ -307,19 +300,15 @@ module.exports = {
 			"npm-package-exports-apis-linted": [
 				// Rollout suppressions - enable only after tools are updated to support policy
 				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^azure/",
 				"^common/",
-				"^examples/",
-				"^experimental/",
-				"^packages/",
 
 				// Packages that violate the API linting rules
-				// AB#8135: ae-unresolved-inheritdoc-reference: @public AzureMember references @internal AzureUser
-				"^packages/service-clients/azure-client/",
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
+				// AB#8288 api-extractor Internal Error: symbol has a ts.SyntaxKind.SourceFile declaration
+				"^packages/framework/fluid-framework/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -491,7 +480,8 @@ module.exports = {
 		},
 		// Requirements applied to all `public` packages.
 		publicPackageRequirements: {
-			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			// The following scripts combined with npm-package-exports-apis-linted policy are all currently required
+			// to ensure api-extractor is run correctly in local builds and pipelines.
 			requiredScripts: [
 				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
 				// {
@@ -505,10 +495,6 @@ module.exports = {
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
-				},
-				{
-					name: "check:release-tags",
-					body: "api-extractor run --local --config ./api-extractor-lint.json",
 				},
 			],
 			// All of our public packages should be using api-extractor

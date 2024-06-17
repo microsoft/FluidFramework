@@ -7,20 +7,20 @@ import { strict as assert, fail } from "assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
-	ValueFieldEditor,
+	type ValueFieldEditor,
 	valueChangeHandler,
 	valueFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { CrossFieldManager, FieldChangeHandler } from "../../../feature-libraries/index.js";
+import type { CrossFieldManager, FieldChangeHandler } from "../../../feature-libraries/index.js";
 import {
-	NodeId,
+	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
+import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
@@ -30,6 +30,7 @@ import {
 	tagChangeInline,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../optional-field/optionalFieldUtils.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -200,13 +201,11 @@ describe("defaultFieldKinds", () => {
 		});
 
 		it("can be rebased", () => {
-			const childRebaser = () => assert.fail("Should not be called");
-
 			assert.deepEqual(
 				fieldHandler.rebaser.rebase(
 					change2.change,
 					change1WithChildChange,
-					childRebaser,
+					TestNodeId.rebaseChild,
 					fakeIdAllocator,
 					failCrossFieldManager,
 					rebaseRevisionMetadataFromInfo([], undefined, []),

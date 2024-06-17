@@ -4,7 +4,7 @@
 
 ```ts
 
-import { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import type { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import type { IFluidContainer } from '@fluidframework/fluid-static';
 

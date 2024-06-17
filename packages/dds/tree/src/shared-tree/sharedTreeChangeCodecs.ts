@@ -5,23 +5,26 @@
 
 import {
 	DiscriminatedUnionDispatcher,
-	ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
+	type ICodecFamily,
+	type ICodecOptions,
+	type IJsonCodec,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
+import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
-	ModularChangeset,
+	type ModularChangeset,
 	type SchemaChange,
 	defaultSchemaPolicy,
 	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
-import { type JsonCompatibleReadOnly, Mutable } from "../util/index.js";
+import type { JsonCompatibleReadOnly, Mutable } from "../util/index.js";
 
-import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
-import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+import {
+	EncodedSharedTreeChange,
+	type EncodedSharedTreeInnerChange,
+} from "./sharedTreeChangeFormat.js";
+import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
 	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
@@ -112,6 +115,7 @@ function makeSharedTreeChangeCodec(
 							data: modularChangeCodec.encode(decodedChange.innerChange, {
 								originatorId: context.originatorId,
 								schema: schemaAndPolicy,
+								idCompressor: context.idCompressor,
 								revision: context.revision,
 							}),
 						});

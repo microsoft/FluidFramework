@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 import {
 	DetachedFieldIndex,
-	ForestRootId,
-	IEditableForest,
+	type ForestRootId,
+	type IEditableForest,
 	TreeStoredSchemaRepository,
 	initializeForest,
 	mapCursorField,
@@ -20,21 +20,21 @@ import { optional } from "../../feature-libraries/default-schema/defaultFieldKin
 import {
 	DefaultEditBuilder,
 	ModularChangeFamily,
-	ModularChangeset,
+	type ModularChangeset,
 	ModularEditBuilder,
 	buildForest,
 	fieldKinds,
 } from "../../feature-libraries/index.js";
 import {
-	SharedTreeMutableChangeEnricher,
+	type SharedTreeMutableChangeEnricher,
 	SharedTreeReadonlyChangeEnricher,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeEnricher.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
+import type { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import {
-	IdAllocator,
-	JsonCompatible,
+	type IdAllocator,
+	type JsonCompatible,
 	brand,
 	disposeSymbol,
 	idAllocatorFromMaxId,
@@ -77,10 +77,11 @@ export function setupEnricher() {
 		"test",
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
+		testIdCompressor,
 		{ jsonValidator: typeboxValidator },
 	);
 	const forest = buildForest();
-	initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec);
+	initializeForest(forest, [singleJsonCursor(content)], testRevisionTagCodec, testIdCompressor);
 	const schema = new TreeStoredSchemaRepository();
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,

@@ -296,9 +296,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 // @public
 export interface ITelemetryBaseLogger {
-    // (undocumented)
     minLogLevel?: LogLevel;
-    // (undocumented)
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 

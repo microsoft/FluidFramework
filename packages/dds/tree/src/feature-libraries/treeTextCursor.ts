@@ -7,11 +7,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	DetachedField,
-	IForestSubscription,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	JsonableTree,
+	type DetachedField,
+	type IForestSubscription,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type JsonableTree,
 	aboveRootPlaceholder,
 	detachedFieldAsKey,
 	genericTreeKeys,
@@ -22,7 +22,11 @@ import {
 	setGenericTreeField,
 } from "../core/index.js";
 
-import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils.js";
+import {
+	type CursorAdapter,
+	stackTreeFieldCursor,
+	stackTreeNodeCursor,
+} from "./treeCursorUtils.js";
 
 /**
  * This module provides support for reading and writing a human readable (and

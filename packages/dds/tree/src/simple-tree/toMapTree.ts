@@ -11,7 +11,7 @@ import {
 	type FieldKey,
 	type MapTree,
 	type TreeValue,
-	ValueSchema,
+	type ValueSchema,
 	type SchemaAndPolicy,
 } from "../core/index.js";
 import {
@@ -21,12 +21,13 @@ import {
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
-	NodeKeyManager,
+	type NodeKeyManager,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
-import { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./proxies.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -39,9 +40,10 @@ import {
 	getStoredKey,
 	extractFieldProvider,
 	isConstant,
-	FieldProvider,
+	type FieldProvider,
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
+import { tryGetFlexNode } from "./proxyBinding.js";
 
 /**
  * Module notes:
@@ -211,6 +213,18 @@ function nodeDataToMapTree(
 ): MapTree | undefined {
 	if (data === undefined) {
 		return undefined;
+	}
+
+	// A special cache path for processing unhydrated nodes.
+	// They already have the mapTree, so there is no need to recompute it.
+	const flexNode = tryGetFlexNode(data);
+	if (flexNode !== undefined) {
+		if (isMapTreeNode(flexNode)) {
+			return flexNode.mapTree;
+		} else {
+			// The node is already hydrated, meaning that it already got inserted into the tree previously
+			throw new UsageError("A node may not be inserted into the tree more than once");
+		}
 	}
 
 	const schema = getType(data, allowedTypes);

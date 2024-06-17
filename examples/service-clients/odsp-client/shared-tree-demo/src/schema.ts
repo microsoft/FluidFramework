@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeConfiguration } from "fluid-framework";
+import { SchemaFactory, TreeViewConfiguration } from "fluid-framework";
 
 const sb = new SchemaFactory("fc1db2e8-0a00-11ee-be56-0242ac120002");
 
@@ -23,7 +23,4 @@ export class App extends sb.object("App", {
 	word: sb.array(Letter),
 }) {}
 
-export const treeConfiguration = new TreeConfiguration(App, () => ({
-	letters: [],
-	word: [],
-}));
+export const treeConfiguration = new TreeViewConfiguration({ schema: App });

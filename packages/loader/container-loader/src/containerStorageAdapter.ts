@@ -50,7 +50,7 @@ export class ContainerStorageAdapter
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
-	private readonly _summarizeProtocolTree: boolean | undefined;
+	private _summarizeProtocolTree: boolean | undefined;
 	/**
 	 * Whether the adapter will enforce sending combined summary trees.
 	 */
@@ -119,7 +119,11 @@ export class ContainerStorageAdapter
 			},
 			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
 			// based on the response received from the service after connection is established.
-			() => this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false,
+			() => {
+				this._summarizeProtocolTree =
+					this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false;
+				return this._summarizeProtocolTree;
+			},
 		);
 	}
 

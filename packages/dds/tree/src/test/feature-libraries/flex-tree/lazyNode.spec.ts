@@ -8,20 +8,20 @@
 import { strict as assert, fail } from "assert";
 
 import {
-	Anchor,
-	AnchorNode,
+	type Anchor,
+	type AnchorNode,
 	EmptyKey,
-	FieldAnchor,
-	FieldKey,
-	ITreeSubscriptionCursor,
-	MapTree,
+	type FieldAnchor,
+	type FieldKey,
+	type ITreeSubscriptionCursor,
+	type MapTree,
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { SchemaBuilder, leaf as leafDomain } from "../../../domains/index.js";
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	PropertyNameFromFieldKey,
+	type PropertyNameFromFieldKey,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import {
@@ -36,17 +36,17 @@ import {
 import {
 	Any,
 	DefaultChangeFamily,
-	DefaultChangeset,
+	type DefaultChangeset,
 	DefaultEditBuilder,
-	FlexAllowedTypes,
-	FlexFieldKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeNodeSchema,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import { TreeContent, type ITreeCheckout } from "../../../shared-tree/index.js";
+import type { TreeContent, ITreeCheckout } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
 import { failCodecFamily, flexTreeViewWithContent, forestWithContent } from "../../utils.js";
 

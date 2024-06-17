@@ -6,16 +6,16 @@
 import { strict as assert } from "assert";
 
 import {
-	FieldKindIdentifier,
+	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
-	MutableTreeStoredSchema,
+	type MutableTreeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	TreeStoredSchemaRepository,
-	TreeTypeSet,
+	type TreeTypeSet,
 	ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../../core/index.js";

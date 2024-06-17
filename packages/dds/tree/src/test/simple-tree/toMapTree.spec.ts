@@ -30,10 +30,10 @@ import {
 	FieldKind,
 	createFieldSchema,
 	type TreeNodeSchema,
-	ContextualFieldProvider,
-	ConstantFieldProvider,
-	FieldProvider,
-	FieldProps,
+	type ContextualFieldProvider,
+	type ConstantFieldProvider,
+	type FieldProvider,
+	type FieldProps,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
@@ -43,7 +43,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-import { FieldKinds, MockNodeKeyManager, NodeKeyManager } from "../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	MockNodeKeyManager,
+	type NodeKeyManager,
+} from "../../feature-libraries/index.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.

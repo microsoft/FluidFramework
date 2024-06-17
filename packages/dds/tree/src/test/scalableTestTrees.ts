@@ -5,18 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { FieldKey, UpPath, moveToDetachedField, rootFieldKey } from "../core/index.js";
+import { type FieldKey, type UpPath, moveToDetachedField, rootFieldKey } from "../core/index.js";
 import { jsonSchema, leaf } from "../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
-	InsertableFlexField,
-	InsertableFlexNode,
+	type InsertableFlexField,
+	type InsertableFlexNode,
 	SchemaBuilderBase,
-	typeNameSymbol,
+	type typeNameSymbol,
 } from "../feature-libraries/index.js";
-import { FlexTreeView, TreeContent } from "../shared-tree/index.js";
-import { brand, requireAssignableTo } from "../util/index.js";
+import type { FlexTreeView, TreeContent } from "../shared-tree/index.js";
+import { brand, type requireAssignableTo } from "../util/index.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.

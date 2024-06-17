@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
-	FlexTreeFieldNode,
-	FlexTreeNode,
-	FlexTreeNodeSchema,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeUnboxField,
+	EmptyKey,
+	type ITreeCursorSynchronous,
+	type TreeNodeSchemaIdentifier,
+} from "../core/index.js";
+import {
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
+	type FlexTreeNode,
+	type FlexTreeSequenceField,
+	type MapTreeNode,
+	cursorForMapTreeField,
+	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getOrCreateNodeProxy,
 	markContentType,
-	prepareContentForInsert,
+	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
 import {
@@ -27,17 +31,16 @@ import {
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
 	type,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
-import { cursorFromFieldData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
+import { type TreeNode, TreeNodeValid } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -373,34 +376,34 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 {
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
-	join(separator?: string | undefined): string;
-	slice(start?: number | undefined, end?: number | undefined): T[];
-	indexOf(searchElement: T, fromIndex?: number | undefined): number;
-	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
+	entries(): IterableIterator<[number, T]>;
 	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
 	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
-	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
 	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
 	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
+	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
+	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
+	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+	includes(searchElement: T, fromIndex?: number | undefined): boolean;
+	indexOf(searchElement: T, fromIndex?: number | undefined): number;
+	join(separator?: string | undefined): string;
+	keys(): IterableIterator<number>;
+	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
+	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
 	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
 	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
 	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
 	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
 	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
 	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
-	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
-	entries(): IterableIterator<[number, T]>;
-	keys(): IterableIterator<number>;
-	values(): IterableIterator<T>;
-	includes(searchElement: T, fromIndex?: number | undefined): boolean;
-	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
-	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
-	toString(): string;
+	slice(start?: number | undefined, end?: number | undefined): T[];
+	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
 	toLocaleString(): string;
+	toString(): string;
+	values(): IterableIterator<T>;
 }
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
@@ -481,7 +484,7 @@ function createArrayNodeProxy(
 				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
 				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
 				// Therefor length has to be handled in this proxy.
-				// Since its not actually mutable, return false so setting it will produce a type error.
+				// Since it's not actually mutable, return false so setting it will produce a type error.
 				return false;
 			}
 
@@ -496,7 +499,10 @@ function createArrayNodeProxy(
 			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
 			if (maybeIndex !== undefined) {
 				// For MVP, we otherwise disallow setting properties (mutation is only available via the array node mutation APIs).
-				return false;
+				// To ensure a clear and actionable error experience, we will throw explicitly here, rather than just returning false.
+				throw new UsageError(
+					"Cannot set indexed properties on array nodes. Use array node mutation APIs to alter the array.",
+				);
 			}
 			return allowAdditionalProperties ? Reflect.set(target, key, newValue) : false;
 		},
@@ -550,6 +556,13 @@ function createArrayNodeProxy(
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatchTarget, key);
 		},
+		defineProperty(target, key, attributes) {
+			const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+			if (maybeIndex !== undefined) {
+				throw new UsageError("Shadowing of array indices is not permitted.");
+			}
+			return Reflect.defineProperty(dispatchTarget, key, attributes);
+		},
 	});
 	return proxy;
 }
@@ -574,28 +587,34 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	protected abstract get simpleSchema(): T;
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
+		if (isMapTreeNode(getFlexNode(this))) {
+			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
+		}
+
 		const sequenceField = getSequenceField(this);
-
-		const content = prepareContentForInsert(
-			(
-				value as readonly (
-					| InsertableContent
-					| IterableTreeArrayContent<InsertableContent>
-				)[]
-			).flatMap((c) => (c instanceof IterableTreeArrayContent ? Array.from(c) : [c])),
-			sequenceField.context.checkout.forest,
-		);
-
 		// TODO: this is not valid since this is a value field schema, not a sequence one (which does not exist in the simple tree layer),
 		// but it works since cursorFromFieldData special cases arrays.
 		const simpleFieldSchema = normalizeFieldSchema(this.simpleSchema);
+		const content = value as readonly (
+			| InsertableContent
+			| IterableTreeArrayContent<InsertableContent>
+		)[];
 
-		return cursorFromFieldData(
-			content,
-			simpleFieldSchema,
-			getFlexNode(this).context.nodeKeyManager,
-			getSchemaAndPolicy(sequenceField),
-		);
+		const mapTrees = content
+			.flatMap((c): InsertableContent[] =>
+				c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
+			)
+			.map((c) =>
+				mapTreeFromNodeData(
+					c,
+					simpleFieldSchema.allowedTypes,
+					sequenceField.context.nodeKeyManager,
+					getSchemaAndPolicy(sequenceField),
+				),
+			);
+
+		prepareContentForHydration(mapTrees, sequenceField.context.checkout.forest);
+		return cursorForMapTreeField(mapTrees);
 	}
 
 	public toJSON(): unknown {
@@ -770,13 +789,16 @@ export function arraySchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): RawTreeNode<FlexTreeNodeSchema, unknown> {
-			return new RawFieldNode(
+		): MapTreeNode {
+			return getOrCreateMapTreeNode(
 				flexSchema,
-				copyContent(
-					flexSchema.name,
-					input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				) as object,
+				mapTreeFromNodeData(
+					copyContent(
+						flexSchema.name,
+						input as Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+					) as object,
+					this as unknown as ImplicitAllowedTypes,
+				),
 			);
 		}
 
@@ -784,6 +806,31 @@ export function arraySchema<
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
 			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexFieldNodeSchema;
+
+			// First run, do extra validation.
+			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+			{
+				let prototype: object = this.prototype;
+				// There isn't a clear cleaner way to author this loop.
+				while (prototype !== schema.prototype) {
+					// Search prototype keys and check for positive integers. Throw if any are found.
+					// Shadowing of index properties on array nodes is not supported.
+					for (const key of Object.getOwnPropertyNames(prototype)) {
+						const maybeIndex = asIndex(key, Number.POSITIVE_INFINITY);
+						if (maybeIndex !== undefined) {
+							throw new UsageError(
+								`Schema ${identifier} defines an inherited index property "${key.toString()}" which shadows a possible array index. Shadowing of array indices is not permitted.`,
+							);
+						}
+					}
+
+					// Since this stops at the array node base schema, it should never see a null prototype, so this case is safe.
+					// Additionally, if the prototype chain is ever messed up such that the array base schema is not in it,
+					// the null that would show up here does at least ensure this code throws instead of hanging.
+					prototype = Reflect.getPrototypeOf(prototype) as object;
+				}
+			}
 		}
 
 		public static readonly identifier = identifier;
@@ -801,22 +848,6 @@ export function arraySchema<
 	}
 
 	return schema;
-}
-
-/**
- * The implementation of a field node created by {@link createRawNode}.
- */
-class RawFieldNode<TSchema extends FlexFieldNodeSchema>
-	extends RawTreeNode<TSchema, InsertableContent>
-	implements FlexTreeFieldNode<TSchema>
-{
-	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of an array node");
-	}
-
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of an array node");
-	}
 }
 
 function copyContent<T>(typeName: TreeNodeSchemaIdentifier, content: Iterable<T>): T[] {
