@@ -385,7 +385,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
+		private removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
 			idCompressor,
@@ -403,7 +403,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("transactionAborted", () => {
 			const snapshot = this.removedRootsSnapshots.pop();
 			assert(snapshot !== undefined, "a snapshot for removed roots does not exist");
-			this.removedRoots.loadIndex(snapshot);
+			this.removedRoots = snapshot;
 		});
 
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.

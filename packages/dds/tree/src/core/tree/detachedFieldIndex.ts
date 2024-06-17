@@ -379,24 +379,4 @@ export class DetachedFieldIndex {
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
 		this.fullyLoaded = true;
 	}
-
-	/**
-	 * copies the data from another index into this index
-	 */
-	public loadIndex(index: DetachedFieldIndex): void {
-		this.rootIdAllocator = idAllocatorFromMaxId(
-			index.rootIdAllocator.getMaxId(),
-		) as IdAllocator<ForestRootId>;
-
-		this.detachedNodeToField = new Map();
-		populateNestedMap(index.detachedNodeToField, this.detachedNodeToField, true);
-		this.latestRelevantRevisionToFields = new Map();
-		index.latestRelevantRevisionToFields.forEach((innerMap, key) => {
-			const newInner = new Map();
-			innerMap.forEach(({ major, minor }, root) => {
-				newInner.set(root, { major, minor });
-			});
-			this.latestRelevantRevisionToFields.set(key, newInner);
-		});
-	}
 }
