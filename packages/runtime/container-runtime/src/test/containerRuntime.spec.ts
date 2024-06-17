@@ -79,7 +79,7 @@ import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summar
 // Type test:
 declare const outboundMessage: OutboundContainerRuntimeMessage;
 // @ts-expect-error Outbound type does not include compat behavior
-(() => {})(outboundMessage.compatDetails);
+(() => {})(outboundMessage?.compatDetails);
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
