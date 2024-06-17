@@ -193,7 +193,6 @@ function rebase(
 		idAllocator,
 		moveEffects,
 		metadata,
-		undefined,
 	);
 	verifyContextChain(base, makeAnonChange(rebased));
 	return rebased;

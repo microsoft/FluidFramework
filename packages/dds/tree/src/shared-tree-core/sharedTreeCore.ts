@@ -154,6 +154,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
 		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
+		this.editManager.localBranch.on("transactionStarted", () => {
+			this.commitEnricher.startNewTransaction();
+		});
+		this.editManager.localBranch.on("transactionAborted", () => {
+			this.commitEnricher.abortCurrentTransaction();
+		});
+		this.editManager.localBranch.on("transactionCommitted", () => {
+			this.commitEnricher.commitCurrentTransaction();
+		});
 		this.editManager.localBranch.on("beforeChange", (change) => {
 			// Ensure that any previously prepared commits that have not been sent are purged.
 			this.commitEnricher.purgePreparedCommits();

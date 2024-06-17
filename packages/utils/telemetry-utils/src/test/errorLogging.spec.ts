@@ -21,7 +21,7 @@ import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
-	IFluidErrorAnnotations,
+	type IFluidErrorAnnotations,
 	LoggingError,
 	extractLogSafeErrorProperties,
 	isExternalError,
@@ -30,7 +30,7 @@ import {
 	wrapError,
 	wrapErrorAndLog,
 } from "../errorLogging.js";
-import { IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
+import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
@@ -630,17 +630,17 @@ describe("Error Logging", () => {
 });
 
 class TestFluidError implements IFluidErrorBase {
-	readonly atpStub: sinon.SinonStub;
-	readonly gtpSpy: sinon.SinonSpy;
-	expectedTelemetryProps: ITelemetryBaseProperties;
+	public readonly atpStub: sinon.SinonStub;
+	public readonly gtpSpy: sinon.SinonSpy;
+	public expectedTelemetryProps: ITelemetryBaseProperties;
 
-	readonly errorType: string;
-	readonly message: string;
-	readonly stack?: string;
-	readonly name: string = "Error";
-	readonly errorInstanceId: string;
+	public readonly errorType: string;
+	public readonly message: string;
+	public readonly stack?: string;
+	public readonly name: string = "Error";
+	public readonly errorInstanceId: string;
 
-	constructor(
+	public constructor(
 		errorProps: Omit<
 			IFluidErrorBase,
 			| "getTelemetryProperties"
@@ -660,23 +660,23 @@ class TestFluidError implements IFluidErrorBase {
 		this.expectedTelemetryProps = { ...errorProps };
 	}
 
-	getTelemetryProperties(): ITelemetryBaseProperties {
+	public getTelemetryProperties(): ITelemetryBaseProperties {
 		// Don't actually return any props. We'll use the spy to ensure it was called
 		return {};
 	}
 
-	addTelemetryProperties(props: ITelemetryPropertiesExt): void {
+	public addTelemetryProperties(props: ITelemetryPropertiesExt): void {
 		throw new Error("Not Implemented - Expected to be Stubbed via Sinon");
 	}
 
-	withoutProperty(propName: keyof IFluidErrorBase): this {
+	public withoutProperty(propName: keyof IFluidErrorBase): this {
 		const objectWithoutProp = {};
 		objectWithoutProp[propName] = undefined;
 		Object.assign(this, objectWithoutProp);
 		return this;
 	}
 
-	withExpectedTelemetryProps(props: ITelemetryBaseProperties): this {
+	public withExpectedTelemetryProps(props: ITelemetryBaseProperties): this {
 		Object.assign(this.expectedTelemetryProps, props);
 		return this;
 	}
@@ -729,7 +729,7 @@ describe("normalizeError", () => {
 	});
 	describe("Errors Needing Normalization", () => {
 		class NamedError extends Error {
-			name = "CoolErrorName";
+			public name = "CoolErrorName";
 		}
 		const sampleFluidError = (): TestFluidError =>
 			new TestFluidError({
@@ -746,9 +746,7 @@ describe("normalizeError", () => {
 				message,
 				stack: stackHint,
 			});
-		const testCases: {
-			[label: string]: () => { input: any; expectedOutput: TestFluidError };
-		} = {
+		const testCases: Record<string, () => { input: any; expectedOutput: TestFluidError }> = {
 			"Fluid Error minus errorType": () => ({
 				input: sampleFluidError().withoutProperty("errorType"),
 				expectedOutput: typicalOutput("Hello", "<<stack from input>>"),

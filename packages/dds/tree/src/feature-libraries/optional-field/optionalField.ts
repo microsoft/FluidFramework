@@ -35,7 +35,7 @@ import {
 	type NodeChangeComposer,
 	type NodeChangePruner,
 	type NodeChangeRebaser,
-	NodeExistenceState,
+	NodeAttachState,
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
@@ -366,7 +366,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const rebasedChildChange = rebaseChild(
 				childChange,
 				overChildChange,
-				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
 			);
 			if (rebasedChildChange !== undefined) {
 				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
@@ -378,7 +378,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const rebasedChildChange = rebaseChild(
 				undefined,
 				overChildChange,
-				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
 			);
 			if (rebasedChildChange !== undefined) {
 				rebasedChildChanges.push([rebasedId, rebasedChildChange]);

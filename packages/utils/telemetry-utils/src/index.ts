@@ -5,10 +5,10 @@
 
 export {
 	createChildMonitoringContext,
-	MonitoringContext,
+	type MonitoringContext,
 	sessionStorageConfigProvider,
 	mixinMonitoringContext,
-	IConfigProvider,
+	type IConfigProvider,
 	loggerToMonitoringContext,
 	wrapConfigProviderWithDefaults,
 } from "./config.js";
@@ -25,7 +25,7 @@ export {
 	generateErrorWithStack,
 	generateStack,
 	getCircularReplacer,
-	IFluidErrorAnnotations,
+	type IFluidErrorAnnotations,
 	isExternalError,
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
@@ -43,29 +43,33 @@ export {
 	raiseConnectedEvent,
 	safeRaiseEvent,
 } from "./events.js";
-export { hasErrorInstanceId, IFluidErrorBase, isFluidError } from "./fluidErrorBase.js";
+export { hasErrorInstanceId, type IFluidErrorBase, isFluidError } from "./fluidErrorBase.js";
 export {
 	eventNamespaceSeparator,
 	createChildLogger,
 	createMultiSinkLogger,
 	formatTick,
-	IPerformanceEventMarkers,
-	ITelemetryLoggerPropertyBag,
-	ITelemetryLoggerPropertyBags,
-	MultiSinkLoggerProperties,
+	type IPerformanceEventMarkers,
+	type ITelemetryLoggerPropertyBag,
+	type ITelemetryLoggerPropertyBags,
+	type MultiSinkLoggerProperties,
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
 	tagData,
 	tagCodeArtifacts,
 	TelemetryDataTag,
-	TelemetryEventPropertyTypes,
+	type TelemetryEventPropertyTypes,
 } from "./logger.js";
 export { MockLogger } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper.js";
-export { createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils.js";
 export {
+	createSampledLogger,
+	type IEventSampler,
+	type ISampledTelemetryLogger,
+} from "./utils.js";
+export type {
 	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
