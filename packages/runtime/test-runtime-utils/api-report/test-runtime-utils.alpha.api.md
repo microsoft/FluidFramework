@@ -343,7 +343,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     constructor(id?: string, existing?: boolean, baseLogger?: ITelemetryLoggerExt, interactive?: boolean);
     // (undocumented)
-    addedGCOutboundRoute(fromPath: string, toPath: string): void;
+    addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     attachState: AttachState;
     // (undocumented)
     readonly baseLogger: ITelemetryLoggerExt;

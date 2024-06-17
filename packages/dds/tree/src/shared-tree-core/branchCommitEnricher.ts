@@ -12,8 +12,7 @@ import { TransactionEnricher } from "./transactionEnricher.js";
  * Utility for enriching commits from a {@link Branch} before these commits are applied and submitted.
  */
 export class BranchCommitEnricher<TChange> {
-	private transactionEnricher?: TransactionEnricher<TChange>;
-	private readonly rebaser: ChangeRebaser<TChange>;
+	private readonly transactionEnricher: TransactionEnricher<TChange>;
 	private readonly enricher: ChangeEnricherReadonlyCheckout<TChange>;
 	/**
 	 * Maps each local commit to the corresponding enriched commit.
@@ -28,8 +27,8 @@ export class BranchCommitEnricher<TChange> {
 		rebaser: ChangeRebaser<TChange>,
 		enricher: ChangeEnricherReadonlyCheckout<TChange>,
 	) {
-		this.rebaser = rebaser;
 		this.enricher = enricher;
+		this.transactionEnricher = new TransactionEnricher(rebaser, this.enricher);
 	}
 
 	/**
@@ -39,6 +38,18 @@ export class BranchCommitEnricher<TChange> {
 		return this.preparedCommits.size;
 	}
 
+	public startNewTransaction(): void {
+		this.transactionEnricher.startNewTransaction();
+	}
+
+	public commitCurrentTransaction(): void {
+		this.transactionEnricher.commitCurrentTransaction();
+	}
+
+	public abortCurrentTransaction(): void {
+		this.transactionEnricher.abortCurrentTransaction();
+	}
+
 	/**
 	 * Adds a commit to the enricher.
 	 * @param commit - A commit that is part of a transaction.
@@ -46,8 +57,7 @@ export class BranchCommitEnricher<TChange> {
 	public ingestTransactionCommit(commit: GraphCommit<TChange>): void {
 		// We do not submit ops for changes that are part of a transaction.
 		// But we need to enrich the commits that will be sent if the transaction is committed.
-		this.transactionEnricher ??= new TransactionEnricher(this.rebaser, this.enricher);
-		this.transactionEnricher.addTransactionSteps(commit);
+		this.transactionEnricher.addTransactionStep(commit);
 	}
 
 	/**
@@ -66,7 +76,6 @@ export class BranchCommitEnricher<TChange> {
 				"Unexpected transaction commit without transaction steps",
 			);
 			enrichedChange = this.transactionEnricher.getComposedChange(commit.revision);
-			delete this.transactionEnricher;
 		} else {
 			enrichedChange = this.enricher.updateChangeEnrichments(commit.change, commit.revision);
 		}

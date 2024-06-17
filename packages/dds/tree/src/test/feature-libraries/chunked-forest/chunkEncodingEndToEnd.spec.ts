@@ -69,6 +69,7 @@ const revisionTagCodec = new RevisionTagCodec(idCompressor);
 const context = {
 	encodeType: options.summaryEncodeType,
 	idCompressor,
+	originatorId: idCompressor.localSessionId,
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
 
@@ -88,6 +89,7 @@ function getIdentifierEncodingContext(id: StableId) {
 	const encoderContext = {
 		encodeType: options.summaryEncodeType,
 		idCompressor: testIdCompressor,
+		originatorId: testIdCompressor.localSessionId,
 		schema: {
 			schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)),
 			policy: defaultSchemaPolicy,
@@ -176,7 +178,10 @@ describe("End to end chunked encoding", () => {
 		function stringifier(content: unknown) {
 			// TODO: use something other than `any`
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const insertedChunk = decode((content as any).fields, idCompressor);
+			const insertedChunk = decode((content as any).fields, {
+				idCompressor,
+				originatorId: idCompressor.localSessionId,
+			});
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -207,7 +212,10 @@ describe("End to end chunked encoding", () => {
 		function stringifier(content: unknown) {
 			// TODO: use something other than `any`
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const insertedChunk = decode((content as any).fields, idCompressor);
+			const insertedChunk = decode((content as any).fields, {
+				idCompressor,
+				originatorId: idCompressor.localSessionId,
+			});
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);

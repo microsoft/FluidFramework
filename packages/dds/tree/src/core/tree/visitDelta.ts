@@ -10,6 +10,8 @@ import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
+// Since ProtoNodes is reexported, import it directly to avoid forcing Delta to be reexported.
+// eslint-disable-next-line import/no-duplicates
 import type { ProtoNodes } from "./delta.js";
 import {
 	areDetachedNodeIdsEqual,

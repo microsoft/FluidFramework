@@ -272,7 +272,6 @@ export {
 	type TreeArrayNodeBase,
 	type ITree,
 	type TreeNodeSchema,
-	TreeConfiguration,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type ITreeConfigurationOptions,
@@ -299,7 +298,6 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
-	InternalSimpleTreeTypes,
 	type NodeBuilderData,
 	NodeKind,
 	type ObjectFromSchemaRecord,
@@ -363,7 +361,6 @@ export {
 	type BrandedKeyContent,
 	type RestrictiveReadonlyRecord,
 	type MakeNominal,
-	type InternalUtilTypes,
 } from "./util/index.js";
 
 export {
@@ -386,7 +383,6 @@ export {
 	type UnbrandedName,
 	type EmptyObject,
 	type FlexList,
-	InternalFlexListTypes,
 
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
@@ -396,3 +392,12 @@ export {
 	type Forbidden,
 	type Sequence,
 } from "./feature-libraries/index.js";
+
+import * as InternalTypes from "./internalTypes.js";
+export {
+	/**
+	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
+	 */
+	InternalTypes,
+};
