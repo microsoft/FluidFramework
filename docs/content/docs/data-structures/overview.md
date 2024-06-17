@@ -117,14 +117,14 @@ Typical scenarios require the connected clients to "agree" on some course of act
 -   Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
 -   Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
-# DDS Deprecation
+## DDS Deprecation
 
 With Fluid Framework 2, we made SharedTree DDS Generally Available and encourage developers to use it for new development. This is an incredibly flexible DDS that allows developers to represent a varity of data models (primitives, objects, lists, maps in any nested orientation). Due to this flexibility, it can also support features of various other DDSes in the Fluid repertoire. As SharedTree becomes more feature-rich, we plan to start reducing support for other DDSes that offer a sub-set of the functionality. This process take the form of a deprecation journey for some of our existing DDSes, but rest assured, we will provide enough runway and support to migrate away from deprecated DDSes. DDS deprecation will follow these steps:
 
-- **Provide alternative** - The new DDS will offer the same or better functionality than the old DDS
-- **Migration path to the new DDS** - Before we deprecate a DDS, we will provide the ability for developers to migrate their data to the new DDS. This will allow you to switch to the new DDS for existing documents
-- **Deprecation of the old DDS** - The old DDS will be marked deprecated in our APIs
-- **Remove the ability to create new documents with the deprecated DDS** - Finally, the old DDS write APIs will be removed so developers don't continue to build using unsupported DDSes
+-   **Provide alternative** - The new DDS will offer the same or better functionality than the old DDS
+-   **Migration path to the new DDS** - Before we deprecate a DDS, we will provide the ability for developers to migrate their data to the new DDS. This will allow you to switch to the new DDS for existing documents
+-   **Deprecation of the old DDS** - The old DDS will be marked deprecated in our APIs
+-   **Remove the ability to create new documents with the deprecated DDS** - Finally, the old DDS write APIs will be removed so developers don't continue to build using unsupported DDSes
 
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
