@@ -702,9 +702,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
 
-	getLongClientId(shortClientId: number): string {
-		const clientID = this.shortClientIdMap[shortClientId];
-		return shortClientId >= 0 && clientID ? clientID : "original";
+	getLongClientId(shortClientId: number) {
+		// TODO why are we non null asserting here?
+		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId]! : "original";
 	}
 
 	addLongClientId(longClientId: string) {
@@ -1076,10 +1076,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
-		return opList.length === 1 && opList[0] !== undefined
-			? opList[0]
-			: // eslint-disable-next-line import/no-deprecated
-			  createGroupOp(...opList);
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line import/no-deprecated
+		return opList.length === 1 ? opList[0]! : createGroupOp(...opList);
 	}
 
 	// eslint-disable-next-line import/no-deprecated

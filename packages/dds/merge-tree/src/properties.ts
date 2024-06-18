@@ -88,9 +88,10 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 	// eslint-disable-next-line guard-for-in, no-restricted-syntax
 	for (const key in extension) {
 		const v = extension[key];
-		// TODO Non null asserting, why is this not null?
-		if (v !== null && v !== undefined) {
-			cloneMap[key] = v;
+		if (v !== null) {
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			cloneMap[key] = v!;
 		}
 	}
 	return cloneMap;

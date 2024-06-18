@@ -583,9 +583,8 @@ export class MergeTree {
 				this.blockUpdate(block);
 			}
 
-			return blocks.length === 1 // If there is only one block at this layer...
-				? // TODO Non null asserting, why is this not null?
-				  blocks[0]! // ...then we're done.  Return the root.
+			return blocks.length === 1 && blocks[0] !== undefined // If there is only one block at this layer...
+				? blocks[0] // ...then we're done.  Return the root.
 				: buildMergeBlock(blocks); // ...otherwise recursively build the next layer above blocks.
 		};
 		if (segments.length > 0) {
