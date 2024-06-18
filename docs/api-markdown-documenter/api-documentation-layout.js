@@ -60,11 +60,11 @@ function createBetaWarning(apiItem) {
  *
  * 1. Heading (if not the document-root item, in which case headings are handled specially by document-level rendering)
  *
- * 1. Beta warning (if item annotated with `@beta`)
+ * 1. Summary (if any)
  *
  * 1. Deprecation notice (if any)
  *
- * 1. Summary (if any)
+ * 1. Alpha/Beta warning (if item annotated with `@alpha` or `@beta`)
  *
  * 1. Item Signature
  *
