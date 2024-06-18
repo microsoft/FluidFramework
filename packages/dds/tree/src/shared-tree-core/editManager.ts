@@ -53,9 +53,9 @@ const minimumPossibleSequenceId: SequenceId = {
 };
 
 /**
- * Amount of time the telemetry logger will wait before sending a batch of events.
+ * Max number of telemetry log call that may be aggregated before being sent.
  */
-const THRESHOLD = 1000;
+const maxRebaseStatsAggregationCount = 1000;
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
