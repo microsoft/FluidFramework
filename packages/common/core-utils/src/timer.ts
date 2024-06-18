@@ -260,7 +260,7 @@ export interface IPromiseTimer extends ITimer {
  * @internal
  */
 export class PromiseTimer implements IPromiseTimer {
-	private deferred?: Deferred<IPromiseTimerResult> | undefined;
+	private deferred: Deferred<IPromiseTimerResult> | undefined;
 	private readonly timer: Timer;
 
 	/**
