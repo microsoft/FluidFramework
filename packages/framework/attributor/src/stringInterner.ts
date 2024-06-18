@@ -61,7 +61,7 @@ export class MutableStringInterner implements StringInterner {
 	 */
 	public getString(internId: number): string {
 		const result = this.internedStrings[internId];
-		if (!result) {
+		if (result === undefined) {
 			throw new UsageError(`No string associated with ${internId}.`);
 		}
 		return result;

@@ -22,7 +22,8 @@ export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;
 }
 
-export interface ISummarizerClientElection extends IEventProvider<ISummarizerClientElectionEvents> {
+export interface ISummarizerClientElection
+	extends IEventProvider<ISummarizerClientElectionEvents> {
 	readonly electedClientId: string | undefined;
 	readonly electedParentId: string | undefined;
 }

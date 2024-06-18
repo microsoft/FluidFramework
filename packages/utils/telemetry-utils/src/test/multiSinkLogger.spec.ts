@@ -24,7 +24,10 @@ describe("MultiSinkLogger", () => {
 	it("Appends namespace to all logged events", () => {
 		const logger1 = new MockLogger();
 		const logger2 = new MockLogger();
-		const multiSink = createMultiSinkLogger({ loggers: [logger1, logger2], namespace: "test" });
+		const multiSink = createMultiSinkLogger({
+			loggers: [logger1, logger2],
+			namespace: "test",
+		});
 		multiSink.sendTelemetryEvent({ eventName: "test" });
 
 		logger1.assertMatch([{ category: "generic", eventName: "test:test" }]);

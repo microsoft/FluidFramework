@@ -8,7 +8,8 @@ import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStore
 /**
  * @alpha
  */
-export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
+export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory =
+	"IFluidDataStoreFactory";
 
 /**
  * @alpha

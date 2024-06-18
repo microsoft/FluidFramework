@@ -312,9 +312,7 @@ export class EpochTracker implements IPersistedFileCache {
 							redirectUrl,
 							{ driverVersion, redirectLocation },
 						);
-						locationRedirectionError.addTelemetryProperties(
-							error.getTelemetryProperties(),
-						);
+						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
 						throw locationRedirectionError;
 					}
 				}
@@ -475,11 +473,11 @@ export class EpochTracker implements IPersistedFileCache {
 		if (this.fluidEpoch && epochFromResponse && this.fluidEpoch !== epochFromResponse) {
 			// This is similar in nature to how fluidEpochMismatchError (409) is handled.
 			// Difference - client detected mismatch, instead of server detecting it.
-			return new NonRetryableError(
-				"Epoch mismatch",
-				OdspErrorTypes.fileOverwrittenInStorage,
-				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
-			);
+			return new NonRetryableError("Epoch mismatch", OdspErrorTypes.fileOverwrittenInStorage, {
+				driverVersion,
+				serverEpoch: epochFromResponse,
+				clientEpoch: this.fluidEpoch,
+			});
 		}
 	}
 

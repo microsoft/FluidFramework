@@ -149,7 +149,10 @@ export class ArrayChangeSetIterator {
 		let type: ArrayIteratorOperationTypes;
 		(this._op as any).removeInsertOperation = undefined;
 		// Process the current remove entry
-		if (this._changeSet.remove && this._currentIndices.remove < this._changeSet.remove.length) {
+		if (
+			this._changeSet.remove &&
+			this._currentIndices.remove < this._changeSet.remove.length
+		) {
 			type = ArrayChangeSetIterator.types.REMOVE;
 			currentIndex = this._changeSet.remove[this._currentIndices.remove][0];
 			let currentLength = this._changeSet.remove[this._currentIndices.remove][1];
@@ -161,8 +164,7 @@ export class ArrayChangeSetIterator {
 			if (
 				this._changeSet.insert &&
 				this._currentIndices.insert < this._changeSet.insert.length &&
-				this._changeSet.insert[this._currentIndices.insert][0] <=
-					currentIndex + currentLength
+				this._changeSet.insert[this._currentIndices.insert][0] <= currentIndex + currentLength
 			) {
 				(this._op as InsertOperation).removeInsertOperation =
 					this._changeSet.insert[this._currentIndices.insert];
