@@ -11,7 +11,8 @@ import type {
 } from "./telemetryTypes.js";
 
 /**
- * Telemetry class that measures the execution time of a given piece of code and accumulates user defined telemetry metrics, to finally log an event through the {@link TelemetryEventBatcher.logger | logger} provided to this class when the number of calls to the function reaches the specified by {@link TelemetryEventBatcher.threshold | threshold}.
+ * Telemetry class that accumulates measurements which are eventually logged in a telemetry event through the provided
+ * {@link TelemetryEventBatcher.logger | logger} when the number of calls to the function reaches the specified {@link TelemetryEventBatcher.threshold | threshold}.
  *
  * @remarks It is expected to be used for a single event type. If different properties should be logged at different times, a separate `TelemetryEventBatcher` should be created with separate `TMetrics` type.
  * @typeparam TMetrics - The set of keys that should be logged.
