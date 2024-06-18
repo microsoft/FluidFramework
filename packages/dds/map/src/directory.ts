@@ -853,7 +853,7 @@ export class SharedDirectory
 		const nodeList = absolutePath.split(posix.sep);
 		let start = 1;
 		while (start < nodeList.length) {
-			// TODO Non null asserting, why is this not null?
+			// Non null asserting, this loop only runs while start in in the bounds of the array
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const subDirName = nodeList[start]!;
 			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
