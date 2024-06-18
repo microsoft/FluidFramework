@@ -252,7 +252,7 @@ export class FluidDataStoreRuntime
 
 		// Must always receive the data store type inside of the attributes
 		if (tree?.trees !== undefined) {
-			Object.entries(tree.trees).forEach(([path, value]) => {
+			Object.entries(tree.trees).forEach(([path, subtree]) => {
 				// Issue #4414
 				if (path === "_search") {
 					return;
