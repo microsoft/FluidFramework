@@ -683,7 +683,9 @@ function setTruncatedEndpoint(
 ): void {
 	const effect = getMoveEffect(moveEffects, target, id.revision, id.localId, count);
 	const newEffect =
-		effect.value !== undefined ? { ...effect.value, truncatedEndpoint } : { truncatedEndpoint };
+		effect.value !== undefined
+			? { ...effect.value, truncatedEndpoint }
+			: { truncatedEndpoint };
 
 	setMoveEffect(moveEffects, target, id.revision, id.localId, effect.length, newEffect);
 

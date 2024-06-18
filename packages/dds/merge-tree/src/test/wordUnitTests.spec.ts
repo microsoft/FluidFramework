@@ -122,7 +122,9 @@ export function propertyCopy() {
 	}
 	perIter = (et / iterCount).toFixed(3);
 	perProp = (et / (iterCount * propCount)).toFixed(2);
-	console.log(`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`);
+	console.log(
+		`diff time ${perIter} us per ${propCount} properties; ${perProp} us per property`,
+	);
 }
 
 function makeBookmarks(client: TestClient, bookmarkCount: number) {

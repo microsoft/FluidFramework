@@ -80,12 +80,11 @@ for (const testOpts of testMatrix) {
 
 			let container1: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						summaryTree,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					summaryTree,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));

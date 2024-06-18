@@ -298,7 +298,6 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
-	InternalSimpleTreeTypes,
 	type NodeBuilderData,
 	NodeKind,
 	type ObjectFromSchemaRecord,
@@ -311,7 +310,6 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
-
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type ObjectFromSchemaRecordUnsafe,
@@ -327,13 +325,11 @@ export {
 	type InsertableTypedNodeUnsafe,
 	type NodeBuilderDataUnsafe,
 	type NodeFromSchemaUnsafe,
-
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -362,7 +358,6 @@ export {
 	type BrandedKeyContent,
 	type RestrictiveReadonlyRecord,
 	type MakeNominal,
-	type InternalUtilTypes,
 } from "./util/index.js";
 
 export {
@@ -385,8 +380,6 @@ export {
 	type UnbrandedName,
 	type EmptyObject,
 	type FlexList,
-	InternalFlexListTypes,
-
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
 	type Required,
@@ -395,3 +388,12 @@ export {
 	type Forbidden,
 	type Sequence,
 } from "./feature-libraries/index.js";
+
+import * as InternalTypes from "./internalTypes.js";
+export {
+	/**
+	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
+	 */
+	InternalTypes,
+};
