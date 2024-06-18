@@ -64,6 +64,7 @@ import {
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
+	type ContainerRuntimeGCMessage,
 	type OutboundContainerRuntimeMessage,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
@@ -74,6 +75,12 @@ import {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
+
+// Type test:
+const outboundMessage: OutboundContainerRuntimeMessage =
+	{} as unknown as OutboundContainerRuntimeMessage;
+// @ts-expect-error Outbound type should not include compat behavior
+(() => {})(outboundMessage.compatDetails);
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
@@ -973,7 +980,7 @@ describe("Runtime", () => {
 			);
 		});
 
-		describe("Future op type compatibility", () => {
+		describe("[DEPRECATED] Future op type compatibility", () => {
 			let containerRuntime: ContainerRuntime;
 			beforeEach(async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -988,7 +995,7 @@ describe("Runtime", () => {
 				});
 			});
 
-			it("can submit op compat behavior", async () => {
+			it("can submit op compat behavior (temporarily still available for GC op)", async () => {
 				// Create a container runtime type where the submit method is public. This makes it easier to test
 				// submission and processing of ops. The other option is to send data store or alias ops whose
 				// processing requires creation of data store context and runtime as well.
@@ -1002,22 +1009,16 @@ describe("Runtime", () => {
 				const containerRuntimeWithSubmit =
 					containerRuntime as unknown as ContainerRuntimeWithSubmit;
 
-				const runtimeCompatMessage: Omit<
-					OutboundContainerRuntimeMessage,
-					"type" | "contents"
-				> & {
-					type: string;
-					contents: any;
-				} = {
-					type: "NEW",
-					contents: "Hello",
+				const gcMessageWithDeprecatedCompatDetails: ContainerRuntimeGCMessage = {
+					type: ContainerMessageType.GC,
+					contents: { type: "Sweep", deletedNodeIds: [] },
 					compatDetails: { behavior: "Ignore" },
 				};
 
 				assert.doesNotThrow(
 					() =>
 						containerRuntimeWithSubmit.submit(
-							runtimeCompatMessage as OutboundContainerRuntimeMessage,
+							gcMessageWithDeprecatedCompatDetails,
 							undefined,
 							undefined,
 						),
