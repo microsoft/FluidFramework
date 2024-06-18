@@ -976,6 +976,14 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		// If both these settings are set this way, we will certainly not submit the GC op.
+		// In this case, we declare in Document Schema below that the gcOp feature is not supported.
+		// Once any client stops blocking GC op for a document, this schema bit will flip
+		// and clients that don't understand or unblock the GC op will face container closure on boot.
+		const gcOpBlocked =
+			mc.config.getBoolean("Fluid.GarbageCollection.RunSweep") === false &&
+			mc.config.getBoolean("Fluid.GarbageCollection.DisableAutoRecovery") === true;
+
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -985,6 +993,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
+				gcOp: !gcOpBlocked,
 				disallowedVersions: [],
 			},
 			(schema) => {

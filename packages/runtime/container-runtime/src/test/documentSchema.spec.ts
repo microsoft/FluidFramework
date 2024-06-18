@@ -36,6 +36,7 @@ describe("Runtime", () => {
 		explicitSchemaControl: true,
 		compressionLz4: true,
 		opGroupingEnabled: false,
+		gcOp: true,
 		idCompressorMode: "delayed",
 		disallowedVersions: [],
 	};

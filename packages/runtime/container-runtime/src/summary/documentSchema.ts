@@ -95,6 +95,11 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
+	/**
+	 * Is the GC op able to be processed?
+	 * @remarks - When this schema feature was introduced, the only supported sub-types were "Sweep" and "TombstoneLoaded"
+	 */
+	gcOp: boolean;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -219,6 +224,7 @@ const documentSchemaSupportedConfigs = {
 	explicitSchemaControl: new TrueOrUndefinedMax(), // once new behavior shows up, it's sticky
 	idCompressorMode: new IdCompressorProperty(["delayed", "on"]),
 	opGroupingEnabled: new TrueOrUndefined(),
+	gcOpSupported: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 	disallowedVersions: new CheckVersions(),
 };
@@ -472,6 +478,7 @@ export class DocumentsSchemaController {
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
+				gcOp: boolToProp(features.gcOp),
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 			},
 		};
