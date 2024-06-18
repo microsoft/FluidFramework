@@ -258,7 +258,7 @@ export class InkCanvas {
 
 		const strokes = this.model.getStrokes();
 		for (const stroke of strokes) {
-			// TODO Non null asserting, why does stroke.points always have atleast one entry?
+			// Non null asserting since previous would not be used if stroke.points is empty
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let previous = stroke.points[0]!;
 			for (const current of stroke.points) {
