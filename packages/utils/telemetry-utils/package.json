@@ -154,6 +154,9 @@
 			"RemovedFunctionDeclaration_isValidLegacyError": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_MockLogger": {
+				"forwardCompat": false
 			}
 		}
 	}
