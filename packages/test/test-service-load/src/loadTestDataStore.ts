@@ -652,6 +652,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				largeOpsSent++;
 			}
 
+			// [DEPRECATED] This flow is deprecated and is expected to be removed from FF soon.
 			if (futureOpPeriod !== undefined && opsSent % futureOpPeriod === 0) {
 				(
 					this.context.containerRuntime as unknown as {
