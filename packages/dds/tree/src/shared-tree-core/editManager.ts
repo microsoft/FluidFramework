@@ -163,7 +163,7 @@ export class EditManager<
 					category: "performance",
 				},
 				logger,
-				THRESHOLD,
+				maxRebaseStatsAggregationCount,
 			);
 		}
 
