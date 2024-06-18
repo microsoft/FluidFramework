@@ -252,10 +252,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
 // @alpha @sealed
 export interface IDeltaManagerEvents extends IEvent {
-    // @deprecated (undocumented)
-    (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
-    // @deprecated (undocumented)
-    (event: "submitOp", listener: (message: IDocumentMessage) => void): any;
     (event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void): any;
     (event: "pong", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
