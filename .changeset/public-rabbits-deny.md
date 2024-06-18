@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 ---
 
-Move several types into InternalTypes
+tree: Move several types into InternalTypes
 
 The stable public API surface for Tree has been reduced.
 Several types have been moved into InternalTypes, indicating that they are not fully stable nor intended to be referenced by users of Tree.
