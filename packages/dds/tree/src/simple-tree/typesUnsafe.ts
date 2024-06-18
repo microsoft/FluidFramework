@@ -131,7 +131,7 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
  * @remarks
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
 	extends TreeArrayNodeBase<
@@ -144,7 +144,7 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
  * {@link Unenforced} version of {@link TreeMapNode}.
  * @remarks
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @public
+ * @sealed @public
  */
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
@@ -167,7 +167,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
  * {@link Unenforced} version of `FieldHasDefault`.
  * @remarks
  * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @public
+ * @sealed @public
  */
 export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
 	T extends FieldSchemaUnsafe<
