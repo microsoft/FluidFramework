@@ -2198,6 +2198,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
 				if (pendingKeyMessageIdArray !== undefined) {
 					let index = 0;
+					// Non-null asserting because we maintain that the pendingKeyMessageIdArray will only exist if it is non-empty.
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					while (pendingKeyMessageIdArray[index]! < firstPendingClearMessageId) {
 						index += 1;
