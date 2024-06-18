@@ -161,10 +161,10 @@ export class SerializedStateManager {
 			namespace: "serializedStateManager",
 		});
 
+		// special case handle. Obtaining the last saved op seq num to avoid
+		// refreshing the snapshot before we have processed it. It could cause
+		// a subsequent stashing to have a newer snapshot than allowed.
 		if (pendingLocalState !== undefined) {
-			// special case handle. Obtaining the last saved op seq num to avoid
-			// refreshing the snapshot before we have processed it. It could cause
-			// a subsequent stashing to have a newer snapshot than allowed.
 			const savedOpsSize = pendingLocalState.savedOps.length;
 			const lastSavedOp = pendingLocalState.savedOps[savedOpsSize - 1];
 			if (lastSavedOp !== undefined) {
