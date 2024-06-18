@@ -41,7 +41,7 @@ For packages that are part of the `@fluidframework` scope and the `fluid-framewo
 
 -   **Public APIs** - These APIs are officially supported and any breaking changes to these APIs will be done in a major release and go through a deprecation phase before being removed.
 -   **Beta APIs** (`/beta` import path) - These APIs are on the path to being officially supported but can still change before becoming a Public API in a future release. They are meant as a preview for developers to experiment with and provide feedback. These APIs can be changed in minor releases. Production usage of these APIs is discouraged.
--   **Legacy APIs** (`/legacy` import path) - These APIs were used by the early adopters of Fluid Framework, and we strongly discourage new applications from using these APIs. We will continue to support legacy use of SharedMap & SharedDirectory DDSes until we provide a migration path to SharedTree in a future release.
+-   **Legacy APIs** (`/legacy` import path) - These APIs were used by the early adopters of Fluid Framework, and we strongly discourage new applications from using these APIs. We will continue to support use of SharedMap & SharedDirectory DDSes until we provide a migration path to SharedTree in a future release.
     -   For existing users of these Legacy APIs, you will have to use the /legacy import path. This is intentional to highlight that we do not encourage new development using these APIs and plan to provide a graceful path away from them in future.
     -   For example, SharedMap is now a Legacy API and should be imported as follows:
 
