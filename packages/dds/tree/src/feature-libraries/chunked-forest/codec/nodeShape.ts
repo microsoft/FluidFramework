@@ -10,6 +10,7 @@ import {
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
 	forEachField,
+	type Value,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
 
@@ -39,6 +40,24 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		this.explicitKeys = new Set(this.fields.map((f) => f.key));
 	}
 
+	private getEncodeValue(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
+		if (this.value === 0) {
+			assert(typeof cursor.value === "string", "identifier must be type string");
+			if (
+				isStableId(cursor.value) &&
+				cache.idCompressor.tryRecompress(cursor.value) !== undefined
+			) {
+				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
+				assert(
+					sessionSpaceCompressedId !== undefined,
+					"sessionSpaceCompressedId should not be undefined",
+				);
+				return cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+			}
+		}
+		return cursor.value;
+	}
+
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -49,22 +68,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-
-		if (this.value === 0) {
-			assert(typeof cursor.value === "string", "identifier must be type string");
-			if (!isStableId(cursor.value)) {
-				encodeValue(cursor.value, this.value, outputBuffer);
-			} else {
-				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
-				const opSpaceCompressedId =
-					sessionSpaceCompressedId !== undefined
-						? cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId)
-						: cursor.value;
-				encodeValue(opSpaceCompressedId, this.value, outputBuffer);
-			}
-		} else {
-			encodeValue(cursor.value, this.value, outputBuffer);
-		}
+		encodeValue(this.getEncodeValue(cursor, cache), this.value, outputBuffer);
 		for (const field of this.fields) {
 			cursor.enterField(brand(field.key));
 			field.shape.encodeField(cursor, cache, outputBuffer);

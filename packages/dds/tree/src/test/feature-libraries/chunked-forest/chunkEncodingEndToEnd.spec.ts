@@ -281,8 +281,7 @@ describe("End to end chunked encoding", () => {
 			assert.equal(identifierValue, id);
 		});
 
-		it("is the uncompressed value when it is an invalid uuid", () => {
-			// generate an id from a different id compressor.
+		it("is the uncompressed value when it is not a UUID", () => {
 			const id = "invalidUUID";
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
