@@ -42,7 +42,8 @@ async function getTestUsers(credFile?: string) {
 	}
 }
 
-const createLoginEnv = (userName: string, password: string) => `{"${userName}": "${password}"}`;
+const createLoginEnv = (userName: string, password: string) =>
+	`{"${userName}": "${password}"}`;
 
 async function main() {
 	commander
@@ -129,18 +130,18 @@ async function orchestratorProcess(
 ) {
 	const url = await (args.testId !== undefined && args.createTestId === false
 		? // If testId is provided and createTestId is false, then load the file;
-		  testDriver.createContainerUrl(args.testId)
+			testDriver.createContainerUrl(args.testId)
 		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
-		  // create a file;
-		  // In case testId is provided, name of the file to be created is taken as the testId provided
-		  initialize(
+			// create a file;
+			// In case testId is provided, name of the file to be created is taken as the testId provided
+			initialize(
 				testDriver,
 				args.seed,
 				profile,
 				args.verbose === true,
 				args.profileName,
 				args.testId,
-		  ));
+			));
 
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),

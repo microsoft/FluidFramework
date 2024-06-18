@@ -92,7 +92,10 @@ export class OdspTokenManager {
 		});
 	}
 
-	private async updateTokensCacheWithoutLock(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
+	private async updateTokensCacheWithoutLock(
+		key: IOdspTokenManagerCacheKey,
+		value: IOdspTokens,
+	) {
 		debug(`${cacheKeyToString(key)}: Saving tokens`);
 		const memoryCache = key.isPush ? this.pushCache : this.storageCache;
 		memoryCache.set(key.userOrServer, value);

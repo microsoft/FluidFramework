@@ -64,8 +64,17 @@ import {
 	toRemovalInfo,
 } from "./mergeTreeNodes.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
-import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder.js";
-import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import {
+	createAnnotateRangeOp,
+	createInsertSegmentOp,
+	createRemoveRangeOp,
+} from "./opBuilder.js";
+import {
+	IMergeTreeDeltaOp,
+	IRelativePosition,
+	MergeTreeDeltaType,
+	ReferenceType,
+} from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
@@ -494,7 +503,10 @@ export class MergeTree {
 			}
 		}
 
-		assert(refSeq !== undefined, 0x398 /* localSeq provided for local length without refSeq */);
+		assert(
+			refSeq !== undefined,
+			0x398 /* localSeq provided for local length without refSeq */,
+		);
 		assert(segment.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
 		const { seq, removedSeq, localRemovedSeq, movedSeq, localMovedSeq } = segment;
 		if (seq !== UnassignedSequenceNumber) {
@@ -936,11 +948,7 @@ export class MergeTree {
 				this.computeLocalPartials(refSeq);
 
 				// Local client should see all segments except those after localSeq.
-				const partialLen = node.partialLengths!.getPartialLength(
-					refSeq,
-					clientId,
-					localSeq,
-				);
+				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
 
 				PartialSequenceLengths.options.verifyExpected?.(
 					this,
@@ -1126,10 +1134,7 @@ export class MergeTree {
 				const localMovedSeq = pendingSegment.localMovedSeq;
 				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
 
-				if (
-					opArgs.op.type === MergeTreeDeltaType.OBLITERATE &&
-					localMovedSeq !== undefined
-				) {
+				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE && localMovedSeq !== undefined) {
 					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
 
 					if (locallyMovedSegments) {
@@ -1427,8 +1432,7 @@ export class MergeTree {
 
 				if (newSegment.parent === undefined) {
 					// Indicates an attempt to insert past the end of the merge-tree's content.
-					const errorConstructor =
-						localSeq !== undefined ? UsageError : DataProcessingError;
+					const errorConstructor = localSeq !== undefined ? UsageError : DataProcessingError;
 					throw new errorConstructor("MergeTree insert failed", {
 						currentSeq: this.collabWindow.currentSeq,
 						minSeq: this.collabWindow.minSeq,
@@ -1475,10 +1479,7 @@ export class MergeTree {
 					}
 
 					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-						moveUpperBound = Math.min(
-							moveUpperBound,
-							seg.seq ?? Number.POSITIVE_INFINITY,
-						);
+						moveUpperBound = Math.min(moveUpperBound, seg.seq ?? Number.POSITIVE_INFINITY);
 					}
 					// If we've reached a segment that existed before any of our in-collab-window move ops
 					// happened, no need to continue.
@@ -1495,10 +1496,7 @@ export class MergeTree {
 							_movedSeq = movedSeq;
 							const clientIdIdx = left.movedSeqs?.indexOf(movedSeq) ?? -1;
 							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(
-								movedClientId !== undefined,
-								0x869 /* expected client id to exist */,
-							);
+							assert(movedClientId !== undefined, 0x869 /* expected client id to exist */);
 							movedClientIds = [movedClientId];
 							return false;
 						}
@@ -1508,13 +1506,9 @@ export class MergeTree {
 						const left = leftLocalSegments[localMovedSeq];
 						if (left) {
 							_localMovedSeq = localMovedSeq;
-							const clientIdIdx =
-								left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
+							const clientIdIdx = left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
 							const movedClientId = left.movedClientIds?.[clientIdIdx];
-							assert(
-								movedClientId !== undefined,
-								0x86a /* expected client id to exist */,
-							);
+							assert(movedClientId !== undefined, 0x86a /* expected client id to exist */);
 							movedClientIds = [movedClientId];
 							return false;
 						}
@@ -1525,10 +1519,7 @@ export class MergeTree {
 					}
 
 					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
-						moveUpperBound = Math.min(
-							moveUpperBound,
-							seg.seq ?? Number.POSITIVE_INFINITY,
-						);
+						moveUpperBound = Math.min(moveUpperBound, seg.seq ?? Number.POSITIVE_INFINITY);
 					}
 					// If we've reached a segment that existed before any of our in-collab-window move ops
 					// happened, no need to continue.
@@ -1547,8 +1538,7 @@ export class MergeTree {
 					const moveInfo = {
 						movedClientIds,
 						movedSeq: _movedSeq ?? UnassignedSequenceNumber,
-						movedSeqs:
-							_movedSeq === undefined ? [UnassignedSequenceNumber] : [_movedSeq],
+						movedSeqs: _movedSeq === undefined ? [UnassignedSequenceNumber] : [_movedSeq],
 						localMovedSeq: _localMovedSeq,
 						wasMovedOnInsert: (_movedSeq ?? -1) !== UnassignedSequenceNumber,
 					};
@@ -1556,9 +1546,7 @@ export class MergeTree {
 					markSegmentMoved(newSegment, moveInfo);
 
 					if (moveInfo.localMovedSeq !== undefined) {
-						const movedSegmentGroup = this.locallyMovedSegments.get(
-							moveInfo.localMovedSeq,
-						);
+						const movedSegmentGroup = this.locallyMovedSegments.get(moveInfo.localMovedSeq);
 
 						assert(
 							movedSegmentGroup !== undefined,
@@ -2177,11 +2165,7 @@ export class MergeTree {
 					);
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					const props = pendingSegmentGroup.previousProps![i];
-					const annotateOp = createAnnotateRangeOp(
-						start,
-						start + segment.cachedLength,
-						props,
-					);
+					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
 					this.annotateRange(
 						start,
 						start + segment.cachedLength,
@@ -2339,8 +2323,8 @@ export class MergeTree {
 		}
 
 		const newOrder = Array.from(affectedSegments.map(({ data }) => data));
-		newOrder.forEach(
-			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
+		newOrder.forEach((seg) =>
+			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
 		);
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
 		for (const segment of newOrder) {
@@ -2380,8 +2364,8 @@ export class MergeTree {
 				this.nodeUpdateLengthNewStructure(node);
 			}
 		}
-		newOrder.forEach(
-			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
+		newOrder.forEach((seg) =>
+			seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
 		);
 	}
 
@@ -2640,10 +2624,7 @@ export class MergeTree {
 				}
 
 				if (node.isLeaf()) {
-					if (
-						leaf(node, pos, refSeq, clientId, start - pos, endPos - pos, accum) ===
-						false
-					) {
+					if (leaf(node, pos, refSeq, clientId, start - pos, endPos - pos, accum) === false) {
 						return NodeAction.Exit;
 					}
 					pos = nextPos;

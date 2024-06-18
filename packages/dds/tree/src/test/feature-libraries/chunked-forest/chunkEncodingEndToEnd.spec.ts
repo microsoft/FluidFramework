@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId, StableId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -23,8 +23,11 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type Context,
 	DefaultChangeFamily,
@@ -53,8 +56,6 @@ import {
 import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { StableId } from "../../../../../../runtime/id-compressor/dist/index.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 
 const options = {
