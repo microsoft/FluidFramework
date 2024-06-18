@@ -48,7 +48,9 @@ export class V1IntervalCollection<
 	casted = this as unknown as IntervalCollectionInternals<SequenceInterval>;
 }
 
-class V1SequenceIntervalCollectionFactory implements IIntervalCollectionFactory<SequenceInterval> {
+class V1SequenceIntervalCollectionFactory
+	implements IIntervalCollectionFactory<SequenceInterval>
+{
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -61,9 +63,8 @@ class V1SequenceIntervalCollectionFactory implements IIntervalCollectionFactory<
 	public store(
 		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-		return Array.from(
-			value,
-			(interval) => interval?.serialize(),
+		return Array.from(value, (interval) =>
+			interval?.serialize(),
 		) as unknown as ISerializedIntervalCollectionV2;
 	}
 }

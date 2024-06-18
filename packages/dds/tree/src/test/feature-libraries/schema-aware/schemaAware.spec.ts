@@ -32,7 +32,11 @@ import type {
 	FlexListToNonLazyArray,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/flexList.js";
-import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../../util/index.js";
 
 // Test UnbrandedName
 {

@@ -211,7 +211,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(
+		pkg: Readonly<string | string[]>,
+		loadingGroupId?: string,
+	): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -233,7 +236,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Returns the current quorum.

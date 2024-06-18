@@ -52,7 +52,10 @@ export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
  * Generic network error class.
  * @internal
  */
-export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+export class GenericNetworkError
+	extends LoggingError
+	implements IDriverErrorBase, IFluidErrorBase
+{
 	/**
 	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
 	 */
@@ -145,7 +148,10 @@ export class LocationRedirectionError
 /**
  * @internal
  */
-export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
+export class NetworkErrorBasic<T extends string>
+	extends LoggingError
+	implements IFluidErrorBase
+{
 	constructor(
 		message: string,
 		readonly errorType: T,
@@ -186,7 +192,10 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
  * Throttling error class - used to communicate all throttling errors
  * @internal
  */
-export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingError
+	extends LoggingError
+	implements IThrottlingWarning, IFluidErrorBase
+{
 	readonly errorType = DriverErrorTypes.throttlingError;
 	readonly canRetry = true;
 

@@ -849,10 +849,7 @@ describe("serializedStateManager", () => {
 				// Since there is no saved event, it should only update the expiry timer
 				// when we're not dirty at fetching time.
 				if (isDirty) {
-					assert.strictEqual(
-						parsed.pendingRuntimeState.sessionExpiryTimerStarted,
-						undefined,
-					);
+					assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 				} else {
 					assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
 				}

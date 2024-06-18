@@ -4,7 +4,11 @@
  */
 
 import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
-import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import type {
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../../core/index.js";
 import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
