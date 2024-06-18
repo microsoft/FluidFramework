@@ -43,7 +43,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { ISharedObjectTelemetryProperties } from "./TelemetryProperties.js";
+import { ITelemetryProperties } from "./TelemetryProperties.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -62,12 +62,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		return this;
 	}
 
-	private readonly opProcessingHelper: SampledTelemetryHelper<
-		keyof ISharedObjectTelemetryProperties
-	>;
-	private readonly callbacksHelper: SampledTelemetryHelper<
-		keyof ISharedObjectTelemetryProperties
-	>;
+	private readonly opProcessingHelper: SampledTelemetryHelper<ITelemetryProperties>;
+	private readonly callbacksHelper: SampledTelemetryHelper<ITelemetryProperties>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -153,9 +149,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper<
-		keyof ISharedObjectTelemetryProperties
-	>[] {
+	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper<ITelemetryProperties>[] {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
@@ -536,11 +530,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			() => {
+			(event) => {
 				this.processCore(message, local, localOpMetadata);
-				return {
-					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-				};
+				event.incrementMetric({
+					sequenceNumber: message.sequenceNumber - message.referenceSequenceNumber,
+				});
 			},
 			local ? "local" : "remote",
 		);

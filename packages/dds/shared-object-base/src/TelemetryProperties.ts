@@ -9,4 +9,5 @@
  */
 export interface ITelemetryProperties {
 	sequenceDifference: number;
+	[key: string]: number;
 }
