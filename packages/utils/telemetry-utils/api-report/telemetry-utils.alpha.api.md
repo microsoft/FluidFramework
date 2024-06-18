@@ -75,7 +75,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @alpha
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
-// @alpha
+// @alpha @deprecated
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
