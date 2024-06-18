@@ -155,12 +155,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
 				const err = errorMessage.includes("failed, reason: self signed certificate")
 					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
 							driverVersion,
-					  })
-					: new GenericNetworkError(
-							errorMessage,
-							errorMessage.startsWith("NetworkError"),
-							{ driverVersion },
-					  );
+						})
+					: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
+							driverVersion,
+						});
 				throw err;
 			});
 			return {
@@ -177,7 +175,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
 		const bodySize = text.length;
 		start = performance.now();
-		const responseBody: any = response.headers.get("content-type")?.includes("application/json")
+		const responseBody: any = response.headers
+			.get("content-type")
+			?.includes("application/json")
 			? JSON.parse(text)
 			: text;
 		const parseTime = performance.now() - start;

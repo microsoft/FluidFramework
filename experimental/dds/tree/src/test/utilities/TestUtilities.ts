@@ -17,7 +17,7 @@ import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import {
 	MockContainerRuntimeFactory,
@@ -432,7 +432,10 @@ export function createStableEdits(
 		ChangeInternal.build([node], 0 as DetachedSequenceId),
 		ChangeInternal.insert(
 			0 as DetachedSequenceId,
-			StablePlace.atEndOf({ label: testTraitLabel, parent: idContext.convertToNodeId(initialTree.identifier) })
+			StablePlace.atEndOf({
+				label: testTraitLabel,
+				parent: idContext.convertToNodeId(initialTree.identifier),
+			})
 		),
 	]);
 

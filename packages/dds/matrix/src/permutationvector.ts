@@ -9,6 +9,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,
@@ -20,9 +21,11 @@ import {
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -389,9 +392,7 @@ export class PermutationVector extends Client {
 				if (isHandleValid(asPerm.start)) {
 					// Note: Using the spread operator with `.splice()` can exhaust the stack.
 					freed = freed.concat(
-						new Array(asPerm.cachedLength)
-							.fill(0)
-							.map((value, index) => index + asPerm.start),
+						new Array(asPerm.cachedLength).fill(0).map((value, index) => index + asPerm.start),
 					);
 				}
 			}

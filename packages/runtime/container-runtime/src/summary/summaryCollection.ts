@@ -7,13 +7,13 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
 	ISummaryAck,
 	ISummaryContent,
 	ISummaryNack,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -298,7 +298,10 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.summaryWatchers.delete(clientId);
 	}
 
-	public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
+	public setPendingAckTimerTimeoutCallback(
+		maxAckWaitTime: number,
+		timeoutCallback: () => void,
+	) {
 		this.maxAckWaitTime = maxAckWaitTime;
 		this.pendingAckTimerTimeoutCallback = timeoutCallback;
 	}

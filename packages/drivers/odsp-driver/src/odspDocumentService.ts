@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -13,6 +14,7 @@ import {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IResolvedUrl,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	HostStoragePolicy,
@@ -21,7 +23,6 @@ import {
 	InstrumentedStorageTokenFetcher,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -32,7 +33,10 @@ import { HostStoragePolicyInternal } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";
 import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
-import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService.js";
+import {
+	OdspDeltaStorageService,
+	OdspDeltaStorageWithCache,
+} from "./odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
@@ -179,14 +183,11 @@ export class OdspDocumentService
 				this.epochTracker,
 				// flushCallback
 				async () => {
-					const currentConnection =
-						this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
+					const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
 					if (currentConnection !== undefined && !currentConnection.disposed) {
 						return currentConnection.flush();
 					}
-					throw new Error(
-						"Disconnected while uploading summary (attempt to perform flush())",
-					);
+					throw new Error("Disconnected while uploading summary (attempt to perform flush())");
 				},
 				() => {
 					return this.odspDelayLoadedDeltaStream?.relayServiceTenantAndSessionId;

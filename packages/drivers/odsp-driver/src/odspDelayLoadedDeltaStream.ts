@@ -6,11 +6,14 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
 	type IAnyDriverError,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
@@ -26,11 +29,6 @@ import {
 	OdspErrorTypes,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 import {
 	IFluidErrorBase,
 	MonitoringContext,
@@ -147,15 +145,11 @@ export class OdspDelayLoadedDeltaStream {
 			const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
 				? // eslint-disable-next-line unicorn/no-null
-				  Promise.resolve(null)
+					Promise.resolve(null)
 				: this.getWebsocketToken(options);
 
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
-				throw this.annotateConnectionError(
-					error,
-					step,
-					!requestWebsocketTokenFromJoinSession,
-				);
+				throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
 			};
 
 			const joinSessionPromise = this.joinSession(
@@ -172,11 +166,9 @@ export class OdspDelayLoadedDeltaStream {
 			const finalWebsocketToken = websocketToken ?? websocketEndpoint.socketToken ?? null;
 			if (finalWebsocketToken === null) {
 				throw this.annotateConnectionError(
-					new NonRetryableError(
-						"Websocket token is null",
-						OdspErrorTypes.fetchTokenError,
-						{ driverVersion },
-					),
+					new NonRetryableError("Websocket token is null", OdspErrorTypes.fetchTokenError, {
+						driverVersion,
+					}),
 					"getWebsocketToken",
 					!requestWebsocketTokenFromJoinSession,
 				);
@@ -208,8 +200,7 @@ export class OdspDelayLoadedDeltaStream {
 					if (
 						typeof error === "object" &&
 						error !== null &&
-						(error as Partial<IOdspError>).errorType ===
-							OdspErrorTypes.authorizationError
+						(error as Partial<IOdspError>).errorType === OdspErrorTypes.authorizationError
 					) {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}

@@ -14,8 +14,9 @@ import type {
 	ErasedType,
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IQuorumClients } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
@@ -110,7 +111,10 @@ export interface IFluidDataStoreRuntime
 	 * Api to upload a blob of data.
 	 * @param blob - blob to be uploaded.
 	 */
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Submits the signal to be sent to other clients.

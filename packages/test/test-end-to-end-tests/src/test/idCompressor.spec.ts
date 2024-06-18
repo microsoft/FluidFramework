@@ -6,10 +6,14 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	type IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
@@ -17,11 +21,17 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	IIdCompressor,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/id-compressor";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
-import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -33,8 +43,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { delay } from "@fluidframework/core-utils/internal";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -96,8 +104,7 @@ describeCompat(
 				const enabledContainer = await provider.loadTestContainer(
 					containerConfigWithCompressor,
 				);
-				const enabledDataObject =
-					(await enabledContainer.getEntryPoint()) as ITestFluidObject;
+				const enabledDataObject = (await enabledContainer.getEntryPoint()) as ITestFluidObject;
 				const enabledMap = await enabledDataObject.getSharedObject<ISharedMap>("mapId");
 				assert(getIdCompressor(enabledMap) === undefined);
 			});
@@ -498,8 +505,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 				);
 				assert(
 					sessionSpaceId >= 0 ||
-						(compressor === compressorOrigin &&
-							sessionSpaceId === sessionSpaceIdOrigin),
+						(compressor === compressorOrigin && sessionSpaceId === sessionSpaceIdOrigin),
 				);
 				assert(compressor.normalizeToOpSpace(sessionSpaceId) === opSpaceId);
 				const decompressed = compressor.decompress(sessionSpaceId);
@@ -522,7 +528,8 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		const sharedMapCompressedId2 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		const sharedMapDecompressedId2 =
 			getIdCompressor(sharedMapContainer1).decompress(sharedMapCompressedId2);
-		const sharedCellCompressedId = getIdCompressor(sharedCellContainer1).generateCompressedId();
+		const sharedCellCompressedId =
+			getIdCompressor(sharedCellContainer1).generateCompressedId();
 		const sharedCellDecompressedId =
 			getIdCompressor(sharedMapContainer1).decompress(sharedCellCompressedId);
 
@@ -633,7 +640,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		sharedMapContainer2.set("key", "first");
 
 		let invokedCount = 0;
-		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(sharedMapContainer1);
+		const superProcessCore = (sharedMapContainer1 as any).processCore.bind(
+			sharedMapContainer1,
+		);
 		(sharedMapContainer1 as any).processCore = (
 			message: ISequencedDocumentMessage,
 			local: boolean,
@@ -718,60 +727,67 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 
 // No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
 // Even older versions of the runtime also don't have an id compression feature enabled.
-describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
-	let provider: ITestObjectProvider;
-	let request: IRequest;
+describeCompat(
+	"IdCompressor in detached container",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+		let request: IRequest;
 
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-		request = provider.driver.createCreateNewRequest(provider.documentId);
-	});
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+			request = provider.driver.createCreateNewRequest(provider.documentId);
+		});
 
-	it("Compressors sync after detached container attaches and sends an op", async () => {
-		const testConfig: ITestContainerConfig = {
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
-			runtimeOptions: {
-				enableRuntimeIdCompressor: "on",
-			},
-		};
-		const loader = provider.makeTestLoader(testConfig);
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		it("Compressors sync after detached container attaches and sends an op", async () => {
+			const testConfig: ITestContainerConfig = {
+				fluidDataObjectType: DataObjectFactoryType.Test,
+				registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
+				runtimeOptions: {
+					enableRuntimeIdCompressor: "on",
+				},
+			};
+			const loader = provider.makeTestLoader(testConfig);
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-		// Get the root dataStore from the detached container.
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
+			// Get the root dataStore from the detached container.
+			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const testChannel1 = await dataStore.getSharedObject<ISharedCell>("sharedCell");
 
-		// Generate an Id before attaching the container
-		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
-		// Attach the container. The generated Id won't be synced until another op
-		// is sent after attaching becuase most DDSs don't send ops until they are attached.
-		await container.attach(request);
+			// Generate an Id before attaching the container
+			(testChannel1 as any).runtime.idCompressor.generateCompressedId();
+			// Attach the container. The generated Id won't be synced until another op
+			// is sent after attaching becuase most DDSs don't send ops until they are attached.
+			await container.attach(request);
 
-		// Create another container to test sync
-		const url: any = await container.getAbsoluteUrl("");
-		const loader2 = provider.makeTestLoader(testConfig) as Loader;
-		const container2 = await loader2.resolve({ url });
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
-		// Generate an Id in the second attached container and send an op to send the Ids
-		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
-		testChannel2.set("value");
+			// Create another container to test sync
+			const url: any = await container.getAbsoluteUrl("");
+			const loader2 = provider.makeTestLoader(testConfig) as Loader;
+			const container2 = await loader2.resolve({ url });
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const testChannel2 = await dataStore2.getSharedObject<ISharedCell>("sharedCell");
+			// Generate an Id in the second attached container and send an op to send the Ids
+			(testChannel2 as any).runtime.idCompressor.generateCompressedId();
+			testChannel2.set("value");
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// Send an op in the first container to get its Ids sent
-		testChannel1.set("value2");
+			// Send an op in the first container to get its Ids sent
+			testChannel1.set("value2");
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// Compressor from first container will get the first 512 Ids (0-511) as its id should be finalized
-		// on attach
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
-		// Compressor from second container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
-	});
-});
+			// Compressor from first container will get the first 512 Ids (0-511) as its id should be finalized
+			// on attach
+			assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
+			// Compressor from second container gets second cluster starting at 512 after sending an op
+			assert.strictEqual(
+				(testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1),
+				513,
+			);
+		});
+	},
+);
 
 describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -866,8 +882,14 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 		const { summaryTree } = await summarizeNow(summarizer);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
-		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
-		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
+		assert(
+			summaryStats.sessionCount === 1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert(
+			summaryStats.clusterCount === 1,
+			"Should have a local cluster as all ids are ack'd",
+		);
 	});
 
 	it("Newly connected container synchronizes from summary", async function () {
@@ -892,8 +914,14 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 		const { summaryTree } = await summarizeNow(summarizer1);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
-		assert(summaryStats.sessionCount === 1, "Should have a local session as all ids are ack'd");
-		assert(summaryStats.clusterCount === 1, "Should have a local cluster as all ids are ack'd");
+		assert(
+			summaryStats.sessionCount === 1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert(
+			summaryStats.clusterCount === 1,
+			"Should have a local cluster as all ids are ack'd",
+		);
 
 		const container2 = await provider.loadTestContainer(enabledConfig);
 		const container2DataStore = (await container2.getEntryPoint()) as ITestDataObject;
@@ -965,7 +993,10 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		);
 
 		// Test assumption
-		assert(entryPoint2._runtime.attachState === AttachState.Detached, "data store is detached");
+		assert(
+			entryPoint2._runtime.attachState === AttachState.Detached,
+			"data store is detached",
+		);
 
 		// Create some channel. Assume that data store has directory factory (ITestDataObject exposes _root that is directory,
 		// so it has such entry). This could backfire if non-default type is used for directory - a test would need to be changed

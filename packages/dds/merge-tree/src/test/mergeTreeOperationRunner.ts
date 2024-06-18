@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
@@ -27,8 +27,11 @@ export type TestOperation = (
 	random: IRandom,
 ) => IMergeTreeOp | undefined;
 
-export const removeRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.removeRangeLocal(opStart, opEnd);
+export const removeRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.removeRangeLocal(opStart, opEnd);
 
 export const obliterateRange: TestOperation = (
 	client: TestClient,
@@ -36,8 +39,11 @@ export const obliterateRange: TestOperation = (
 	opEnd: number,
 ) => client.obliterateRangeLocal(opStart, opEnd);
 
-export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
+export const annotateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,
@@ -70,7 +76,7 @@ export const insertAtRefPos: TestOperation = (
 						ReferenceType.Simple,
 						ReferenceType.SlideOnRemove,
 						ReferenceType.Transient,
-				  ]),
+					]),
 			undefined,
 		);
 
@@ -152,7 +158,9 @@ function isConfigRange(t: any): t is IConfigRange {
 
 type ReplaceRangeWith<T, TReplace> = T extends { min: number; max: number } ? TReplace : never;
 
-type RangePropertyNames<T> = { [K in keyof T]-?: T[K] extends IConfigRange ? K : never }[keyof T];
+type RangePropertyNames<T> = {
+	[K in keyof T]-?: T[K] extends IConfigRange ? K : never;
+}[keyof T];
 
 type PickFromRanges<T> = {
 	[K in RangePropertyNames<T>]: ReplaceRangeWith<T[K], number>;

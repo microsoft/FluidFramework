@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToString,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IDocumentAttributes,
@@ -20,7 +25,6 @@ import {
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -89,7 +93,7 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 				query,
 				// URLSearchParams returns null if the param is not provided.
 				version: parsed.searchParams.get("version") ?? undefined,
-		  }
+			}
 		: undefined;
 }
 
@@ -180,7 +184,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
-	assert(snapshot.sequenceNumber !== undefined, 0x93a /* Snapshot sequence number is missing */);
+	assert(
+		snapshot.sequenceNumber !== undefined,
+		0x93a /* Snapshot sequence number is missing */,
+	);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");

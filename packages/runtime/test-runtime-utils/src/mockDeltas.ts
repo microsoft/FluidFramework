@@ -11,15 +11,13 @@ import {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IClientDetails,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
 	IDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -159,7 +157,12 @@ export class MockDeltaManager
 
 	public flush() {}
 
-	public submit(type: MessageType, contents: any, batch = false, localOpMetadata: any): number {
+	public submit(
+		type: MessageType,
+		contents: any,
+		batch = false,
+		localOpMetadata: any,
+	): number {
 		return 0;
 	}
 

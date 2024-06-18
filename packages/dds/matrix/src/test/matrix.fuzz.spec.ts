@@ -19,12 +19,12 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isObject } from "@fluidframework/core-utils/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory, SharedMatrix } from "../runtime.js";
 
@@ -69,7 +69,11 @@ type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCe
 type State = DDSFuzzTestState<SharedMatrixFactory>;
 
 async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
-	assert.equal(a.colCount, b.colCount, `${a.id} and ${b.id} have different number of columns.`);
+	assert.equal(
+		a.colCount,
+		b.colCount,
+		`${a.id} and ${b.id} have different number of columns.`,
+	);
 	assert.equal(a.rowCount, b.rowCount, `${a.id} and ${b.id} have different number of rows.`);
 	for (let row = 0; row < a.rowCount; row++) {
 		for (let col = 0; col < a.colCount; col++) {
@@ -134,7 +138,9 @@ const defaultOptions: GeneratorOptions = {
 	setWeight: 20,
 };
 
-function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
+function makeGenerator(
+	optionsParam?: Partial<GeneratorOptions>,
+): AsyncGenerator<Operation, State> {
 	const { setWeight, insertColWeight, insertRowWeight, removeRowWeight, removeColWeight } = {
 		...defaultOptions,
 		...optionsParam,

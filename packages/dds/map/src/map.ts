@@ -8,9 +8,11 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -20,7 +22,11 @@ import type { IFluidSerializer } from "@fluidframework/shared-object-base/intern
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap, ISharedMapEvents } from "./interfaces.js";
-import { type IMapDataObjectSerializable, type IMapOperation, MapKernel } from "./mapKernel.js";
+import {
+	type IMapDataObjectSerializable,
+	type IMapOperation,
+	MapKernel,
+} from "./mapKernel.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -225,10 +231,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 				}
 				headerBlob[key] = {
 					type: value.type,
-					value:
-						value.value === undefined
-							? undefined
-							: (JSON.parse(value.value) as unknown),
+					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
 				};
 			}
 		}
@@ -290,11 +293,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(
-				message.contents as IMapOperation,
-				local,
-				localOpMetadata,
-			);
+			this.kernel.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata);
 		}
 	}
 

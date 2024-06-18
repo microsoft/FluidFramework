@@ -19,13 +19,13 @@ import {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,

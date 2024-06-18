@@ -4,8 +4,8 @@
  */
 
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -85,7 +85,9 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
  * Type erase IFluidHandleInternal for use with {@link @fluidframework/core-interfaces#fluidHandleSymbol}.
  * @alpha
  */
-export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
+export function toFluidHandleErased<T>(
+	handle: IFluidHandleInternal<T>,
+): IFluidHandleErased<T> {
 	return handle as unknown as IFluidHandleErased<T>;
 }
 

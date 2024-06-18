@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	createChildLogger,
+	raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {

@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
@@ -92,11 +92,7 @@ describe("client.applyMsg", () => {
 
 					case 1:
 					case 4:
-						assert.equal(
-							seg.seq,
-							msg.sequenceNumber,
-							"inserted segment has unexpected id",
-						);
+						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
 						break;
 
 					default:
@@ -432,7 +428,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Conflicting inserts at deleted segment position", () => {
-		const clients = createClientsAtInitialState({ initialState: "a----bcd-ef" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "a----bcd-ef" },
+			"A",
+			"B",
+			"C",
+		);
 
 		const logger = new TestClientLogger(clients.all);
 
@@ -594,19 +595,23 @@ describe("client.applyMsg", () => {
 		ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "D"), ++seq));
 
 		// disconnect B(1)
-		ops.splice(0).forEach((op) =>
-			clients.all.forEach((c, i) => (i === 1 ? perClientOps[i].push(op) : c.applyMsg(op))),
-		);
+		ops
+			.splice(0)
+			.forEach((op) =>
+				clients.all.forEach((c, i) => (i === 1 ? perClientOps[i].push(op) : c.applyMsg(op))),
+			);
 
 		ops.push(clients.D.makeOpMessage(clients.D.insertTextLocal(0, "DDD"), ++seq));
 		ops.push(clients.D.makeOpMessage(clients.D.removeRangeLocal(6, 9), ++seq));
 
 		// disconnect B(1) and C(2)
-		ops.splice(0).forEach((op) =>
-			clients.all.forEach((c, i) =>
-				i === 1 || i === 2 ? perClientOps[i].push(op) : c.applyMsg(op),
-			),
-		);
+		ops
+			.splice(0)
+			.forEach((op) =>
+				clients.all.forEach((c, i) =>
+					i === 1 || i === 2 ? perClientOps[i].push(op) : c.applyMsg(op),
+				),
+			);
 
 		// apply changes to disconnected clients
 		const bOp = {

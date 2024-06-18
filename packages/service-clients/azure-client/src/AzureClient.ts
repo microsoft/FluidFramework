@@ -10,33 +10,36 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
-import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { FluidObject, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+	CompatibilityMode,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	type CompatibilityMode,
 } from "@fluidframework/fluid-static/internal";
-import { type IClient } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
-import {
-	type AzureClientProps,
-	type AzureConnectionConfig,
-	type AzureContainerServices,
-	type AzureContainerVersion,
-	type AzureGetVersionsOptions,
+import type {
+	AzureClientProps,
+	AzureConnectionConfig,
+	AzureContainerServices,
+	AzureContainerVersion,
+	AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
 
@@ -167,7 +170,10 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),
@@ -203,7 +209,10 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),
@@ -233,7 +242,10 @@ export class AzureClient {
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),

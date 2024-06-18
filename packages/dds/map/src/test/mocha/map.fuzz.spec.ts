@@ -63,9 +63,9 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 			assert.equal(
 				aHandle,
 				bHandle,
-				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(
-					aHandle,
-				)} vs ${JSON.stringify(bHandle)}`,
+				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(aHandle)} vs ${JSON.stringify(
+					bHandle,
+				)}`,
 			);
 		} else {
 			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
@@ -97,7 +97,9 @@ const defaultOptions: GeneratorOptions = {
 	keyPoolSize: 20,
 };
 
-function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
+function makeGenerator(
+	optionsParam?: Partial<GeneratorOptions>,
+): AsyncGenerator<Operation, State> {
 	const { setWeight, deleteWeight, clearWeight, keyPoolSize } = {
 		...defaultOptions,
 		...optionsParam,

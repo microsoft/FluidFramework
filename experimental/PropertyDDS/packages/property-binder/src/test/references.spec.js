@@ -661,9 +661,7 @@ describe("DataBinder", function () {
 				.get(0)
 				.insert("three", PropertyFactory.create(ChildTemplate.typeid, "single"));
 
-			childrenChildren[1]
-				.get([0, "one"], RESOLVE_NO_LEAFS)
-				.setValue("/myChildren[0][0].zero");
+			childrenChildren[1].get([0, "one"], RESOLVE_NO_LEAFS).setValue("/myChildren[0][0].zero");
 			childrenChildren[2]
 				.get([0, "two"], RESOLVE_NO_LEAFS)
 				.setValue("/myChildren[3][0].three");
@@ -1182,10 +1180,7 @@ describe("DataBinder", function () {
 			// The keys __registeredDataBindingHandlers and __registeredHandler are used internally in our data-structures
 			// we do escaping to avoid name conflicts, and thus this test serves to check that we actually escape
 			// everywhere we have to
-			var referenceParentPSet = PropertyFactory.create(
-				NodeContainerTemplate.typeid,
-				"single",
-			);
+			var referenceParentPSet = PropertyFactory.create(NodeContainerTemplate.typeid, "single");
 
 			var refInsertSpy1 = jest.fn();
 			var refModifySpy1 = jest.fn();
@@ -1426,10 +1421,7 @@ describe("DataBinder", function () {
 					"single",
 				);
 				var nodeParentPSet = PropertyFactory.create(NodeContainerTemplate.typeid, "single");
-				var nodeParentPSet2 = PropertyFactory.create(
-					NodeContainerTemplate.typeid,
-					"single",
-				);
+				var nodeParentPSet2 = PropertyFactory.create(NodeContainerTemplate.typeid, "single");
 
 				// Add our child (referenced) pset
 				var childPset1 = PropertyFactory.create(ChildTemplate.typeid, "single");
@@ -1497,14 +1489,10 @@ describe("DataBinder", function () {
 				var runTests = function (in_increment, in_refChangedCount) {
 					expect(doubleReferenceRefChangedSpy).toHaveBeenCalledTimes(in_refChangedCount);
 					// We should have a property if 'to' is defined
-					expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(
-						!!to,
-					);
+					expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(!!to);
 					if (to) {
 						expect(
-							doubleReferenceRefChangedSpy.mock.calls[0][0]
-								.getProperty()
-								.getAbsolutePath(),
+							doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath(),
 						).toEqual(to);
 					}
 					doubleReferenceRefChangedSpy.mockClear();
@@ -1550,9 +1538,7 @@ describe("DataBinder", function () {
 				workspace.root.insert("myReferenceParent2", referenceParentPSet2);
 
 				// We insert with an already valid reference
-				referenceParentPSet
-					.get("single_ref", RESOLVE_NEVER)
-					.setValue("/myReferenceParent2");
+				referenceParentPSet.get("single_ref", RESOLVE_NEVER).setValue("/myReferenceParent2");
 				workspace.root.insert("myReferenceParent", referenceParentPSet);
 
 				// This should trigger the modify on the reference property
@@ -1571,9 +1557,7 @@ describe("DataBinder", function () {
 				runTests(0, 1);
 
 				// Restore the references
-				referenceParentPSet
-					.get("single_ref", RESOLVE_NEVER)
-					.setValue("/myReferenceParent2");
+				referenceParentPSet.get("single_ref", RESOLVE_NEVER).setValue("/myReferenceParent2");
 				runTests(1, 1);
 
 				// Now delete the node in the middle of the reference chain
@@ -2218,21 +2202,9 @@ describe("DataBinder", function () {
 				referenceInsertSpy[i] = jest.fn();
 				referenceModifySpy[i] = jest.fn();
 				referenceRemoveSpy[i] = jest.fn();
-				ParentDataBinding.registerOnPath(
-					"ref" + (i + 1),
-					["insert"],
-					referenceInsertSpy[i],
-				);
-				ParentDataBinding.registerOnPath(
-					"ref" + (i + 1),
-					["modify"],
-					referenceModifySpy[i],
-				);
-				ParentDataBinding.registerOnPath(
-					"ref" + (i + 1),
-					["remove"],
-					referenceRemoveSpy[i],
-				);
+				ParentDataBinding.registerOnPath("ref" + (i + 1), ["insert"], referenceInsertSpy[i]);
+				ParentDataBinding.registerOnPath("ref" + (i + 1), ["modify"], referenceModifySpy[i]);
+				ParentDataBinding.registerOnPath("ref" + (i + 1), ["remove"], referenceRemoveSpy[i]);
 			}
 
 			// Register the DataBinding
@@ -2406,21 +2378,9 @@ describe("DataBinder", function () {
 			var referenceInsertSpy = jest.fn();
 			var referenceModifySpy = jest.fn();
 			var referenceRemoveSpy = jest.fn();
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionInsert"],
-				referenceInsertSpy,
-			);
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionModify"],
-				referenceModifySpy,
-			);
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionRemove"],
-				referenceRemoveSpy,
-			);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionInsert"], referenceInsertSpy);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionModify"], referenceModifySpy);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionRemove"], referenceRemoveSpy);
 
 			// Register the DataBinding
 			dataBinder.register("BINDING", ReferenceParentTemplate.typeid, ParentDataBinding, {
@@ -2574,21 +2534,9 @@ describe("DataBinder", function () {
 			var referenceInsertSpy = jest.fn();
 			var referenceModifySpy = jest.fn();
 			var referenceRemoveSpy = jest.fn();
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionInsert"],
-				referenceInsertSpy,
-			);
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionModify"],
-				referenceModifySpy,
-			);
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionRemove"],
-				referenceRemoveSpy,
-			);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionInsert"], referenceInsertSpy);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionModify"], referenceModifySpy);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionRemove"], referenceRemoveSpy);
 
 			// Register the DataBinding
 			dataBinder.register("BINDING", ReferenceParentTemplate.typeid, ParentDataBinding, {
@@ -2725,12 +2673,9 @@ describe("DataBinder", function () {
 			var childPset1 = PropertyFactory.create(ChildTemplate.typeid, "single");
 			var childPset2 = PropertyFactory.create(ChildTemplate.typeid, "single");
 			// Register the DataBinding
-			dataBinder.register(
-				"BINDING",
-				DoubleReferenceParentTemplate.typeid,
-				ParentDataBinding,
-				{ context: "single" },
-			);
+			dataBinder.register("BINDING", DoubleReferenceParentTemplate.typeid, ParentDataBinding, {
+				context: "single",
+			});
 			dataBinder.register("BINDING", ChildTemplate.typeid, ChildDataBinding, {
 				context: "all",
 			});
@@ -2822,12 +2767,9 @@ describe("DataBinder", function () {
 			// Add our child (referenced) pset
 			var childPset1 = PropertyFactory.create(ChildTemplate.typeid, "single");
 			// Register the DataBinding
-			dataBinder.register(
-				"BINDING",
-				DoubleReferenceParentTemplate.typeid,
-				ParentDataBinding,
-				{ context: "single" },
-			);
+			dataBinder.register("BINDING", DoubleReferenceParentTemplate.typeid, ParentDataBinding, {
+				context: "single",
+			});
 			dataBinder.register("BINDING", ChildTemplate.typeid, ChildDataBinding, {
 				context: "all",
 			});
@@ -3228,9 +3170,7 @@ describe("DataBinder", function () {
 			// order by DataBindingManger is as expected
 			workspace.root.insert("array", PropertyFactory.create(undefined, "array"));
 			workspace.root.get("array").push(PropertyFactory.create(ChildTemplate.typeid));
-			workspace.root
-				.get("array")
-				.push(PropertyFactory.create(ReferenceParentTemplate.typeid));
+			workspace.root.get("array").push(PropertyFactory.create(ReferenceParentTemplate.typeid));
 			workspace.root.get("array").push(PropertyFactory.create("NodeProperty"));
 			workspace.root.get("array").push(PropertyFactory.create(ChildTemplate.typeid));
 
@@ -3795,9 +3735,7 @@ describe("DataBinder", function () {
 			workspace.root.insert("myReferenceParent", referenceParentPSet);
 
 			// create the chain
-			referenceParentPSet
-				.get("ref1", RESOLVE_NEVER)
-				.setValue("/myReferenceParent.map_ref[a]");
+			referenceParentPSet.get("ref1", RESOLVE_NEVER).setValue("/myReferenceParent.map_ref[a]");
 			var referenceMap = referenceParentPSet.get("map_ref");
 			referenceMap.insert("a");
 			referenceMap.setValue("a", "/myReferenceParent.ref2");
@@ -3942,9 +3880,7 @@ describe("DataBinder", function () {
 				expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(!!to);
 				if (to) {
 					expect(
-						doubleReferenceRefChangedSpy.mock.calls[0][0]
-							.getProperty()
-							.getAbsolutePath(),
+						doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath(),
 					).toEqual(to);
 				}
 				if (in_refChangedCount === 1) {
@@ -4512,9 +4448,7 @@ describe("DataBinder", function () {
 				expect(!!doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty()).toEqual(!!to);
 				if (to) {
 					expect(
-						doubleReferenceRefChangedSpy.mock.calls[0][0]
-							.getProperty()
-							.getAbsolutePath(),
+						doubleReferenceRefChangedSpy.mock.calls[0][0].getProperty().getAbsolutePath(),
 					).toEqual(to);
 				}
 				if (in_refChangedCount === 1) {
@@ -4831,11 +4765,7 @@ describe("DataBinder", function () {
 			var arrayPset = PropertyFactory.create("Int32", "array");
 			// register the reference handler
 			var referenceInsertSpy = jest.fn();
-			ParentDataBinding.registerOnPath(
-				"single_ref",
-				["collectionInsert"],
-				referenceInsertSpy,
-			);
+			ParentDataBinding.registerOnPath("single_ref", ["collectionInsert"], referenceInsertSpy);
 
 			// Register the DataBinding
 			dataBinder.register("BINDING", ReferenceParentTemplate.typeid, ParentDataBinding, {

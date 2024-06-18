@@ -38,8 +38,9 @@ export const okResponse = async (
 	headers: { [key: string]: string },
 	response: object,
 ): Promise<MockResponse> => createResponse(headers, response, 200);
-export const notFound = async (headers: { [key: string]: string } = {}): Promise<MockResponse> =>
-	createResponse(headers, undefined, 404);
+export const notFound = async (
+	headers: { [key: string]: string } = {},
+): Promise<MockResponse> => createResponse(headers, undefined, 404);
 
 export type FetchCallType = "internal" | "external" | "single";
 

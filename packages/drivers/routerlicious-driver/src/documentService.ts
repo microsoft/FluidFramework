@@ -5,8 +5,10 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceEvents,
+	IDocumentServicePolicies,
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -19,7 +21,6 @@ import {
 	RateLimiter,
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -70,6 +71,8 @@ export class DocumentService
 	private storageManager: GitManager | undefined;
 	private noCacheStorageManager: GitManager | undefined;
 
+	private _policies: IDocumentServicePolicies | undefined;
+
 	public get resolvedUrl() {
 		return this._resolvedUrl;
 	}
@@ -99,6 +102,10 @@ export class DocumentService
 	}
 
 	private documentStorageService: DocumentStorageService | undefined;
+
+	public get policies(): IDocumentServicePolicies | undefined {
+		return this._policies;
+	}
 
 	public dispose() {}
 
@@ -179,9 +186,7 @@ export class DocumentService
 
 			if (shouldUpdateDiscoveredSessionInfo) {
 				await this.refreshDiscovery();
-				const rateLimiter = new RateLimiter(
-					this.driverPolicies.maxConcurrentOrdererRequests,
-				);
+				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
 				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,
@@ -281,6 +286,17 @@ export class DocumentService
 		// Retry with new token on authorization error; otherwise, allow container layer to handle.
 		try {
 			const connection = await connect();
+			// Enable single-commit summaries via driver policy based on the enable_single_commit_summary flag which maybe provided by the service during connection.
+			// summarizeProtocolTree flag is used by the loader layer to attach protocol tree along with the summary required in the single-commit summaries.
+			const shouldSummarizeProtocolTree = (connection as R11sDocumentDeltaConnection).details
+				?.supportedFeatures?.enable_single_commit_summary
+				? true
+				: false;
+			this._policies = {
+				...this._policies,
+				summarizeProtocolTree: shouldSummarizeProtocolTree,
+			};
+
 			return connection;
 		} catch (error: any) {
 			if (error?.statusCode === 401) {

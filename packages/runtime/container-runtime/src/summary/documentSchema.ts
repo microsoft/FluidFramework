@@ -482,18 +482,16 @@ export class DocumentsSchemaController {
 		this.documentSchema = !existing
 			? this.desiredSchema
 			: (documentMetadataSchema as IDocumentSchemaCurrent) ??
-			  ({
+				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
 					refSeq: 0,
 					// If it's existing document and it has no schema, then it was written by legacy client.
 					// If it's a new document, then we define it's legacy-related behaviors.
 					runtime: {
-						explicitSchemaControl: boolToProp(
-							!existing && features.explicitSchemaControl,
-						),
+						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
-			  } satisfies IDocumentSchemaCurrent);
+				} satisfies IDocumentSchemaCurrent);
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
@@ -563,8 +561,7 @@ export class DocumentsSchemaController {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			this.sendOp = false;
 			assert(
-				this.explicitSchemaControl &&
-					this.futureSchema.runtime.explicitSchemaControl === true,
+				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
 				0x94e /* not legacy */,
 			);
 			return {

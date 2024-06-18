@@ -4,17 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils.js";
-import { brand } from "../../../util/index.js";
+import { type Mutable, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionTag,
 	asChangeAtomId,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
@@ -70,7 +70,11 @@ export const cases: {
 	],
 };
 
-function createInsertChangeset(index: number, count: number, id?: ChangesetLocalId): SF.Changeset {
+function createInsertChangeset(
+	index: number,
+	count: number,
+	id?: ChangesetLocalId,
+): SF.Changeset {
 	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0));
 }
 
@@ -127,7 +131,13 @@ function createReturnChangeset(
 	detachCellId: SF.CellId,
 	attachCellId: SF.CellId,
 ): SF.Changeset {
-	return SF.sequenceFieldEditor.return(sourceIndex, count, destIndex, detachCellId, attachCellId);
+	return SF.sequenceFieldEditor.return(
+		sourceIndex,
+		count,
+		destIndex,
+		detachCellId,
+		attachCellId,
+	);
 }
 
 function createModifyChangeset(index: number, change: NodeId): SF.Changeset {
@@ -351,7 +361,11 @@ function createTomb(
 	localId: ChangesetLocalId = brand(0),
 	count: number = 1,
 ): SF.CellMark<SF.NoopMark> {
-	return { count, cellId: { revision, localId } };
+	const cellId: Mutable<SF.CellId> = { localId };
+	if (revision !== undefined) {
+		cellId.revision = revision;
+	}
+	return { count, cellId };
 }
 
 function createAttachAndDetachMark<TChange>(
@@ -361,7 +375,10 @@ function createAttachAndDetachMark<TChange>(
 ): SF.CellMark<SF.AttachAndDetach> {
 	assert(attach.count === detach.count, "Attach and detach must have the same count");
 	assert(attach.cellId !== undefined, "AttachAndDetach attach should apply to an empty cell");
-	assert(detach.cellId === undefined, "AttachAndDetach detach should apply to an populated cell");
+	assert(
+		detach.cellId === undefined,
+		"AttachAndDetach detach should apply to an populated cell",
+	);
 	assert(
 		attach.changes === undefined && detach.changes === undefined,
 		"Attach and detach must not carry changes",
@@ -380,7 +397,10 @@ function createAttachAndDetachMark<TChange>(
 	return mark;
 }
 
-function overrideCellId<TMark extends SF.HasMarkFields>(cellId: SF.CellId, mark: TMark): TMark {
+function overrideCellId<TMark extends SF.HasMarkFields>(
+	cellId: SF.CellId,
+	mark: TMark,
+): TMark {
 	mark.cellId = cellId;
 	return mark;
 }

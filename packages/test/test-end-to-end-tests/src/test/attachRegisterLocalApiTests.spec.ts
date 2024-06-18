@@ -15,6 +15,7 @@ import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
@@ -25,7 +26,6 @@ import {
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 /*
 Context no longer provides observability point to when context changes its attach states
@@ -570,15 +570,11 @@ describeCompat(
 				toFluidHandleInternal(dataStore2.handle).bind(
 					toFluidHandleInternal(dataStore3.handle),
 				);
-				toFluidHandleInternal(dataStore2.handle).bind(
-					toFluidHandleInternal(channel3.handle),
-				);
+				toFluidHandleInternal(dataStore2.handle).bind(toFluidHandleInternal(channel3.handle));
 				toFluidHandleInternal(dataStore3.handle).bind(
 					toFluidHandleInternal(dataStore2.handle),
 				);
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(channel2.handle),
-				);
+				toFluidHandleInternal(dataStore3.handle).bind(toFluidHandleInternal(channel2.handle));
 
 				toFluidHandleInternal(dataStore2.handle).attachGraph();
 				assert.strictEqual(

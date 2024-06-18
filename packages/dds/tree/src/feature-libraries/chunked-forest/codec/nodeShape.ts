@@ -6,23 +6,24 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type TreeNodeSchemaIdentifier,
 	forEachField,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
 
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
+import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
+import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
-	EncoderCache,
-	FieldEncoder,
-	KeyedFieldEncoder,
-	NodeEncoder,
+	type EncoderCache,
+	type FieldEncoder,
+	type KeyedFieldEncoder,
+	type NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
-import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import type { StableId } from "@fluidframework/id-compressor";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -49,8 +50,18 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
 
-		encodeValue(cursor.value, this.value, outputBuffer);
-
+		if (this.value === 0) {
+			const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(
+				cursor.value as StableId,
+			);
+			const opSpaceCompressedId =
+				sessionSpaceCompressedId !== undefined
+					? cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId)
+					: cursor.value;
+			encodeValue(opSpaceCompressedId, this.value, outputBuffer);
+		} else {
+			encodeValue(cursor.value, this.value, outputBuffer);
+		}
 		for (const field of this.fields) {
 			cursor.enterField(brand(field.key));
 			field.shape.encodeField(cursor, cache, outputBuffer);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.39.0",
+	"version": "0.40.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,7 +25,12 @@
 	"bin": {
 		"flub": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "!lib/test", "/oclif.manifest.json"],
+	"files": [
+		"/bin",
+		"/lib",
+		"!lib/test",
+		"/oclif.manifest.json"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
@@ -56,14 +61,25 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		],
 		"exclude-after-remap": false,
-		"include": ["src/**/*.*ts", "lib/**/*.*js"],
+		"include": [
+			"src/**/*.*ts",
+			"lib/**/*.*js"
+		],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@andrewbranch/untar.js": "^1.0.3",
 		"@fluid-tools/version-tools": "workspace:~",
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
@@ -82,6 +98,7 @@
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",
 		"execa": "^5.1.1",
+		"fflate": "^0.8.2",
 		"fs-extra": "^11.2.0",
 		"globby": "^11.1.0",
 		"gray-matter": "^4.0.3",
@@ -153,11 +170,18 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": ["...", "build:diagrams"],
+				"dependsOn": [
+					"...",
+					"build:diagrams"
+				],
 				"script": false
 			},
 			"build:diagrams": [],
-			"build:manifest": ["...", "build:copy", "build:diagrams"]
+			"build:manifest": [
+				"...",
+				"build:copy",
+				"build:diagrams"
+			]
 		}
 	},
 	"oclif": {
@@ -165,8 +189,12 @@
 		"dirname": "flub",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": ["-h"],
-		"additionalVersionFlags": ["-V"],
+		"additionalHelpFlags": [
+			"-h"
+		],
+		"additionalVersionFlags": [
+			"-V"
+		],
 		"plugins": [
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",
@@ -190,6 +218,9 @@
 			},
 			"release": {
 				"description": "Release commands are used to manage the Fluid release process."
+			},
+			"publish": {
+				"description": "Publish commands are used to publish packages to an npm registry."
 			}
 		}
 	}

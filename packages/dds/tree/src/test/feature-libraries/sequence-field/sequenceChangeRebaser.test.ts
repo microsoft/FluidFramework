@@ -7,16 +7,16 @@ import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangesetLocalId,
-	RevisionInfo,
-	RevisionTag,
-	TaggedChange,
+	type ChangesetLocalId,
+	type RevisionInfo,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import {
+import type { SequenceField as SF } from "../../../feature-libraries/index.js";
+import type {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
 	FieldStateTree,
@@ -24,9 +24,17 @@ import {
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
-import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	type IdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+	makeArray,
+} from "../../../util/index.js";
+import type {
+	NodeId,
+	RebaseRevisionMetadata,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
@@ -45,7 +53,7 @@ import {
 	assertWrappedChangesetsEqual,
 	composeDeep,
 	pruneDeep,
-	WrappedChange,
+	type WrappedChange,
 	withoutTombstones,
 	tagChangeInline,
 	inlineRevision,
@@ -106,124 +114,123 @@ const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
 const nodeId3: NodeId = { localId: brand(3) };
 
-const testChanges: [string, (index: number, maxIndex: number) => ChangesetWrapper<SF.Changeset>][] =
+const testChanges: [
+	string,
+	(index: number, maxIndex: number) => ChangesetWrapper<SF.Changeset>,
+][] = [
 	[
-		[
-			"NestedChange",
-			(i) =>
-				ChangesetWrapper.create(Change.modify(i, nodeId1), [
-					nodeId1,
-					TestChange.mint([], 1),
-				]),
-		],
-		[
-			"NestedChangeUnderRemovedNode",
-			(i, max) =>
-				ChangesetWrapper.create(
-					[
-						...(i > 0 ? [{ count: i }] : []),
-						...withAdjacentTombstones(
-							[Mark.modify(nodeId2, { revision: tag1, localId: brand(i) })],
-							undefined,
-							max,
-						),
-					],
-					[nodeId2, TestChange.mint([], 1)],
-				),
-		],
-		[
-			"MInsert",
-			(i) =>
-				ChangesetWrapper.create(
-					[
-						...(i > 0 ? [Mark.skip(i)] : []),
-						Mark.insert(1, brand(42), {
-							changes: nodeId3,
-						}),
-					],
-					[nodeId3, TestChange.mint([], 2)],
-				),
-		],
-		["Insert", (i) => ChangesetWrapper.create(Change.insert(i, 2, brand(42)))],
-		["NoOp", (i) => ChangesetWrapper.create([])],
-		[
-			"TransientInsert",
-			(i) =>
-				ChangesetWrapper.create([
-					...(i > 0 ? [Mark.skip(i)] : []),
-					Mark.remove(1, brand(0), { cellId: { localId: brand(0) } }),
-				]),
-		],
-		["Remove", (i) => ChangesetWrapper.create(Change.remove(i, 2))],
-		[
-			"Revive",
-			(i, max) =>
-				ChangesetWrapper.create([
-					Mark.skip(2),
+		"NestedChange",
+		(i) =>
+			ChangesetWrapper.create(Change.modify(i, nodeId1), [nodeId1, TestChange.mint([], 1)]),
+	],
+	[
+		"NestedChangeUnderRemovedNode",
+		(i, max) =>
+			ChangesetWrapper.create(
+				[
+					...(i > 0 ? [{ count: i }] : []),
 					...withAdjacentTombstones(
-						[Mark.revive(2, { revision: tag1, localId: brand(i) })],
-						"Insert",
+						[Mark.modify(nodeId2, { revision: tag1, localId: brand(i) })],
+						undefined,
 						max,
 					),
-				]),
-		],
-		[
-			"TransientRevive",
-			(i) =>
-				ChangesetWrapper.create([
+				],
+				[nodeId2, TestChange.mint([], 1)],
+			),
+	],
+	[
+		"MInsert",
+		(i) =>
+			ChangesetWrapper.create(
+				[
 					...(i > 0 ? [Mark.skip(i)] : []),
-					Mark.remove(1, brand(0), {
-						cellId: {
-							revision: tag1,
-							localId: brand(0),
-						},
+					Mark.insert(1, brand(42), {
+						changes: nodeId3,
 					}),
-				]),
-		],
-		[
-			"ConflictedRevive",
-			(i) =>
-				ChangesetWrapper.create(
-					Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
+				],
+				[nodeId3, TestChange.mint([], 2)],
+			),
+	],
+	["Insert", (i) => ChangesetWrapper.create(Change.insert(i, 2, brand(42)))],
+	["NoOp", (i) => ChangesetWrapper.create([])],
+	[
+		"TransientInsert",
+		(i) =>
+			ChangesetWrapper.create([
+				...(i > 0 ? [Mark.skip(i)] : []),
+				Mark.remove(1, brand(0), { cellId: { localId: brand(0) } }),
+			]),
+	],
+	["Remove", (i) => ChangesetWrapper.create(Change.remove(i, 2))],
+	[
+		"Revive",
+		(i, max) =>
+			ChangesetWrapper.create([
+				Mark.skip(2),
+				...withAdjacentTombstones(
+					[Mark.revive(2, { revision: tag1, localId: brand(i) })],
+					"Insert",
+					max,
 				),
-		],
-		["MoveOut", (i) => ChangesetWrapper.create(Change.move(i, 2, 1))],
-		["MoveIn", (i) => ChangesetWrapper.create(Change.move(1, 2, i))],
-		[
-			"ReturnFrom",
-			(i, max) =>
-				ChangesetWrapper.create(
-					withAdjacentTombstones(
-						Change.return(
-							i,
-							2,
-							1,
-							{ revision: tag3, localId: brand(i + 2) },
-							{ revision: tag3, localId: brand(i) },
-						),
-						"MoveIn",
-						max,
+			]),
+	],
+	[
+		"TransientRevive",
+		(i) =>
+			ChangesetWrapper.create([
+				...(i > 0 ? [Mark.skip(i)] : []),
+				Mark.remove(1, brand(0), {
+					cellId: {
+						revision: tag1,
+						localId: brand(0),
+					},
+				}),
+			]),
+	],
+	[
+		"ConflictedRevive",
+		(i) =>
+			ChangesetWrapper.create(
+				Change.redundantRevive(2, 2, { revision: tag2, localId: brand(i) }),
+			),
+	],
+	["MoveOut", (i) => ChangesetWrapper.create(Change.move(i, 2, 1))],
+	["MoveIn", (i) => ChangesetWrapper.create(Change.move(1, 2, i))],
+	[
+		"ReturnFrom",
+		(i, max) =>
+			ChangesetWrapper.create(
+				withAdjacentTombstones(
+					Change.return(
+						i,
+						2,
+						1,
+						{ revision: tag3, localId: brand(i + 2) },
+						{ revision: tag3, localId: brand(i) },
 					),
+					"MoveIn",
+					max,
 				),
-		],
-		[
-			"ReturnTo",
-			(i, max) =>
-				ChangesetWrapper.create(
-					withAdjacentTombstones(
-						Change.return(
-							1,
-							2,
-							i,
-							{ revision: tag3, localId: brand(i + 2) },
-							{ revision: tag3, localId: brand(i) },
-						),
-						"MoveIn",
-						max,
+			),
+	],
+	[
+		"ReturnTo",
+		(i, max) =>
+			ChangesetWrapper.create(
+				withAdjacentTombstones(
+					Change.return(
+						1,
+						2,
+						i,
+						{ revision: tag3, localId: brand(i + 2) },
+						{ revision: tag3, localId: brand(i) },
 					),
+					"MoveIn",
+					max,
 				),
-		],
-	];
+			),
+	],
+];
 deepFreeze(testChanges);
 
 export function testRebaserAxioms() {
@@ -254,20 +261,9 @@ export function testRebaserAxioms() {
 						const maxOffset = 4;
 						for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 							for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-								const change1 = tagWrappedChangeInline(
-									makeChange1(offset1, maxOffset),
-									tag7,
-								);
-								const change2 = tagWrappedChangeInline(
-									makeChange2(offset2, maxOffset),
-									tag5,
-								);
-								if (
-									!areRebasable(
-										change1.change.fieldChange,
-										change2.change.fieldChange,
-									)
-								) {
+								const change1 = tagWrappedChangeInline(makeChange1(offset1, maxOffset), tag7);
+								const change2 = tagWrappedChangeInline(makeChange2(offset2, maxOffset), tag5);
+								if (!areRebasable(change1.change.fieldChange, change2.change.fieldChange)) {
 									continue;
 								}
 								const inv = tagWrappedChangeInline(invertDeep(change2), tag6, tag5);
@@ -283,6 +279,16 @@ export function testRebaserAxioms() {
 					});
 				}
 			}
+		});
+
+		// Hand-crafted version of the above tests to add coverage for returns
+		it("Return ↷ [Return, Return⁻¹] === Return", () => {
+			const move: SF.Changeset = Mark.move(1, { revision: tag0, localId: brand(0) });
+			const r: SF.Changeset = invert(tagChange(move, tag0), false);
+			const base1 = tagChange(r, tag1);
+			const base2 = tagChange(invert(base1, true), tag2);
+			const actual = rebaseOverChanges(tagChange(r, tag3), [base1, base2]);
+			assertChangesetsEqual(withoutTombstones(actual.change), r);
 		});
 
 		/**
@@ -316,20 +322,9 @@ export function testRebaserAxioms() {
 						const maxOffset = 4;
 						for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 							for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-								const change1 = tagWrappedChangeInline(
-									makeChange1(offset1, maxOffset),
-									tag7,
-								);
-								const change2 = tagWrappedChangeInline(
-									makeChange2(offset2, maxOffset),
-									tag5,
-								);
-								if (
-									!areRebasable(
-										change1.change.fieldChange,
-										change2.change.fieldChange,
-									)
-								) {
+								const change1 = tagWrappedChangeInline(makeChange1(offset1, maxOffset), tag7);
+								const change2 = tagWrappedChangeInline(makeChange2(offset2, maxOffset), tag5);
+								if (!areRebasable(change1.change.fieldChange, change2.change.fieldChange)) {
 									continue;
 								}
 								const inv = tagWrappedChangeInline(invertDeep(change2), tag6);
@@ -377,20 +372,9 @@ export function testRebaserAxioms() {
 						const maxOffset = 4;
 						for (let offset1 = 1; offset1 <= maxOffset; ++offset1) {
 							for (let offset2 = 1; offset2 <= maxOffset; ++offset2) {
-								const change1 = tagWrappedChangeInline(
-									makeChange1(offset1, maxOffset),
-									tag8,
-								);
-								const change2 = tagWrappedChangeInline(
-									makeChange2(offset2, maxOffset),
-									tag5,
-								);
-								if (
-									!areRebasable(
-										change1.change.fieldChange,
-										change2.change.fieldChange,
-									)
-								) {
+								const change1 = tagWrappedChangeInline(makeChange1(offset1, maxOffset), tag8);
+								const change2 = tagWrappedChangeInline(makeChange2(offset2, maxOffset), tag5);
+								if (!areRebasable(change1.change.fieldChange, change2.change.fieldChange)) {
 									continue;
 								}
 								const inverse2 = tagWrappedChangeInline(
@@ -473,10 +457,7 @@ export function testRebaserAxioms() {
 				for (const [nameB, makeChange2] of shallowTestChanges) {
 					for (const [nameC, makeChange3] of tombstoneFreeTestChanges) {
 						const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
-						if (
-							changesTargetingDetached.has(nameA) &&
-							changesTargetingDetached.has(nameB)
-						) {
+						if (changesTargetingDetached.has(nameA) && changesTargetingDetached.has(nameB)) {
 							// Some of these tests are malformed as the change targeting the older cell
 							// should have tombstones describing its position relative to the newer cell.
 						} else {
@@ -491,11 +472,7 @@ export function testRebaserAxioms() {
 									a,
 									makeAnonChange(bc),
 									rebaseRevisionMetadataFromInfo(
-										[
-											{ revision: tag6 },
-											{ revision: tag7 },
-											{ revision: tag5 },
-										],
+										[{ revision: tag6 }, { revision: tag7 }, { revision: tag5 }],
 										tag5,
 										[tag6, tag7],
 									),
@@ -984,17 +961,7 @@ export function testSandwichComposing() {
 			const unMod = tagChangeInline(invert(mod), tag7, mod.revision);
 			const return3 = tagChangeInline(invert(move3), tag8, move3.revision);
 			const move1Rebased = rebaseTagged(move1, del);
-			const changes = [
-				return3,
-				unMod,
-				return2,
-				return1,
-				del,
-				move1Rebased,
-				move2,
-				mod,
-				move3,
-			];
+			const changes = [return3, unMod, return2, return1, del, move1Rebased, move2, mod, move3];
 
 			const sandwich = composeShallow(changes);
 			const pruned = prune(sandwich, (id) => undefined);

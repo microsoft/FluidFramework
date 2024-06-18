@@ -5,8 +5,7 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
 
@@ -53,7 +52,9 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapshotTreeAndBlobs(odspSnapshot: IOdspSnapshot): ISnapshot {
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
+	odspSnapshot: IOdspSnapshot,
+): ISnapshot {
 	const blobsWithBufferContent = new Map<string, ArrayBuffer>();
 	if (odspSnapshot.blobs) {
 		for (const blob of odspSnapshot.blobs) {

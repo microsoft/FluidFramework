@@ -175,7 +175,6 @@ describe("Garbage Collection Tests", () => {
 
 		// The runtime to be passed to the garbage collector.
 		const gcRuntime: IGarbageCollectionRuntime = {
-			updateStateBeforeGC: async () => {},
 			getGCData,
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
@@ -301,7 +300,7 @@ describe("Garbage Collection Tests", () => {
 			const spies = {
 				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
 			};
-			garbageCollector.addedOutboundReference("/from", "to/relative/url");
+			garbageCollector.addedOutboundReference("/from", "to/relative/url", Date.now());
 			mockLogger.assertMatch(
 				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute", category: "error" }],
 				"Expected error log",
@@ -317,7 +316,7 @@ describe("Garbage Collection Tests", () => {
 			const spies = {
 				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
 			};
-			garbageCollector.addedOutboundReference("/from", "/to/absolute/url");
+			garbageCollector.addedOutboundReference("/from", "/to/absolute/url", Date.now());
 			mockLogger.assertMatchNone(
 				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute" }],
 				"unexpected events logged",
@@ -489,7 +488,7 @@ describe("Garbage Collection Tests", () => {
 			assert.deepEqual(gc.tombstones, [nodes[0]], "node 0 should be in the Tombstones list");
 
 			// Simulate usage to trigger TombstoneLoaded op.
-			nodeUpdated(gc, nodes[0], "Loaded");
+			nodeUpdated(gc, nodes[0], "Loaded", Date.now());
 			const [gcTombstoneLoadedMessage] = spies.gc.submitMessage.args[0];
 			assert.deepEqual(
 				gcTombstoneLoadedMessage,
@@ -504,12 +503,13 @@ describe("Garbage Collection Tests", () => {
 				"submitted message not as expected",
 			);
 
+			const autoRecoveryTimestampMs = Date.now();
 			// Plumb the message to processMessage fn to trigger autorecovery
 			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
-			gc.processMessage(gcTombstoneLoadedMessage, true /* local */);
+			gc.processMessage(gcTombstoneLoadedMessage, autoRecoveryTimestampMs, true /* local */);
 			assert.deepEqual(
 				spies.gc.addedOutboundReference.args[0],
-				["/", nodes[0], /* autorecovery: */ true],
+				["/", nodes[0], autoRecoveryTimestampMs, /* autorecovery: */ true],
 				"addedOutboundReference should be called with node 0",
 			);
 			assert.equal(
@@ -601,8 +601,8 @@ describe("Garbage Collection Tests", () => {
 					mode === "tombstone"
 						? timeout
 						: mode === "sweep"
-						? timeout - sweepGracePeriodMs
-						: undefined;
+							? timeout - sweepGracePeriodMs
+							: undefined;
 				const gcOptions = { sweepGracePeriodMs };
 				return createGarbageCollector({
 					createParams: { baseSnapshot, gcOptions },
@@ -682,7 +682,7 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// Add reference from node 1 to node 3 and validate that we get a revived event.
-				garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[1], nodes[3], Date.now());
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
@@ -718,7 +718,7 @@ describe("Garbage Collection Tests", () => {
 				clock.tick(1);
 				nodeUpdated(garbageCollector, nodes[2], "Changed", Date.now(), testPkgPath);
 				nodeUpdated(garbageCollector, nodes[2], "Loaded", Date.now(), testPkgPath);
-				garbageCollector.addedOutboundReference(nodes[1], nodes[2]);
+				garbageCollector.addedOutboundReference(nodes[1], nodes[2], Date.now());
 				await garbageCollector.collectGarbage({});
 
 				for (const event of mockLogger.events) {
@@ -818,9 +818,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gcState.gcNodes[nodes[3]] = node3Data;
 
-				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([
-					[gcBlobId, gcState],
-				]);
+				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
 				const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
 				// Remove node 3's reference from node 2 so that it is still unreferenced.
@@ -851,7 +849,7 @@ describe("Garbage Collection Tests", () => {
 
 				// Add reference from node 2 to node 3 and validate that revived event is logged.
 				defaultGCData.gcNodes[nodes[2]] = [nodes[3]];
-				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
@@ -899,9 +897,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gcState.gcNodes[nodes[3]] = node3Data;
 
-				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([
-					[gcBlobId, gcState],
-				]);
+				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
 				const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
 				// Initialize the base state which happens during runtime initialization.
@@ -913,9 +909,7 @@ describe("Garbage Collection Tests", () => {
 
 				// Log pending events explicitly. This is needed because summarizer clients don't log these events
 				// until the next GC run which calls this function.
-				await garbageCollector.telemetryTracker.logPendingEvents(
-					garbageCollector.mc.logger,
-				);
+				await garbageCollector.telemetryTracker.logPendingEvents(garbageCollector.mc.logger);
 				mockLogger.assertMatch(
 					[
 						{
@@ -935,11 +929,9 @@ describe("Garbage Collection Tests", () => {
 
 				// Add reference from node 2 to node 3 and validate that revived event is logged. Node 3 needs to be
 				// deleted from unreferencedNodesState otherwise revived events are not logged.
-				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				garbageCollector.unreferencedNodesState.delete(nodes[3]);
-				await garbageCollector.telemetryTracker.logPendingEvents(
-					garbageCollector.mc.logger,
-				);
+				await garbageCollector.telemetryTracker.logPendingEvents(garbageCollector.mc.logger);
 				mockLogger.assertMatch(
 					[
 						{
@@ -1014,7 +1006,7 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// No revived events should be logged as no timeouts should have occurred
-				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatchNone(
 					[
@@ -1243,10 +1235,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state, tombstone state and deleted nodes should all be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState !== undefined,
 					"GC state in base snapshot should not be available",
@@ -1268,11 +1257,7 @@ describe("Garbage Collection Tests", () => {
 					1,
 					"Expecting 1 tombstone node",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 			});
 
 			it("resets GC / tombstone state when GC version is newer that the one in base snapshot", async () => {
@@ -1281,10 +1266,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState === undefined,
 					"GC state in base snapshot should be undefined when GC version changes",
@@ -1309,11 +1291,7 @@ describe("Garbage Collection Tests", () => {
 					0,
 					"Expecting no tombstone nodes",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
 					garbageCollector.configs.gcEnabled,
 					true,
@@ -1327,10 +1305,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState === undefined,
 					"GC state in base snapshot should be undefined when GC version changes",
@@ -1359,11 +1334,7 @@ describe("Garbage Collection Tests", () => {
 					0,
 					"Expecting no tombstone nodes",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
 					garbageCollector.configs.gcEnabled,
 					true,
@@ -1395,11 +1366,7 @@ describe("Garbage Collection Tests", () => {
 					0,
 					"Expecting no tombstone nodes",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					0,
-					"Expecting no deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting no deleted node");
 				assert.strictEqual(
 					garbageCollector.configs.gcEnabled,
 					true,
@@ -1683,7 +1650,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeBTime1 !== undefined, "B should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Remove reference from A to B. E = [].
@@ -1727,7 +1694,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B, B -\> C].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Remove reference from B to C. E = [A -\> B].
@@ -1780,7 +1747,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeDTime1 !== undefined, "D should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B, B -\> C, C -\> D].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Remove reference from A to B. E = [B -\> C, C -\> D].
@@ -1834,11 +1801,11 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodeB] = [];
 
 				// 3. Add reference from A to B. E = [A -\> B].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 4. Add reference from B to C. E = [A -\> B, B -\> C].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 5. Remove reference from B to C. E = [A -\> B].
@@ -1883,11 +1850,11 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from A to B. E = [A -\> B].
-				garbageCollector.addedOutboundReference(nodeA, nodeB);
+				garbageCollector.addedOutboundReference(nodeA, nodeB, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB];
 
 				// 3. Add reference from A to C. E = [A -\> B, A -\> C].
-				garbageCollector.addedOutboundReference(nodeA, nodeC);
+				garbageCollector.addedOutboundReference(nodeA, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeA] = [nodeB, nodeC];
 
 				// 4. Remove reference from A to B. E = [A -\> C].
@@ -1944,7 +1911,7 @@ describe("Garbage Collection Tests", () => {
 
 				// 4. Add reference from A to D with calling addedOutboundReference
 				defaultGCData.gcNodes[nodeA].push(nodeD);
-				garbageCollector.addedOutboundReference(nodeA, nodeD);
+				garbageCollector.addedOutboundReference(nodeA, nodeD, Date.now());
 
 				// 5. Run GC and generate summary 2. E = [A -\> B, A -\> C, A -\> E, D -\> C, E -\> A].
 				await getUnreferencedTimestamps();
@@ -1999,7 +1966,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeCTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from B to C. E = [B -\> C].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 3. Run GC and generate summary 2. E = [B -\> C].
@@ -2043,7 +2010,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeDTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from B to C. E = [B -\> C, C-\> D].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 3. Run GC and generate summary 2. E = [B -\> C. C -\> D].
@@ -2094,7 +2061,7 @@ describe("Garbage Collection Tests", () => {
 				assert(nodeDTime1 !== undefined, "C should have unreferenced timestamp");
 
 				// 2. Add reference from B to C. E = [B -\> C, C-\> D].
-				garbageCollector.addedOutboundReference(nodeB, nodeC);
+				garbageCollector.addedOutboundReference(nodeB, nodeC, Date.now());
 				defaultGCData.gcNodes[nodeB] = [nodeC];
 
 				// 3. Remove reference from C to D. E = [B -\> C].
@@ -2223,10 +2190,7 @@ describe("Garbage Collection Tests", () => {
 
 		it("can submit GC op compat behavior", async () => {
 			const gcWithPrivates = garbageCollector as GcWithPrivates;
-			const containerRuntimeGCMessage: Omit<
-				ContainerRuntimeGCMessage,
-				"type" | "contents"
-			> & {
+			const containerRuntimeGCMessage: Omit<ContainerRuntimeGCMessage, "type" | "contents"> & {
 				type: string;
 				contents: any;
 			} = {
@@ -2237,9 +2201,7 @@ describe("Garbage Collection Tests", () => {
 
 			assert.doesNotThrow(
 				() =>
-					gcWithPrivates.submitMessage(
-						containerRuntimeGCMessage as ContainerRuntimeGCMessage,
-					),
+					gcWithPrivates.submitMessage(containerRuntimeGCMessage as ContainerRuntimeGCMessage),
 				"Cannot submit GC message with compatDetails",
 			);
 		});
@@ -2250,7 +2212,11 @@ describe("Garbage Collection Tests", () => {
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
 				compatDetails: { behavior: "Ignore" },
 			};
-			garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */);
+			garbageCollector.processMessage(
+				containerRuntimeGCMessage,
+				Date.now(),
+				false /* local */,
+			);
 		});
 
 		it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
@@ -2260,7 +2226,12 @@ describe("Garbage Collection Tests", () => {
 				compatDetails: { behavior: "FailToProcess" },
 			};
 			assert.throws(
-				() => garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */),
+				() =>
+					garbageCollector.processMessage(
+						containerRuntimeGCMessage,
+						Date.now(),
+						false /* local */,
+					),
 				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 				"Garbage collection message of unknown type FROM_THE_FUTURE",
 			);
@@ -2272,7 +2243,12 @@ describe("Garbage Collection Tests", () => {
 				contents: gcMessageFromFuture as unknown as GarbageCollectionMessage,
 			};
 			assert.throws(
-				() => garbageCollector.processMessage(containerRuntimeGCMessage, false /* local */),
+				() =>
+					garbageCollector.processMessage(
+						containerRuntimeGCMessage,
+						Date.now(),
+						false /* local */,
+					),
 				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
 				"Garbage collection message of unknown type FROM_THE_FUTURE",
 			);

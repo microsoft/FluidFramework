@@ -46,7 +46,7 @@ function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}):
 	const connectionProperties: OdspConnectionConfig = {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
-		driveId: "<raas_drive_id>",
+		driveId: "<sharepoint_embedded_container_id>",
 		filePath: "<file_path>",
 	};
 
@@ -111,8 +111,7 @@ describe("OdspClient", () => {
 
 		const client_gcEnabled = createOdspClient({
 			configProvider: {
-				getRawConfig: (name: string) =>
-					({ "Fluid.GarbageCollection.RunSweep": true })[name],
+				getRawConfig: (name: string) => ({ "Fluid.GarbageCollection.RunSweep": true })[name],
 			},
 		});
 		const { container: container_gcEnabled } = await client_gcEnabled.createContainer(schema);

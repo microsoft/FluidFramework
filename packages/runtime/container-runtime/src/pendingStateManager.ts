@@ -6,7 +6,7 @@
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -75,6 +75,13 @@ function buildPendingMessageContent(
 	return JSON.stringify({ type, contents, compatDetails });
 }
 
+function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
+	return {
+		...message,
+		localOpMetadata: undefined,
+	};
+}
+
 /**
  * PendingStateManager is responsible for maintaining the messages that have not been sent or have not yet been
  * acknowledged by the server. It also maintains the batch information for both automatically and manually flushed
@@ -138,12 +145,15 @@ export class PendingStateManager implements IDisposable {
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
 		);
+		// Using snapshot sequence number to filter ops older than our latest snapshot.
+		// Such ops should not be declared in pending/stashed state. Snapshot seq num will not
+		// be available when the container is not attached. Therefore, no filtering is needed.
 		const newSavedOps = [...this.savedOps].filter((message) => {
 			assert(
 				message.sequenceNumber !== undefined,
 				0x97c /* saved op should already have a sequence number */,
 			);
-			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
+			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
 			if (
@@ -154,9 +164,10 @@ export class PendingStateManager implements IDisposable {
 			}
 		});
 		return {
-			pendingStates: [...newSavedOps, ...this.pendingMessages.toArray()].map((message) => {
-				return { ...message, localOpMetadata: undefined };
-			}),
+			pendingStates: [
+				...newSavedOps,
+				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+			],
 		};
 	}
 
@@ -241,7 +252,9 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
+	public processPendingLocalMessage(
+		message: InboundSequencedContainerRuntimeMessage,
+	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 		// Get the next message from the pending queue. Verify a message exists.
@@ -251,7 +264,7 @@ export class PendingStateManager implements IDisposable {
 			0x169 /* "No pending message found for this remote message" */,
 		);
 		pendingMessage.sequenceNumber = message.sequenceNumber;
-		this.savedOps.push(pendingMessage);
+		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
 

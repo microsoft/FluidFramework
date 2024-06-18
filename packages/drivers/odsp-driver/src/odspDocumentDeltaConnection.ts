@@ -7,20 +7,18 @@ import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
 	INack,
 	ISentSignalMessage,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	IClient,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,
@@ -108,10 +106,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		if (this.references === 0 && this.delayDeleteTimeout === undefined) {
 			this.delayDeleteTimeout = setTimeout(() => {
 				// We should not get here with active users.
-				assert(
-					this.references === 0,
-					0x0a0 /* "Unexpected socketIO references on timeout" */,
-				);
+				assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
 				this.closeSocket();
 			}, socketReferenceBufferTime);
 		}
@@ -526,7 +521,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return this.flushDeferred.promise;
 	}
 
-	protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string): void => {
+	protected disconnectHandler = (
+		error: IFluidErrorBase & OdspError,
+		clientId?: string,
+	): void => {
 		if (clientId === undefined || clientId === this.clientId) {
 			this.logger.sendTelemetryEvent(
 				{
@@ -669,11 +667,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(
 					event,
 					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
-						if (
-							!this.enableMultiplexing ||
-							!documentId ||
-							documentId === this.documentId
-						) {
+						if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
 							listener(msg, documentId);
 						}
 					},
@@ -689,8 +683,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						clientIdOrDocumentId === this.documentId ||
 						clientIdOrDocumentId === this.clientId;
 					const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
-					const { clientSequenceNumber, referenceSequenceNumber } =
-						nacks[0]?.operation ?? {};
+					const { clientSequenceNumber, referenceSequenceNumber } = nacks[0]?.operation ?? {};
 					this.logger.sendTelemetryEvent({
 						eventName: "ServerNack",
 						code,

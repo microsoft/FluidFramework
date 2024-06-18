@@ -6,7 +6,7 @@
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
@@ -53,7 +53,9 @@ export class OpSplitter {
 	}
 
 	public get isBatchChunkingEnabled(): boolean {
-		return this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined;
+		return (
+			this.chunkSizeInBytes < Number.POSITIVE_INFINITY && this.submitBatchFn !== undefined
+		);
 	}
 
 	public get chunks(): ReadonlyMap<string, string[]> {
@@ -272,7 +274,8 @@ export const splitOp = (
 	);
 
 	const contentLength = op.contents.length;
-	const chunkCount = Math.floor((contentLength - 1) / chunkSizeInBytes) + 1 + (extraOp ? 1 : 0);
+	const chunkCount =
+		Math.floor((contentLength - 1) / chunkSizeInBytes) + 1 + (extraOp ? 1 : 0);
 	let offset = 0;
 	for (let chunkId = 1; chunkId <= chunkCount; chunkId++) {
 		const chunk: IChunkedOp = {
@@ -306,7 +309,10 @@ export const splitOp = (
 		);
 	}
 
-	assert(offset >= contentLength, 0x58c /* Content offset equal or larger than content length */);
+	assert(
+		offset >= contentLength,
+		0x58c /* Content offset equal or larger than content length */,
+	);
 	assert(chunks.length === chunkCount, 0x5a5 /* Expected number of chunks */);
 	return chunks;
 };

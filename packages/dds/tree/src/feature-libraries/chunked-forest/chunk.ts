@@ -7,12 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldKey,
-	ITreeCursor,
-	ITreeCursorSynchronous,
+	type FieldKey,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
 	rootFieldKey,
 } from "../../core/index.js";
-import { ReferenceCounted } from "../../util/index.js";
+import type { ReferenceCounted } from "../../util/index.js";
 
 /**
  * Contiguous part of the tree which get stored together in some data format.

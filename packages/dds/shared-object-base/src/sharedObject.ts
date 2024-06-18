@@ -5,11 +5,8 @@
 
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IFluidHandle,
-	ITelemetryBaseProperties,
-	type ErasedType,
-} from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
 import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -21,8 +18,10 @@ import {
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { type IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	type IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -31,6 +30,10 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
+import {
+	toDeltaManagerInternal,
+	TelemetryContext,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -42,10 +45,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 
-import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -56,7 +56,9 @@ import { makeHandlesSerializable, parseHandles } from "./utils.js";
  * Base class from which all shared objects derive.
  * @alpha
  */
-export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+export abstract class SharedObjectCore<
+		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
+	>
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
@@ -329,18 +331,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
 	/**
-	 * Called when a handle is decoded by this object. A handle in the object's data represents an outbound reference
-	 * to another object in the container.
-	 * @param decodedHandle - The handle of the Fluid object that is decoded.
-	 */
-	protected handleDecoded(decodedHandle: IFluidHandle) {
-		if (this.isAttached()) {
-			// This represents an outbound reference from this object to the node represented by decodedHandle.
-			this.services?.deltaConnection.addedGCOutboundReference?.(this.handle, decodedHandle);
-		}
-	}
-
-	/**
 	 * Allows the distributed data type to perform custom loading
 	 * @param services - Storage used by the shared object
 	 */
@@ -450,9 +440,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error(
-						"FluidDataStoreRuntime disposed while this ack-based Promise was pending",
-					),
+					new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"),
 				);
 
 			if (this.runtime.disposed) {
@@ -539,7 +527,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	private process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
@@ -663,10 +655,7 @@ export abstract class SharedObject<
 	) {
 		super(id, runtime, attributes);
 
-		this._serializer = new FluidSerializer(
-			this.runtime.channelsRoutingContext,
-			(handle: IFluidHandle) => this.handleDecoded(handle),
-		);
+		this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 	}
 
 	/**
@@ -732,10 +721,7 @@ export abstract class SharedObject<
 
 		let gcData: IGarbageCollectionData;
 		try {
-			const serializer = new SummarySerializer(
-				this.runtime.channelsRoutingContext,
-				(handle: IFluidHandle) => this.handleDecoded(handle),
-			);
+			const serializer = new SummarySerializer(this.runtime.channelsRoutingContext);
 			this.processGCDataCore(serializer);
 			// The GC data for this shared object contains a single GC node. The outbound routes of this node are the
 			// routes of handles serialized during summarization.
@@ -788,11 +774,7 @@ export abstract class SharedObject<
 				this.telemetryContextPrefix,
 				propertyName,
 			) ?? 0) as number;
-			telemetryContext.set(
-				this.telemetryContextPrefix,
-				propertyName,
-				prevTotal + incrementBy,
-			);
+			telemetryContext.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
 		}
 	}
 }
