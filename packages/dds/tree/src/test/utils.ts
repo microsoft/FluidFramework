@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -348,6 +352,7 @@ export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -377,6 +382,7 @@ export class TestTreeProviderLite {
 				clientId: `test-client-${i}`,
 				id: "test",
 				idCompressor: createIdCompressor(sessionId),
+				logger: this.logger,
 			});
 			const tree = this.factory.create(
 				runtime,
@@ -678,12 +684,32 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
+	const { checkout } = createCheckoutWithContent(content, args);
+	return checkout;
+}
+
+export function createCheckoutWithContent(
+	content: TreeContent,
+	args?: {
+		events?: Listenable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+	},
+): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const forest = forestWithContent(content);
-	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const logger = createMockLoggerExt();
+	const checkout = createTreeCheckout(
+		testIdCompressor,
+		mintRevisionTag,
+		testRevisionTagCodec,
+		{
+			...args,
+			forest,
+			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+			logger,
+		},
+	);
+	return { checkout, logger };
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
