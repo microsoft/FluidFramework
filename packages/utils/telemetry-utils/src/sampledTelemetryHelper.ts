@@ -5,6 +5,7 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { roundToDecimalPlaces } from "./mathTools.js";
 import {
@@ -53,34 +54,52 @@ interface Measurements {
 }
 
 /**
- * Expected type of the custom data passed into the logger.
- *
- * @internal
- */
-export interface ICustomData<TKey extends string> {
-	/**
-	 * Optional properties to log custom data. The set of properties must be the same for all calls to the `measure` function.
-	 */
-	customData?: { readonly [key in TKey]: number };
-}
-
-/**
  * The data that will be logged in the telemetry event.
  */
-interface LoggerData<TCustomDataKey extends string> extends ICustomData<TCustomDataKey> {
+interface LoggerData {
 	measurements: Measurements;
 
 	/**
-	 * The sum of the custom data passed into the logger.
-	 * This will be an empty object if `customData` is not provided in the `ICustomData` object.
+	 * The sum of the custom data passed into the logger for each key.
+	 * Absence of a given key should be interpreted as 0.
 	 */
-	dataSums: { [key in TCustomDataKey]?: number };
+	dataSums: Record<string, number>;
 
 	/**
-	 * The max of the custom data passed into the logger.
-	 * This will be an empty object if `customData` is not provided in the `ICustomData` object.
+	 * The max of the custom data passed into the logger for each key.
 	 */
-	dataMaxes: { [key in TCustomDataKey]?: number };
+	dataMaxes: Record<string, number>;
+}
+
+/**
+ * @internal
+ */
+export interface ITelemetryEventMetrics<TCustomMetrics extends Record<string, number>> {
+	incrementMetric(bag: Partial<TCustomMetrics>): void;
+}
+
+export class TelemetryEventMetrics<TCustomMetrics extends Record<string, number>> {
+	private constructor(private readonly metrics: TCustomMetrics) {}
+
+	public static start<TCustomMetrics extends Record<string, number>>(
+		defaults: TCustomMetrics,
+	): TelemetryEventMetrics<TCustomMetrics> {
+		return new TelemetryEventMetrics<TCustomMetrics>(defaults);
+	}
+
+	public incrementMetric(bag: Partial<TCustomMetrics>): void {
+		for (const [key, value] of Object.entries(bag)) {
+			assert(this.metrics !== undefined, "Metrics object should be defined");
+			assert(typeof key === "string", "Key should be a string");
+			assert(typeof value === "number", "Value should be a number");
+
+			(this.metrics as Record<string, number>)[key] = (this.metrics[key] ?? 0) + value;
+		}
+	}
+
+	public end(): TCustomMetrics {
+		return this.metrics;
+	}
 }
 
 /**
@@ -94,10 +113,13 @@ interface LoggerData<TCustomDataKey extends string> extends ICustomData<TCustomD
  *
  * @internal
  */
-export class SampledTelemetryHelper<TCustomMetrics extends string> implements IDisposable {
+export class SampledTelemetryHelper<
+	TCustomMetrics extends Record<string, number> = Record<never, number>,
+> implements IDisposable
+{
 	disposed: boolean = false;
 
-	private readonly measurementsMap = new Map<string, LoggerData<TCustomMetrics>>();
+	private readonly measurementsMap = new Map<string, LoggerData>();
 
 	/**
 	 * @param eventBase -
@@ -117,12 +139,13 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	 * them is specified as a key in one of the ITelemetryBaseProperties objects in this map, that key-value pair will be
 	 * ignored.
 	 */
-	public constructor(
+	constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
+		private readonly customMetricsDefaults?: TCustomMetrics,
 	) {}
 
 	/**
@@ -135,31 +158,17 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	 * If no such distinction needs to be made, do not provide a value.
 	 * @returns Whatever the passed-in code block returns.
 	 */
-	public measure<T = TCustomMetrics extends string ? ICustomData<TCustomMetrics> : void>(
-		codeToMeasure: () => T,
+	public measure<T>(
+		codeToMeasure: (event: ITelemetryEventMetrics<TCustomMetrics>) => T,
 		bucket: string = "",
 	): T {
+		const event = TelemetryEventMetrics.start({ ...this.customMetricsDefaults });
 		const start = performance.now();
-		const returnValue = codeToMeasure();
+		const returnValue = codeToMeasure(event);
+		const telemetryProperties = event.end();
 		const duration = performance.now() - start;
 
-		let loggerData = this.measurementsMap.get(bucket);
-		if (loggerData === undefined) {
-			loggerData = {
-				measurements: { count: 0, duration: -1 },
-				dataSums: {},
-				dataMaxes: {},
-			};
-			this.measurementsMap.set(bucket, loggerData);
-		}
-
-		if (returnValue !== undefined && returnValue !== null) {
-			const telemetryProperties = returnValue as ICustomData<TCustomMetrics>;
-
-			if (telemetryProperties.customData !== undefined) {
-				loggerData = this.accumulateCustomData(telemetryProperties.customData, loggerData);
-			}
-		}
+		const loggerData = this.accumulateCustomData(telemetryProperties as TCustomMetrics, bucket);
 
 		const m = loggerData.measurements;
 		m.count++;
@@ -180,20 +189,24 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	}
 
 	/**
-	 * Accumulates the custom data and sends it to the logger every {@link SampledTelemetryHelper.sampleThreshold} calls.
-	 *
-	 * @param customData -
-	 * A record storing the custom data to be accumulated and eventually logged.
+	 * TODO
 	 */
-	private accumulateCustomData(
-		customData: Record<TCustomMetrics, number>,
-		loggerData: LoggerData<TCustomMetrics>,
-	): LoggerData<TCustomMetrics> {
-		for (const key of Object.keys(customData) as TCustomMetrics[]) {
-			loggerData.dataSums[key] = (loggerData.dataSums[key] ?? 0) + customData[key];
+	private accumulateCustomData(customData: TCustomMetrics, bucket: string): LoggerData {
+		let loggerData = this.measurementsMap.get(bucket);
+		if (loggerData === undefined) {
+			loggerData = {
+				measurements: { count: 0, duration: -1 },
+				dataSums: {},
+				dataMaxes: {},
+			};
+			this.measurementsMap.set(bucket, loggerData);
+		}
+
+		for (const [key, val] of Object.entries(customData)) {
+			loggerData.dataSums[key] = (loggerData.dataSums[key] ?? 0) + val;
 			loggerData.dataMaxes[key] = Math.max(
 				loggerData.dataMaxes[key] ?? Number.NEGATIVE_INFINITY,
-				customData[key],
+				val,
 			);
 		}
 
@@ -207,17 +220,15 @@ export class SampledTelemetryHelper<TCustomMetrics extends string> implements ID
 	 * @param counts - The number of times the {@link SampledTelemetryHelper.measure} has been called.
 	 * @returns A record with the average and maximum values of the custom data.
 	 */
-	private processCustomData(
-		loggerData: LoggerData<TCustomMetrics>,
-		counts: number,
-	): Record<string, number> {
+	private processCustomData(loggerData: LoggerData, counts: number): Record<string, number> {
 		const processedCustomData: Record<string, number> = {};
 
 		const dataSums = loggerData.dataSums;
 		const dataMaxes = loggerData.dataMaxes;
 
-		for (const key of Object.keys(dataSums) as TCustomMetrics[]) {
-			processedCustomData[`avg_${key}`] = roundToDecimalPlaces(dataSums[key]! / counts, 6);
+		for (const [key, val] of Object.entries(dataSums)) {
+			processedCustomData[`avg_${key}`] = roundToDecimalPlaces(val / counts, 6);
+			// implementation of class guarantees the keys between dataMaxes and dataSums align.
 			processedCustomData[`max_${key}`] = dataMaxes[key] ?? 0;
 		}
 

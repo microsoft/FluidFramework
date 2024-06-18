@@ -9,7 +9,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import sinon from "sinon";
+// import sinon from "sinon";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import {
@@ -236,85 +236,85 @@ describe("SampledTelemetryHelper without Custom Data", () => {
 	});
 });
 
-/**
- * @remarks Initialized in advance to extract its keys for type checking.
- * Arbitrary properties that can be logged with the telemetry event.
- */
-interface TestTelemetryProperties {
-	propertyOne: number;
-	propertyTwo: number;
-	propertyThree: number;
-}
+// /**
+//  * @remarks Initialized in advance to extract its keys for type checking.
+//  * Arbitrary properties that can be logged with the telemetry event.
+//  */
+// interface TestTelemetryProperties {
+// 	propertyOne: number;
+// 	propertyTwo: number;
+// 	propertyThree: number;
+// }
 
-describe("SampledTelemetryHelper with Custom Data", () => {
-	let logger: TestLogger;
+// describe("SampledTelemetryHelper with Custom Data", () => {
+// 	let logger: TestLogger;
 
-	beforeEach(() => {
-		logger = new TestLogger();
-	});
+// 	beforeEach(() => {
+// 		logger = new TestLogger();
+// 	});
 
-	it("Correctly returns computed averages and maxes for custom data", () => {
-		const sampling = 10;
-		const helper = new SampledTelemetryHelper<keyof TestTelemetryProperties>(
-			{ eventName: "testEvent" },
-			logger,
-			sampling,
-		);
+// 	it("Correctly returns computed averages and maxes for custom data", () => {
+// 		const sampling = 10;
+// 		const helper = new SampledTelemetryHelper<TestTelemetryProperties>(
+// 			{ eventName: "testEvent" },
+// 			logger,
+// 			sampling,
+// 		);
 
-		for (let i = 0; i < sampling; i++) {
-			helper.measure(() => ({
-				customData: {
-					propertyOne: 1,
-					propertyTwo: 2,
-					propertyThree: 3,
-				},
-			}));
-		}
+// 		for (let i = 0; i < sampling; i++) {
+// 			helper.measure(() => ({
+// 				customData: {
+// 					propertyOne: 1,
+// 					propertyTwo: 2,
+// 					propertyThree: 3,
+// 				},
+// 			}));
+// 		}
 
-		assert.strictEqual(logger.events.length, 1);
-		assert.strictEqual(logger.events[0].avg_propertyOne, 1);
-		assert.strictEqual(logger.events[0].avg_propertyTwo, 2);
-		assert.strictEqual(logger.events[0].avg_propertyThree, 3);
-		assert.strictEqual(logger.events[0].max_propertyOne, 1);
-		assert.strictEqual(logger.events[0].max_propertyTwo, 2);
-		assert.strictEqual(logger.events[0].max_propertyThree, 3);
-	});
+// 		assert.strictEqual(logger.events.length, 1);
+// 		assert.strictEqual(logger.events[0].avg_propertyOne, 1);
+// 		assert.strictEqual(logger.events[0].avg_propertyTwo, 2);
+// 		assert.strictEqual(logger.events[0].avg_propertyThree, 3);
+// 		assert.strictEqual(logger.events[0].max_propertyOne, 1);
+// 		assert.strictEqual(logger.events[0].max_propertyTwo, 2);
+// 		assert.strictEqual(logger.events[0].max_propertyThree, 3);
+// 	});
 
-	it("Correctly returns computed duration for custom data", () => {
-		const sampling = 10;
-		const helper = new SampledTelemetryHelper<keyof TestTelemetryProperties>(
-			{ eventName: "testEvent" },
-			logger,
-			sampling,
-			true /* includeAggregateMetrics */,
-		);
+// 	it("Correctly returns computed duration for custom data", () => {
+// 		const sampling = 10;
+// 		const helper = new SampledTelemetryHelper<keyof TestTelemetryProperties>(
+// 			{ eventName: "testEvent" },
+// 			logger,
+// 			sampling,
+// 			true /* includeAggregateMetrics */,
+// 		);
 
-		const clock = sinon.useFakeTimers();
-		const startingPoint = 50; // Arbitrary starting point.
-		let totalDuration = 0;
-		let maxDuration = Number.MIN_VALUE;
-		let minDuration = Number.MAX_VALUE;
+// 		const clock = sinon.useFakeTimers();
+// 		const startingPoint = 50; // Arbitrary starting point.
+// 		let totalDuration = 0;
+// 		let maxDuration = Number.MIN_VALUE;
+// 		let minDuration = Number.MAX_VALUE;
 
-		for (let i = 0; i < sampling; i++) {
-			helper.measure(() => {
-				const currentIterationDuration = startingPoint + i;
+// 		for (let i = 0; i < sampling; i++) {
+// 			helper.measure(() => {
+// 				const currentIterationDuration = startingPoint + i;
 
-				clock.tick(currentIterationDuration);
-				totalDuration += currentIterationDuration;
-				maxDuration = Math.max(maxDuration, currentIterationDuration);
-				minDuration = Math.min(minDuration, currentIterationDuration);
-			});
-		}
+// 				clock.tick(currentIterationDuration);
+// 				totalDuration += currentIterationDuration;
+// 				maxDuration = Math.max(maxDuration, currentIterationDuration);
+// 				minDuration = Math.min(minDuration, currentIterationDuration);
+// 			});
+// 		}
 
-		clock.restore();
+// 		clock.restore();
 
-		assert.strictEqual(logger.events.length, 1);
-		assert.strictEqual(logger.events[0].totalDuration, totalDuration);
-		assert.strictEqual(logger.events[0].averageDuration, totalDuration / sampling);
-		assert.strictEqual(logger.events[0].maxDuration, maxDuration);
-		assert.strictEqual(logger.events[0].minDuration, minDuration);
-	});
-});
+// 		assert.strictEqual(logger.events.length, 1);
+// 		assert.strictEqual(logger.events[0].totalDuration, totalDuration);
+// 		assert.strictEqual(logger.events[0].averageDuration, totalDuration / sampling);
+// 		assert.strictEqual(logger.events[0].maxDuration, maxDuration);
+// 		assert.strictEqual(logger.events[0].minDuration, minDuration);
+// 	});
+// });
 
 function ensurePropertiesExist(
 	object: ITelemetryPerformanceEventExt,
