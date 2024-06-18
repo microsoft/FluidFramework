@@ -103,10 +103,7 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 						);
 					}
 				} else {
-					sharedString.removeText(
-						change.rangeOffset,
-						change.rangeOffset + change.rangeLength,
-					);
+					sharedString.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
 				}
 			}
 		});
@@ -128,8 +125,7 @@ export const MonacoView: React.FC<IMonacoViewProps> = (props: IMonacoViewProps) 
 				 */
 				const offsetsToRange = (offset1: number, offset2?: number): monaco.Range => {
 					const pos1 = codeModel.getPositionAt(offset1);
-					const pos2 =
-						typeof offset2 === "number" ? codeModel.getPositionAt(offset2) : pos1;
+					const pos2 = typeof offset2 === "number" ? codeModel.getPositionAt(offset2) : pos1;
 					const range = new monaco.Range(
 						pos1.lineNumber,
 						pos1.column,

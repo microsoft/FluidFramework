@@ -61,11 +61,7 @@ export async function getFileLink(
 				async () =>
 					runWithRetryForCoherencyAndServiceReadOnlyErrors(
 						async () =>
-							getFileLinkWithLocationRedirectionHandling(
-								getToken,
-								odspUrlParts,
-								logger,
-							),
+							getFileLinkWithLocationRedirectionHandling(getToken, odspUrlParts, logger),
 						"getFileLinkCore",
 						logger,
 					),
