@@ -111,8 +111,7 @@ describe("OdspClient", () => {
 
 		const client_gcEnabled = createOdspClient({
 			configProvider: {
-				getRawConfig: (name: string) =>
-					({ "Fluid.GarbageCollection.RunSweep": true })[name],
+				getRawConfig: (name: string) => ({ "Fluid.GarbageCollection.RunSweep": true })[name],
 			},
 		});
 		const { container: container_gcEnabled } = await client_gcEnabled.createContainer(schema);

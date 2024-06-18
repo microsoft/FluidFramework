@@ -7,7 +7,11 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
-import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import type {
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
@@ -109,14 +113,8 @@ export function makeV2Codec(
 				case "AttachAndDetach":
 					return {
 						attachAndDetach: {
-							attach: markEffectCodec.encode(
-								effect.attach,
-								context,
-							) as Encoded.Attach,
-							detach: markEffectCodec.encode(
-								effect.detach,
-								context,
-							) as Encoded.Detach,
+							attach: markEffectCodec.encode(effect.attach, context) as Encoded.Attach,
+							detach: markEffectCodec.encode(effect.detach, context) as Encoded.Detach,
 						},
 					};
 				case NoopMarkType:
@@ -135,10 +133,7 @@ export function makeV2Codec(
 		context: ChangeEncodingContext,
 	): RevisionTag {
 		if (encodedRevision === undefined) {
-			assert(
-				context.revision !== undefined,
-				0x996 /* Implicit revision should be provided */,
-			);
+			assert(context.revision !== undefined, 0x996 /* Implicit revision should be provided */);
 			return context.revision;
 		}
 
@@ -255,10 +250,7 @@ export function makeV2Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						markEffectCodec.decode(mark.effect, context.baseContext),
-					);
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
 				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = changeAtomIdCodec.decode(mark.cellId, context.baseContext);

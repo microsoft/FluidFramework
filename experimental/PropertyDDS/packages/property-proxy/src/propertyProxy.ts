@@ -71,9 +71,7 @@ export namespace PropertyProxy {
 					referencedPropertyParent = property.getRoot().get(tokens);
 				} else {
 					const parent = property.getParent() as ContainerProperty;
-					referencedPropertyParent = types.includes(
-						PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN,
-					)
+					referencedPropertyParent = types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN)
 						? parent.resolvePath(path.slice(0, path.lastIndexOf("[")))
 						: parent.get(tokens);
 				}
@@ -149,10 +147,7 @@ export namespace PropertyProxy {
 			let proxy;
 			switch (context) {
 				case "array":
-					proxy = new Proxy(
-						new ComponentArray(property as ArrayProperty),
-						arrayProxyHandler,
-					);
+					proxy = new Proxy(new ComponentArray(property as ArrayProperty), arrayProxyHandler);
 					break;
 				case "map":
 					proxy = new ComponentMap(property as MapProperty);

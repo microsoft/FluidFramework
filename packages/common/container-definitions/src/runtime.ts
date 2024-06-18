@@ -148,8 +148,14 @@ export interface IContainerContext {
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+	readonly submitFn: (
+		type: MessageType,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		contents: any,
+		batch: boolean,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		appData?: any,
+	) => number;
 	/**
 	 * @returns clientSequenceNumber of last message in a batch
 	 */

@@ -94,7 +94,9 @@ describe("container telemetry E2E", () => {
 
 		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
 	});
 
 	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using ITelemetryConsumer", async () => {
@@ -146,7 +148,9 @@ describe("container telemetry E2E", () => {
 
 		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
 	});
 
 	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using ITelemetryConsumer", async () => {
@@ -203,6 +207,8 @@ describe("container telemetry E2E", () => {
 
 		expect(expectedContainerTelemetry).to.deep.equal(actualContainerTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId)
+			.to.be.a("string")
+			.with.length.above(0);
 	});
 });

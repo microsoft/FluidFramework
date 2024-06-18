@@ -95,9 +95,8 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 3: optional captured drive ID
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
-		joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(
-			pathname,
-		);
+		joinSessionMatch =
+			/(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(pathname);
 
 		if (joinSessionMatch === null) {
 			// Try again but with the OData format ( `/drives('ABC123')/items('ABC123!456')` )

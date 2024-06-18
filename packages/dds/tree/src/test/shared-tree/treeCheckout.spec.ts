@@ -31,7 +31,11 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import type { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
+import type {
+	ITreeCheckout,
+	RevertibleFactory,
+	TreeContent,
+} from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
 	checkoutWithContent,
@@ -167,10 +171,7 @@ describe("sharedTreeView", () => {
 
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 
 				assert.equal(log.length, 2);
 
@@ -194,10 +195,7 @@ describe("sharedTreeView", () => {
 				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
