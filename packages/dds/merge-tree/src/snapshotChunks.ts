@@ -25,12 +25,12 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
 	chunkStartSegmentIndex: number;
 	chunkSegmentCount: number;
 	chunkLengthChars: number;
-	totalLengthChars?: number;
-	totalSegmentCount?: number;
-	chunkSequenceNumber?: number;
-	chunkMinSequenceNumber?: number;
+	totalLengthChars?: number | undefined;
+	totalSegmentCount?: number | undefined;
+	chunkSequenceNumber?: number | undefined;
+	chunkMinSequenceNumber?: number | undefined;
 	segmentTexts: JsonSegmentSpecs[];
-	headerMetadata?: MergeTreeHeaderMetadata;
+	headerMetadata?: MergeTreeHeaderMetadata | undefined;
 	attribution?: SerializedAttributionCollection | undefined;
 }
 
@@ -53,7 +53,7 @@ export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
 	length: number;
 	segments: JsonSegmentSpecs[];
 	headerMetadata: MergeTreeHeaderMetadata | undefined;
-	attribution?: SerializedAttributionCollection;
+	attribution?: SerializedAttributionCollection | undefined;
 }
 
 /**

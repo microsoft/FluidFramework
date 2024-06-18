@@ -496,9 +496,9 @@ export abstract class BaseSegment implements ISegment {
 	public properties?: PropertySet;
 	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
-	public localSeq?: number;
-	public localRemovedSeq?: number;
-	public localMovedSeq?: number;
+	public localSeq?: number | undefined;
+	public localRemovedSeq?: number | undefined;
+	public localMovedSeq?: number | undefined;
 
 	public addProperties(
 		newProps: PropertySet,
@@ -591,7 +591,10 @@ export abstract class BaseSegment implements ISegment {
 
 			case MergeTreeDeltaType.OBLITERATE:
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
-				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
+				assert(
+					moveInfo !== undefined && moveInfo.movedSeqs !== undefined,
+					0x86e /* On obliterate ack, missing move info! */,
+				);
 				this.localMovedSeq = undefined;
 				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
