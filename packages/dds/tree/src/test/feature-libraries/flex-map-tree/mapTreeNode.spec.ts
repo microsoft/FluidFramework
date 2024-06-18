@@ -31,10 +31,7 @@ describe("MapTreeNodes", () => {
 		"FieldNode",
 		FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.string]),
 	);
-	const objectSchema = schemaBuilder.object("Object", {
-		map: mapSchema,
-		field: fieldNodeSchema,
-	});
+	const objectSchema = schemaBuilder.object("Object", { map: mapSchema, field: fieldNodeSchema });
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s

@@ -133,7 +133,12 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
 							throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
 						}
 					} else {
-						return Utilities.proxifyInternal(property, key, caretFound, isReferenceArray);
+						return Utilities.proxifyInternal(
+							property,
+							key,
+							caretFound,
+							isReferenceArray,
+						);
 					}
 				}
 			}
@@ -157,7 +162,7 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
 						enumerable: true,
 						value: PropertyProxy.proxify(target.getProperty())[key],
 						writable: true,
-					};
+				  };
 		} else {
 			return {
 				configurable: false,
@@ -202,8 +207,7 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
 	 * @param target - The {@link ComponentArray} the Proxy handles.
 	 * @return The array containing the IDs of the {@link external:ArrayProperty ArrayProperty}.
 	 */
-	ownKeys: (target: ComponentArray) =>
-		Reflect.ownKeys(Array.from(target.getProperty().getIds())),
+	ownKeys: (target: ComponentArray) => Reflect.ownKeys(Array.from(target.getProperty().getIds())),
 
 	/**
 	 * The set trap handles setting of properties.
@@ -280,7 +284,11 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
 					Utilities.throwOnIterableForSingleProperty(value);
 					property.set(
 						numeric_key,
-						Utilities.prepareElementForInsertion(property, value, target.lastCalledMethod),
+						Utilities.prepareElementForInsertion(
+							property,
+							value,
+							target.lastCalledMethod,
+						),
 					);
 				} else {
 					const child = property.get(numeric_key);

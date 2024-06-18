@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	FluidObjectValueNode,
-	HasContainerKey,
-} from "@fluidframework/devtools-core/internal";
+import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper.js";

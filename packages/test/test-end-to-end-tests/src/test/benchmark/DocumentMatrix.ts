@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	assertDocumentTypeInfo,
-	isDocumentMatrixInfo,
-} from "@fluid-private/test-version-utils";
+import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -29,10 +26,7 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import {
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils/internal";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils/internal";
 
 import {
 	IDocumentLoaderAndSummarizer,

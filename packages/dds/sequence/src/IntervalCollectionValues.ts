@@ -4,10 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	serializeHandles,
-	IFluidSerializer,
-} from "@fluidframework/shared-object-base/internal";
+import { serializeHandles, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 import type { IntervalCollection } from "./intervalCollection.js";
 import {
@@ -38,10 +35,7 @@ export interface ILocalIntervalCollection<T extends ISerializableInterval> {
 	 * @param bind - Container type's handle
 	 * @returns The serialized form of the contained value
 	 */
-	makeSerialized(
-		serializer: IFluidSerializer,
-		bind: IFluidHandle,
-	): ISerializedIntervalCollection;
+	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedIntervalCollection;
 }
 
 export function makeSerializable<T extends ISerializableInterval>(

@@ -366,10 +366,7 @@ export class NodeCore {
 
 	public addNumber(payload: number | undefined): void {
 		assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
-		assert(
-			payload !== undefined && payload >= 0,
-			0x232 /* "Payload should not be negative" */,
-		);
+		assert(payload !== undefined && payload >= 0, 0x232 /* "Payload should not be negative" */);
 		this.children.push(payload);
 	}
 
@@ -477,7 +474,9 @@ export class NodeCore {
 				case MarkerCodes.BinarySingle16:
 				case MarkerCodes.BinarySingle32:
 				case MarkerCodes.BinarySingle64: {
-					children.push(BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)));
+					children.push(
+						BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code)),
+					);
 					continue;
 				}
 				// If integer is 0.
@@ -569,7 +568,8 @@ export class NodeCore {
 			logger.sendErrorEvent({ eventName: "StringParsingError" });
 			for (const el of stringsToResolve) {
 				assert(
-					el.content === Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
+					el.content ===
+						Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
 					0x3ea /* test */,
 				);
 			}
@@ -614,30 +614,21 @@ export function getStringInstance(node: NodeTypes, message: string): string {
 	throwBufferParseException(node, "BlobCore", message);
 }
 
-export function assertBlobCoreInstance(
-	node: NodeTypes,
-	message: string,
-): asserts node is BlobCore {
+export function assertBlobCoreInstance(node: NodeTypes, message: string): asserts node is BlobCore {
 	if (node instanceof BlobCore) {
 		return;
 	}
 	throwBufferParseException(node, "BlobCore", message);
 }
 
-export function assertNodeCoreInstance(
-	node: NodeTypes,
-	message: string,
-): asserts node is NodeCore {
+export function assertNodeCoreInstance(node: NodeTypes, message: string): asserts node is NodeCore {
 	if (node instanceof NodeCore) {
 		return;
 	}
 	throwBufferParseException(node, "NodeCore", message);
 }
 
-export function assertNumberInstance(
-	node: NodeTypes,
-	message: string,
-): asserts node is number {
+export function assertNumberInstance(node: NodeTypes, message: string): asserts node is number {
 	if (typeof node === "number") {
 		return;
 	}

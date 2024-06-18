@@ -9,11 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "./constants.js";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
 import { TrackingGroupCollection } from "./mergeTreeTracking.js";
@@ -22,11 +18,7 @@ import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import {
-	ReferencePosition,
-	refGetTileLabels,
-	refTypeIncludesFlag,
-} from "./referencePositions.js";
+import { ReferencePosition, refGetTileLabels, refTypeIncludesFlag } from "./referencePositions.js";
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
 
@@ -78,9 +70,7 @@ export interface IRemovalInfo {
 /**
  * @internal
  */
-export function toRemovalInfo(
-	maybe: Partial<IRemovalInfo> | undefined,
-): IRemovalInfo | undefined {
+export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
 		return maybe as IRemovalInfo;
 	}
@@ -487,9 +477,7 @@ export abstract class BaseSegment implements ISegment {
 	public cachedLength: number = 0;
 
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
-	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
-		this,
-	);
+	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
 	public propertyManager?: PropertiesManager;
@@ -581,7 +569,10 @@ export abstract class BaseSegment implements ISegment {
 
 			case MergeTreeDeltaType.REMOVE:
 				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
-				assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
+				assert(
+					removalInfo !== undefined,
+					0x046 /* "On remove ack, missing removal info!" */,
+				);
 				this.localRemovedSeq = undefined;
 				if (removalInfo.removedSeq === UnassignedSequenceNumber) {
 					removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;

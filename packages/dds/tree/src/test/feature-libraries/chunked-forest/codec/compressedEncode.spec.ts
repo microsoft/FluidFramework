@@ -84,12 +84,7 @@ const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
 function makeFieldBatchCodec(
 	options: ICodecOptions,
 	cache: EncoderCache,
-): IJsonCodec<
-	FieldBatch,
-	EncodedFieldBatch,
-	JsonCompatibleReadOnly,
-	FieldBatchEncodingContext
-> {
+): IJsonCodec<FieldBatch, EncodedFieldBatch, JsonCompatibleReadOnly, FieldBatchEncodingContext> {
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
 		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			return compressedEncode(data, cache);
@@ -361,7 +356,12 @@ describe("compressedEncode", () => {
 			// Should use nestedArray, which will lookup the shape from cache:
 			assert.deepEqual(buffer, [
 				cache.nestedArray(anyNodeEncoder),
-				[onlyTypeShape, new IdentifierToken("foo"), onlyTypeShape, new IdentifierToken("bar")],
+				[
+					onlyTypeShape,
+					new IdentifierToken("foo"),
+					onlyTypeShape,
+					new IdentifierToken("bar"),
+				],
 			]);
 		});
 	});

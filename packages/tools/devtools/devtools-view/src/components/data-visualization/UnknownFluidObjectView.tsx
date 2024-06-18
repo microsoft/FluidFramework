@@ -18,9 +18,7 @@ export type UnknownFluidObjectViewProps = DataVisualizationTreeProps<FluidUnknow
 /**
  * Render data with type VisualNodeKind.FluidUnknownObjectNode and render its children.
  */
-export function UnknownFluidObjectView(
-	props: UnknownFluidObjectViewProps,
-): React.ReactElement {
+export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
 	const { label, node } = props;
 
 	const metadata = JSON.stringify(node.metadata);

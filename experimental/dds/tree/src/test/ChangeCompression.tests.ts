@@ -106,7 +106,8 @@ describe('ChangeCompression', () => {
 		const decompressedEdit = decompressEdit(compressor, newInterner, idNormalizer, compressedEdit);
 
 		const compressedBuildChanges = compressedEdit.changes.filter<CompressedBuildInternal<OpSpaceNodeId>>(
-			(change): change is CompressedBuildInternal<OpSpaceNodeId> => change.type === ChangeTypeInternal.CompressedBuild
+			(change): change is CompressedBuildInternal<OpSpaceNodeId> =>
+				change.type === ChangeTypeInternal.CompressedBuild
 		);
 
 		treeIndex = 0;
@@ -129,14 +130,17 @@ describe('ChangeCompression', () => {
 			changes: [
 				{
 					destination: 0 as DetachedSequenceId,
-					source: [new InterningTreeCompressor().compress(tree, new MutableStringInterner(), scopeIdNormalizer(tree))],
+					source: [
+						new InterningTreeCompressor().compress(
+							tree,
+							new MutableStringInterner(),
+							scopeIdNormalizer(tree)
+						),
+					],
 					type: ChangeTypeInternal.CompressedBuild,
 				},
 				{
-					destination: {
-						side: 1,
-						referenceSibling: tree.normalizeToOpSpace(tree.left.identifier),
-					},
+					destination: { side: 1, referenceSibling: tree.normalizeToOpSpace(tree.left.identifier) },
 					source: 0 as DetachedSequenceId,
 					type: ChangeTypeInternal.Insert,
 				},
@@ -158,12 +162,7 @@ describe('ChangeCompression', () => {
 		};
 		testCompression(edit, scopeIdNormalizer(tree), {
 			...edit,
-			changes: [
-				{
-					...detach,
-					source: convertStableRangeIds(detach.source, (id) => tree.normalizeToOpSpace(id)),
-				},
-			],
+			changes: [{ ...detach, source: convertStableRangeIds(detach.source, (id) => tree.normalizeToOpSpace(id)) }],
 		});
 	});
 

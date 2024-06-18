@@ -298,10 +298,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.summaryWatchers.delete(clientId);
 	}
 
-	public setPendingAckTimerTimeoutCallback(
-		maxAckWaitTime: number,
-		timeoutCallback: () => void,
-	) {
+	public setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void) {
 		this.maxAckWaitTime = maxAckWaitTime;
 		this.pendingAckTimerTimeoutCallback = timeoutCallback;
 	}

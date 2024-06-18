@@ -203,10 +203,7 @@ export const defaultInspectorTableDataGetter = (
 class InspectorTable<
 	T extends IRowData<T> = IRowData,
 	ITableProps = IInspectorTableProps<IRowData<T>>,
-> extends React.Component<
-	ITableProps & IInspectorTableProps<IRowData<T>>,
-	IInspectorTableState
-> {
+> extends React.Component<ITableProps & IInspectorTableProps<IRowData<T>>, IInspectorTableState> {
 	public static defaultProps: Partial<IInspectorTableProps> = {
 		childGetter: defaultInspectorTableChildGetter,
 		expandColumnKey: "name",
@@ -229,7 +226,8 @@ class InspectorTable<
 			return {
 				...newState,
 				expanded:
-					props.activeRepositoryGuid && props.activeRepositoryGuid in state.expandedRepoMap
+					props.activeRepositoryGuid &&
+					props.activeRepositoryGuid in state.expandedRepoMap
 						? { ...state.expandedRepoMap[props.activeRepositoryGuid] }
 						: {},
 				expandedRepoGuid: props.activeRepositoryGuid,
@@ -305,7 +303,9 @@ class InspectorTable<
 					this.updateSearchState,
 					false,
 				);
-				newState.searchAbortHandler = searchControls ? searchControls.abortHandler : undefined;
+				newState.searchAbortHandler = searchControls
+					? searchControls.abortHandler
+					: undefined;
 				newState.searchState = searchControls ? searchControls.state : undefined;
 				newState.currentResult = -1;
 				newState.searchInProgress = true;
@@ -398,7 +398,9 @@ class InspectorTable<
 					this.updateSearchState,
 					false,
 				);
-				newState.searchAbortHandler = searchControls ? searchControls.abortHandler : undefined;
+				newState.searchAbortHandler = searchControls
+					? searchControls.abortHandler
+					: undefined;
 				newState.searchState = searchControls ? searchControls.state : undefined;
 				newState.searchDone = false;
 				newState.searchInProgress = true;
@@ -534,10 +536,11 @@ class InspectorTable<
 									<span>
 										<br />
 										<br />
-										Undeleting expired repositories is only possible with v2 urns.
+										Undeleting expired repositories is only possible with v2
+										urns.
 										<br />
-										Please change your v1 urn ({this.props.currentUrn}) into a v2 urn manually
-										and reload.
+										Please change your v1 urn ({this.props.currentUrn}) into a
+										v2 urn manually and reload.
 									</span>
 								)}
 							</span>
@@ -599,7 +602,10 @@ class InspectorTable<
 					headerClassName={classes.header}
 					headerRenderer={getHeader}
 					rowClassName={({ rowIndex }) =>
-						classNames(classes.row, rowIndex % 2 === 0 ? classes.evenRow : classes.oddRow)
+						classNames(
+							classes.row,
+							rowIndex % 2 === 0 ? classes.evenRow : classes.oddRow,
+						)
 					}
 					gridStyle={{ outline: "none" }}
 					onRowExpand={this.handleRowExpanded}
@@ -698,13 +704,14 @@ class InspectorTable<
 			<div className={classes.dataFormContainer}>
 				{showFormRowID !== "0" && rowData.isNewDataRow && showFormRowID === rowData.id
 					? generateForm.call(this, rowData, this.handleCreateData) &&
-						this.props.addDataForm({
+					  this.props.addDataForm({
 							handleCancelCreate: this.handleCancelCreate,
 							handleCreateData: this.handleCreateData,
-							options: this.props.dataCreationOptionGenerationHandler!(rowData, false).options,
+							options: this.props.dataCreationOptionGenerationHandler!(rowData, false)
+								.options,
 							rowData,
 							styleClass: classes.dataForm,
-						})
+					  })
 					: (rowData.isNewDataRow = true) && <NewDataRow dataType={result.name} />}
 			</div>
 		);
@@ -954,7 +961,5 @@ class InspectorTable<
 /**
  * @internal
  */
-const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(
-	InspectorTable as any,
-);
+const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable as any);
 export { StyledInspectorTable as InspectorTable };

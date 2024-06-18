@@ -249,7 +249,11 @@ export function createOdspNetworkError(
 			// The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
 			// database on server becomes readonly. The driver retries for such cases with exponential backup logic.
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
-				error = new RetryableError(errorMessage, OdspErrorTypes.serviceReadOnly, driverProps);
+				error = new RetryableError(
+					errorMessage,
+					OdspErrorTypes.serviceReadOnly,
+					driverProps,
+				);
 			} else if (
 				innerMostErrorCode === "blockedIPAddress" ||
 				innerMostErrorCode === "conditionalAccessPolicyEnforced"
@@ -260,7 +264,9 @@ export function createOdspNetworkError(
 					driverProps,
 				);
 			} else {
-				const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+				const claims = response?.headers
+					? parseAuthErrorClaims(response.headers)
+					: undefined;
 				const tenantId = response?.headers
 					? parseAuthErrorTenant(response.headers)
 					: undefined;
@@ -345,7 +351,11 @@ export function createOdspNetworkError(
 			);
 			break;
 		case 501:
-			error = new NonRetryableError(errorMessage, OdspErrorTypes.fluidNotEnabled, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.fluidNotEnabled,
+				driverProps,
+			);
 			break;
 		case 507:
 			error = new NonRetryableError(

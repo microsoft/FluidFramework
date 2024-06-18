@@ -12,11 +12,7 @@ import {
 	extractFromOpaque,
 	type _InlineTrick,
 } from "../../util/index.js";
-import type {
-	FieldKey,
-	TreeNodeSchemaIdentifier,
-	ValueSchema,
-} from "../schema-stored/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
 
 /**
  * @internal

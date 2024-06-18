@@ -430,7 +430,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			for (const [name, collectionSpec] of Object.entries(channels)) {
 				extractOntoSegments(collectionSpec, (collection, segment) => {
 					// Cast is valid as we just assigned this field above
-					((segment.attribution as AttributionCollection).channels ??= {})[name] = collection;
+					((segment.attribution as AttributionCollection).channels ??= {})[name] =
+						collection;
 				});
 			}
 		}

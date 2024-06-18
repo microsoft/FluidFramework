@@ -38,11 +38,7 @@ import {
 	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
-import type {
-	IIdCompressor,
-	OpSpaceCompressedId,
-	SessionId,
-} from "@fluidframework/id-compressor";
+import type { IIdCompressor, OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 
 export interface IdDecodingContext {
 	idCompressor: IIdCompressor;
@@ -117,7 +113,7 @@ export function readValue(
 							streamValue as OpSpaceCompressedId,
 							idDecodingContext.originatorId,
 						),
-					)
+				  )
 				: streamValue;
 		} else {
 			// EncodedCounter case:

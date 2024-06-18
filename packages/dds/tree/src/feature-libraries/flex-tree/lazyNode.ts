@@ -449,9 +449,7 @@ export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new S
 	reservedObjectNodeFieldPropertyNames,
 );
 
-export function propertyNameFromFieldKey<T extends string>(
-	key: T,
-): PropertyNameFromFieldKey<T> {
+export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
 	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}

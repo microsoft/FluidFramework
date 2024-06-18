@@ -354,7 +354,12 @@ describe("Summarizer Client Election", () => {
 			// Add more clients, no effect
 			addClient("s2", 19, false);
 			addClient("b", 41, true);
-			assertState("a-summarizer", "a", 17, "additional younger clients should have no effect");
+			assertState(
+				"a-summarizer",
+				"a",
+				17,
+				"additional younger clients should have no effect",
+			);
 
 			// Remove elected client, should reelect
 			removeClient("a", 400);

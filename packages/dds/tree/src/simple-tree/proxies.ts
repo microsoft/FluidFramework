@@ -57,7 +57,9 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>;
+			const asValue = field as FlexTreeTypedField<
+				FlexFieldSchema<typeof FieldKinds.required>
+			>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -65,7 +67,9 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			return getOrCreateNodeProxy(asValue.boxedContent);
 		}
 		case FieldKinds.optional: {
-			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>;
+			const asValue = field as FlexTreeTypedField<
+				FlexFieldSchema<typeof FieldKinds.optional>
+			>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's

@@ -78,7 +78,9 @@ export function rebaseToRemoteChanges(
 			loop(
 				makePromise(getUnrebasedChange(change.localBranchStart)),
 				(currentRebasedChange) => {
-					if (currentRebasedChange.remoteHeadGuid === currentRebasedChange.referenceGuid) {
+					if (
+						currentRebasedChange.remoteHeadGuid === currentRebasedChange.referenceGuid
+					) {
 						return null;
 					}
 					return makePromise(getUnrebasedChange(currentRebasedChange.referenceGuid)).then(
@@ -128,7 +130,9 @@ export function rebaseToRemoteChanges(
 								cloneDeep(alreadyRebasedChanges[0].changeSet),
 							);
 							invertedChange.toInverseChangeSet();
-							invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
+							invertedChange.applyChangeSet(
+								rebaseBaseChangeSetForAlreadyRebasedChanges,
+							);
 							applyAfterMetaInformation = new Map();
 							const conflicts2 = [];
 							changeset = cloneDeep(alreadyRebasedChanges[0].changeSet);

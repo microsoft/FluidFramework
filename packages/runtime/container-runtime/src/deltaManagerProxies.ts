@@ -100,10 +100,7 @@ export abstract class BaseDeltaManagerProxy
 	}
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {
 		super();
 
@@ -195,10 +192,7 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 	private readonly isSummarizerClient: boolean;
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
@@ -243,10 +237,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	};
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly pendingStateManager: Pick<
 			PendingStateManager,
 			"minimumPendingMessageSequenceNumber"

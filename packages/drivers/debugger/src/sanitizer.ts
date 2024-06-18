@@ -421,7 +421,9 @@ export class Sanitizer {
 							pkg.name = this.replaceText(pkg.name, TextType.FluidObject);
 						}
 						if (Array.isArray(pkg?.fluid?.browser?.umd?.files)) {
-							pkg.fluid.browser.umd.files = this.replaceArray(pkg.fluid.browser.umd.files);
+							pkg.fluid.browser.umd.files = this.replaceArray(
+								pkg.fluid.browser.umd.files,
+							);
 						}
 					}
 				} catch (e) {
@@ -550,7 +552,10 @@ export class Sanitizer {
 			} else if (this.validator.validate(innerContent, opContentsMapSchema).valid) {
 				// map op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
+					innerContent.address = this.replaceText(
+						innerContent.address,
+						TextType.FluidObject,
+					);
 					innerContent.contents.key = this.replaceText(
 						innerContent.contents.key,
 						TextType.MapKey,
@@ -566,7 +571,10 @@ export class Sanitizer {
 			) {
 				// merge tree group op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
+					innerContent.address = this.replaceText(
+						innerContent.address,
+						TextType.FluidObject,
+					);
 				}
 				innerContent.contents.ops.forEach((deltaOp) => {
 					this.fixDeltaOp(deltaOp);
@@ -576,7 +584,10 @@ export class Sanitizer {
 			) {
 				// merge tree delta op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
+					innerContent.address = this.replaceText(
+						innerContent.address,
+						TextType.FluidObject,
+					);
 				}
 				this.fixDeltaOp(innerContent.contents);
 			} else if (
@@ -584,7 +595,10 @@ export class Sanitizer {
 			) {
 				// register collection op
 				if (this.fullScrub) {
-					innerContent.address = this.replaceText(innerContent.address, TextType.FluidObject);
+					innerContent.address = this.replaceText(
+						innerContent.address,
+						TextType.FluidObject,
+					);
 					innerContent.contents.key = this.replaceText(
 						innerContent.contents.key,
 						TextType.MapKey,

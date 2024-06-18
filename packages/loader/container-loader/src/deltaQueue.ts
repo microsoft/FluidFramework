@@ -4,10 +4,7 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import {
-	IDeltaQueue,
-	IDeltaQueueEvents,
-} from "@fluidframework/container-definitions/internal";
+import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import Deque from "double-ended-queue";
 

@@ -23,10 +23,7 @@ export const loadFluidData = async (
 	services: OdspContainerServices;
 	container: IFluidContainer;
 }> => {
-	const {
-		container,
-		services,
-	}: { container: IFluidContainer; services: OdspContainerServices } =
+	const { container, services }: { container: IFluidContainer; services: OdspContainerServices } =
 		await client.getContainer(itemId, schema);
 
 	return { services, container };
@@ -40,10 +37,7 @@ export const createFluidData = async (
 }> => {
 	// The client will create a new detached container using the schema
 	// A detached container will enable the app to modify the container before attaching it to the client
-	const {
-		container,
-		services,
-	}: { container: IFluidContainer; services: OdspContainerServices } =
+	const { container, services }: { container: IFluidContainer; services: OdspContainerServices } =
 		await client.createContainer(schema);
 
 	return { services, container };

@@ -85,9 +85,7 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
  * Property-bag configuration for {@link TreeViewConfiguration} construction.
  * @public
  */
-export interface ITreeViewConfiguration<
-	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-> {
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */

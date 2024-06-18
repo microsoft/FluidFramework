@@ -75,7 +75,9 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 							...maybeExport,
 							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore({
 								defaultFactory,
-								registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+								registryEntries: [
+									[defaultFactory.type, Promise.resolve(defaultFactory)],
+								],
 								runtimeOptions,
 							}),
 						},

@@ -19,9 +19,7 @@ export interface MockEnrichableChange {
 	readonly rebased?: true;
 }
 
-export class MockChangeEnricher
-	implements ChangeEnricherMutableCheckout<MockEnrichableChange>
-{
+export class MockChangeEnricher implements ChangeEnricherMutableCheckout<MockEnrichableChange> {
 	public isDisposed = false;
 	public isReadonly;
 	public contextOverride?: RevisionTag;

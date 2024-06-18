@@ -49,11 +49,12 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.findOriginalMember,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.findOriginalMember,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -94,11 +95,12 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.findPartnerMember,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.findPartnerMember,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -158,11 +160,12 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.observeMemberLeaving,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.observeMemberLeaving,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -223,11 +226,12 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.observeMemberLeaving,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.observeMemberLeaving,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container, services } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -338,11 +342,12 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.observeMemberLeaving,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.observeMemberLeaving,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {

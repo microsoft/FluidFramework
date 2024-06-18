@@ -17,11 +17,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ITree } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-import type {
-	IInventoryItem,
-	IInventoryList,
-	IMigrateBackingData,
-} from "../modelInterfaces.js";
+import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
 
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
 import {
@@ -64,11 +60,7 @@ function migrate(legacyTree: LegacySharedTree, newTree: ITree) {
 }
 
 const legacyTreeFactory = LegacySharedTree.getFactory();
-const migrationShimFactory = new MigrationShimFactory(
-	legacyTreeFactory,
-	newTreeFactory,
-	migrate,
-);
+const migrationShimFactory = new MigrationShimFactory(legacyTreeFactory, newTreeFactory, migrate);
 const newTreeShimFactory = new SharedTreeShimFactory(newTreeFactory);
 
 export class InventoryList extends DataObject implements IInventoryList, IMigrateBackingData {

@@ -149,10 +149,7 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
  * @returns a copy of the normalized snapshot tree.
  * @internal
  */
-export function getNormalizedSnapshot(
-	snapshot: ITree,
-	config?: ISnapshotNormalizerConfig,
-): ITree {
+export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormalizerConfig): ITree {
 	// Merge blobs to normalize in the config with runtime blobs to normalize. The contents of these blobs will be
 	// parsed and deep sorted.
 	const normalizedEntries: ITreeEntry[] = [];
@@ -236,7 +233,9 @@ function normalizeEntry(
 						maybeAttributes.type === TreeEntry.Blob &&
 						maybeAttributes.path === ".attributes"
 					) {
-						const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
+						const parsed: { type?: string } = JSON.parse(
+							maybeAttributes.value.contents,
+						);
 						if (parsed.type === "https://graph.microsoft.com/types/sharedmatrix") {
 							return new TreeTreeEntry(
 								entry.path,

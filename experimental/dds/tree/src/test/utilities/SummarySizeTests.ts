@@ -41,7 +41,9 @@ interface SummarySizeTestEntry {
  */
 const summarySizeTests: SummarySizeTestEntry[] = [
 	{
-		edits: (testTree) => [Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation))],
+		edits: (testTree) => [
+			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
+		],
 		expectedSize: 1163,
 		description: 'when inserting a node',
 	},
@@ -79,7 +81,9 @@ const summarySizeTests: SummarySizeTestEntry[] = [
 		description: 'when inserting and deleting a node',
 	},
 	{
-		edits: (testTree) => [Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation))],
+		edits: (testTree) => [
+			Change.insertTree(testTree.buildLeaf(), StablePlace.atEndOf(testTree.right.traitLocation)),
+		],
 		expectedSize: 1355,
 		description: 'when inserting and reverting a node',
 		revertEdits: true,
@@ -142,7 +146,8 @@ export function runSummarySizeTests(
 				for (let i = changes.length - 1; i >= 0; i--) {
 					const editIndex = tree.edits.getIndexOfId(edits[i].id);
 					const edit =
-						(tree.edits.tryGetEditAtIndex(editIndex) as unknown as Edit<ChangeInternal>) ?? fail('edit not found');
+						(tree.edits.tryGetEditAtIndex(editIndex) as unknown as Edit<ChangeInternal>) ??
+						fail('edit not found');
 					const reverted = revert(edit.changes, tree.logViewer.getRevisionViewInMemory(editIndex));
 					if (reverted !== undefined) {
 						tree.applyEditInternal(reverted);

@@ -98,11 +98,11 @@ function testDecode(
 			? {
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
-				}
+			  }
 			: {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
-				},
+			  },
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
@@ -134,11 +134,11 @@ function testDecode(
 				? {
 						idCompressor,
 						originatorId: idCompressor.localSessionId,
-					}
+				  }
 				: {
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
-					},
+				  },
 		);
 		assert.deepEqual(parsedResult, result);
 	}

@@ -94,9 +94,7 @@ export interface IOdspErrorAugmentations {
  * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
  * @alpha
  */
-export interface IOdspError
-	extends Omit<IDriverErrorBase, "errorType">,
-		IOdspErrorAugmentations {
+export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
 	readonly errorType: OdspErrorTypes;
 }
 

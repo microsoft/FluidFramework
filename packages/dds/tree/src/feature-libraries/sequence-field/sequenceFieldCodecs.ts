@@ -4,11 +4,7 @@
  */
 
 import { type IJsonCodec, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
-} from "../../core/index.js";
+import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 
 import type { Changeset, MarkList } from "./types.js";
 import type { FieldChangeEncodingContext } from "../index.js";

@@ -192,7 +192,12 @@ export function makeCodecFamily<TDecoded, TContext>(
 		[
 			formatVersion: FormatVersion,
 			codec:
-				| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
+				| IMultiFormatCodec<
+						TDecoded,
+						JsonCompatibleReadOnly,
+						JsonCompatibleReadOnly,
+						TContext
+				  >
 				| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
 		]
 	>,

@@ -52,7 +52,5 @@ const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 // These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
 // As such, changesets should not contain duplicated src or dst entries.
 const EncodedMoves = Type.Optional(
-	Type.Array(
-		Type.Tuple([EncodedRegisterId, EncodedRegisterId, Type.Optional(Type.Boolean())]),
-	),
+	Type.Array(Type.Tuple([EncodedRegisterId, EncodedRegisterId, Type.Optional(Type.Boolean())])),
 );

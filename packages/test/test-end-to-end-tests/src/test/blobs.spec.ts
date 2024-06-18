@@ -538,7 +538,8 @@ function serializationTests({
 					{
 						createContainer: {
 							connectToStorage: {
-								uploadSummaryWithContext: () => assert.fail("fail on real summary upload"),
+								uploadSummaryWithContext: () =>
+									assert.fail("fail on real summary upload"),
 							},
 						},
 					},
@@ -620,11 +621,15 @@ function serializationTests({
 
 						detachedDataStore._root.set(
 							"my blob",
-							await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+							await detachedDataStore._runtime.uploadBlob(
+								stringToBuffer(text, "utf-8"),
+							),
 						);
 						detachedDataStore._root.set(
 							"my same blob",
-							await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+							await detachedDataStore._runtime.uploadBlob(
+								stringToBuffer(text, "utf-8"),
+							),
 						);
 						detachedDataStore._root.set(
 							"my other blob",
@@ -651,7 +656,10 @@ function serializationTests({
 								"detachedBlobStorage should be disposed after attach",
 							);
 						}
-						const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
+						const url = await getUrlFromDetachedBlobStorage(
+							detachedContainer,
+							provider,
+						);
 						const attachedContainer = await provider
 							.makeTestLoader(testContainerConfig)
 							.resolve({ url });
@@ -660,7 +668,10 @@ function serializationTests({
 							(await attachedContainer.getEntryPoint()) as ITestDataObject;
 						await provider.ensureSynchronized();
 						assert.strictEqual(
-							bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
+							bufferToString(
+								await attachedDataStore._root.get("my blob").get(),
+								"utf-8",
+							),
 							text,
 						);
 					}
@@ -724,7 +735,9 @@ function serializationTests({
 						...testContainerConfig,
 						loaderProps: { detachedBlobStorage },
 					});
-					let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+					let container = await loader.createDetachedContainer(
+						provider.defaultCodeDetails,
+					);
 
 					const text = "this is some example text";
 					const dataStore = (await container.getEntryPoint()) as ITestDataObject;

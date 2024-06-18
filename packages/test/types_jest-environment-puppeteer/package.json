@@ -16,10 +16,10 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"check:biome": "biome check . --formatter-enabled=true",
-		"check:format": "npm run check:biome",
+		"check:format": "npm run check:prettier",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob \"*.tsbuildinfo\" \"*.build.log\"",
-		"format": "npm run format:biome",
+		"format": "npm run format:prettier",
 		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore"
 	},

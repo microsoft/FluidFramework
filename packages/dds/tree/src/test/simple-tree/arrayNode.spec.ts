@@ -77,7 +77,9 @@ describe("ArrayNode", () => {
 				// Index too large
 				assert.throws(
 					() => array.removeAt(3),
-					validateUsageError(/Index value passed to TreeArrayNode.removeAt is out of bounds./),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.removeAt is out of bounds./,
+					),
 				);
 				// Index is negative
 				assert.throws(
@@ -99,7 +101,9 @@ describe("ArrayNode", () => {
 				// Index too large
 				assert.throws(
 					() => array.insertAt(4, 0),
-					validateUsageError(/Index value passed to TreeArrayNode.insertAt is out of bounds./),
+					validateUsageError(
+						/Index value passed to TreeArrayNode.insertAt is out of bounds./,
+					),
 				);
 				// Index is negative
 				assert.throws(

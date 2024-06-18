@@ -85,8 +85,7 @@ export const adapter: CursorAdapter<JsonableTree> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
 	keysFromNode: genericTreeKeys,
-	getFieldFromNode: (node, key): readonly JsonableTree[] =>
-		getGenericTreeField(node, key, false),
+	getFieldFromNode: (node, key): readonly JsonableTree[] => getGenericTreeField(node, key, false),
 };
 
 /**
@@ -100,10 +99,10 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 			? {
 					type: cursor.type,
 					value: cursor.value,
-				}
+			  }
 			: {
 					type: cursor.type,
-				};
+			  };
 
 	// Normalize object by only including fields that are required.
 	for (let inFields = cursor.firstField(); inFields; inFields = cursor.nextField()) {

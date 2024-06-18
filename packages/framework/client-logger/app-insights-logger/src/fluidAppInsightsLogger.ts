@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import structuredClone from "@ungap/structured-clone";
 
@@ -126,10 +123,7 @@ export interface NamespaceFilter {
  * ```
  * @beta
  */
-export type TelemetryFilter =
-	| CategoryFilter
-	| NamespaceFilter
-	| (CategoryFilter & NamespaceFilter);
+export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
 /**
  * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
@@ -157,7 +151,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 						mode: "exclusive",
 						filters: [],
 					},
-				};
+			  };
 
 		if (this.config.filtering.filters) {
 			this.validateFilters(this.config.filtering.filters);

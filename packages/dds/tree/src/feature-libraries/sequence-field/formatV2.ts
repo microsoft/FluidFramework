@@ -101,8 +101,7 @@ const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
-	CellMark(MarkEffect, tNodeChange);
+const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

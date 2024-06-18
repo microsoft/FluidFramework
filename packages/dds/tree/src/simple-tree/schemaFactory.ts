@@ -17,11 +17,7 @@ import {
 	isFlexTreeNode,
 	isLazy,
 } from "../feature-libraries/index.js";
-import {
-	type RestrictiveReadonlyRecord,
-	getOrCreate,
-	isReadonlyArray,
-} from "../util/index.js";
+import { type RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 
 import {
 	booleanSchema,
@@ -178,9 +174,10 @@ export class SchemaFactory<
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
+		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
+			TScope,
+			Name
+		>;
 	}
 
 	/**
@@ -707,7 +704,12 @@ export class SchemaFactory<
 			public constructor(
 				data:
 					| Iterable<
-							[string, InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>]
+							[
+								string,
+								InsertableTreeNodeFromImplicitAllowedTypes<
+									T & ImplicitAllowedTypes
+								>,
+							]
 					  >
 					| FlexTreeNode,
 			) {

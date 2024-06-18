@@ -30,10 +30,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	toDeltaManagerInternal,
-	TelemetryContext,
-} from "@fluidframework/runtime-utils/internal";
+import { toDeltaManagerInternal, TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -56,9 +53,7 @@ import { makeHandlesSerializable, parseHandles } from "./utils.js";
  * Base class from which all shared objects derive.
  * @alpha
  */
-export abstract class SharedObjectCore<
-		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
-	>
+export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
@@ -440,7 +435,9 @@ export abstract class SharedObjectCore<
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"),
+					new Error(
+						"FluidDataStoreRuntime disposed while this ack-based Promise was pending",
+					),
 				);
 
 			if (this.runtime.disposed) {
@@ -527,11 +524,7 @@ export abstract class SharedObjectCore<
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	private process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
+	private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
@@ -774,7 +767,11 @@ export abstract class SharedObject<
 				this.telemetryContextPrefix,
 				propertyName,
 			) ?? 0) as number;
-			telemetryContext.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
+			telemetryContext.set(
+				this.telemetryContextPrefix,
+				propertyName,
+				prevTotal + incrementBy,
+			);
 		}
 	}
 }

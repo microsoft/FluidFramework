@@ -382,7 +382,10 @@ export class Outbox {
 
 			this.params.legacySendBatchFn(batch);
 		} else {
-			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
+			assert(
+				batch.referenceSequenceNumber !== undefined,
+				0x58e /* Batch must not be empty */,
+			);
 			this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,

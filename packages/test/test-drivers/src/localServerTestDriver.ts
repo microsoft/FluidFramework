@@ -5,10 +5,7 @@
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	IDocumentServiceFactory,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

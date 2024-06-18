@@ -12,10 +12,7 @@ import {
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	createResponseError,
-	responseToException,
-} from "@fluidframework/runtime-utils/internal";
+import { createResponseError, responseToException } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -59,10 +56,7 @@ import {
 	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
-import {
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
-} from "./gcSummaryDefinitions.js";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker.js";
 import { GCTelemetryTracker } from "./gcTelemetry.js";
 import {
@@ -248,7 +242,10 @@ export class GarbageCollector implements IGarbageCollector {
 						return undefined;
 					}
 
-					const snapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+					const snapshotData = await getGCDataFromSnapshot(
+						gcSnapshotTree,
+						readAndParseBlob,
+					);
 
 					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
@@ -263,7 +260,10 @@ export class GarbageCollector implements IGarbageCollector {
 					}
 					return snapshotData;
 				} catch (error) {
-					const dpe = DataProcessingError.wrapIfUnrecognized(error, "FailedToInitializeGC");
+					const dpe = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"FailedToInitializeGC",
+					);
 					dpe.addTelemetryProperties({
 						gcConfigs: JSON.stringify(this.configs),
 					});
@@ -814,16 +814,14 @@ export class GarbageCollector implements IGarbageCollector {
 		 */
 		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
 		const newOutboundRoutesSinceLastRun: string[] = [];
-		this.newReferencesSinceLastRun.forEach(
-			(outboundRoutes: string[], sourceNodeId: string) => {
-				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
-					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
-				} else {
-					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
-				}
-				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
-			},
-		);
+		this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
+			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
+			} else {
+				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+			}
+			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
+		});
 
 		/**
 		 * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a
@@ -931,7 +929,10 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			default: {
 				if (
-					!compatBehaviorAllowsGCMessageType(gcMessageType, message.compatDetails?.behavior)
+					!compatBehaviorAllowsGCMessageType(
+						gcMessageType,
+						message.compatDetails?.behavior,
+					)
 				) {
 					const error = DataProcessingError.create(
 						`Garbage collection message of unknown type ${gcMessageType}`,

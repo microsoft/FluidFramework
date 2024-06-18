@@ -258,10 +258,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		};
 	}
 
-	private getOffsetPath(
-		offset: number,
-		prefix: PathRootPrefix | undefined,
-	): UpPath | undefined {
+	private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
 		// It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
 
 		const length = this.indexStack.length - offset;
@@ -429,10 +426,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 				this.nestedCursor = undefined;
 			}
 		}
-		assert(
-			this.mode === CursorLocationType.Nodes,
-			0x52c /* can only nextNode when in Nodes */,
-		);
+		assert(this.mode === CursorLocationType.Nodes, 0x52c /* can only nextNode when in Nodes */);
 		this.indexWithinChunk++;
 		if (
 			this.indexWithinChunk ===

@@ -18,10 +18,7 @@ import {
 	requestOps,
 	streamObserver,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { DocumentStorageService } from "./documentStorageService.js";
 import { RestWrapper } from "./restWrapperBase.js";
@@ -74,7 +71,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 				? await readAndParse<ISequencedDocumentMessage[]>(
 						this.documentStorageService,
 						this.logtailSha,
-					)
+				  )
 				: [];
 			this.logtailSha = undefined;
 
@@ -163,7 +160,8 @@ export class DeltaStorageService implements IDeltaStorageService {
 					length: response.content.length,
 					details: JSON.stringify({
 						firstOpSeqNumber: response.content[0]?.sequenceNumber,
-						lastOpSeqNumber: response.content[response.content.length - 1]?.sequenceNumber,
+						lastOpSeqNumber:
+							response.content[response.content.length - 1]?.sequenceNumber,
 					}),
 					...response.propsToLog,
 					...getW3CData(response.requestUrl, "xmlhttprequest"),

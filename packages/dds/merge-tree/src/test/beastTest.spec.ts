@@ -26,11 +26,7 @@ import {
 	RedBlackTree,
 	SortedDictionary,
 } from "../collections/index.js";
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "../constants.js";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
@@ -909,9 +905,11 @@ export function TestPack(verbose = true) {
 					aveExtractSnapTime = (extractSnapTime / extractSnapOps).toFixed(1);
 				}
 				log(
-					`round: ${roundCount} seq ${server.seq} char count ${server.getLength()} height ${
-						stats.maxHeight
-					} lv ${stats.leafCount} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${
+					`round: ${roundCount} seq ${
+						server.seq
+					} char count ${server.getLength()} height ${stats.maxHeight} lv ${
+						stats.leafCount
+					} rml ${stats.removedLeafCount} p ${posLeaves} nodes ${
 						stats.nodeCount
 					} pop ${liveAve} histo ${stats.histo}`,
 				);
@@ -1048,7 +1046,10 @@ export function TestPack(verbose = true) {
 					const preLen = cliA.getLength();
 					const pos = random.integer(0, preLen);
 
-					const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text)!, sequenceNumber++);
+					const msg = cliA.makeOpMessage(
+						cliA.insertTextLocal(pos, text)!,
+						sequenceNumber++,
+					);
 					msg.minimumSequenceNumber = min;
 					cliAMsgs.push(msg);
 					cliB.applyMsg(msg);
@@ -1074,7 +1075,10 @@ export function TestPack(verbose = true) {
 					);
 					const preLen = cliB.getLength();
 					const pos = random.integer(0, preLen);
-					const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text)!, sequenceNumber++);
+					const msg = cliB.makeOpMessage(
+						cliB.insertTextLocal(pos, text)!,
+						sequenceNumber++,
+					);
 					msg.minimumSequenceNumber = min;
 					cliBMsgs.push(msg);
 					cliA.applyMsg(msg);

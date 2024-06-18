@@ -109,7 +109,8 @@ export function scopeIdNormalizer<TId extends OpSpaceNodeId>(
 ): ContextualizedNodeIdNormalizer<TId> {
 	return {
 		normalizeToOpSpace: (id) => idNormalizer.normalizeToOpSpace(id),
-		normalizeToSessionSpace: (id) => idNormalizer.normalizeToSessionSpace(id, sessionId ?? idNormalizer.localSessionId),
+		normalizeToSessionSpace: (id) =>
+			idNormalizer.normalizeToSessionSpace(id, sessionId ?? idNormalizer.localSessionId),
 	};
 }
 

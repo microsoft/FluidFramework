@@ -329,7 +329,12 @@ export function testPerf() {
 					it(`For an existing peer branch with ${P} commits unaware of ${T}+1 trunk commits`, () => {
 						const rebaser = new NoOpChangeRebaser();
 						const manager = testChangeEditManagerFactory({ rebaser }).manager;
-						rebasePeerEditsOverTrunkEdits(P, T + 1, manager, () => TestChange.emptyChange);
+						rebasePeerEditsOverTrunkEdits(
+							P,
+							T + 1,
+							manager,
+							() => TestChange.emptyChange,
+						);
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;

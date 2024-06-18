@@ -64,11 +64,7 @@ export {
 export { createMockLoggerExt, type IMockLoggerExt, MockLogger } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper.js";
-export {
-	createSampledLogger,
-	type IEventSampler,
-	type ISampledTelemetryLogger,
-	measure,
+export { createSampledLogger, type IEventSampler, type ISampledTelemetryLogger 	measure,
 } from "./utils.js";
 export type {
 	TelemetryEventPropertyTypeExt,

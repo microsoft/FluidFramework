@@ -274,9 +274,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		return this.extendProperties(newEvent, includeErrorProps);
 	}
 
-	private extendProperties<
-		T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag,
-	>(toExtend: T, includeErrorProps: boolean): T {
+	private extendProperties<T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag>(
+		toExtend: T,
+		includeErrorProps: boolean,
+	): T {
 		const eventLike: ITelemetryLoggerPropertyBag = toExtend;
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
@@ -421,8 +422,8 @@ export class ChildLogger extends TelemetryLogger {
 				baseLogger.namespace === undefined
 					? namespace
 					: namespace === undefined
-						? baseLogger.namespace
-						: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+					? baseLogger.namespace
+					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
 			const child = new ChildLogger(
 				baseLogger.baseLogger,
@@ -855,7 +856,7 @@ export function convertToBasePropertyType(
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
 				tag: x.tag,
-			}
+		  }
 		: convertToBasePropertyTypeUntagged(x);
 }
 
@@ -920,11 +921,11 @@ export const tagData = <
 				? () => {
 						value: ReturnType<V[P]>;
 						tag: T;
-					}
+				  }
 				: {
 						value: Exclude<V[P], undefined>;
 						tag: T;
-					})
+				  })
 		| (V[P] extends undefined ? undefined : never);
 } =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -982,10 +983,10 @@ export const tagCodeArtifacts = <
 				? () => {
 						value: ReturnType<T[P]>;
 						tag: TelemetryDataTag.CodeArtifact;
-					}
+				  }
 				: {
 						value: Exclude<T[P], undefined>;
 						tag: TelemetryDataTag.CodeArtifact;
-					})
+				  })
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);

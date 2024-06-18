@@ -69,12 +69,10 @@ describe("Garbage Collection configurations", () => {
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
 
 	const customSessionExpiryDurationMs = defaultSessionExpiryDurationMs + 1;
-	const testOverrideInactiveTimeoutKey =
-		"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs";
+	const testOverrideInactiveTimeoutKey = "Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs";
 	const testOverrideTombstoneTimeoutKey =
 		"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs";
-	const testOverrideSessionExpiryMsKey =
-		"Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
+	const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
 
 	let gc: GcWithPrivates | undefined;
 
@@ -181,12 +179,20 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 			assert(gc.configs.tombstoneTimeoutMs === undefined, "tombstoneTimeoutMs incorrect");
-			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
+			assert.equal(
+				gc.configs.gcVersionInBaseSnapshot,
+				0,
+				"gcVersionInBaseSnapshot incorrect",
+			);
 		});
 		it("gcFeature 0", () => {
 			gc = createGcWithPrivateMembers({ gcFeature: 0 });
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
+			assert.equal(
+				gc.configs.gcVersionInBaseSnapshot,
+				0,
+				"gcVersionInBaseSnapshot incorrect",
+			);
 		});
 		it("gcFeature 0, Sweep enabled via gcGeneration", () => {
 			gc = createGcWithPrivateMembers(
@@ -195,12 +201,20 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
-			assert.equal(gc.configs.gcVersionInBaseSnapshot, 0, "gcVersionInBaseSnapshot incorrect");
+			assert.equal(
+				gc.configs.gcVersionInBaseSnapshot,
+				0,
+				"gcVersionInBaseSnapshot incorrect",
+			);
 		});
 		it("gcFeature 1", () => {
 			gc = createGcWithPrivateMembers({ gcFeature: 1 });
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
-			assert.equal(gc.configs.gcVersionInBaseSnapshot, 1, "gcVersionInBaseSnapshot incorrect");
+			assert.equal(
+				gc.configs.gcVersionInBaseSnapshot,
+				1,
+				"gcVersionInBaseSnapshot incorrect",
+			);
 		});
 		it("sweepEnabled value ignored", () => {
 			gc = createGcWithPrivateMembers(
@@ -523,7 +537,11 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				sessionExpiryTimeoutMs: 123,
 			});
-			assert.equal(gc.configs.sessionExpiryTimeoutMs, 123, "sessionExpiryTimeoutMs incorrect");
+			assert.equal(
+				gc.configs.sessionExpiryTimeoutMs,
+				123,
+				"sessionExpiryTimeoutMs incorrect",
+			);
 			assert.equal(gc.sessionExpiryTimer.defaultTimeout, 123, "sessionExpiryTimer incorrect");
 			assert.equal(
 				gc.configs.tombstoneTimeoutMs,
@@ -534,7 +552,11 @@ describe("Garbage Collection configurations", () => {
 		it("IGCMetadata.sessionExpiryTimeoutMs, backfill tombstoneTimeoutMs", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 1337); // Should be ignored
 			gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: 456 } /* metadata */);
-			assert.equal(gc.configs.sessionExpiryTimeoutMs, 456, "sessionExpiryTimeoutMs incorrect");
+			assert.equal(
+				gc.configs.sessionExpiryTimeoutMs,
+				456,
+				"sessionExpiryTimeoutMs incorrect",
+			);
 			assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456, "sessionExpiryTimer incorrect");
 			assert.equal(
 				gc.configs.tombstoneTimeoutMs,
@@ -547,7 +569,11 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(
 				{ sessionExpiryTimeoutMs: 456, tombstoneTimeoutMs: 789 } /* metadata */,
 			);
-			assert.equal(gc.configs.sessionExpiryTimeoutMs, 456, "sessionExpiryTimeoutMs incorrect");
+			assert.equal(
+				gc.configs.sessionExpiryTimeoutMs,
+				456,
+				"sessionExpiryTimeoutMs incorrect",
+			);
 			assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456, "sessionExpiryTimer incorrect");
 			assert.equal(gc.configs.tombstoneTimeoutMs, 789, "tombstoneTimeoutMs incorrect");
 		});

@@ -141,7 +141,8 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample = eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+					const shouldSample =
+						eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 					}
@@ -162,7 +163,8 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample = eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
+					const shouldSample =
+						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 						this.noOpCountForTelemetry = 0;
@@ -210,7 +212,10 @@ class OpPerfTelemetry {
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
-					assert(latencyStats !== undefined, 0x7c2 /* Latency stats for op should exist */);
+					assert(
+						latencyStats !== undefined,
+						0x7c2 /* Latency stats for op should exist */,
+					);
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,

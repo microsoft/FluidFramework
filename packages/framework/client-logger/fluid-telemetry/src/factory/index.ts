@@ -6,10 +6,7 @@
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 import type { ITelemetryConsumer } from "../common/index.js";
-import {
-	ContainerTelemetryManager,
-	ContainerEventTelemetryProducer,
-} from "../container/index.js";
+import { ContainerTelemetryManager, ContainerEventTelemetryProducer } from "../container/index.js";
 
 /**
  * Configuration object for subscribing to {@link @fluidframework/fluid-telemetry#IFluidTelemetry} and consuming said telemetry via one or more {@link ITelemetryConsumer}

@@ -647,21 +647,25 @@ export class SharedPropertyTree extends SharedObject {
 					snapshotSummary.remoteHeadGuid =
 						snapshotSummary.remoteChanges.length > 0
 							? // If there are remote changes in the
-								// summary we can deduce the head GUID from these changes.
-								snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid
+							  // summary we can deduce the head GUID from these changes.
+							  snapshotSummary.remoteChanges[
+									snapshotSummary.remoteChanges.length - 1
+							  ].guid
 							: // If no remote head GUID is available, we will fall back to the old behaviour,
-								// where the head GUID was set to an empty string. However, this could lead to
-								// divergence between the clients, if there is still a client in the session
-								// that is using a version of this library without this patch and which
-								// has started the session at a different summary.
-								"";
+							  // where the head GUID was set to an empty string. However, this could lead to
+							  // divergence between the clients, if there is still a client in the session
+							  // that is using a version of this library without this patch and which
+							  // has started the session at a different summary.
+							  "";
 				}
 
 				this.remoteTipView = snapshotSummary.remoteTipView;
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
 				this.headCommitGuid = snapshotSummary.remoteHeadGuid;
-				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
+				const isPartialCheckoutActive = !!(
+					this.options.clientFiltering && this.options.paths
+				);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
 						this.remoteTipView,
@@ -673,7 +677,9 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = 0;
 			} else {
 				const { branchGuid, summaryMinimumSequenceNumber } = snapshot;
-				const branchResponse = await axios.get(`http://localhost:3000/branch/${branchGuid}`);
+				const branchResponse = await axios.get(
+					`http://localhost:3000/branch/${branchGuid}`,
+				);
 				this.headCommitGuid = branchResponse.data.headCommitGuid;
 				const {
 					commit: { meta: commitMetadata },

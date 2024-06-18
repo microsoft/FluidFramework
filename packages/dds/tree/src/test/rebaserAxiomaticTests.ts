@@ -170,7 +170,9 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					),
 				);
 				for (const namedSourceEdits of localEdits) {
-					for (const [{ description: name, changeset: namedEditToRebaseOver }] of trunkEdits) {
+					for (const [
+						{ description: name, changeset: namedEditToRebaseOver },
+					] of trunkEdits) {
 						const title = `Rebase ${JSON.stringify(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
@@ -179,7 +181,9 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
 
-							const rollbacks = sourceEdits.map((change) => invert(fieldRebaser, change));
+							const rollbacks = sourceEdits.map((change) =>
+								invert(fieldRebaser, change),
+							);
 							rollbacks.reverse();
 
 							const rebasedEditsWithoutCompose = sandwichRebaseWithoutCompose(
@@ -197,7 +201,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							);
 
 							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
-								assertDeepEqual(rebasedEditsWithoutCompose[i], rebasedEditsWithCompose[i]);
+								assertDeepEqual(
+									rebasedEditsWithoutCompose[i],
+									rebasedEditsWithCompose[i],
+								);
 							}
 
 							// TODO: consider testing the compose associativity with the `rebasedEditsWithoutCompose` as well.
@@ -573,11 +580,7 @@ function rebaseOverSinglesVsRebaseOverCompositions<TChangeset>(
 	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
 
 	// Rebase over each base edit individually
-	const rebaseWithoutCompose = rebaseTagged(
-		fieldRebaser.rebase,
-		edit,
-		editsToRebaseOver,
-	).change;
+	const rebaseWithoutCompose = rebaseTagged(fieldRebaser.rebase, edit, editsToRebaseOver).change;
 
 	// Rebase over the composition of base edits
 	const metadata = rebaseRevisionMetadataFromInfo(
@@ -827,9 +830,7 @@ function verifyRebaseEmpty<TChangeset>(
 	assert(fieldRebaser.isEmpty(actualChange.change));
 }
 
-function getDefaultedEqualityAssert<TChangeset>(
-	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
-) {
+function getDefaultedEqualityAssert<TChangeset>(fieldRebaser: BoundFieldChangeRebaser<TChangeset>) {
 	return fieldRebaser.assertEqual ?? ((a, b) => assert.deepEqual(a, b));
 }
 

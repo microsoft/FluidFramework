@@ -121,7 +121,10 @@ describeCompat(
 			if (fetchCount > 0) {
 				const snapshotTree = await getSnapshotTreeSpy.returnValues[0];
 				assert(snapshotTree !== null, "Could not find snapshot tree");
-				fetchSnapshotRefSeq = await getSnapshotSequenceNumber(containerRuntime, snapshotTree);
+				fetchSnapshotRefSeq = await getSnapshotSequenceNumber(
+					containerRuntime,
+					snapshotTree,
+				);
 			}
 
 			getSnapshotTreeSpy.restore();
@@ -224,7 +227,9 @@ describeCompat(
 				let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 				let lastSummaryVersion: string | undefined;
 				const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
+					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
+						containerRuntime.storage,
+					);
 					const response = await uploadSummaryUploaderFunc(summary, context);
 					// ODSP has single commit summary enabled by default and
 					// will update the summary version even without the summary op.

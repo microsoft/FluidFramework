@@ -261,7 +261,10 @@ describe("non-collab", () => {
 						Object.keys(expected[i].propDeltas ?? {}).length,
 					);
 					for (const key of Object.keys(event.ranges[i].propertyDeltas)) {
-						assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas?.[key]);
+						assert.equal(
+							event.ranges[i].propertyDeltas[key],
+							expected[i].propDeltas?.[key],
+						);
 					}
 				} else {
 					assert(event.ranges[i].propertyDeltas === undefined);
@@ -2000,7 +2003,10 @@ describe("collab", () => {
 						Object.keys(expected[i].propDeltas ?? {}).length,
 					);
 					for (const key of Object.keys(event.ranges[i].propertyDeltas)) {
-						assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas?.[key]);
+						assert.equal(
+							event.ranges[i].propertyDeltas[key],
+							expected[i].propDeltas?.[key],
+						);
 					}
 				} else {
 					assert(

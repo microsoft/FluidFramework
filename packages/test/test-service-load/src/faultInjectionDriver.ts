@@ -299,9 +299,7 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 }
 
-export class FaultInjectionDocumentDeltaStorageService
-	implements IDocumentDeltaStorageService
-{
+export class FaultInjectionDocumentDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(
 		private readonly internal: IDocumentDeltaStorageService,
 		private online: boolean,
@@ -388,11 +386,7 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 }
 
 function throwOfflineError(): never {
-	throw new FaultInjectionError(
-		"simulated offline error",
-		false,
-		DriverErrorTypes.offlineError,
-	);
+	throw new FaultInjectionError("simulated offline error", false, DriverErrorTypes.offlineError);
 }
 
 export class FaultInjectionError extends LoggingError {

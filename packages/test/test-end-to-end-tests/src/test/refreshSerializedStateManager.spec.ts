@@ -89,9 +89,13 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 					send: (tb) => (event) => {
 						tb.send(event);
 						if (
-							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
+							event.eventName ===
+							"fluid:telemetry:serializedStateManager:SnapshotRefreshed"
 						) {
-							assert(event.snapshotSequenceNumber ?? 0 > 0, "snapshot was not refreshed");
+							assert(
+								event.snapshotSequenceNumber ?? 0 > 0,
+								"snapshot was not refreshed",
+							);
 							assert.strictEqual(
 								event.firstProcessedOpSequenceNumber ?? 0,
 								1,

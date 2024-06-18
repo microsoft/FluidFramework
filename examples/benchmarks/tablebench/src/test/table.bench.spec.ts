@@ -136,22 +136,20 @@ describe("Table", () => {
 				// Writing directly to 'process.stdout' bypasses this suppression.
 				process.stdout.write(`          Summary: ${summaryBytes} bytes\n`);
 				process.stdout.write(
-					`              vs row-major: ${(summaryBytes / rowMajorJsonBytes).toLocaleString(
-						undefined,
-						{
-							maximumFractionDigits: 2,
-							minimumFractionDigits: 2,
-						},
-					)}x\n`,
+					`              vs row-major: ${(
+						summaryBytes / rowMajorJsonBytes
+					).toLocaleString(undefined, {
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 2,
+					})}x\n`,
 				);
 				process.stdout.write(
-					`              vs col-major: ${(summaryBytes / colMajorJsonBytes).toLocaleString(
-						undefined,
-						{
-							maximumFractionDigits: 2,
-							minimumFractionDigits: 2,
-						},
-					)}x\n`,
+					`              vs col-major: ${(
+						summaryBytes / colMajorJsonBytes
+					).toLocaleString(undefined, {
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 2,
+					})}x\n`,
 				);
 			});
 

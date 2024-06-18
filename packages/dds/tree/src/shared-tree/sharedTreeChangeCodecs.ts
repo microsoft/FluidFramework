@@ -109,7 +109,7 @@ function makeSharedTreeChangeCodec(
 												? context.schema.policy
 												: defaultSchemaPolicy,
 										schema: updatedSchema,
-									}
+								  }
 								: context.schema;
 						changes.push({
 							data: modularChangeCodec.encode(decodedChange.innerChange, {

@@ -26,7 +26,11 @@ describe("utils", () => {
 				if (jsonSnapshots.has(snapshotFileName)) {
 					assert.strictEqual(isJsonSnapshot(fileContent), true, "expect a JSON file");
 				} else {
-					assert.strictEqual(isJsonSnapshot(fileContent), false, "expect a non-JSON file");
+					assert.strictEqual(
+						isJsonSnapshot(fileContent),
+						false,
+						"expect a non-JSON file",
+					);
 				}
 			});
 		});

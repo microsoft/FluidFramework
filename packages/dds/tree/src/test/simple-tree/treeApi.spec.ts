@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	MockHandle,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { type UpPath, rootFieldKey } from "../../core/index.js";
 import {

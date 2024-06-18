@@ -71,7 +71,9 @@ export function getW3CData(url: string, initiatorType: string) {
 					? indResTime.responseEnd - indResTime.responseStart
 					: undefined;
 			fetchStartToResponseEndTime =
-				indResTime.fetchStart > 0 ? indResTime.responseEnd - indResTime.fetchStart : undefined;
+				indResTime.fetchStart > 0
+					? indResTime.responseEnd - indResTime.fetchStart
+					: undefined;
 			reqStartToResponseEndTime =
 				indResTime.requestStart > 0
 					? indResTime.responseEnd - indResTime.requestStart
@@ -146,7 +148,9 @@ export function validateMessages(
 				details: JSON.stringify({
 					validLength: messages.length,
 					lastValidOpSeqNumber:
-						messages.length > 0 ? messages[messages.length - 1].sequenceNumber : undefined,
+						messages.length > 0
+							? messages[messages.length - 1].sequenceNumber
+							: undefined,
 					strict,
 				}),
 			});

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ICodeDetailsLoader,
-	IContainer,
-} from "@fluidframework/container-definitions/internal";
+import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions/internal";
 import { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**

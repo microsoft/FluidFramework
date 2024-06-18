@@ -141,15 +141,7 @@ const testCases: {
 ];
 
 describe("Undo and redo", () => {
-	for (const {
-		name,
-		skip,
-		edit,
-		undoCount,
-		initialState,
-		editedState,
-		undoState,
-	} of testCases) {
+	for (const { name, skip, edit, undoCount, initialState, editedState, undoState } of testCases) {
 		const count = undoCount ?? 1;
 		const itFn = skip ? it.skip : it;
 		itFn(`${name} (act on fork undo on fork)`, () => {

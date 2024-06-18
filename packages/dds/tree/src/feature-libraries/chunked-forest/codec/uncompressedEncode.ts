@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITreeCursorSynchronous,
-	forEachField,
-	forEachNode,
-} from "../../../core/index.js";
+import { type ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core/index.js";
 import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 
 import type { FieldBatch } from "./fieldBatch.js";

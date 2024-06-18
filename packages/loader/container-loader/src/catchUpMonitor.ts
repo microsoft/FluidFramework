@@ -22,9 +22,7 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 	private readonly targetSeqNumber: number;
 	private caughtUp: boolean = false;
 
-	private readonly opHandler = (
-		message: Pick<ISequencedDocumentMessage, "sequenceNumber">,
-	) => {
+	private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
 		if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
 			this.caughtUp = true;
 			this.listener();

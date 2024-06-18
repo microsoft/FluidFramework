@@ -59,8 +59,7 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
  * @internal
  */
-export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
-	extends FlexTreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 

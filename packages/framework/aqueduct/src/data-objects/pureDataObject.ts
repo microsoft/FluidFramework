@@ -4,12 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IEvent,
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import type { IEvent, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	// eslint-disable-next-line import/no-deprecated

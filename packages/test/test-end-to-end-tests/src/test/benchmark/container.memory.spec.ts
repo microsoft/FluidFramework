@@ -38,7 +38,8 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 			...props,
 			logger: provider.logger,
 			urlResolver: props?.urlResolver ?? provider.urlResolver,
-			documentServiceFactory: props?.documentServiceFactory ?? provider.documentServiceFactory,
+			documentServiceFactory:
+				props?.documentServiceFactory ?? provider.documentServiceFactory,
 			codeLoader:
 				props?.codeLoader ??
 				new LocalCodeLoader([[codeDetails, new TestFluidObjectFactory([])]]),
@@ -101,7 +102,9 @@ describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObject
 
 			async run() {
 				this.container = await loader.createDetachedContainer(codeDetails);
-				await this.container.attach(provider.driver.createCreateNewRequest("containerTest"));
+				await this.container.attach(
+					provider.driver.createCreateNewRequest("containerTest"),
+				);
 			}
 		})(),
 	);

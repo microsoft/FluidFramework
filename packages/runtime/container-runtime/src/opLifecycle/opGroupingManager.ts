@@ -73,7 +73,10 @@ export class OpGroupingManager {
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(keys.length === 0 || keys[0] === "batch", 0x5de /* unexpected op metadata */);
+				assert(
+					keys.length === 0 || keys[0] === "batch",
+					0x5de /* unexpected op metadata */,
+				);
 			}
 		}
 

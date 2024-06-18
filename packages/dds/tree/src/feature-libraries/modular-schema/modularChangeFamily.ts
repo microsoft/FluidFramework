@@ -81,11 +81,7 @@ import {
 	type RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
 import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
-import {
-	convertGenericChange,
-	genericFieldKind,
-	newGenericChangeset,
-} from "./genericFieldKind.js";
+import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import type { GenericChangeset } from "./genericFieldKindTypes.js";
 import type {
 	FieldChange,
@@ -101,9 +97,7 @@ import type {
  * as determined by the schema.
  */
 export class ModularChangeFamily
-	implements
-		ChangeFamily<ModularEditBuilder, ModularChangeset>,
-		ChangeRebaser<ModularChangeset>
+	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
@@ -274,7 +268,11 @@ export class ModularChangeFamily
 					) {
 						crossFieldTable.nodeIdPairs.push([child1, child2]);
 						if (child1 !== undefined && child2 !== undefined) {
-							addToNestedSet(crossFieldTable.nodeIds, child2.revision, child2.localId);
+							addToNestedSet(
+								crossFieldTable.nodeIds,
+								child2.revision,
+								child2.localId,
+							);
 						}
 					}
 					return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
@@ -407,13 +405,13 @@ export class ModularChangeFamily
 		const nodeChangeset1 =
 			id1 !== undefined
 				? tryGetFromNestedMap(nodeChanges1, id1.revision, id1.localId) ??
-					fail("Unknown node ID")
+				  fail("Unknown node ID")
 				: {};
 
 		const nodeChangeset2 =
 			id2 !== undefined
 				? tryGetFromNestedMap(nodeChanges2, id2.revision, id2.localId) ??
-					fail("Unknown node ID")
+				  fail("Unknown node ID")
 				: {};
 
 		const composedNodeChangeset = this.composeNodeChanges(
@@ -425,12 +423,7 @@ export class ModularChangeFamily
 		);
 
 		const nodeId = id1 ?? id2 ?? fail("Should not compose two undefined node IDs");
-		setInNestedMap(
-			composedNodeChanges,
-			nodeId.revision,
-			nodeId.localId,
-			composedNodeChangeset,
-		);
+		setInNestedMap(composedNodeChanges, nodeId.revision, nodeId.localId, composedNodeChangeset);
 	}
 
 	private composeNodeChanges(
@@ -440,8 +433,7 @@ export class ModularChangeFamily
 		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
-		const nodeExistsConstraint =
-			change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
+		const nodeExistsConstraint = change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
 
 		const composedFieldChanges = this.composeFieldMaps(
 			change1?.fieldChanges,
@@ -468,10 +460,7 @@ export class ModularChangeFamily
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 */
-	public invert(
-		change: TaggedChange<ModularChangeset>,
-		isRollback: boolean,
-	): ModularChangeset {
+	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
 			return makeModularChangeset();
@@ -658,8 +647,11 @@ export class ModularChangeFamily
 
 			const baseNodeChange =
 				baseId !== undefined
-					? tryGetFromNestedMap(over.change.nodeChanges, baseId.revision, baseId.localId) ??
-						fail("Unknown node ID")
+					? tryGetFromNestedMap(
+							over.change.nodeChanges,
+							baseId.revision,
+							baseId.localId,
+					  ) ?? fail("Unknown node ID")
 					: {};
 
 			const rebasedNode = this.rebaseNodeChange(
@@ -997,7 +989,11 @@ export class ModularChangeFamily
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, oldRevisions, newRevision);
+			updated.refreshers = replaceIdMapRevisions(
+				change.refreshers,
+				oldRevisions,
+				newRevision,
+			);
 		}
 
 		if (newRevision !== undefined) {
@@ -1766,7 +1762,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined,
 							undefined,
 							change.builds,
-						)
+					  )
 					: buildModularChangesetFromField(
 							change.field,
 							{
@@ -1775,7 +1771,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							},
 							new Map(),
 							this.idAllocator,
-						),
+					  ),
 			),
 		);
 		const composedChange: Mutable<ModularChangeset> =
@@ -1918,9 +1914,7 @@ function revisionInfoFromTaggedChange(
 	return revInfos;
 }
 
-function revisionFromTaggedChange(
-	change: TaggedChange<ModularChangeset>,
-): RevisionTag | undefined {
+function revisionFromTaggedChange(change: TaggedChange<ModularChangeset>): RevisionTag | undefined {
 	return change.revision ?? revisionFromRevInfos(change.change.revisions);
 }
 

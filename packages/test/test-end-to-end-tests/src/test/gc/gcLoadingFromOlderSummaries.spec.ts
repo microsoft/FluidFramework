@@ -26,10 +26,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
-import {
-	getGCStateFromSummary,
-	reconnectSummarizerToBeElected,
-} from "./gcTestSummaryUtils.js";
+import { getGCStateFromSummary, reconnectSummarizerToBeElected } from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that when a summarizer loads from an older summary and gets an ack for a newer summary, it disposes
@@ -43,10 +40,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
-	configProvider.set(
-		"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
-		false,
-	);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },

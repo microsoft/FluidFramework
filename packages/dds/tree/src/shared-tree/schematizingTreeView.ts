@@ -40,12 +40,7 @@ import {
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
-import {
-	type TreeContent,
-	canInitialize,
-	ensureSchema,
-	initialize,
-} from "./schematizeTree.js";
+import { type TreeContent, canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 
@@ -88,8 +83,8 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		public readonly config: // eslint-disable-next-line import/no-deprecated
-		TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
+		// eslint-disable-next-line import/no-deprecated
+		public readonly config: TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
 		const policy = {
@@ -132,7 +127,11 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				initialTree:
 					content === undefined
 						? undefined
-						: cursorFromUnhydratedRoot(this.config.schema, content, this.nodeKeyManager),
+						: cursorFromUnhydratedRoot(
+								this.config.schema,
+								content,
+								this.nodeKeyManager,
+						  ),
 			});
 		});
 	}
@@ -342,12 +341,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(
-		checkout,
-		viewSchema.schema,
-		nodeKeyManager,
-		onDispose,
-	);
+	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {

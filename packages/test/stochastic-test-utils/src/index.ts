@@ -40,11 +40,7 @@ export {
 	SpaceEfficientWordMarkovChain,
 	WordSpacing,
 } from "./markovChain.js";
-export {
-	performFuzzActions,
-	performFuzzActionsAsync,
-	saveOpsToFile,
-} from "./performActions.js";
+export { performFuzzActions, performFuzzActionsAsync, saveOpsToFile } from "./performActions.js";
 export { makeRandom } from "./random.js";
 export {
 	AcceptanceCondition,

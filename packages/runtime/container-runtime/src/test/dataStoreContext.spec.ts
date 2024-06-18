@@ -36,10 +36,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	GCDataBuilder,
-	convertSummaryTreeToITree,
-} from "@fluidframework/runtime-utils/internal";
+import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
 	TelemetryDataTag,
@@ -494,7 +491,11 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const gcData = await localDataStoreContext.getGCData();
-				assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+				assert.deepStrictEqual(
+					gcData,
+					emptyGCData,
+					"GC data from getGCData should be empty.",
+				);
 			});
 
 			it("can successfully update referenced state", () => {
@@ -625,7 +626,9 @@ describe("Data Store Context Tests", () => {
 				 * @param hasIsolatedChannels - whether we expect to read a snapshot tree with isolated channels or not
 				 * @param attributes - datastore attributes that are in the base snapshot we load from
 				 */
-				async function testGenerateAttributesCore(attributes: ReadFluidDataStoreAttributes) {
+				async function testGenerateAttributesCore(
+					attributes: ReadFluidDataStoreAttributes,
+				) {
 					const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
 					const attachBlobs = new Map<string, ArrayBufferLike>([
 						["fluidDataStoreAttributes", buffer],
@@ -657,7 +660,9 @@ describe("Data Store Context Tests", () => {
 					const isRootNode = await remoteDataStoreContext.isRoot();
 					assert.strictEqual(isRootNode, true, "The data store should be root.");
 
-					const summarizeResult = await remoteDataStoreContext.summarize(true /* fullTree */);
+					const summarizeResult = await remoteDataStoreContext.summarize(
+						true /* fullTree */,
+					);
 					assert(
 						summarizeResult.summary.type === SummaryType.Tree,
 						"summarize should always return a tree when fullTree is true",
@@ -666,7 +671,9 @@ describe("Data Store Context Tests", () => {
 						dataStoreAttributesBlobName
 					] as ISummaryBlob;
 
-					const contents = JSON.parse(blob.content as string) as WriteFluidDataStoreAttributes;
+					const contents = JSON.parse(
+						blob.content as string,
+					) as WriteFluidDataStoreAttributes;
 
 					// Validate that generated attributes are as expected.
 					assert.deepStrictEqual(
@@ -779,7 +786,11 @@ describe("Data Store Context Tests", () => {
 				});
 
 				const gcData = await remoteDataStoreContext.getGCData();
-				assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+				assert.deepStrictEqual(
+					gcData,
+					emptyGCData,
+					"GC data from getGCData should be empty.",
+				);
 			});
 
 			it("can generate GC data with GC details in initial summary", async () => {
@@ -787,7 +798,10 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const attributesBuffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
@@ -836,7 +850,10 @@ describe("Data Store Context Tests", () => {
 					pkg: "TestDataStore1",
 					summaryFormatVersion: undefined,
 				};
-				const attributesBuffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
+				const attributesBuffer = stringToBuffer(
+					JSON.stringify(dataStoreAttributes),
+					"utf8",
+				);
 				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
@@ -1127,7 +1144,10 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+					const dataStore = await factory.instantiateDataStore(
+						localDataStoreContext,
+						false,
+					);
 					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
 						assert.strictEqual(
 							error.message,
@@ -1160,7 +1180,10 @@ describe("Data Store Context Tests", () => {
 						channelToDataStoreFn,
 					});
 
-					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
+					const dataStore = await factory.instantiateDataStore(
+						localDataStoreContext,
+						false,
+					);
 					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
 						assert.strictEqual(
 							error.message,

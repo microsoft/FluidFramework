@@ -44,9 +44,7 @@ export interface NodeKeyManager {
  * @param idCompressor - the compressor to use for key generation, compression, and decompression.
  * If undefined, then attempts to generate or convert keys will throw an error.
  */
-export function createNodeKeyManager(
-	idCompressor?: IIdCompressor | undefined,
-): NodeKeyManager {
+export function createNodeKeyManager(idCompressor?: IIdCompressor | undefined): NodeKeyManager {
 	return {
 		generateLocalNodeKey: () => {
 			assert(

@@ -11,10 +11,7 @@ import { expect } from "chai";
 import { spy } from "sinon";
 import type Sinon from "sinon";
 
-import {
-	IFluidContainerSystemEventNames,
-	type IContainerTelemetry,
-} from "../container/index.js";
+import { IFluidContainerSystemEventNames, type IContainerTelemetry } from "../container/index.js";
 import { startTelemetry, type TelemetryConfig } from "../factory/index.js";
 import {
 	AppInsightsTelemetryConsumer,
@@ -91,9 +88,7 @@ describe("container telemetry via", () => {
 
 		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry using Azure App Insights", () => {
@@ -119,9 +114,7 @@ describe("container telemetry via", () => {
 
 		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'disposed' system event produces expected ContainerDisposedTelemetry using Azure App Insights", () => {
@@ -147,9 +140,7 @@ describe("container telemetry via", () => {
 
 		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'disposed' system event with an error produces expected ContainerDisposedTelemetry using Azure App Insights", () => {
@@ -180,8 +171,6 @@ describe("container telemetry via", () => {
 
 		expect(expectedAppInsightsTelemetry).to.deep.equal(actualAppInsightsTelemetry);
 		// We won't know what the container containerInstanceId will be but we can still check that it is defined.
-		expect(actualContainerTelemetry.containerInstanceId)
-			.to.be.a("string")
-			.with.length.above(0);
+		expect(actualContainerTelemetry.containerInstanceId).to.be.a("string").with.length.above(0);
 	});
 });

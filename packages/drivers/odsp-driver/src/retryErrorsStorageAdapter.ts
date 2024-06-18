@@ -74,7 +74,12 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	): Promise<IVersion[]> {
 		return this.runWithRetry(
 			async () =>
-				this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
+				this.internalStorageService.getVersions(
+					versionId,
+					count,
+					scenarioName,
+					fetchSource,
+				),
 			"storage_getVersions",
 		);
 	}

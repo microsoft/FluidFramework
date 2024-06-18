@@ -68,10 +68,7 @@ export function runSharedTreeVersioningTests(
 
 		it('only processes edit ops if they have the same version', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const { tree: newerTree } = setUpTestSharedTree({
-				containerRuntimeFactory,
-				...secondTreeOptions,
-			});
+			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
 			expect(tree.edits.length).to.equal(0);
 			expect(newerTree.edits.length).to.equal(0);
@@ -104,7 +101,11 @@ export function runSharedTreeVersioningTests(
 
 			// Verify even though one edit was applied, 2 edit ops were sent due to the version upgrade.
 			expect(ops.length).to.equal(3);
-			expect(ops.map((op) => op.type)).to.eql([SharedTreeOpType.Update, SharedTreeOpType.Edit, SharedTreeOpType.Edit]);
+			expect(ops.map((op) => op.type)).to.eql([
+				SharedTreeOpType.Update,
+				SharedTreeOpType.Edit,
+				SharedTreeOpType.Edit,
+			]);
 
 			expect(ops[1].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
@@ -120,10 +121,7 @@ export function runSharedTreeVersioningTests(
 
 		it('throws if an edit op with a newer version than the write version is received', () => {
 			const { tree, containerRuntimeFactory } = setUpTestSharedTree(treeOptions);
-			const { tree: newerTree } = setUpTestSharedTree({
-				containerRuntimeFactory,
-				...secondTreeOptions,
-			});
+			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 
 			expect(tree.edits.length).to.equal(0);
 			expect(newerTree.edits.length).to.equal(0);
@@ -132,7 +130,8 @@ export function runSharedTreeVersioningTests(
 			applyNoop(newerTree);
 			assert.throws(
 				() => containerRuntimeFactory.processAllMessages(),
-				(e: Error) => validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
+				(e: Error) =>
+					validateAssertionError(e, 'Newer op version received by a client that has yet to be updated.')
 			);
 		});
 
@@ -252,10 +251,7 @@ export function runSharedTreeVersioningTests(
 			const summary = tree.saveSummary();
 
 			// Load the summary into a newer tree to trigger a version update op
-			const { tree: newerTree } = setUpTestSharedTree({
-				containerRuntimeFactory,
-				...secondTreeOptions,
-			});
+			const { tree: newerTree } = setUpTestSharedTree({ containerRuntimeFactory, ...secondTreeOptions });
 			newerTree.loadSummary(summary);
 			containerRuntimeFactory.processAllMessages();
 
@@ -267,7 +263,11 @@ export function runSharedTreeVersioningTests(
 
 			expect(versions).to.eql([newVersion]);
 			expect(ops.length).to.equal(3);
-			expect(ops.map((op) => op.type)).to.eql([SharedTreeOpType.Edit, SharedTreeOpType.Update, SharedTreeOpType.Edit]);
+			expect(ops.map((op) => op.type)).to.eql([
+				SharedTreeOpType.Edit,
+				SharedTreeOpType.Update,
+				SharedTreeOpType.Edit,
+			]);
 
 			expect(ops[0].version).to.equal(oldVersion);
 			expect(ops[2].version).to.equal(newVersion);
@@ -510,10 +510,7 @@ export function runSharedTreeVersioningTests(
 			});
 
 			it('emits RequestVersionUpdate events', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					...treeOptions,
-					logger,
-				});
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, logger });
 				const { tree: newerTree } = setUpTestSharedTree({
 					containerRuntimeFactory,
 					...secondTreeOptions,
@@ -533,10 +530,7 @@ export function runSharedTreeVersioningTests(
 			});
 
 			it('emits VersionUpdate events', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					...treeOptions,
-					logger,
-				});
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, logger });
 				const { tree: newerTree } = setUpTestSharedTree({
 					containerRuntimeFactory,
 					...secondTreeOptions,
@@ -556,10 +550,7 @@ export function runSharedTreeVersioningTests(
 			});
 
 			it('emits error events on VersionUpdate failure', () => {
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					...treeOptions,
-					logger,
-				});
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({ ...treeOptions, logger });
 				const op: SharedTreeUpdateOp = {
 					type: SharedTreeOpType.Update,
 					version: newVersion,

@@ -126,7 +126,10 @@ describe("chunkDecoding", () => {
 				const compressedId = testIdCompressor.generateCompressedId();
 				const stableId = testIdCompressor.decompress(compressedId);
 				const stream: StreamCursor = { data: [compressedId], offset: 0 };
-				assert.equal(readValue(stream, SpecialField.Identifier, idDecodingContext), stableId);
+				assert.equal(
+					readValue(stream, SpecialField.Identifier, idDecodingContext),
+					stableId,
+				);
 				assert.equal(stream.offset, 1);
 			});
 		});
@@ -339,7 +342,13 @@ describe("chunkDecoding", () => {
 				cache,
 			);
 			const stream = {
-				data: ["type", true, "value", ["a", "l1", 0, "l2"], ["c", "g1", 1, "g2", "e", "g3"]],
+				data: [
+					"type",
+					true,
+					"value",
+					["a", "l1", 0, "l2"],
+					["c", "g1", 1, "g2", "e", "g3"],
+				],
 				offset: 0,
 			};
 			const result = decoder.decode(decoders, stream);

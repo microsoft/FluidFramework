@@ -231,7 +231,12 @@ describe("MapProperty", function () {
 		it("should work with raise path tokens", function () {
 			expect(complexMap.resolvePath("../../path.map.one")).to.deep.equal(complexProperty1);
 			expect(
-				complexMap.get(PATH_TOKENS.UP).get(PATH_TOKENS.UP).get("path").get("map").get("two"),
+				complexMap
+					.get(PATH_TOKENS.UP)
+					.get(PATH_TOKENS.UP)
+					.get("path")
+					.get("map")
+					.get("two"),
 			).to.deep.equal(complexProperty2);
 			expect(
 				complexMap.get([PATH_TOKENS.UP, "map", "two", PATH_TOKENS.UP, "two"]),
@@ -286,17 +291,22 @@ describe("MapProperty", function () {
 			expect(
 				changeSetWithTwoMapEntries.insert &&
 					changeSetWithTwoMapEntries.insert["autodesk.tests:MapTestPropertyID-1.0.0"] &&
-					_.keys(changeSetWithTwoMapEntries.insert["autodesk.tests:MapTestPropertyID-1.0.0"])
-						.length === 2 &&
+					_.keys(
+						changeSetWithTwoMapEntries.insert["autodesk.tests:MapTestPropertyID-1.0.0"],
+					).length === 2 &&
 					_.includes(
 						_.keys(
-							changeSetWithTwoMapEntries.insert["autodesk.tests:MapTestPropertyID-1.0.0"],
+							changeSetWithTwoMapEntries.insert[
+								"autodesk.tests:MapTestPropertyID-1.0.0"
+							],
 						),
 						"node1",
 					) &&
 					_.includes(
 						_.keys(
-							changeSetWithTwoMapEntries.insert["autodesk.tests:MapTestPropertyID-1.0.0"],
+							changeSetWithTwoMapEntries.insert[
+								"autodesk.tests:MapTestPropertyID-1.0.0"
+							],
 						),
 						"node2",
 					),
@@ -651,14 +661,18 @@ describe("MapProperty", function () {
 			});
 
 			expect(mapProp.get(["map", "firstString", "stringValue"]).getValue()).to.equal("test1");
-			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal("test2");
+			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal(
+				"test2",
+			);
 
 			mapProp.get("map").setValues({ firstString: { stringValue: "test1_updated" } });
 
 			expect(mapProp.get(["map", "firstString", "stringValue"]).getValue()).to.equal(
 				"test1_updated",
 			);
-			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal("test2");
+			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal(
+				"test2",
+			);
 		});
 
 		it("setValues should update values for existing keys and create new ones for non-existing keys", function () {
@@ -676,7 +690,9 @@ describe("MapProperty", function () {
 			});
 
 			expect(mapProp.get(["map", "firstString", "stringValue"]).getValue()).to.equal("test1");
-			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal("test2");
+			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal(
+				"test2",
+			);
 
 			mapProp.setValues({
 				map: {
@@ -713,7 +729,9 @@ describe("MapProperty", function () {
 			expect(mapProp.get(["map", "thirdString", "stringValue"]).getValue()).to.equal(
 				"test3-upd",
 			);
-			expect(mapProp.get(["map", "fourthString", "stringValue"]).getValue()).to.equal("test4");
+			expect(mapProp.get(["map", "fourthString", "stringValue"]).getValue()).to.equal(
+				"test4",
+			);
 		});
 
 		it("getValues should work for custom maps", function () {
@@ -765,7 +783,9 @@ describe("MapProperty", function () {
 			});
 
 			expect(mapProp.get(["map", "firstString", "stringValue"]).getValue()).to.equal("test1");
-			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal("test2");
+			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal(
+				"test2",
+			);
 		});
 
 		it("setValues should create new items from untyped inputs if key does not exist", function () {
@@ -783,7 +803,9 @@ describe("MapProperty", function () {
 			});
 
 			expect(mapProp.get(["map", "firstString", "stringValue"]).getValue()).to.equal("test1");
-			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal("test2");
+			expect(mapProp.get(["map", "secondString", "stringValue"]).getValue()).to.equal(
+				"test2",
+			);
 		});
 
 		it("getRelativePath should work", function () {
@@ -1035,7 +1057,10 @@ describe("MapProperty", function () {
 					},
 				],
 				post: function (changeset) {
-					expect(changeset["map<NamedProperty>"].map).to.have.all.keys("remove", "insert");
+					expect(changeset["map<NamedProperty>"].map).to.have.all.keys(
+						"remove",
+						"insert",
+					);
 				},
 			});
 		});
@@ -1117,9 +1142,8 @@ describe("MapProperty", function () {
 				],
 				post: function (changeset) {
 					expect(
-						changeset["map<NamedProperty>"].map.insert["array<NodeProperty>"].array.insert[
-							"0"
-						][1]["0"].insert["map<Bool>"].boolMap,
+						changeset["map<NamedProperty>"].map.insert["array<NodeProperty>"].array
+							.insert["0"][1]["0"].insert["map<Bool>"].boolMap,
 					).to.have.all.keys("insert");
 				},
 			});
@@ -1360,9 +1384,14 @@ describe("MapProperty", function () {
 				compareToSequential: true,
 				checkResult: function (conflicts, changeSet) {
 					expect(conflicts).to.have.length(1);
-					expect(conflicts[0].type).to.be.equal(ChangeSet.ConflictType.REMOVE_AFTER_MODIFY);
+					expect(conflicts[0].type).to.be.equal(
+						ChangeSet.ConflictType.REMOVE_AFTER_MODIFY,
+					);
 					expect(conflicts[0].path).to.be.equal("map[node1]");
-					expect(changeSet["map<NamedProperty>"].map).to.have.all.keys("remove", "insert");
+					expect(changeSet["map<NamedProperty>"].map).to.have.all.keys(
+						"remove",
+						"insert",
+					);
 				},
 			});
 		});

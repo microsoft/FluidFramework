@@ -21,9 +21,7 @@ export function isDataObjectClass<T extends IFluidLoadable>(
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
-export function isDataObjectClass(
-	obj: LoadableObjectClass,
-): obj is DataObjectClass<IFluidLoadable>;
+export function isDataObjectClass(obj: LoadableObjectClass): obj is DataObjectClass<IFluidLoadable>;
 
 /**
  * Runtime check to determine if a class is a DataObject type.

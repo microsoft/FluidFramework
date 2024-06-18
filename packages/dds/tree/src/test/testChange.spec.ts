@@ -155,7 +155,9 @@ describe("TestChange", () => {
 				generateChildStates,
 				{
 					rebase: (change, base) => {
-						return TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange;
+						return (
+							TestChange.rebase(change.change, base.change) ?? TestChange.emptyChange
+						);
 					},
 					compose: (change1, change2) => {
 						return TestChange.compose(change1.change, change2.change);

@@ -83,11 +83,12 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.canAttachContainer,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.canAttachContainer,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -120,11 +121,12 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.cannotAttachContainerTwice,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.cannotAttachContainerTwice,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
@@ -162,21 +164,25 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let newContainer: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
-					ephemeralSummaryTrees.retrieveExistingAFRContainer,
-					"test-user-id-1",
-					"test-user-name-1",
-				);
+				const containerResponse: AxiosResponse | undefined =
+					await createContainerFromPayload(
+						ephemeralSummaryTrees.retrieveExistingAFRContainer,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
 				({ container: newContainer } = await client.createContainer(schema, "2"));
 				containerId = await newContainer.attach();
 
 				if (newContainer.connectionState !== ConnectionState.Connected) {
-					await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
-						durationMs: connectTimeoutMs,
-						errorMsg: "container connect() timeout",
-					});
+					await timeoutPromise(
+						(resolve) => newContainer.once("connected", () => resolve()),
+						{
+							durationMs: connectTimeoutMs,
+							errorMsg: "container connect() timeout",
+						},
+					);
 				}
 			}
 
@@ -310,7 +316,9 @@ for (const testOpts of testMatrix) {
 					(resolve) => {
 						const confirmValueSet = (): void => {
 							if (
-								(containerLegacy.initialObjects.map1 as SharedMapLegacy).get("key") === "value"
+								(containerLegacy.initialObjects.map1 as SharedMapLegacy).get(
+									"key",
+								) === "value"
 							) {
 								containerLegacy.off("saved", confirmValueSet);
 								resolve();
@@ -421,10 +429,13 @@ for (const testOpts of testMatrix) {
 
 			const { container: containerLegacy } = await resources;
 			if (containerLegacy.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => containerLegacy.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "containerLegacy connect() timeout",
-				});
+				await timeoutPromise(
+					(resolve) => containerLegacy.once("connected", () => resolve()),
+					{
+						durationMs: connectTimeoutMs,
+						errorMsg: "containerLegacy connect() timeout",
+					},
+				);
 			}
 
 			const result = (containerLegacy.initialObjects.map1 as SharedMapLegacy).get<string>(

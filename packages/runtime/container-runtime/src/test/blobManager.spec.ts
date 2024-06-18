@@ -116,7 +116,9 @@ export class MockRuntime
 				const P = this.processBlobsP.promise.then(async () => {
 					if (!this.connected && this.attachState === AttachState.Attached) {
 						this.unprocessedBlobs.delete(blob);
-						throw new Error("fake error due to having no connection to storage service");
+						throw new Error(
+							"fake error due to having no connection to storage service",
+						);
 					} else {
 						this.unprocessedBlobs.delete(blob);
 						return this.storage.createBlob(blob);
@@ -950,7 +952,8 @@ describe("BlobManager", () => {
 			"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 		[true, undefined].forEach((disableAttachmentBlobsSweep) =>
 			it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
-				injectedSettings[legacyKey_disableAttachmentBlobSweep] = disableAttachmentBlobsSweep;
+				injectedSettings[legacyKey_disableAttachmentBlobSweep] =
+					disableAttachmentBlobsSweep;
 
 				await runtime.attach();
 				await runtime.connect();

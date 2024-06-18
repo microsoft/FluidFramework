@@ -28,22 +28,14 @@ import {
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import {
-	ObjectStoragePartition,
-	SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils/internal";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
-	IMatrixConsumer,
-	IMatrixProducer,
-	IMatrixReader,
-	IMatrixWriter,
-} from "@tiny-calc/nano";
+import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
 
 import { Handle, isHandleValid } from "./handletable.js";
@@ -874,10 +866,7 @@ export class SharedMatrix<T = any>
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
-			rowHandle,
-			colHandle,
-		);
+		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
 		return (
@@ -933,7 +922,11 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
+					const isLatestPendingOp = this.isLatestPendingWrite(
+						rowHandle,
+						colHandle,
+						localSeq,
+					);
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.

@@ -236,10 +236,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.postAudienceStateChange();
 	};
 
-	private readonly audienceMemberRemovedHandler = (
-		clientId: string,
-		client: IClient,
-	): void => {
+	private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): void => {
 		this._audienceChangeLog.push({
 			clientId,
 			client,
@@ -292,9 +289,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.disconnect(
-					/* TODO: Specify devtools reason here once it is supported */
-				);
+				this.container.disconnect(/* TODO: Specify devtools reason here once it is supported */);
 				return true;
 			}
 			return false;
@@ -350,11 +345,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
-		handleIncomingWindowMessage(
-			event,
-			this.inboundMessageHandlers,
-			this.messageLoggingOptions,
-		);
+		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
@@ -566,9 +557,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		};
 	}
 
-	private async getRootDataVisualizations(): Promise<
-		Record<string, RootHandleNode> | undefined
-	> {
+	private async getRootDataVisualizations(): Promise<Record<string, RootHandleNode> | undefined> {
 		return this.dataVisualizer?.renderRootHandles() ?? undefined;
 	}
 

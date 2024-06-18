@@ -225,7 +225,9 @@ async function getTimeoutPromise<T = void>(
 		};
 		const timer = setTimeout(
 			() =>
-				timeoutOptions.reject === false ? resolve(timeoutOptions.value) : timeoutRejections(),
+				timeoutOptions.reject === false
+					? resolve(timeoutOptions.value)
+					: timeoutRejections(),
 			timeout,
 		);
 

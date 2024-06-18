@@ -39,7 +39,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 						summaryOptions: {
 							initialSummarizerDelayMs: 0,
 						},
-					}
+				  }
 				: undefined,
 		);
 	}
@@ -48,9 +48,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const inventoryList = await runtime.createDataStore(
-			InventoryListInstantiationFactory.type,
-		);
+		const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
 		await inventoryList.trySetAlias(inventoryListId);
 		const migrationTool = await runtime.createDataStore(migrationToolRegistryKey);
 		await migrationTool.trySetAlias(migrationToolId);

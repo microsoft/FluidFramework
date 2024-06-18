@@ -146,8 +146,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 		});
 	};
 
-	const options =
-		node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
+	const options = node.editProps?.editTypes === undefined ? allEdits : node.editProps?.editTypes;
 
 	// Returns the proper type, mainly fixing te issue of null being type "object"
 	function getEditType(): string {

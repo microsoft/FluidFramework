@@ -1,7 +1,4 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../../../biome.jsonc"],
-	"files": {
-		"ignore": ["src/test/localOdspSnapshots/**", "src/test/telemetryExpectedOutputs/**"]
-	}
+	"extends": ["../../../biome.jsonc"]
 }

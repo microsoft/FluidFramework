@@ -35,9 +35,7 @@ export type WideTreeNode = NodeFromSchema<typeof WideTreeNode>;
  * Make an unhydrated deep tree with a single leaf value
  */
 function makeDeepTree(depth: number, leafValue: number): Unhydrated<DeepTreeNode> {
-	return new DeepTreeNode({
-		node: depth === 1 ? leafValue : makeDeepTree(depth - 1, leafValue),
-	});
+	return new DeepTreeNode({ node: depth === 1 ? leafValue : makeDeepTree(depth - 1, leafValue) });
 }
 
 /**

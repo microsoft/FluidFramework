@@ -34,10 +34,7 @@ export function assertChunkCursorEquals(chunk: TreeChunk, expected: JsonableTree
 	assert.equal(chunk.topLevelLength, expected.length);
 }
 
-export function assertChunkCursorBatchEquals(
-	chunk: TreeChunk[],
-	expected: JsonableTree[][],
-): void {
+export function assertChunkCursorBatchEquals(chunk: TreeChunk[], expected: JsonableTree[][]): void {
 	assert.equal(chunk.length, expected.length);
 	for (let index = 0; index < chunk.length; index++) {
 		assertChunkCursorEquals(chunk[index], expected[index]);

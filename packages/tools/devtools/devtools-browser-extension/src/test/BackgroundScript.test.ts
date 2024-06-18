@@ -160,10 +160,7 @@ describe("Background Script unit tests", () => {
 		expect(typeof connectFromDevtools).to.equal("function");
 
 		// Wait for the Background script to register `onMessage`  listener with the Devtools port.
-		const onMessageFromDevtoolsListenerPromise = awaitListener(
-			sandbox,
-			devtoolsPort.onMessage,
-		);
+		const onMessageFromDevtoolsListenerPromise = awaitListener(sandbox, devtoolsPort.onMessage);
 
 		// Simulate background script connection init from the devtools
 		connectFromDevtools(devtoolsPort);

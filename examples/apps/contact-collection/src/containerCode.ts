@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ModelContainerRuntimeFactory,
-	getDataStoreEntryPoint,
-} from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
@@ -33,9 +30,7 @@ export class ContactCollectionContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const dataStore = await runtime.createDataStore(
-			ContactCollectionInstantiationFactory.type,
-		);
+		const dataStore = await runtime.createDataStore(ContactCollectionInstantiationFactory.type);
 		await dataStore.trySetAlias(contactCollectionId);
 	}
 

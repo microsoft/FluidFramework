@@ -23,8 +23,7 @@ import { brand, fail } from "../../util/index.js";
 import { Format } from "./format.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
-	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> =
-		Object.create(null);
+	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> = Object.create(null);
 	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail("missing schema");

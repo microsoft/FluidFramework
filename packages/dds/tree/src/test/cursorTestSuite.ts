@@ -336,8 +336,8 @@ export function testSpecializedFieldCursor<TData, TCursor extends ITreeCursor>(c
 				withKeys:
 					config.builders.withKeys !== undefined
 						? // This is known to be non-null from check above, but typescript can't infer it.
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							(keys) => [0, config.builders.withKeys!(keys)]
+						  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						  (keys) => [0, config.builders.withKeys!(keys)]
 						: undefined,
 			},
 			cursorFactory: (data: [number, TData]): TCursor => {
@@ -422,7 +422,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 						setGenericTreeField(root, key, [child]);
 					}
 					return builder(root);
-				};
+			  };
 
 	const parent = !extraRoot
 		? undefined
@@ -430,7 +430,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
-			};
+		  };
 
 	return describe(`${cursorName} cursor implementation`, () => {
 		describe("test trees", () => {

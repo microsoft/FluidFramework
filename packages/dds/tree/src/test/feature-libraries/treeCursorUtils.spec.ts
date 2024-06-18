@@ -76,7 +76,10 @@ describe("treeCursorUtils", () => {
 			);
 			assert(
 				compareUpPaths(
-					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, root),
+					prefixPath(
+						{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
+						root,
+					),
 					{
 						parent: child,
 						parentField: brand("y"),
@@ -122,7 +125,10 @@ describe("treeCursorUtils", () => {
 			);
 			assert(
 				compareUpPaths(
-					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, child),
+					prefixPath(
+						{ indexOffset: 2, rootFieldOverride: brand("y"), parent: child },
+						child,
+					),
 					{
 						parent: {
 							parent: child,

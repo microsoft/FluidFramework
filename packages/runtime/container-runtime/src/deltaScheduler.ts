@@ -148,7 +148,9 @@ export class DeltaScheduler {
 				numberOfTurns: this.schedulingLog.numberOfTurns,
 				processingTime: formatTick(this.schedulingLog.totalProcessingTime),
 				opsProcessed:
-					this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber + 1,
+					this.schedulingLog.lastSequenceNumber -
+					this.schedulingLog.firstSequenceNumber +
+					1,
 				batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
 				duration: formatTick(currentTime - this.schedulingLog.startTime),
 				schedulingCount: this.schedulingCount,

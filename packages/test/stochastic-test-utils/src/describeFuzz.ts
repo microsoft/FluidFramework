@@ -95,8 +95,7 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress =
-		process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
+	const isStress = process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
 	const args = { testCount, isStress };
 	const d: DescribeFuzz = (name, tests) =>
 		(isStress ? describe.only : describe)(name, createSuite(tests, args));

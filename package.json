@@ -32,7 +32,6 @@
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.cjs",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
-		"check:format:repo": "biome check . --formatter-enabled=true",
 		"check:versions": "flub check buildVersion -g client --path .",
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
@@ -59,10 +58,10 @@
 		"format": "fluid-build --task format",
 		"format:biome": "fluid-build --task format:biome",
 		"format:changed": "npm run format:changed:main",
-		"format:changed:main": "biome check --formatter-enabled=true --apply --changed --since=main",
-		"format:changed:next": "biome check --formatter-enabled=true --apply --changed --since=next",
+		"format:changed:main": "pretty-quick --branch main",
+		"format:changed:next": "pretty-quick --branch next",
 		"format:prettier": "fluid-build --task format:prettier",
-		"format:repo": "biome check . --formatter-enabled=true --apply",
+		"format:repo": "npm run prettier:repo:fix",
 		"generate:packageList": "fluid-build --task generate:packageList",
 		"generate:packageList:internal-build": "flub list client --no-private --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list client --no-private --feed internal-dev --outFile feeds/internal-dev.txt",
@@ -253,7 +252,7 @@
 			},
 			"check:format": {
 				"dependsOn": [
-					"check:format:repo"
+					"^check:format"
 				],
 				"script": false
 			},
@@ -266,7 +265,8 @@
 					"layer-check",
 					"syncpack:deps",
 					"syncpack:versions",
-					"check:versions"
+					"check:versions",
+					"prettier"
 				],
 				"script": false
 			},
@@ -278,7 +278,8 @@
 					"policy-check:fix",
 					"syncpack:deps:fix",
 					"syncpack:versions:fix",
-					"check:versions:fix"
+					"check:versions:fix",
+					"prettier:fix"
 				],
 				"script": false
 			},
@@ -317,7 +318,8 @@
 			},
 			"format": {
 				"dependsOn": [
-					"format:repo"
+					"prettier:root:fix",
+					"^format"
 				],
 				"script": false
 			},

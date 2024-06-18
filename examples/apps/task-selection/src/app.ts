@@ -5,10 +5,7 @@
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import {
-	ITaskSelectionAppModel,
-	TaskSelectionContainerRuntimeFactory,
-} from "./containerCode.js";
+import { ITaskSelectionAppModel, TaskSelectionContainerRuntimeFactory } from "./containerCode.js";
 import { renderDiceRoller } from "./view.js";
 
 /**

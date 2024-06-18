@@ -76,9 +76,7 @@ export class SharedTreeChangeFamily
 		);
 	}
 
-	public buildEditor(
-		changeReceiver: (change: SharedTreeChange) => void,
-	): SharedTreeEditBuilder {
+	public buildEditor(changeReceiver: (change: SharedTreeChange) => void): SharedTreeEditBuilder {
 		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver);
 	}
 
@@ -111,10 +109,7 @@ export class SharedTreeChangeFamily
 		return { changes: newChanges };
 	}
 
-	public invert(
-		change: TaggedChange<SharedTreeChange>,
-		isRollback: boolean,
-	): SharedTreeChange {
+	public invert(change: TaggedChange<SharedTreeChange>, isRollback: boolean): SharedTreeChange {
 		const invertInnerChange: (
 			innerChange: SharedTreeChange["changes"][number],
 		) => SharedTreeChange["changes"][number] = (innerChange) => {
@@ -209,7 +204,7 @@ export class SharedTreeChangeFamily
 								newRevision,
 								rollbackOf,
 							),
-						}
+					  }
 					: inner;
 			}),
 		};

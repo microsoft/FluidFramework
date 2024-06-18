@@ -383,7 +383,11 @@ export function testInvert() {
 				];
 
 				const actual = invert(input, tag1);
-				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag1 }, cellId);
+				const expected = Change.modifyDetached(
+					0,
+					{ ...childChange1, revision: tag1 },
+					cellId,
+				);
 				assertChangesetsEqual(actual, expected);
 			});
 
@@ -397,7 +401,11 @@ export function testInvert() {
 				];
 
 				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */));
-				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
+				const expected = Change.modifyDetached(
+					0,
+					{ ...childChange1, revision: tag2 },
+					cellId,
+				);
 				assertChangesetsEqual(actual, expected);
 			});
 

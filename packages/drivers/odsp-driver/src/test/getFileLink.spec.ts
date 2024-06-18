@@ -44,7 +44,8 @@ describe("getFileLink", () => {
 				),
 			[
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -98,7 +99,8 @@ describe("getFileLink", () => {
 				async (): Promise<MockResponse> =>
 					createResponse({ "retry-after": "0.001" }, undefined, 900),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -165,7 +167,8 @@ describe("getFileLink", () => {
 						308,
 					),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -216,7 +219,8 @@ describe("getFileLink", () => {
 						307,
 					),
 				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
-				async (): Promise<MockResponse> => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(

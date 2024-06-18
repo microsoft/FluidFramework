@@ -124,10 +124,6 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	afterAttach(source: FieldKey, destination: Range): void;
 	beforeDetach(source: Range, destination: FieldKey): void;
 	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
-	beforeReplace(
-		newContent: FieldKey,
-		oldContent: Range,
-		oldContentDestination: FieldKey,
-	): void;
+	beforeReplace(newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey): void;
 	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
 }

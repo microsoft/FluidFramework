@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DriverErrorTypes,
-	IDriverErrorBase,
-} from "@fluidframework/driver-definitions/internal";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions/internal";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**

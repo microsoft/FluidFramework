@@ -8,8 +8,7 @@ import { strict as assert } from "node:assert";
 import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
 
 describe("getUrlAndHeadersWithAuth", () => {
-	const baseUrl =
-		"https://contoso.sharepoint.com/_api/v2.1/drives/driveId/items/itemId/opstream";
+	const baseUrl = "https://contoso.sharepoint.com/_api/v2.1/drives/driveId/items/itemId/opstream";
 	const urlWithoutParams = new URL(baseUrl);
 	const urlWithSingleParam = new URL(`${baseUrl}?someParam=someValue`);
 	const urlWithMultipleParams = new URL(`${baseUrl}?param1=value1&param2=value2`);
@@ -96,7 +95,11 @@ describe("getUrlAndHeadersWithAuth", () => {
 		validateTokenEmbeddedIntoQueryString(
 			urlWithSingleParam,
 			longTokenForUrlWithSingleParam,
-			getUrlAndHeadersWithAuth(urlWithSingleParam.href, longTokenForUrlWithSingleParam, false),
+			getUrlAndHeadersWithAuth(
+				urlWithSingleParam.href,
+				longTokenForUrlWithSingleParam,
+				false,
+			),
 		);
 
 		const longTokenForUrlMultipleParams = generateToken(
@@ -127,7 +130,11 @@ describe("getUrlAndHeadersWithAuth", () => {
 		validateTokenEmbeddedIntoHeaders(
 			urlWithSingleParam,
 			longTokenForUrlWithSingleParam,
-			getUrlAndHeadersWithAuth(urlWithSingleParam.href, longTokenForUrlWithSingleParam, false),
+			getUrlAndHeadersWithAuth(
+				urlWithSingleParam.href,
+				longTokenForUrlWithSingleParam,
+				false,
+			),
 		);
 
 		const longTokenForUrlMultipleParams = generateToken(

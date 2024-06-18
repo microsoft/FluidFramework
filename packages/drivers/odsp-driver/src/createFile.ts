@@ -14,10 +14,7 @@ import {
 	OdspErrorTypes,
 	ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { ICreateFileResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
@@ -151,7 +148,7 @@ function extractShareLinkData(
 							role: sharing.sharingLink.type,
 							webUrl: sharing.sharingLink.webUrl,
 							...sharing.sharingLink,
-						}
+					  }
 					: undefined,
 				error: sharing.error,
 				shareId: sharing.shareId,

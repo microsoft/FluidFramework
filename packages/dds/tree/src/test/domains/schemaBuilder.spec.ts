@@ -13,12 +13,7 @@ import {
 	type FlexTreeTypedNode,
 	schemaIsFieldNode,
 } from "../../feature-libraries/index.js";
-import type {
-	areSafelyAssignable,
-	isAny,
-	requireFalse,
-	requireTrue,
-} from "../../util/index.js";
+import type { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {

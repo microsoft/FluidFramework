@@ -5,12 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import {
-	CursorLocationType,
-	EmptyKey,
-	type Value,
-	mapCursorField,
-} from "../../../core/index.js";
+import { CursorLocationType, EmptyKey, type Value, mapCursorField } from "../../../core/index.js";
 import { SchemaBuilder, jsonObject, leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";

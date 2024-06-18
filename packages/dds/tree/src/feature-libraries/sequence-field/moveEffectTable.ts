@@ -7,11 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
 import { type RangeQueryResult, brand } from "../../util/index.js";
-import {
-	type CrossFieldManager,
-	CrossFieldTarget,
-	type NodeId,
-} from "../modular-schema/index.js";
+import { type CrossFieldManager, CrossFieldTarget, type NodeId } from "../modular-schema/index.js";
 
 import type { MoveMarkEffect } from "./helperTypes.js";
 import type { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";

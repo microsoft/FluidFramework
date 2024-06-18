@@ -90,11 +90,11 @@ export const Change = {
 					moves: [],
 					childChanges: [],
 					valueReplace: { isEmpty: false, dst: asChangeAtomId(dst) },
-				}
+			  }
 			: {
 					moves: [[asChangeAtomId(target), asChangeAtomId(dst)]],
 					childChanges: [],
-				},
+			  },
 	/**
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.

@@ -149,9 +149,7 @@ export function resolveVersion(requested: string, installed: boolean) {
 		if (found) {
 			return found;
 		}
-		throw new Error(
-			`No matching version found in ${baseModulePath} (requested: ${requested})`,
-		);
+		throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
 	} else {
 		let result: string | undefined;
 		try {
@@ -358,8 +356,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 				typeof exp === "string"
 					? exp
 					: exp.require !== undefined
-						? exp.require.default
-						: exp.default;
+					? exp.require.default
+					: exp.default;
 			if (primaryExport === undefined) {
 				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}
@@ -395,10 +393,7 @@ function calculateRequestedRange(
 	const scheme = detectVersionScheme(baseVersion);
 
 	// if the baseVersion passed is an internal version
-	if (
-		adjustPublicMajor === false &&
-		(scheme === "internal" || scheme === "internalPrerelease")
-	) {
+	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
 		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
 			baseVersion,
 			/** allowPrereleases */ true,

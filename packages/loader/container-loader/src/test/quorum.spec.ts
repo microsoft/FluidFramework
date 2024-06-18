@@ -41,7 +41,12 @@ describe("Quorum", () => {
 			// Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
 			quorum.on(
 				"approveProposal",
-				(sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+				(
+					sequenceNumber: number,
+					key: string,
+					value: any,
+					approvalSequenceNumber: number,
+				) => {
 					assert.strictEqual(evented, false, "Double event");
 					evented = true;
 					assert.strictEqual(
@@ -145,7 +150,12 @@ describe("Quorum", () => {
 			// Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
 			quorum.on(
 				"approveProposal",
-				(sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+				(
+					sequenceNumber: number,
+					key: string,
+					value: any,
+					approvalSequenceNumber: number,
+				) => {
 					assert.strictEqual(evented, false, "Double event");
 					evented = true;
 					assert.strictEqual(
@@ -368,9 +378,21 @@ describe("Quorum", () => {
 
 				// Now we're simulating "connecting" state, where we will see the ack's for proposals 1 and 2
 				// And also we'll advance the MSN past proposal 1
-				quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
+				quorum.addProposal(
+					proposal1.key,
+					proposal1.value,
+					proposal1.sequenceNumber,
+					true,
+					1,
+				);
 				quorum.updateMinimumSequenceNumber(messageApproving1);
-				quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+				quorum.addProposal(
+					proposal2.key,
+					proposal2.value,
+					proposal2.sequenceNumber,
+					true,
+					2,
+				);
 
 				// Now we'll simulate the transition to connected state
 				quorum.setConnectionState(true);
@@ -500,8 +522,20 @@ describe("Quorum", () => {
 						proposal3.rejected = true;
 					});
 
-				quorum.addProposal(proposal1.key, proposal1.value, proposal1.sequenceNumber, true, 1);
-				quorum.addProposal(proposal2.key, proposal2.value, proposal2.sequenceNumber, true, 2);
+				quorum.addProposal(
+					proposal1.key,
+					proposal1.value,
+					proposal1.sequenceNumber,
+					true,
+					1,
+				);
+				quorum.addProposal(
+					proposal2.key,
+					proposal2.value,
+					proposal2.sequenceNumber,
+					true,
+					2,
+				);
 				quorum.updateMinimumSequenceNumber(messageApproving1);
 
 				const snapshot = quorum.snapshot();
@@ -535,7 +569,13 @@ describe("Quorum", () => {
 				// The snapshot we took should never change after we take it
 				quorum.updateMinimumSequenceNumber(messageApproving2);
 				verifyExpectedSnapshot();
-				quorum.addProposal(proposal3.key, proposal3.value, proposal3.sequenceNumber, true, 3);
+				quorum.addProposal(
+					proposal3.key,
+					proposal3.value,
+					proposal3.sequenceNumber,
+					true,
+					3,
+				);
 				verifyExpectedSnapshot();
 				quorum.updateMinimumSequenceNumber(messageApproving3);
 				verifyExpectedSnapshot();
@@ -651,7 +691,11 @@ describe("Quorum", () => {
 					1,
 					"Should be exactly 1 member in the snapshot",
 				);
-				assert.strictEqual(snapshot.members[0][0], client1Info.clientId, "Expecting client 1");
+				assert.strictEqual(
+					snapshot.members[0][0],
+					client1Info.clientId,
+					"Expecting client 1",
+				);
 			};
 
 			// Verify initial state of snapshot

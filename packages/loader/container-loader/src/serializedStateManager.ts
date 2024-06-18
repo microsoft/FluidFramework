@@ -8,11 +8,7 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import type {
-	IEventProvider,
-	IEvent,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
@@ -32,10 +28,7 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	ISerializableBlobContents,
-	getBlobContentsFromTree,
-} from "./containerStorageAdapter.js";
+import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 /**
@@ -218,7 +211,10 @@ export class SerializedStateManager {
 					baseSnapshotTree,
 					this.storageAdapter,
 				);
-				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
+				const attributes = await getDocumentAttributes(
+					this.storageAdapter,
+					baseSnapshotTree,
+				);
 				this.snapshot = {
 					baseSnapshot: baseSnapshotTree,
 					snapshotBlobs,
@@ -334,7 +330,10 @@ export class SerializedStateManager {
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
-			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
+			this.processedOps.splice(
+				0,
+				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
+			);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -342,7 +341,9 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
+					this.processedOps.length === 0
+						? undefined
+						: this.processedOps[0].sequenceNumber,
 			});
 		}
 	}
@@ -398,7 +399,9 @@ export class SerializedStateManager {
 			},
 			async () => {
 				if (!this.offlineLoadEnabled) {
-					throw new UsageError("Can't get pending local state unless offline load is enabled");
+					throw new UsageError(
+						"Can't get pending local state unless offline load is enabled",
+					);
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
@@ -421,7 +424,9 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
+					loadedGroupIdSnapshots: hasGroupIdSnapshots
+						? loadedGroupIdSnapshots
+						: undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					clientId,
@@ -520,7 +525,7 @@ export async function fetchISnapshot(
 			: {
 					id: snapshot.snapshotTree.id,
 					treeId: snapshot.snapshotTree.id,
-				};
+			  };
 
 	if (snapshot === undefined && specifiedVersion !== undefined) {
 		mc.logger.sendErrorEvent({

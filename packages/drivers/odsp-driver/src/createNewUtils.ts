@@ -18,10 +18,7 @@ import {
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {

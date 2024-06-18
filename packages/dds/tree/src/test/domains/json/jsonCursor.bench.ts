@@ -86,7 +86,11 @@ function bench(
 				before: () => {
 					const cloned = clone(json);
 					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
+					assert.notEqual(
+						cloned,
+						json,
+						"clone() must not return the same tree instance.",
+					);
 				},
 				benchmarkFn: () => {
 					clone(json);
@@ -99,7 +103,9 @@ function bench(
 				[
 					"MapCursor",
 					() =>
-						cursorForMapTreeNode(mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree))),
+						cursorForMapTreeNode(
+							mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
+						),
 				],
 				[
 					"object-forest Cursor",
@@ -130,7 +136,9 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy));
+						const forest = buildChunkedForest(
+							makeTreeChunker(schema, defaultSchemaPolicy),
+						);
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
@@ -190,10 +198,7 @@ const canada = generateCanada(
 	isInPerformanceTestingMode ? undefined : [2, 10],
 );
 
-function extractCoordinatesFromCanada(
-	cursor: ITreeCursor,
-	calculate: (x: number) => void,
-): void {
+function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number) => void): void {
 	cursor.enterField(Canada.SharedTreeFieldKey.features);
 	cursor.enterNode(0);
 	cursor.enterField(EmptyKey);
@@ -301,10 +306,7 @@ function extractAvgValsFromCitm(
 }
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
-	true,
-);
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
 const citm = isInPerformanceTestingMode
 	? generateCitmJson(2, 2500000)

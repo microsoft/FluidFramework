@@ -23,11 +23,8 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-import {
-	TreeShape,
-	UniformChunk,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type Context,
 	DefaultChangeFamily,

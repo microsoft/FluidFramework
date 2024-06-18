@@ -1,14 +1,4 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../../../biome.jsonc"],
-	"formatter": {
-		"lineWidth": 120
-	},
-	"javascript": {
-		"formatter": {
-			"jsxQuoteStyle": "single",
-			"trailingComma": "es5",
-			"quoteStyle": "single"
-		}
-	}
+	"extends": ["../../../biome.jsonc"]
 }
