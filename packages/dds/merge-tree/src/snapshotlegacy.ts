@@ -114,7 +114,7 @@ export class SnapshotLegacy {
 			segmentTexts: segs.map((seg) => seg.toJSONObject() as JsonSegmentSpecs),
 			attribution:
 				segsWithAttribution > 0
-					? attributionSerializer?.serializeAttributionCollections(segs as any)
+					? attributionSerializer?.serializeAttributionCollections(segs)
 					: undefined,
 		};
 	}

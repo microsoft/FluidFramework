@@ -62,7 +62,7 @@ export interface IAttributionCollectionSerializer {
 	/***/
 	serializeAttributionCollections(
 		segments: Iterable<{
-			attribution?: IAttributionCollection<AttributionKey>;
+			attribution?: IAttributionCollection<AttributionKey> | undefined;
 			cachedLength: number;
 		}>,
 	): SerializedAttributionCollection;

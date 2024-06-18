@@ -225,7 +225,7 @@ export interface IAttributionCollectionSerializer {
     populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
     // (undocumented)
     serializeAttributionCollections(segments: Iterable<{
-        attribution?: IAttributionCollection<AttributionKey>;
+        attribution?: IAttributionCollection<AttributionKey> | undefined;
         cachedLength: number;
     }>): SerializedAttributionCollection;
 }
