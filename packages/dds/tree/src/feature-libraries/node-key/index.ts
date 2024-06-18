@@ -11,4 +11,8 @@ export {
 	nodeKeyTreeIdentifier,
 } from "./nodeKey.js";
 export { NodeKeyIndex } from "./nodeKeyIndex.js";
-export { createNodeKeyManager, isStableNodeKey, type NodeKeyManager } from "./nodeKeyManager.js";
+export {
+	createNodeKeyManager,
+	isStableNodeKey,
+	type NodeKeyManager,
+} from "./nodeKeyManager.js";

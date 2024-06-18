@@ -43,11 +43,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
 				identifier,
-				LeafNodeSchema.create(
-					{ name: "intoTypedSchema" },
-					identifier,
-					innerSchema.leafValue,
-				),
+				LeafNodeSchema.create({ name: "intoTypedSchema" }, identifier, innerSchema.leafValue),
 			);
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
@@ -59,10 +55,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 				),
 			);
 		} else {
-			assert(
-				innerSchema instanceof ObjectNodeStoredSchema,
-				0x882 /* unsupported node kind */,
-			);
+			assert(innerSchema instanceof ObjectNodeStoredSchema, 0x882 /* unsupported node kind */);
 			const fields = new Map<string, FlexFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
 				fields.set(key, fieldSchemaFromStoredSchema(field, map));

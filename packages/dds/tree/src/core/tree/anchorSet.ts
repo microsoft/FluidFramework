@@ -355,7 +355,10 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		}
 
 		const path = this.anchorToPath.get(anchor);
-		assert(path !== undefined, 0x3a6 /* Cannot locate anchor which is not in this AnchorSet */);
+		assert(
+			path !== undefined,
+			0x3a6 /* Cannot locate anchor which is not in this AnchorSet */,
+		);
 		return path.status === Status.Alive ? path : undefined;
 	}
 
@@ -928,11 +931,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 					}
 				}
 			},
-			afterReplace(
-				newContentSource: FieldKey,
-				newContent: Range,
-				oldContent: FieldKey,
-			): void {
+			afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a7 /* Must be in a field in order to replace */,
@@ -1010,10 +1009,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 				}
 			},
 			enterNode(index: number): void {
-				assert(
-					this.parentField !== undefined,
-					0x3ab /* Must be in a field to enter node */,
-				);
+				assert(this.parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 
 				this.parent = {
 					parent: this.parent,
@@ -1175,7 +1171,10 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		super(1);
 	}
 
-	public on<K extends keyof AnchorEvents>(eventName: K, listener: AnchorEvents[K]): () => void {
+	public on<K extends keyof AnchorEvents>(
+		eventName: K,
+		listener: AnchorEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 

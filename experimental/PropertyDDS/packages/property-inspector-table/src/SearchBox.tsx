@@ -118,7 +118,8 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> = ({
 			return -1;
 		}
 	};
-	const changeResultEnabled = totalResults !== undefined && totalResults > 0 && !searchInProgress;
+	const changeResultEnabled =
+		totalResults !== undefined && totalResults > 0 && !searchInProgress;
 	const handlePrevious = () =>
 		onPrevious && changeResultEnabled && onPrevious(getNewResultIndex(-1));
 	const handleNext = () => onNext && changeResultEnabled && onNext(getNewResultIndex(1));
@@ -155,8 +156,7 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> = ({
 								className={classNames(
 									classes.alignedItem,
 									{
-										[classes.backGroundToggle]:
-											totalResults && !searchInProgress,
+										[classes.backGroundToggle]: totalResults && !searchInProgress,
 									},
 									{ [classes.hoverableItem]: totalResults && !searchInProgress },
 								)}
@@ -175,8 +175,7 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> = ({
 								className={classNames(
 									classes.alignedItem,
 									{
-										[classes.backGroundToggle]:
-											totalResults && !searchInProgress,
+										[classes.backGroundToggle]: totalResults && !searchInProgress,
 									},
 									{ [classes.hoverableItem]: totalResults && !searchInProgress },
 								)}

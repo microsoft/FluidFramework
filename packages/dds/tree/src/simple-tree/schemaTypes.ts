@@ -8,10 +8,10 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type InternalFlexListTypes,
 	type LazyItem,
 	type NodeKeyManager,
 	isLazy,
+	type FlexListToUnion,
 } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -266,7 +266,9 @@ export interface FieldProps {
 /**
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
-export type ContextualFieldProvider = (context: NodeKeyManager) => InsertableContent | undefined;
+export type ContextualFieldProvider = (
+	context: NodeKeyManager,
+) => InsertableContent | undefined;
 /**
  * A {@link FieldProvider} which can produce its content in a vacuum
  */
@@ -278,7 +280,9 @@ export type FieldProvider = ContextualFieldProvider | ConstantFieldProvider;
 /**
  * Returns true if the given {@link FieldProvider} is a {@link ConstantFieldProvider}
  */
-export function isConstant(fieldProvider: FieldProvider): fieldProvider is ConstantFieldProvider {
+export function isConstant(
+	fieldProvider: FieldProvider,
+): fieldProvider is ConstantFieldProvider {
 	return fieldProvider.length === 0;
 }
 
@@ -374,7 +378,9 @@ export class FieldSchema<
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
-	return schema instanceof FieldSchema ? schema : createFieldSchema(FieldKind.Required, schema);
+	return schema instanceof FieldSchema
+		? schema
+		: createFieldSchema(FieldKind.Required, schema);
 }
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
@@ -383,7 +389,9 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  */
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
+export function normalizeAllowedTypes(
+	types: ImplicitAllowedTypes,
+): ReadonlySet<TreeNodeSchema> {
 	const normalized = new Set<TreeNodeSchema>();
 	if (isReadonlyArray(types)) {
 		for (const lazyType of types) {
@@ -429,8 +437,8 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 	TSchema extends FieldSchema<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
-		? TreeNodeFromImplicitAllowedTypes<TSchema>
-		: unknown;
+			? TreeNodeFromImplicitAllowedTypes<TSchema>
+			: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
@@ -441,8 +449,8 @@ export type InsertableTreeFieldFromImplicitField<
 > = TSchema extends FieldSchema<infer Kind, infer Types>
 	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: TSchema extends ImplicitAllowedTypes
-	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-	: unknown;
+		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		: unknown;
 
 /**
  * Suitable for output.
@@ -464,8 +472,8 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
-	: unknown;
+		? NodeFromSchema<FlexListToUnion<TSchema>>
+		: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
@@ -476,8 +484,8 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-	? InsertableTypedNode<InternalFlexListTypes.FlexListToUnion<TSchema>>
-	: never;
+		? InsertableTypedNode<FlexListToUnion<TSchema>>
+		: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.

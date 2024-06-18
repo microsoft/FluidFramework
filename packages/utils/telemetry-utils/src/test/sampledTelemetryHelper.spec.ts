@@ -11,7 +11,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 
-import { SampledTelemetryHelper, type ITelemetryEventMetrics } from "../sampledTelemetryHelper.js";
+import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,

@@ -11,7 +11,10 @@ export function supportsDataVirtualization(provider: ITestObjectProvider) {
 	return provider.driver.type === "local" || provider.driver.type === "odsp";
 }
 
-export function clearCacheIfOdsp(provider: ITestObjectProvider, persistedCache: TestSnapshotCache) {
+export function clearCacheIfOdsp(
+	provider: ITestObjectProvider,
+	persistedCache: TestSnapshotCache,
+) {
 	if (provider.driver.type === "odsp") {
 		persistedCache.clearCache();
 	}

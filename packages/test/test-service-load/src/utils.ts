@@ -175,10 +175,16 @@ export async function initialize(
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
+	const optionsOverride = getOptionOverride(
+		testConfig,
+		testDriver.type,
+		testDriver.endpointName,
+	);
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
-	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
+	const containerOptions = random.pick(
+		generateRuntimeOptions(seed, optionsOverride?.container),
+	);
 	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
