@@ -78,8 +78,12 @@ export function shouldAllowGcSweep(
 /**
  * Sorts the given GC state as per the id of the GC nodes. It also sorts the outbound routes array of each node.
  */
-export function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
-	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
+export function generateSortedGCState(
+	gcState: IGarbageCollectionState,
+): IGarbageCollectionState {
+	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(
+		gcState.gcNodes,
+	);
 	sortableArray.sort(([a], [b]) => a.localeCompare(b));
 	const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
 	for (const [nodeId, nodeData] of sortableArray) {

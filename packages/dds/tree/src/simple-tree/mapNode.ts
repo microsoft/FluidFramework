@@ -145,10 +145,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = getFlexNode(this);
 		for (const key of node.keys()) {
-			yield [
-				key,
-				getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
-			];
+			yield [key, getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {

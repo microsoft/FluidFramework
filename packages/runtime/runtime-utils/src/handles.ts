@@ -85,7 +85,9 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
  * Type erase IFluidHandleInternal for use with {@link @fluidframework/core-interfaces#fluidHandleSymbol}.
  * @alpha
  */
-export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
+export function toFluidHandleErased<T>(
+	handle: IFluidHandleInternal<T>,
+): IFluidHandleErased<T> {
 	return handle as unknown as IFluidHandleErased<T>;
 }
 

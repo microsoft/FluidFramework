@@ -74,10 +74,7 @@ describe("PathHelper", function () {
 
 		it("should work for combinations of arrays and paths separated by dots", function () {
 			let types = [];
-			expect(PathHelper.tokenizePathString("map[test]", types)).to.deep.equal([
-				"map",
-				"test",
-			]);
+			expect(PathHelper.tokenizePathString("map[test]", types)).to.deep.equal(["map", "test"]);
 			expect(types).to.deep.equal([
 				PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
 				PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
@@ -92,9 +89,9 @@ describe("PathHelper", function () {
 				PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
 			]);
 
-			expect(
-				PathHelper.tokenizePathString("map[test].parameter[test2]", types),
-			).to.deep.equal(["map", "test", "parameter", "test2"]);
+			expect(PathHelper.tokenizePathString("map[test].parameter[test2]", types)).to.deep.equal(
+				["map", "test", "parameter", "test2"],
+			);
 			expect(types).to.deep.equal([
 				PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN,
 				PathHelper.TOKEN_TYPES.ARRAY_TOKEN,
@@ -395,9 +392,7 @@ describe("PathHelper", function () {
 		});
 
 		it("should work for paths with multiple occurrences of the test string", function () {
-			expect(PathHelper.unquotePathSegment('"test\\"property\\""')).to.equal(
-				'test"property"',
-			);
+			expect(PathHelper.unquotePathSegment('"test\\"property\\""')).to.equal('test"property"');
 			expect(PathHelper.unquotePathSegment('"test\\\\property\\\\"')).to.equal(
 				"test\\property\\",
 			);
@@ -443,9 +438,7 @@ describe("PathHelper", function () {
 
 		it("should not modify simple paths", function () {
 			expect(PathHelper.convertAbsolutePathToCanonical("a.b.c.d")).to.equal("a.b.c.d");
-			expect(PathHelper.convertAbsolutePathToCanonical("test_string")).to.equal(
-				"test_string",
-			);
+			expect(PathHelper.convertAbsolutePathToCanonical("test_string")).to.equal("test_string");
 		});
 	});
 

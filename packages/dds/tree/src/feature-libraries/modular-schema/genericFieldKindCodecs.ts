@@ -5,7 +5,10 @@
 
 import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
-import { type EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
+import {
+	type EncodedGenericChange,
+	EncodedGenericChangeset,
+} from "./genericFieldKindFormat.js";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 

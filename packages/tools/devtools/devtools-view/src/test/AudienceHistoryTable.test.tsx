@@ -9,7 +9,10 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 
-import { AudienceHistoryTable, type TransformedAudienceHistoryData } from "../components/index.js";
+import {
+	AudienceHistoryTable,
+	type TransformedAudienceHistoryData,
+} from "../components/index.js";
 
 describe("AudienceHistoryTable component tests", () => {
 	async function getTableBodyRows(): Promise<HTMLCollection> {
