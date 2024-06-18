@@ -75,7 +75,10 @@ const deletionHandler = (rowData: IInspectorRow) => {
 	return (parent as any).getProperty().getRoot().getWorkspace().commit();
 };
 
-const copyHandler = (rowData: IInspectorRow, ref: React.MutableRefObject<HTMLTextAreaElement>) => {
+const copyHandler = (
+	rowData: IInspectorRow,
+	ref: React.MutableRefObject<HTMLTextAreaElement>,
+) => {
 	const prop = rowData.parent! as BaseProperty;
 	let path = prop.getAbsolutePath();
 	path +=
@@ -165,9 +168,7 @@ const NameCell: React.FunctionComponent<
 								? { handler: () => deletionHandler(rowData) }
 								: undefined,
 						edit:
-							!readOnly && rowData.isReference
-								? { handler: editReferenceHandler }
-								: undefined,
+							!readOnly && rowData.isReference ? { handler: editReferenceHandler } : undefined,
 					}}
 					modalTextParameters={{
 						modalCallingSource: "property",

@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import {
+	IMatrixConsumer,
+	IMatrixProducer,
+	IMatrixReader,
+	IMatrixWriter,
+} from "@tiny-calc/nano";
 
 import { SharedMatrix } from "../index.js";
 
@@ -193,7 +198,7 @@ export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCoun
 			(r & 1) === 0
 				? matrix.rowCount
 				: // eslint-disable-next-line no-bitwise
-				  r >> 1,
+					r >> 1,
 			1,
 		);
 	}
@@ -204,7 +209,7 @@ export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCoun
 			(c & 1) === 0
 				? matrix.colCount
 				: // eslint-disable-next-line no-bitwise
-				  c >> 1,
+					c >> 1,
 			1,
 		);
 	}
