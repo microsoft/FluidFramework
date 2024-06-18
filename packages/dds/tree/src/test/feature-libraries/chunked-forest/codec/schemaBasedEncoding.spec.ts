@@ -58,8 +58,7 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createIdCompressor } from "../../../../../../../runtime/id-compressor/dist/idCompressor.js";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);

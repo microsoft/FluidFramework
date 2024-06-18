@@ -2948,6 +2948,53 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{ foo: "a" }, "c", "b"]);
 			});
 
+			it("a change can depend on the existence of a node that is built in a prior change whose constraint was violated", () => {
+				const tree = makeTreeFromJson([]);
+				const rootSequence = tree.editor.sequenceField(rootField);
+				rootSequence.insert(0, cursorForJsonableTreeNode({ type: jsonObject.name }));
+				const optional = tree.editor.optionalField({
+					parent: rootNode,
+					field: brand("foo"),
+				});
+				optional.set(
+					cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" }),
+					true,
+				);
+
+				const tree2 = tree.fork();
+
+				// Remove foo
+				optional.set(undefined, false);
+
+				tree2.transaction.start();
+				tree2.editor.addNodeExistsConstraint({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				tree2.editor
+					.sequenceField({ parent: rootNode, field: brand("bar") })
+					.insert(0, singleJsonCursor({ baz: 42 }));
+				tree2.transaction.commit();
+				expectJsonTree([tree2], [{ foo: "x", bar: { baz: 42 } }]);
+				// This edit require the node `{ baz: 42 }` to have been built
+				tree2.editor
+					.optionalField({
+						parent: {
+							parent: rootNode,
+							parentField: brand("bar"),
+							parentIndex: 0,
+						},
+						field: brand("baz"),
+					})
+					.set(singleJsonCursor(43), false);
+
+				tree.merge(tree2, false);
+				tree2.rebaseOnto(tree);
+
+				expectJsonTree([tree, tree2], [{}]);
+			});
+
 			// TODO: This doesn't update the constraint properly yet because
 			// rebaseChild isn't called inside of handleCurrAttach
 			it.skip("transaction dropped when node can't be inserted", () => {

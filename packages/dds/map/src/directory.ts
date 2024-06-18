@@ -2217,10 +2217,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				assert(
-					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
-					0x331 /* Unexpected pending message received */,
-				);
+				if (pendingKeyMessageIds[0] !== localOpMetadata.pendingMessageId) {
+					// TODO: AB#7742: Hitting this block indicates that the pending message Id received
+					// is not consistent with the "next" local op
+					this.logger.sendTelemetryEvent({
+						eventName: "unexpectedPendingMessage",
+						expectedPendingMessage: pendingKeyMessageIds[0],
+						actualPendingMessage: localOpMetadata.pendingMessageId,
+						expectedPendingMessagesLength: pendingKeyMessageIds.length,
+					});
+				}
 				pendingKeyMessageIds.shift();
 				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);

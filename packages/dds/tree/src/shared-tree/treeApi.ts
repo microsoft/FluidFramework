@@ -319,6 +319,10 @@ export interface RunTransaction {
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
+ * @remarks
+ * This type should only be used via the public `Tree` export.
+ * @privateRemarks
+ * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
  * @public
  */
 export interface TreeApi extends TreeNodeApi {

@@ -74,7 +74,7 @@ export class ContainerStorageAdapter
 	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param shouldSummarizeProtocolTree  - Enforce uploading a protocol summary regardless of the service's policy.
+	 * @param enableSummarizeProtocolTree  - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
 	 */
 	public constructor(
 		// eslint-disable-next-line import/no-deprecated
@@ -86,10 +86,9 @@ export class ContainerStorageAdapter
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		shouldSummarizeProtocolTree: boolean | undefined,
+		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		this._summarizeProtocolTree = shouldSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
@@ -120,8 +119,21 @@ export class ContainerStorageAdapter
 			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
 			// based on the response received from the service after connection is established.
 			() => {
-				this._summarizeProtocolTree =
-					this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false;
+				// Determine whether or not container should upload the protocol summary along with the summary.
+				// This is determined based on what value is set for serve policy's summariProtocolTree value or the enableSummarizeProtocolTree
+				// retrievd from the loader options or monitoring context config.
+				const shouldSummarizeProtocolTree =
+					service.policies?.summarizeProtocolTree ??
+					this.enableSummarizeProtocolTree ??
+					false;
+
+				if (this._summarizeProtocolTree !== shouldSummarizeProtocolTree) {
+					this.logger.sendTelemetryEvent({
+						eventName: "isSummarizeProtocolTreeEnabled",
+						details: { value: shouldSummarizeProtocolTree },
+					});
+				}
+				this._summarizeProtocolTree = shouldSummarizeProtocolTree;
 				return this._summarizeProtocolTree;
 			},
 		);

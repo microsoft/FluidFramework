@@ -6,7 +6,7 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type WithType, type } from "./schemaTypes.js";
+import { NodeKind, type TreeNodeSchema, type WithType, typeNameSymbol } from "./schemaTypes.js";
 import {
 	type FlexTreeNode,
 	type MapTreeNode,
@@ -85,11 +85,11 @@ export abstract class TreeNode implements WithType {
 	readonly #brand!: unknown;
 
 	/**
-	 * {@inheritdoc "type"}
+	 * Adds a type symbol for stronger typing.
 	 * @privateRemarks
 	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
 	 */
-	public abstract get [type](): string;
+	public abstract get [typeNameSymbol](): string;
 
 	/**
 	 * Provides `instanceof` support for testing if a value is a `TreeNode`.

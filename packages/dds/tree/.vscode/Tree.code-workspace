@@ -10,6 +10,8 @@
 		}
 	],
 	"settings": {
-		"search.followSymlinks": false
+		"search.followSymlinks": false,
+		"typescript.preferences.autoImportFileExcludePatterns": ["**/dist/**"],
+		"typescript.preferences.importModuleSpecifier": "project-relative"
 	}
 }

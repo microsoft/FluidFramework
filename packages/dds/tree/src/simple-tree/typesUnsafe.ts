@@ -4,7 +4,7 @@
  */
 
 import type { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
-import type { RestrictiveReadonlyRecord } from "../util/index.js";
+import type { RestrictiveReadonlyRecord, _InlineTrick } from "../util/index.js";
 
 import type {
 	AllowedTypes,
@@ -35,7 +35,9 @@ import type { TreeNode, Unhydrated } from "./types.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
- * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
+ * {@link Unenforced} version of `ObjectFromSchemaRecord`.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type ObjectFromSchemaRecordUnsafe<
@@ -46,6 +48,8 @@ export type ObjectFromSchemaRecordUnsafe<
 
 /**
  * {@link Unenforced} version of {@link TreeObjectNode}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type TreeObjectNodeUnsafe<
@@ -55,6 +59,8 @@ export type TreeObjectNodeUnsafe<
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
@@ -66,6 +72,8 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
@@ -80,6 +88,8 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
@@ -90,14 +100,19 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
-export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
+export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = [
 	| Unhydrated<NodeFromSchemaUnsafe<T>>
-	| (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never);
+	| (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never),
+][_InlineTrick];
 
 /**
  * {@link Unenforced} version of {@link NodeFromSchema}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
@@ -110,6 +125,8 @@ export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T exten
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
@@ -123,6 +140,8 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T exte
 
 /**
  * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
@@ -134,6 +153,8 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 
 /**
  * {@link Unenforced} version of {@link TreeMapNode}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
@@ -151,7 +172,9 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 }
 
 /**
- * {@link Unenforced} version of {@link FieldHasDefault}.
+ * {@link Unenforced} version of `FieldHasDefault`.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
@@ -163,7 +186,9 @@ export type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> =
 		: false;
 
 /**
- * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
+ * {@link Unenforced} version of `InsertableObjectFromSchemaRecord`.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type InsertableObjectFromSchemaRecordUnsafe<
@@ -183,6 +208,8 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeFieldFromImplicitField}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
@@ -193,6 +220,8 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
+ * @remarks
+ * Do note use this type directly: its only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @public
  */
 export interface FieldSchemaUnsafe<
