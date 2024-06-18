@@ -58,8 +58,6 @@ function createBetaWarning(apiItem) {
  *
  * @remarks Lays out the content in the following manner:
  *
- * 1. Heading (if not the document-root item, in which case headings are handled specially by document-level rendering)
- *
  * 1. Summary (if any)
  *
  * 1. Deprecation notice (if any)
