@@ -21,7 +21,9 @@ import {
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
-type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
+type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & {
+	clientId?: string | undefined;
+};
 
 enum RuntimeLayer {
 	dataStoreRuntime = "dataStoreRuntime",
@@ -303,11 +305,7 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		for (const client of clients) {
-			client[runtime].submitSignal(
-				"Test Signal Type",
-				"Test Signal Content",
-				client.clientId,
-			);
+			client[runtime].submitSignal("Test Signal Type", "Test Signal Content", client.clientId);
 			await waitForTargetedSignal(
 				client[runtime],
 				clients.filter((c) => c !== client).map((c) => c[runtime]),
@@ -323,7 +321,10 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 		});
 	}
 
-	function assertSignalProperties(message: IInboundSignalMessage, clientId: string | undefined) {
+	function assertSignalProperties(
+		message: IInboundSignalMessage,
+		clientId: string | undefined,
+	) {
 		assert.equal(message.type, "Test Signal Type", "signal type mismatch");
 		assert.equal(message.content, "Test Signal Content", "signal content mismatch");
 		assert.equal(message.targetClientId, clientId, "Signal should be targeted to this client");
