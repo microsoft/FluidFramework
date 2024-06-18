@@ -46,6 +46,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { ITelemetryProperties } from "./TelemetryProperties.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -158,7 +159,7 @@ export abstract class SharedObjectCore<
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
 		);
-		const opProcessingHelper = new SampledTelemetryHelper(
+		const opProcessingHelper = new SampledTelemetryHelper<ITelemetryProperties>(
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
@@ -171,7 +172,7 @@ export abstract class SharedObjectCore<
 				["remote", { localOp: false }],
 			]),
 		);
-		const callbacksHelper = new SampledTelemetryHelper(
+		const callbacksHelper = new SampledTelemetryHelper<ITelemetryProperties>(
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
@@ -536,8 +537,10 @@ export abstract class SharedObjectCore<
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			() => {
+			(event) => {
 				this.processCore(message, local, localOpMetadata);
+				event.incrementMetric({
+					sequenceNumber: message.sequenceNumber - message.referenceSequenceNumber,
 			},
 			local ? "local" : "remote",
 		);
