@@ -11,7 +11,10 @@ import { fail } from "../util/index.js";
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { NodeFromSchema, NodeKind, TreeNodeSchemaClass } from "./schemaTypes.js";
 import type { TreeNode } from "./types.js";
-import type { InsertableObjectFromSchemaRecord, ObjectFromSchemaRecord } from "./objectNode.js";
+import type {
+	InsertableObjectFromSchemaRecord,
+	ObjectFromSchemaRecord,
+} from "./objectNode.js";
 
 /**
  * Create a schema for a node with no state.

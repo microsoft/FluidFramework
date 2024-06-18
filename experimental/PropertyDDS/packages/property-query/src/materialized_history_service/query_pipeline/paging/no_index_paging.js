@@ -44,9 +44,7 @@ class NoIndexPaging {
 
 		if (limitedPaths) {
 			let standardizedLimitedPaths = limitedPaths.map((lp) =>
-				PathHelper.tokenizePathString(lp)
-					.map(PathHelper.quotePathSegmentIfNeeded)
-					.join("."),
+				PathHelper.tokenizePathString(lp).map(PathHelper.quotePathSegmentIfNeeded).join("."),
 			);
 
 			memIndex = memIndex.filter((mi) => standardizedLimitedPaths.includes(mi.path));
@@ -60,10 +58,7 @@ class NoIndexPaging {
 		// Paging yielded some paths, yay.  Return only the paging items
 		if (partialCheckoutPaths.length > 0) {
 			return {
-				changeSet: PropertyUtils.getFilteredChangeSetByPaths(
-					changeSet,
-					partialCheckoutPaths,
-				),
+				changeSet: PropertyUtils.getFilteredChangeSetByPaths(changeSet, partialCheckoutPaths),
 				queryPaths: partialCheckoutPaths,
 			};
 		} else {
@@ -95,10 +90,7 @@ class NoIndexPaging {
 		let counter = 0;
 
 		const _getPath = (context, length) =>
-			context._parentStack
-				.slice(0, length)
-				.map(PathHelper.quotePathSegmentIfNeeded)
-				.join(".");
+			context._parentStack.slice(0, length).map(PathHelper.quotePathSegmentIfNeeded).join(".");
 
 		return new Promise((resolve, reject) => {
 			let idx = {};
@@ -121,13 +113,7 @@ class NoIndexPaging {
 							return cb("break");
 						}
 
-						if (
-							ScanTraversalUtils.isItemContext(
-								tokenizedPagingPath,
-								depthLimit,
-								context,
-							)
-						) {
+						if (ScanTraversalUtils.isItemContext(tokenizedPagingPath, depthLimit, context)) {
 							if (!idx[_getPath(context, context._parentStack.length)]) {
 								idx[_getPath(context, context._parentStack.length)] = Array(
 									tokenizedOrderClauses.length,
@@ -157,12 +143,9 @@ class NoIndexPaging {
 								return undefined;
 							}
 
-							idx[
-								_getPath(
-									context,
-									-1 * tokenizedOrderClauses[orderClauseIndex].by.length,
-								)
-							][orderClauseIndex] = {
+							idx[_getPath(context, -1 * tokenizedOrderClauses[orderClauseIndex].by.length)][
+								orderClauseIndex
+							] = {
 								value: context.getNestedChangeSet(),
 								typeId: context.getTypeid(),
 							};
@@ -201,7 +184,12 @@ class NoIndexPaging {
 	 * @param {Object} context - Traversal context
 	 * @return {Number} - Whether this represent the property to sort upon
 	 */
-	static _getOrderClauseIndex(tokenizedPagingPath, tokenizedOrderClauses, depthLimit, context) {
+	static _getOrderClauseIndex(
+		tokenizedPagingPath,
+		tokenizedOrderClauses,
+		depthLimit,
+		context,
+	) {
 		return tokenizedOrderClauses.findIndex((oc) => {
 			const expectedStackLength = tokenizedPagingPath.length + oc.by.length + depthLimit;
 			if (context._parentStack.length > expectedStackLength) {

@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerErrorTypes,
+	IContainer,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
@@ -166,70 +169,74 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("SharedCounter orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedCounter } = apis.dds;
+describeCompat(
+	"SharedCounter orderSequentially",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedCounter } = apis.dds;
 
-	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
-		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
-	};
-
-	let provider: ITestObjectProvider;
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-	});
-
-	let container: IContainer;
-	let dataObject: ITestFluidObject;
-	let dataStore: ITestFluidObject;
-	let sharedCounter: SharedCounter;
-	let containerRuntime: ContainerRuntime;
-
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-		getRawConfig: (name: string): ConfigTypes => settings[name],
-	});
-	const errorMessage = "callback failure";
-
-	beforeEach("setup", async () => {
-		const configWithFeatureGates = {
-			...testContainerConfig,
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.ContainerRuntime.EnableRollback": true,
-				}),
-			},
+		const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
 		};
-		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
-		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
-	});
 
-	itExpects(
-		"Closes container when rollback fails",
-		[
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "RollbackError: rollback not supported",
-				errorType: ContainerErrorTypes.dataProcessingError,
+		let provider: ITestObjectProvider;
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+		});
+
+		let container: IContainer;
+		let dataObject: ITestFluidObject;
+		let dataStore: ITestFluidObject;
+		let sharedCounter: SharedCounter;
+		let containerRuntime: ContainerRuntime;
+
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		const errorMessage = "callback failure";
+
+		beforeEach("setup", async () => {
+			const configWithFeatureGates = {
+				...testContainerConfig,
+				loaderProps: {
+					configProvider: configProvider({
+						"Fluid.ContainerRuntime.EnableRollback": true,
+					}),
+				},
+			};
+			container = await provider.makeTestContainer(configWithFeatureGates);
+			dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
+			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+		});
+
+		itExpects(
+			"Closes container when rollback fails",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "RollbackError: rollback not supported",
+					errorType: ContainerErrorTypes.dataProcessingError,
+				},
+			],
+			async () => {
+				let error: Error | undefined;
+				try {
+					containerRuntime.orderSequentially(() => {
+						sharedCounter.increment(1);
+						throw new Error(errorMessage);
+					});
+				} catch (err) {
+					error = err as Error;
+				}
+
+				assert.notEqual(error, undefined, "No error");
+				assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
+				assert.equal(container.closed, true);
 			},
-		],
-		async () => {
-			let error: Error | undefined;
-			try {
-				containerRuntime.orderSequentially(() => {
-					sharedCounter.increment(1);
-					throw new Error(errorMessage);
-				});
-			} catch (err) {
-				error = err as Error;
-			}
-
-			assert.notEqual(error, undefined, "No error");
-			assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
-			assert.equal(container.closed, true);
-		},
-	);
-});
+		);
+	},
+);
