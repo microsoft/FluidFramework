@@ -6,7 +6,12 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type WithType, typeNameSymbol } from "./schemaTypes.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	type WithType,
+	typeNameSymbol,
+} from "./schemaTypes.js";
 import {
 	type FlexTreeNode,
 	type MapTreeNode,

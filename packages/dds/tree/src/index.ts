@@ -299,7 +299,6 @@ export {
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
 	type TreeNodeApi,
 	type TreeNodeSchemaCore,
-
 	// Types not really intended for public use, but used in inferred types exposed in the public API.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -311,7 +310,6 @@ export {
 	type TreeMapNodeUnsafe,
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
-
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	// experimental @internal APIs:
