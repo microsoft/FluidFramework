@@ -294,7 +294,6 @@ export {
 	type SchemaCompatibilityStatus,
 	type FieldProps,
 	type InternalTreeNode,
-
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -315,13 +314,11 @@ export {
 
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
-
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -371,7 +368,6 @@ export {
 	type TypedFields,
 	type UnbrandedName,
 	type EmptyObject,
-
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
 	type Required,

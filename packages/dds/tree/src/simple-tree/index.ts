@@ -80,7 +80,11 @@ export {
 // TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
 // See docs on TreeNode for more details.
 export type { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent, type TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	TreeArrayNode,
+	IterableTreeArrayContent,
+	type TreeArrayNodeBase,
+} from "./arrayNode.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,

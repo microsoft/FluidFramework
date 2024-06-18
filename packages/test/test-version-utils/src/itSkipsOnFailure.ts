@@ -73,16 +73,17 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
  *
  * @internal
  */
-export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType = (
-	name: string,
-	orderedExpectedEvents: ExpectedEvents,
-	skippedDrivers: TestDriverTypes[],
-	test: Mocha.AsyncFunc,
-): Mocha.Test =>
-	it(
-		name,
-		createSkippedTestsWithDriverType(
-			skippedDrivers,
-			createExpectsTest(orderedExpectedEvents, test),
-		),
-	);
+export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType =
+	(
+		name: string,
+		orderedExpectedEvents: ExpectedEvents,
+		skippedDrivers: TestDriverTypes[],
+		test: Mocha.AsyncFunc,
+	): Mocha.Test =>
+		it(
+			name,
+			createSkippedTestsWithDriverType(
+				skippedDrivers,
+				createExpectsTest(orderedExpectedEvents, test),
+			),
+		);

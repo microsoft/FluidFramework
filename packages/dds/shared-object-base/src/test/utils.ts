@@ -36,7 +36,11 @@ export class MockHandleContext implements IFluidHandleContext {
  * Creates a Jsonable object graph of a specified breadth/depth.  The 'createLeaf' callback
  * is a factory that is invoked to create the leaves of the graph.
  */
-export function makeJson<T>(breadth: number, depth: number, createLeaf: () => Serializable<T>) {
+export function makeJson<T>(
+	breadth: number,
+	depth: number,
+	createLeaf: () => Serializable<T>,
+) {
 	let depthInternal = depth;
 	if (--depthInternal === 0) {
 		return createLeaf();

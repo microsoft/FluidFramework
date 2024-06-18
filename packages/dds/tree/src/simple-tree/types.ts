@@ -107,10 +107,11 @@ export abstract class TreeNode implements WithType {
 	 * @privateRemarks
 	 * Despite type-only export, this functionality is available outside the package since it is inherited by subclasses.
 	 */
-	public static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(
-		this: TSchema,
-		value: unknown,
-	): value is InstanceType<TSchema>;
+	public static [Symbol.hasInstance]<
+		TSchema extends abstract new (
+			...args: any[]
+		) => TreeNode,
+	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
 
 	public static [Symbol.hasInstance](this: { prototype: object }, value: unknown): boolean {
 		const schema = tryGetSchema(value);
@@ -256,7 +257,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: FlexTreeNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
+		const node: FlexTreeNode = isFlexTreeNode(input)
+			? input
+			: schema.buildRawNode(this, input);
 		assert(
 			tryGetSimpleNodeSchema(node.schema) === schema,
 			0x83b /* building node with wrong schema */,
@@ -278,7 +281,8 @@ markEager(TreeNodeValid);
  * A {@link FlexTreeNode}. Includes {@link RawTreeNode}s.
  * @public
  */
-export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
+export interface InternalTreeNode
+	extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
 
 export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
 	assert(isFlexTreeNode(node), 0x963 /* Invalid InternalTreeNode */);
