@@ -28,7 +28,7 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 			: {
 					clientId: this._currentClientId,
 					client: this.getMember(this._currentClientId),
-			  };
+				};
 	}
 
 	public setCurrentClientId(clientId: string): void {

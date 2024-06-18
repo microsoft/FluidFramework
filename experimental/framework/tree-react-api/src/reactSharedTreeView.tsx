@@ -315,9 +315,9 @@ function TreeErrorComponent({
 		return (
 			<div>
 				<div>
-					Document is incompatible with current version of the application, but the
-					document format can be updated. This may prevent other versions of the
-					application from opening this document.
+					Document is incompatible with current version of the application, but the document
+					format can be updated. This may prevent other versions of the application from
+					opening this document.
 				</div>
 				<button onClick={upgradeSchema}>Upgrade</button>;
 			</div>
@@ -326,8 +326,8 @@ function TreeErrorComponent({
 		return (
 			<div>
 				Document is incompatible with current version of the application, and the document
-				format cannot be updated. The document is likely from a newer or otherwise
-				incompatible version of the application, or a different application.
+				format cannot be updated. The document is likely from a newer or otherwise incompatible
+				version of the application, or a different application.
 			</div>
 		);
 	}

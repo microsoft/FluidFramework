@@ -47,7 +47,10 @@ export class OdspUrlResolver implements IUrlResolver {
 		return undefined;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		throw new Error("Not implemented");
 	}
 }
@@ -104,7 +107,9 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
 	}
 }
 
-async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlParts | undefined> {
+async function initializeFluidOfficeOrOneNote(
+	urlSource: URL,
+): Promise<IOdspUrlParts | undefined> {
 	const pathname = urlSource.pathname;
 	const siteDriveItemMatch = pathname.match(
 		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/,
@@ -122,7 +127,9 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 	const storageType = decodedSite.split(":")[0];
 	const expectedStorageType = "spo"; // Only support spo for now
 	if (storageType !== expectedStorageType) {
-		throw new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
+		throw new Error(
+			`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`,
+		);
 	}
 
 	// Since we have the drive and item, only take the host ignore the rest

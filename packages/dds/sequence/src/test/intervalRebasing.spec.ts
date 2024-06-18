@@ -281,7 +281,10 @@ describe("interval rebasing", () => {
 		const B = await loadClient(containerRuntimeFactory, A, "B");
 		B.sharedString.removeRange(0, 1);
 		const collection = A.sharedString.getIntervalCollection("comments");
-		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		collection.add({
+			start: { pos: 1, side: Side.After },
+			end: { pos: 0, side: Side.Before },
+		});
 		A.containerRuntime.connected = false;
 		containerRuntimeFactory.processAllMessages();
 		B.sharedString.insertText(0, "8");
