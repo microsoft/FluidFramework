@@ -164,39 +164,147 @@ export type FullyReadonly<T> = {
 };
 
 /**
- * Recurses T applying {@link JsonDeserialized} filter up to RecurseLimit times.
+ * Replaces any instance where a type T recurses into itself or a portion of
+ * itself with TReplacement.
  *
  * @beta
  */
-export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit> = RecurseLimit extends 10
-	? JsonDeserializedImpl<T, TReplaced, 9>
-	: RecurseLimit extends 9
-	? JsonDeserializedImpl<T, TReplaced, 8>
-	: RecurseLimit extends 8
-	? JsonDeserializedImpl<T, TReplaced, 7>
-	: RecurseLimit extends 7
-	? JsonDeserializedImpl<T, TReplaced, 6>
-	: RecurseLimit extends 6
-	? JsonDeserializedImpl<T, TReplaced, 5>
-	: RecurseLimit extends 5
-	? JsonDeserializedImpl<T, TReplaced, 4>
-	: RecurseLimit extends 4
-	? JsonDeserializedImpl<T, TReplaced, 3>
-	: RecurseLimit extends 3
-	? JsonDeserializedImpl<T, TReplaced, 2>
-	: RecurseLimit extends 2
-	? JsonDeserializedImpl<T, TReplaced, 1>
-	: RecurseLimit extends 1
-	? JsonDeserializedImpl<T, TReplaced, 0>
-	: JsonTypeWith<TReplaced>;
+export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<
+	T,
+	TReplacement,
+	never
+>;
 
 /**
- * Implementation of {@link JsonDeserialized}.
+ * Implementation for {@link ReplaceRecursionWith}
+ *
+ * @beta
  */
-export type JsonDeserializedImpl<
+export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
+	/* test for recursion */ T extends TAncestorTypes
+		? /* recursion => use replacement */ TReplacement
+		: T extends object
+		? // eslint-disable-next-line @typescript-eslint/ban-types
+		  /* test for function */ T extends Function
+			? /* function => */ T
+			: /* property bag => */ {
+					[K in keyof T]: ReplaceRecursionWithImpl<
+						T[K],
+						TReplacement,
+						TAncestorTypes | T
+					>;
+			  }
+		: /* non-object => T as is */ T;
+
+/**
+ * Basic test for type equality ignoring differentiation between:
+ * - `any` versus `unknown`
+ * - `object` versus `{}`
+ *
+ * @beta
+ */
+export type IsSameType<T, U> = [T] extends [U] ? ([U] extends [T] ? true : false) : false;
+
+/**
+ * Test for non-public properties (class instance type)
+ * Compare original (unprocessed) to filtered case that has `any` where
+ * recursing.
+ *
+ * @beta
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type HasNonPublicProperties<T> = IsSameType<T, ReplaceRecursionWith<T, any>>;
+
+/**
+ * Sentinel type for use when marking points of recursion (in a recursive type).
+ * Type is expected to be unique, though no lengths is taken to ensure that.
+ *
+ * @beta
+ */
+export interface RecursionMarker {
+	"recursion here": "recursion here";
+}
+
+/**
+ * Type resulting from {@link JsonDeserialized} use given a class with
+ * non-public properties.
+ *
+ * @privateRemarks type is used over interface; so inspection of type
+ * result can be more informative than just the type name.
+ *
+ * @beta
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type DeserializationErrorPerNonPublicProperties = {
+	"deserialization error": "non-public properties are not supported";
+};
+
+/**
+ * Outer implementation of {@link JsonDeserialized} handling meta cases
+ * like recursive types and classes (with non-public properties).
+ *
+ * @beta
+ */
+export type JsonDeserializedImpl<T, TReplaced> = /* test for 'any' */ boolean extends (
+	T extends never ? true : false
+)
+	? /* 'any' => */ JsonTypeWith<TReplaced>
+	: /* infer non-recursive version of T */ ReplaceRecursionWith<
+			T,
+			RecursionMarker
+	  > extends infer TNoRecursion
+	? /* test for no change from filtered type */ IsSameType<
+			TNoRecursion,
+			JsonDeserializedFilter<TNoRecursion, TReplaced, 0>
+	  > extends true
+		? /* same => test for non-public properties (class instance type) */
+		  HasNonPublicProperties<T> extends true
+			? /* no hidden properties => deserialized T is just T */ T
+			: /* hidden props => test if array properties that are the problem */ T extends readonly (infer _)[]
+			? /* array => */ {
+					/* use homomorphic mapped type to preserve tuple type */
+					[K in keyof T]: JsonDeserializedFilter<T[K], TReplaced>;
+			  } // JsonDeserializedFilter<T, TReplaced>
+			: /* not array => error */ DeserializationErrorPerNonPublicProperties
+		: /* filtering is needed => */ JsonDeserializedFilter<T, TReplaced>
+	: /* unreachable else for infer */ never;
+
+/**
+ * Recurses T applying {@link JsonDeserializedFilter} up to RecurseLimit times.
+ *
+ * @beta
+ */
+export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit, TAncestorTypes> =
+	T extends TAncestorTypes
+		? RecurseLimit extends 10
+			? JsonDeserializedFilter<T, TReplaced, 9, TAncestorTypes | T>
+			: RecurseLimit extends 9
+			? JsonDeserializedFilter<T, TReplaced, 8, TAncestorTypes | T>
+			: RecurseLimit extends 8
+			? JsonDeserializedFilter<T, TReplaced, 7, TAncestorTypes | T>
+			: RecurseLimit extends 7
+			? JsonDeserializedFilter<T, TReplaced, 6, TAncestorTypes | T>
+			: RecurseLimit extends 6
+			? JsonDeserializedFilter<T, TReplaced, 5, TAncestorTypes | T>
+			: RecurseLimit extends 5
+			? JsonDeserializedFilter<T, TReplaced, 4, TAncestorTypes | T>
+			: RecurseLimit extends 4
+			? JsonDeserializedFilter<T, TReplaced, 3, TAncestorTypes | T>
+			: RecurseLimit extends 3
+			? JsonDeserializedFilter<T, TReplaced, 2, TAncestorTypes | T>
+			: RecurseLimit extends 2
+			? JsonDeserializedFilter<T, TReplaced, 1, TAncestorTypes | T>
+			: JsonTypeWith<TReplaced>
+		: JsonDeserializedFilter<T, TReplaced, RecurseLimit, TAncestorTypes | T>;
+
+/**
+ * Core implementation of {@link JsonDeserialized}.
+ */
+export type JsonDeserializedFilter<
 	T,
 	TReplaced,
 	RecurseLimit = 10,
+	TAncestorTypes = never,
 > = /* test for 'any' */ boolean extends (T extends never ? true : false)
 	? /* 'any' => */ JsonTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
@@ -218,7 +326,7 @@ export type JsonDeserializedImpl<
 					[K in keyof T]: JsonForArrayItem<
 						T[K],
 						TReplaced,
-						JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit>
+						JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>
 					>;
 			  }
 			: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
@@ -232,13 +340,23 @@ export type JsonDeserializedImpl<
 						[K in NonSymbolWithDefinedNotDeserializablePropertyOf<
 							T,
 							TReplaced
-						>]: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit>;
+						>]: JsonDeserializedRecursion<
+							T[K],
+							TReplaced,
+							RecurseLimit,
+							TAncestorTypes
+						>;
 					} & {
 						/* properties that may have undefined values are optional */
 						[K in NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
 							T,
 							TReplaced
-						>]?: JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit>;
+						>]?: JsonDeserializedRecursion<
+							T[K],
+							TReplaced,
+							RecurseLimit,
+							TAncestorTypes
+						>;
 					}
 			  >
 		: /* not an object => */ never

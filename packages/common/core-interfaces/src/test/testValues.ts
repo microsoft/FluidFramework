@@ -87,6 +87,65 @@ export const objectWithNever = {
 	never,
 };
 
+interface ObjectWithReadonly {
+	readonly readonly: number;
+}
+export const objectWithReadonly: ObjectWithReadonly = { readonly: 5 };
+class ClassImplementsObjectWithReadonly implements ObjectWithReadonly {
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+	public get readonly(): number {
+		return 4;
+	}
+}
+export const objectWithReadonlyViaGetter: ObjectWithReadonly =
+	new ClassImplementsObjectWithReadonly();
+interface ObjectWithGetter {
+	get getter(): number;
+}
+export const objectWithGetter: ObjectWithGetter = { getter: 0 };
+interface ObjectWithSetter {
+	set setter(v: string);
+}
+class ClassImplementsObjectWithSetter implements ObjectWithSetter {
+	public set setter(_: string) {}
+}
+export const objectWithSetter: ObjectWithSetter = new ClassImplementsObjectWithSetter();
+export const objectWithSetterViaValue: ObjectWithSetter = { setter: "value" };
+interface ObjectWithMatchedGetterAndSetterProperty {
+	get property(): number;
+	set property(v: number);
+}
+export const objectWithMatchedGetterAndSetterPropertyViaValue: ObjectWithMatchedGetterAndSetterProperty =
+	{ property: 0 };
+class ClassImplementsObjectWithMatchedGetterAndSetterProperty
+	implements ObjectWithMatchedGetterAndSetterProperty
+{
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+	public get property(): number {
+		return 2;
+	}
+	public set property(_: number) {}
+}
+export const objectWithMatchedGetterAndSetterProperty: ObjectWithMatchedGetterAndSetterProperty =
+	new ClassImplementsObjectWithMatchedGetterAndSetterProperty();
+interface ObjectWithMismatchedGetterAndSetterProperty {
+	get property(): number;
+	set property(v: string);
+}
+export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
+	{ property: 0 };
+class ClassImplementsObjectWithMismatchedGetterAndSetterProperty
+	implements ObjectWithMismatchedGetterAndSetterProperty
+{
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
+	public get property(): number {
+		return 3;
+	}
+	public set property(_: string) {}
+}
+export const objectWithMismatchedGetterAndSetterProperty: ObjectWithMismatchedGetterAndSetterProperty =
+	new ClassImplementsObjectWithMismatchedGetterAndSetterProperty();
+
 // #region Recursive types
 
 /* eslint-disable @typescript-eslint/consistent-type-definitions */

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { DeserializationErrorPerNonPublicProperties } from "../exposedUtilityTypes.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonTypeWith, NonNullJsonObject } from "../jsonType.js";
 
@@ -274,7 +275,6 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
 				ContainsAny(resultRead) satisfies never;
 				objectWithPossibleRecursion satisfies typeof resultRead;
-				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'string | ObjectWithPossibleRecursion'
 				resultRead satisfies typeof objectWithPossibleRecursion;
 			});
 
@@ -285,7 +285,6 @@ describe("JsonDeserialized", () => {
 				);
 				ContainsAny(resultRead) satisfies never;
 				objectWithRecursion satisfies typeof resultRead;
-				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'ObjectWithRecursion'
 				resultRead satisfies typeof objectWithRecursion;
 			});
 
@@ -293,7 +292,6 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(objectWithEmbeddedRecursion);
 				ContainsAny(resultRead) satisfies never;
 				objectWithEmbeddedRecursion satisfies typeof resultRead;
-				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'ObjectWithEmbeddedRecursion'
 				resultRead satisfies typeof objectWithEmbeddedRecursion;
 			});
 
@@ -301,7 +299,6 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(objectWithAlternatingRecursion);
 				ContainsAny(resultRead) satisfies never;
 				objectWithAlternatingRecursion satisfies typeof resultRead;
-				// @ts-expect-error `JsonTypeWith<never>` is not assignable to type 'ObjectWithAlternatingRecursion'
 				resultRead satisfies typeof objectWithAlternatingRecursion;
 			});
 
@@ -325,13 +322,8 @@ describe("JsonDeserialized", () => {
 			});
 
 			// Class instances are indistinguishable from general objects by type checking.
-			// Non-public (non-function) members are preserved, but they are filtered away
-			// by the type filters and thus produce an incorrectly narrowed type. Though
-			// such a result may be customer desired.
-			// Additionally because non-public members are not observed by type mapping,
-			// objects with private functions are not appropriately rejected.
-			// Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
-			// enable support.
+			// They are considered supported despite loss of instanceof support after
+			// deserialization.
 			describe("class instance", () => {
 				it("with public data (propagated)", () => {
 					const instanceRead = passThru(classInstanceWithPublicData, {
@@ -360,47 +352,65 @@ describe("JsonDeserialized", () => {
 						"instanceRead is not an instance of ClassWithPublicMethod",
 					);
 				});
-				it("with private method (removes method)", () => {
-					const instanceRead = passThru(classInstanceWithPrivateMethod, {
-						public: "public",
-						// @ts-expect-error getSecret is missing, but required
-					}) satisfies typeof classInstanceWithPrivateMethod;
-					assert.ok(
-						classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
-						"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
-					);
-					assert.ok(
-						!(instanceRead instanceof ClassWithPrivateMethod),
-						"instanceRead is not an instance of ClassWithPrivateMethod",
-					);
-				});
-				it("with private getter (removes getter)", () => {
-					const instanceRead = passThru(classInstanceWithPrivateGetter, {
-						public: "public",
-						// @ts-expect-error secret is missing, but required
-					}) satisfies typeof classInstanceWithPrivateGetter;
-					assert.ok(
-						classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
-						"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
-					);
-					assert.ok(
-						!(instanceRead instanceof ClassWithPrivateGetter),
-						"instanceRead is not an instance of ClassWithPrivateGetter",
-					);
-				});
-				it("with private setter (removes setter)", () => {
-					const instanceRead = passThru(classInstanceWithPrivateSetter, {
-						public: "public",
-						// @ts-expect-error secret is missing, but required
-					}) satisfies typeof classInstanceWithPrivateSetter;
-					assert.ok(
-						classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
-						"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
-					);
-					assert.ok(
-						!(instanceRead instanceof ClassWithPrivateSetter),
-						"instanceRead is not an instance of ClassWithPrivateSetter",
-					);
+				// TO FIX: add option to ignore inaccessible members
+				describe("with `ignore-inaccessible-members`", () => {
+					it("with private method (removes method)", () => {
+						const instanceRead = passThru(classInstanceWithPrivateMethod, {
+							public: "public",
+							// @ts-expect-error getSecret is missing, but required
+						}) satisfies typeof classInstanceWithPrivateMethod;
+						assert.ok(
+							classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
+							"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPrivateMethod),
+							"instanceRead is not an instance of ClassWithPrivateMethod",
+						);
+					});
+					it("with private getter (removes getter)", () => {
+						const instanceRead = passThru(classInstanceWithPrivateGetter, {
+							public: "public",
+							// @ts-expect-error secret is missing, but required
+						}) satisfies typeof classInstanceWithPrivateGetter;
+						assert.ok(
+							classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
+							"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPrivateGetter),
+							"instanceRead is not an instance of ClassWithPrivateGetter",
+						);
+					});
+					it("with private setter (removes setter)", () => {
+						const instanceRead = passThru(classInstanceWithPrivateSetter, {
+							public: "public",
+							// @ts-expect-error secret is missing, but required
+						}) satisfies typeof classInstanceWithPrivateSetter;
+						assert.ok(
+							classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
+							"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPrivateSetter),
+							"instanceRead is not an instance of ClassWithPrivateSetter",
+						);
+					});
+					it("with private data (hides private data that propagates)", () => {
+						const instanceRead = passThru(classInstanceWithPrivateData, {
+							public: "public",
+							secret: 0,
+							// @ts-expect-error secret is missing, but required
+						}) satisfies typeof classInstanceWithPrivateData;
+						assert.ok(
+							classInstanceWithPrivateData instanceof ClassWithPrivateData,
+							"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPrivateData),
+							"instanceRead is not an instance of ClassWithPrivateData",
+						);
+					});
 				});
 			});
 		});
@@ -410,6 +420,7 @@ describe("JsonDeserialized", () => {
 			// They show "allowed" incorrect use and the unexpected results.
 			describe("known defect expectations", () => {
 				describe("class instance", () => {
+					// TODO: class instance aspect is not important here - replace with object versions
 					it("with public getter (preserves getter that doesn't propagate)", () => {
 						const instanceRead = passThru(
 							classInstanceWithPublicGetter,
@@ -427,6 +438,7 @@ describe("JsonDeserialized", () => {
 							"instanceRead is not an instance of ClassWithPublicGetter",
 						);
 					});
+					// TODO: class instance aspect is not important here - replace with object versions
 					it("with public setter (add value that doesn't propagate)", () => {
 						const instanceRead = passThru(
 							classInstanceWithPublicSetter,
@@ -442,22 +454,6 @@ describe("JsonDeserialized", () => {
 						assert.ok(
 							!(instanceRead instanceof ClassWithPublicSetter),
 							"instanceRead is not an instance of ClassWithPublicSetter",
-						);
-					});
-					it("with private data (hides private data that propagates)", () => {
-						const instanceRead = passThru(classInstanceWithPrivateData, {
-							public: "public",
-							// @ts-expect-error secret is not allowed but is present
-							secret: 0,
-							// @ts-expect-error secret is missing, but required
-						}) satisfies typeof classInstanceWithPrivateData;
-						assert.ok(
-							classInstanceWithPrivateData instanceof ClassWithPrivateData,
-							"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
-						);
-						assert.ok(
-							!(instanceRead instanceof ClassWithPrivateData),
-							"instanceRead is not an instance of ClassWithPrivateData",
 						);
 					});
 				});
@@ -568,7 +564,62 @@ describe("JsonDeserialized", () => {
 							// @ts-expect-error `functionOrSymbol` missing
 						) satisfies typeof objectWithFunctionOrSymbol;
 					});
+
+					describe("of class instance", () => {
+						it("with private method (becomes `DeserializationErrorPerNonPublicProperties`)", () => {
+							const instanceRead = passThru(classInstanceWithPrivateMethod, {
+								// @ts-expect-error DeserializationErrorPerNonPublicProperties
+								public: "public",
+							});
+							instanceRead satisfies DeserializationErrorPerNonPublicProperties;
+							// @ts-expect-error DeserializationErrorPerNonPublicProperties is missing ...
+							instanceRead satisfies typeof classInstanceWithPrivateMethod;
+							assert.ok(
+								classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
+								"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
+							);
+							assert.ok(
+								!(instanceRead instanceof ClassWithPrivateMethod),
+								"instanceRead is not an instance of ClassWithPrivateMethod",
+							);
+						});
+						it("with private getter (becomes `DeserializationErrorPerNonPublicProperties`)", () => {
+							const instanceRead = passThru(classInstanceWithPrivateGetter, {
+								// @ts-expect-error DeserializationErrorPerNonPublicProperties
+								public: "public",
+							});
+							instanceRead satisfies DeserializationErrorPerNonPublicProperties;
+							// @ts-expect-error DeserializationErrorPerNonPublicProperties is missing ...
+							instanceRead satisfies typeof classInstanceWithPrivateGetter;
+							assert.ok(
+								classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
+								"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
+							);
+							assert.ok(
+								!(instanceRead instanceof ClassWithPrivateGetter),
+								"instanceRead is not an instance of ClassWithPrivateGetter",
+							);
+						});
+						it("with private setter (becomes `DeserializationErrorPerNonPublicProperties`)", () => {
+							const instanceRead = passThru(classInstanceWithPrivateSetter, {
+								// @ts-expect-error DeserializationErrorPerNonPublicProperties
+								public: "public",
+							});
+							instanceRead satisfies DeserializationErrorPerNonPublicProperties;
+							// @ts-expect-error DeserializationErrorPerNonPublicProperties is missing ...
+							instanceRead satisfies typeof classInstanceWithPrivateSetter;
+							assert.ok(
+								classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
+								"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
+							);
+							assert.ok(
+								!(instanceRead instanceof ClassWithPrivateSetter),
+								"instanceRead is not an instance of ClassWithPrivateSetter",
+							);
+						});
+					});
 				});
+
 				it("will only propagate with `string` for `bigint | string`", () => {
 					const resultRead = passThru(
 						objectWithBigintOrString,
@@ -578,6 +629,27 @@ describe("JsonDeserialized", () => {
 					objectWithBigintOrString satisfies typeof resultRead;
 					resultRead satisfies { bigintOrString: string };
 					ContainsAny(resultRead) satisfies never;
+				});
+
+				describe("class instance", () => {
+					it("with private data becomes `DeserializationErrorPerNonPublicProperties` (but propagates)", () => {
+						const instanceRead = passThru(classInstanceWithPrivateData, {
+							// @ts-expect-error DeserializationErrorPerNonPublicProperties
+							public: "public",
+							secret: 0,
+						});
+						instanceRead satisfies DeserializationErrorPerNonPublicProperties;
+						// @ts-expect-error DeserializationErrorPerNonPublicProperties is missing ...
+						instanceRead satisfies typeof classInstanceWithPrivateData;
+						assert.ok(
+							classInstanceWithPrivateData instanceof ClassWithPrivateData,
+							"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
+						);
+						assert.ok(
+							!(instanceRead instanceof ClassWithPrivateData),
+							"instanceRead is not an instance of ClassWithPrivateData",
+						);
+					});
 				});
 			});
 		});

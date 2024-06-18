@@ -243,6 +243,7 @@ describe("JsonSerializable", () => {
 				});
 				it("with private getter (removes getter)", () => {
 					const instanceResult = passThru(classInstanceWithPrivateGetter, {
+						// @ts-expect-error DeserializationErrorPerNonPublicProperties
 						public: "public",
 						// @ts-expect-error secret is missing, but required
 					}) satisfies typeof classInstanceWithPrivateGetter;
@@ -257,6 +258,7 @@ describe("JsonSerializable", () => {
 				});
 				it("with private setter (removes setter)", () => {
 					const instanceResult = passThru(classInstanceWithPrivateSetter, {
+						// @ts-expect-error DeserializationErrorPerNonPublicProperties
 						public: "public",
 						// @ts-expect-error secret is missing, but required
 					}) satisfies typeof classInstanceWithPrivateSetter;
@@ -298,8 +300,9 @@ describe("JsonSerializable", () => {
 				describe("class instance", () => {
 					it("with private data (ignores private data)", () => {
 						const instanceResult = passThru(classInstanceWithPrivateData, {
+							// @ts-expect-error DeserializationErrorPerNonPublicProperties
 							public: "public",
-							// @ts-expect-error secret is not allowed but is present
+							// secret is also not allowed but is present
 							secret: 0,
 							// @ts-expect-error Property 'secret' is missing
 						}) satisfies typeof classInstanceWithPrivateData;
@@ -314,6 +317,7 @@ describe("JsonSerializable", () => {
 					});
 					it("with private method (ignores private method)", () => {
 						const instanceResult = passThru(classInstanceWithPrivateMethod, {
+							// @ts-expect-error DeserializationErrorPerNonPublicProperties
 							public: "public",
 							// @ts-expect-error Property 'getSecret' is missing
 						}) satisfies typeof classInstanceWithPrivateMethod;
