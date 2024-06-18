@@ -97,7 +97,7 @@ export interface CheckoutEvents {
  * whichever happens first.
  * This is typically used to clean up any resources associated with the `Revertible` in the host application.
  *
- * @public
+ * @sealed @public
  */
 export type RevertibleFactory = (
 	onRevertibleDisposed?: (revertible: Revertible) => void,

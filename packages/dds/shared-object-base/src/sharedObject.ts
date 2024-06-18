@@ -838,6 +838,7 @@ export interface ISharedObjectKind<TSharedObject> {
  * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
  * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
  * Use {@link createSharedObjectKind} to creating an instance of this type.
+ * @sealed
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
