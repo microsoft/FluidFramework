@@ -9,12 +9,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import {
-	TreeViewConfiguration,
-	SchemaFactory,
-	type TreeView,
-	type ITree,
-} from "@fluidframework/tree";
+import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
 import { SharedTree, Tree, TreeStatus, type Revertible } from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
@@ -72,13 +67,21 @@ for (const testOpts of testMatrix) {
 			client = createAzureClient();
 		});
 
+		async function waitForConnection(container: IFluidContainer): Promise<void> {
+			if (container.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "container1 connect() timeout",
+				});
+			}
+		}
+
 		async function init(
 			summaryTree: (typeof ephemeralSummaryTrees)[keyof typeof ephemeralSummaryTrees],
 		): Promise<{ containerId: string; treeData: TreeView<typeof StringArray> }> {
 			let containerId: string;
 			let treeData: TreeView<typeof StringArray>;
 
-			let container1: IFluidContainer;
 			if (isEphemeral) {
 				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
 					summaryTree,
@@ -87,23 +90,15 @@ for (const testOpts of testMatrix) {
 				);
 
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
-
-				treeData = (container1.initialObjects.tree1 as ITree).viewWith(treeConfiguration);
+				const { container } = await client.getContainer(containerId, schema, "2");
+				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
+				await waitForConnection(container);
 			} else {
-				({ container: container1 } = await client.createContainer(schema, "2"));
-
-				treeData = (container1.initialObjects.tree1 as ITree).viewWith(treeConfiguration);
+				const { container } = await client.createContainer(schema, "2");
+				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				treeData.initialize(new StringArray([]));
-
-				containerId = await container1.attach();
-			}
-
-			if (container1.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise((resolve) => container1.once("connected", () => resolve()), {
-					durationMs: connectTimeoutMs,
-					errorMsg: "container1 connect() timeout",
-				});
+				containerId = await container.attach();
+				await waitForConnection(container);
 			}
 
 			return {
@@ -201,7 +196,7 @@ for (const testOpts of testMatrix) {
 						new User({
 							name: "Pardes",
 							nicknames: ["Alex", "Duder"],
-							data: new Map(tags),
+							data: tags,
 						}),
 					);
 
