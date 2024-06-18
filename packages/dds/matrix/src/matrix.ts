@@ -331,12 +331,9 @@ export class SharedMatrix<T = any>
 		//       yields an ~40% improvement in the case of a cache hit (node v12 x64)
 
 		// Map the logical (row, col) to associated storage handles.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const rowHandle = this.rowHandles.getHandle(row)!;
+		const rowHandle = this.rowHandles.getHandle(row);
 		if (isHandleValid(rowHandle)) {
-			// TODO Non null asserting, why is this not null?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const colHandle = this.colHandles.getHandle(col)!;
+			const colHandle = this.colHandles.getHandle(col);
 			if (isHandleValid(colHandle)) {
 				return this.cells.getCell(rowHandle, colHandle);
 			}
