@@ -357,7 +357,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				0x3ca /* no start batch markup */,
 			);
 			const lastBatch = batch[batch.length - 1];
-			assert(lastBatch !== undefined, 0x3cb /* no end batch markup */);
+			assert(lastBatch !== undefined, "lastBatch is undefined in DeltaManager.flush()");
 			assert(
 				(lastBatch.metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
