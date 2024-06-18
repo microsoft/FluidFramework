@@ -209,9 +209,9 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 								matrixIndex + 1
 							}.setCells(/* row: */ ${row}, /* col: */ ${col}, /* colCount: */ ${colCount}, ${JSON.stringify(
 								values,
-							)});    // rowCount: ${matrix.rowCount} colCount: ${
+							)});    // rowCount: ${matrix.rowCount} colCount: ${matrix.colCount} stride: ${
 								matrix.colCount
-							} stride: ${matrix.colCount} length: ${values.length}`,
+							} length: ${values.length}`,
 						);
 						matrix.setCells(row, col, colCount, values);
 					};
@@ -280,8 +280,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 								// remove 1 or more rows (if any exist)
 								if (rowCount > 0) {
 									// 10% probability of removing multiple rows.
-									const numRemoved =
-										float64() < 0.1 ? int32(rowCount - row - 1) + 1 : 1;
+									const numRemoved = float64() < 0.1 ? int32(rowCount - row - 1) + 1 : 1;
 
 									trace?.push(
 										`matrix${
@@ -299,8 +298,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 								// remove 1 or more cols (if any exist)
 								if (colCount > 0) {
 									// 10% probability of removing multiple cols.
-									const numRemoved =
-										float64() < 0.1 ? int32(colCount - col - 1) + 1 : 1;
+									const numRemoved = float64() < 0.1 ? int32(colCount - col - 1) + 1 : 1;
 
 									trace?.push(
 										`matrix${

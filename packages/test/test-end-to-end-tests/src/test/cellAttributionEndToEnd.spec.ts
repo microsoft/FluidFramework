@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -162,7 +165,8 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 		};
 		const container1 = await loader.createDetachedContainer(defaultCodeDetails);
 		const sharedCell1 = await sharedCellFromContainer(container1);
-		const initDataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const initDataObject =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		const attributor = (initDataObject.context.containerRuntime as ContainerRuntime)
 			.IRuntimeAttributor;
 

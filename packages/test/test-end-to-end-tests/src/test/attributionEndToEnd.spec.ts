@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	enableOnNewFileKey,
@@ -177,7 +180,8 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		sharedString1.insertText(0, text);
 		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
-		const initDataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const initDataObject =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		const attributor = (initDataObject.context.containerRuntime as ContainerRuntime)
 			.IRuntimeAttributor;
 

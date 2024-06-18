@@ -81,10 +81,10 @@ export class DeterministicRandomGenerator {
 		} else {
 			return in_max < 16777619
 				? // The random generator doesn't seem to be very good.
-				  // It is quite biased (e.g. it generates too many even numbers)
-				  // this is a hack to solve at least this problem, but we probably should
-				  // instead use a different approach altogether
-				  (this._guid1[0] % 16777619) % in_max
+					// It is quite biased (e.g. it generates too many even numbers)
+					// this is a hack to solve at least this problem, but we probably should
+					// instead use a different approach altogether
+					(this._guid1[0] % 16777619) % in_max
 				: this._guid1[0] % in_max;
 		}
 	}

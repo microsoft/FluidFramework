@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	IDeltaManagerEvents,
+} from "@fluidframework/container-definitions/internal";
 
 import { CatchUpMonitor } from "../catchUpMonitor.js";
 
