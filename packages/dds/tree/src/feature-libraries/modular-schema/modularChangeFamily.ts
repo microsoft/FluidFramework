@@ -1931,5 +1931,7 @@ function revisionFromRevInfos(
 }
 
 function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {
-	return (changes.constraintViolationCount ?? 0) === 0 ? changes.fieldChanges : new Map();
+	return (changes.constraintViolationCount ?? 0) === 0
+		? changes.fieldChanges
+		: new Map<FieldKey, FieldChange>();
 }
