@@ -35,7 +35,7 @@ import {
 	type TreeNodeSchemaClass,
 	type WithType,
 	type TreeNodeSchema,
-	type,
+	typeNameSymbol,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
@@ -950,7 +950,7 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 
