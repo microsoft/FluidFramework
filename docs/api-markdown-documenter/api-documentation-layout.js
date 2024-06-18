@@ -18,8 +18,11 @@ import { AlertNode } from "./alert-node.js";
 const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
 
+// Temporary workaround for items tagged as `@alpha` (to mean "legacy").
+// This messaging should be changed back to standard "alpha" terminology once we have
+// cleaned up our tag meanings.
 const alphaWarning = SpanNode.createFromPlainText(
-	"WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.",
+	"LEGACY: This API is provided as is for existing users, but is not recommended for new users.",
 );
 const betaWarning = SpanNode.createFromPlainText(
 	"WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.",
