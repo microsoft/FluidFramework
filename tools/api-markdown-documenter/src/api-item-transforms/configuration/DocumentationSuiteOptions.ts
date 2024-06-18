@@ -8,7 +8,6 @@ import {
 	type ApiItem,
 	ApiItemKind,
 	type ApiPackage,
-	type Excerpt,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
@@ -20,6 +19,7 @@ import {
 	releaseTagToString,
 	getSafeFilenameForName,
 	getConciseSignature,
+	getSingleLineExcerptText,
 } from "../../utilities/index.js";
 
 /**
@@ -371,23 +371,6 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
-
-/**
- * Extracts the text from the provided excerpt and adjusts it to be on a single line, and to omit any trailing `;`.
- *
- * @privateRemarks If we find that this is useful in more places, we might consider moving this to a
- * public utilities module and make it part of the public helper suite.
- */
-function getSingleLineExcerptText(excerpt: Excerpt): string {
-	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
-	let signatureExcerpt = excerpt.text.trim().replace(/\s+/g, " ");
-
-	if (signatureExcerpt.endsWith(";")) {
-		signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
-	}
-
-	return signatureExcerpt;
-}
 
 /**
  * Gets a complete {@link DocumentationSuiteOptions} using the provided partial configuration, and filling

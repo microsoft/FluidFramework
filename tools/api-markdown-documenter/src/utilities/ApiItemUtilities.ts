@@ -22,6 +22,7 @@ import {
 	ApiReadonlyMixin,
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
+	type Excerpt,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { type DocSection, StandardTags } from "@microsoft/tsdoc";
@@ -464,4 +465,20 @@ export function getSafeFilenameForName(apiItemName: string): string {
 	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
 	// https://github.com/microsoft/rushstack/issues/1308
 	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
+}
+
+/**
+ * Extracts the text from the provided excerpt and adjusts it to be on a single line, and to omit any trailing `;`.
+ *
+ * @public
+ */
+export function getSingleLineExcerptText(excerpt: Excerpt): string {
+	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
+	let signatureExcerpt = excerpt.text.trim().replace(/\s+/g, " ");
+
+	if (signatureExcerpt.endsWith(";")) {
+		signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
+	}
+
+	return signatureExcerpt;
 }

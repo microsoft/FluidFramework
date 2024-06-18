@@ -27,6 +27,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
+import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -84,6 +85,7 @@ declare namespace ApiItemUtilities {
         getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
+        getSingleLineExcerptText,
         getThrowsBlocks,
         getUnscopedPackageName,
         isDeprecated,
@@ -360,6 +362,9 @@ function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
+function getSingleLineExcerptText(excerpt: Excerpt): string;
 
 // @public
 function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
