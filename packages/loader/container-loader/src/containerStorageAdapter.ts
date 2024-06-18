@@ -125,18 +125,18 @@ export class ContainerStorageAdapter
 				// Determine whether or not container should upload the protocol summary along with the summary.
 				// This is determined based on what value is set for serve policy's summariProtocolTree value or the enableSummarizeProtocolTree
 				// retrievd from the loader options or monitoring context config.
-				const shouldSummarize =
+				const shouldSummarizeProtocolTree =
 					service.policies?.summarizeProtocolTree ??
 					this.enableSummarizeProtocolTree ??
 					false;
 
-				if (this._summarizeProtocolTree !== shouldSummarize) {
+				if (this._summarizeProtocolTree !== shouldSummarizeProtocolTree) {
 					this.logger.sendTelemetryEvent({
 						eventName: "isSummarizeProtocolTreeEnabled",
-						details: { value: shouldSummarize },
+						details: { value: shouldSummarizeProtocolTree },
 					});
 				}
-				this._summarizeProtocolTree = shouldSummarize;
+				this._summarizeProtocolTree = shouldSummarizeProtocolTree;
 				return this._summarizeProtocolTree;
 			},
 		);
