@@ -131,7 +131,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 }
 
 // @public
-interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> extends FieldSchema<Kind, any> {
+export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> extends FieldSchema<Kind, any> {
     readonly allowedTypes: Types;
     readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
@@ -480,7 +480,6 @@ declare namespace InternalTypes {
         InsertableObjectFromSchemaRecord,
         ObjectFromSchemaRecord,
         FieldHasDefaultUnsafe,
-        FieldSchemaUnsafe,
         ObjectFromSchemaRecordUnsafe,
         TreeObjectNodeUnsafe,
         TreeFieldFromImplicitFieldUnsafe,
