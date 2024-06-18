@@ -48,7 +48,7 @@ describe("RemoteMessageProcessor", () => {
 					? undefined
 					: {
 							batch: batchMetadata,
-					  },
+						},
 			referenceSequenceNumber: Infinity,
 			contents: JSON.stringify({
 				contents: {
@@ -73,7 +73,7 @@ describe("RemoteMessageProcessor", () => {
 					? undefined
 					: {
 							batch: batchMetadata,
-					  },
+						},
 			compression: undefined,
 			sequenceNumber: seqNum,
 			clientSequenceNumber: clientSeqNum,
@@ -179,14 +179,14 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("c", startSeqNum, 3),
 						getProcessedMessage("d", startSeqNum, 4),
 						getProcessedMessage("e", startSeqNum, 5, false),
-				  ]
+					]
 				: [
 						getProcessedMessage("a", startSeqNum, startSeqNum++, true),
 						getProcessedMessage("b", startSeqNum, startSeqNum++),
 						getProcessedMessage("c", startSeqNum, startSeqNum++),
 						getProcessedMessage("d", startSeqNum, startSeqNum++),
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
-				  ];
+					];
 
 			assert.deepStrictEqual(actual, expected, "unexpected output");
 		});

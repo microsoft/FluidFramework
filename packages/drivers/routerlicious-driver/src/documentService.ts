@@ -186,9 +186,7 @@ export class DocumentService
 
 			if (shouldUpdateDiscoveredSessionInfo) {
 				await this.refreshDiscovery();
-				const rateLimiter = new RateLimiter(
-					this.driverPolicies.maxConcurrentOrdererRequests,
-				);
+				const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
 				this.ordererRestWrapper = RouterliciousOrdererRestWrapper.load(
 					this.ordererTokenFetcher,
 					this.logger,

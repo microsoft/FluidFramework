@@ -11,7 +11,10 @@ export {
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection.js";
-export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer.js";
+export {
+	defaultMaxAttemptsForSubmitFailures,
+	RunningSummarizer,
+} from "./runningSummarizer.js";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,

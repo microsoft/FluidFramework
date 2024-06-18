@@ -99,20 +99,12 @@ describe("Collections.DoublyLinkedList", () => {
 
 				const listNodes = [...list];
 				for (let i = 0; i < listNodes.length; i++) {
-					assert.equal(
-						listNodes[i],
-						nodesArray[i],
-						`remaining node mismatch at pos ${i}`,
-					);
+					assert.equal(listNodes[i], nodesArray[i], `remaining node mismatch at pos ${i}`);
 				}
 
 				const listSpliceNodes = [...listSplice];
 				for (let i = 0; i < listSpliceNodes.length; i++) {
-					assert.equal(
-						listSpliceNodes[i],
-						arraySplice[i],
-						`splice node mismatch at pos ${i}`,
-					);
+					assert.equal(listSpliceNodes[i], arraySplice[i], `splice node mismatch at pos ${i}`);
 				}
 			});
 		}
