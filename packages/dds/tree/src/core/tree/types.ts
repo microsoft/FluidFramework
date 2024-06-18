@@ -8,11 +8,15 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type Brand,
 	type Opaque,
-	type InternalUtilTypes,
 	brand,
 	extractFromOpaque,
+	type _InlineTrick,
 } from "../../util/index.js";
-import type { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
+import type {
+	FieldKey,
+	TreeNodeSchemaIdentifier,
+	ValueSchema,
+} from "../schema-stored/index.js";
 
 /**
  * @internal
@@ -134,7 +138,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 		// eslint-disable-next-line @rushstack/no-new-null
 		[ValueSchema.Null]: null;
 	}[TSchema],
-][InternalUtilTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Value stored on a node.

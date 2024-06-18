@@ -6,10 +6,10 @@
 import { performance } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
-import {
-	type ITelemetryGenericEventExt,
+import type {
+	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
 
 /**
@@ -58,7 +58,14 @@ interface Measurements {
  * @internal
  */
 export class SampledTelemetryHelper implements IDisposable {
-	disposed: boolean = false;
+	private _disposed: boolean = false;
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
 
 	private readonly measurementsMap = new Map<string, Measurements>();
 
@@ -145,6 +152,9 @@ export class SampledTelemetryHelper implements IDisposable {
 	}
 
 	public dispose(error?: Error | undefined): void {
-		for (const [k] of this.measurementsMap.entries()) this.flushBucket(k);
+		for (const [k] of this.measurementsMap.entries()) {
+			this.flushBucket(k);
+		}
+		this._disposed = true;
 	}
 }

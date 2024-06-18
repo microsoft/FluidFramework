@@ -86,7 +86,11 @@ export function createSingleBlobSummary(
  *
  * @internal
  */
-export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void {
+export function bindHandles(
+	value: any,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
+): void {
 	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
 	// implementation that doesn't clone at all. Today the distinction between
 	// this function and `encode` is purely semantic -- encoding both serializes

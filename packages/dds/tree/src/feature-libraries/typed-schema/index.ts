@@ -47,7 +47,6 @@ export {
 	type LazyItem,
 	isLazy,
 	type NormalizeLazyItem,
+	type FlexListToUnion,
+	type ExtractItemType,
 } from "./flexList.js";
-
-import * as InternalFlexListTypes from "./internalTypes.js";
-export { InternalFlexListTypes };

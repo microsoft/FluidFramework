@@ -98,7 +98,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		private readonly httpServerConfig?: IHttpServerConfig,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
 		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {}
 
@@ -381,7 +381,7 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		httpServerConfig?: IHttpServerConfig,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
 		clusterConfig?: Partial<INodeClusterConfig>,
 		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {

@@ -4,23 +4,23 @@
 
 ```ts
 
-import { ConfigTypes } from '@fluidframework/core-interfaces';
+import type { ConfigTypes } from '@fluidframework/core-interfaces';
 import type { EventEmitter } from '@fluid-internal/client-utils';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import type { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import type { IDisposable } from '@fluidframework/core-interfaces';
-import { IErrorBase } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
+import type { IErrorBase } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces/internal';
 import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces/internal';
 import { Lazy } from '@fluidframework/core-utils/internal';
 import { LogLevel } from '@fluidframework/core-interfaces';
-import { Tagged } from '@fluidframework/core-interfaces';
+import type { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
@@ -40,15 +40,12 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
 
 // @alpha
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
     eventName: string;
 }
 
 // @alpha
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
     category?: TelemetryEventCategory;
-    // (undocumented)
     eventName: string;
 }
 
@@ -60,10 +57,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 }
 
 // @alpha (undocumented)
-export interface ITelemetryLoggerPropertyBag {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
+export type ITelemetryLoggerPropertyBag = Record<string, TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)>;
 
 // @alpha (undocumented)
 export interface ITelemetryLoggerPropertyBags {
@@ -75,34 +69,26 @@ export interface ITelemetryLoggerPropertyBags {
 
 // @alpha
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
-    // (undocumented)
     duration?: number;
 }
 
 // @alpha
-export interface ITelemetryPropertiesExt {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
-}
+export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
 // @alpha
 export class MockLogger implements ITelemetryBaseLogger {
-    constructor(minLogLevel?: LogLevel | undefined);
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    // (undocumented)
+    constructor(minLogLevel?: LogLevel);
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
     clear(): void;
-    // (undocumented)
-    events: ITelemetryBaseEvent[];
-    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    // (undocumented)
-    readonly minLogLevel?: LogLevel | undefined;
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
+    get events(): readonly ITelemetryBaseEvent[];
+    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    readonly minLogLevel: LogLevel;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     // (undocumented)
     toTelemetryLogger(): ITelemetryLoggerExt;
 }
@@ -111,10 +97,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @alpha
-export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
-    [key: string]: // Flat objects can have the same properties as the event itself
-    string | number | boolean | undefined | (string | number | boolean)[];
-};
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
 
 // @alpha (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];

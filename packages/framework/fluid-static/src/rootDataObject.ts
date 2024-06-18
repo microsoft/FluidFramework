@@ -208,8 +208,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			containerRuntime: IContainerRuntime,
 			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): Promise<FluidObject> => {
-			const entryPoint =
-				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 			if (entryPoint === undefined) {
 				throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 			}
