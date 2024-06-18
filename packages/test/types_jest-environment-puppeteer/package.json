@@ -20,7 +20,7 @@
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob \"*.tsbuildinfo\" \"*.build.log\"",
 		"format": "npm run format:biome",
-		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:biome": "biome check . --formatter-enabled=true --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore"
 	},
 	"devDependencies": {

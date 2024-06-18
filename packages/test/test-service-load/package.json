@@ -31,7 +31,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
-		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:biome": "biome check . --formatter-enabled=true --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"full": "node ./dist/nodeStressTest.js --profile full",
 		"lint": "fluid-build . --task lint",
