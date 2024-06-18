@@ -51,7 +51,7 @@ function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
 
 	// Draw the rest of the segments
 	for (let i = 1; i < points.length; i++) {
-		// Non null asserting, this must exist because the we are iterating thought the length of points
+		// Non null asserting, this must exist because the we are iterating through the length of points
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		context.lineTo(points[i]!.x, points[i]!.y);
 	}
