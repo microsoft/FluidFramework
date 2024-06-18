@@ -5,7 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
@@ -419,9 +422,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
-						const delta = intoDelta(
-							tagChange(change.innerChange, event.change.revision),
-						);
+						const delta = intoDelta(tagChange(change.innerChange, event.change.revision));
 						this.withCombinedVisitor((visitor) => {
 							visitDelta(delta, visitor, this.removedRoots);
 						});
@@ -512,7 +513,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.revertibleCommitBranches.set(revision, branch.fork());
 						this.revertibles.add(revertible);
 						return revertible;
-				  };
+					};
 
 			this.events.emit("commitApplied", data, getRevertible);
 			withinEventContext = false;
@@ -613,15 +614,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const cursor = this.forest.allocateCursor("getRemovedRoots");
 		for (const { id, root } of this.removedRoots.entries()) {
 			const parentField = this.removedRoots.toFieldKey(root);
-			this.forest.moveCursorToPath(
-				{ parent: undefined, parentField, parentIndex: 0 },
-				cursor,
-			);
+			this.forest.moveCursorToPath({ parent: undefined, parentField, parentIndex: 0 }, cursor);
 			const tree = jsonableTreeFromCursor(cursor);
 			// This method is used for tree consistency comparison.
 			const { major, minor } = id;
-			const finalizedMajor =
-				major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
 			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();

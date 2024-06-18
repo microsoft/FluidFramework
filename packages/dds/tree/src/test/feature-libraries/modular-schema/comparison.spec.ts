@@ -105,7 +105,9 @@ describe("Schema Comparison", () => {
 		optionalAnyField,
 	);
 
-	const optionalEmptyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(optionalEmptyTreeField);
+	const optionalEmptyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(
+		optionalEmptyTreeField,
+	);
 	const valueAnyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(valueAnyField);
 	const valueEmptyTree: TreeNodeStoredSchema = new MapNodeStoredSchema(valueEmptyTreeField);
 
@@ -437,9 +439,9 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
 			assert.fail(
 				`expected ${JSON.stringify(
 					intoSimpleObject(inOrder[index + 1]),
-				)} to be a superset of ${JSON.stringify(
-					intoSimpleObject(inOrder[index]),
-				)} but was ${Ordering[order]}`,
+				)} to be a superset of ${JSON.stringify(intoSimpleObject(inOrder[index]))} but was ${
+					Ordering[order]
+				}`,
 			);
 		}
 	}

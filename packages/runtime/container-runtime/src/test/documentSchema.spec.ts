@@ -257,10 +257,7 @@ describe("Runtime", () => {
 
 		if (!existing || !explicitSchemaControl) {
 			controller.onDisconnect();
-			assert(
-				controller.maybeSendSchemaMessage() === undefined,
-				"no messages should be sent!",
-			);
+			assert(controller.maybeSendSchemaMessage() === undefined, "no messages should be sent!");
 		}
 
 		// get rid of all properties with undefined values.

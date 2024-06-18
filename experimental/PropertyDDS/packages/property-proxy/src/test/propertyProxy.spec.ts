@@ -50,8 +50,13 @@ describe("JS-Object-like property accessing ", function () {
 		rootNode.insert("constantCollections", PropertyFactory.create(collectionConstants.typeid));
 
 		// Create an Array of NodeProperties, we should be able to create arrays of collections
-		rootNode.insert("myGenericArray", PropertyFactory.create(vector2DTemplate.typeid, "array"));
-		rootNode.get("myGenericArray").push(PropertyFactory.create("Int32", "array", [0, 1, 2, 3]));
+		rootNode.insert(
+			"myGenericArray",
+			PropertyFactory.create(vector2DTemplate.typeid, "array"),
+		);
+		rootNode
+			.get("myGenericArray")
+			.push(PropertyFactory.create("Int32", "array", [0, 1, 2, 3]));
 		rootNode
 			.get("myGenericArray")
 			.push(PropertyFactory.create("Int32", "map", { a: 0, b: 1, c: 2 }));
@@ -261,9 +266,7 @@ describe("JS-Object-like property accessing ", function () {
 						.setValue("/myTestProperty.myI32Array[0]");
 					expect(state.myTestProperty.myReference).toEqual(0);
 
-					rootNode
-						.resolvePath("myTestProperty.myReference*")
-						.setValue("myComplexArray[0]");
+					rootNode.resolvePath("myTestProperty.myReference*").setValue("myComplexArray[0]");
 					expect(state.myTestProperty.myReference.getProperty()).toEqual(
 						state.myTestProperty.myComplexArray[0].getProperty(),
 					);
@@ -303,9 +306,7 @@ describe("JS-Object-like property accessing ", function () {
 					rootNode.resolvePath("myTestProperty.myI32Array").set(0, oldValue);
 
 					oldValue = rootNode.resolvePath("myTestProperty.myComplexArray[0]").getValues();
-					rootNode
-						.resolvePath("myTestProperty.myReference*")
-						.setValue("myComplexArray[0]");
+					rootNode.resolvePath("myTestProperty.myReference*").setValue("myComplexArray[0]");
 					state.myTestProperty.myReference = { x: 7, y: 8 };
 					expect(
 						rootNode.resolvePath("myTestProperty.myComplexArray[0].x").getValue(),
@@ -335,10 +336,7 @@ describe("JS-Object-like property accessing ", function () {
 
 				it("should be able to obtain the reference property via getProperty() from the parent", function () {
 					expect(
-						state.myTestProperty.getProperty([
-							"myReference",
-							BaseProperty.PATH_TOKENS.REF,
-						]),
+						state.myTestProperty.getProperty(["myReference", BaseProperty.PATH_TOKENS.REF]),
 					).toEqual(rootNode.resolvePath("myTestProperty.myReference*"));
 
 					expect(
@@ -390,11 +388,7 @@ describe("JS-Object-like property accessing ", function () {
 					const prop = PropertyFactory.create<NodeProperty>("NodeProperty", "single");
 					prop.insert(
 						"ref",
-						PropertyFactory.create(
-							"Reference",
-							"single",
-							"/myTestProperty.myF32Number",
-						),
+						PropertyFactory.create("Reference", "single", "/myTestProperty.myF32Number"),
 					);
 					const proxiedProp = PropertyProxy.proxify(prop);
 					expect(() => {
@@ -414,9 +408,7 @@ describe("JS-Object-like property accessing ", function () {
 						state.myTestProperty.myReference = 10;
 					}).toThrow("PropertyProxy-009");
 
-					rootNode
-						.resolvePath("myTestProperty.myReference*")
-						.setValue("/absoluteInvalid");
+					rootNode.resolvePath("myTestProperty.myReference*").setValue("/absoluteInvalid");
 					expect(() => {
 						state.myTestProperty.myReference = 10;
 					}).toThrow("PropertyProxy-009");
@@ -427,9 +419,7 @@ describe("JS-Object-like property accessing ", function () {
 
 			describe.skip("RepositoryReference", function () {
 				it("should return property if accessed via * syntax", function () {
-					expect(state["repoRef*"].getProperty()).toEqual(
-						rootNode.resolvePath("repoRef*"),
-					);
+					expect(state["repoRef*"].getProperty()).toEqual(rootNode.resolvePath("repoRef*"));
 					expect(state.repoRefArray["0*"].getProperty()).toEqual(
 						rootNode.resolvePath("repoRefArray[0]*"),
 					);
@@ -464,8 +454,7 @@ describe("JS-Object-like property accessing ", function () {
 						const entry = refArray.get(i);
 						if (PropertyFactory.instanceOf(entry, "BaseProperty")) {
 							refArraySum +=
-								PropertyFactory.instanceOf(entry, "ContainerProperty") &&
-								entry.has("x")
+								PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")
 									? entry.get("x").getValue()
 									: refArray.get(i).getValue();
 						} else {
@@ -757,14 +746,9 @@ describe("JS-Object-like property accessing ", function () {
 
 				it("check .reduce() functionality", function () {
 					expect(
-						state.myTestProperty.myReferenceArray.reduce(
-							(accumulator, currentValue) => {
-								return (
-									accumulator + (currentValue.x ? currentValue.x : currentValue)
-								);
-							},
-							0,
-						),
+						state.myTestProperty.myReferenceArray.reduce((accumulator, currentValue) => {
+							return accumulator + (currentValue.x ? currentValue.x : currentValue);
+						}, 0),
 					).toEqual(refArraySum);
 				});
 
@@ -772,9 +756,7 @@ describe("JS-Object-like property accessing ", function () {
 					expect(
 						state.myTestProperty.myReferenceArray.reduceRight(
 							(previousValue, currentValue) => {
-								return (
-									previousValue + (currentValue.x ? currentValue.x : currentValue)
-								);
+								return previousValue + (currentValue.x ? currentValue.x : currentValue);
 							},
 							0,
 						),
@@ -800,59 +782,55 @@ describe("JS-Object-like property accessing ", function () {
 						rootNode.resolvePath("myTestProperty.myF32Number").setValue(3);
 						rootNode.resolvePath("myTestProperty.myVector").setValues({ x: 1, y: 2 });
 						rootNode.resolvePath("myTestProperty.myI32Array").set(0, 0);
-						rootNode
-							.resolvePath("myTestProperty.myComplexArray")
-							.set(0, { x: 1, y: 2 });
+						rootNode.resolvePath("myTestProperty.myComplexArray").set(0, { x: 1, y: 2 });
 						rootNode.resolvePath("myTestProperty.myMap").set("firstNumber", 1111);
 						rootNode
 							.resolvePath("myTestProperty.myComplexMap[firstEntry]")
 							.setValues({ x: 10, y: 20 });
-						rootNode
-							.resolvePath("myTestProperty.myReferenceArray")
-							.setValues([
-								"myF32Number",
-								"../myTestProperty.myF32Number",
-								"/myTestProperty.myF32Number",
+						rootNode.resolvePath("myTestProperty.myReferenceArray").setValues([
+							"myF32Number",
+							"../myTestProperty.myF32Number",
+							"/myTestProperty.myF32Number",
 
-								"myVector",
-								"../myTestProperty.myVector",
-								"/myTestProperty.myVector",
+							"myVector",
+							"../myTestProperty.myVector",
+							"/myTestProperty.myVector",
 
-								"myI32Array[0]",
-								"../myTestProperty.myI32Array[0]",
-								"/myTestProperty.myI32Array[0]",
+							"myI32Array[0]",
+							"../myTestProperty.myI32Array[0]",
+							"/myTestProperty.myI32Array[0]",
 
-								"myComplexArray[0]",
-								"/myTestProperty.myComplexArray[0]",
-								"../myTestProperty.myComplexArray[0]",
+							"myComplexArray[0]",
+							"/myTestProperty.myComplexArray[0]",
+							"../myTestProperty.myComplexArray[0]",
 
-								"myMap[firstNumber]",
-								"../myTestProperty.myMap[firstNumber]",
-								"/myTestProperty.myMap[firstNumber]",
+							"myMap[firstNumber]",
+							"../myTestProperty.myMap[firstNumber]",
+							"/myTestProperty.myMap[firstNumber]",
 
-								"myComplexMap[firstEntry]",
-								"../myTestProperty.myComplexMap[firstEntry]",
-								"/myTestProperty.myComplexMap[firstEntry]",
+							"myComplexMap[firstEntry]",
+							"../myTestProperty.myComplexMap[firstEntry]",
+							"/myTestProperty.myComplexMap[firstEntry]",
 
-								"myReferenceArray[0]",
-								"myReferenceArray[1]",
-								"myReferenceArray[2]",
-								"myReferenceArray[3]",
-								"myReferenceArray[4]",
-								"myReferenceArray[5]",
-								"myReferenceArray[6]",
-								"myReferenceArray[7]",
-								"myReferenceArray[8]",
-								"myReferenceArray[9]",
-								"myReferenceArray[10]",
-								"myReferenceArray[11]",
-								"myReferenceArray[12]",
-								"myReferenceArray[13]",
-								"myReferenceArray[14]",
-								"myReferenceArray[15]",
-								"myReferenceArray[16]",
-								"myReferenceArray[17]",
-							]);
+							"myReferenceArray[0]",
+							"myReferenceArray[1]",
+							"myReferenceArray[2]",
+							"myReferenceArray[3]",
+							"myReferenceArray[4]",
+							"myReferenceArray[5]",
+							"myReferenceArray[6]",
+							"myReferenceArray[7]",
+							"myReferenceArray[8]",
+							"myReferenceArray[9]",
+							"myReferenceArray[10]",
+							"myReferenceArray[11]",
+							"myReferenceArray[12]",
+							"myReferenceArray[13]",
+							"myReferenceArray[14]",
+							"myReferenceArray[15]",
+							"myReferenceArray[16]",
+							"myReferenceArray[17]",
+						]);
 					};
 
 					beforeEach(function () {
@@ -861,39 +839,21 @@ describe("JS-Object-like property accessing ", function () {
 
 					it("should be able to change the referenced properties", function () {
 						state.myTestProperty.myReferenceArray[0] = 4;
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(4);
 						state.myTestProperty.myReferenceArray[1] = 5;
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(5);
 						state.myTestProperty.myReferenceArray[2] = 6;
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(6);
 
 						state.myTestProperty.myReferenceArray[3] = { x: 3, y: 4 };
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(3);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(3);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(4);
 						state.myTestProperty.myReferenceArray[4] = { x: 5, y: 6 };
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(5);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(6);
 						state.myTestProperty.myReferenceArray[5] = { x: 7, y: 8 };
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(7);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(8);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(7);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(8);
 
 						state.myTestProperty.myReferenceArray[6] = 1;
 						expect(rootNode.resolvePath("myTestProperty.myI32Array[0]")).toEqual(1);
@@ -925,88 +885,52 @@ describe("JS-Object-like property accessing ", function () {
 						).toEqual(8);
 
 						state.myTestProperty.myReferenceArray[12] = 1;
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							1,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(1);
 						state.myTestProperty.myReferenceArray[13] = 2;
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							2,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(2);
 						state.myTestProperty.myReferenceArray[14] = 3;
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							3,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(3);
 
 						state.myTestProperty.myReferenceArray[15] = { x: 3, y: 4 };
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(3);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(4);
 						state.myTestProperty.myReferenceArray[16] = { x: 5, y: 6 };
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(5);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(6);
 						state.myTestProperty.myReferenceArray[17] = { x: 7, y: 8 };
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(7);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(8);
 					});
 
 					it("should be able to change the referenced properties in the presence of multi-hops", function () {
 						state.myTestProperty.myReferenceArray[18] = 4;
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(4);
 						state.myTestProperty.myReferenceArray[19] = 5;
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(5);
 						state.myTestProperty.myReferenceArray[20] = 6;
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(6);
 
 						state.myTestProperty.myReferenceArray[21] = { x: 3, y: 4 };
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(3);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(3);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(4);
 						state.myTestProperty.myReferenceArray[22] = { x: 5, y: 6 };
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(5);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(6);
 						state.myTestProperty.myReferenceArray[23] = { x: 7, y: 8 };
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(7);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(8);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(7);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(8);
 
 						state.myTestProperty.myReferenceArray[24] = 1;
 						expect(rootNode.resolvePath("myTestProperty.myI32Array[0]")).toEqual(1);
@@ -1038,50 +962,32 @@ describe("JS-Object-like property accessing ", function () {
 						).toEqual(8);
 
 						state.myTestProperty.myReferenceArray[30] = 1;
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							1,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(1);
 						state.myTestProperty.myReferenceArray[31] = 2;
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							2,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(2);
 						state.myTestProperty.myReferenceArray[32] = 3;
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							3,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(3);
 
 						state.myTestProperty.myReferenceArray[33] = { x: 3, y: 4 };
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(3);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(4);
 						state.myTestProperty.myReferenceArray[34] = { x: 5, y: 6 };
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(5);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(6);
 						state.myTestProperty.myReferenceArray[35] = { x: 7, y: 8 };
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(7);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(8);
 					});
 
@@ -1144,9 +1050,9 @@ describe("JS-Object-like property accessing ", function () {
 					it("check .fill() functionality", function () {
 						state.myTestProperty.myReferenceArray.fill("myVector");
 						for (let i = 0; i < state.myTestProperty.length; ++i) {
-							expect(
-								rootNode.resolvePath("myTestProperty.myReferenceArray").get(i),
-							).toEqual(rootNode.resolvePath("myTestProperty.myVector"));
+							expect(rootNode.resolvePath("myTestProperty.myReferenceArray").get(i)).toEqual(
+								rootNode.resolvePath("myTestProperty.myVector"),
+							);
 						}
 					});
 
@@ -1177,15 +1083,10 @@ describe("JS-Object-like property accessing ", function () {
 					});
 
 					it("check .reverse() functionality", function () {
-						const values = state.myTestProperty.myReferenceArray
-							.getProperty()
-							.getValues();
+						const values = state.myTestProperty.myReferenceArray.getProperty().getValues();
 						state.myTestProperty.myReferenceArray.reverse();
 						expect(
-							state.myTestProperty.myReferenceArray
-								.getProperty()
-								.getValues()
-								.toString(),
+							state.myTestProperty.myReferenceArray.getProperty().getValues().toString(),
 						).toEqual(values.reverse().toString());
 					});
 
@@ -1203,9 +1104,7 @@ describe("JS-Object-like property accessing ", function () {
 
 						state.myTestProperty.myReferenceArray.sort((a, b) => b - a);
 						for (let i = 0; i < state.myTestProperty.myReferenceArray.length; ++i) {
-							expect(
-								rootNode.resolvePath("myTestProperty.myReferenceArray").get(i),
-							).toEqual(
+							expect(rootNode.resolvePath("myTestProperty.myReferenceArray").get(i)).toEqual(
 								rootNode
 									.resolvePath("myTestProperty.myI32Array")
 									.get(state.myTestProperty.myReferenceArray.length - 1 - i),
@@ -1237,11 +1136,7 @@ describe("JS-Object-like property accessing ", function () {
 						// Mix and multi-hops
 						rootNode
 							.resolvePath("myTestProperty.myReferenceArray")
-							.setValues([
-								"myComplexArray[1]",
-								"myMultiHopReference",
-								"myI32Array[0]",
-							]);
+							.setValues(["myComplexArray[1]", "myMultiHopReference", "myI32Array[0]"]);
 
 						state.myTestProperty.myReferenceArray.sort((a, b) => {
 							if (a.x) {
@@ -1297,12 +1192,8 @@ describe("JS-Object-like property accessing ", function () {
 						expect(
 							rootNode.resolvePath("myTestProperty.myReferenceArray").getLength(),
 						).toEqual(32);
-						expect(rootNode.resolvePath("myTestProperty.myReferenceArray[0]")).toEqual(
-							0,
-						);
-						expect(rootNode.resolvePath("myTestProperty.myReferenceArray[1]")).toEqual(
-							10,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myReferenceArray[0]")).toEqual(0);
+						expect(rootNode.resolvePath("myTestProperty.myReferenceArray[1]")).toEqual(10);
 					});
 
 					it("check .shift() functionality", function () {
@@ -1350,9 +1241,7 @@ describe("JS-Object-like property accessing ", function () {
 						function () {
 							// Property not in property tree
 							const tempRefArray = PropertyProxy.proxify(
-								PropertyFactory.create("Reference", "array", [
-									"/myTestProperty.myF32Number",
-								]),
+								PropertyFactory.create("Reference", "array", ["/myTestProperty.myF32Number"]),
 							);
 							expect(() => {
 								tempRefArray[0] = 100;
@@ -1390,8 +1279,7 @@ describe("JS-Object-like property accessing ", function () {
 						const entry = refMap.get(id);
 						if (PropertyFactory.instanceOf(entry, "BaseProperty")) {
 							refMapSum +=
-								PropertyFactory.instanceOf(entry, "ContainerProperty") &&
-								entry.has("x")
+								PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")
 									? entry.get("x").getValue()
 									: entry.getValue();
 						} else {
@@ -1582,9 +1470,7 @@ describe("JS-Object-like property accessing ", function () {
 						rootNode.resolvePath("myTestProperty.myF32Number").setValue(3);
 						rootNode.resolvePath("myTestProperty.myVector").setValues({ x: 1, y: 2 });
 						rootNode.resolvePath("myTestProperty.myI32Array").set(0, 0);
-						rootNode
-							.resolvePath("myTestProperty.myComplexArray")
-							.set(0, { x: 1, y: 2 });
+						rootNode.resolvePath("myTestProperty.myComplexArray").set(0, { x: 1, y: 2 });
 						rootNode.resolvePath("myTestProperty.myMap").set("firstNumber", 1111);
 						rootNode
 							.resolvePath("myTestProperty.myComplexMap[firstEntry]")
@@ -1643,39 +1529,21 @@ describe("JS-Object-like property accessing ", function () {
 						const rM = state.myTestProperty.myReferenceMap;
 
 						rM.set("a", 4);
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(4);
 						rM.set("b", 5);
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(5);
 						rM.set("c", 6);
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(6);
 
 						rM.set("d", { x: 3, y: 4 });
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(3);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(3);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(4);
 						rM.set("e", { x: 5, y: 6 });
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(5);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(6);
 						rM.set("f", { x: 7, y: 8 });
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(7);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(8);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(7);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(8);
 
 						rM.set("g", 1);
 						expect(rootNode.resolvePath("myTestProperty.myI32Array[0]")).toEqual(1);
@@ -1707,50 +1575,32 @@ describe("JS-Object-like property accessing ", function () {
 						).toEqual(8);
 
 						rM.set("m", 1);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							1,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(1);
 						rM.set("n", 2);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							2,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(2);
 						rM.set("o", 3);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							3,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(3);
 
 						rM.set("p", { x: 3, y: 4 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(3);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(4);
 						rM.set("q", { x: 5, y: 6 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(5);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(6);
 						rM.set("r", { x: 7, y: 8 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(7);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(8);
 					});
 
@@ -1758,39 +1608,21 @@ describe("JS-Object-like property accessing ", function () {
 						const rM = state.myTestProperty.myReferenceMap;
 
 						rM.set("aa", 4);
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(4);
 						rM.set("bb", 5);
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(5);
 						rM.set("cc", 6);
-						expect(
-							rootNode.resolvePath("myTestProperty.myF32Number").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myF32Number").getValue()).toEqual(6);
 
 						rM.set("dd", { x: 3, y: 4 });
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(3);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(4);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(3);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(4);
 						rM.set("ee", { x: 5, y: 6 });
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(5);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(6);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(5);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(6);
 						rM.set("ff", { x: 7, y: 8 });
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.x").getValue(),
-						).toEqual(7);
-						expect(
-							rootNode.resolvePath("myTestProperty.myVector.y").getValue(),
-						).toEqual(8);
+						expect(rootNode.resolvePath("myTestProperty.myVector.x").getValue()).toEqual(7);
+						expect(rootNode.resolvePath("myTestProperty.myVector.y").getValue()).toEqual(8);
 
 						rM.set("gg", 1);
 						expect(rootNode.resolvePath("myTestProperty.myI32Array[0]")).toEqual(1);
@@ -1822,50 +1654,32 @@ describe("JS-Object-like property accessing ", function () {
 						).toEqual(8);
 
 						rM.set("mm", 1);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							1,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(1);
 						rM.set("nn", 2);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							2,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(2);
 						rM.set("oo", 3);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							3,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(3);
 
 						rM.set("pp", { x: 3, y: 4 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(3);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(4);
 						rM.set("qq", { x: 5, y: 6 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(5);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(6);
 						rM.set("rr", { x: 7, y: 8 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(7);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(8);
 					});
 
@@ -2007,17 +1821,17 @@ describe("JS-Object-like property accessing ", function () {
 
 			it("setting", function () {
 				state.myTestProperty.myEnumCases.myEnum = 2;
-				expect(
-					rootNode.resolvePath("myTestProperty.myEnumCases.myEnum").getValue(),
-				).toEqual(2);
+				expect(rootNode.resolvePath("myTestProperty.myEnumCases.myEnum").getValue()).toEqual(
+					2,
+				);
 				expect(
 					rootNode.resolvePath("myTestProperty.myEnumCases.myEnum").getEnumString(),
 				).toEqual("dos");
 
 				state.myTestProperty.myEnumCases.myEnum = "tres";
-				expect(
-					rootNode.resolvePath("myTestProperty.myEnumCases.myEnum").getValue(),
-				).toEqual(3);
+				expect(rootNode.resolvePath("myTestProperty.myEnumCases.myEnum").getValue()).toEqual(
+					3,
+				);
 				expect(
 					rootNode.resolvePath("myTestProperty.myEnumCases.myEnum").getEnumString(),
 				).toEqual("tres");
@@ -2030,23 +1844,23 @@ describe("JS-Object-like property accessing ", function () {
 				}).toThrow();
 
 				state.myTestProperty.myEnumCases.myEnumArray = ["dos", 1];
-				expect(
-					rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(0),
-				).toEqual(2);
-				expect(
-					rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(1),
-				).toEqual(1);
+				expect(rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(0)).toEqual(
+					2,
+				);
+				expect(rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(1)).toEqual(
+					1,
+				);
 
 				expect(state.myTestProperty.myEnumCases.myEnumArray.pop()).toEqual(1);
 				expect(state.myTestProperty.myEnumCases.myEnumArray.shift()).toEqual(2);
 				state.myTestProperty.myEnumCases.myEnumArray.push(2);
-				expect(
-					rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(0),
-				).toEqual(2);
+				expect(rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(0)).toEqual(
+					2,
+				);
 				state.myTestProperty.myEnumCases.myEnumArray.unshift("uno");
-				expect(
-					rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(0),
-				).toEqual(1);
+				expect(rootNode.resolvePath("myTestProperty.myEnumCases.myEnumArray").get(0)).toEqual(
+					1,
+				);
 			});
 		});
 
@@ -2069,9 +1883,7 @@ describe("JS-Object-like property accessing ", function () {
 				expect(state.myTestProperty.myUint64Int64Cases.myUint64Array[0]).toEqual(
 					valueOfUint64ArrayAtZero,
 				);
-				expect(state.myTestProperty.myUint64Int64Cases.myUint64Array["0^"]).toEqual(
-					stringVal,
-				);
+				expect(state.myTestProperty.myUint64Int64Cases.myUint64Array["0^"]).toEqual(stringVal);
 				expect(state.myTestProperty.myUint64Int64Cases.myInt64Map.get("a")).toEqual(
 					valueOfInt64MapAtA,
 				);
@@ -2169,100 +1981,100 @@ describe("JS-Object-like property accessing ", function () {
 				expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64[10]).toEqual(
 					valueOfInt64MapAtA,
 				);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64["10^"],
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64["10^"]).toEqual(
+					stringVal,
+				);
 				expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64[11]).toEqual(
 					valueOfInt64MapAtA,
 				);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64["11^"],
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refArrayToUint64Int64["11^"]).toEqual(
+					stringVal,
+				);
 
 				// Ref Map
 				// ref to Uint64
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("a"),
-				).toEqual(uint64Value);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("a^"),
-				).toEqual(stringVal);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("b"),
-				).toEqual(uint64Value);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("b^"),
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("a")).toEqual(
+					uint64Value,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("a^")).toEqual(
+					stringVal,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("b")).toEqual(
+					uint64Value,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("b^")).toEqual(
+					stringVal,
+				);
 
 				// ref to entry of Uint64Array
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("c"),
-				).toEqual(valueOfUint64ArrayAtZero);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("c^"),
-				).toEqual(stringVal);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("d"),
-				).toEqual(valueOfUint64ArrayAtZero);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("d^"),
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("c")).toEqual(
+					valueOfUint64ArrayAtZero,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("c^")).toEqual(
+					stringVal,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("d")).toEqual(
+					valueOfUint64ArrayAtZero,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("d^")).toEqual(
+					stringVal,
+				);
 
 				// ref to entry of Int64Map
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("e"),
-				).toEqual(valueOfInt64MapAtA);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("e^"),
-				).toEqual(stringVal);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("f"),
-				).toEqual(valueOfInt64MapAtA);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("f^"),
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("e")).toEqual(
+					valueOfInt64MapAtA,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("e^")).toEqual(
+					stringVal,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("f")).toEqual(
+					valueOfInt64MapAtA,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("f^")).toEqual(
+					stringVal,
+				);
 
 				// ref to ref to Uint64
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("g"),
-				).toEqual(uint64Value);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("g^"),
-				).toEqual(stringVal);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("h"),
-				).toEqual(uint64Value);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("h^"),
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("g")).toEqual(
+					uint64Value,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("g^")).toEqual(
+					stringVal,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("h")).toEqual(
+					uint64Value,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("h^")).toEqual(
+					stringVal,
+				);
 
 				// ref to ref to entry of Uint64Array
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("i"),
-				).toEqual(valueOfUint64ArrayAtZero);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("i^"),
-				).toEqual(stringVal);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("j"),
-				).toEqual(valueOfUint64ArrayAtZero);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("j^"),
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("i")).toEqual(
+					valueOfUint64ArrayAtZero,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("i^")).toEqual(
+					stringVal,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("j")).toEqual(
+					valueOfUint64ArrayAtZero,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("j^")).toEqual(
+					stringVal,
+				);
 
 				// ref to ref to entry of Int64Map
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("k"),
-				).toEqual(valueOfInt64MapAtA);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("k^"),
-				).toEqual(stringVal);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("l"),
-				).toEqual(valueOfInt64MapAtA);
-				expect(
-					state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("l^"),
-				).toEqual(stringVal);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("k")).toEqual(
+					valueOfInt64MapAtA,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("k^")).toEqual(
+					stringVal,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("l")).toEqual(
+					valueOfInt64MapAtA,
+				);
+				expect(state.myTestProperty.myUint64Int64Cases.refMapToUint64Int64.get("l^")).toEqual(
+					stringVal,
+				);
 			});
 
 			it("setting", function () {
@@ -2302,12 +2114,8 @@ describe("JS-Object-like property accessing ", function () {
 
 			it("Setting", function () {
 				state.myTestProperty.myVector = { x: 3, y: 4 };
-				expect(rootNode.get("myTestProperty").get("myVector").get("x").getValue()).toEqual(
-					3,
-				);
-				expect(rootNode.get("myTestProperty").get("myVector").get("y").getValue()).toEqual(
-					4,
-				);
+				expect(rootNode.get("myTestProperty").get("myVector").get("x").getValue()).toEqual(3);
+				expect(rootNode.get("myTestProperty").get("myVector").get("y").getValue()).toEqual(4);
 
 				// Property
 				state.myTestProperty.myVector = PropertyFactory.create(
@@ -2315,22 +2123,14 @@ describe("JS-Object-like property accessing ", function () {
 					"single",
 					{ x: 5, y: 6 },
 				);
-				expect(rootNode.get("myTestProperty").get("myVector").get("x").getValue()).toEqual(
-					5,
-				);
-				expect(rootNode.get("myTestProperty").get("myVector").get("y").getValue()).toEqual(
-					6,
-				);
+				expect(rootNode.get("myTestProperty").get("myVector").get("x").getValue()).toEqual(5);
+				expect(rootNode.get("myTestProperty").get("myVector").get("y").getValue()).toEqual(6);
 
 				state.myTestProperty.myVector = PropertyProxy.proxify(
 					PropertyFactory.create(vector2DTemplate.typeid, "single", { x: 7, y: 8 }),
 				);
-				expect(rootNode.get("myTestProperty").get("myVector").get("x").getValue()).toEqual(
-					7,
-				);
-				expect(rootNode.get("myTestProperty").get("myVector").get("y").getValue()).toEqual(
-					8,
-				);
+				expect(rootNode.get("myTestProperty").get("myVector").get("x").getValue()).toEqual(7);
+				expect(rootNode.get("myTestProperty").get("myVector").get("y").getValue()).toEqual(8);
 
 				expect(() => {
 					state.myTestProperty.myF32Number = [{ x: 1, y: 2 }];
@@ -2422,27 +2222,23 @@ describe("JS-Object-like property accessing ", function () {
 				});
 
 				it("check .every() functionality", function () {
-					expect(
-						state.myTestProperty.myI32Array.every((element) => element < 50),
-					).toEqual(true);
-					expect(
-						state.myTestProperty.myI32Array.every((element) => element < 20),
-					).toEqual(false);
+					expect(state.myTestProperty.myI32Array.every((element) => element < 50)).toEqual(
+						true,
+					);
+					expect(state.myTestProperty.myI32Array.every((element) => element < 20)).toEqual(
+						false,
+					);
 				});
 
 				it("check .filter() functionality", function () {
-					const filtered = state.myTestProperty.myI32Array.filter(
-						(element) => element < 20,
-					);
+					const filtered = state.myTestProperty.myI32Array.filter((element) => element < 20);
 					expect(filtered.length).toEqual(2);
 					expect(Object.getPrototypeOf(filtered)).toEqual(Object.getPrototypeOf([]));
 				});
 
 				it("check .find() functionality", function () {
 					expect(
-						state.myTestProperty.myI32Array.find(
-							(element) => element < 15 && element > 5,
-						),
+						state.myTestProperty.myI32Array.find((element) => element < 15 && element > 5),
 					).toEqual(10);
 				});
 
@@ -2523,20 +2319,15 @@ describe("JS-Object-like property accessing ", function () {
 
 				it("check .reduceRight() functionality", function () {
 					expect(
-						state.myTestProperty.myI32Array.reduceRight(
-							(previousValue, currentValue) => {
-								return previousValue + currentValue;
-							},
-						),
+						state.myTestProperty.myI32Array.reduceRight((previousValue, currentValue) => {
+							return previousValue + currentValue;
+						}),
 					).toEqual(100);
 
 					expect(
-						state.myTestProperty.myI32Array.reduceRight(
-							(previousValue, currentValue) => {
-								return previousValue + currentValue;
-							},
-							-100,
-						),
+						state.myTestProperty.myI32Array.reduceRight((previousValue, currentValue) => {
+							return previousValue + currentValue;
+						}, -100),
 					).toEqual(0);
 				});
 
@@ -2578,10 +2369,7 @@ describe("JS-Object-like property accessing ", function () {
 			describe("Setting", function () {
 				afterEach(function () {
 					rootNode.get("myTestProperty").get("myI32Array").clear();
-					rootNode
-						.get("myTestProperty")
-						.get("myI32Array")
-						.insertRange(0, [0, 10, 20, 30, 40]);
+					rootNode.get("myTestProperty").get("myI32Array").insertRange(0, [0, 10, 20, 30, 40]);
 				});
 
 				it("should set via direct access", function () {
@@ -2597,9 +2385,7 @@ describe("JS-Object-like property accessing ", function () {
 				it("should set an element out of range", function () {
 					// Setting and element out of range
 					state.myTestProperty.myI32Array[10] = 100;
-					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(
-						11,
-					);
+					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(11);
 					expect(rootNode.get("myTestProperty").get("myI32Array").get("10")).toEqual(100);
 				});
 
@@ -2613,9 +2399,9 @@ describe("JS-Object-like property accessing ", function () {
 				it("check .fill() functionality", function () {
 					state.myTestProperty.myI32Array.fill(0);
 					for (let i = 0; i < state.myTestProperty.myI32Array.length; i++) {
-						expect(
-							rootNode.get("myTestProperty").get("myI32Array").get(i.toString()),
-						).toEqual(0);
+						expect(rootNode.get("myTestProperty").get("myI32Array").get(i.toString())).toEqual(
+							0,
+						);
 					}
 
 					state.myTestProperty.myI32Array[0] = 0;
@@ -2648,28 +2434,20 @@ describe("JS-Object-like property accessing ", function () {
 					expect(rootNode.get("myTestProperty").get("myI32Array").get("7")).toEqual(70);
 
 					// (proxied) property
-					state.myTestProperty.myI32Array.push(
-						PropertyFactory.create("Int32", "single", 80),
-					);
+					state.myTestProperty.myI32Array.push(PropertyFactory.create("Int32", "single", 80));
 					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(9);
 					expect(rootNode.get("myTestProperty").get("myI32Array").get("8")).toEqual(80);
 
-					const proxied = PropertyProxy.proxify(
-						PropertyFactory.create("Int32", "single", 90),
-					);
+					const proxied = PropertyProxy.proxify(PropertyFactory.create("Int32", "single", 90));
 					state.myTestProperty.myI32Array.push(proxied);
-					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(
-						10,
-					);
+					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(10);
 					expect(rootNode.get("myTestProperty").get("myI32Array").get("9")).toEqual(90);
 
 					state.myTestProperty.myI32Array.push(
 						PropertyFactory.create("Int32", "single", 100),
 						PropertyFactory.create("Int32", "single", 110),
 					);
-					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(
-						12,
-					);
+					expect(rootNode.get("myTestProperty").get("myI32Array").getLength()).toEqual(12);
 					expect(rootNode.get("myTestProperty").get("myI32Array").get("10")).toEqual(100);
 					expect(rootNode.get("myTestProperty").get("myI32Array").get("11")).toEqual(110);
 
@@ -2809,14 +2587,10 @@ describe("JS-Object-like property accessing ", function () {
 
 				it("should be able to adjust array size be setting length", function () {
 					state.myTestProperty.myI32Array.length = 10;
-					expect(rootNode.resolvePath("myTestProperty.myI32Array").getLength()).toEqual(
-						10,
-					);
+					expect(rootNode.resolvePath("myTestProperty.myI32Array").getLength()).toEqual(10);
 
 					state.myTestProperty.myI32Array.length = 5;
-					expect(rootNode.resolvePath("myTestProperty.myI32Array").getLength()).toEqual(
-						5,
-					);
+					expect(rootNode.resolvePath("myTestProperty.myI32Array").getLength()).toEqual(5);
 
 					expect(() => {
 						state.myTestProperty.myI32Array.length = -10;
@@ -2972,9 +2746,9 @@ describe("JS-Object-like property accessing ", function () {
 				expect(
 					state.myTestProperty.myComplexArray.every((element) => element.x < 100),
 				).toEqual(true);
-				expect(
-					state.myTestProperty.myComplexArray.every((element) => element.y < 20),
-				).toEqual(false);
+				expect(state.myTestProperty.myComplexArray.every((element) => element.y < 20)).toEqual(
+					false,
+				);
 			});
 
 			it("check .filter() functionality", function () {
@@ -3015,9 +2789,7 @@ describe("JS-Object-like property accessing ", function () {
 
 			it("check .includes() functionality", function () {
 				expect(
-					state.myTestProperty.myComplexArray.includes(
-						state.myTestProperty.myComplexArray[0],
-					),
+					state.myTestProperty.myComplexArray.includes(state.myTestProperty.myComplexArray[0]),
 				).toEqual(arrayWithJsOutfit.includes(arrayWithJsOutfit[0]));
 				expect(
 					state.myTestProperty.myComplexArray.includes(
@@ -3139,32 +2911,25 @@ describe("JS-Object-like property accessing ", function () {
 
 			it("check .reduceRight() functionality", function () {
 				expect(
-					state.myTestProperty.myComplexArray.reduceRight(
-						(previousValue, currentValue) => {
-							return (
-								previousValue.x + previousValue.y + currentValue.x + currentValue.y
-							);
-						},
-					),
+					state.myTestProperty.myComplexArray.reduceRight((previousValue, currentValue) => {
+						return previousValue.x + previousValue.y + currentValue.x + currentValue.y;
+					}),
 				).toEqual(33);
 
 				expect(
-					state.myTestProperty.myComplexArray.reduceRight(
-						(previousValue, currentValue) => {
-							return previousValue + currentValue.x + currentValue.y;
-						},
-						-33,
-					),
+					state.myTestProperty.myComplexArray.reduceRight((previousValue, currentValue) => {
+						return previousValue + currentValue.x + currentValue.y;
+					}, -33),
 				).toEqual(0);
 			});
 
 			it("check .some() functionality", function () {
-				expect(
-					state.myTestProperty.myComplexArray.some((element) => element.x > 1),
-				).toEqual(true);
-				expect(
-					state.myTestProperty.myComplexArray.some((element) => element.x > 50),
-				).toEqual(false);
+				expect(state.myTestProperty.myComplexArray.some((element) => element.x > 1)).toEqual(
+					true,
+				);
+				expect(state.myTestProperty.myComplexArray.some((element) => element.x > 50)).toEqual(
+					false,
+				);
 			});
 
 			it("check .toString() functionality", function () {
@@ -3220,20 +2985,10 @@ describe("JS-Object-like property accessing ", function () {
 						PropertyFactory.create(vector2DTemplate.typeid, "single", { x: 30, y: 40 }),
 					);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("x").getValue(),
 					).toEqual(30);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("y").getValue(),
 					).toEqual(40);
 
 					state.myTestProperty.myComplexArray[0] = PropertyFactory.create(
@@ -3242,20 +2997,10 @@ describe("JS-Object-like property accessing ", function () {
 						{ x: 5, y: 6 },
 					);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("x").getValue(),
 					).toEqual(5);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("y").getValue(),
 					).toEqual(6);
 
 					// polymorphic
@@ -3265,52 +3010,25 @@ describe("JS-Object-like property accessing ", function () {
 						{ x: 50, y: 60, z: 1 },
 					);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("x").getValue(),
 					).toEqual(50);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("y").getValue(),
 					).toEqual(60);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("0")
-							.get("z")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("0").get("z").getValue(),
 					).toEqual(1);
 				});
 
 				it("should set an element out of range", function () {
 					// Setting and element out of range
 					state.myTestProperty.myComplexArray[10] = { x: 100, y: 100 };
+					expect(rootNode.get("myTestProperty").get("myComplexArray").getLength()).toEqual(11);
 					expect(
-						rootNode.get("myTestProperty").get("myComplexArray").getLength(),
-					).toEqual(11);
-					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get(10)
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get(10).get("x").getValue(),
 					).toEqual(100);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get(10)
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get(10).get("y").getValue(),
 					).toEqual(100);
 				});
 
@@ -3362,13 +3080,12 @@ describe("JS-Object-like property accessing ", function () {
 						rootNode.get("myTestProperty").get("myComplexArray").get(2).getValues().z,
 					).toEqual(1);
 
-					expect(rootNode.get("myTestProperty").get("myComplexArray").get(2)).toEqual(
-						entry,
-					);
+					expect(rootNode.get("myTestProperty").get("myComplexArray").get(2)).toEqual(entry);
 
 					expect(() => {
-						state.myTestProperty.myComplexArray[0] =
-							rootNode.resolvePath("myTestProperty.myVector");
+						state.myTestProperty.myComplexArray[0] = rootNode.resolvePath(
+							"myTestProperty.myVector",
+						);
 					}).toThrow();
 				});
 
@@ -3480,8 +3197,9 @@ describe("JS-Object-like property accessing ", function () {
 					}
 
 					expect(() => {
-						state.myTestProperty.myComplexArray[0] =
-							rootNode.resolvePath("myTestProperty.myVector");
+						state.myTestProperty.myComplexArray[0] = rootNode.resolvePath(
+							"myTestProperty.myVector",
+						);
 					}).toThrow();
 				});
 
@@ -3489,71 +3207,35 @@ describe("JS-Object-like property accessing ", function () {
 					const popped = state.myTestProperty.myComplexArray.pop();
 					expect(popped.x).toEqual(10);
 					expect(popped.y).toEqual(20);
-					expect(
-						rootNode.get("myTestProperty").get("myComplexArray").getLength(),
-					).toEqual(1);
+					expect(rootNode.get("myTestProperty").get("myComplexArray").getLength()).toEqual(1);
 				});
 
 				it("check .push() functionality", function () {
 					expect(state.myTestProperty.myComplexArray.push({ x: 3, y: 4 })).toEqual(3);
+					expect(rootNode.get("myTestProperty").get("myComplexArray").getLength()).toEqual(3);
 					expect(
-						rootNode.get("myTestProperty").get("myComplexArray").getLength(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("2").get("x").getValue(),
 					).toEqual(3);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("2")
-							.get("x")
-							.getValue(),
-					).toEqual(3);
-					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("2")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("2").get("y").getValue(),
 					).toEqual(4);
 
 					// multiple elements
 					expect(
 						state.myTestProperty.myComplexArray.push({ x: 30, y: 40 }, { x: 5, y: 6 }),
 					).toEqual(5);
+					expect(rootNode.get("myTestProperty").get("myComplexArray").getLength()).toEqual(5);
 					expect(
-						rootNode.get("myTestProperty").get("myComplexArray").getLength(),
-					).toEqual(5);
-					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("3")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("3").get("x").getValue(),
 					).toEqual(30);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("3")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("3").get("y").getValue(),
 					).toEqual(40);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("4")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("4").get("x").getValue(),
 					).toEqual(5);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("4")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("4").get("y").getValue(),
 					).toEqual(6);
 
 					// (proxied) properties
@@ -3566,40 +3248,18 @@ describe("JS-Object-like property accessing ", function () {
 						),
 						PropertyFactory.create(vector2DTemplate.typeid, "single", { x: 7, y: 8 }),
 					);
+					expect(rootNode.get("myTestProperty").get("myComplexArray").getLength()).toEqual(7);
 					expect(
-						rootNode.get("myTestProperty").get("myComplexArray").getLength(),
-					).toEqual(7);
-					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("5")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("5").get("x").getValue(),
 					).toEqual(50);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("5")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("5").get("y").getValue(),
 					).toEqual(60);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("6")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("6").get("x").getValue(),
 					).toEqual(7);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("6")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("6").get("y").getValue(),
 					).toEqual(8);
 
 					// polymorphic
@@ -3610,32 +3270,15 @@ describe("JS-Object-like property accessing ", function () {
 							z: 1,
 						}),
 					);
+					expect(rootNode.get("myTestProperty").get("myComplexArray").getLength()).toEqual(8);
 					expect(
-						rootNode.get("myTestProperty").get("myComplexArray").getLength(),
-					).toEqual(8);
-					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("7")
-							.get("x")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("7").get("x").getValue(),
 					).toEqual(70);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("7")
-							.get("y")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("7").get("y").getValue(),
 					).toEqual(80);
 					expect(
-						rootNode
-							.get("myTestProperty")
-							.get("myComplexArray")
-							.get("7")
-							.get("z")
-							.getValue(),
+						rootNode.get("myTestProperty").get("myComplexArray").get("7").get("z").getValue(),
 					).toEqual(1);
 				});
 
@@ -3652,8 +3295,9 @@ describe("JS-Object-like property accessing ", function () {
 					expect(rootNode.resolvePath("myTestProperty.myComplexArray[1]")).toEqual(entry);
 
 					expect(() => {
-						state.myTestProperty.myComplexArray[0] =
-							rootNode.resolvePath("myTestProperty.myVector");
+						state.myTestProperty.myComplexArray[0] = rootNode.resolvePath(
+							"myTestProperty.myVector",
+						);
 					}).toThrow();
 				});
 
@@ -3663,13 +3307,14 @@ describe("JS-Object-like property accessing ", function () {
 					expect(first.x).toEqual(1);
 					expect(first.y).toEqual(2);
 					expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength - 1);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray").getLength(),
-					).toEqual(oldLength - 1);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray").getLength()).toEqual(
+						oldLength - 1,
+					);
 
 					expect(() => {
-						state.myTestProperty.myComplexArray[0] =
-							rootNode.resolvePath("myTestProperty.myVector");
+						state.myTestProperty.myComplexArray[0] = rootNode.resolvePath(
+							"myTestProperty.myVector",
+						);
 					}).toThrow();
 				});
 
@@ -3696,15 +3341,15 @@ describe("JS-Object-like property accessing ", function () {
 						rootNode.resolvePath("myTestProperty.myComplexArray[2].x").getValue(),
 					).toEqual(1);
 
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray[0]").getTypeid(),
-					).toEqual(vector3DTemplate.typeid);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray[1]").getTypeid(),
-					).toEqual(vector2DTemplate.typeid);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray[2]").getTypeid(),
-					).toEqual(vector2DTemplate.typeid);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray[0]").getTypeid()).toEqual(
+						vector3DTemplate.typeid,
+					);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray[1]").getTypeid()).toEqual(
+						vector2DTemplate.typeid,
+					);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray[2]").getTypeid()).toEqual(
+						vector2DTemplate.typeid,
+					);
 
 					// Check that it still refers to the same property
 					expect(rootNode.resolvePath("myTestProperty.myComplexArray[2]")).toEqual(entry);
@@ -3716,12 +3361,8 @@ describe("JS-Object-like property accessing ", function () {
 
 					state.myTestProperty.myComplexArray.swap(0, 1);
 
-					expect(rootNode.resolvePath("myTestProperty.myComplexArray[1]")).toEqual(
-						entry0,
-					);
-					expect(rootNode.resolvePath("myTestProperty.myComplexArray[0]")).toEqual(
-						entry1,
-					);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray[1]")).toEqual(entry0);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray[0]")).toEqual(entry1);
 					expect(
 						rootNode.resolvePath("myTestProperty.myComplexArray[1].x").getValue(),
 					).toEqual(1);
@@ -3741,21 +3382,16 @@ describe("JS-Object-like property accessing ", function () {
 					// Replace first element
 					state.myTestProperty.myComplexArray.splice(0, 1, { x: 1, y: 2 });
 					expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray").getLength(),
-					).toEqual(oldLength);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray").getLength()).toEqual(
+						oldLength,
+					);
 
 					// Add some elements
-					state.myTestProperty.myComplexArray.splice(
-						2,
-						0,
-						{ x: 3, y: 4 },
-						{ x: 30, y: 40 },
-					);
+					state.myTestProperty.myComplexArray.splice(2, 0, { x: 3, y: 4 }, { x: 30, y: 40 });
 					expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength + 2);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray").getLength(),
-					).toEqual(oldLength + 2);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray").getLength()).toEqual(
+						oldLength + 2,
+					);
 					const newArrayWithJsOutfit = [
 						{ x: 1, y: 2 },
 						{ x: 10, y: 20 },
@@ -3763,10 +3399,7 @@ describe("JS-Object-like property accessing ", function () {
 						{ x: 30, y: 40 },
 					];
 					expect(
-						rootNode
-							.resolvePath("myTestProperty.myComplexArray")
-							.getValues()
-							.toString(),
+						rootNode.resolvePath("myTestProperty.myComplexArray").getValues().toString(),
 					).toEqual(newArrayWithJsOutfit.toString());
 
 					// Remove added elements
@@ -3777,16 +3410,13 @@ describe("JS-Object-like property accessing ", function () {
 					expect(removed[1].y).toEqual(40);
 
 					expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray").getLength(),
-					).toEqual(oldLength);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray").getLength()).toEqual(
+						oldLength,
+					);
 
 					arrayWithJsOutfit.splice(2, 2);
 					expect(
-						rootNode
-							.resolvePath("myTestProperty.myComplexArray")
-							.getValues()
-							.toString(),
+						rootNode.resolvePath("myTestProperty.myComplexArray").getValues().toString(),
 					).toEqual(arrayWithJsOutfit.toString());
 				});
 
@@ -3796,9 +3426,9 @@ describe("JS-Object-like property accessing ", function () {
 						oldLength + 1,
 					);
 					expect(state.myTestProperty.myComplexArray.length).toEqual(oldLength + 1);
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray").getLength(),
-					).toEqual(oldLength + 1);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray").getLength()).toEqual(
+						oldLength + 1,
+					);
 					expect(
 						rootNode.resolvePath("myTestProperty.myComplexArray[0].x").getValue(),
 					).toEqual(-1);
@@ -3809,15 +3439,12 @@ describe("JS-Object-like property accessing ", function () {
 
 				it("should be able to adjust array size be setting length", function () {
 					state.myTestProperty.myComplexArray.length = 4;
-					expect(
-						rootNode.resolvePath("myTestProperty.myComplexArray").getLength(),
-					).toEqual(4);
+					expect(rootNode.resolvePath("myTestProperty.myComplexArray").getLength()).toEqual(4);
 				});
 
 				it("should be possible to assign another ArrayProperty", function () {
 					// This will fill the target with clones of the entry;
-					state.myTestProperty.myComplexArray =
-						state.constantCollections.nonPrimitiveArray;
+					state.myTestProperty.myComplexArray = state.constantCollections.nonPrimitiveArray;
 
 					const myComplexArray = rootNode.resolvePath("myTestProperty.myComplexArray");
 					expect(myComplexArray.getLength()).toEqual(2);
@@ -4034,66 +3661,50 @@ describe("JS-Object-like property accessing ", function () {
 					});
 
 					it("check .clear() functionality", function () {
-						expect(
-							rootNode.resolvePath("myTestProperty.myMap").getIds().length,
-						).toEqual(3);
+						expect(rootNode.resolvePath("myTestProperty.myMap").getIds().length).toEqual(3);
 						state.myTestProperty.myMap.clear();
-						expect(
-							rootNode.resolvePath("myTestProperty.myMap").getIds().length,
-						).toEqual(0);
+						expect(rootNode.resolvePath("myTestProperty.myMap").getIds().length).toEqual(0);
 					});
 
 					it("check .delete() functionality", function () {
 						expect(state.myTestProperty.myMap.has("firstNumber")).toEqual(true);
-						expect(
-							rootNode.get("myTestProperty").get("myMap").has("firstNumber"),
-						).toEqual(true);
+						expect(rootNode.get("myTestProperty").get("myMap").has("firstNumber")).toEqual(
+							true,
+						);
 						expect(state.myTestProperty.myMap.delete("firstNumber")).toEqual(true);
-						expect(state.myTestProperty.myMap.delete("nonExistingEntry")).toEqual(
+						expect(state.myTestProperty.myMap.delete("nonExistingEntry")).toEqual(false);
+						expect(state.myTestProperty.myMap.has("fistNumber")).toEqual(false);
+						expect(rootNode.get("myTestProperty").get("myMap").has("firstNumber")).toEqual(
 							false,
 						);
-						expect(state.myTestProperty.myMap.has("fistNumber")).toEqual(false);
-						expect(
-							rootNode.get("myTestProperty").get("myMap").has("firstNumber"),
-						).toEqual(false);
 					});
 
 					it("check .set() functionality", function () {
 						// Modify entry
 						state.myTestProperty.myMap.set("firstNumber", 42);
-						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(
-							42,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[firstNumber]")).toEqual(42);
 
 						// Insert entry
 						state.myTestProperty.myMap.set("fourthNumber", 4444);
-						expect(rootNode.resolvePath("myTestProperty.myMap[fourthNumber]")).toEqual(
-							4444,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[fourthNumber]")).toEqual(4444);
 
 						// Insert (proxied) property
 						state.myTestProperty.myMap.set(
 							"fifthNumber",
 							PropertyFactory.create("Int32", "single", 5555),
 						);
-						expect(rootNode.resolvePath("myTestProperty.myMap[fifthNumber]")).toEqual(
-							5555,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[fifthNumber]")).toEqual(5555);
 
 						state.myTestProperty.myMap.set(
 							"sixthNumber",
 							PropertyProxy.proxify(PropertyFactory.create("Int32", "single", 6666)),
 						);
-						expect(rootNode.resolvePath("myTestProperty.myMap[sixthNumber]")).toEqual(
-							6666,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[sixthNumber]")).toEqual(6666);
 
 						// Insert non matching property
 						const floatProperty = PropertyFactory.create("Float32", "single", 7.7);
 						state.myTestProperty.myMap.set("seventhNumber", floatProperty);
-						expect(rootNode.resolvePath("myTestProperty.myMap[seventhNumber]")).toEqual(
-							7,
-						);
+						expect(rootNode.resolvePath("myTestProperty.myMap[seventhNumber]")).toEqual(7);
 					});
 
 					it("should be possible to assign another MapProperty", function () {
@@ -4125,14 +3736,8 @@ describe("JS-Object-like property accessing ", function () {
 
 						// Assign iterables of properties
 						const entriesAsProperties = (): [string, BaseProperty][] => [
-							[
-								entries[0][0],
-								PropertyFactory.create("Int32", "single", entries[0][1]),
-							],
-							[
-								entries[1][0],
-								PropertyFactory.create("Int32", "single", entries[1][1]),
-							],
+							[entries[0][0], PropertyFactory.create("Int32", "single", entries[0][1])],
+							[entries[1][0], PropertyFactory.create("Int32", "single", entries[1][1])],
 						];
 
 						state.myTestProperty.myMap = new Map(entriesAsProperties());
@@ -4319,12 +3924,10 @@ describe("JS-Object-like property accessing ", function () {
 						expect(
 							rootNode.get("myTestProperty").get("myComplexMap").has("firstEntry"),
 						).toEqual(true);
-						expect(state.myTestProperty.myComplexMap.delete("firstEntry")).toEqual(
-							true,
+						expect(state.myTestProperty.myComplexMap.delete("firstEntry")).toEqual(true);
+						expect(state.myTestProperty.myComplexMap.delete("nonExistingEntry")).toEqual(
+							false,
 						);
-						expect(
-							state.myTestProperty.myComplexMap.delete("nonExistingEntry"),
-						).toEqual(false);
 						expect(state.myTestProperty.myComplexMap.has("firstEntry")).toEqual(false);
 						expect(
 							rootNode.get("myTestProperty").get("myComplexMap").has("firstEntry"),
@@ -4342,14 +3945,10 @@ describe("JS-Object-like property accessing ", function () {
 							),
 						);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(7);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(8);
 
 						// replace with polymorphic
@@ -4362,32 +3961,22 @@ describe("JS-Object-like property accessing ", function () {
 							}),
 						);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].x").getValue(),
 						).toEqual(10);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].y").getValue(),
 						).toEqual(20);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[firstEntry].z")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[firstEntry].z").getValue(),
 						).toEqual(1);
 
 						// insert entry
 						state.myTestProperty.myComplexMap.set("fourthEntry", { x: 70, y: 80 });
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[fourthEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[fourthEntry].x").getValue(),
 						).toEqual(70);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[fourthEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[fourthEntry].y").getValue(),
 						).toEqual(80);
 
 						// proxied property
@@ -4401,14 +3990,10 @@ describe("JS-Object-like property accessing ", function () {
 							),
 						);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[fifthEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[fifthEntry].x").getValue(),
 						).toEqual(90);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[fifthEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[fifthEntry].y").getValue(),
 						).toEqual(100);
 
 						// polymorphic
@@ -4421,25 +4006,18 @@ describe("JS-Object-like property accessing ", function () {
 							}),
 						);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[sixthEntry].x")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[sixthEntry].x").getValue(),
 						).toEqual(110);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[sixthEntry].y")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[sixthEntry].y").getValue(),
 						).toEqual(120);
 						expect(
-							rootNode
-								.resolvePath("myTestProperty.myComplexMap[sixthEntry].z")
-								.getValue(),
+							rootNode.resolvePath("myTestProperty.myComplexMap[sixthEntry].z").getValue(),
 						).toEqual(1);
 					});
 
 					it("should be possible to assign another MapProperty", function () {
-						state.myTestProperty.myComplexMap =
-							state.constantCollections.nonPrimitiveMap;
+						state.myTestProperty.myComplexMap = state.constantCollections.nonPrimitiveMap;
 
 						const myComplexMap = rootNode.resolvePath("myTestProperty.myComplexMap");
 						expect(myComplexMap.getIds().length).toEqual(2);
@@ -4481,19 +4059,11 @@ describe("JS-Object-like property accessing ", function () {
 						const entriesAsProperties = (): [string, BaseProperty][] => [
 							[
 								entries[0][0],
-								PropertyFactory.create(
-									vector2DTemplate.typeid,
-									"single",
-									entries[0][1],
-								),
+								PropertyFactory.create(vector2DTemplate.typeid, "single", entries[0][1]),
 							],
 							[
 								entries[1][0],
-								PropertyFactory.create(
-									vector2DTemplate.typeid,
-									"single",
-									entries[1][1],
-								),
+								PropertyFactory.create(vector2DTemplate.typeid, "single", entries[1][1]),
 							],
 						];
 
@@ -4757,13 +4327,9 @@ describe("JS-Object-like property accessing ", function () {
 						});
 					expect(foundHobbit).toEqual(true);
 					expect(foundFaust).toEqual(true);
-					expect(
-						rootNode.resolvePath("myTestProperty.myBookSet").getIds().length,
-					).toEqual(2);
+					expect(rootNode.resolvePath("myTestProperty.myBookSet").getIds().length).toEqual(2);
 					rootNode.resolvePath("myTestProperty.myBookSet").clear();
-					expect(
-						rootNode.resolvePath("myTestProperty.myBookSet").getIds().length,
-					).toEqual(0);
+					expect(rootNode.resolvePath("myTestProperty.myBookSet").getIds().length).toEqual(0);
 				};
 
 				// Assign pure javascript iterables

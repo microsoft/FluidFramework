@@ -173,10 +173,7 @@ describe("sharedTreeView", () => {
 
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 
 				assert.equal(log.length, 2);
 
@@ -200,10 +197,7 @@ describe("sharedTreeView", () => {
 				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
@@ -1019,9 +1013,7 @@ describe("sharedTreeView", () => {
 
 				const revertEvents = logger
 					.events()
-					.filter((event) =>
-						event.eventName.endsWith(TreeCheckout.revertTelemetryEventName),
-					);
+					.filter((event) => event.eventName.endsWith(TreeCheckout.revertTelemetryEventName));
 				assert.equal(revertEvents.length, 1);
 				assert.equal(revertEvents[0].age, ageToTest);
 
