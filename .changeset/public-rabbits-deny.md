@@ -18,7 +18,6 @@ Several types have been moved into InternalTypes, indicating that they are not f
 -   InsertableObjectFromSchemaRecord
 -   ObjectFromSchemaRecord
 -   FieldHasDefaultUnsafe
--   FieldSchemaUnsafe
 -   ObjectFromSchemaRecordUnsafe
 -   TreeObjectNodeUnsafe
 -   TreeFieldFromImplicitFieldUnsafe
@@ -41,5 +40,6 @@ Additionally a few more types which could not be moved due to technically limita
 -   All \*Unsafe type (use for construction of recursive schema).
 -   WithType
 -   AllowedTypes
+-   FieldSchemaUnsafe
 
 Also to reduce confusion `type` was renamed to `typeNameSymbol`, and is now only type exported. `Tree.is` should be used to get type information from `TreeNodes` instead.
