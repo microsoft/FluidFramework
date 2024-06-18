@@ -40,19 +40,14 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		this.explicitKeys = new Set(this.fields.map((f) => f.key));
 	}
 
-	private getEncodeValue(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
+	private getValueToEncode(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
 		if (this.value === 0) {
 			assert(typeof cursor.value === "string", "identifier must be type string");
-			if (
-				isStableId(cursor.value) &&
-				cache.idCompressor.tryRecompress(cursor.value) !== undefined
-			) {
+			if (isStableId(cursor.value)) {
 				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
-				assert(
-					sessionSpaceCompressedId !== undefined,
-					"sessionSpaceCompressedId should not be undefined",
-				);
-				return cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+				if (sessionSpaceCompressedId !== undefined) {
+					return cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+				}
 			}
 		}
 		return cursor.value;
@@ -68,7 +63,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-		encodeValue(this.getEncodeValue(cursor, cache), this.value, outputBuffer);
+		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
 		for (const field of this.fields) {
 			cursor.enterField(brand(field.key));
 			field.shape.encodeField(cursor, cache, outputBuffer);
