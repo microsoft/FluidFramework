@@ -9,11 +9,11 @@ import {
 	describeCompat,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	enableOnNewFileKey,
 	type IRuntimeAttributor,
 } from "@fluidframework/attributor/internal";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
