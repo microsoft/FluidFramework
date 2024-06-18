@@ -604,11 +604,7 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				const parsed = JSON.parse(state) as IPendingContainerState;
-				assert.strictEqual(
-					parsed.baseSnapshot.id,
-					"fromStorage",
-					"snapshot was not updated",
-				);
+				assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
 				const attributes = getAttributesFromPendingState(parsed);
 				assert.strictEqual(
 					attributes.sequenceNumber,
@@ -1004,11 +1000,7 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				const parsed = JSON.parse(state) as IPendingContainerState;
-				assert.strictEqual(
-					parsed.baseSnapshot.id,
-					"fromStorage",
-					"snapshot was not updated",
-				);
+				assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
 				const attributes = getAttributesFromPendingState(parsed);
 				assert.strictEqual(
 					attributes.sequenceNumber,
@@ -1090,11 +1082,7 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				const parsed = JSON.parse(state) as IPendingContainerState;
-				assert.strictEqual(
-					parsed.baseSnapshot.id,
-					"fromStorage",
-					"snapshot was not updated",
-				);
+				assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
 				const attributes = getAttributesFromPendingState(parsed);
 				assert.strictEqual(
 					attributes.sequenceNumber,
