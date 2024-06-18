@@ -71,7 +71,7 @@ describe("SparseArray2D", () => {
 							rowClearCount: clearCount,
 							colClearStart: 0,
 							colClearCount: 0,
-					  }
+						}
 					: {
 							rowStart,
 							colStart,
@@ -81,7 +81,7 @@ describe("SparseArray2D", () => {
 							rowClearCount: 0,
 							colClearStart: clearStart,
 							colClearCount: clearCount,
-					  };
+						};
 			}
 
 			const cases = [

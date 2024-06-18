@@ -121,10 +121,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 				itemData.name.get(),
 				itemData.quantity.get(),
 			]);
-			this.inventoryItems.set(
-				id,
-				new InventoryItem(id, nameSharedString, quantitySharedCell),
-			);
+			this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
 		}
 	}
 }

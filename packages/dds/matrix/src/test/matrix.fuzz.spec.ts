@@ -69,7 +69,11 @@ type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCe
 type State = DDSFuzzTestState<SharedMatrixFactory>;
 
 async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
-	assert.equal(a.colCount, b.colCount, `${a.id} and ${b.id} have different number of columns.`);
+	assert.equal(
+		a.colCount,
+		b.colCount,
+		`${a.id} and ${b.id} have different number of columns.`,
+	);
 	assert.equal(a.rowCount, b.rowCount, `${a.id} and ${b.id} have different number of rows.`);
 	for (let row = 0; row < a.rowCount; row++) {
 		for (let col = 0; col < a.colCount; col++) {
@@ -134,7 +138,9 @@ const defaultOptions: GeneratorOptions = {
 	setWeight: 20,
 };
 
-function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
+function makeGenerator(
+	optionsParam?: Partial<GeneratorOptions>,
+): AsyncGenerator<Operation, State> {
 	const { setWeight, insertColWeight, insertRowWeight, removeRowWeight, removeColWeight } = {
 		...defaultOptions,
 		...optionsParam,

@@ -44,7 +44,9 @@ import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
 export class SessionSpaceNormalizer {
 	// Run-length encoding of IDs that were generated as local IDs. They are stored as a list of tuples (genCount, count)
 	// that are sorted on the genCount so that contains checks can use a binary search.
-	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(compareFiniteNumbers);
+	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(
+		compareFiniteNumbers,
+	);
 
 	public get idRanges(): Pick<AppendOnlySortedMap<number, number>, "size" | "entries"> {
 		return this.localIdRanges;
