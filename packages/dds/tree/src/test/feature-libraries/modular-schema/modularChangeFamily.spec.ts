@@ -1537,7 +1537,6 @@ describe("ModularChangeFamily", () => {
 			{ parent: path, field: fieldB },
 			valueField.identifier,
 			brand(valueChange1a),
-			[],
 		);
 		const changes = getChanges();
 

@@ -45,7 +45,14 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
 }
 
-export type CrossFieldKeyTable = BTree<CrossFieldKey, FieldId>;
+export type CrossFieldKeyTable = BTree<CrossFieldKeyRange, FieldId>;
+export type CrossFieldKeyRange = [
+	CrossFieldTarget,
+	RevisionTag | undefined,
+	ChangesetLocalId,
+	number,
+];
+
 export type CrossFieldKey = [CrossFieldTarget, RevisionTag | undefined, ChangesetLocalId];
 
 export interface FieldId {

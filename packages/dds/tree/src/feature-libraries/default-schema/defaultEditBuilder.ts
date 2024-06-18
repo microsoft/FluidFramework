@@ -251,10 +251,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				destIndex,
 				moveId,
 			);
-			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change), [
-				[CrossFieldTarget.Source, undefined, moveId],
-				[CrossFieldTarget.Destination, undefined, moveId],
-			]);
+			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
 		} else {
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
@@ -346,7 +343,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change, []);
+				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const moveId = this.modularBuilder.generateId(count);
@@ -356,10 +353,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					destIndex,
 					moveId,
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, brand(change), [
-					[CrossFieldTarget.Source, undefined, moveId],
-					[CrossFieldTarget.Destination, undefined, moveId],
-				]);
+				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
 			},
 		};
 	}

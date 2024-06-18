@@ -87,6 +87,7 @@ import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
 	CrossFieldKey,
+	CrossFieldKeyRange,
 	CrossFieldKeyTable,
 	FieldChange,
 	FieldChangeMap,
@@ -248,7 +249,10 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		const nodeAliases: ChangeAtomIdMap<NodeId> = new Map();
+		const nodeAliases: ChangeAtomIdMap<NodeId> = mergeNestedMaps(
+			change1.change.nodeAliases,
+			change2.change.nodeAliases,
+		);
 
 		this.composeDiscoveredFields(
 			change1.change,
@@ -578,9 +582,13 @@ export class ModularChangeFamily
 		);
 
 		setInChangeAtomIdMap(composedNodes, id1, composedNodeChangeset);
-		deleteFromNestedMap(composedNodes, id2.revision, id2.localId);
-		deleteFromNestedMap(composedNodeToParent, id2.revision, id2.localId);
-		setInChangeAtomIdMap(nodeAliases, id2, id1);
+
+		if (!areEqualChangeAtomIds(id1, id2)) {
+			deleteFromNestedMap(composedNodes, id2.revision, id2.localId);
+			deleteFromNestedMap(composedNodeToParent, id2.revision, id2.localId);
+			setInChangeAtomIdMap(nodeAliases, id2, id1);
+		}
+
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
 	}
 
@@ -1508,11 +1516,12 @@ function replaceCrossFieldKeyTableRevisions(
 	nodeAliases: ChangeAtomIdMap<NodeId>,
 ): CrossFieldKeyTable {
 	const updated: CrossFieldKeyTable = new BTree();
-	table.forEachPair(([target, revision, id], field) => {
-		const updatedKey: CrossFieldKey = [
+	table.forEachPair(([target, revision, id, count], field) => {
+		const updatedKey: CrossFieldKeyRange = [
 			target,
 			replaceRevision(revision, oldRevisions, newRevision),
 			id,
+			count,
 		];
 
 		const normalizedFieldId = normalizeFieldId(field, nodeAliases);
@@ -2145,33 +2154,43 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 		invalidateDependents: boolean,
 	): void {
 		if (invalidateDependents && this.allowInval) {
-			const newFieldId = getFieldForCrossFieldKey(this.table.newChange, [
+			const newFieldIds = getFieldsForCrossFieldKey(this.table.newChange, [
 				target,
 				revision,
 				id,
+				count,
 			]);
 
-			if (newFieldId !== undefined) {
-				this.table.affectedNewFields.set(
-					[newFieldId.nodeId?.revision, newFieldId.nodeId?.localId, newFieldId.field],
-					true,
-				);
+			if (newFieldIds.length > 0) {
+				for (const newFieldId of newFieldIds) {
+					this.table.affectedNewFields.set(
+						[newFieldId.nodeId?.revision, newFieldId.nodeId?.localId, newFieldId.field],
+						true,
+					);
+				}
 			} else {
-				const baseFieldId = getFieldForCrossFieldKey(this.table.baseChange, [
+				const baseFieldIds = getFieldsForCrossFieldKey(this.table.baseChange, [
 					target,
 					revision,
 					id,
+					count,
 				]);
 
 				assert(
-					baseFieldId !== undefined,
+					baseFieldIds.length > 0,
 					"Cross field key not registered in base or new change",
 				);
 
-				this.table.affectedBaseFields.set(
-					[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
-					true,
-				);
+				for (const baseFieldId of baseFieldIds) {
+					this.table.affectedBaseFields.set(
+						[
+							baseFieldId.nodeId?.revision,
+							baseFieldId.nodeId?.localId,
+							baseFieldId.field,
+						],
+						true,
+					);
+				}
 			}
 		}
 
@@ -2198,33 +2217,43 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 		invalidateDependents: boolean,
 	): void {
 		if (invalidateDependents && this.allowInval) {
-			const newFieldId = getFieldForCrossFieldKey(this.table.newChange, [
+			const newFieldIds = getFieldsForCrossFieldKey(this.table.newChange, [
 				target,
 				revision,
 				id,
+				count,
 			]);
 
-			if (newFieldId !== undefined) {
-				this.table.affectedNewFields.set(
-					[newFieldId.nodeId?.revision, newFieldId.nodeId?.localId, newFieldId.field],
-					true,
-				);
+			if (newFieldIds.length > 0) {
+				for (const newFieldId of newFieldIds) {
+					this.table.affectedNewFields.set(
+						[newFieldId.nodeId?.revision, newFieldId.nodeId?.localId, newFieldId.field],
+						true,
+					);
+				}
 			} else {
-				const baseFieldId = getFieldForCrossFieldKey(this.table.baseChange, [
+				const baseFieldIds = getFieldsForCrossFieldKey(this.table.baseChange, [
 					target,
 					revision,
 					id,
+					count,
 				]);
 
 				assert(
-					baseFieldId !== undefined,
+					baseFieldIds.length > 0,
 					"Cross field key not registered in base or new change",
 				);
 
-				this.table.affectedBaseFields.set(
-					[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
-					true,
-				);
+				for (const baseFieldId of baseFieldIds) {
+					this.table.affectedBaseFields.set(
+						[
+							baseFieldId.nodeId?.revision,
+							baseFieldId.nodeId?.localId,
+							baseFieldId.field,
+						],
+						true,
+					);
+				}
 			}
 		}
 
@@ -2344,8 +2373,11 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
-		crossFieldKeys: CrossFieldKey[],
 	): void {
+		const crossFieldKeys = getChangeHandler(this.fieldKinds, fieldKind).getCrossFieldKeys(
+			change,
+		);
+
 		const modularChange = buildModularChangesetFromField(
 			field,
 			{ fieldKind, change },
@@ -2433,7 +2465,7 @@ function buildModularChangesetFromField(
 	nodeToParent: ChangeAtomIdMap<FieldId>,
 	crossFieldKeys: CrossFieldKeyTable,
 	idAllocator: IdAllocator = idAllocatorFromMaxId(),
-	localCrossFieldKeys: CrossFieldKey[] = [],
+	localCrossFieldKeys: CrossFieldKeyRange[] = [],
 	childId: NodeId | undefined = undefined,
 ): ModularChangeset {
 	const fieldChanges: FieldChangeMap = new Map([[path.field, fieldChange]]);
@@ -2616,6 +2648,7 @@ function mergeNestedMaps<K1, K2, V>(
 	map1: NestedMap<K1, K2, V>,
 	map2: NestedMap<K1, K2, V>,
 ): NestedMap<K1, K2, V> {
+	// XXX: Should assert there are no collisions?
 	return nestedMapFromFlatList([...nestedMapToFlatList(map1), ...nestedMapToFlatList(map2)]);
 }
 
@@ -2690,16 +2723,40 @@ export function getParentFieldId(changeset: ModularChangeset, nodeId: NodeId): F
 	return normalizeFieldId(parentId, changeset.nodeAliases);
 }
 
-export function getFieldForCrossFieldKey(
+export function getFieldsForCrossFieldKey(
 	changeset: ModularChangeset,
-	key: CrossFieldKey,
-): FieldId | undefined {
-	const fieldId = changeset.crossFieldKeys.get(key);
-	if (fieldId === undefined) {
-		return undefined;
-	}
+	[target, revision, id, count]: CrossFieldKeyRange,
+): FieldId[] {
+	let firstLocalId: number = id;
+	const lastLocalId = firstLocalId + count - 1;
 
-	return normalizeFieldId(fieldId, changeset.nodeAliases);
+	const fields: FieldId[] = [];
+	while (true) {
+		const entry = changeset.crossFieldKeys.getPairOrNextLower([target, revision, id, Infinity]);
+		if (entry === undefined) {
+			return fields;
+		}
+
+		const [entryKey, fieldId] = entry;
+		const [entryTarget, entryRevision, entryId, entryCount] = entryKey;
+		if (entryTarget !== target || entryRevision !== revision) {
+			return fields;
+		}
+
+		const entryLastId = entryId + entryCount - 1;
+
+		if (entryId > firstLocalId || entryLastId < firstLocalId) {
+			// TODO: We should probably assert that the ID ranges have no overlap.
+			return fields;
+		}
+
+		fields.push(normalizeFieldId(fieldId, changeset.nodeAliases));
+		if (entryLastId >= lastLocalId) {
+			return fields;
+		}
+
+		firstLocalId = entryLastId + 1;
+	}
 }
 
 function normalizeFieldId(fieldId: FieldId, nodeAliases: ChangeAtomIdMap<NodeId>): FieldId {

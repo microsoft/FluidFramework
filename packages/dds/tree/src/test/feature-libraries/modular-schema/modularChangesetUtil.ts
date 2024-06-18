@@ -25,6 +25,7 @@ import {
 	IdAllocator,
 	Mutable,
 	brand,
+	fail,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	nestedMapToFlatList,
@@ -32,11 +33,11 @@ import {
 } from "../../../util/index.js";
 import {
 	getChangeHandler,
-	getFieldForCrossFieldKey,
+	getFieldsForCrossFieldKey,
 	getParentFieldId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { fail } from "assert";
+import { strict as assert } from "assert";
 
 export const Change = {
 	build,
@@ -229,10 +230,9 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = new BTree();
 	for (const key of changeset.crossFieldKeys.keys()) {
-		updatedCrossFieldKeys.set(
-			key,
-			getFieldForCrossFieldKey(changeset, key) ?? fail("Cross field key should be defined"),
-		);
+		const fields = getFieldsForCrossFieldKey(changeset, key);
+		assert(fields.length === 1);
+		updatedCrossFieldKeys.set(key, fields[0]);
 	}
 
 	return {

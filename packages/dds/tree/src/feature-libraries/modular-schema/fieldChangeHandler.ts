@@ -17,7 +17,7 @@ import { IdAllocator, Invariant } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import { CrossFieldManager } from "./crossFieldQueries.js";
-import { CrossFieldKey, NodeId } from "./modularChangeTypes.js";
+import { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 /**
@@ -71,7 +71,7 @@ export interface FieldChangeHandler<
 	 */
 	isEmpty(change: TChangeset): boolean;
 	createEmpty(): TChangeset;
-	getCrossFieldKeys(change: TChangeset): CrossFieldKey[];
+	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 }
 
 export interface FieldChangeRebaser<TChangeset> {
