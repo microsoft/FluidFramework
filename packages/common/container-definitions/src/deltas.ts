@@ -67,17 +67,6 @@ export interface IDeltaSender {
  */
 export interface IDeltaManagerEvents extends IEvent {
 	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(event: "prepareSend", listener: (messageBuffer: any[]) => void);
-
-	/**
-	 * @deprecated No replacement API recommended.
-	 */
-	(event: "submitOp", listener: (message: IDocumentMessage) => void);
-
-	/**
 	 * Emitted immediately after processing an incoming operation (op).
 	 *
 	 * @remarks
