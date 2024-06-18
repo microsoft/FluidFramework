@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { assert } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
@@ -149,10 +148,6 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 		if (removalInfo !== undefined || moveInfo !== undefined) {
 			// If the segment's removal is below the MSN and it's not being held onto by a tracking group,
 			// it can be unlinked (i.e. removed from the merge-tree)
-			assert(
-				removalInfo?.removedSeq !== undefined && moveInfo?.movedSeq !== undefined,
-				"removedSeq and movedSeq should be defined",
-			);
 			if (
 				((!!removalInfo && seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq)) ||
 					(!!moveInfo && seqLTE(moveInfo.movedSeq, mergeTree.collabWindow.minSeq))) &&
