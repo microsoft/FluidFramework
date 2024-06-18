@@ -8,6 +8,8 @@ import {
 	CodeSpanNode,
 	HeadingNode,
 	LayoutUtilities,
+	LineBreakNode,
+	LinkNode,
 	PlainTextNode,
 	ReleaseTag,
 	SectionNode,
@@ -19,6 +21,12 @@ import { AlertNode } from "./alert-node.js";
 
 const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
+
+const supportDocsLinkSpan = new SpanNode([
+	new PlainTextNode("For more information about our API support guarantees, see "),
+	LinkNode.createFromPlainText("here", "https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels"),
+	new PlainTextNode("."),
+]);
 
 // Temporary workaround for items tagged as `@alpha` (to mean "legacy").
 // This messaging should be changed back to standard "alpha" terminology once we have
@@ -32,9 +40,11 @@ function createAlphaWarning(apiItem) {
 				CodeSpanNode.createFromPlainText(`${packageName}/legacy`),
 				new PlainTextNode("."),
 			]),
+			LineBreakNode.Singleton,
+			supportDocsLinkSpan,
 		],
 		/* alertKind: */ "note",
-		/* title: */ "This API is provided as-is for existing users, but is not recommended for new users.",
+		/* title: */ "This API is provided for existing users, but is not recommended for new users.",
 	);
 }
 
@@ -47,9 +57,11 @@ function createBetaWarning(apiItem) {
 				CodeSpanNode.createFromPlainText(`${packageName}/beta`),
 				new PlainTextNode("."),
 			]),
+			LineBreakNode.Singleton,
+			supportDocsLinkSpan,
 		],
 		/* alertKind: */ "warning",
-		/* title: */ "This API is provided as a beta preview and may change without notice. Use at your own risk.",
+		/* title: */ "This API is provided as a beta preview and may change without notice.",
 	);
 }
 
