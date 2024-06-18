@@ -20,6 +20,11 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 /**
  * @internal
  */
+/**
+ * error TS2420: Class 'DocumentStorageServiceProxy' incorrectly implements interface 'IDocumentStorageService'.
+ * @fluidframework/driver-utils:   Types of property 'policies' are incompatible.@fluidframework/driver-utils:     Type 'IDocumentStorageServicePolicies | undefined' is not assignable to type 'IDocumentStorageServicePolicies'.
+ * @fluidframework/driver-utils:       Type 'undefined' is not assignable to type 'IDocumentStorageServicePolicies'.
+ */
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
 	private _policies: IDocumentStorageServicePolicies | undefined;
 
