@@ -21,7 +21,6 @@ export type {
 	ObjectFromSchemaRecord,
 	// Recursive Schema APIs
 	FieldHasDefaultUnsafe,
-	FieldSchemaUnsafe,
 	ObjectFromSchemaRecordUnsafe,
 	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
