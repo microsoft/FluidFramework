@@ -33,7 +33,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run format:biome",
-		"format:biome": "biome check --apply .",
+		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"test": "echo \"Error: no test specified\" && exit 1",
