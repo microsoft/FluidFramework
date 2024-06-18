@@ -55,7 +55,7 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
-			username: this.creds.username,
+			username: this.creds.email,
 			password: this.creds.password,
 		};
 		const body = {
