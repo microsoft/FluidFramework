@@ -128,7 +128,7 @@ export interface IMoveInfo {
 	 *
 	 * Currently this field is unused, as we only support obliterate operations
 	 */
-	moveDst?: ReferencePosition;
+	moveDst?: ReferencePosition | undefined;
 
 	/**
 	 * List of client IDs that have moved this segment.
@@ -308,8 +308,8 @@ export interface ISegmentAction<TClientData> {
  * @internal
  */
 export interface ISegmentChanges {
-	next?: ISegment;
-	replaceCurrent?: ISegment;
+	next?: ISegment | undefined;
+	replaceCurrent?: ISegment | undefined;
 }
 /**
  * @internal
@@ -347,7 +347,7 @@ export interface NodeAction<TClientData> {
  * @internal
  */
 export interface InsertContext {
-	candidateSegment?: ISegment;
+	candidateSegment?: ISegment | undefined;
 	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
@@ -370,7 +370,7 @@ export interface SegmentActions<TClientData> {
 export interface SegmentGroup {
 	segments: ISegment[];
 	previousProps?: PropertySet[];
-	localSeq?: number;
+	localSeq?: number | undefined;
 	refSeq: number;
 }
 
@@ -592,7 +592,7 @@ export abstract class BaseSegment implements ISegment {
 			case MergeTreeDeltaType.OBLITERATE:
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(
-					moveInfo !== undefined && moveInfo.movedSeqs !== undefined,
+					moveInfo?.movedSeqs !== undefined,
 					0x86e /* On obliterate ack, missing move info! */,
 				);
 				this.localMovedSeq = undefined;

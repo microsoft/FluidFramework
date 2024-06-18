@@ -62,7 +62,7 @@ export interface ReferencePosition {
 	/**
 	 * Properties associated with this reference
 	 */
-	properties?: PropertySet;
+	properties?: PropertySet | undefined;
 
 	/**
 	 * The direction for this reference position to slide when the segment it
@@ -70,7 +70,7 @@ export interface ReferencePosition {
 	 *
 	 * Defaults to SlidingPreference.Forward
 	 */
-	slidingPreference?: SlidingPreference;
+	slidingPreference?: SlidingPreference | undefined;
 
 	refType: ReferenceType;
 

@@ -134,12 +134,12 @@ export interface PartialSequenceLength {
 	/**
 	 * clientId for the client that submitted the op with sequence number `seq`.
 	 */
-	clientId?: number;
+	clientId?: number | undefined;
 	/**
 	 * If this partial length obliterated remote segments, this is the length of
 	 * those segments
 	 */
-	remoteObliteratedLen?: number;
+	remoteObliteratedLen?: number | undefined;
 	/**
 	 * This field maps each client to the size of the intersection between segments deleted at this seq
 	 * and segments concurrently deleted by that client.
@@ -931,10 +931,12 @@ export class PartialSequenceLengths {
 				const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 
 				const removeHappenedFirst =
-					removalInfo &&
+					removalInfo?.removedSeq !== undefined &&
 					(!moveInfo ||
 						moveIsLocal ||
-						(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
+						(!removalIsLocal &&
+							moveInfo?.movedSeq !== undefined &&
+							moveInfo.movedSeq > removalInfo.removedSeq));
 
 				if (seq === segment.seq) {
 					// if this segment was moved on insert, its length should
@@ -942,7 +944,7 @@ export class PartialSequenceLengths {
 					if (
 						segment.wasMovedOnInsert &&
 						segment.seq !== undefined &&
-						moveInfo &&
+						moveInfo?.movedSeq !== undefined &&
 						moveInfo.movedSeq < segment.seq
 					) {
 						remoteObliteratedLen += segment.cachedLength;
