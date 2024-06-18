@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 import { mintRevisionTag } from "../../utils.js";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
-import { ChangeAtomId, RevisionTag, makeAnonChange } from "../../../core/index.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { type ChangeAtomId, type RevisionTag, makeAnonChange } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
-	RebaseConfig,
+	type RebaseConfig,
 	assertChangesetsEqual,
 	checkDeltaEquality,
 	rebase as rebaseI,
@@ -1046,11 +1046,10 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					insert,
 					removes,
-					rebaseRevisionMetadataFromInfo(
-						[{ revision: tag1 }, { revision: tag2 }],
-						undefined,
-						[tag1, tag2],
-					),
+					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
+						tag1,
+						tag2,
+					]),
 				);
 
 				const expected = [
@@ -1073,11 +1072,10 @@ export function testRebase() {
 				const rebased = rebaseOverComposition(
 					modify,
 					removes,
-					rebaseRevisionMetadataFromInfo(
-						[{ revision: tag1 }, { revision: tag2 }],
-						undefined,
-						[tag1, tag2],
-					),
+					rebaseRevisionMetadataFromInfo([{ revision: tag1 }, { revision: tag2 }], undefined, [
+						tag1,
+						tag2,
+					]),
 				);
 
 				const expected = [

@@ -61,12 +61,20 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 			tenantId = this.config.tenantId;
 			documentId = this.config.documentId;
 			provider = this.config.provider;
-		} else if (path.length >= 4) {
-			tenantId = path[2];
-			documentId = path[3];
 		} else {
-			tenantId = "fluid";
-			documentId = path[2];
+			const firstPath = path[2];
+			const secondPath = path[3];
+			assert(
+				firstPath !== undefined,
+				"firstPath is undefined in RouterliciousUrlResolver.resolve" /* "Tenant id should exist" */,
+			);
+			if (path.length >= 4 && secondPath !== undefined) {
+				tenantId = firstPath;
+				documentId = secondPath;
+			} else {
+				tenantId = "fluid";
+				documentId = firstPath;
+			}
 		}
 
 		const token = await this.getToken();
@@ -79,9 +87,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		let fluidUrl =
 			"https://" +
 			`${
-				this.config
-					? new URL(this.config.provider.get("worker:serverUrl")).host
-					: serverSuffix
+				this.config ? new URL(this.config.provider.get("worker:serverUrl")).host : serverSuffix
 			}/` +
 			`${encodeURIComponent(tenantId)}/` +
 			`${encodeURIComponent(documentId)}`;
@@ -141,7 +147,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		return resolved;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
 		assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");

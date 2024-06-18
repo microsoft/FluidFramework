@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, RevisionTag } from "../../../core/index.js";
+import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 import { mintRevisionTag } from "../../utils.js";
-import { Mutable, brand } from "../../../util/index.js";
+import { type Mutable, brand } from "../../../util/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";

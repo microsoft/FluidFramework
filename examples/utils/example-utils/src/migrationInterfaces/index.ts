@@ -25,4 +25,7 @@ export {
 	ISameContainerMigrationToolEvents,
 	SameContainerMigrationState,
 } from "./sameContainerMigrationTool.js";
-export { ISameContainerMigrator, ISameContainerMigratorEvents } from "./sameContainerMigrator.js";
+export {
+	ISameContainerMigrator,
+	ISameContainerMigratorEvents,
+} from "./sameContainerMigrator.js";

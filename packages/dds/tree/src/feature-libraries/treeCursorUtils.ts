@@ -8,14 +8,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	CursorLocationType,
 	CursorMarker,
-	DetachedField,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	PathRootPrefix,
-	TreeType,
-	UpPath,
-	Value,
+	type DetachedField,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type PathRootPrefix,
+	type TreeType,
+	type UpPath,
+	type Value,
 	detachedFieldAsKey,
 	rootField,
 } from "../core/index.js";
@@ -200,7 +200,10 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		};
 	}
 
-	private getOffsetPath(offset: number, prefix: PathRootPrefix | undefined): UpPath | undefined {
+	private getOffsetPath(
+		offset: number,
+		prefix: PathRootPrefix | undefined,
+	): UpPath | undefined {
 		// It is more efficient to handle prefix directly in here rather than delegating to PrefixedPath.
 
 		const length = this.indexStack.length - offset;
@@ -321,7 +324,10 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public nextNode(): boolean {
-		assert(this.mode === CursorLocationType.Nodes, 0x406 /* can only nextNode when in Nodes */);
+		assert(
+			this.mode === CursorLocationType.Nodes,
+			0x406 /* can only nextNode when in Nodes */,
+		);
 		this.index++;
 		if (this.index < (this.siblings as []).length) {
 			return true;

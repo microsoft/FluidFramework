@@ -7,8 +7,8 @@ import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
-import { ChangeEncodingContext } from "../core/index.js";
-import { JsonCompatibleReadOnly, fail } from "../util/index.js";
+import type { ChangeEncodingContext } from "../core/index.js";
+import { type JsonCompatibleReadOnly, fail } from "../util/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -192,12 +192,7 @@ export function makeCodecFamily<TDecoded, TContext>(
 		[
 			formatVersion: FormatVersion,
 			codec:
-				| IMultiFormatCodec<
-						TDecoded,
-						JsonCompatibleReadOnly,
-						JsonCompatibleReadOnly,
-						TContext
-				  >
+				| IMultiFormatCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>
 				| IJsonCodec<TDecoded, JsonCompatibleReadOnly, JsonCompatibleReadOnly, TContext>,
 		]
 	>,

@@ -6,17 +6,17 @@
 import { strict as assert, fail } from "assert";
 
 import {
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	FieldKey,
-	RevisionTag,
+	type ChangesetLocalId,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type FieldKey,
+	type RevisionTag,
 	emptyFieldChanges,
 	tagChange,
 } from "../../../core/index.js";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";

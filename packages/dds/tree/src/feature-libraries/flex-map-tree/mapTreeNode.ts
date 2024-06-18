@@ -5,55 +5,56 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	AnchorNode,
+	type AnchorNode,
 	EmptyKey,
-	FieldKey,
-	MapTree,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type Value,
 } from "../../core/index.js";
 import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
-	FlexTreeContext,
+	type FlexTreeContext,
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeFieldNode,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeNodeEvents,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNode,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxField,
-	FlexTreeUnboxNodeUnion,
-	FlexibleFieldContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeFieldNode,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeNodeEvents,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNode,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxField,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleFieldContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 	isLazy,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
-import { FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { ComposableEventEmitter, Listenable, Off } from "../../events/index.js";
+import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
+import { ComposableEventEmitter, type Listenable, type Off } from "../../events/index.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
@@ -606,6 +607,9 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 	): void {
 		throw unsupportedUsageError("Editing a sequence");
 	}
+	public getFieldPath(): FieldUpPath {
+		throw unsupportedUsageError("Editing a sequence");
+	}
 }
 
 // #endregion Fields
@@ -778,7 +782,11 @@ function unboxedUnion<TTypes extends FlexAllowedTypes>(
 		return getOrCreateChild(mapTree, type, parent) as FlexTreeUnboxNodeUnion<TTypes>;
 	}
 
-	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnboxNodeUnion<TTypes>;
+	return getOrCreateChild(
+		mapTree,
+		schema.allowedTypes,
+		parent,
+	) as FlexTreeUnboxNodeUnion<TTypes>;
 }
 
 /** Unboxes non-polymorphic required and optional fields holding leaf nodes to their values, if applicable */
@@ -789,7 +797,8 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 	parentNode: FlexTreeNode,
 ): FlexTreeUnboxField<TFieldSchema> {
 	const fieldSchema = field.schema;
-	const mapTrees = mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
+	const mapTrees =
+		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
 
 	if (fieldSchema.kind === FieldKinds.required) {
 		return unboxedUnion(fieldSchema, mapTrees[0], {

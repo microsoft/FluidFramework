@@ -23,6 +23,7 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
+import { waitForContainerConnection } from "@fluidframework/test-utils/internal";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.
@@ -83,7 +84,9 @@ export function getGCFeatureFromSummary(summaryTree: ISummaryTree): number {
  * @param summaryTree - The summary tree that contains the GC summary.
  * @returns The tombstone data if it exists, undefined otherwise.
  */
-export function getGCTombstoneStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
+export function getGCTombstoneStateFromSummary(
+	summaryTree: ISummaryTree,
+): string[] | undefined {
 	const rootGCTree = summaryTree.tree[gcTreeKey];
 	if (rootGCTree === undefined) {
 		return undefined;
@@ -170,4 +173,19 @@ export function manufactureHandle<T>(
 		serializer,
 	);
 	return handle;
+}
+
+/**
+ * Reconnects the summarizer so that it is elected as the current summarizer. This is needed for two reasons:
+ * 1. In ODSP, when a summary is submitted, the previous one may be deleted based on heuristics. Since these tests
+ * need to load a container from an older summary, we need to load a summarizer with the old summary before a new
+ * one is generated. This poses problem with summarizer election because of the second reason below.
+ * 2. In these tests, summarization is disabled on the main container. However, when the first summarizer container
+ * is closed, the main container is still chosen as the summarizer due to a bug. If we reconnect a new summarizer
+ * after this happens, it will be chosen as the summarizer client and can do on-demand summaries.
+ */
+export async function reconnectSummarizerToBeElected(container: IContainer) {
+	container.disconnect();
+	container.connect();
+	await waitForContainerConnection(container);
 }

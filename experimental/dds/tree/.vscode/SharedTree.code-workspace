@@ -1,15 +1,15 @@
 {
-    "folders": [
-      {
-        "name": "FluidFramework",
-        "path": "../../../../"
-      },
-      {
-        "name": "@fluid-experimental/tree",
-        "path": ".."
-      }
-    ],
-    "settings": {
-      "terminal.integrated.cwd": "../../.."
-    }
-  }
+	"folders": [
+		{
+			"name": "FluidFramework",
+			"path": "../../../../"
+		},
+		{
+			"name": "@fluid-experimental/tree",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"terminal.integrated.cwd": "../../.."
+	}
+}

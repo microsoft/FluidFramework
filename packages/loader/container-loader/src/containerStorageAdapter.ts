@@ -46,7 +46,10 @@ export interface ISerializableBlobContents {
  * container attach state.
  */
 export class ContainerStorageAdapter
-	implements ISerializedStateManagerDocumentStorageService, IDocumentStorageService, IDisposable
+	implements
+		ISerializedStateManagerDocumentStorageService,
+		IDocumentStorageService,
+		IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
@@ -74,7 +77,7 @@ export class ContainerStorageAdapter
 	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
+	 * @param shouldSummarizeProtocolTree  - Enforce uploading a protocol summary regardless of the service's policy.
 	 */
 	public constructor(
 		// eslint-disable-next-line import/no-deprecated
@@ -86,10 +89,10 @@ export class ContainerStorageAdapter
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		forceEnableSummarizeProtocolTree: boolean | undefined,
+		shouldSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		this._summarizeProtocolTree = forceEnableSummarizeProtocolTree;
+		this._summarizeProtocolTree = shouldSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
@@ -109,15 +112,22 @@ export class ContainerStorageAdapter
 			this.logger,
 		));
 
-		this._summarizeProtocolTree =
-			this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
-		if (this.summarizeProtocolTree) {
-			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
-			this._storageService = new ProtocolTreeStorageService(
-				retriableStorage,
-				this.addProtocolSummaryIfMissing,
-			);
-		}
+		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include
+		// the protocol summary, provided single-commit summary is enabled.
+		this._storageService = new ProtocolTreeStorageService(
+			retriableStorage,
+			(...props) => {
+				this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
+				return this.addProtocolSummaryIfMissing(...props);
+			},
+			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
+			// based on the response received from the service after connection is established.
+			() => {
+				this._summarizeProtocolTree =
+					this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree ?? false;
+				return this._summarizeProtocolTree;
+			},
+		);
 	}
 
 	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {
@@ -153,9 +163,7 @@ export class ContainerStorageAdapter
 			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
 			const localSnapshot =
-				this.loadingGroupIdSnapshotsFromPendingState[
-					snapshotFetchOptions.loadingGroupIds[0]
-				];
+				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
