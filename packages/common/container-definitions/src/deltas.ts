@@ -14,7 +14,6 @@ import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IAnyDriverError,
 	IClientConfiguration,
-	IDocumentMessage,
 	ITokenClaims,
 	ISequencedDocumentMessage,
 	ISignalMessage,
