@@ -2222,6 +2222,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						eventName: "unexpectedPendingMessage",
 						expectedPendingMessage: pendingKeyMessageIds[0],
 						actualPendingMessage: localOpMetadata.pendingMessageId,
+						expectedPendingMessagesLength: pendingKeyMessageIds.length,
 					});
 				}
 				pendingKeyMessageIds.shift();
