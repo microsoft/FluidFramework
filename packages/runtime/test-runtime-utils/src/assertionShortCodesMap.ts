@@ -533,7 +533,6 @@ export const shortCodeMap = {
 	"0x32b": "Invalid localOpMetadata for clear",
 	"0x32d": "Invalid localOpMetadata in submit",
 	"0x32f": "Invalid localOpMetadata for sub directory op",
-	"0x331": "Unexpected pending message received",
 	"0x337": "ObjectForest must only be given its own Cursor type",
 	"0x338": "ObjectForest must only be given its own Cursor",
 	"0x33b": "Cursor must not be freed",
@@ -1454,7 +1453,6 @@ export const shortCodeMap = {
 	"0x90e": "Unknown format version",
 	"0x90f":
 		'Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document.',
-	"0x910": "a disposed revertible cannot be disposed",
 	"0x911": "Invalid operation on a disposed TreeCheckout",
 	"0x916": "invalid value",
 	"0x91a": "identifier must exist",
@@ -1596,4 +1594,5 @@ export const shortCodeMap = {
 	"0x9a6": "There should be a channel when generating attach GC data",
 	"0x9a7": "BatchManager does not support rebase",
 	"0x9a8": "should be in fields mode",
+	"0x9a9": "expected to find a parent commit",
 };
