@@ -5,8 +5,10 @@
 
 import {
 	ApiItemUtilities,
+	CodeSpanNode,
 	HeadingNode,
 	LayoutUtilities,
+	PlainTextNode,
 	ReleaseTag,
 	SectionNode,
 	SpanNode,
@@ -21,12 +23,35 @@ const customThrowsSectionTitle = "Error Handling";
 // Temporary workaround for items tagged as `@alpha` (to mean "legacy").
 // This messaging should be changed back to standard "alpha" terminology once we have
 // cleaned up our tag meanings.
-const alphaWarning = SpanNode.createFromPlainText(
-	"LEGACY: This API is provided as is for existing users, but is not recommended for new users.",
-);
-const betaWarning = SpanNode.createFromPlainText(
-	"WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.",
-);
+function createAlphaWarning(apiItem) {
+	const packageName = apiItem.getAssociatedPackage().displayName;
+	return new AlertNode(
+		[
+			new SpanNode([
+				new PlainTextNode("To use, import via "),
+				CodeSpanNode.createFromPlainText(`${packageName}/legacy`),
+				new PlainTextNode("."),
+			]),
+		],
+		/* alertKind: */ "note",
+		/* title: */ "This API is provided as-is for existing users, but is not recommended for new users.",
+	);
+}
+
+function createBetaWarning(apiItem) {
+	const packageName = apiItem.getAssociatedPackage().displayName;
+	return new AlertNode(
+		[
+			new SpanNode([
+				new PlainTextNode("To use, import via "),
+				CodeSpanNode.createFromPlainText(`${packageName}/beta`),
+				new PlainTextNode("."),
+			]),
+		],
+		/* alertKind: */ "warning",
+		/* title: */ "This API is provided as a beta preview and may change without notice. Use at your own risk.",
+	);
+}
 
 /**
  * Default content layout for all API items.
@@ -77,9 +102,9 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	// Render alpha/beta notice if applicable
 	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
 	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(new SectionNode([alphaWarning]));
+		sections.push(new SectionNode([createAlphaWarning(apiItem)]));
 	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(new SectionNode([betaWarning]));
+		sections.push(new SectionNode([createBetaWarning(apiItem)]));
 	}
 
 	// Render signature (if any)
