@@ -68,6 +68,7 @@ export {
 	createSampledLogger,
 	type IEventSampler,
 	type ISampledTelemetryLogger,
+	measure,
 } from "./utils.js";
 export type {
 	TelemetryEventPropertyTypeExt,
@@ -80,4 +81,4 @@ export type {
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
-export { type IMeasuredCodeResult, TelemetryEventBatcher } from "./telemetryEventBatcher.js";
+export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
