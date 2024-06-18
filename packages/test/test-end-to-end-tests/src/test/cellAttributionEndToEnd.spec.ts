@@ -13,9 +13,9 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	enableOnNewFileKey,
-	type ContainerRuntime,
 	type IRuntimeAttributor,
-} from "@fluidframework/container-runtime/internal";
+} from "@fluidframework/attributor/internal";
+import { type ContainerRuntime } from "@fluidframework/attributor/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {

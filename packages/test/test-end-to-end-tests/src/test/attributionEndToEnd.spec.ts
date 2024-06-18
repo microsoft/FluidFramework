@@ -12,9 +12,9 @@ import {
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	enableOnNewFileKey,
-	type ContainerRuntime,
 	type IRuntimeAttributor,
-} from "@fluidframework/container-runtime/internal";
+} from "@fluidframework/attributor/internal";
+import { type ContainerRuntime } from "@fluidframework/attributor/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
