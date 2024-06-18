@@ -368,6 +368,7 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
+			// TODO why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const attributes = JSON.parse(snapshotBlobs[attributesHash!]!);
 			assert(

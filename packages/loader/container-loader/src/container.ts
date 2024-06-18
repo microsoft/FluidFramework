@@ -874,6 +874,7 @@ export class Container
 							: this.deltaManager?.lastMessage?.clientId,
 					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 					connectionStateDuration: () =>
+						// TODO why are we non null asserting here?
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						performance.now() - this.connectionTransitionTimes[this.connectionState]!,
 				},
@@ -920,6 +921,7 @@ export class Container
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
 							performance.now() -
+							// TODO why are we non null asserting here?
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							this.connectionTransitionTimes[ConnectionState.CatchingUp]!,
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
@@ -1852,16 +1854,19 @@ export class Container
 				await Promise.all([
 					readAndParse<[string, ISequencedClient][]>(
 						storage,
+						// TODO why are we non null asserting here?
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						baseTree.blobs.quorumMembers!,
 					),
 					readAndParse<[number, ISequencedProposal, string[]][]>(
 						storage,
+						// TODO why are we non null asserting here?
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						baseTree.blobs.quorumProposals!,
 					),
 					readAndParse<[string, ICommittedProposal][]>(
 						storage,
+						// TODO why are we non null asserting here?
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						baseTree.blobs.quorumValues!,
 					),
@@ -2120,6 +2125,7 @@ export class Container
 		// Log actual event
 		const time = performance.now();
 		this.connectionTransitionTimes[value] = time;
+		// TODO why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const duration = time - this.connectionTransitionTimes[oldState]!;
 
@@ -2133,6 +2139,7 @@ export class Container
 		} else {
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
+					// TODO why are we non null asserting here?
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected]!;
 				durationFromDisconnected = formatTick(durationFromDisconnected);

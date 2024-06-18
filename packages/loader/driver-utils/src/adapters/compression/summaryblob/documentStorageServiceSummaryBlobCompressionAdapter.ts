@@ -61,6 +61,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns `true` if there is a compression markup byte in the blob, otherwise `false`.
 	 */
 	private static hasPrefix(blob: ArrayBufferLike): boolean {
+		// TODO why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const firstByte = IsoBuffer.from(blob)[0]!;
 		// eslint-disable-next-line no-bitwise
@@ -74,7 +75,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
 		return !this.hasPrefix(blob)
 			? SummaryCompressionAlgorithm.None
-			: // eslint-disable-next-line no-bitwise, @typescript-eslint/no-non-null-assertion
+			: // TODO why are we non null asserting here?
+				// eslint-disable-next-line no-bitwise, @typescript-eslint/no-non-null-assertion
 				IsoBuffer.from(blob)[0]! & 0x0f;
 	}
 
