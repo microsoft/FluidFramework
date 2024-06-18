@@ -36,7 +36,7 @@
 		"tinylicious": "^5.0.0-265463"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "^1.8.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
