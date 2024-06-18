@@ -73,13 +73,13 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
-	private readonly rebaseLogger: ITelemetryLoggerExt;
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
+	rebaseLogger: ITelemetryLoggerExt;
 
 	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
@@ -145,7 +145,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			policy: schemaPolicy,
 		};
 
-		this.rebaseLogger = createChildLogger({
+		const rebaseLogger = createChildLogger({
 			logger: this.logger,
 			namespace: "Rebase",
 		});
@@ -162,7 +162,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag, this.rebaseLogger);
+		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag, rebaseLogger);
 		this.editManager.localBranch.on("transactionStarted", () => {
 			this.commitEnricher.startNewTransaction();
 		});
