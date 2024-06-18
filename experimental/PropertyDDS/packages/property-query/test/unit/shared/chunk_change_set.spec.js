@@ -142,7 +142,12 @@ describe("chunkChangeSet", function () {
 		return in_root;
 	};
 
-	let testChangeSetChunking = function (in_changeSet, in_chunks, in_chunkSize, in_testFirstPath) {
+	let testChangeSetChunking = function (
+		in_changeSet,
+		in_chunks,
+		in_chunkSize,
+		in_testFirstPath,
+	) {
 		// Make sure the remove operations are sorted
 		if (in_changeSet.remove) {
 			in_changeSet.remove.sort();
@@ -272,9 +277,7 @@ describe("chunkChangeSet", function () {
 				// Check whether they can be applied to the original chunks and then give the correct CS
 				// This also includes validating that delta calculation is possible
 				for (let chunk of chunks2) {
-					let newChangeSet = new ChangeSet(
-						chunks[chunk.correspondingChunkIndex].changeSet,
-					);
+					let newChangeSet = new ChangeSet(chunks[chunk.correspondingChunkIndex].changeSet);
 					let deltaCS = new ChangeSet(chunk.changeSet);
 					deltaCS._toReversibleChangeSet(newChangeSet.getSerializedChangeSet());
 					newChangeSet.applyChangeSet(chunk.changeSet);
@@ -634,13 +637,11 @@ describe("chunkChangeSet", function () {
 												stuffs: {
 													modify: {
 														"test.product:stuffs.model-0.0.2": {
-															"888f9944-b7b2-2038-2d19-07577129808f":
-																{
-																	"test.product:components.ABCReference-0.0.1":
-																		{
-																			abcReference: {},
-																		},
+															"888f9944-b7b2-2038-2d19-07577129808f": {
+																"test.product:components.ABCReference-0.0.1": {
+																	abcReference: {},
 																},
+															},
 														},
 													},
 												},
@@ -784,7 +785,7 @@ describe("chunkChangeSet", function () {
 											insert: {
 												[nestedType]: expectedChunkCS[i],
 											},
-									  }
+										}
 									: {},
 							},
 						},
@@ -975,7 +976,7 @@ describe("chunkChangeSet", function () {
 											insert: {
 												[nestedType]: expectedChunkCS[i],
 											},
-									  }
+										}
 									: {},
 							},
 						},
@@ -1128,14 +1129,7 @@ describe("chunkChangeSet", function () {
 													insert: {
 														"Array<Float32>": {
 															arr: {
-																insert: [
-																	[
-																		0,
-																		Array(10000000).fill(
-																			3.141698371,
-																		),
-																	],
-																],
+																insert: [[0, Array(10000000).fill(3.141698371)]],
 															},
 														},
 													},

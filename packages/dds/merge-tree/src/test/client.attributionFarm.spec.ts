@@ -24,18 +24,21 @@ import {
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 
-export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
+export const annotateRange: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+) => client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });
 
-const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
-	{
-		initLen: { min: 2, max: 4 },
-		modLen: { min: 1, max: 8 },
-		opsPerRoundRange: { min: 10, max: 40 },
-		rounds: 10,
-		operations: [removeRange, annotateRange, insert],
-		growthFunc: (input: number) => input * 2,
-	};
+const defaultOptions: Record<"initLen" | "modLen", IConfigRange> &
+	IMergeTreeOperationRunnerConfig = {
+	initLen: { min: 2, max: 4 },
+	modLen: { min: 1, max: 8 },
+	opsPerRoundRange: { min: 10, max: 40 },
+	rounds: 10,
+	operations: [removeRange, annotateRange, insert],
+	growthFunc: (input: number) => input * 2,
+};
 
 describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 	// Generate a list of single character client names, support up to 69 clients
@@ -52,9 +55,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 							attribution: {
 								track: true,
 								policyFactory:
-									createPropertyTrackingAndInsertionAttributionPolicyFactory(
-										"trackedProp",
-									),
+									createPropertyTrackingAndInsertionAttributionPolicyFactory("trackedProp"),
 							},
 						}),
 				);
@@ -83,8 +84,8 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				const validateAnnotation = (reason: string, workload: () => void) => {
 					const preWorkload = TestClientLogger.toString(clients);
 					workload();
-					const attributions = Array.from({ length: clients[0].getLength() }).map(
-						(_, i) => getAttributionAtPosition(clients[0], i),
+					const attributions = Array.from({ length: clients[0].getLength() }).map((_, i) =>
+						getAttributionAtPosition(clients[0], i),
 					);
 					for (let c = 1; c < clients.length; c++) {
 						for (let i = 0; i < clients[c].getLength(); i++) {
@@ -107,13 +108,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 				let seq = 0;
 
 				validateAnnotation("Initialize", () => {
-					seq = runMergeTreeOperationRunner(
-						random,
-						seq,
-						clients,
-						initLen,
-						defaultOptions,
-					);
+					seq = runMergeTreeOperationRunner(random, seq, clients, initLen, defaultOptions);
 				});
 
 				validateAnnotation("After Init Zamboni", () => {

@@ -86,7 +86,8 @@ export function TelemetryView(): React.ReactElement {
 	 * If `telemetryEvents` is full, new events accumulate in `bufferedEvents` until more space becomes available.
 	 */
 	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
-	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
+	const [maxEventsToDisplay, setMaxEventsToDisplay] =
+		React.useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
 
 	React.useEffect(() => {
@@ -96,10 +97,7 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			[TelemetryEvent.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
-				setBufferedEvents((currentBuffer) => [
-					message.data.event,
-					...(currentBuffer ?? []),
-				]);
+				setBufferedEvents((currentBuffer) => [message.data.event, ...(currentBuffer ?? [])]);
 				return true;
 			},
 			[TelemetryHistory.MessageType]: async (untypedMessage) => {
@@ -340,9 +338,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			// Filter by event name
 			if (customSearch !== "") {
 				filteredEvents = filteredEvents?.filter((event) => {
-					return (
-						event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch
-					);
+					return event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch;
 				});
 			}
 
@@ -474,7 +470,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 						eventName: message.logContent.eventName,
 						information: JSON.stringify(message.logContent, undefined, 2),
 					};
-			  }, []);
+				}, []);
 
 	const columns: TableColumnDefinition<Item>[] = [
 		createTableColumn<Item>({
@@ -546,11 +542,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					style={{ marginBottom: "10px" }}
 				>
 					{customSearch ? (
-						<Option
-							key="freeform"
-							style={{ overflowWrap: "anywhere" }}
-							text={customSearch}
-						>
+						<Option key="freeform" style={{ overflowWrap: "anywhere" }} text={customSearch}>
 							Search for `{customSearch}`
 						</Option>
 					) : undefined}

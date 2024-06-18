@@ -126,10 +126,7 @@ export function handleIncomingMessage(
 			}
 		},
 		(error) => {
-			console.error(
-				`${loggingPreamble} Message could not be handled due to an error:`,
-				error,
-			);
+			console.error(`${loggingPreamble} Message could not be handled due to an error:`, error);
 		},
 	);
 }

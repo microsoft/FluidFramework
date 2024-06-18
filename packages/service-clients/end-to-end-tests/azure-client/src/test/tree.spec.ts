@@ -84,12 +84,11 @@ for (const testOpts of testMatrix) {
 			let container1: IFluidContainer;
 			let treeData: TreeView<typeof StringArray>;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.createContainerWithSharedTree,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.createContainerWithSharedTree,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
@@ -140,12 +139,11 @@ for (const testOpts of testMatrix) {
 			let container1: IFluidContainer;
 			let treeData1: TreeView<typeof StringArray>;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.createLoadContainerWithSharedTree,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.createLoadContainerWithSharedTree,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
