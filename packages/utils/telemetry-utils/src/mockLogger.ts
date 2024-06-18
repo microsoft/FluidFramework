@@ -91,7 +91,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 
 	/**
 	 * Asserts {@link MockLogger.matchEvents} is `true` for the given events.
-	 * @param disallowedEvents - The events expected to not appear.
+	 * @param expectedEvents - The events expected to appear.
 	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
@@ -143,7 +143,7 @@ ${JSON.stringify(actualEvents)}`);
 
 	/**
 	 * Asserts {@link MockLogger.matchAnyEvent} is `true` for the given events.
-	 * @param disallowedEvents - The events expected to not appear.
+	 * @param expectedEvents - The events expected to appear.
 	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
@@ -199,7 +199,7 @@ ${JSON.stringify(actualEvents)}`);
 
 	/**
 	 * Asserts {@link MockLogger.matchEvents} is `true` for the given events.
-	 * @param disallowedEvents - The events expected to not appear.
+	 * @param expectedEvents - The events expected to appear.
 	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
