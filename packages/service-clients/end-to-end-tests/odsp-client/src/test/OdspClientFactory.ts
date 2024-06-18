@@ -23,7 +23,7 @@ interface LoginTenantRange {
  * Interface representing a collection of tenants with their respective login ranges.
  * @example
  * ```string
- * {"tenantName":{"range":{"prefix":"prefixName","password":"XYZ","start":0,"count":2}
+ * {"tenantName":{"range":{"prefix":"prefixName","password":"XYZ","start":0,"count":2}}}
  * ```
  */
 export interface LoginTenants {
@@ -84,8 +84,19 @@ export function getCredentials(): IOdspLoginCredentials[] {
 		});
 	}
 
-	if (creds.length < 2) {
+	const [client1Creds, client2Creds] = creds;
+
+	if (client1Creds === undefined || client2Creds === undefined || creds.length < 2) {
 		throw new Error("Insufficient number of login credentials");
+	}
+
+	if (
+		client1Creds.email === undefined ||
+		client1Creds.password === undefined ||
+		client2Creds.email === undefined ||
+		client2Creds.password === undefined
+	) {
+		throw new Error("Email or password is missing for login account");
 	}
 
 	return creds;
@@ -112,10 +123,6 @@ export function createOdspClient(
 
 	if (clientId === "" || clientId === undefined) {
 		throw new Error("client id is missing");
-	}
-
-	if (creds.email === undefined || creds.password === undefined) {
-		throw new Error("username or password is missing for login account");
 	}
 
 	const credentials: IOdspCredentials = {

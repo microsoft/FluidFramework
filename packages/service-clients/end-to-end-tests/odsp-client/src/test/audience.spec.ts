@@ -27,7 +27,7 @@ describe("Fluid audience", () => {
 	const [client1Creds, client2Creds] = getCredentials();
 
 	if (client1Creds === undefined || client2Creds === undefined) {
-		throw new Error("Invalid login credentials");
+		throw new Error("Couldn't get login credentials");
 	}
 
 	beforeEach(() => {

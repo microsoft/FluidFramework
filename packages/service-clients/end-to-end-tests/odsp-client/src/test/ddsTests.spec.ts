@@ -28,7 +28,7 @@ describe("Fluid data updates", () => {
 	const [clientCreds] = getCredentials();
 
 	if (clientCreds === undefined) {
-		throw new Error("Invalid login credentials");
+		throw new Error("Couldn't get login credentials");
 	}
 
 	beforeEach(() => {
