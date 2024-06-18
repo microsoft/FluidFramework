@@ -21,11 +21,12 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
 import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";
+import type { IRuntimeAttributor } from "./interfaces.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
-import { attributorTreeName, opBlobName, type IRuntimeAttributor } from "./utils.js";
+import { attributorTreeName, opBlobName } from "./utils.js";
 
 /**
- * @alpha
+ * @internal
  */
 export class RuntimeAttributor implements IRuntimeAttributor {
 	public get IRuntimeAttributor(): IRuntimeAttributor {
@@ -127,4 +128,10 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 		builder.addBlob(opBlobName, this.encoder.encode(this.opAttributor));
 		return builder.getSummaryTree();
 	}
+}
+/**
+ * @internal
+ */
+export function createRuntimeAttributor() {
+	return new RuntimeAttributor();
 }

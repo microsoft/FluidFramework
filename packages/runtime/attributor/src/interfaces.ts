@@ -8,15 +8,6 @@ import {
 	type AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 
-// Summary tree keys
-export const attributorTreeName = ".attributor";
-export const opBlobName = "op";
-
-/**
- * @alpha
- */
-export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
-
 /**
  * @alpha
  */
@@ -34,7 +25,6 @@ export interface IProvideRuntimeAttributor {
  *
  * @remarks Attributors are only populated after the container runtime into which they are being injected has initialized.
  *
- * @sealed
  * @alpha
  */
 export interface IRuntimeAttributor extends IProvideRuntimeAttributor {

@@ -10,6 +10,9 @@ import { type AttributionInfo } from "@fluidframework/runtime-definitions/intern
 import { type IAttributor } from "./attributor.js";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
 
+/**
+ * @internal
+ */
 export interface Encoder<TDecoded, TEncoded> {
 	encode(decoded: TDecoded): TEncoded;
 	decode(encoded: TEncoded): TDecoded;
@@ -17,8 +20,14 @@ export interface Encoder<TDecoded, TEncoded> {
 
 // Note: the encoded format doesn't matter as long as it's serializable;
 // these types could be weakened.
+/**
+ * @internal
+ */
 export type TimestampEncoder = Encoder<number[], number[]>;
 
+/**
+ * @internal
+ */
 export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
 		const deltaTimestamps: number[] = Array.from({ length: timestamps.length });
@@ -41,8 +50,14 @@ export const deltaEncoder: TimestampEncoder = {
 	},
 };
 
+/**
+ * @internal
+ */
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
+/**
+ * @internal
+ */
 export interface SerializedAttributor {
 	interner: readonly string[] /* result of calling getSerializable() on a StringInterner */;
 	seqs: number[];
@@ -50,6 +65,9 @@ export interface SerializedAttributor {
 	attributionRefs: InternedStringId[];
 }
 
+/**
+ * @internal
+ */
 export class AttributorSerializer implements IAttributorSerializer {
 	public constructor(
 		private readonly makeAttributor: (
@@ -108,6 +126,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 /**
  * Creates an encoder which composes `a` and `b`.
+ * @internal
  */
 export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
 	encode: (content) => b.encode(a.encode(content)),

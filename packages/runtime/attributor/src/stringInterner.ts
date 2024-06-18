@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 /**
  * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the
  * original string.
- * @public
+ * @internal
  */
 export type InternedStringId = number & {
 	readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
@@ -16,6 +16,7 @@ export type InternedStringId = number & {
 
 /**
  * Interns strings as integers.
+ * @internal
  */
 export interface StringInterner {
 	getInternedId(input: string): InternedStringId | undefined;
@@ -27,6 +28,7 @@ export interface StringInterner {
  * Interns strings as integers.
  * Given a string, this class will produce a unique integer associated with that string that can then be used to
  * retrieve the string.
+ * @internal
  */
 export class MutableStringInterner implements StringInterner {
 	private readonly stringToInternedIdMap = new Map<string, InternedStringId>();
@@ -61,7 +63,7 @@ export class MutableStringInterner implements StringInterner {
 	 */
 	public getString(internId: number): string {
 		const result = this.internedStrings[internId];
-		if (!result) {
+		if (result === undefined) {
 			throw new UsageError(`No string associated with ${internId}.`);
 		}
 		return result;

@@ -5,6 +5,13 @@
 
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	attributorTreeName,
+	enableOnNewFileKey,
+	type IProvideRuntimeAttributor,
+	type IRuntimeAttributor,
+	type RuntimeAttributor,
+} from "@fluidframework/attributor/internal";
+import {
 	AttachState,
 	IAudience,
 	ISelf,
@@ -125,13 +132,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	attributorTreeName,
-	enableOnNewFileKey,
-	type IProvideRuntimeAttributor,
-	type IRuntimeAttributor,
-	type RuntimeAttributor,
-} from "./attributor/index.js";
 import { BindBatchTracker } from "./batchTracker.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
 import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
@@ -1054,8 +1054,8 @@ export class ContainerRuntime
 	}
 
 	// Promise to load runtime attributor after loading module.
-	private runtimeAttributorP: Promise<RuntimeAttributor> | undefined;
-	private _runtimeAttributor: RuntimeAttributor | undefined;
+	private runtimeAttributorP: Promise<IRuntimeAttributor> | undefined;
+	private _runtimeAttributor: IRuntimeAttributor | undefined;
 	// Represents whether the socket module is loaded or not.
 	private runtimeAttributorModuleLoaded: boolean = false;
 
@@ -1977,7 +1977,7 @@ export class ContainerRuntime
 						eventName: "initializeRuntimeAttributor",
 					},
 					async (event) => {
-						await attributor.initialize(
+						await (attributor as RuntimeAttributor).initialize(
 							deltaManager,
 							quorum,
 							baseSnapshot,
@@ -2005,22 +2005,11 @@ export class ContainerRuntime
 	 * import this later on when required.
 	 * @returns The delta stream object.
 	 */
-	private async getDelayLoadedRuntimeAttributor(): Promise<RuntimeAttributor> {
+	private async getDelayLoadedRuntimeAttributor(): Promise<IRuntimeAttributor> {
 		assert(this.runtimeAttributorModuleLoaded === false, "Should be loaded only once");
 		const module = await import(
-			/* webpackChunkName: "runtimeAttributorModule" */ "./attributor/index.js"
-		)
-			.then((m) => {
-				this.mc.logger.sendTelemetryEvent({ eventName: "RuntimeAttributorModuleLoaded" });
-				return m;
-			})
-			.catch((error) => {
-				this.mc.logger.sendErrorEvent(
-					{ eventName: "RuntimeAttributorModuleLoadFailed" },
-					error,
-				);
-				throw error;
-			});
+			/* webpackChunkName: "runtimeAttributorModule" */ "@fluidframework/attributor/internal"
+		);
 		this._runtimeAttributor = new module.RuntimeAttributor();
 		return this._runtimeAttributor;
 	}
@@ -2393,7 +2382,7 @@ export class ContainerRuntime
 		}
 
 		if (this._runtimeAttributor?.isEnabled) {
-			const attributorSummary = this._runtimeAttributor?.summarize();
+			const attributorSummary = (this._runtimeAttributor as RuntimeAttributor)?.summarize();
 			if (attributorSummary) {
 				addSummarizeResultToSummary(summaryTree, attributorTreeName, attributorSummary);
 			}

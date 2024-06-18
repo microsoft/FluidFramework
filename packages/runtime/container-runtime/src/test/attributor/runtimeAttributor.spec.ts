@@ -7,6 +7,16 @@
 
 import { strict as assert } from "assert";
 
+import {
+	type IProvideRuntimeAttributor,
+	enableOnNewFileKey,
+	type IAttributor,
+	AttributorSerializer,
+	chain,
+	deltaEncoder,
+	makeLZ4Encoder,
+	Attributor,
+} from "@fluidframework/attributor/internal";
 import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
@@ -20,16 +30,6 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type IProvideRuntimeAttributor,
-	enableOnNewFileKey,
-	type IAttributor,
-	AttributorSerializer,
-	chain,
-	deltaEncoder,
-	makeLZ4Encoder,
-	Attributor,
-} from "../../attributor/index.js";
 import { ContainerRuntime } from "../../index.js";
 
 import { makeMockAudience, makeMockQuorum } from "./utils.js";

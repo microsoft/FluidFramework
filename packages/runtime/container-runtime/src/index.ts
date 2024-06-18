@@ -52,12 +52,6 @@ export {
 	IGCStats,
 } from "./gc/index.js";
 export {
-	IRuntimeAttributor,
-	IProvideRuntimeAttributor,
-	IAttributor,
-	enableOnNewFileKey,
-} from "./attributor/index.js";
-export {
 	IAckedSummary,
 	ISummarizer,
 	ISummarizeResults,

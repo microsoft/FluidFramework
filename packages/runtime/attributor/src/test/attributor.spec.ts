@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { type IUser } from "@fluidframework/driver-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
-import { Attributor } from "../../attributor/index.js";
+import { Attributor } from "../attributor.js";
 
 describe("Attributor", () => {
 	it("can retrieve user information from its initial entries", () => {

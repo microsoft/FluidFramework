@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { type JsonableTypeWith } from "@fluidframework/runtime-definitions/internal";
+import { type JsonableTypeWith } from "@fluidframework/datastore-definitions/internal";
 
-import { makeLZ4Encoder } from "../../attributor/index.js";
+import { makeLZ4Encoder } from "../lz4Encoder.js";
 
 describe("lz4Encoder", () => {
 	const cases: { name: string; data: unknown }[] = [
@@ -15,6 +15,7 @@ describe("lz4Encoder", () => {
 		{ name: "numbers", data: 0 },
 		{ name: "objects", data: {} },
 		{ name: "empty lists", data: [] },
+		// eslint-disable-next-line unicorn/no-null
 		{ name: "null properties", data: { foo: null } },
 		{ name: "more complex objects", data: { foo: { bar: [1, 2] }, baz: 3, bat: "hello" } },
 	];

@@ -3,24 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
+import { Attributor, type IAttributor } from "../attributor.js";
 import {
-	Attributor,
-	type IAttributor,
 	AttributorSerializer,
 	type Encoder,
 	type SerializedAttributor,
-	type InternedStringId,
 	chain,
-} from "../../attributor/index.js";
+} from "../encoders.js";
+import { type InternedStringId } from "../stringInterner.js";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
 	return {
-		encode: (x: T) => x,
-		decode: (x: T) => x,
+		encode: (x) => x,
+		decode: (x) => x,
 	};
 }
 
@@ -32,16 +31,13 @@ describe("AttributorSerializer", () => {
 				[2, { user: { id: "a" }, timestamp: 6001 }],
 			]);
 			const calls: unknown[] = [];
-			const serializer = new AttributorSerializer(
-				(entries) => new Attributor(entries) as IAttributor,
-				{
-					encode: (x: number[]): number[] => {
-						calls.push(x);
-						return x;
-					},
-					decode: (x: number[]): number[] => x,
+			const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
+				encode: (x): number[] => {
+					calls.push(x);
+					return x;
 				},
-			);
+				decode: (x): number[] => x,
+			});
 			assert.equal(calls.length, 0);
 			serializer.encode(attributor);
 			assert.equal(calls.length, 1);
@@ -50,16 +46,13 @@ describe("AttributorSerializer", () => {
 
 		it("on decode", () => {
 			const calls: unknown[] = [];
-			const serializer = new AttributorSerializer(
-				(entries) => new Attributor(entries) as IAttributor,
-				{
-					encode: (x: number[]): number[] => x,
-					decode: (x: number[]): number[] => {
-						calls.push(x);
-						return x;
-					},
+			const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
+				encode: (x): number[] => x,
+				decode: (x): number[] => {
+					calls.push(x);
+					return x;
 				},
-			);
+			});
 			const encoded: SerializedAttributor = {
 				interner: ["a"],
 				seqs: [1, 2],
