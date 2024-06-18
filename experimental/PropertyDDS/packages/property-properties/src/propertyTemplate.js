@@ -93,9 +93,7 @@ export class PropertyTemplate {
 		if (in_currentPropertyLevel.properties) {
 			for (var i = 0; i < in_currentPropertyLevel.properties.length; i++) {
 				if (in_currentPropertyLevel.properties[i].typeid === "Enum") {
-					var dictionary = this._parseEnums(
-						in_currentPropertyLevel.properties[i].properties,
-					);
+					var dictionary = this._parseEnums(in_currentPropertyLevel.properties[i].properties);
 					in_currentPropertyLevel.properties[i]._enumDictionary = dictionary;
 				} else if (in_currentPropertyLevel.properties[i].properties) {
 					// call self

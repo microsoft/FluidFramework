@@ -92,7 +92,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 			in_flags !== undefined
 				? in_flags
 				: BaseProperty.MODIFIED_STATE_FLAGS.DIRTY |
-				  BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+					BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
 
 		// Clean all entries inside of the collection
 		let cleanDirtiness = (collection) => {
@@ -308,12 +308,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 							insert,
 							typeid,
 							key,
-							entry._serialize(
-								false,
-								false,
-								undefined,
-								in_includeReferencedRepositories,
-							),
+							entry._serialize(false, false, undefined, in_includeReferencedRepositories),
 						);
 					}
 				} else {
@@ -475,8 +470,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 				for (i = 0; i < addedKeys.length; i++) {
 					if (currentEntries[addedKeys[i]] !== undefined) {
 						modifiedEntries[typeid] = modifiedEntries[typeid] || {};
-						modifiedEntries[typeid][addedKeys[i]] =
-							insertedEntries[typeid][addedKeys[i]];
+						modifiedEntries[typeid][addedKeys[i]] = insertedEntries[typeid][addedKeys[i]];
 						delete insertedEntries[typeid][addedKeys[i]];
 					}
 				}
@@ -530,8 +524,8 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 					valueWasChanged =
 						this._typeid === "Int64" || this._typeid === "Uint64"
 							? // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
-							  this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0] ||
-							  this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1]
+								this._dynamicChildren[modifiedKeys[i]].getValueLow() !== changes[0] ||
+								this._dynamicChildren[modifiedKeys[i]].getValueHigh() !== changes[1]
 							: this._dynamicChildren[modifiedKeys[i]] !== changes;
 					modifiedEntriesMap = modifiedEntries;
 					if (valueWasChanged) {
@@ -656,9 +650,7 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 		// Modify entries
 		var mapWasChangedByModify = false;
 		if (in_changeSet.modify) {
-			var classKeys = this._containsPrimitiveTypes
-				? [undefined]
-				: _.keys(in_changeSet.modify);
+			var classKeys = this._containsPrimitiveTypes ? [undefined] : _.keys(in_changeSet.modify);
 			for (var iClass = 0; iClass < classKeys.length; iClass++) {
 				var modifiedEntries = this._containsPrimitiveTypes
 					? in_changeSet.modify
@@ -761,13 +753,10 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
 			var classKeys = _.keys(in_pendingChangeSet.modify);
 			for (var iClass = 0; iClass < classKeys.length; iClass++) {
 				var modifiedPendingEntries =
-					(in_pendingChangeSet.modify && in_pendingChangeSet.modify[classKeys[iClass]]) ||
-					{};
+					(in_pendingChangeSet.modify && in_pendingChangeSet.modify[classKeys[iClass]]) || {};
 				var modifiedDirtyEntries =
 					(in_dirtyChangeSet.modify && in_dirtyChangeSet.modify[classKeys[iClass]]) || {};
-				keys = Object.keys(modifiedPendingEntries).concat(
-					Object.keys(modifiedDirtyEntries),
-				);
+				keys = Object.keys(modifiedPendingEntries).concat(Object.keys(modifiedDirtyEntries));
 				for (i = 0; i < keys.length; i++) {
 					key = keys[i];
 					if (this._dynamicChildren[key] !== undefined) {

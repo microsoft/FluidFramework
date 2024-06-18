@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type BranchRebaseResult,
@@ -20,6 +21,7 @@ import {
 	rebaseBranch,
 	tagChange,
 	tagRollbackInverse,
+	type RebaseStatsWithDuration,
 } from "../core/index.js";
 import { EventEmitter, type Listenable } from "../events/index.js";
 
@@ -163,9 +165,10 @@ export interface BranchTrimmingEvents {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TEditor, TChange>
-> {
+export class SharedTreeBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+> extends EventEmitter<SharedTreeBranchEvents<TEditor, TChange>> {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	/**
@@ -205,6 +208,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
+		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
+			keyof RebaseStatsWithDuration
+		>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -403,7 +409,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const commits: GraphCommit<TChange>[] = [];
-		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
+		const startCommit = findAncestor(
+			[this.head, commits],
+			(c) => c.revision === startRevision,
+		);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
@@ -529,18 +538,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(
-			this.mintRevisionTag,
-			this.changeFamily.rebaser,
-			head,
-			upTo,
-			onto.getHead(),
+		const { duration, output } = measure(() =>
+			rebaseBranch(
+				this.mintRevisionTag,
+				this.changeFamily.rebaser,
+				head,
+				upTo,
+				onto.getHead(),
+			),
 		);
-		if (this.head === rebaseResult.newSourceHead) {
+
+		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });
+
+		if (this.head === output.newSourceHead) {
 			return undefined;
 		}
 
-		return rebaseResult;
+		return output;
 	}
 
 	/**

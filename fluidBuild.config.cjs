@@ -56,7 +56,7 @@ module.exports = {
 			script: false,
 		},
 		"checks:fix": {
-			dependsOn: ["^checks:fix"],
+			dependsOn: [],
 			script: false,
 		},
 		"build:copy": [],
