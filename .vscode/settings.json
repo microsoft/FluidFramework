@@ -80,9 +80,6 @@
 	// Don't search for the biome executable in the path, as it's not a globally installed tool.
 	"biome.searchInPath": false,
 
-	// Use the biome executable from the node_modules folder.
-	"biome.lspBin": "node_modules/@biomejs/biome/bin/biome",
-
 	// Customizations for VSCode search results.
 	// These entries should probably be kept more or less in sync with the .gitignore file.
 	// They are added here because when doing a search in VSCode and using the "files to include" feature, the underlying
