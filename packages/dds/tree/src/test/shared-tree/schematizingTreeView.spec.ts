@@ -36,8 +36,12 @@ import type { TreeContent, TreeCheckout } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
-const configGeneralized = new TreeViewConfiguration({ schema: [schema.number, schema.string] });
-const configGeneralized2 = new TreeViewConfiguration({ schema: [schema.number, schema.boolean] });
+const configGeneralized = new TreeViewConfiguration({
+	schema: [schema.number, schema.string],
+});
+const configGeneralized2 = new TreeViewConfiguration({
+	schema: [schema.number, schema.boolean],
+});
 
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
@@ -86,7 +90,9 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.root, 5);
 	});
 
-	const getChangeData = <T extends ImplicitFieldSchema>(view: SchematizingSimpleTreeView<T>) => {
+	const getChangeData = <T extends ImplicitFieldSchema>(
+		view: SchematizingSimpleTreeView<T>,
+	) => {
 		return view.compatibility.canView
 			? view.root
 			: `SchemaCompatibilityStatus canView: ${view.compatibility.canView} canUpgrade: ${view.compatibility.canUpgrade}`;

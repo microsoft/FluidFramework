@@ -197,11 +197,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 				this._latestSummary !== undefined
 					? {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
-							latestSummarySequenceNumber:
-								this._latestSummary.referenceSequenceNumber,
+							latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
 							// TODO: remove summaryPath
 							summaryPath: this._latestSummary.fullPath.path,
-					  }
+						}
 					: undefined;
 		}
 
@@ -323,7 +322,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 		parentPath: EscapedPath | undefined,
 		parentSkipRecursion: boolean,
 	) {
-		assert(this.wipReferenceSequenceNumber !== undefined, 0x1a4 /* "Not tracking a summary" */);
+		assert(
+			this.wipReferenceSequenceNumber !== undefined,
+			0x1a4 /* "Not tracking a summary" */,
+		);
 		let localPathsToUse = this.wipLocalPaths;
 
 		if (parentSkipRecursion) {
