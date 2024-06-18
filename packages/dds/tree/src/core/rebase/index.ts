@@ -46,4 +46,6 @@ export {
 	rebaseChange,
 	rebaseChangeOverChanges,
 	revisionMetadataSourceFromInfo,
+	type RebaseStats,
+	type RebaseStatsWithDuration,
 } from "./utils.js";
