@@ -150,27 +150,24 @@ function makeV1CodecWithVersion<TChangeset>(
 							revision: undefined,
 						}),
 					),
-					branches: Array.from(
-						data.peerLocalBranches.entries(),
-						([sessionId, branch]) => [
-							sessionId,
-							{
-								base: revisionTagCodec.encode(branch.base, {
-									originatorId: sessionId,
+					branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
+						sessionId,
+						{
+							base: revisionTagCodec.encode(branch.base, {
+								originatorId: sessionId,
+								idCompressor: context.idCompressor,
+								revision: undefined,
+							}),
+							commits: branch.commits.map((commit) =>
+								encodeCommit(commit, {
+									originatorId: commit.sessionId,
 									idCompressor: context.idCompressor,
+									schema: context.schema,
 									revision: undefined,
 								}),
-								commits: branch.commits.map((commit) =>
-									encodeCommit(commit, {
-										originatorId: commit.sessionId,
-										idCompressor: context.idCompressor,
-										schema: context.schema,
-										revision: undefined,
-									}),
-								),
-							},
-						],
-					),
+							),
+						},
+					]),
 					version,
 				};
 				return json;

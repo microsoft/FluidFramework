@@ -71,7 +71,10 @@ export class ChunkedForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
+	public on<K extends keyof ForestEvents>(
+		eventName: K,
+		listener: ForestEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -101,10 +104,7 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunkStack: [] as StackNode[],
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
-				assert(
-					this.mutableChunkStack.length > 0,
-					0x532 /* invalid access to root's parent */,
-				);
+				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
 				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
 			},
 			free(): void {

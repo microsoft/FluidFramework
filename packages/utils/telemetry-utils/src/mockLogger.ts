@@ -4,14 +4,18 @@
  */
 
 import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { createChildLogger } from "./logger.js";
-import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
+import type {
+	ITelemetryEventExt,
+	ITelemetryLoggerExt,
+	ITelemetryPropertiesExt,
+} from "./telemetryTypes.js";
 
 /**
  * Mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} implementation.
@@ -22,7 +26,8 @@ import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.j
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
-	events: ITelemetryBaseEvent[] = [];
+	// TODO: don't expose mutability to external consumers
+	public events: ITelemetryBaseEvent[] = [];
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.minLogLevel}
@@ -58,7 +63,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEvents(
+	public matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -74,7 +79,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
 	 */
-	assertMatch(
+	public assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -99,7 +104,7 @@ ${JSON.stringify(actualEvents)}`);
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 * @returns if any of the expected events is found.
 	 */
-	matchAnyEvent(
+	public matchAnyEvent(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -113,7 +118,7 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchAnyEvent is true, and prints the actual/expected output if not.
 	 */
-	assertMatchAny(
+	public assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -137,7 +142,7 @@ ${JSON.stringify(actualEvents)}`);
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
 	 */
-	matchEventStrict(
+	public matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
@@ -150,7 +155,7 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchEvents is true, and prints the actual/expected output if not
 	 */
-	assertMatchStrict(
+	public assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -169,7 +174,7 @@ ${JSON.stringify(actualEvents)}`);
 	/**
 	 * Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not
 	 */
-	assertMatchNone(
+	public assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
 		inlineDetailsProp: boolean = false,
@@ -201,7 +206,7 @@ ${JSON.stringify(actualEvents)}`);
 		}
 
 		// Remove the events so far; next call will just compare subsequent events from here
-		this.events = [];
+		this.clear();
 
 		// Return the count of matched events.
 		return iExpectedEvent;
@@ -222,7 +227,6 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
-				// eslint-disable-next-line unicorn/numeric-separators-style
 				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -234,7 +238,10 @@ ${JSON.stringify(actualEvents)}`);
 	}
 }
 
-function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPropertiesExt): boolean {
+function matchObjects(
+	actual: ITelemetryPropertiesExt,
+	expected: ITelemetryPropertiesExt,
+): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
 		const actualValue = actual[expectedKey];
 		if (
@@ -258,4 +265,33 @@ function matchObjects(actual: ITelemetryPropertiesExt, expected: ITelemetryPrope
 		}
 	}
 	return true;
+}
+
+/**
+ * Mock {@link ITelemetryLoggerExt} implementation.
+ *
+ * @remarks Can be created via {@link createMockLoggerExt}.
+ *
+ * @internal
+ */
+export interface IMockLoggerExt extends ITelemetryLoggerExt {
+	/**
+	 * Gets the events that have been logged so far.
+	 */
+	events(): readonly ITelemetryEventExt[];
+}
+
+/**
+ * Creates an {@link IMockLoggerExt}.
+ *
+ * @internal
+ */
+export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
+	const mockLogger = new MockLogger(minLogLevel);
+	const childLogger = createChildLogger({ logger: mockLogger });
+	Object.assign(childLogger, {
+		events: (): readonly ITelemetryEventExt[] =>
+			mockLogger.events.map((e) => e as ITelemetryEventExt),
+	});
+	return childLogger as IMockLoggerExt;
 }

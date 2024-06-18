@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalFlexListTypes, Unenforced } from "../feature-libraries/index.js";
+import type { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
 import type { RestrictiveReadonlyRecord } from "../util/index.js";
 
 import type {
@@ -61,8 +61,8 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
-		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
-		: unknown;
+			? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
+			: unknown;
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
@@ -73,10 +73,10 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 > = TSchema extends ImplicitAllowedTypes
 	? TreeNodeFromImplicitAllowedTypes<TSchema>
 	: TSchema extends TreeNodeSchema
-	? NodeFromSchema<TSchema>
-	: TSchema extends AllowedTypes
-	? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
-	: unknown;
+		? NodeFromSchema<TSchema>
+		: TSchema extends AllowedTypes
+			? NodeFromSchema<FlexListToUnion<TSchema>>
+			: unknown;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
@@ -85,7 +85,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
 > = TSchema extends AllowedTypes
-	? InsertableTypedNodeUnsafe<InternalFlexListTypes.FlexListToUnion<TSchema>>
+	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>>
 	: InsertableTypedNodeUnsafe<TSchema>;
 
 /**
@@ -100,26 +100,15 @@ export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * {@link Unenforced} version of {@link NodeFromSchema}.
  * @public
  */
-export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
-	string,
-	NodeKind,
-	infer TNode
->
-	? TNode
-	: never;
+export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> =
+	T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
  * @public
  */
-export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
-	string,
-	NodeKind,
-	unknown,
-	infer TBuild
->
-	? TBuild
-	: never;
+export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
+	T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 /**
  * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
@@ -142,7 +131,10 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	/**
 	 * {@inheritdoc TreeMapNode.set}
 	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined): void;
+	set(
+		key: string,
+		value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined,
+	): void;
 
 	/**
 	 * {@inheritdoc TreeMapNode.delete}

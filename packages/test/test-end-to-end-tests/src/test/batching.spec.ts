@@ -148,7 +148,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("can send and a batch containing a future/unknown op type", async () => {
+	it("[DEPRECATED] can send and a batch containing a future/unknown op type", async () => {
 		await setupContainers({
 			flushMode: FlushMode.TurnBased,
 			compressionOptions: {
