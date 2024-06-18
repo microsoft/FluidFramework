@@ -37,20 +37,20 @@ There are no guarantees for API breakages or Fluid document compatibility among 
 
 ## API Tags
 
-There are no API stability guarantees for packages in the `@fluid-experimental` and `@fluid-internal` scopes.
-`@fluid-experimental` APIs are for developers to try experimental features and provide feedback. It's possible that these APIs can get completely scrapped or drastically changed in a minor release based on developer feedback.
-`@fluid-internal` APIs are only meant for internal consumption by the framework and should not be used.
-
 For packages that are part of the `@fluidframework` scope and the `fluid-framework` package, we use import paths to communicate the stability and guarantees associated with those APIs.
 
--   **Public APIs** - These APIs are officially supported and any breaking changes to these APIs will be done in a major release and go through a deprecation phase before being removed. We guarantee to not break them in minor and patch releases (consistent with the semver guarantees)
--   **Beta APIs** (`/beta` import path) - These APIs are on the path to being officially supported but can still change before becoming a Public API in a future release. They are meant as a preview for developers to experiment with and provide feedback. These APIs can be changed in minor releases. As a result, production usage of these APIs is discouraged.
--   **Legacy APIs** (`/legacy` import path) - These APIs were used by the early adopters of Fluid Framework, and we strongly discourage new applications from using these APIs. Existing users of SharedMap & SharedDirectory DDSes will need to use these legacy API until we provide a migration path to SharedTree in a future release. Rest assured, we will provide a smooth transition off SharedMap & SharedDirectory with a long migration timeline.
+-   **Public APIs** - These APIs are officially supported and any breaking changes to these APIs will be done in a major release and go through a deprecation phase before being removed.
+-   **Beta APIs** (`/beta` import path) - These APIs are on the path to being officially supported but can still change before becoming a Public API in a future release. They are meant as a preview for developers to experiment with and provide feedback. These APIs can be changed in minor releases. Production usage of these APIs is discouraged.
+-   **Legacy APIs** (`/legacy` import path) - These APIs were used by the early adopters of Fluid Framework, and we strongly discourage new applications from using these APIs. We will continue to support legacy use of SharedMap & SharedDirectory DDSes until we provide a migration path to SharedTree in a future release.
     -   For existing users of these Legacy APIs, you will have to use the /legacy import path. This is intentional to highlight that we do not encourage new development using these APIs and plan to provide a graceful path away from them in future.
     -   For example, SharedMap is now a Legacy API and should be imported as follows:
 
         ```typescript
         import { SharedMap } from "fluid-framework/legacy"
         ```
+
+There are no API stability guarantees for packages in the `@fluid-experimental` and `@fluid-internal` scopes.
+`@fluid-experimental` APIs are for developers to try experimental features and provide feedback. It's possible that these APIs can get completely scrapped or drastically changed in a minor release based on developer feedback.
+`@fluid-internal` APIs are only meant for internal consumption by the framework and should not be used.
 
 For additional information on Release tags, visit the [github documentation](https://github.com/microsoft/FluidFramework/wiki/Release-Tags).
