@@ -2923,10 +2923,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				optional.set(
-					cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" }),
-					true,
-				);
+				optional.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" }), true);
 
 				const tree2 = tree.fork();
 
