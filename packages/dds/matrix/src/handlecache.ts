@@ -60,7 +60,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		const index = this.getIndex(position);
 		if (index < this.handles.length) {
 			assert(
-				// TODO Non null asserting, why is this not null?
+				// Non null asserting, above we checked that the index is less than the length.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				!isHandleValid(this.handles[index]!),
 				0x018 /* "Trying to insert handle into position with already valid handle!" */,
