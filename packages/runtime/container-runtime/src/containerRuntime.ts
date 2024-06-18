@@ -2144,7 +2144,7 @@ export class ContainerRuntime
 		pathParts: string[],
 		hasIsolatedChannels: boolean,
 	): ISnapshotTree | undefined {
-		let childTree = snapshotTree;
+		let childTree: ISnapshotTree | undefined = snapshotTree;
 		for (const part of pathParts) {
 			if (hasIsolatedChannels) {
 				childTree = childTree?.trees[channelsTreeName];
@@ -2201,7 +2201,9 @@ export class ContainerRuntime
 			}
 
 			if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]!);
 				return blob
 					? {
 							status: 200,
@@ -3676,7 +3678,9 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			const dataStoreTree = summaryTree.tree[channelsTreeName];
+			// TODO why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreTree = summaryTree.tree[channelsTreeName]!;
 
 			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(

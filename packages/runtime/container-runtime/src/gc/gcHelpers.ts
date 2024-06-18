@@ -163,10 +163,11 @@ export function concatGarbageCollectionData(
 ) {
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
-		if (combinedGCData.gcNodes[id] === undefined) {
+		const node = combinedGCData.gcNodes[id];
+		if (node === undefined) {
 			combinedGCData.gcNodes[id] = Array.from(routes);
 		} else {
-			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
+			const combinedRoutes = [...routes, ...node];
 			combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];
 		}
 	}
@@ -184,16 +185,16 @@ export async function getGCDataFromSnapshot(
 	let rootGCState: IGarbageCollectionState = { gcNodes: {} };
 	let tombstones: string[] | undefined;
 	let deletedNodes: string[] | undefined;
-	for (const key of Object.keys(gcSnapshotTree.blobs)) {
+	for (const [key, value] of Object.entries(gcSnapshotTree.blobs)) {
 		// Update deleted nodes blob.
 		if (key === gcDeletedBlobKey) {
-			deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+			deletedNodes = await readAndParseBlob<string[]>(value);
 			continue;
 		}
 
 		// Update tombstone blob.
 		if (key === gcTombstoneBlobKey) {
-			tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+			tombstones = await readAndParseBlob<string[]>(value);
 			continue;
 		}
 
@@ -202,7 +203,8 @@ export async function getGCDataFromSnapshot(
 			continue;
 		}
 
-		const blobId = gcSnapshotTree.blobs[key];
+		// TODO would this ever run?
+		const blobId = value;
 		if (blobId === undefined) {
 			continue;
 		}
@@ -236,6 +238,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 
 		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
 		const childId = id.split("/")[1];
+		assert(childId !== undefined, "childId undefined in unpackChildNodesGCDetails");
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
 		// of format `/root`. In this case, the childId is root and childGCNodeId is "". Make childGCNodeId = "/".
@@ -265,6 +268,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	for (const route of usedRoutes) {
 		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
 		const childId = route.split("/")[1];
+		assert(childId !== undefined, "childId undefined in unpackChildNodesGCDetails");
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
@@ -290,7 +294,8 @@ function trimLeadingAndTrailingSlashes(str: string) {
 
 /** Reformats a request URL to match expected format for a GC node path */
 export function urlToGCNodePath(url: string): string {
-	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0]!)}`;
 }
 
 /**

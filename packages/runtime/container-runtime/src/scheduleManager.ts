@@ -119,12 +119,13 @@ class ScheduleManagerCore {
 	) {
 		// Listen for delta manager sends and add batch metadata to messages
 		this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
-			if (messages.length === 0) {
+			const firstMessage = messages[0];
+			if (firstMessage === undefined) {
 				return;
 			}
 
 			// First message will have the batch flag set to true if doing a batched send
-			const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
+			const firstMessageMetadata = firstMessage.metadata as IRuntimeMessageMetadata;
 			if (!firstMessageMetadata?.batch) {
 				return;
 			}
@@ -137,8 +138,10 @@ class ScheduleManagerCore {
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
 			const lastMessage = messages[messages.length - 1];
+			if (lastMessage === undefined) {
+				return;
+			}
 			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };
 		});
 

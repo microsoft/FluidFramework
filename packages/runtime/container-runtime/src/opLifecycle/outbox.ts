@@ -373,6 +373,10 @@ export class Outbox {
 		}
 
 		if (this.params.submitBatchFn === undefined) {
+			assert(
+				batch.content[0] !== undefined,
+				"batch.content[0] is undefined in Outbox.sendBatch()",
+			);
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(

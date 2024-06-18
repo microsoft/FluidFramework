@@ -38,6 +38,10 @@ export class OpCompressor {
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
 			0x5a4 /* Batch should not be empty */,
 		);
+		assert(
+			batch.content[0] !== undefined,
+			"batch.content[0] undefined in OpCompressor.compressBatch",
+		);
 
 		const compressionStart = Date.now();
 		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatchContents(batch));

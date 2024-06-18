@@ -560,7 +560,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return {
 			id: localContext.id,
 			snapshot,
-			type: getLocalDataStoreType(localContext),
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			type: getLocalDataStoreType(localContext)!,
 		} satisfies IAttachMessage;
 	}
 
@@ -1103,7 +1105,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						0x166 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 					);
 					dataStoreSummary = convertSnapshotTreeToSummaryTree(
-						getSnapshotTree(this.baseSnapshot).trees[contextId],
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						getSnapshotTree(this.baseSnapshot).trees[contextId]!,
 					);
 				}
 				builder.addWithStats(contextId, dataStoreSummary);
@@ -1291,6 +1295,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
+			assert(
+				dataStoreId !== undefined,
+				"dataStoreId undefined in ChannelCollection.deleteSweepReadyNodes()",
+			);
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
@@ -1336,6 +1344,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				continue;
 			}
 			const dataStoreId = pathParts[1];
+			assert(
+				dataStoreId !== undefined,
+				"dataStoreId undefined in ChannelCollection.updateTombstonedRoutes()",
+			);
 			assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
 			tombstonedDataStoresSet.add(dataStoreId);
 		}
@@ -1370,7 +1382,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	): Promise<readonly string[] | undefined> {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
-		const context = this.contexts.get(nodePath.split("/")[1]);
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const context = this.contexts.get(nodePath.split("/")[1]!);
 		return (await context?.getInitialSnapshotDetails())?.pkg;
 	}
 
@@ -1380,7 +1394,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public getGCNodeType(nodePath: string): GCNodeType | undefined {
 		const pathParts = nodePath.split("/");
-		if (!this.contexts.has(pathParts[1])) {
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (!this.contexts.has(pathParts[1]!)) {
 			return undefined;
 		}
 
@@ -1399,6 +1415,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public async request(request: IRequest): Promise<IResponse> {
 		const requestParser = RequestParser.create(request);
 		const id = requestParser.pathParts[0];
+		assert(id !== undefined, "id undefined in ChannelCollection.request");
 
 		// Differentiate between requesting the dataStore directly, or one of its children
 		const requestForChild = !requestParser.isLeaf(1);

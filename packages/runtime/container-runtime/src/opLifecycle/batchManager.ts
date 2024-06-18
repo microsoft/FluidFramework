@@ -51,9 +51,11 @@ export class BatchManager {
 	}
 
 	private get referenceSequenceNumber(): number | undefined {
-		return this.pendingBatch.length === 0
-			? undefined
-			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
+		const lastPendingBatch = this.pendingBatch[this.pendingBatch.length - 1];
+		if (this.pendingBatch.length === 0 || lastPendingBatch === undefined) {
+			return undefined;
+		}
+		return lastPendingBatch.referenceSequenceNumber;
 	}
 
 	private clientSequenceNumber: number | undefined;
@@ -116,10 +118,11 @@ export class BatchManager {
 		const startPoint = this.pendingBatch.length;
 		return {
 			rollback: (process: (message: BatchMessage) => void) => {
-				for (let i = this.pendingBatch.length; i > startPoint; ) {
-					i--;
-					const message = this.pendingBatch[i];
-					this.batchContentSize -= message.contents?.length ?? 0;
+				const pendingBatchSlice = this.pendingBatch
+					.slice(startPoint + 1, this.pendingBatch.length)
+					.reverse();
+				for (const message of pendingBatchSlice) {
+					this.batchContentSize -= message?.contents?.length ?? 0;
 					process(message);
 				}
 
@@ -130,13 +133,15 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch): IBatch => {
-	if (batch.content.length > 1) {
-		batch.content[0].metadata = {
-			...batch.content[0].metadata,
+	const firstContent = batch.content[0];
+	const lastContent = batch.content[batch.content.length - 1];
+	if (firstContent !== undefined && lastContent !== undefined) {
+		firstContent.metadata = {
+			...firstContent.metadata,
 			batch: true,
 		};
-		batch.content[batch.content.length - 1].metadata = {
-			...batch.content[batch.content.length - 1].metadata,
+		lastContent.metadata = {
+			...lastContent.metadata,
 			batch: false,
 		};
 	}

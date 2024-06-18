@@ -72,8 +72,8 @@ export class EscapedPath {
 	}
 	public static createAndConcat(pathParts: string[]): EscapedPath {
 		let ret = EscapedPath.create(pathParts[0] ?? "");
-		for (let i = 1; i < pathParts.length; i++) {
-			ret = ret.concat(EscapedPath.create(pathParts[i]));
+		for (const value of pathParts.slice(1)) {
+			ret = ret.concat(EscapedPath.create(value));
 		}
 		return ret;
 	}
