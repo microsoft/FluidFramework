@@ -55,7 +55,11 @@ export async function performFuzzActions(
 	const random = makeRandom(seed);
 
 	// Note: the direct fields of `state` aren't mutated, but it is mutated transitively.
-	const initialState: FuzzTestState = { random, passiveCollaborators: [], activeCollaborators: [] };
+	const initialState: FuzzTestState = {
+		random,
+		passiveCollaborators: [],
+		activeCollaborators: [],
+	};
 	const finalState = await performFuzzActionsBase(
 		generator,
 		{
@@ -72,7 +76,10 @@ export async function performFuzzActions(
 					summarizeHistory,
 					testObjectProvider: state.testObjectProvider,
 				});
-				(isObserver ? state.passiveCollaborators : state.activeCollaborators).push({ container, tree });
+				(isObserver ? state.passiveCollaborators : state.activeCollaborators).push({
+					container,
+					tree,
+				});
 				return { ...state, testObjectProvider };
 			},
 			leave: async (state, operation) => {
@@ -129,14 +136,11 @@ export async function performFuzzActions(
 							expect(editA).to.not.be.undefined;
 							expect(editA?.id).to.equal(editB?.id);
 						}
-						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to
-							.be.true;
+						expect(areRevisionViewsSemanticallyEqual(tree.currentView, tree, first.currentView, first)).to.be.true;
 
 						for (const node of tree.currentView) {
 							expect(tree.attributeNodeId(node.identifier)).to.equal(
-								first.attributeNodeId(
-									first.convertToNodeId(tree.convertToStableNodeId(node.identifier))
-								)
+								first.attributeNodeId(first.convertToNodeId(tree.convertToStableNodeId(node.identifier)))
 							);
 						}
 					}
@@ -197,7 +201,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 						? {
 								saveOnFailure: { path: join(directory, `test-history-${seed}.json`) },
 								saveOnSuccess: false,
-						  }
+							}
 						: undefined;
 				if (saveInfo !== undefined && !existsSync(directory)) {
 					mkdirSync(directory);
@@ -210,8 +214,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 			describe('using 0.0.2 and 0.1.1 trees', () => {
 				for (let seed = 0; seed < testsPerSuite; seed++) {
 					runTest(
-						() =>
-							take(testLength, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
+						() => take(testLength, makeOpGenerator({ joinConfig: { summarizeHistory: [summarizeHistory] } })),
 						seed
 					);
 				}
