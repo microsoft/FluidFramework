@@ -27,13 +27,6 @@ export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
 		}
 	}
 
-	/**
-	 *
-	 * error TS2375: Type 'DocumentStorageServiceCompressionAdapter' is not assignable to type 'IDocumentStorageService' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
-	 * @fluidframework/driver-utils:   Types of property 'policies' are incompatible.
-	 * @fluidframework/driver-utils:     Type 'IDocumentStorageServicePolicies | undefined' is not assignable to type 'IDocumentStorageServicePolicies'.
-	 * @fluidframework/driver-utils:       Type 'undefined' is not assignable to type 'IDocumentStorageServicePolicies'.
-	 */
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		const storage = await super.connectToStorage();
 		const wrapped = new DocumentStorageServiceSummaryBlobCompressionAdapter(

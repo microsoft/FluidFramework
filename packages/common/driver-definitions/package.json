@@ -109,6 +109,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDocumentStorageService": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

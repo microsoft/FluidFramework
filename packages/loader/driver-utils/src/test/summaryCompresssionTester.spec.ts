@@ -110,7 +110,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	constructor() {}
 	private _uploadedSummary: ISummaryTree | undefined;
 
-	policies?: IDocumentStorageServicePolicies | undefined;
+	policies: IDocumentStorageServicePolicies | undefined;
 
 	async getSnapshotTree(
 		version?: IVersion | undefined,
