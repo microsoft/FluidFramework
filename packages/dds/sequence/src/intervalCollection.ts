@@ -233,12 +233,7 @@ export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
 		create: createInterval,
 	};
-	const lc = new LocalIntervalCollection<Interval>(
-		undefined as any as Client,
-		"",
-		helpers,
-		{},
-	);
+	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
 	return lc;
 }
 

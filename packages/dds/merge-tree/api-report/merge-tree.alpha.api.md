@@ -109,7 +109,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     applyStashedOp(op: IMergeTreeOp): void;
     createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
-    createPerspective(seqNum?: number, clientId?: number, localSeqNum?: number | undefined): Perspective;
+    createPerspective(seqNum?: number, clientId?: number, refSeq?: number, localSeqNum?: number | undefined): Perspective;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -528,6 +528,20 @@ export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
     // (undocumented)
+    clampToBoundingReference(): void;
+    // (undocumented)
+    localCreate?: number;
+    // (undocumented)
+    localCreateRefSeq?: number;
+    // (undocumented)
+    localSlide?: number;
+    // (undocumented)
+    offsetBeforeLocalSlide?: number;
+    // (undocumented)
+    segmentBeforeLocalSlide?: ISegment;
+    // (undocumented)
+    setBoundingReference(ref: ReferencePosition): void;
+    // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
 
@@ -678,6 +692,8 @@ export type PropertySet = MapLike<any>;
 export interface ReferencePosition {
     // (undocumented)
     addProperties(newProps: PropertySet): void;
+    // (undocumented)
+    boundingReference?: ReferencePosition;
     getOffset(): number;
     getSegment(): ISegment | undefined;
     // (undocumented)
