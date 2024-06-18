@@ -252,7 +252,7 @@ export class FluidDataStoreRuntime
 
 		// Must always receive the data store type inside of the attributes
 		if (tree?.trees !== undefined) {
-			Object.keys(tree.trees).forEach((path) => {
+			Object.entries(tree.trees).forEach(([path, value]) => {
 				// Issue #4414
 				if (path === "_search") {
 					return;
@@ -263,7 +263,7 @@ export class FluidDataStoreRuntime
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
 				if (dataStoreContext.isLocalDataStore) {
-					channelContext = this.createRehydratedLocalChannelContext(path, tree.trees[path]);
+					channelContext = this.createRehydratedLocalChannelContext(path, value);
 					// This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
 					// data store, if the data store is loaded after the container is attached, then we missed making
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
@@ -281,7 +281,7 @@ export class FluidDataStoreRuntime
 						(content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
 						(address: string) => this.setChannelDirty(address),
 						path,
-						tree.trees[path],
+						value,
 						this.sharedObjectRegistry,
 						undefined /* extraBlobs */,
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
@@ -353,7 +353,9 @@ export class FluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
-			const id = parser.pathParts[0];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const id = parser.pathParts[0]!;
 
 			if (id === "_channels" || id === "_custom") {
 				return await this.request(parser.createSubRequest(1));
@@ -838,7 +840,9 @@ export class FluidDataStoreRuntime
 						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 					);
 					summaryTree = convertSnapshotTreeToSummaryTree(
-						this.dataStoreContext.baseSnapshot.trees[contextId],
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						this.dataStoreContext.baseSnapshot.trees[contextId]!,
 					);
 				}
 				summaryBuilder.addWithStats(contextId, summaryTree);
