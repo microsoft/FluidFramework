@@ -30,7 +30,7 @@ export const alertNodeType = "Alert";
 export class AlertNode extends DocumentationParentNodeBase {
 	/**
 	 * @param {@fluid-tools/api-markdown-documenter#DocumentationNode[]} children - Child node content.
-	 * @param {string} alertKind - The kind of alert.
+	 * @param {string} alertKind - The kind of alert. See {@link https://hugo-docs-theme.netlify.app/docs/guide/shortcodes/callout/}.
 	 * @param {string | undefined} title - (Optional) Title text for the alert.
 	 */
 	constructor(children, alertKind, title) {
