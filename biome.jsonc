@@ -4,7 +4,8 @@
 		"enabled": true,
 		"clientKind": "git",
 		"root": ".",
-		"useIgnoreFile": true
+		"useIgnoreFile": true,
+		"defaultBranch": "main"
 	},
 	"files": {
 		"ignoreUnknown": true,
@@ -19,7 +20,9 @@
 			"**/_package.json",
 			"**/fluid-runner/src/test/localOdspSnapshots/**",
 			"**/fluid-runner/src/test/telemetryExpectedOutputs/**",
+			"**/snapshots/*.json",
 
+			// Generated files
 			"**/src/**/test/types/*.generated.ts",
 			"**/src/packageVersion.ts",
 
