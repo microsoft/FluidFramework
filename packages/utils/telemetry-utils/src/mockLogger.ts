@@ -67,6 +67,8 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 * @param clearEventsAfterCheck - Whether or not to clear the logger's {@link MockLogger.events} after performing the check.
+	 * Default: true.
 	 */
 	public matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -84,7 +86,15 @@ export class MockLogger implements ITelemetryBaseLogger {
 	}
 
 	/**
-	 * Asserts that matchEvents is true, and prints the actual/expected output if not.
+	 * Asserts {@link MockLogger.matchEvents} is `true` for the given events.
+	 * @param disallowedEvents - The events expected to not appear.
+	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
+	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
+	 * These event objects may be subsets of the logged events.
+	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 * @param clearEventsAfterCheck - Whether or not to clear the logger's {@link MockLogger.events} after performing the check.
+	 * Default: true.
+	 * @throws An error containing the actual/expected event data if the condition is not satisfied.
 	 */
 	public assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -128,7 +138,15 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Asserts that matchAnyEvent is true, and prints the actual/expected output if not.
+	 * Asserts {@link MockLogger.matchAnyEvent} is `true` for the given events.
+	 * @param disallowedEvents - The events expected to not appear.
+	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
+	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
+	 * These event objects may be subsets of the logged events.
+	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 * @param clearEventsAfterCheck - Whether or not to clear the logger's {@link MockLogger.events} after performing the check.
+	 * Default: true.
+	 * @throws An error containing the actual/expected event data if the condition is not satisfied.
 	 */
 	public assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -156,6 +174,8 @@ ${JSON.stringify(actualEvents)}`);
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 * @param clearEventsAfterCheck - Whether or not to clear the logger's {@link MockLogger.events} after performing the check.
+	 * Default: true.
 	 */
 	public matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -174,7 +194,15 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Asserts that matchEvents is true, and prints the actual/expected output if not
+	 * Asserts {@link MockLogger.matchEvents} is `true` for the given events.
+	 * @param disallowedEvents - The events expected to not appear.
+	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
+	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
+	 * These event objects may be subsets of the logged events.
+	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 * @param clearEventsAfterCheck - Whether or not to clear the logger's {@link MockLogger.events} after performing the check.
+	 * Default: true.
+	 * @throws An error containing the actual/expected event data if the condition is not satisfied.
 	 */
 	public assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -196,7 +224,15 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not
+	 * Asserts {@link MockLogger.matchAnyEvent} is `false` for the given events.
+	 * @param disallowedEvents - The events expected to not appear.
+	 * @param message - Optional error message to include in the thrown error, if the condition is not satisfied.
+	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
+	 * These event objects may be subsets of the logged events.
+	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 * @param clearEventsAfterCheck - Whether or not to clear the logger's {@link MockLogger.events} after performing the check.
+	 * Default: true.
+	 * @throws An error containing the actual/expected event data if the condition is not satisfied.
 	 */
 	public assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
