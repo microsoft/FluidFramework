@@ -57,7 +57,7 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 			? this.internalStorageService.uploadSummaryWithContext(
 					this.addProtocolSummaryIfMissing(summary),
 					context,
-			  )
+				)
 			: this.internalStorageService.uploadSummaryWithContext(summary, context);
 	}
 }

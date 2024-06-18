@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import {
+	type ContainerProperty,
+	PropertyFactory,
+} from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import TextField from "@material-ui/core/TextField";
@@ -118,7 +121,12 @@ export interface INewDataFormProps {
 	/**
 	 * Callback that is executed on create.
 	 */
-	onDataCreate: (rowData: IInspectorRow, name: string, typeid: string, context: string) => void;
+	onDataCreate: (
+		rowData: IInspectorRow,
+		name: string,
+		typeid: string,
+		context: string,
+	) => void;
 	/**
 	 * The available options.
 	 */
@@ -296,9 +304,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 			/>
 			<DecoratedSelect
 				id="contextSelector"
-				options={
-					isNamedProp ? listOfContextOptions.concat(setContext) : listOfContextOptions
-				}
+				options={isNamedProp ? listOfContextOptions.concat(setContext) : listOfContextOptions}
 				defaultValue={defaultContainerOption}
 				value={selectedContainerOption}
 				onChange={(val: DecoratedSelectValueType) => {
@@ -321,10 +327,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 		const startAndEndAdornment = {
 			endAdornment: isSiblingFound ? (
 				<ErrorTooltip title="A property with this name already exists" placement="top">
-					<InputAdornment
-						position="end"
-						classes={{ positionStart: classes.inputAdornment }}
-					>
+					<InputAdornment position="end" classes={{ positionStart: classes.inputAdornment }}>
 						<div>
 							<SvgIcon svgId={"error-24"} className={classes.errorIndicatorIcon} />
 						</div>
@@ -332,10 +335,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 				</ErrorTooltip>
 			) : undefined,
 			startAdornment: (
-				<InputAdornment
-					position="start"
-					classes={{ positionStart: classes.inputAdornment }}
-				>
+				<InputAdornment position="start" classes={{ positionStart: classes.inputAdornment }}>
 					<div style={{ opacity: 0.5 }}>
 						<TypeIcon typeId={selectedTypeOrCollectionLabel} />
 					</div>

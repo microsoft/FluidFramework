@@ -19,7 +19,11 @@ import { render, screen } from "@testing-library/react";
 import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
-import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../components/index.js";
+import {
+	FluidTreeView,
+	UnknownDataView,
+	UnknownFluidObjectView,
+} from "../components/index.js";
 
 import { MockMessageRelay } from "./utils/index.js";
 

@@ -143,9 +143,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 			<div>{`${app.localClient.bubbles.length}/${bubbleCount} bubbles @${formatFloat(
 				stats.smoothFps,
 			)} fps (${stats.lastFrameElapsed} ms)`}</div>
-			<div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${
-				stats.glitchCount
-			})`}</div>
+			<div>{`Total FPS: ${formatFloat(stats.totalFps)} (Glitches: ${stats.glitchCount})`}</div>
 			<StageView app={app}></StageView>
 		</div>
 	);

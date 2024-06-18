@@ -100,7 +100,13 @@ export {
 	ReferenceType,
 	IMergeTreeObliterateMsg,
 } from "./ops.js";
-export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties.js";
+export {
+	addProperties,
+	createMap,
+	MapLike,
+	matchProperties,
+	PropertySet,
+} from "./properties.js";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,
