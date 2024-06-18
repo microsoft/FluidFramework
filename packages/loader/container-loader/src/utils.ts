@@ -82,15 +82,21 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 	const query = parsed.search ?? "";
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
-	return match?.length === 3
-		? {
-				id: match[1],
-				path: match[2],
-				query,
-				// URLSearchParams returns null if the param is not provided.
-				version: parsed.searchParams.get("version") ?? undefined,
-		  }
-		: undefined;
+	if (match?.length !== 3) {
+		return undefined;
+	}
+	const id = match[1];
+	const path = match[2];
+	if (id === undefined || path === undefined) {
+		return undefined;
+	}
+	return {
+		id,
+		path,
+		query,
+		// URLSearchParams returns null if the param is not provided.
+		version: parsed.searchParams.get("version") ?? undefined,
+	};
 }
 
 /**
@@ -135,10 +141,8 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 		unreferenced: summary.unreferenced,
 		groupId: summary.groupId,
 	};
-	const keys = Object.keys(summary.tree);
-	for (const key of keys) {
-		const summaryObject = summary.tree[key];
 
+	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);
@@ -264,8 +268,9 @@ export const combineSnapshotTreeAndSnapshotBlobs = (
 
 	// Process blobs in the current level
 	for (const [, id] of Object.entries(baseSnapshot.blobs)) {
-		if (snapshotBlobs[id]) {
-			blobsContents[id] = stringToBuffer(snapshotBlobs[id], "utf8");
+		const snapshot = snapshotBlobs[id];
+		if (snapshot !== undefined) {
+			blobsContents[id] = stringToBuffer(snapshot, "utf8");
 		}
 	}
 
@@ -394,8 +399,10 @@ export async function getDocumentAttributes(
 	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
 	const attributesHash =
 		".protocol" in tree.trees
-			? tree.trees[".protocol"].blobs.attributes
-			: tree.blobs[".attributes"];
+			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			  tree.trees[".protocol"].blobs.attributes!
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			  tree.blobs[".attributes"]!;
 
 	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 

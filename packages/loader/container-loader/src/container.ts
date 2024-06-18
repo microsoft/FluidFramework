@@ -861,7 +861,8 @@ export class Container
 							: this.deltaManager?.lastMessage?.clientId,
 					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 					connectionStateDuration: () =>
-						performance.now() - this.connectionTransitionTimes[this.connectionState],
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						performance.now() - this.connectionTransitionTimes[this.connectionState]!,
 				},
 			},
 		});
@@ -906,7 +907,8 @@ export class Container
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
 							performance.now() -
-							this.connectionTransitionTimes[ConnectionState.CatchingUp],
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							this.connectionTransitionTimes[ConnectionState.CatchingUp]!,
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
@@ -1809,7 +1811,8 @@ export class Container
 		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
-			baseTree.blobs.quorumValues,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			baseTree.blobs.quorumValues!,
 		);
 		this.initializeProtocolState(
 			attributes,
@@ -1847,15 +1850,18 @@ export class Container
 				await Promise.all([
 					readAndParse<[string, ISequencedClient][]>(
 						storage,
-						baseTree.blobs.quorumMembers,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						baseTree.blobs.quorumMembers!,
 					),
 					readAndParse<[number, ISequencedProposal, string[]][]>(
 						storage,
-						baseTree.blobs.quorumProposals,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						baseTree.blobs.quorumProposals!,
 					),
 					readAndParse<[string, ICommittedProposal][]>(
 						storage,
-						baseTree.blobs.quorumValues,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						baseTree.blobs.quorumValues!,
 					),
 				]);
 		}
@@ -2112,7 +2118,8 @@ export class Container
 		// Log actual event
 		const time = performance.now();
 		this.connectionTransitionTimes[value] = time;
-		const duration = time - this.connectionTransitionTimes[oldState];
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const duration = time - this.connectionTransitionTimes[oldState]!;
 
 		let durationFromDisconnected: number | undefined;
 		let connectionInitiationReason: string | undefined;
@@ -2124,7 +2131,8 @@ export class Container
 		} else {
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
-					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					time - this.connectionTransitionTimes[ConnectionState.Disconnected]!;
 				durationFromDisconnected = formatTick(durationFromDisconnected);
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
