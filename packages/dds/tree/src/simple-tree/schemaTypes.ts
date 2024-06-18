@@ -128,7 +128,7 @@ export interface TreeNodeSchemaCore<
  * Types for use in fields.
  * @remarks
  * Type constraint used in schema declaration APIs.
- * For for direct use outside of package.
+ * Not intended for direct use outside of package.
  * @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
