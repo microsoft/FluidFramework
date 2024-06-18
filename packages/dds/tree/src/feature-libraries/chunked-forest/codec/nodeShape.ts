@@ -23,7 +23,7 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
-import type { StableId } from "@fluidframework/id-compressor";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -51,14 +51,17 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 
 		if (this.value === 0) {
-			const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(
-				cursor.value as StableId,
-			);
-			const opSpaceCompressedId =
-				sessionSpaceCompressedId !== undefined
-					? cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId)
-					: cursor.value;
-			encodeValue(opSpaceCompressedId, this.value, outputBuffer);
+			assert(typeof cursor.value === "string", "identifier must be type string");
+			if (!isStableId(cursor.value)) {
+				encodeValue(cursor.value, this.value, outputBuffer);
+			} else {
+				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
+				const opSpaceCompressedId =
+					sessionSpaceCompressedId !== undefined
+						? cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId)
+						: cursor.value;
+				encodeValue(opSpaceCompressedId, this.value, outputBuffer);
+			}
 		} else {
 			encodeValue(cursor.value, this.value, outputBuffer);
 		}

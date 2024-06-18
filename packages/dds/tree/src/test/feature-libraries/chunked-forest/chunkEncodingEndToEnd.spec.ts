@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import type { SessionId, StableId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -81,7 +81,7 @@ const schemaWithIdentifier = schemaFactory.object("parent", {
 	identifier: schemaFactory.identifier,
 });
 
-function getIdentifierEncodingContext(id: StableId) {
+function getIdentifierEncodingContext(id: string) {
 	const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 		identifier: id,
 	}));
@@ -253,11 +253,37 @@ describe("End to end chunked encoding", () => {
 			assert.equal(identifierValue, testIdCompressor.recompress(id));
 		});
 
-		it("is the uncompressed value when it is an unknown/invalid identifier", () => {
+		it("is the uncompressed value when it is an unknown  identifier", () => {
 			// generate an id from a different id compressor.
 			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 
+			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
+
+			const forestSummarizer = new ForestSummarizer(
+				checkout.forest,
+				new RevisionTagCodec(testIdCompressor),
+				fieldBatchCodec,
+				encoderContext,
+				options,
+				testIdCompressor,
+			);
+
+			function stringifier(content: unknown) {
+				return JSON.stringify(content);
+			}
+			const { summary } = forestSummarizer.getAttachSummary(stringifier);
+			const tree = summary.tree.ForestTree;
+			assert(tree.type === SummaryType.Blob);
+			const treeContent = JSON.parse(tree.content as string);
+			const identifierValue = treeContent.fields.data[0][1];
+			// Check that the identifierValue is the original uncompressed id.
+			assert.equal(identifierValue, id);
+		});
+
+		it("is the uncompressed value when it is an invalid uuid", () => {
+			// generate an id from a different id compressor.
+			const id = "invalidUUID";
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(
