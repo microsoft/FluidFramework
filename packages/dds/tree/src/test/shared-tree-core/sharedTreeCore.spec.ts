@@ -6,11 +6,15 @@
 import { strict as assert } from "assert";
 
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
+	type ISummaryTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -26,24 +30,24 @@ import {
 
 import {
 	AllowedUpdateType,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
-	DefaultChangeset,
-	DefaultEditBuilder,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
 	FieldKinds,
 	FlexFieldSchema,
-	ModularChangeset,
+	type ModularChangeset,
 	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import {
+import type { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
+import type {
 	ChangeEnricherReadonlyCheckout,
 	EditManager,
 	ResubmitMachine,
@@ -53,7 +57,12 @@ import {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
+import {
+	SharedTreeTestFactory,
+	TestTreeProviderLite,
+	schematizeFlexTree,
+	stringSequenceRootSchema,
+} from "../utils.js";
 
 import { TestSharedTreeCore } from "./utils.js";
 
@@ -343,6 +352,95 @@ describe("SharedTreeCore", () => {
 		]);
 	});
 
+	it("Does not submit changes that were aborted in an outer transaction", async () => {
+		const provider = new TestTreeProviderLite(2);
+		const content = {
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
+			initialTree: ["A", "B"],
+		} satisfies InitializeAndSchematizeConfiguration;
+		const tree1 = schematizeFlexTree(provider.trees[0], content);
+		provider.processMessages();
+		const tree2 = schematizeFlexTree(provider.trees[1], content);
+
+		const root1 = tree1.flexTree;
+		const root2 = tree2.flexTree;
+
+		tree1.checkout.transaction.start();
+		{
+			// Remove A as part of the aborted transaction
+			root1.removeAt(0);
+			tree1.checkout.transaction.start();
+			{
+				// Remove B as part of the committed inner transaction
+				root1.removeAt(0);
+			}
+			tree1.checkout.transaction.commit();
+		}
+		tree1.checkout.transaction.abort();
+
+		provider.processMessages();
+		assert.deepEqual([...root2], ["A", "B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		tree1.checkout.transaction.start();
+		{
+			root1.insertAtEnd("C");
+		}
+		tree1.checkout.transaction.commit();
+		provider.processMessages();
+		assert.deepEqual([...root2], ["A", "B", "C"]);
+		assert.deepEqual([...root2], ["A", "B", "C"]);
+	});
+
+	it("Does not submit changes that were aborted in an inner transaction", async () => {
+		const provider = new TestTreeProviderLite(2);
+		const content = {
+			schema: stringSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
+			initialTree: ["A", "B"],
+		} satisfies InitializeAndSchematizeConfiguration;
+		const tree1 = schematizeFlexTree(provider.trees[0], content);
+
+		provider.processMessages();
+		const tree2 = schematizeFlexTree(provider.trees[1], content);
+
+		const root1 = tree1.flexTree;
+		const root2 = tree2.flexTree;
+
+		tree1.checkout.transaction.start();
+		{
+			// Remove A as part of the committed transaction
+			root1.removeAt(0);
+			tree1.checkout.transaction.start();
+			{
+				// Remove B as part of the aborted transaction
+				root1.removeAt(0);
+			}
+			tree1.checkout.transaction.abort();
+		}
+		tree1.checkout.transaction.commit();
+
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["A", "B"]);
+
+		provider.processMessages();
+
+		assert.deepEqual([...root1], ["B"]);
+		assert.deepEqual([...root2], ["B"]);
+
+		// Make an additional change to ensure that all changes from the previous transactions were flushed
+		tree1.checkout.transaction.start();
+		{
+			root1.insertAtEnd("C");
+		}
+		tree1.checkout.transaction.commit();
+		provider.processMessages();
+		assert.deepEqual([...root2], ["B", "C"]);
+		assert.deepEqual([...root2], ["B", "C"]);
+	});
+
 	describe("commit enrichment", () => {
 		interface EnrichedCommit extends GraphCommit<ModularChangeset> {
 			readonly original?: GraphCommit<ModularChangeset>;
@@ -474,6 +572,29 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.submissionLog.length, 1);
 			assert.notEqual(machine.submissionLog[0], tree.getLocalBranch().getHead().change);
+		});
+
+		it("handles aborted outer transaction", () => {
+			const enricher = new MockChangeEnricher<ModularChangeset>();
+			const machine = new MockResubmitMachine();
+			const tree = createTree([], machine, enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			tree.getLocalBranch().startTransaction();
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree);
+			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
+			tree.getLocalBranch().abortTransaction();
+			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(machine.submissionLog.length, 0);
 		});
 
 		it("update commit enrichments on re-submit", () => {

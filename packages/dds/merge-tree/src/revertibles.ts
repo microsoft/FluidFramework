@@ -44,9 +44,10 @@ export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRever
 	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
 }
 
-type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> = MergeTreeDeltaRevertible & {
-	operation: T;
-};
+type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> =
+	MergeTreeDeltaRevertible & {
+		operation: T;
+	};
 
 interface RemoveSegmentRefProperties {
 	/**

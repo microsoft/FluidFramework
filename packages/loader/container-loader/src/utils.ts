@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToString,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -184,7 +188,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
-	assert(snapshot.sequenceNumber !== undefined, 0x93a /* Snapshot sequence number is missing */);
+	assert(
+		snapshot.sequenceNumber !== undefined,
+		0x93a /* Snapshot sequence number is missing */,
+	);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");

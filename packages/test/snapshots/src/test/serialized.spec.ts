@@ -11,7 +11,10 @@ import { SharedCell, ISharedCell } from "@fluidframework/cell/internal";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import {

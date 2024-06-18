@@ -23,7 +23,8 @@ export const ContainerErrorTypes = {
  * {@inheritDoc (ContainerErrorTypes:variable)}
  * @alpha
  */
-export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
+export type ContainerErrorTypes =
+	(typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 /**
  * Different error types the Container may report out to the Host.

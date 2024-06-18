@@ -19,6 +19,7 @@ export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } fro
 export {
 	createFluidServiceNetworkError,
 	INetworkErrorDetails,
+	InternalErrorCode,
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,

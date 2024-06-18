@@ -4,7 +4,7 @@
  */
 
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
-import { InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries/index.js";
+import { type InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries/index.js";
 
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 

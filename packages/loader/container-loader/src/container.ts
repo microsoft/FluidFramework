@@ -96,11 +96,18 @@ import {
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
-import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
+import {
+	AttachProcessProps,
+	AttachmentData,
+	runRetriableAttachProcess,
+} from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
-import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
+import {
+	IConnectionStateHandler,
+	createConnectionStateHandler,
+} from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
@@ -269,7 +276,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 					? wrapError(
 							err,
 							(innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`),
-					  )
+						)
 					: new GenericError(baseMessage),
 			);
 		};
@@ -328,7 +335,8 @@ export async function waitContainerToCatchUp(container: IContainer) {
 	});
 }
 
-const getCodeProposal = (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+const getCodeProposal = (quorum: IQuorumProposals) =>
+	quorum.get("code") ?? quorum.get("code2");
 
 /**
  * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
@@ -384,9 +392,7 @@ export class Container
 
 					const onClosed = (err?: ICriticalContainerError) => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
-						reject(
-							err ?? new GenericError("Container closed without error during load"),
-						);
+						reject(err ?? new GenericError("Container closed without error during load"));
 					};
 					container.on("closed", onClosed);
 
@@ -678,6 +684,13 @@ export class Container
 		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
+	private supportGetSnapshotApi(): boolean {
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
+				true && this.service?.policies?.supportGetSnapshotApi === true;
+		return supportGetSnapshotApi;
+	}
+
 	/**
 	 * Get the code details that are currently specified for the container.
 	 * @returns The current code details if any are specified, undefined if none are specified.
@@ -960,9 +973,9 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context or supportedFeatures flag by the service.
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
-		const forceEnableSummarizeProtocolTree =
+		const shouldSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree;
 
@@ -972,7 +985,7 @@ export class Container
 			pendingLocalState?.snapshotBlobs,
 			pendingLocalState?.loadedGroupIdSnapshots,
 			addProtocolSummaryIfMissing,
-			forceEnableSummarizeProtocolTree,
+			shouldSummarizeProtocolTree,
 		);
 
 		const offlineLoadEnabled =
@@ -986,6 +999,7 @@ export class Container
 			offlineLoadEnabled,
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
+			() => this.supportGetSnapshotApi(),
 		);
 
 		const isDomAvailable =
@@ -1057,9 +1071,7 @@ export class Container
 					{
 						eventName: "ContainerClose",
 						category:
-							this._lifecycleState !== "loading" && error !== undefined
-								? "error"
-								: "generic",
+							this._lifecycleState !== "loading" && error !== undefined ? "error" : "generic",
 					},
 					error,
 				);
@@ -1131,10 +1143,7 @@ export class Container
 				// Driver need to ensure all caches are cleared on critical errors
 				this.service?.dispose(error);
 			} catch (exception) {
-				this.mc.logger.sendErrorEvent(
-					{ eventName: "ContainerDisposeException" },
-					exception,
-				);
+				this.mc.logger.sendErrorEvent({ eventName: "ContainerDisposeException" }, exception);
 			}
 
 			this.emit("disposed", error);
@@ -1303,8 +1312,7 @@ export class Container
 						async (summary) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
-								const createNewResolvedUrl =
-									await this.urlResolver.resolve(request);
+								const createNewResolvedUrl = await this.urlResolver.resolve(request);
 								assert(
 									this.client.details.type !== summarizerClientType &&
 										createNewResolvedUrl !== undefined,
@@ -1339,9 +1347,7 @@ export class Container
 					});
 
 					// only enable the new behavior if the config is set
-					if (
-						this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true
-					) {
+					if (this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true) {
 						attachP = attachP.catch((error) => {
 							throw normalizeErrorAndClose(error);
 						});
@@ -1350,7 +1356,6 @@ export class Container
 					// If offline load is enabled, attachP will return the attach summary (in Snapshot format) so we can initialize SerializedStateManager
 					const snapshotWithBlobs = await attachP;
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
-
 					if (!this.closed) {
 						this.detachedBlobStorage.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
@@ -1453,7 +1458,9 @@ export class Container
 		this.connectToDeltaStream(args);
 	}
 
-	public readonly getAbsoluteUrl = async (relativeUrl: string): Promise<string | undefined> => {
+	public readonly getAbsoluteUrl = async (
+		relativeUrl: string,
+	): Promise<string | undefined> => {
 		if (this.resolvedUrl === undefined) {
 			return undefined;
 		}
@@ -1617,14 +1624,9 @@ export class Container
 
 		timings.phase2 = performance.now();
 
-		const supportGetSnapshotApi: boolean =
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
-				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
-			specifiedVersion,
-			supportGetSnapshotApi,
-		);
+		const { baseSnapshot, version } =
+			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
@@ -1964,7 +1966,7 @@ export class Container
 						permission: [],
 						scopes: [],
 						user: { id: "" },
-				  };
+					};
 
 		if (clientDetailsOverride !== undefined) {
 			client.details = {
@@ -2159,9 +2161,7 @@ export class Container
 				opsBehind,
 				online: OnlineStatus[isOnline()],
 				lastVisible:
-					this.lastVisible !== undefined
-						? performance.now() - this.lastVisible
-						: undefined,
+					this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				isDirty: this.isDirty,

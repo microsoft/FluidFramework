@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
-	NestedMap,
+	type NestedMap,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,

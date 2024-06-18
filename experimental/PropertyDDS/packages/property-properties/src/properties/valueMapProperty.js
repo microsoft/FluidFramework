@@ -174,9 +174,7 @@ export class ValueMapProperty extends MapProperty {
 
 		// Modify entries
 		if (in_pendingChangeSet.modify) {
-			var modifiedPendingEntries = in_pendingChangeSet
-				? in_pendingChangeSet.modify || {}
-				: {};
+			var modifiedPendingEntries = in_pendingChangeSet ? in_pendingChangeSet.modify || {} : {};
 			var modifiedDirtyEntries = in_dirtyChangeSet ? in_dirtyChangeSet.modify || {} : {};
 			keys = Object.keys(modifiedPendingEntries).concat(Object.keys(modifiedDirtyEntries));
 			for (i = 0; i < keys.length; i++) {

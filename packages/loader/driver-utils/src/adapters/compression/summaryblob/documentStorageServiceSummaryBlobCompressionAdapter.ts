@@ -20,8 +20,8 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { compress, decompress } from "lz4js";
 
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
+import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../index.js";
 
 /**
  * @internal
@@ -84,7 +84,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param algorithm - The algorithm to write.
 	 * @returns The blob with the algorithm as the first byte.
 	 */
-	private static writeAlgorithmToBlob(blob: ArrayBufferLike, algorithm: number): ArrayBufferLike {
+	private static writeAlgorithmToBlob(
+		blob: ArrayBufferLike,
+		algorithm: number,
+	): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const firstByte = IsoBuffer.from(blob)[0]!;
@@ -138,8 +141,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const original: ArrayBufferLike =
-				DocumentStorageServiceCompressionAdapter.toBinaryArray(summaryBlob.content);
+			const original: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+				summaryBlob.content,
+			);
 			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
 				original,
 				config,
@@ -450,6 +454,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					DocumentStorageServiceCompressionAdapter.blobEncoder,
 					DocumentStorageServiceCompressionAdapter.blobDecoder,
 					this._config,
-			  ) as ISummaryTree);
+				) as ISummaryTree);
 	}
 }

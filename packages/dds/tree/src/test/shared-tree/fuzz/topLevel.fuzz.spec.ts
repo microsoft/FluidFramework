@@ -5,19 +5,19 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
-import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,

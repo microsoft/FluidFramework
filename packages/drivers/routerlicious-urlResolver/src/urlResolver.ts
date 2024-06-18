@@ -79,9 +79,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		let fluidUrl =
 			"https://" +
 			`${
-				this.config
-					? new URL(this.config.provider.get("worker:serverUrl")).host
-					: serverSuffix
+				this.config ? new URL(this.config.provider.get("worker:serverUrl")).host : serverSuffix
 			}/` +
 			`${encodeURIComponent(tenantId)}/` +
 			`${encodeURIComponent(documentId)}`;
@@ -141,7 +139,10 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		return resolved;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
 		assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");

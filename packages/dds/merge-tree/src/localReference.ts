@@ -384,11 +384,7 @@ export class LocalReferenceCollection {
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
-			lref.link(
-				this.segment,
-				lref.getOffset() + this.refsByOffset.length,
-				lref.getListNode(),
-			);
+			lref.link(this.segment, lref.getOffset() + this.refsByOffset.length, lref.getListNode());
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);

@@ -127,13 +127,7 @@ function buildTreeNodeSchema(
 			buildLocalFields(builder, nodeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
 			for (const inheritanceType of inheritanceChain) {
-				buildLocalFields(
-					builder,
-					nodeSchemaMap,
-					allChildrenByType,
-					inheritanceType,
-					fields,
-				);
+				buildLocalFields(builder, nodeSchemaMap, allChildrenByType, inheritanceType, fields);
 			}
 			if (typeid === nodePropertyType) {
 				cache.nodeSchema = nodePropertySchema;
@@ -246,7 +240,7 @@ function buildLocalFields(
 								property.typeid ?? "",
 								property.context,
 								false,
-						  )
+							)
 						: property.typeid ?? Any;
 				local.set(
 					property.id,

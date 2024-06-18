@@ -11,7 +11,10 @@
 import { RESOLVE_ALWAYS, RESOLVE_NEVER } from "./constants.js";
 
 import { PathHelper, TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { BaseProperty, REFERENCE_RESOLUTION_TYPE } from "@fluid-experimental/property-properties";
+import {
+	BaseProperty,
+	REFERENCE_RESOLUTION_TYPE,
+} from "@fluid-experimental/property-properties";
 import { isCollection, isReferenceProperty } from "./typeGuards.js";
 
 export declare type Property = BaseProperty | undefined;
@@ -464,9 +467,7 @@ export class PropertyElement {
 				if (this.isPrimitiveCollectionElement()) {
 					// References are relative to the property that contains it, which in this case is the container
 					// this primitive collection element belongs to.
-					this.becomeParent()
-						.becomeParent()
-						.becomeChild(tokens, options, out_pathDelimiters);
+					this.becomeParent().becomeParent().becomeChild(tokens, options, out_pathDelimiters);
 				} else {
 					this.becomeParent().becomeChild(tokens, options, out_pathDelimiters);
 				}
