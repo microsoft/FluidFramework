@@ -97,10 +97,8 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
-	assert(moveInfo.movedClientIds !== undefined, "");
-	seg.movedClientIds = moveInfo.movedClientIds.slice();
-	assert(moveInfo.movedSeq !== undefined, "");
-	seg.movedSeqs = [moveInfo.movedSeq];
+	seg.movedClientIds = moveInfo.movedClientIds!.slice();
+	seg.movedSeqs = [moveInfo.movedSeq!];
 	seg.movedSeq = moveInfo.movedSeq;
 	seg.localMovedSeq = moveInfo.localMovedSeq;
 	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
@@ -1903,21 +1901,17 @@ export class MergeTree {
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
 					// for partialLengths bookkeeping purposes
-					assert(existingMoveInfo.movedClientIds !== undefined, "");
-					existingMoveInfo.movedClientIds.unshift(clientId);
+					existingMoveInfo.movedClientIds!.unshift(clientId);
 
 					existingMoveInfo.movedSeq = seq;
-					assert(existingMoveInfo.movedSeqs !== undefined, "");
-					existingMoveInfo.movedSeqs.unshift(seq);
+					existingMoveInfo.movedSeqs!.unshift(seq);
 					if (segment.localRefs?.empty === false) {
 						localOverlapWithRefs.push(segment);
 					}
 				} else {
-					assert(existingMoveInfo.movedClientIds !== undefined, "");
-					assert(existingMoveInfo.movedSeqs !== undefined, "");
 					// Do not replace earlier sequence number for move
-					existingMoveInfo.movedClientIds.push(clientId);
-					existingMoveInfo.movedSeqs.push(seq);
+					existingMoveInfo.movedClientIds!.push(clientId);
+					existingMoveInfo.movedSeqs!.push(seq);
 				}
 			} else {
 				segment.movedClientIds = [clientId];
@@ -2021,17 +2015,16 @@ export class MergeTree {
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first removal at the head
 					// for partialLengths bookkeeping purposes
-					assert(existingRemovalInfo.removedClientIds !== undefined, "");
-					existingRemovalInfo.removedClientIds.unshift(clientId);
+
+					existingRemovalInfo.removedClientIds!.unshift(clientId);
 
 					existingRemovalInfo.removedSeq = seq;
 					if (segment.localRefs?.empty === false) {
 						localOverlapWithRefs.push(segment);
 					}
 				} else {
-					assert(existingRemovalInfo.removedClientIds !== undefined, "");
 					// Do not replace earlier sequence number for remove
-					existingRemovalInfo.removedClientIds.push(clientId);
+					existingRemovalInfo.removedClientIds!.push(clientId);
 				}
 			} else {
 				segment.removedClientIds = [clientId];

@@ -671,17 +671,18 @@ export class PartialSequenceLengths {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = removalIsLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq!;
 			segmentLen = -segmentLen;
-			assert(removalInfo.removedClientIds !== undefined, "");
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
-			clientId = removalInfo.removedClientIds[0];
-			const hasOverlap = removalInfo.removedClientIds.length > 1;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			clientId = removalInfo.removedClientIds![0];
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const hasOverlap = removalInfo.removedClientIds!.length > 1;
 			removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
 		} else if (moveInfo) {
-			assert(moveInfo.movedClientIds !== undefined, "");
 			// The client who performed the move is always stored
 			// in the first position of moveInfo.
-			clientId = moveInfo.movedClientIds[0];
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			clientId = moveInfo.movedClientIds![0];
 
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq!;
@@ -695,8 +696,8 @@ export class PartialSequenceLengths {
 			} else {
 				segmentLen = -segmentLen;
 			}
-
-			const hasOverlap = moveInfo.movedClientIds.length > 1;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const hasOverlap = moveInfo.movedClientIds!.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
 		} else if (segment.wasMovedOnInsert) {
 			// if this segment was obliterated on insert, its length is only
@@ -715,13 +716,12 @@ export class PartialSequenceLengths {
 
 		// overlapping move and remove, remove happened first
 		if (moveInfo && removalInfo && removeHappenedFirst && !moveIsLocal) {
-			assert(moveInfo.movedClientIds !== undefined, "");
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
-			const moveClientId = moveInfo.movedClientIds[0];
-			const hasOverlap = moveInfo.movedClientIds.length > 1;
-
-			assert(moveInfo.movedSeq !== undefined, "");
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const moveClientId = moveInfo.movedClientIds![0];
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const hasOverlap = moveInfo.movedClientIds!.length > 1;
 
 			PartialSequenceLengths.updatePartialsAfterInsertion(
 				segment,
@@ -729,7 +729,8 @@ export class PartialSequenceLengths {
 				-segment.cachedLength,
 				segmentLen,
 				partials,
-				moveInfo.movedSeq,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				moveInfo.movedSeq!,
 				moveClientId,
 				undefined,
 				hasOverlap ? moveInfo.movedClientIds : undefined,
@@ -741,20 +742,21 @@ export class PartialSequenceLengths {
 				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					removalInfo.localRemovedSeq!
 				: removalInfo.removedSeq;
-			assert(removalInfo.removedClientIds !== undefined, "");
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
-			const removeClientId = removalInfo.removedClientIds[0];
-			const hasOverlap = removalInfo.removedClientIds.length > 1;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const removeClientId = removalInfo.removedClientIds![0];
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const hasOverlap = removalInfo.removedClientIds!.length > 1;
 
-			assert(removeSeqOrLocalSeq !== undefined, "");
 			PartialSequenceLengths.updatePartialsAfterInsertion(
 				segment,
 				0,
 				-segment.cachedLength,
 				segmentLen,
 				partials,
-				removeSeqOrLocalSeq,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				removeSeqOrLocalSeq!,
 				removeClientId,
 				hasOverlap ? removalInfo.removedClientIds : undefined,
 				undefined,
