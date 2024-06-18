@@ -157,8 +157,10 @@ export class InkCanvas {
 		const strokes = this.model.getStrokes();
 
 		// Time of the first operation in stroke 0 is our starting time
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const startTime = strokes[0]!.points[0]!.time;
+		const startTime = strokes[0]?.points[0]?.time;
+		if (startTime === undefined) {
+			throw new Error("Couldn't get start time");
+		}
 		for (const stroke of strokes) {
 			this.animateStroke(stroke, 0, startTime);
 		}
