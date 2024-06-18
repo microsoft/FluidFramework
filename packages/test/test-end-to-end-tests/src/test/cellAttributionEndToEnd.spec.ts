@@ -15,7 +15,7 @@ import {
 	enableOnNewFileKey,
 	type IRuntimeAttributor,
 } from "@fluidframework/attributor/internal";
-import { type ContainerRuntime } from "@fluidframework/attributor/internal";
+import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import {
