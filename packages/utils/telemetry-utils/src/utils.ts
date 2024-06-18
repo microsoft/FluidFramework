@@ -106,11 +106,12 @@ export function createSampledLogger(
 }
 
 /**
- * Executes the specified code, keeping statistics of its execution time and the telemetry properties it returns, and when the {@link TelemetryEventBatcher.threshold} is reached it logs a performance event which includes the maxes and averages.
+ * Runs the specified function and returns an object with the time it took to run as well as any output from it.
+ * @remarks Useful in conjunction with {@link TelemetryEventBatcher}.
+ *
  * @param codeToMeasure - The code to be executed and measured.
  * @returns The total duration of the code execution and whatever the passed-in code block returns.
- *
- * @public
+ * @internal
  */
 export function measure<T>(codeToMeasure: () => T): { duration: number; output: T } {
 	const start = performance.now();
