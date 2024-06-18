@@ -5,19 +5,19 @@
 
 import { strict as assert } from "assert";
 
-import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { type BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import {
-	ChangeFamily,
-	RevisionTag,
+	type ChangeFamily,
+	type RevisionTag,
 	rootFieldKey,
 	type ChangeFamilyEditor,
 } from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
-import { Commit } from "../../../shared-tree-core/index.js";
+import type { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
-import { Editor, makeEditMinter } from "../../editMinter.js";
+import { type Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
 import { failCodecFamily, mintRevisionTag } from "../../utils.js";
 

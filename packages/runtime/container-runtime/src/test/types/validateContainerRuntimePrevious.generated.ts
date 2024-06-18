@@ -248,28 +248,16 @@ use_old_ClassDeclaration_ContainerRuntime(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ContainerRuntimeMessage": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_ContainerRuntimeMessage": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ContainerRuntimeMessage():
-    TypeOnly<old.ContainerRuntimeMessage>;
-declare function use_current_InterfaceDeclaration_ContainerRuntimeMessage(
-    use: TypeOnly<current.ContainerRuntimeMessage>): void;
-use_current_InterfaceDeclaration_ContainerRuntimeMessage(
-    get_old_InterfaceDeclaration_ContainerRuntimeMessage());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ContainerRuntimeMessage():
-    TypeOnly<current.ContainerRuntimeMessage>;
-declare function use_old_InterfaceDeclaration_ContainerRuntimeMessage(
-    use: TypeOnly<old.ContainerRuntimeMessage>): void;
-use_old_InterfaceDeclaration_ContainerRuntimeMessage(
-    get_current_InterfaceDeclaration_ContainerRuntimeMessage());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1381,6 +1369,7 @@ declare function get_old_InterfaceDeclaration_IGCNodeUpdatedProps():
 declare function use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
     use: TypeOnly<current.IGCNodeUpdatedProps>): void;
 use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCNodeUpdatedProps());
 
 /*

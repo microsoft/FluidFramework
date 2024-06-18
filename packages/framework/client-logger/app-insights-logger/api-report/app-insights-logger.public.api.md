@@ -4,7 +4,7 @@
 
 ```ts
 
-import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 ```

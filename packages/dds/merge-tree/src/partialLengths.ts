@@ -413,8 +413,7 @@ export class PartialSequenceLengths {
 				if (
 					(removalInfo?.removedSeq !== undefined &&
 						seqLTE(removalInfo.removedSeq, collabWindow.minSeq)) ||
-					(moveInfo?.movedSeq !== undefined &&
-						seqLTE(moveInfo.movedSeq, collabWindow.minSeq))
+					(moveInfo?.movedSeq !== undefined && seqLTE(moveInfo.movedSeq, collabWindow.minSeq))
 				) {
 					combinedPartialLengths.minLength -= segment.cachedLength;
 				} else if (removalInfo !== undefined || moveInfo !== undefined) {
@@ -610,7 +609,7 @@ export class PartialSequenceLengths {
 						segment,
 						obliterateOverlapLen,
 						moveClientOverlap,
-				  )
+					)
 				: undefined;
 
 			partialLengthEntry = {
@@ -620,10 +619,7 @@ export class PartialSequenceLengths {
 				seglen: segmentLen,
 				remoteObliteratedLen,
 				overlapRemoveClients: removeClientOverlap
-					? PartialSequenceLengths.getOverlapClients(
-							removeClientOverlap,
-							obliterateOverlapLen,
-					  )
+					? PartialSequenceLengths.getOverlapClients(removeClientOverlap, obliterateOverlapLen)
 					: undefined,
 				overlapObliterateClients,
 			};
@@ -653,7 +649,8 @@ export class PartialSequenceLengths {
 		removalInfo?: IRemovalInfo,
 		moveInfo?: IMoveInfo,
 	) {
-		const removalIsLocal = !!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
+		const removalIsLocal =
+			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocal =
 			segment.seq === UnassignedSequenceNumber ||
@@ -752,7 +749,7 @@ export class PartialSequenceLengths {
 		if (removalInfo && !removeHappenedFirst && !removalIsLocal) {
 			const removeSeqOrLocalSeq = removalIsLocal
 				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  removalInfo.localRemovedSeq!
+					removalInfo.localRemovedSeq!
 				: removalInfo.removedSeq;
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.

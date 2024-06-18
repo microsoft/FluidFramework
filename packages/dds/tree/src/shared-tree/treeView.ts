@@ -4,17 +4,17 @@
  */
 
 import {
-	Context,
-	FlexFieldSchema,
-	FlexTreeContext,
-	FlexTreeSchema,
-	FlexTreeTypedField,
-	NodeKeyManager,
+	type Context,
+	type FlexFieldSchema,
+	type FlexTreeContext,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
+	type NodeKeyManager,
 	getTreeContext,
 } from "../feature-libraries/index.js";
-import { IDisposable, disposeSymbol } from "../util/index.js";
+import { type IDisposable, disposeSymbol } from "../util/index.js";
 
-import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
@@ -59,7 +59,8 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
  * @internal
  */
-export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends FlexTreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends FlexFieldSchema>
+	extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 

@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
-import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { type IJsonCodec, makeCodecFamily, type ICodecFamily } from "../../codec/index.js";
+import type {
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../../core/index.js";
 
-import { Changeset, type MarkList } from "./types.js";
-import { FieldChangeEncodingContext } from "../index.js";
+import type { Changeset, MarkList } from "./types.js";
+import type { FieldChangeEncodingContext } from "../index.js";
 import { makeV1Codec } from "./sequenceFieldCodecV1.js";
 import { makeV2Codec } from "./sequenceFieldCodecV2.js";
 

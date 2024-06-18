@@ -7,19 +7,19 @@ import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
+import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 
 import {
-	Anchor,
-	Revertible,
+	type Anchor,
+	type Revertible,
 	TreeNavigationResult,
-	UpPath,
-	Value,
+	type UpPath,
+	type Value,
 	clonePath,
 	forEachNodeInSubtree,
 	moveToDetachedField,
@@ -29,13 +29,13 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeObjectNodeTyped,
-	LeafNodeSchema,
-	SchemaLibrary,
+	type FlexTreeObjectNodeTyped,
+	type LeafNodeSchema,
+	type SchemaLibrary,
 	intoStoredSchema,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import { ITreeCheckout, SharedTree, TreeContent } from "../../../shared-tree/index.js";
+import type { ITreeCheckout, SharedTree, TreeContent } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 
@@ -169,13 +169,15 @@ export const createOrDeserializeCompressor = (
 	return summary === undefined
 		? createIdCompressor(sessionId)
 		: summary.withSession
-		? deserializeIdCompressor(summary.serializedCompressor)
-		: deserializeIdCompressor(summary.serializedCompressor, sessionId);
+			? deserializeIdCompressor(summary.serializedCompressor)
+			: deserializeIdCompressor(summary.serializedCompressor, sessionId);
 };
 
 export const deterministicIdCompressorFactory: (
 	seed: number,
-) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (seed) => {
+) => (summary?: FuzzSerializedIdCompressor) => ReturnType<typeof createIdCompressor> = (
+	seed,
+) => {
 	const random = makeRandom(seed);
 	return (summary?: FuzzSerializedIdCompressor) => {
 		const sessionId = random.uuid4() as SessionId;
@@ -183,29 +185,30 @@ export const deterministicIdCompressorFactory: (
 	};
 };
 
-export const populatedInitialState: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] =
-	{
-		[typeNameSymbol]: fuzzNode.name,
-		sequenceChildren: [
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: ["AA", "AB", "AC"],
-				requiredChild: "A",
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: ["BA", "BB", "BC"],
-				requiredChild: "B",
-				optionalChild: undefined,
-			},
-			{
-				[typeNameSymbol]: fuzzNode.name,
-				sequenceChildren: ["CA", "CB", "CC"],
-				requiredChild: "C",
-				optionalChild: undefined,
-			},
-		],
-		requiredChild: "R",
-		optionalChild: undefined,
-	};
+export const populatedInitialState: TreeContent<
+	typeof fuzzSchema.rootFieldSchema
+>["initialTree"] = {
+	[typeNameSymbol]: fuzzNode.name,
+	sequenceChildren: [
+		{
+			[typeNameSymbol]: fuzzNode.name,
+			sequenceChildren: ["AA", "AB", "AC"],
+			requiredChild: "A",
+			optionalChild: undefined,
+		},
+		{
+			[typeNameSymbol]: fuzzNode.name,
+			sequenceChildren: ["BA", "BB", "BC"],
+			requiredChild: "B",
+			optionalChild: undefined,
+		},
+		{
+			[typeNameSymbol]: fuzzNode.name,
+			sequenceChildren: ["CA", "CB", "CC"],
+			requiredChild: "C",
+			optionalChild: undefined,
+		},
+	],
+	requiredChild: "R",
+	optionalChild: undefined,
+};

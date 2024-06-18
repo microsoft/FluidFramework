@@ -3,37 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
-	IForestSubscription,
-	MapTree,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	UpPath,
+	type IForestSubscription,
+	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type UpPath,
 } from "../core/index.js";
 
 import {
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeNodeEvents,
-	FlexTreeTypedField,
-	MapTreeNode,
-	onNodeChanged,
-	onTreeChanged,
+	type FlexFieldSchema,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeNodeEvents,
+	type FlexTreeTypedField,
+	type MapTreeNode,
 	tryGetMapTreeNode,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
-import { Mutable, fail, isReadonlyArray } from "../util/index.js";
+import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
-import { TreeNode, Unhydrated } from "./types.js";
-import { Off } from "../events/index.js";
+import type { TreeNode, Unhydrated } from "./types.js";
+import type { Off } from "../events/index.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -59,9 +57,7 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.required>
-			>;
+			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -69,9 +65,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			return getOrCreateNodeProxy(asValue.boxedContent);
 		}
 		case FieldKinds.optional: {
-			const asValue = field as FlexTreeTypedField<
-				FlexFieldSchema<typeof FieldKinds.optional>
-			>;
+			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -229,16 +223,12 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 						listener: FlexTreeNodeEvents[K],
 					): Off {
 						switch (eventName) {
-							case "nodeChanged":
-								return onNodeChanged(
-									anchorNode,
-									listener as FlexTreeNodeEvents["nodeChanged"],
-								);
-							case "treeChanged":
-								return onTreeChanged(
-									anchorNode,
-									listener as FlexTreeNodeEvents["treeChanged"],
-								);
+							case "nodeChanged": {
+								return anchorNode.on("childrenChangedAfterBatch", listener);
+							}
+							case "treeChanged": {
+								return anchorNode.on("subtreeChangedAfterBatch", listener);
+							}
 							default:
 								fail("Unexpected event subscription");
 						}

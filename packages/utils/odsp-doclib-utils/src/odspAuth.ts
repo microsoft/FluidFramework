@@ -66,7 +66,8 @@ export const getOdspScope = (server: string) =>
 /**
  * @alpha
  */
-export const pushScope = "offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
+export const pushScope =
+	"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
 /**
  * @internal
@@ -188,7 +189,9 @@ interface AadOauth2TokenError {
 }
 
 function isAccessTokenError(parsedResponse: any): parsedResponse is AadOauth2TokenError {
-	return typeof parsedResponse?.error === "string" && Array.isArray(parsedResponse?.error_codes);
+	return (
+		typeof parsedResponse?.error === "string" && Array.isArray(parsedResponse?.error_codes)
+	);
 }
 
 /**

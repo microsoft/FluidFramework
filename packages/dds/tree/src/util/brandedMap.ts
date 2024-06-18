@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "./typeCheck.js";
+import type { Invariant } from "./typeCheck.js";
 import { getOrCreate } from "./utils.js";
 
 /**

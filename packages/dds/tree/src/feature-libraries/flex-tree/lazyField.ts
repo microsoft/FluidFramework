@@ -7,12 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
@@ -28,27 +28,27 @@ import {
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-	ValueFieldEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import type { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxNodeUnion,
-	FlexibleNodeContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleNodeContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 } from "./flexTreeTypes.js";
@@ -62,7 +62,12 @@ import {
 } from "./lazyEntity.js";
 import { makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import { indexForAt, treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
+import {
+	indexForAt,
+	treeStatusFromAnchorCache,
+	treeStatusFromDetachedField,
+} from "./utilities.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 export function makeField(
 	context: Context,
@@ -234,10 +239,9 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
-		assert(
-			this.treeStatus() === TreeStatus.InDocument,
-			0x77f /* Editing only allowed on fields with TreeStatus.InDocument status */,
-		);
+		if (this.treeStatus() !== TreeStatus.InDocument) {
+			throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+		}
 		return this.getFieldPath();
 	}
 }
@@ -284,7 +288,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 					Array.from(value, (item) =>
 						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
 					),
-			  );
+				);
 
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
@@ -304,7 +308,10 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 
 	public moveToStart(sourceIndex: number): void;
-	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+	public moveToStart(
+		sourceIndex: number,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void;
 	public moveToStart(
 		sourceIndex: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
@@ -313,7 +320,10 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 	public moveToEnd(sourceIndex: number): void;
 	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<FlexAllowedTypes>): void {
+	public moveToEnd(
+		sourceIndex: number,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void {
 		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number): void;
@@ -516,8 +526,8 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 			newContent === undefined
 				? []
 				: isCursor(newContent)
-				? prepareNodeCursorForInsert(newContent)
-				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
+					? prepareNodeCursorForInsert(newContent)
+					: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,

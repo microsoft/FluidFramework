@@ -13,7 +13,10 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
 import { UnassignedSequenceNumber } from "./constants.js";
@@ -213,10 +216,7 @@ export class SnapshotV1 {
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
 		const pushSeg = (segment?: ISegment) => {
 			if (segment) {
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
@@ -282,10 +282,7 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
@@ -302,8 +299,7 @@ export class SnapshotV1 {
 				// sequence numbers.  Any remaining removal info should be preserved.
 				if (segment.removedSeq !== undefined) {
 					assert(
-						segment.removedSeq !== UnassignedSequenceNumber &&
-							segment.removedSeq > minSeq,
+						segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
 					raw.removedSeq = segment.removedSeq;
@@ -328,9 +324,7 @@ export class SnapshotV1 {
 					);
 					raw.movedSeq = segment.movedSeq;
 					raw.movedSeqs = segment.movedSeqs;
-					raw.movedClientIds = segment.movedClientIds?.map((id) =>
-						this.getLongClientId(id),
-					);
+					raw.movedClientIds = segment.movedClientIds?.map((id) => this.getLongClientId(id));
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.

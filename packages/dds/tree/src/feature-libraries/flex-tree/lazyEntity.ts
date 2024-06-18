@@ -6,14 +6,19 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ITreeSubscriptionCursor,
+	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
 } from "../../core/index.js";
-import { IDisposable, disposeSymbol } from "../../util/index.js";
+import { type IDisposable, disposeSymbol } from "../../util/index.js";
 
-import { Context } from "./context.js";
-import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
+import type { Context } from "./context.js";
+import {
+	type FlexTreeEntity,
+	type FlexTreeEntityKind,
+	type TreeStatus,
+	flexTreeMarker,
+} from "./flexTreeTypes.js";
 
 export const prepareForEditSymbol = Symbol("prepareForEdit");
 export const isFreedSymbol = Symbol("isFreed");

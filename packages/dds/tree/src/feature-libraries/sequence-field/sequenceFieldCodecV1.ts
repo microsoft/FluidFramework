@@ -4,30 +4,38 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { TAnySchema } from "@sinclair/typebox";
+import type { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, IJsonCodec } from "../../codec/index.js";
-import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
-import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
+import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
+import type {
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../../core/index.js";
+import { type JsonCompatibleReadOnly, type Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
-import { Changeset as ChangesetSchema, DetachIdOverrideType, Encoded } from "./formatV1.js";
 import {
-	Attach,
-	AttachAndDetach,
-	CellId,
-	Changeset,
-	Detach,
-	Insert,
-	Mark,
-	MarkEffect,
-	MoveIn,
-	MoveOut,
+	Changeset as ChangesetSchema,
+	DetachIdOverrideType,
+	type Encoded,
+} from "./formatV1.js";
+import {
+	type Attach,
+	type AttachAndDetach,
+	type CellId,
+	type Changeset,
+	type Detach,
+	type Insert,
+	type Mark,
+	type MarkEffect,
+	type MoveIn,
+	type MoveOut,
 	NoopMarkType,
-	Remove,
+	type Remove,
 } from "./types.js";
 import { isNoopMark } from "./utils.js";
-import { FieldChangeEncodingContext } from "../index.js";
+import type { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 
 export function makeV1Codec(
@@ -92,7 +100,7 @@ export function makeV1Codec(
 											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
 											type: DetachIdOverrideType.Unattach,
 											id: cellIdCodec.encode(effect.idOverride, context),
-									  },
+										},
 							id: effect.id,
 						},
 					};
@@ -111,21 +119,15 @@ export function makeV1Codec(
 											// An arbitrary override type is chosen here. It only had an impact on lineage logic which was not enabled in V1.
 											type: DetachIdOverrideType.Unattach,
 											id: cellIdCodec.encode(effect.idOverride, context),
-									  },
+										},
 							id: effect.id,
 						},
 					};
 				case "AttachAndDetach":
 					return {
 						attachAndDetach: {
-							attach: markEffectCodec.encode(
-								effect.attach,
-								context,
-							) as Encoded.Attach,
-							detach: markEffectCodec.encode(
-								effect.detach,
-								context,
-							) as Encoded.Detach,
+							attach: markEffectCodec.encode(effect.attach, context) as Encoded.Attach,
+							detach: markEffectCodec.encode(effect.detach, context) as Encoded.Detach,
 						},
 					};
 				case NoopMarkType:
@@ -144,10 +146,7 @@ export function makeV1Codec(
 		context: ChangeEncodingContext,
 	): RevisionTag {
 		if (encodedRevision === undefined) {
-			assert(
-				context.revision !== undefined,
-				0x965 /* Implicit revision should be provided */,
-			);
+			assert(context.revision !== undefined, 0x965 /* Implicit revision should be provided */);
 			return context.revision;
 		}
 
@@ -224,7 +223,12 @@ export function makeV1Codec(
 		},
 	});
 
-	const cellIdCodec: IJsonCodec<CellId, Encoded.CellId, Encoded.CellId, ChangeEncodingContext> = {
+	const cellIdCodec: IJsonCodec<
+		CellId,
+		Encoded.CellId,
+		Encoded.CellId,
+		ChangeEncodingContext
+	> = {
 		encode: (cellId: CellId, context: ChangeEncodingContext): Encoded.CellId => {
 			const encoded: Encoded.CellId = {
 				atom: changeAtomIdCodec.encode(cellId, context),
@@ -276,10 +280,7 @@ export function makeV1Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(
-						decodedMark,
-						markEffectCodec.decode(mark.effect, context.baseContext),
-					);
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
 				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);

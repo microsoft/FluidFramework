@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 
 import {
-	DeltaRoot,
-	FieldKey,
-	IForestSubscription,
-	JsonableTree,
-	TaggedChange,
-	UpPath,
+	type DeltaRoot,
+	type FieldKey,
+	type IForestSubscription,
+	type JsonableTree,
+	type TaggedChange,
+	type UpPath,
 	applyDelta,
 	initializeForest,
 	makeDetachedFieldIndex,
@@ -22,7 +22,7 @@ import {
 import { jsonObject, leaf } from "../../../domains/index.js";
 import {
 	DefaultChangeFamily,
-	DefaultChangeset,
+	type DefaultChangeset,
 	DefaultEditBuilder,
 	buildForest,
 	cursorForJsonableTreeNode,
@@ -144,7 +144,10 @@ function initializeEditableForest(data?: JsonableTree): {
 	};
 }
 
-function expectForest(actual: IForestSubscription, expected: JsonableTree | JsonableTree[]): void {
+function expectForest(
+	actual: IForestSubscription,
+	expected: JsonableTree | JsonableTree[],
+): void {
 	const reader = actual.allocateCursor();
 	moveToDetachedField(actual, reader);
 	const copy = mapCursorField(reader, jsonableTreeFromCursor);
@@ -958,6 +961,24 @@ describe("DefaultEditBuilder", () => {
 						{ type: leaf.number.name, value: 2 },
 						{ type: leaf.number.name, value: 3 },
 					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Moving 0 items does nothing.", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 0, 0, { parent: root, field: fooKey }, 0);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [],
 				},
 			};
 			assert.deepEqual(treeView, [expected]);
