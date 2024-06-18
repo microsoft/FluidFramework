@@ -65,12 +65,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 					undo1.closeCurrentOperation();
 
 					matrix1.insertRows(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* rowStart: */ 0,
-						/* colStart: */ 0,
-						/* colCount: */ 1,
-						[0, 1],
-					);
+					matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 1, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([[0], [1]]);
@@ -243,12 +238,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 					undo1.closeCurrentOperation();
 
 					matrix1.insertCols(/* start: */ 0, /* count: */ 2);
-					matrix1.setCells(
-						/* rowStart: */ 0,
-						/* colStart: */ 0,
-						/* colCount: */ 2,
-						[0, 1],
-					);
+					matrix1.setCells(/* rowStart: */ 0, /* colStart: */ 0, /* colCount: */ 2, [0, 1]);
 					undo1.closeCurrentOperation();
 
 					await expect([[0, 1]]);

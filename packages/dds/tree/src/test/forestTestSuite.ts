@@ -6,22 +6,22 @@
 import { strict as assert } from "assert";
 
 import {
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DetachedField,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DetachedField,
 	DetachedFieldIndex,
 	EmptyKey,
-	FieldKey,
-	FieldUpPath,
-	ForestRootId,
-	IEditableForest,
-	ITreeCursor,
-	JsonableTree,
+	type FieldKey,
+	type FieldUpPath,
+	type ForestRootId,
+	type IEditableForest,
+	type ITreeCursor,
+	type JsonableTree,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
-	TreeStoredSchemaSubscription,
-	UpPath,
+	type TreeStoredSchemaSubscription,
+	type UpPath,
 	clonePath,
 	detachedFieldAsKey,
 	initializeForest,
@@ -49,8 +49,8 @@ import {
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import {
-	IdAllocator,
-	JsonCompatible,
+	type IdAllocator,
+	type JsonCompatible,
 	brand,
 	idAllocatorFromMaxId,
 	mapIterable,
@@ -121,10 +121,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new TreeStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = FlexFieldSchema.create(
-						FieldKinds.optional,
-						jsonRoot,
-					).stored;
+					const rootFieldSchema = FlexFieldSchema.create(FieldKinds.optional, jsonRoot).stored;
 					schema.apply({
 						nodeSchema: new Map(
 							mapIterable(jsonSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -196,12 +193,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				new TreeStoredSchemaRepository(intoStoredSchema(jsonDocumentSchema)),
 			);
 			assert(forest.isEmpty);
-			initializeForest(
-				forest,
-				[singleJsonCursor([])],
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
+			initializeForest(forest, [singleJsonCursor([])], testRevisionTagCodec, testIdCompressor);
 			assert(!forest.isEmpty);
 		});
 
@@ -1152,9 +1144,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					x: leaf.number,
 					y: leaf.number,
 				});
-				const schema = builder.intoSchema(
-					FlexFieldSchema.create(FieldKinds.optional, [root]),
-				);
+				const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [root]));
 
 				const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(schema)));
 				initializeForest(
@@ -1203,9 +1193,7 @@ export function testForest(config: ForestTestConfiguration): void {
 	testGeneralPurposeTreeCursor(
 		"forest cursor",
 		(data): ITreeCursor => {
-			const forest = factory(
-				new TreeStoredSchemaRepository(intoStoredSchema(testTreeSchema)),
-			);
+			const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(testTreeSchema)));
 			initializeForest(
 				forest,
 				[cursorForJsonableTreeNode(data)],

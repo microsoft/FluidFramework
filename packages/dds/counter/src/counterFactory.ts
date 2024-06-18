@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { SharedCounter as SharedCounterClass } from "./counter.js";
-import { type ISharedCounter } from "./interfaces.js";
+import type { ISharedCounter } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

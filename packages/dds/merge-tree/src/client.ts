@@ -193,8 +193,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public peekPendingSegmentGroups(): SegmentGroup | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
+	public peekPendingSegmentGroups(
+		count: number = 1,
+		// eslint-disable-next-line import/no-deprecated
+	): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
@@ -215,7 +217,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @returns The annotate op if valid, otherwise undefined
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
+	public annotateMarker(
+		marker: Marker,
+		props: PropertySet,
+	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateMarkerOp(marker, props)!;
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { type EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEvent } from "@fluidframework/core-interfaces";
 
 /**
  * Event Emitter helper class
@@ -20,7 +20,7 @@ import { IEvent } from "@fluidframework/core-interfaces";
 export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,
 > extends TypedEventEmitter<TEvent> {
-	constructor(
+	public constructor(
 		// TODO: use `unknown` instead (breaking API change)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void,

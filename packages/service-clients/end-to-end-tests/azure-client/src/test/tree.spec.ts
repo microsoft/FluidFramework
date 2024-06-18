@@ -9,7 +9,12 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { TreeConfiguration, SchemaFactory, type TreeView, type ITree } from "@fluidframework/tree";
+import {
+	TreeViewConfiguration,
+	SchemaFactory,
+	type TreeView,
+	type ITree,
+} from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
@@ -46,11 +51,9 @@ class StringArray extends sf.array("StringArray", sf.string) {
 /**
  * This object is passed into the SharedTree via the schematize method.
  */
-const treeConfiguration = new TreeConfiguration(
+const treeConfiguration = new TreeViewConfiguration(
 	// Specify the root type - StringArray.
-	StringArray,
-	// Initial state of the tree which is used for new trees.
-	() => new StringArray([]),
+	{ schema: StringArray },
 );
 
 const testMatrix = getTestMatrix();
@@ -81,24 +84,24 @@ for (const testOpts of testMatrix) {
 			let container1: IFluidContainer;
 			let treeData: TreeView<typeof StringArray>;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.createContainerWithSharedTree,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.createContainerWithSharedTree,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
-				treeData = (container1.initialObjects.tree1 as ITree).schematize(
+				treeData = (container1.initialObjects.tree1 as ITree).viewWith(
 					treeConfiguration, // This is defined in schema.ts
 				);
 			} else {
 				({ container: container1 } = await client.createContainer(schema, "2"));
 
-				treeData = (container1.initialObjects.tree1 as ITree).schematize(
+				treeData = (container1.initialObjects.tree1 as ITree).viewWith(
 					treeConfiguration, // This is defined in schema.ts
 				);
+				treeData.initialize(new StringArray([]));
 
 				containerId = await container1.attach();
 			}
@@ -136,24 +139,20 @@ for (const testOpts of testMatrix) {
 			let container1: IFluidContainer;
 			let treeData1: TreeView<typeof StringArray>;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.createLoadContainerWithSharedTree,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.createLoadContainerWithSharedTree,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 				({ container: container1 } = await client.getContainer(containerId, schema, "2"));
 
-				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(
-					treeConfiguration,
-				);
+				treeData1 = (container1.initialObjects.tree1 as ITree).viewWith(treeConfiguration);
 			} else {
 				({ container: container1 } = await client.createContainer(schema, "2"));
 
-				treeData1 = (container1.initialObjects.tree1 as ITree).schematize(
-					treeConfiguration,
-				);
+				treeData1 = (container1.initialObjects.tree1 as ITree).viewWith(treeConfiguration);
+				treeData1.initialize(new StringArray([]));
 
 				containerId = await container1.attach();
 			}
@@ -186,7 +185,7 @@ for (const testOpts of testMatrix) {
 				});
 			}
 
-			const treeData2 = container2.initialObjects.tree1.schematize(treeConfiguration);
+			const treeData2 = container2.initialObjects.tree1.viewWith(treeConfiguration);
 			assert.strictEqual(treeData2.root.length, 1);
 			assert.strictEqual(treeData2.root.at(0), "test string 1");
 		});

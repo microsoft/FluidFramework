@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FullSchemaPolicy } from "../modular-schema/index.js";
+import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { fieldKinds } from "./defaultFieldKinds.js";
 

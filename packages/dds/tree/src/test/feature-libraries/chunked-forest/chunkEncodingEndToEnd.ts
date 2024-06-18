@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import {
-	ChangesetLocalId,
-	IEditableForest,
+	type ChangesetLocalId,
+	type IEditableForest,
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
@@ -23,15 +23,18 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	Context,
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	type Context,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
-	FlexTreeSchema,
+	type FlexTreeSchema,
 	ForestSummarizer,
-	ModularChangeset,
+	type ModularChangeset,
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	defaultSchemaPolicy,
@@ -71,6 +74,7 @@ const revisionTagCodec = new RevisionTagCodec(idCompressor);
 const context = {
 	encodeType: options.summaryEncodeType,
 	idCompressor,
+	originatorId: idCompressor.localSessionId,
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
 
@@ -90,6 +94,7 @@ function getIdentifierEncodingContext(id: StableId) {
 	const encoderContext = {
 		encodeType: options.summaryEncodeType,
 		idCompressor: testIdCompressor,
+		originatorId: testIdCompressor.localSessionId,
 		schema: {
 			schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)),
 			policy: defaultSchemaPolicy,
@@ -178,7 +183,10 @@ describe("End to end chunked encoding", () => {
 		function stringifier(content: unknown) {
 			// TODO: use something other than `any`
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const insertedChunk = decode((content as any).fields, idCompressor);
+			const insertedChunk = decode((content as any).fields, {
+				idCompressor,
+				originatorId: idCompressor.localSessionId,
+			});
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);
@@ -209,7 +217,10 @@ describe("End to end chunked encoding", () => {
 		function stringifier(content: unknown) {
 			// TODO: use something other than `any`
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const insertedChunk = decode((content as any).fields, idCompressor);
+			const insertedChunk = decode((content as any).fields, {
+				idCompressor,
+				originatorId: idCompressor.localSessionId,
+			});
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
 			return JSON.stringify(content);

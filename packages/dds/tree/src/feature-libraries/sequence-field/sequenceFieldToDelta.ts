@@ -6,17 +6,17 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeRename,
-	DeltaFieldChanges,
-	DeltaMark,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
+	type DeltaFieldChanges,
+	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import { Mutable } from "../../util/index.js";
+import type { Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
-import { MarkList, NoopMarkType } from "./types.js";
+import { type MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
@@ -25,9 +25,12 @@ import {
 	getInputCellId,
 	isAttachAndDetachEffect,
 } from "./utils.js";
-import { ToDelta } from "../modular-schema/index.js";
+import type { ToDelta } from "../modular-schema/index.js";
 
-export function sequenceFieldToDelta(change: MarkList, deltaFromChild: ToDelta): DeltaFieldChanges {
+export function sequenceFieldToDelta(
+	change: MarkList,
+	deltaFromChild: ToDelta,
+): DeltaFieldChanges {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];

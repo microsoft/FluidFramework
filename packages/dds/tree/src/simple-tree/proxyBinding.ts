@@ -5,30 +5,30 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { AnchorNode, AnchorSet, UpPath, anchorSlot } from "../core/index.js";
+import { type AnchorNode, type AnchorSet, type UpPath, anchorSlot } from "../core/index.js";
 import {
 	ContextSlot,
-	FlexTreeNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeObjectNode,
+	type FlexTreeNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
-	FieldKinds,
-	FlexFieldSchema,
-	MapTreeNode,
+	type FieldKinds,
+	type FlexFieldSchema,
+	type MapTreeNode,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { WithType } from "./schemaTypes.js";
-import { TreeArrayNode } from "./arrayNode.js";
-import { TreeNode } from "./types.js";
+import type { WithType } from "./schemaTypes.js";
+import type { TreeArrayNode } from "./arrayNode.js";
+import type { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
-import { TreeMapNode } from "./mapNode.js";
+import type { TreeMapNode } from "./mapNode.js";
 
 // This file contains various maps and helpers for supporting proxy binding (a.k.a. proxy hydration).
 // See ./ProxyBinding.md for a high-level overview of the process.

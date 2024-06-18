@@ -178,7 +178,8 @@ export function endpointPosAndSide(
 	start: SequencePlace | undefined,
 	end: SequencePlace | undefined,
 ) {
-	const startIsPlainEndpoint = typeof start === "number" || start === "start" || start === "end";
+	const startIsPlainEndpoint =
+		typeof start === "number" || start === "start" || start === "end";
 	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
 
 	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
@@ -232,7 +233,12 @@ export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
 		create: createInterval,
 	};
-	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
+	const lc = new LocalIntervalCollection<Interval>(
+		undefined as any as Client,
+		"",
+		helpers,
+		{},
+	);
 	return lc;
 }
 
@@ -263,7 +269,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		]);
 	}
 
-	public createLegacyId(start: number | "start" | "end", end: number | "start" | "end"): string {
+	public createLegacyId(
+		start: number | "start" | "end",
+		end: number | "start" | "end",
+	): string {
 		// Create a non-unique ID based on start and end to be used on intervals that come from legacy clients
 		// without ID's.
 		return `${LocalIntervalCollection.legacyIdPrefix}${start}-${end}`;
@@ -468,7 +477,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory<SequenceInterval> {
+class SequenceIntervalCollectionFactory
+	implements IIntervalCollectionFactory<SequenceInterval>
+{
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -556,7 +567,11 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	IntervalOpType,
 	IIntervalCollectionOperation<T>
 > {
-	const rebase: IIntervalCollectionOperation<T>["rebase"] = (collection, op, localOpMetadata) => {
+	const rebase: IIntervalCollectionOperation<T>["rebase"] = (
+		collection,
+		op,
+		localOpMetadata,
+	) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
 		if (rebasedValue === undefined) {
@@ -655,7 +670,8 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
  * Change events emitted by `IntervalCollection`s
  * @alpha
  */
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval>
+	extends IEvent {
 	/**
 	 * This event is invoked whenever the endpoints of an interval may have changed.
 	 * This can happen on:
@@ -994,7 +1010,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			? serializedIntervals
 			: serializedIntervals.intervals.map((i) =>
 					decompressInterval(i, serializedIntervals.label),
-			  );
+				);
 	}
 
 	/**
@@ -1113,10 +1129,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (client) {
 			client.on("normalize", () => {
 				for (const localSeq of this.localSeqToSerializedInterval.keys()) {
-					this.localSeqToRebasedInterval.set(
-						localSeq,
-						this.computeRebasedPositions(localSeq),
-					);
+					this.localSeqToRebasedInterval.set(localSeq, this.computeRebasedPositions(localSeq));
 				}
 			});
 		}

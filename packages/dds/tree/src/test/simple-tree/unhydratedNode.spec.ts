@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { TreeStatus } from "../../../dist/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
-import { SchemaFactory, FieldProps, TreeNode } from "../../simple-tree/index.js";
-import {
+import { SchemaFactory, type FieldProps, type TreeNode } from "../../simple-tree/index.js";
+import type {
 	ConstantFieldProvider,
 	ContextualFieldProvider,
 	FieldProvider,
