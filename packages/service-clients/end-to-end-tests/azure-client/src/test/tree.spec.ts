@@ -270,7 +270,7 @@ for (const testOpts of testMatrix) {
 				});
 			}
 
-			it.only("can use identifiers and the static Tree APIs", async () => {
+			it("can use identifiers and the static Tree APIs", async () => {
 				class Widget extends sf.object("Widget", { id: sf.identifier }) {}
 
 				const { container } = await client.createContainer(schema, "2");
