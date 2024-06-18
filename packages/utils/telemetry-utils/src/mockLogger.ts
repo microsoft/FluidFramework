@@ -23,7 +23,15 @@ import type {
  * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
  * match against the logged events.
  *
- * @internal
+ * @deprecated
+ *
+ * This class is not intended for use outside of the `fluid-framework` repo, and will be removed from
+ * package exports in the near future.
+ *
+ * Please migrate usages by either creating your own mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
+ * implementation, or by copying this code as-is into your own repo.
+ *
+ * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	/**
