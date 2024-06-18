@@ -407,9 +407,9 @@ export async function getDocumentAttributes(
 	const attributesHash =
 		".protocol" in tree.trees
 			? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			  tree.trees[".protocol"].blobs.attributes!
+				tree.trees[".protocol"].blobs.attributes!
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			  tree.blobs[".attributes"]!;
+				tree.blobs[".attributes"]!;
 
 	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 

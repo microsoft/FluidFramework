@@ -75,7 +75,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return !this.hasPrefix(blob)
 			? SummaryCompressionAlgorithm.None
 			: // eslint-disable-next-line no-bitwise, @typescript-eslint/no-non-null-assertion
-			  IsoBuffer.from(blob)[0]! & 0x0f;
+				IsoBuffer.from(blob)[0]! & 0x0f;
 	}
 
 	/**
