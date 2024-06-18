@@ -75,12 +75,6 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @alpha
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
-// @public
-export function measure<T>(codeToMeasure: () => T): {
-    duration: number;
-    output: T;
-};
-
 // @alpha
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel);

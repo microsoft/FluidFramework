@@ -47,6 +47,10 @@ import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./chang
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -69,7 +73,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
-
+	private readonly rebaseLogger: ITelemetryLoggerExt;
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -140,6 +144,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			schema,
 			policy: schemaPolicy,
 		};
+
+		this.rebaseLogger = createChildLogger({
+			logger: this.logger,
+			namespace: "Rebase",
+		});
 
 		assert(
 			runtime.idCompressor !== undefined,

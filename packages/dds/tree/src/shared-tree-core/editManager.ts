@@ -16,7 +16,7 @@ import {
 	findCommonAncestor,
 	mintCommit,
 	rebaseChange,
-	type RebaseStats,
+	type RebaseStatsWithDuration,
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
@@ -43,6 +43,7 @@ import {
 import { createEmitter } from "../events/index.js";
 import {
 	TelemetryEventBatcher,
+	measure,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -50,6 +51,11 @@ export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_IN
 const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
+
+/**
+ * Amount of time the telemetry logger will wait before sending a batch of events.
+ */
+const THRESHOLD = 1000;
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
@@ -130,7 +136,9 @@ export class EditManager<
 	 */
 	private readonly localCommits: GraphCommit<TChangeset>[] = [];
 
-	private readonly telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStats> | undefined;
+	private readonly telemetryEventBatcher:
+		| TelemetryEventBatcher<keyof RebaseStatsWithDuration>
+		| undefined;
 
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
@@ -140,7 +148,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
-		readonly logger?: ITelemetryLoggerExt,
+		logger?: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
 			revision: "root",
@@ -148,15 +156,13 @@ export class EditManager<
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
 
-		if (this.logger !== undefined) {
-			const THRESHOLD = 1000;
-
+		if (logger !== undefined) {
 			this.telemetryEventBatcher = new TelemetryEventBatcher(
 				{
 					eventName: "rebaseProcessing",
 					category: "performance",
 				},
-				this.logger,
+				logger,
 				THRESHOLD,
 			);
 		}
@@ -621,13 +627,20 @@ export class EditManager<
 			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
 			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
-			const newChangeFullyRebased = rebaseChange(
-				this.changeFamily.rebaser,
-				newCommit,
-				peerLocalBranch.getHead(),
-				this.trunk.getHead(),
-				this.mintRevisionTag,
+			const { duration, output: newChangeFullyRebased } = measure(() =>
+				rebaseChange(
+					this.changeFamily.rebaser,
+					newCommit,
+					peerLocalBranch.getHead(),
+					this.trunk.getHead(),
+					this.mintRevisionTag,
+				),
 			);
+
+			this.telemetryEventBatcher?.accumulateAndLog({
+				duration,
+				...newChangeFullyRebased.telemetryProperties,
+			});
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);
 			this.pushCommitToTrunk(sequenceId, {
