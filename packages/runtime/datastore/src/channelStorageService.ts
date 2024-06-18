@@ -21,8 +21,8 @@ export class ChannelStorageService implements IChannelStorageService {
 			ChannelStorageService.flattenTree(`${base}${path}/`, subtree, results);
 		}
 
-		for (const [blob, snapshot] of Object.entries(tree.blobs)) {
-			results[`${base}${blob}`] = snapshot;
+		for (const [blobName, blobId] of Object.entries(tree.blobs)) {
+			results[`${base}${blobName}`] = blobId;
 		}
 	}
 
