@@ -466,7 +466,8 @@ export class MergeBlock implements IMergeNodeCommon {
 	}
 }
 
-export function seqLTE(seq: number, minOrRefSeq: number) {
+export function seqLTE(seq: number | undefined, minOrRefSeq: number) {
+	assert(seq !== undefined, "");
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 

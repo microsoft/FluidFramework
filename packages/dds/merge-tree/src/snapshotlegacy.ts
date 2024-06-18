@@ -102,6 +102,7 @@ export class SnapshotLegacy {
 			segsWithAttribution === 0 || attributionSerializer !== undefined,
 			0x559 /* attribution serializer must be provided when there are segments with attribution. */,
 		);
+
 		return {
 			version: undefined,
 			chunkStartSegmentIndex: startIndex,

@@ -75,7 +75,7 @@ export interface LocalReferencePosition extends ReferencePosition {
  * @internal
  */
 class LocalReference implements LocalReferencePosition {
-	public properties: PropertySet;
+	public properties: PropertySet | undefined;
 
 	private segment: ISegment | undefined;
 	private offset: number = 0;
@@ -91,7 +91,7 @@ class LocalReference implements LocalReferencePosition {
 
 	constructor(
 		public refType = ReferenceType.Simple,
-		properties: PropertySet,
+		properties: PropertySet | undefined,
 		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 		public readonly canSlideToEndpoint?: boolean,
 	) {
@@ -283,7 +283,7 @@ export class LocalReferenceCollection {
 					if (next.done === true) {
 						subiterators.shift();
 					} else {
-						return { done: next.done, value: next.value.data };
+						return { done: next.done as boolean, value: next.value.data };
 					}
 				}
 
@@ -310,7 +310,7 @@ export class LocalReferenceCollection {
 	public createLocalRef(
 		offset: number,
 		refType: ReferenceType,
-		properties: PropertySet,
+		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
 		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
