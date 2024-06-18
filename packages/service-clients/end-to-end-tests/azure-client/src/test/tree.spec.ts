@@ -196,7 +196,7 @@ for (const testOpts of testMatrix) {
 						new User({
 							name: "Pardes",
 							nicknames: ["Alex", "Duder"],
-							data: tags,
+							data: new Map(tags),
 						}),
 					);
 
