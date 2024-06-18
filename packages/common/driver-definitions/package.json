@@ -111,7 +111,6 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IDocumentStorageService": {
-				"forwardCompat": false,
 				"backCompat": false
 			}
 		}

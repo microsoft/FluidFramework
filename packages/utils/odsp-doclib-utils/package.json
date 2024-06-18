@@ -148,6 +148,9 @@
 			"RemovedInterfaceDeclaration_IClientConfig": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"ClassDeclaration_OdspRedirectError": {
+				"forwardCompat": false
 			}
 		}
 	}

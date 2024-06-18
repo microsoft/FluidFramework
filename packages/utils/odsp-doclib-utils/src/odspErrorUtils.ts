@@ -139,7 +139,7 @@ export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
 
 	constructor(
 		message: string,
-		readonly redirectLocation: string | undefined,
+		readonly redirectLocation: string,
 		props: DriverErrorTelemetryProps,
 	) {
 		// do not log redirectLocation (URL can contain sensitive info)
@@ -270,7 +270,12 @@ export function createOdspNetworkError(
 				const tenantId = response?.headers
 					? parseAuthErrorTenant(response.headers)
 					: undefined;
-				error = new AuthorizationError(errorMessage, claims, tenantId, driverProps);
+				error = new AuthorizationError(
+					errorMessage,
+					claims as string,
+					tenantId as string,
+					driverProps,
+				);
 			}
 			break;
 		case 404:
