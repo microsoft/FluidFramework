@@ -67,6 +67,11 @@ import {
 
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
+/** TODO test cases: //*
+ * - gcOpSupportedBySchema false: shouldRunSweep "NO" (even if override config is set)
+ * - gcOpSupportedBySchema false: throwOnTombstoneLoad false
+ */
+
 type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;
 
 type GcWithPrivates = IGarbageCollector & {
@@ -217,6 +222,7 @@ describe("Garbage Collection Tests", () => {
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 			sessionExpiryTimerStarted: createParams.sessionExpiryTimerStarted,
+			gcOpSupportedBySchema: true,
 		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;

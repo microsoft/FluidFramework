@@ -99,6 +99,7 @@ describe("OdspClient", () => {
 		);
 	});
 
+	//* TODO: Clean up these tests
 	it("GC is disabled by default, but can be enabled", async () => {
 		const { container: container_defaultConfig } = await client.createContainer(schema);
 		assert.strictEqual(

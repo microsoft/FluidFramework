@@ -420,6 +420,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 	readonly sessionExpiryTimerStarted?: number | undefined;
+	readonly gcOpSupportedBySchema: boolean;
 }
 
 /**

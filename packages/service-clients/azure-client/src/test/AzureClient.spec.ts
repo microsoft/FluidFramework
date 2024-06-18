@@ -287,6 +287,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 		});
 
+		//* TODO: Clean up these tests
 		it("GC is disabled by default, but can be enabled", async function () {
 			const { container: container_defaultConfig } = await client.createContainer(
 				schema,

@@ -32,6 +32,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		// Grouped batching is on by default but introduces a new type of op which is not compatible with 1.x clients.
 		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
+
+		blockGCOpForSchemaCompatibility: true,
 	},
 	"2": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their

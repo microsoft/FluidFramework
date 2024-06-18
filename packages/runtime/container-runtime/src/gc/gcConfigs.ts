@@ -51,6 +51,7 @@ export function generateGCConfigs(
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
 		isSummarizerClient: boolean;
+		gcOpSupportedBySchema: boolean;
 	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean = true;
@@ -102,16 +103,19 @@ export function generateGCConfigs(
 	// The persisted GC generation must indicate Sweep is allowed for this document,
 	// according to the GC Generation option provided this session.
 	// Note that if no generation option is provided, Sweep is allowed for any document.
-	const sweepAllowed = shouldAllowGcSweep(
-		persistedGcFeatureMatrix ?? {} /* featureMatrix */,
-		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
-	);
+	const sweepAllowed =
+		createParams.gcOpSupportedBySchema &&
+		shouldAllowGcSweep(
+			persistedGcFeatureMatrix ?? {} /* featureMatrix */,
+			createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
+		);
 
 	/**
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and tombstoneTimeout is provided, the following conditions have to be met to run sweep:
+	 * Assuming overall GC is enabled and tombstoneTimeout is provided and the doc schema supports GC op,
+	 * the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be allowed in this container.
 	 * 2. Sweep should be enabled for this session, optionally restricted to attachment blobs only.
@@ -119,7 +123,7 @@ export function generateGCConfigs(
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
 	const sweepEnabled: boolean =
-		!gcEnabled || tombstoneTimeoutMs === undefined
+		!gcEnabled || tombstoneTimeoutMs === undefined || !createParams.gcOpSupportedBySchema
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 				(sweepAllowed && createParams.gcOptions.enableGCSweep === true);

@@ -417,6 +417,16 @@ export interface ICompressionRuntimeOptions {
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
 	readonly gcOptions?: IGCRuntimeOptions;
+
+	/**
+	 * When upgrading to 2.0, application authors need to defer the schema upgrade implicit in sending the GC op.
+	 * So provide a way to block the GC op (and all related features - GC Sweep/Tombstone) until ready for schema upgrade.
+	 *
+	 * If not true, the document schema will express support for GC op (updating if needed),
+	 * and any clients that don't support it will close on boot (e.g. 1.x clients or those still setting this to true)
+	 */
+	readonly blockGCOpForSchemaCompatibility?: boolean;
+
 	/**
 	 * Affects the behavior while loading the runtime when the data verification check which
 	 * compares the DeltaManager sequence number (obtained from protocol in summary) to the
@@ -808,6 +818,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
+			blockGCOpForSchemaCompatibility = false,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -976,14 +987,6 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
-		// If both these settings are set this way, we will certainly not submit the GC op.
-		// In this case, we declare in Document Schema below that the gcOp feature is not supported.
-		// Once any client stops blocking GC op for a document, this schema bit will flip
-		// and clients that don't understand or unblock the GC op will face container closure on boot.
-		const gcOpBlocked =
-			mc.config.getBoolean("Fluid.GarbageCollection.RunSweep") === false &&
-			mc.config.getBoolean("Fluid.GarbageCollection.DisableAutoRecovery") === true;
-
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -993,7 +996,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				gcOp: !gcOpBlocked,
+				gcOp: !blockGCOpForSchemaCompatibility,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1023,6 +1026,7 @@ export class ContainerRuntime
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableGroupedBatching,
+				blockGCOpForSchemaCompatibility,
 				explicitSchemaControl,
 			},
 			containerScope,
@@ -1623,6 +1627,8 @@ export class ContainerRuntime
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
+			gcOpSupportedBySchema:
+				this.documentsSchemaController.sessionSchema.runtime.gcOp === true,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;

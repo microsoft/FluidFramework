@@ -144,6 +144,7 @@ describe("Garbage Collection configurations", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
+			gcOpSupportedBySchema: true,
 		});
 	}
 
