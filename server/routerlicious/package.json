@@ -104,11 +104,12 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
-			"@types/node versions are pinned to 18.17.1 but should be updated. Doing so breaks build, tracked by AB#8453. The build-tools package is pinned to 18.19.3 because it doesn't like the older types."
+			"@types/node versions are pinned to 18.17.6 but should be updated. Doing so breaks build, tracked by AB#8453. The build-tools package is pinned to 18.19.3 because it doesn't like the older types."
 		],
 		"overrides": {
-			"@types/node": "^18.17.1",
-			"@fluidframework/build-tools>@types/node": "18.19.3",
+			"@types/node": "~18.17.6",
+			"@fluidframework/build-tools>@types/node": "~18.19.3",
+			"@fluid-tools/build-cli>@types/node": "~18.19.3",
 			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.4",
 			"sharp": "^0.33.2"

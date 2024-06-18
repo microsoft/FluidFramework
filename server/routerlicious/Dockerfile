@@ -61,7 +61,7 @@ RUN corepack enable
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-RUN pnpm install --unsafe-perm
+RUN pnpm install --unsafe-perm --frozen-lockfile
 
 # And now copy over our actual code and build
 COPY . .
