@@ -126,9 +126,7 @@ export class ContainerStorageAdapter
 				// This is determined based on what value is set for serve policy's summariProtocolTree value or the enableSummarizeProtocolTree
 				// retrievd from the loader options or monitoring context config.
 				const shouldSummarizeProtocolTree =
-					service.policies?.summarizeProtocolTree ??
-					this.enableSummarizeProtocolTree ??
-					false;
+					service.policies?.summarizeProtocolTree ?? this.enableSummarizeProtocolTree ?? false;
 
 				if (this._summarizeProtocolTree !== shouldSummarizeProtocolTree) {
 					this.logger.sendTelemetryEvent({
