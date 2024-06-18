@@ -215,6 +215,12 @@
 			},
 			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IRemovalInfo": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMoveInfo": {
+				"backCompat": false
 			}
 		}
 	}

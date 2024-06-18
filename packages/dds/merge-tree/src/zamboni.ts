@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert } from "@fluidframework/core-utils/internal";
+
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";

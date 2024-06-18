@@ -914,6 +914,7 @@ declare function get_current_InterfaceDeclaration_IMoveInfo():
 declare function use_old_InterfaceDeclaration_IMoveInfo(
     use: TypeOnly<old.IMoveInfo>): void;
 use_old_InterfaceDeclaration_IMoveInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMoveInfo());
 
 /*
@@ -1026,6 +1027,7 @@ declare function get_current_InterfaceDeclaration_IRemovalInfo():
 declare function use_old_InterfaceDeclaration_IRemovalInfo(
     use: TypeOnly<old.IRemovalInfo>): void;
 use_old_InterfaceDeclaration_IRemovalInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRemovalInfo());
 
 /*
