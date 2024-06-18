@@ -89,6 +89,8 @@ export interface TreeNodeSchemaClass<
 
 /**
  * Data common to all tree node schema.
+ * @remarks
+ * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
  * @public
  */
 export interface TreeNodeSchemaCore<
@@ -124,6 +126,9 @@ export interface TreeNodeSchemaCore<
 
 /**
  * Types for use in fields.
+ * @remarks
+ * Type constraint used in schema declaration APIs.
+ * Not intended for direct use outside of package.
  * @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -535,7 +540,7 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 /**
  * The type of a {@link TreeNode}.
- * For moore information about the type, use `Tree.schema(theNode)` instead.
+ * For more information about the type, use `Tree.schema(theNode)` instead.
  * @remarks
  * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
  * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
@@ -546,15 +551,17 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
  * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
  * @public
  */
-export const type: unique symbol = Symbol("TreeNode Type");
+export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
 
 /**
- * Adds a {@link "type"} field.
+ * Adds a type symbol to a type for stronger typing.
+ * @remarks
+ * An implementation detail of {@link TreeNode}'s strong typing setup: not intended for direct use outside of this package.
  * @public
  */
 export interface WithType<TName extends string = string> {
 	/**
-	 * {@inheritdoc "type"}
+	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [type](): TName;
+	get [typeNameSymbol](): TName;
 }

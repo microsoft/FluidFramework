@@ -29,7 +29,7 @@ import {
 	type WithType,
 	type TreeNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
-	type,
+	typeNameSymbol,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type TreeNode, TreeNodeValid } from "./types.js";
@@ -257,7 +257,7 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 	}

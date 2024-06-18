@@ -7925,9 +7925,6 @@ importers:
       events_pkg:
         specifier: npm:events@^3.1.0
         version: /events@3.3.0
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       sha.js:
         specifier: ^2.4.11
         version: 2.4.11
