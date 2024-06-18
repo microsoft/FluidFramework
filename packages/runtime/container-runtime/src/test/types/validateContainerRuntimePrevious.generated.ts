@@ -1113,6 +1113,7 @@ declare function get_old_InterfaceDeclaration_IDocumentSchemaFeatures():
 declare function use_current_InterfaceDeclaration_IDocumentSchemaFeatures(
     use: TypeOnly<current.IDocumentSchemaFeatures>): void;
 use_current_InterfaceDeclaration_IDocumentSchemaFeatures(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentSchemaFeatures());
 
 /*
