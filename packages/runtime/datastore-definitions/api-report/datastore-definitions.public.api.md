@@ -23,6 +23,5 @@ import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitio
 import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
-import type { Jsonable as Jsonable_2 } from '@fluidframework/runtime-definitions/internal';
 
 ```

@@ -283,12 +283,6 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 };
 
 // @alpha (undocumented)
-export interface Internal_InterfaceOfJsonableTypesWith<T> {
-    // (undocumented)
-    [index: string | number]: JsonableTypeWith<T>;
-}
-
-// @alpha (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
     readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
@@ -385,14 +379,6 @@ export interface ITelemetryContext {
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
-
-// @alpha
-export type Jsonable<T, TReplaced = never> = boolean extends (T extends never ? true : false) ? JsonableTypeWith<TReplaced> : unknown extends T ? JsonableTypeWith<TReplaced> : T extends undefined | null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends (infer U)[] ? Jsonable<U, TReplaced>[] : {
-    [K in keyof T]: Extract<K, symbol> extends never ? Jsonable<T[K], TReplaced> : never;
-} : never : never;
-
-// @alpha
-export type JsonableTypeWith<T> = undefined | null | boolean | number | string | T | Internal_InterfaceOfJsonableTypesWith<T> | ArrayLike<JsonableTypeWith<T>>;
 
 // @alpha
 export interface LocalAttributionKey {

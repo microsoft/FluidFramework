@@ -6,8 +6,6 @@
 
 import { AliasResult } from '@fluidframework/runtime-definitions/internal';
 import { AttachState } from '@fluidframework/container-definitions';
-import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
-import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
 import { ContainerWarning } from '@fluidframework/container-definitions/internal';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions/internal';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions/internal';
@@ -45,10 +43,12 @@ import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import { IProvideRuntimeAttributor } from '@fluidframework/attributor/internal';
 import { IQuorumClients } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
+import { IRuntimeAttributor } from '@fluidframework/attributor/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import { ISignalMessage } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
