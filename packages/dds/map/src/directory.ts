@@ -1480,9 +1480,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			dirs: this._subdirectories,
 			next(): IteratorResult<[string, IDirectory]> {
 				if (this.index < subdirNames.length) {
-					// TODO Non null asserting, why is this not null?
+					// Non null asserting, we've checked that the index is inside the bounds of the array.
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const subdirName = subdirNames[this.index++]!;
+					const subdirName = subdirNames[this.index]!;
+					this.index++;
 					const subdir = this.dirs.get(subdirName);
 					assert(
 						subdir !== undefined,
