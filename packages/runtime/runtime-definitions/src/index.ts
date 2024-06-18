@@ -70,8 +70,3 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
-export type {
-	Jsonable,
-	JsonableTypeWith,
-	Internal_InterfaceOfJsonableTypesWith,
-} from "./jsonable.js";

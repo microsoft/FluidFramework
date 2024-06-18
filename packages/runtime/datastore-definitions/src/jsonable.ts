@@ -14,7 +14,6 @@
  * @privateRemarks
  * Perfer using `Jsonable<unknown>` over this type that is an implementation detail.
  *
- * @deprecated - This has been moved to {@link @fluidframework/runtime-definitions#JsonableTypeWith}
  * @alpha
  */
 export type JsonableTypeWith<T> =
@@ -37,7 +36,6 @@ export type JsonableTypeWith<T> =
  * the ability of {@link Jsonable} to detect array-like types that are not handled naively ({@link JSON.stringify}).
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
  *
- * @deprecated - This has been moved to {@link @fluidframework/runtime-definitions#Internal_InterfaceOfJsonableTypesWith}
  * @alpha
  */
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
@@ -77,8 +75,6 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * Using `Jsonable<unknown>` or `Jsonable<any>` is a type alias for
  * {@link JsonableTypeWith}`<never>` and should not be used if precise type safety is desired.
  *
- * TODO: Will deprecate in another PR.
- * This has been moved to {@link @fluidframework/runtime-definitions#Jsonable}
  * @example Typical usage
  *
  * ```typescript

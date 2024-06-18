@@ -17,7 +17,10 @@ import {
 	makeLZ4Encoder,
 	Attributor,
 } from "@fluidframework/attributor/internal";
-import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import {
@@ -27,7 +30,10 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime } from "../../index.js";
