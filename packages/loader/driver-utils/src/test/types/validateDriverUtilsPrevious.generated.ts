@@ -55,7 +55,6 @@ declare function get_old_ClassDeclaration_AuthorizationError():
 declare function use_current_ClassDeclaration_AuthorizationError(
     use: TypeOnly<current.AuthorizationError>): void;
 use_current_ClassDeclaration_AuthorizationError(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AuthorizationError());
 
 /*

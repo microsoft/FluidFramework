@@ -86,7 +86,7 @@ export function createR11sNetworkError(
 		// The first 401 is manually retried in RouterliciousRestWrapper with a refreshed token,
 		// so we treat repeat 401s the same as 403.
 		case 403:
-			error = new AuthorizationError(errorMessage, "", "", props);
+			error = new AuthorizationError(errorMessage, undefined, undefined, props);
 			break;
 		case 404:
 			const errorType = RouterliciousErrorTypes.fileNotFoundOrAccessDeniedError;

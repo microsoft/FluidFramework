@@ -270,12 +270,7 @@ export function createOdspNetworkError(
 				const tenantId = response?.headers
 					? parseAuthErrorTenant(response.headers)
 					: undefined;
-				error = new AuthorizationError(
-					errorMessage,
-					claims as string,
-					tenantId as string,
-					driverProps,
-				);
+				error = new AuthorizationError(errorMessage, claims, tenantId, driverProps);
 			}
 			break;
 		case 404:

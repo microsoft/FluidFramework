@@ -41,6 +41,7 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: TypeOnly<old.DriverError>): void;
 use_old_TypeAliasDeclaration_DriverError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -265,6 +266,7 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: TypeOnly<old.IAuthorizationError>): void;
 use_old_InterfaceDeclaration_IAuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*

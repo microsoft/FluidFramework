@@ -112,6 +112,12 @@
 		"broken": {
 			"InterfaceDeclaration_IDocumentStorageService": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IAuthorizationError": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_DriverError": {
+				"backCompat": false
 			}
 		}
 	}

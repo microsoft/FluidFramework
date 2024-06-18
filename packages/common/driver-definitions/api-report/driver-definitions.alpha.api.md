@@ -100,11 +100,11 @@ export interface IAttachment {
 // @alpha (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
-    readonly claims?: string;
+    readonly claims?: string | undefined;
     // (undocumented)
     readonly errorType: typeof DriverErrorTypes.authorizationError;
     // (undocumented)
-    readonly tenantId?: string;
+    readonly tenantId?: string | undefined;
 }
 
 // @alpha

@@ -187,8 +187,8 @@ export interface IGenericNetworkError extends IDriverErrorBase {
  */
 export interface IAuthorizationError extends IDriverErrorBase {
 	readonly errorType: typeof DriverErrorTypes.authorizationError;
-	readonly claims?: string;
-	readonly tenantId?: string;
+	readonly claims?: string | undefined;
+	readonly tenantId?: string | undefined;
 }
 
 /**
