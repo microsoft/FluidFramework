@@ -73,6 +73,7 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
+import { PerspectiveImpl, type Perspective } from "./perspective.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
@@ -402,9 +403,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param offset - Offset on the segment at which to place the local reference
 	 * @param refType - ReferenceType for the created local reference
 	 * @param properties - PropertySet to place on the created local reference
-	 * @param canSlideToEndpoint - Whether or not the created local reference can
-	 * slide onto one of the special endpoint segments denoting the position
-	 * before the start of or after the end of the tree
 	 */
 	public createLocalReferencePosition(
 		segment: ISegment | "start" | "end",
@@ -412,7 +410,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
-		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
@@ -420,7 +417,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			refType,
 			properties,
 			slidingPreference,
-			canSlideToEndpoint,
 		);
 	}
 
@@ -1215,6 +1211,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	getLength() {
 		return this._mergeTree.length ?? 0;
+	}
+
+	/**
+	 * Creates a new {@link Perspective} to view this client's merge tree at a specific sequence number,
+	 * client id, and local sequence number.
+	 */
+	public createPerspective(
+		seqNum = this.getCurrentSeq(),
+		clientId = this.getClientId(),
+		refSeq = seqNum,
+		localSeqNum: number | undefined = this.getCollabWindow().localSeq,
+	): Perspective {
+		return new PerspectiveImpl(this._mergeTree, seqNum, clientId, refSeq, localSeqNum);
 	}
 
 	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {

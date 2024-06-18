@@ -324,36 +324,13 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("causing references to slide backward", () => {
-				sharedString2.removeRange(2, 3);
+				sharedString2.removeRange(1, 2);
 				collection.add({ start: 2, end: 2 });
 				sharedString.removeRange(2, 5);
 				containerRuntimeFactory.processAllMessages();
 				assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 1 }]);
 				assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
 			});
-		});
-
-		it("errors creating invalid intervals", () => {
-			const collection1 = sharedString.getIntervalCollection("test");
-			containerRuntimeFactory.processAllMessages();
-
-			assert.throws(
-				() => collection1.add({ start: 0, end: 0 }),
-				"Should throw creating interval on empty string",
-			);
-			assert.throws(
-				() => collection1.add({ start: 1, end: 3 }),
-				"Should throw creating interval on empty string",
-			);
-			sharedString.insertText(0, "ABCD");
-			containerRuntimeFactory.processAllMessages();
-			assert.throws(
-				() => collection1.add({ start: 2, end: 5 }),
-				"Should throw creating interval past end of string",
-			);
-			// There is no check for creating an interval at a negative offset
-			// assert.throws(() => collection1.add(-1, 2, IntervalType.SlideOnRemove),
-			//     "Should throw creating interval at negative position");
 		});
 
 		it("can create and slide interval to a marker", () => {
@@ -383,57 +360,39 @@ describe("SharedString interval collections", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
 
 			// Conflicting remove/add interval at end of string
-			collection1.add({ start: 1, end: 3 });
-			sharedString2.removeRange(3, 4);
+			collection1.add({ start: 1, end: 3 }); // contains "BC", starts before B, ends before D
+			sharedString2.removeRange(2, 3); // removes "C"
 			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 2 }]); // now contains only "B"
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 2 }]);
 
 			// Remove location of end of interval
-			sharedString.removeRange(2, 3);
-			assert.equal(sharedString.getText(), "AB");
+			sharedString.removeRange(1, 2); // remove "B"
+			assert.equal(sharedString.getText(), "AD");
 			assertSequenceIntervals(sharedString, collection1, [
-				// odd behavior - end of interval doesn't slide
-				// until ack, so position beyond end of string
-				{ start: 1, end: 2 },
+				// interval slides as soon as the local removal happens. Does not wait for ack.
+				{ start: 1, end: 1 },
 			]);
 			containerRuntimeFactory.processAllMessages();
 			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 1 }]);
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
 
 			// Remove location of start and end of interval
-			sharedString.removeRange(1, 2);
-			assertSequenceIntervals(
-				sharedString,
-				collection1,
-				[
-					// odd behavior - start of interval doesn't slide
-					// until ack, so not found by overlapping search
-					{ start: 1, end: 1 },
-				],
-				false,
-			);
+			sharedString.removeRange(0, 1); // remove "A"
+			assertSequenceIntervals(sharedString, collection1, [
+				// interval slides as soon as the local removal happens. Does not wait for ack.
+				{ start: 0, end: 0 },
+			]);
 			containerRuntimeFactory.processAllMessages();
 			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
 
 			// Interval on empty string
 			sharedString.removeRange(0, 1);
-			assertSequenceIntervals(sharedString, collection1, [
-				// Search finds interval at end of string
-				{ start: 0, end: 0 },
-			]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(
-				sharedString,
-				collection1,
-				[
-					// Interval becomes detached when string is acked empty
-					{ start: -1, end: -1 },
-				],
-				false,
-			);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
 		});
 
 		it("remains consistent when a change to the same position but different segment is issued", () => {
@@ -471,37 +430,39 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			sharedString2.removeRange(3, 4);
-			collection1.add({ start: 1, end: 3 });
-			sharedString.removeRange(1, 3);
+			sharedString2.removeRange(3, 4); // removes "D"
+			collection1.add({ start: 1, end: 3 }); // starts before B, ends before D, contains "BC"
+			sharedString.removeRange(1, 3); // removes BC
 			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+			// BC was removed, so interval is now empty
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 1 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
 		});
 
 		it("consistent after remove all/insert text conflict", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "ABCD");
-			collection1.add({ start: 1, end: 3 });
+			collection1.add({ start: 1, end: 3 }); // starts before B, ends before D, contains "BC"
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			sharedString.insertText(0, "XYZ");
-			sharedString2.removeRange(0, 4);
+			sharedString.insertText(0, "XYZ"); // "XYZABCD"
+			sharedString2.removeRange(0, 4); // remove "ABCD"
+			containerRuntimeFactory.processAllMessages();
+			// Interval becomes empty at the end of the string.
+			assertSequenceIntervals(sharedString, collection1, [{ start: 3, end: 3 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 3, end: 3 }]);
+
+			sharedString2.removeRange(0, 3); // remove "XYZ"
+			sharedString.insertText(0, "PQ"); // "PQXYZ"
 			containerRuntimeFactory.processAllMessages();
 			assertSequenceIntervals(sharedString, collection1, [{ start: 2, end: 2 }]);
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 2, end: 2 }]);
 
-			sharedString2.removeRange(0, 3);
-			sharedString.insertText(0, "PQ");
+			sharedString2.removeRange(0, 2); // remove "PQ"
 			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(sharedString, collection1, [{ start: -1, end: -1 }], false);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
-
-			sharedString2.removeRange(0, 2);
-			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(sharedString, collection1, [{ start: -1, end: -1 }], false);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 0 }], false);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 0 }], false);
 		});
 
 		it("can slide intervals on remove ack", () => {
@@ -510,22 +471,22 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection1.add({ start: 1, end: 3 });
+			collection1.add({ start: 1, end: 3 }); // contains "BC"
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString.insertText(2, "X");
 			assert.strictEqual(sharedString.getText(), "ABXCD");
-			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 4 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 4 }]); // "BXC"
 
 			sharedString2.removeRange(1, 2);
 			assert.strictEqual(sharedString2.getText(), "ACD");
-			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 2 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 2 }]); // "C"
 
 			containerRuntimeFactory.processAllMessages();
 			assert.strictEqual(sharedString.getText(), "AXCD");
 			assert.strictEqual(sharedString2.getText(), "AXCD");
 
-			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 3 }]); // "XC"
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 		});
 
@@ -612,12 +573,12 @@ describe("SharedString interval collections", () => {
 
 			const collection1 = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "ABCD");
-			const interval = collection1.add({ start: 0, end: 0 });
+			const interval = collection1.add({ start: 0, end: 0 }); // empty interval at the start of the string.
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 			const collection3 = sharedString3.getIntervalCollection("test");
 
-			sharedString.removeRange(1, 2);
+			sharedString.removeRange(1, 2); // remove "B"
 			assert.strictEqual(sharedString.getText(), "ACD");
 
 			sharedString2.insertText(2, "X");
@@ -625,7 +586,7 @@ describe("SharedString interval collections", () => {
 
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection3.change(intervalId, { start: 1, end: 3 });
+			collection3.change(intervalId, { start: 1, end: 3 }); // change the interval to start before B and end before D, containing "BC"
 
 			containerRuntimeFactory.processAllMessages();
 			assert.strictEqual(sharedString.getText(), "AXCD");
@@ -636,13 +597,13 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 			assertSequenceIntervals(sharedString3, collection3, [{ start: 1, end: 3 }]);
 
-			sharedString.removeRange(3, 4);
+			sharedString.removeRange(3, 4); // remove "D"
 			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processAllMessages();
 
-			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 2 }]);
-			assertSequenceIntervals(sharedString3, collection3, [{ start: 1, end: 2 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
+			assertSequenceIntervals(sharedString3, collection3, [{ start: 1, end: 3 }]);
 		});
 
 		it("can slide intervals on create before remove", () => {
@@ -698,19 +659,20 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection1.add({ start: 1, end: 3 });
-			sharedString.insertText(2, "XY");
+			collection1.add({ start: 1, end: 3 }); // contains "BC"
+			sharedString.insertText(2, "XY"); // interval now contains "BXYC"
 			assert.strictEqual(sharedString.getText(), "ABXYCD");
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 5 }]);
 
-			sharedString2.removeRange(0, 4);
+			sharedString2.removeRange(0, 4); // remove "ABCD"
 			assert.strictEqual(sharedString2.getText(), "");
 
 			containerRuntimeFactory.processAllMessages();
 			assert.strictEqual(sharedString.getText(), "XY");
 			assert.strictEqual(sharedString2.getText(), "XY");
 
-			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 1 }]);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 1 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 2 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
 		});
 
 		it("tolerates creation of an interval with no segment due to concurrent delete", () => {
@@ -718,12 +680,14 @@ describe("SharedString interval collections", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
-			sharedString2.removeRange(0, sharedString2.getLength());
-			collection1.add({ start: 1, end: 1 });
+			sharedString2.removeRange(0, sharedString2.getLength()); // remove "ABCDEF"
+			collection1.add({ start: 1, end: 1 }); // empty interval before B
 			sharedString2.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(sharedString, collection1, [{ start: -1, end: -1 }], false);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
+			assert.strictEqual(sharedString.getText(), "X");
+			assert.strictEqual(sharedString2.getText(), "X");
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 1 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
 		});
 
 		it("can maintain consistency of LocalReference's when segments are packed", async () => {
@@ -935,23 +899,21 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency when falling back to end comparison", () => {
-				collection.add({ start: 1, end: 6 });
-				collection.add({ start: 2, end: 5 });
-				const initiallyLargest = collection.add({ start: 3, end: 4 });
-				sharedString.removeRange(1, 4);
-				// Interval slide doesn't happen until creation is acked, so interval sort order
-				// is still by start position, which do not compare equal despite all appearing to be 1
+				collection.add({ start: 1, end: 6 }); // contains "BCDEF"
+				collection.add({ start: 2, end: 5 }); // contains "CDE"
+				const initiallyLargest = collection.add({ start: 3, end: 4 }); // contains "D"
+				sharedString.removeRange(1, 4); // remove "BCD", now "AEFG",
 				assertSequenceIntervals(sharedString, collection, [
-					{ start: 1, end: 3 },
-					{ start: 1, end: 2 },
 					{ start: 1, end: 1 },
+					{ start: 1, end: 2 },
+					{ start: 1, end: 3 },
 				]);
 				const initiallyLargestId = initiallyLargest.getIntervalId();
 				assert(initiallyLargestId);
 				collection.removeIntervalById(initiallyLargestId);
 				assertSequenceIntervals(sharedString, collection, [
-					{ start: 1, end: 3 },
 					{ start: 1, end: 2 },
+					{ start: 1, end: 3 },
 				]);
 				containerRuntimeFactory.processAllMessages();
 				// After processing messages, intervals slide and order is as expected.
@@ -962,14 +924,14 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency after slide when falling back to end comparison", () => {
-				collection.add({ start: 1, end: 6 });
-				collection.add({ start: 2, end: 5 });
-				const initiallyLargest = collection.add({ start: 3, end: 4 });
-				sharedString.removeRange(1, 4);
+				collection.add({ start: 1, end: 6 }); // contains "BCDEF"
+				collection.add({ start: 2, end: 5 }); // contains "CDE"
+				const initiallyLargest = collection.add({ start: 3, end: 4 }); // contains "D"
+				sharedString.removeRange(1, 4); // remove "BCD", now "AEFG",
 				assertSequenceIntervals(sharedString, collection, [
-					{ start: 1, end: 3 },
-					{ start: 1, end: 2 },
 					{ start: 1, end: 1 },
+					{ start: 1, end: 2 },
+					{ start: 1, end: 3 },
 				]);
 				containerRuntimeFactory.processAllMessages();
 				assertSequenceIntervals(sharedString, collection, [
@@ -1173,30 +1135,26 @@ describe("SharedString interval collections", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
-			sharedString.removeRange(3, 6);
-			const interval = collection2.add({ start: 3, end: 4 });
+			sharedString.removeRange(3, 6); // remove "DEF", leaving "ABC"
+			const interval = collection2.add({ start: 3, end: 4 }); // contains "D"
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
-			collection2.change(intervalId, { start: 1, end: 5 });
+			collection2.change(intervalId, { start: 1, end: 5 }); // changed to contain "BCDE"
 
 			assert.equal(
 				containerRuntimeFactory.outstandingMessageCount,
 				3,
 				"Unexpected number of ops",
 			);
+			containerRuntimeFactory.processOneMessage(); // removal of "DEF"
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processOneMessage();
-			assertSequenceIntervals(sharedString2, collection2, [
-				{ start: 1, end: 3 /* hasn't yet been acked */ },
-			]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processOneMessage();
-			assertSequenceIntervals(sharedString2, collection2, [
-				{ start: 1, end: 3 /* hasn't yet been acked */ },
-			]);
-			containerRuntimeFactory.processOneMessage();
-			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 2 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
 
 			assert.equal(sharedString.getText(), "ABC");
-			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 3 }]);
 		});
 
 		describe("have eventually consistent property sets", () => {
@@ -1285,6 +1243,8 @@ describe("SharedString interval collections", () => {
 			containerRuntime1.connected = false;
 
 			sharedString2.insertText(7, "amily its my f");
+			// interval in collection2 now contains "family its my fr"
+
 			sharedString.removeText(0, 5);
 			sharedString.insertText(0, "hi");
 			containerRuntimeFactory.processAllMessages();
@@ -1369,8 +1329,8 @@ describe("SharedString interval collections", () => {
 			sharedString.removeRange(1, sharedString.getLength());
 			containerRuntime1.connected = true;
 			containerRuntimeFactory.processAllMessages();
-			assertSequenceIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
-			assertSequenceIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 1 }]);
+			assertSequenceIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
 		});
 
 		it("can rebase changeProperty ops", () => {
@@ -1777,7 +1737,7 @@ describe("SharedString interval collections", () => {
 
 			assert.strictEqual(sharedString.getText(), "XXX", "different text");
 
-			assertSequenceIntervals(sharedString, collection, [{ start: -1, end: -1 }], false);
+			assertSequenceIntervals(sharedString, collection, [{ start: 3, end: 3 }]);
 		});
 
 		it("none stickiness slides off string when entire string is deleted incrementally", () => {
@@ -1801,7 +1761,7 @@ describe("SharedString interval collections", () => {
 
 			assert.strictEqual(sharedString.getText(), "XXX", "different text");
 
-			assertSequenceIntervals(sharedString, collection, [{ start: -1, end: -1 }], false);
+			assertSequenceIntervals(sharedString, collection, [{ start: 3, end: 3 }], false);
 		});
 
 		it("full stickiness doesn't slide off string when entire string is deleted incrementally", () => {

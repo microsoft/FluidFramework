@@ -75,7 +75,7 @@ export interface SequenceOptions {
 	 * Also see the feature flag `mergeTreeReferencesCanSlideToEndpoint` to allow
 	 * endpoints to slide to the special endpoint segments.
 	 *
-	 * The default value is false.
+	 * The default value is true.
 	 */
 	intervalStickinessEnabled: boolean;
 	/**
@@ -85,7 +85,7 @@ export interface SequenceOptions {
 	 * suggested to enable both this flag and `intervalStickinessEnabled` at the
 	 * same time.
 	 *
-	 * The default value is false.
+	 * The default value is true.
 	 */
 	mergeTreeReferencesCanSlideToEndpoint: boolean;
 	[key: string]: boolean;

@@ -127,3 +127,4 @@ export {
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
+export { Perspective, Place, Side } from "./perspective.js";

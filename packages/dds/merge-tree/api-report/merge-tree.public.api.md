@@ -15,6 +15,27 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/inter
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
+// @public
+export interface Perspective {
+    // (undocumented)
+    slidePlace(place: Place, sourceSeqNum: number, sourceClientId: number, sourceLocalSeq?: number): Place;
+}
+
+// @public
+export interface Place {
+    readonly pos: number | undefined;
+    // (undocumented)
+    readonly side: Side;
+}
+
+// @public
+export enum Side {
+    // (undocumented)
+    After = 1,
+    // (undocumented)
+    Before = 0
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

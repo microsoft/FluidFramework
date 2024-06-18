@@ -22,8 +22,8 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition } from "../index.js";
-import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import { IMergeTreeOptions, ReferencePosition, Side } from "../index.js";
+import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { MergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
@@ -36,7 +36,7 @@ import {
 	ReferenceType,
 } from "../ops.js";
 import { PropertySet } from "../properties.js";
-import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
+import { refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
@@ -382,46 +382,14 @@ export class TestClient extends Client {
 	 * slow-path computations in this function without leveraging the merge-tree's structure
 	 */
 	public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
-		let segment: ISegment | undefined;
-		let posAccumulated = 0;
-		let offset = pos;
-		const isInsertedInView = (seg: ISegment) =>
-			(seg.seq !== undefined &&
-				seg.seq !== UnassignedSequenceNumber &&
-				seg.seq <= seqNumberFrom) ||
-			(seg.localSeq !== undefined && seg.localSeq <= localSeq);
-
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
-			(removedSeq !== undefined &&
-				removedSeq !== UnassignedSequenceNumber &&
-				removedSeq <= seqNumberFrom) ||
-			(localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
-
-		walkAllChildSegments(this.mergeTree.root, (seg) => {
-			assert(
-				seg.seq !== undefined || seg.localSeq !== undefined,
-				"either seq or localSeq should be defined",
-			);
-			segment = seg;
-
-			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
-				posAccumulated += seg.cachedLength;
-				if (offset >= seg.cachedLength) {
-					offset -= seg.cachedLength;
-				}
-			}
-
-			// Keep going while we've yet to reach the segment at the desired position
-			return posAccumulated <= pos;
-		});
-
-		assert(segment !== undefined, "No segment found");
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
-		if (segoff.segment === undefined || segoff.offset === undefined) {
-			return DetachedReferencePosition;
-		}
-
-		return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+		const perspective = this.createPerspective();
+		const slidPlace = perspective.slidePlace(
+			{ pos, side: Side.Before },
+			seqNumberFrom,
+			this.getClientId(),
+			localSeq,
+		);
+		return slidPlace.pos ?? this.getLength();
 	}
 
 	public findReconnectionPosition(segment: ISegment, localSeq: number): number {

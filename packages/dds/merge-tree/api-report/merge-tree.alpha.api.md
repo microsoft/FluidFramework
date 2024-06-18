@@ -108,7 +108,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
     // (undocumented)
     applyStashedOp(op: IMergeTreeOp): void;
-    createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
+    createPerspective(seqNum?: number, clientId?: number, localSeqNum?: number | undefined): Perspective;
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -507,7 +508,7 @@ export class LocalReferenceCollection {
     static append(seg1: ISegment, seg2: ISegment): void;
     append(other: LocalReferenceCollection): void;
     // (undocumented)
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // (undocumented)
     get empty(): boolean;
     has(lref: ReferencePosition): boolean;
@@ -526,7 +527,6 @@ export class LocalReferenceCollection {
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
-    readonly canSlideToEndpoint?: boolean;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
@@ -638,6 +638,19 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
+// @public
+export interface Perspective {
+    // (undocumented)
+    slidePlace(place: Place, sourceSeqNum: number, sourceClientId: number, sourceLocalSeq?: number): Place;
+}
+
+// @public
+export interface Place {
+    readonly pos: number | undefined;
+    // (undocumented)
+    readonly side: Side;
+}
+
 // @alpha (undocumented)
 export class PropertiesManager {
     // (undocumented)
@@ -745,6 +758,14 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     };
     // (undocumented)
     length: number;
+}
+
+// @public
+export enum Side {
+    // (undocumented)
+    After = 1,
+    // (undocumented)
+    Before = 0
 }
 
 // @alpha

@@ -24,8 +24,6 @@ import {
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
-	anyLocalReferencePosition,
-	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
 	IMergeTreeDeltaOpArgs,
@@ -35,6 +33,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
+	LeafAction,
 	NodeAction,
 	backwardExcursion,
 	depthFirstNodeWalk,
@@ -67,9 +66,11 @@ import type { TrackingGroup } from "./mergeTreeTracking.js";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder.js";
 import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
+import { PerspectiveImpl, Side } from "./perspective.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
+	compareReferencePositions,
 	DetachedReferencePosition,
 	ReferencePosition,
 	refGetTileLabels,
@@ -84,6 +85,106 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 		seg.removedSeq !== UnassignedSequenceNumber &&
 		(seg.removedSeq === undefined || seg.removedSeq > seq)
 	);
+}
+
+export function wasRemovedBefore(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+): boolean {
+	if (
+		seg.removedSeq === UnassignedSequenceNumber &&
+		localSeq !== undefined &&
+		seg.localRemovedSeq !== undefined
+	) {
+		return seg.localRemovedSeq <= localSeq;
+	}
+	if (seg.removedClientIds !== undefined && seg.removedClientIds.includes(clientId)) {
+		return (
+			seg.removedSeq !== undefined &&
+			seg.removedSeq !== UnassignedSequenceNumber &&
+			seg.removedSeq <= seq
+		);
+	}
+	return (
+		seg.removedSeq !== undefined &&
+		seg.removedSeq !== UnassignedSequenceNumber &&
+		seg.removedSeq <= refSeq
+	);
+}
+
+export function wasMovedBefore(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+): boolean {
+	if (
+		seg.movedSeq === UnassignedSequenceNumber &&
+		localSeq !== undefined &&
+		seg.localMovedSeq !== undefined
+	) {
+		return seg.localMovedSeq <= localSeq;
+	}
+	if (seg.movedClientIds !== undefined && seg.movedClientIds.includes(clientId)) {
+		return (
+			seg.movedSeq !== undefined &&
+			seg.movedSeq !== UnassignedSequenceNumber &&
+			seg.movedSeq <= seq
+		);
+	}
+	return (
+		seg.movedSeq !== undefined &&
+		seg.movedSeq !== UnassignedSequenceNumber &&
+		seg.movedSeq <= refSeq
+	);
+}
+
+export function wasRemovedOrMovedBefore(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+): boolean {
+	return (
+		wasRemovedBefore(seg, seq, clientId, refSeq, localSeq) ||
+		wasMovedBefore(seg, seq, clientId, refSeq, localSeq)
+	);
+}
+
+export function isSegmentPresent(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+) {
+	if (seg.seq === undefined) {
+		// segment was inserted prior to minSeq
+		return true;
+	}
+	if (seg.seq !== UnassignedSequenceNumber) {
+		if (
+			// Clients can only see insertions made by other clients before refseq.
+			(seg.clientId !== clientId && seg.seq > refSeq) ||
+			// Clients can see their own insertions before seq
+			(seg.clientId === clientId && seg.seq > seq)
+		) {
+			return false;
+		}
+	} else if (seg.localSeq !== undefined && localSeq) {
+		if (seg.localSeq > (localSeq ?? -1)) {
+			return false;
+		}
+	}
+	if (wasRemovedOrMovedBefore(seg, seq, clientId, refSeq, localSeq)) {
+		return false;
+	}
+	return true;
 }
 
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
@@ -276,7 +377,6 @@ function getSlideToSegment(
 	segment: ISegment | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	cache?: Map<ISegment, { seg?: ISegment }>,
-	useNewSlidingBehavior: boolean = false,
 ): [ISegment | undefined, "start" | "end" | undefined] {
 	if (
 		!segment ||
@@ -315,23 +415,6 @@ function getSlideToSegment(
 		return [result.seg, undefined];
 	}
 
-	// in the new sliding behavior, we don't look in the opposite direction
-	// if we fail to find a segment to slide to in the right direction.
-	//
-	// in other words, rather than going `forward ?? backward ?? detached` (or
-	// `backward ?? forward ?? detached`), we would slide `forward ?? detached`
-	// or `backward ?? detached`
-	//
-	// in both of these cases detached may be substituted for one of the special
-	// endpoint segments, if such behavior is enabled
-	if (!useNewSlidingBehavior) {
-		if (slidingPreference === SlidingPreference.BACKWARD) {
-			forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		} else {
-			backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		}
-	}
-
 	let maybeEndpoint: "start" | "end" | undefined;
 
 	if (slidingPreference === SlidingPreference.BACKWARD) {
@@ -352,17 +435,11 @@ function getSlideToSegment(
 export function getSlideToSegoff(
 	segoff: { segment: ISegment | undefined; offset: number | undefined },
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
-	useNewSlidingBehavior: boolean = false,
 ) {
 	if (segoff.segment === undefined) {
 		return segoff;
 	}
-	const [segment, _] = getSlideToSegment(
-		segoff.segment,
-		slidingPreference,
-		undefined,
-		useNewSlidingBehavior,
-	);
+	const [segment, _] = getSlideToSegment(segoff.segment, slidingPreference, undefined);
 	if (segment === segoff.segment) {
 		return segoff;
 	}
@@ -682,6 +759,28 @@ export class MergeTree {
 		return { segment, offset };
 	}
 
+	private ackLocalSlide(segments: ISegment[], seqNum: number, localSlide: number) {
+		const perspective = new PerspectiveImpl(
+			this,
+			seqNum,
+			this.collabWindow.clientId,
+			localSlide,
+		);
+		for (const segment of segments) {
+			const nextSegment = perspective.nextSegment(segment);
+			if (nextSegment?.localRefs !== undefined) {
+				for (const ref of nextSegment.localRefs) {
+					if (ref.localSlide === localSlide) {
+						// This slide has now been acked. No need to reslide on future inserts.
+						ref.localSlide = undefined;
+						ref.segmentBeforeLocalSlide = undefined;
+						ref.offsetBeforeLocalSlide = undefined;
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Slides or removes references from the provided list of segments.
 	 *
@@ -692,201 +791,164 @@ export class MergeTree {
 	 *
 	 * @remarks
 	 *
-	 * 1. Preserving the order of the references is a useful property for reference-based undo/redo
+	 * Preserving the order of the references is a useful property for reference-based undo/redo
 	 * (see revertibles.ts).
 	 *
-	 * 2. For use cases which necessitate eventual consistency across clients,
-	 * this method should only be called with segments for which the current client sequence number is
-	 * max(remove segment sequence number, add reference sequence number).
 	 * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
 	 *
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
+	 * @param localSeq - The local sequence number at which the references are being slid.
+	 * Undefined for remote ops.
 	 */
-	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
-		// References are slid in groups to preserve their order.
-		let currentForwardSlideGroup: LocalReferenceCollection[] = [];
-		let currentBackwardSlideGroup: LocalReferenceCollection[] = [];
+	private slideRemovedSegmentReferences(segments: ISegment[], localSeq?: number) {
+		// all references in contiguous segments with the same sliding preference slide to the same place.
+		let currentSlideGroup: LocalReferencePosition[];
 
-		let currentForwardMaybeEndpoint: "start" | "end" | undefined;
-		let currentForwardSlideDestination: ISegment | undefined;
-		let currentForwardSlideIsForward: boolean | undefined;
-		const forwardPred = (ref: LocalReferencePosition) =>
-			ref.slidingPreference !== SlidingPreference.BACKWARD;
+		// All references which were slid. References are clamped to their bounding references after all references have slid.
+		const allSlidReferences: LocalReferencePosition[] = [];
 
-		let currentBackwardMaybeEndpoint: "start" | "end" | undefined;
-		let currentBackwardSlideDestination: ISegment | undefined;
-		let currentBackwardSlideIsForward: boolean | undefined;
-		const backwardPred = (ref: LocalReferencePosition) =>
-			ref.slidingPreference === SlidingPreference.BACKWARD;
-
-		const slideGroup = (
-			currentSlideDestination: ISegmentLeaf | undefined,
-			currentSlideIsForward: boolean | undefined,
-			currentSlideGroup: LocalReferenceCollection[],
-			pred: (ref: LocalReferencePosition) => boolean,
-			maybeEndpoint: "start" | "end" | undefined,
-		) => {
-			if (currentSlideIsForward === undefined) {
-				return;
-			}
-
-			const nonEndpointRefsToAdd = currentSlideGroup.map((collection) =>
-				filterLocalReferencePositions(
-					collection,
-					(ref) => pred(ref) && (maybeEndpoint ? !ref.canSlideToEndpoint : true),
-				),
-			);
-
-			const endpointRefsToAdd = currentSlideGroup.map((collection) =>
-				filterLocalReferencePositions(
-					collection,
-					(ref) => pred(ref) && !!ref.canSlideToEndpoint,
-				),
-			);
-
-			if (maybeEndpoint) {
-				const endpoint = maybeEndpoint === "start" ? this.startOfTree : this.endOfTree;
-				const localRefs = LocalReferenceCollection.setOrGet(endpoint);
-				if (currentSlideIsForward) {
-					localRefs.addBeforeTombstones(...endpointRefsToAdd);
-				} else {
-					localRefs.addAfterTombstones(...endpointRefsToAdd);
-				}
-			}
-
-			if (currentSlideDestination !== undefined) {
-				const localRefs = LocalReferenceCollection.setOrGet(currentSlideDestination);
-				if (currentSlideIsForward) {
-					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
-				} else {
-					localRefs.addAfterTombstones(...nonEndpointRefsToAdd);
-				}
-			} else {
-				for (const collection of currentSlideGroup) {
-					for (const ref of collection) {
-						if (pred(ref) && !refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
-							ref.callbacks?.beforeSlide?.(ref);
-							collection.removeLocalRef(ref);
-							ref.callbacks?.afterSlide?.(ref);
-						}
-					}
-				}
-			}
-		};
-
-		const trySlideSegment = (
-			segment: ISegment,
-			currentSlideDestination: ISegment | undefined,
-			currentSlideIsForward: boolean | undefined,
-			currentSlideGroup: LocalReferenceCollection[],
-			pred: (ref: LocalReferencePosition) => boolean,
-			slidingPreference: SlidingPreference,
-			currentMaybeEndpoint: "start" | "end" | undefined,
-			reassign: (
-				localRefs: LocalReferenceCollection,
-				slideToSegment: ISegment | undefined,
-				slideIsForward: boolean,
-				maybeEndpoint: "start" | "end" | undefined,
-			) => void,
-		) => {
-			// avoid sliding logic if this segment doesn't have any references
-			// with the given sliding preference
-			if (!segment.localRefs || !anyLocalReferencePosition(segment.localRefs, pred)) {
-				return;
-			}
-
-			const [slideToSegment, maybeEndpoint] = getSlideToSegment(
-				segment,
-				slidingPreference,
-				slidingPreference === SlidingPreference.FORWARD
-					? forwardSegmentCache
-					: backwardSegmentCache,
-				this.options?.mergeTreeReferencesCanSlideToEndpoint,
-			);
-			const slideIsForward =
-				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
-
-			if (
-				slideToSegment !== currentSlideDestination ||
-				slideIsForward !== currentSlideIsForward ||
-				maybeEndpoint !== currentMaybeEndpoint
-			) {
-				slideGroup(
-					currentSlideDestination,
-					currentSlideIsForward,
-					currentSlideGroup,
-					pred,
-					this.options?.mergeTreeReferencesCanSlideToEndpoint ? maybeEndpoint : undefined,
-				);
-				reassign(
-					segment.localRefs,
-					slideToSegment,
-					slideIsForward,
-					this.options?.mergeTreeReferencesCanSlideToEndpoint ? maybeEndpoint : undefined,
-				);
-			} else {
-				currentSlideGroup.push(segment.localRefs);
-			}
-		};
-
-		const forwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
-		const backwardSegmentCache = new Map<ISegment, { seg?: ISegment }>();
-		for (const segment of segments) {
-			assert(
-				isRemovedAndAckedOrMovedAndAcked(segment),
-				0x2f1 /* slideReferences from a segment which has not been removed and acked */,
-			);
-			if (segment.localRefs === undefined || segment.localRefs.empty) {
+		// Forward sliding
+		const forwardSlideQueue = Array.from(segments);
+		let removedSegment: ISegment | undefined;
+		while ((removedSegment = forwardSlideQueue.shift()) !== undefined) {
+			const refs = removedSegment.localRefs;
+			if (refs === undefined) {
+				// no refs to slide
 				continue;
 			}
+			currentSlideGroup = Array.from(refs);
 
-			trySlideSegment(
-				segment,
-				currentForwardSlideDestination,
-				currentForwardSlideIsForward,
-				currentForwardSlideGroup,
-				forwardPred,
-				SlidingPreference.FORWARD,
-				currentForwardMaybeEndpoint,
-				(localRefs, slideToSegment, slideIsForward, maybeEndpoint) => {
-					currentForwardSlideGroup = [localRefs];
-					currentForwardSlideDestination = slideToSegment;
-					currentForwardSlideIsForward = slideIsForward;
-					currentForwardMaybeEndpoint = maybeEndpoint;
-				},
-			);
+			let dst: ISegment | undefined;
+			forwardExcursion(removedSegment, (seg) => {
+				if (seg === forwardSlideQueue[0]) {
+					// The next segment slides to the same place.
+					const nextSegment = forwardSlideQueue.shift();
+					currentSlideGroup.push(...(nextSegment?.localRefs ?? []));
+				}
+				// ignore local removes. If an interval fell within a local remove it would have already been slid.
+				// If the reference falls on the edge of a local remove, it will be slid further once the local remove is acked.
+				if (
+					isSegmentPresent(
+						seg,
+						this.collabWindow.currentSeq,
+						this.collabWindow.clientId,
+						this.collabWindow.currentSeq,
+						// localSeq is undefined
+					)
+				) {
+					dst = seg;
+					return LeafAction.Exit;
+				}
+				return true;
+			});
+			if (dst === undefined) {
+				// everything after the removed segments was also removed or obliterated. Slide to the end.
+				dst = this.endOfTree;
+			}
+			const dstCollection = LocalReferenceCollection.setOrGet(dst);
 
-			trySlideSegment(
-				segment,
-				currentBackwardSlideDestination,
-				currentBackwardSlideIsForward,
-				currentBackwardSlideGroup,
-				backwardPred,
-				SlidingPreference.BACKWARD,
-				currentBackwardMaybeEndpoint,
-				(localRefs, slideToSegment, slideIsForward, maybeEndpoint) => {
-					currentBackwardSlideGroup = [localRefs];
-					currentBackwardSlideDestination = slideToSegment;
-					currentBackwardSlideIsForward = slideIsForward;
-					currentBackwardMaybeEndpoint = maybeEndpoint;
-				},
+			const forwardSlidingReferences = currentSlideGroup.filter(
+				(ref) => ref.slidingPreference === SlidingPreference.FORWARD,
 			);
+			forwardSlidingReferences.forEach((ref) => {
+				// Update localSlide.
+				// This is used to form the perspective to rebase this slide over concurrent remote insertions.
+				// remote slides should clear these fields.
+				if (ref.localSlide === undefined) {
+					if (localSeq) {
+						ref.localSlide = localSeq;
+						ref.segmentBeforeLocalSlide = ref.getSegment();
+						ref.offsetBeforeLocalSlide = ref.getOffset();
+					} else if (ref.localCreate) {
+						// This ref has not been created yet on other clients.
+						// Treat the slide as local and reslide on concurrent inserts.
+						ref.localSlide = ref.localCreate;
+						ref.segmentBeforeLocalSlide = ref.getSegment();
+						ref.offsetBeforeLocalSlide = ref.getOffset();
+					} else {
+						ref.localSlide = undefined;
+						ref.segmentBeforeLocalSlide = undefined;
+						ref.offsetBeforeLocalSlide = undefined;
+					}
+				}
+			});
+			dstCollection.addBeforeTombstones(forwardSlidingReferences);
+			allSlidReferences.push(...forwardSlidingReferences);
+			currentSlideGroup = [];
+		}
+		const backwardSlideQueue = Array.from(segments);
+		while ((removedSegment = backwardSlideQueue.pop()) !== undefined) {
+			const refs = removedSegment.localRefs;
+			if (refs === undefined) {
+				// no refs to slide
+				continue;
+			}
+			currentSlideGroup = Array.from(refs);
+			let dst: ISegment | undefined;
+			backwardExcursion(removedSegment, (seg) => {
+				if (seg === backwardSlideQueue[backwardSlideQueue.length - 1]) {
+					// The next segment slides to the same place.
+					const nextSegment = backwardSlideQueue.pop();
+					currentSlideGroup.push(...(nextSegment?.localRefs ?? []));
+				}
+				// ignore local removes. If an interval fell within a local remove it would have already been slid.
+				// If the reference falls on the edge of a local remove, it will be slid further once the local remove is acked.
+				if (
+					isSegmentPresent(
+						seg,
+						this.collabWindow.currentSeq,
+						this.collabWindow.clientId,
+						this.collabWindow.currentSeq,
+					)
+				) {
+					dst = seg;
+					return LeafAction.Exit;
+				}
+				return true;
+			});
+			if (dst === undefined) {
+				// everything before the removed segments was also removed or obliterated. Slide to the start.
+				dst = this.startOfTree;
+			}
+			const dstCollection = LocalReferenceCollection.setOrGet(dst);
+
+			const backwardSlidingReferences = currentSlideGroup.filter(
+				(ref) => ref.slidingPreference === SlidingPreference.BACKWARD,
+			);
+			backwardSlidingReferences.forEach((ref) => {
+				if (localSeq !== undefined) {
+					// Update localSlide.
+					// This is used to form the perspective to rebase this slide over concurrent remote insertions.
+					ref.localSlide = localSeq;
+					ref.segmentBeforeLocalSlide = ref.getSegment();
+					ref.offsetBeforeLocalSlide = ref.getOffset();
+				} else if (ref.localCreate) {
+					// This ref has not been created yet on other clients.
+					// Treat the slide as local and reslide on concurrent inserts.
+					ref.localSlide = ref.localCreate;
+					ref.segmentBeforeLocalSlide = ref.getSegment();
+					ref.offsetBeforeLocalSlide = ref.getOffset();
+				} else {
+					ref.localSlide = undefined;
+					ref.segmentBeforeLocalSlide = undefined;
+					ref.offsetBeforeLocalSlide = undefined;
+				}
+			});
+			dstCollection.addAfterTombstones(backwardSlidingReferences);
+			allSlidReferences.push(...backwardSlidingReferences);
+			currentSlideGroup = [];
 		}
 
-		slideGroup(
-			currentForwardSlideDestination,
-			currentForwardSlideIsForward,
-			currentForwardSlideGroup,
-			forwardPred,
-			currentForwardMaybeEndpoint,
-		);
-		slideGroup(
-			currentBackwardSlideDestination,
-			currentBackwardSlideIsForward,
-			currentBackwardSlideGroup,
-			backwardPred,
-			currentBackwardMaybeEndpoint,
-		);
+		allSlidReferences.forEach((ref) => {
+			// Clamp references which have slid past their bounding reference.
+			if (ref.boundingReference !== undefined) {
+				const comp = compareReferencePositions(ref, ref.boundingReference);
+				// refs must always come after their boundingReference
+				if (comp < 0) {
+					ref.clampToBoundingReference();
+				}
+			}
+		});
 	}
 
 	private blockLength(node: MergeBlock, refSeq: number, clientId: number): number {
@@ -1178,7 +1240,12 @@ export class MergeTree {
 				opArgs.op.type === MergeTreeDeltaType.REMOVE ||
 				opArgs.op.type === MergeTreeDeltaType.OBLITERATE
 			) {
-				this.slideAckedRemovedSegmentReferences(pendingSegmentGroup.segments);
+				const ackedLocalSeq = pendingSegmentGroup.localSeq;
+				assert(
+					ackedLocalSeq !== undefined,
+					"Local sequence number not set on pending segment group",
+				);
+				this.ackLocalSlide(pendingSegmentGroup.segments, seq, ackedLocalSeq);
 			}
 
 			this.mergeTreeMaintenanceCallback?.(
@@ -1570,6 +1637,75 @@ export class MergeTree {
 
 					if (newSegment.parent) {
 						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
+					}
+				}
+			}
+		}
+		if (localSeq === undefined) {
+			// local insertions will be sequenced after the slide, so we don't re-slide
+			this.rebaseLocalSlidesOnInsertion(newSegments, seq);
+		}
+	}
+
+	private rebaseLocalSlidesOnInsertion(newSegments: ISegment[], seq: number) {
+		// Check the previous and next existing segments at the current client's head perspective.
+		// It may contain ReferencePositions which would have slid to these newly inserted segments for other clients.
+
+		const headPerspective = new PerspectiveImpl(
+			this,
+			seq,
+			this.collabWindow.clientId,
+			seq,
+			this.collabWindow.localSeq,
+		);
+		const previousSegment = headPerspective.previousSegment(newSegments[0]);
+		const nextSegment = headPerspective.nextSegment(newSegments[newSegments.length - 1]);
+		const candidateRefs = [
+			...(previousSegment.localRefs ?? []),
+			...(nextSegment.localRefs ?? []),
+		];
+		for (const ref of candidateRefs) {
+			if (
+				// reference slid forward to the beginning of the segment
+				((ref.slidingPreference === SlidingPreference.FORWARD && ref.getOffset() === 0) ||
+					// reference slid backward to the end of the segment
+					(ref.slidingPreference === SlidingPreference.BACKWARD &&
+						ref.getOffset() === ref.getSegment()?.cachedLength)) &&
+				// in response to a local move/remove
+				ref.localSlide !== undefined
+			) {
+				// Redo the slide with the new segments
+				const refPosBeforeSlide =
+					this.getPosition(
+						ref.segmentBeforeLocalSlide!,
+						seq,
+						this.collabWindow.clientId,
+						// before the local slide happened
+						ref.localSlide - 1,
+					) + ref.offsetBeforeLocalSlide!;
+				const dst = headPerspective.slidePlace(
+					{
+						pos: refPosBeforeSlide,
+						side: Side.Before, // ref.slidingPreference === SlidingPreference.FORWARD
+					},
+					ref.localCreateRefSeq ?? seq,
+					this.collabWindow.clientId,
+					// before the local slide happened
+					ref.localSlide - 1,
+				);
+				const dstSegment =
+					dst.pos === undefined
+						? dst.side === Side.Before
+							? this.endOfTree
+							: this.startOfTree
+						: headPerspective.getContainingSegment(dst.pos).segment;
+				if (dstSegment !== undefined && dstSegment !== ref.getSegment()) {
+					const dstCollection = LocalReferenceCollection.setOrGet(dstSegment);
+					if (dst.side === Side.After) {
+						dstCollection.addAfterTombstones([ref]);
+					} else {
+						// Side.Before
+						dstCollection.addBeforeTombstones([ref]);
 					}
 				}
 			}
@@ -1971,7 +2107,7 @@ export class MergeTree {
 			seq !== UnassignedSequenceNumber ? seq : undefined,
 		);
 
-		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
+		this.slideRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
 		if (movedSegments.length > 0) {
 			this.mergeTreeDeltaCallback?.(opArgs, {
@@ -1988,7 +2124,7 @@ export class MergeTree {
 		// so we slide after eventing in case the consumer wants to make reference
 		// changes at remove time, like add a ref to track undo redo.
 		if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
-			this.slideAckedRemovedSegmentReferences(movedSegments.map(({ segment }) => segment));
+			this.slideRemovedSegmentReferences(movedSegments.map(({ segment }) => segment));
 		}
 
 		if (this.collabWindow.collaborating && seq !== UnassignedSequenceNumber) {
@@ -2072,7 +2208,7 @@ export class MergeTree {
 		this.nodeMap(refSeq, clientId, markRemoved, undefined, afterMarkRemoved, start, end);
 		// these segments are already viewed as being removed locally and are not event-ed
 		// so can slide non-StayOnRemove refs immediately
-		this.slideAckedRemovedSegmentReferences(localOverlapWithRefs);
+		this.slideRemovedSegmentReferences(localOverlapWithRefs);
 		// opArgs == undefined => test code
 		if (removedSegments.length > 0) {
 			this.mergeTreeDeltaCallback?.(opArgs, {
@@ -2083,9 +2219,10 @@ export class MergeTree {
 		// these events are newly removed
 		// so we slide after eventing in case the consumer wants to make reference
 		// changes at remove time, like add a ref to track undo redo.
-		if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
-			this.slideAckedRemovedSegmentReferences(removedSegments.map(({ segment }) => segment));
-		}
+		this.slideRemovedSegmentReferences(
+			removedSegments.map(({ segment }) => segment),
+			localSeq,
+		);
 
 		if (this.collabWindow.collaborating && seq !== UnassignedSequenceNumber) {
 			if (MergeTree.options.zamboniSegments) {
@@ -2247,7 +2384,6 @@ export class MergeTree {
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
-		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		if (
 			_segment !== "start" &&
@@ -2273,13 +2409,7 @@ export class MergeTree {
 
 		const localRefs = LocalReferenceCollection.setOrGet(segment);
 
-		const segRef = localRefs.createLocalRef(
-			offset,
-			refType,
-			properties,
-			slidingPreference,
-			canSlideToEndpoint,
-		);
+		const segRef = localRefs.createLocalRef(offset, refType, properties, slidingPreference);
 
 		return segRef;
 	}

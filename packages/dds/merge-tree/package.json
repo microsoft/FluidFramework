@@ -209,6 +209,12 @@
 			},
 			"InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_Client": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_LocalReferencePosition": {
+				"forwardCompat": false
 			}
 		}
 	}

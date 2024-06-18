@@ -110,6 +110,7 @@ declare function get_old_ClassDeclaration_Client():
 declare function use_current_ClassDeclaration_Client(
     use: TypeOnly<current.Client>): void;
 use_current_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Client());
 
 /*
@@ -1236,6 +1237,7 @@ declare function get_old_InterfaceDeclaration_LocalReferencePosition():
 declare function use_current_InterfaceDeclaration_LocalReferencePosition(
     use: TypeOnly<current.LocalReferencePosition>): void;
 use_current_InterfaceDeclaration_LocalReferencePosition(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_LocalReferencePosition());
 
 /*
