@@ -1,15 +1,16 @@
 # Breaking Changes and Supported Patterns
 
 Scope: This document is about how changes to packages written in TypeScript impact users of those packages which also use TypeScript.
+When necessary Fluid Framework specific conventions are included.
 
-Audience: This document is intended for developers of TypeScript packages as well as authors of TypeScript code which uses those packages.
+Audience: This document is intended for developers of TypeScript packages as well as authors of TypeScript code which uses those packages, especially when those packages are from the Fluid Framework.
 
-Status: This document is an early stage proposal.
-The policies proposed here are NOT the policies currently adopted for the Fluid Framework packages.
+Status: This document covers proposed best practices that have not yet been widely applied or communicated.
+The policies covered here are partially adopted by the Fluid Framework packages.
 
 To Reviewers: Two aspects of this document should be evaluated separately.
-First the proposed system, and second the proposed supported patterns to use with this system.
-Both are provided in the same document as it would be hard to evaluate the proposed system without some example patterns.
+First the proposed system, and second the proposed set of supported patterns to use with this system.
+Both are provided in the same document as it would be hard to evaluate the proposed system without some patterns.
 
 Terminology:
 
@@ -23,9 +24,10 @@ Terminology:
     Can be a compiler error, runtime error, or causing previously Supported User Code to become unsupported.
     For example a Change could break user code by making it not compile, crash, no longer be Supported User Code, return incorrect results etc.
 -   Backwards Compatible Change: A change to The Package which does not Break any possible Supported User Code.
--   Incompatible Change: A Change to The Package which could break a Supported User.
+-   Incompatible Change: A Change to The Package which could break Supported User Code.
 
-The goal of this document is to justify having "Supported Patterns" as defined above, and to suggest some such patterns and explain their motivations.
+The goal of this document is to justify having "Supported Patterns" as defined above, and to provide some such patterns and explain their motivations.
+These patterns can then assist users and implementers of the Fluid Framework packages align on what is considered a breaking change in a way to enable Fluid Framework to continue to improve its APIs without breaking its users in minor versions.
 
 ## Why have Supported Patterns?
 
@@ -50,14 +52,19 @@ The challenge is to pick Supported Patterns and associated design patterns for t
 
 # Supported Patterns
 
-Each pattern below consists of rules that the customer code (which uses Fluid Framework) can follow to avoid getting broken by what Fluid Framework defines as non-breaking changes.
-Follow these rules, and it should be safe to consider Fluid Framework to follow semver and depend its packages using "^" versions.
+Each pattern below consists of rules that user code can follow to avoid getting broken by the package its using defines as non-breaking changes.
+Applied to Fluid Framework, this means users that follow these rules can consider Fluid Framework to follow semver and depend its packages using "^" versions.
 
-Following the concrete explicit of the rule, a detailed discussion of motivation and scenarios follows.
+Following the concrete explicit of the rule, a detailed discussion of motivation and scenarios follows, including what is required on the package side avoid breaking supported user code.
 
 ## Undocumented behavior
 
 User code which depends on any behavior of the package which is undocumented is unsupported.
+
+### Requirements for the Package
+
+For packages this means that documentation only change can be considered breaking, and all behavior users need should be documented.
+Packages should be careful to avoid overspecifying behavior, for example a function which currently does not support a case and throws, but may handle it properly in the future should not document that it throws an exception in that case. It can instead document that case is unsupported, or that it throws an exception if the case is unsupported and otherwise works.
 
 ## Imports for other than documented package entry points
 
