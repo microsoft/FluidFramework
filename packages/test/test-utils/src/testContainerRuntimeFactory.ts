@@ -110,10 +110,7 @@ export const createTestContainerRuntimeFactory = (
 			await (runtime.getAliasedDataStoreEntryPoint?.("default") ??
 				(
 					runtime as any as {
-						getRootDataStore(
-							id: string,
-							wait?: boolean,
-						): Promise<backCompat_IFluidRouter>;
+						getRootDataStore(id: string, wait?: boolean): Promise<backCompat_IFluidRouter>;
 					}
 				).getRootDataStore("default"));
 		}
@@ -166,10 +163,7 @@ export const createTestContainerRuntimeFactory = (
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
 				// eslint-disable-next-line import/no-deprecated
-				requestHandler: buildRuntimeRequestHandler(
-					getDefaultObject,
-					...this.requestHandlers,
-				),
+				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
 				provideEntryPoint,
 				// ! This prop is needed for back-compat. Can be removed in 2.0.0-internal.8.0.0
 				initializeEntryPoint: provideEntryPoint,

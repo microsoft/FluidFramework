@@ -11,7 +11,7 @@ import {
 	SchemaBuilderBase,
 } from "../../../feature-libraries/index.js";
 import { TreeStatus } from "../../../../dist/index.js";
-import { EmptyKey, FieldKey, MapTree } from "../../../core/index.js";
+import { EmptyKey, type FieldKey, type MapTree } from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -31,7 +31,10 @@ describe("MapTreeNodes", () => {
 		"FieldNode",
 		FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.string]),
 	);
-	const objectSchema = schemaBuilder.object("Object", { map: mapSchema, field: fieldNodeSchema });
+	const objectSchema = schemaBuilder.object("Object", {
+		map: mapSchema,
+		field: fieldNodeSchema,
+	});
 	// #endregion
 
 	// #region The `MapTree`s used to construct the `MapTreeNode`s

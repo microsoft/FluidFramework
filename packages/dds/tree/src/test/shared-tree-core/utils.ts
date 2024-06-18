@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { ICodecOptions } from "../../codec/index.js";
+import type { ICodecOptions } from "../../codec/index.js";
 import { RevisionTagCodec, TreeStoredSchemaRepository } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
+	type DefaultChangeset,
+	type DefaultEditBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
@@ -23,11 +23,11 @@ import {
 	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import {
-	ChangeEnricherReadonlyCheckout,
-	ResubmitMachine,
-	SharedTreeBranch,
+	type ChangeEnricherReadonlyCheckout,
+	type ResubmitMachine,
+	type SharedTreeBranch,
 	SharedTreeCore,
-	Summarizable,
+	type Summarizable,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert } from "assert";

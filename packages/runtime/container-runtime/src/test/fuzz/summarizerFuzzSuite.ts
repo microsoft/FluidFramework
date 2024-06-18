@@ -279,7 +279,10 @@ function getSaveInfo(
 	if (!directory) {
 		return { saveOnFailure: false, saveOnSuccess: false };
 	}
-	return { saveOnFailure: { path: path.join(directory, `${seed}.json`) }, saveOnSuccess: false };
+	return {
+		saveOnFailure: { path: path.join(directory, `${seed}.json`) },
+		saveOnSuccess: false,
+	};
 }
 
 type InternalOptions = Omit<SummarizerFuzzSuiteOptions, "only" | "skip"> & {
