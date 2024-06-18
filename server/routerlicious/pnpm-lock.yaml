@@ -28,14 +28,14 @@ importers:
         specifier: file:../../tools/changelog-generator-wrapper
         version: file:../../tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@microsoft/api-documenter':
         specifier: ^7.21.6
         version: 7.22.21
@@ -73,14 +73,14 @@ importers:
   packages/gitresources:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -119,14 +119,14 @@ importers:
         version: link:../services-core
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -219,14 +219,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -328,14 +328,14 @@ importers:
         version: 8.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -419,14 +419,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)(webpack-cli@4.10.0)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)(webpack-cli@4.10.0)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -558,14 +558,14 @@ importers:
         version: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -619,14 +619,14 @@ importers:
         version: /events@3.3.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -731,14 +731,14 @@ importers:
         version: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -876,14 +876,14 @@ importers:
         version: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1054,14 +1054,14 @@ importers:
         version: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1166,14 +1166,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1260,14 +1260,14 @@ importers:
         version: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1318,14 +1318,14 @@ importers:
         version: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1394,14 +1394,14 @@ importers:
         version: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1455,14 +1455,14 @@ importers:
         version: 5.6.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1579,14 +1579,14 @@ importers:
         version: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1667,14 +1667,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1773,14 +1773,14 @@ importers:
         version: 4.5.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1900,14 +1900,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.39.0
-        version: 0.39.0(@types/node@18.17.6)
+        specifier: ^0.39.0-264124
+        version: 0.39.0-264124(@types/node@18.17.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -2169,10 +2169,6 @@ packages:
       safe-buffer: 5.1.2
     transitivePeerDependencies:
       - supports-color
-
-  /@andrewbranch/untar.js@1.0.3:
-    resolution: {integrity: sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw==}
-    dev: true
 
   /@aws-crypto/crc32@3.0.0:
     resolution: {integrity: sha512-IzSgsrxUcsrejQbPVilIKy16kAT52EwB6zSaI+M3xxIhKh5+aldEyvI+z6erM7TCLB2BJsFrtHjp6/4/sr+3dA==}
@@ -3618,15 +3614,14 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/build-cli@0.39.0(@types/node@18.17.6):
-    resolution: {integrity: sha512-6YA9Bnm+url3ZRrIf+dwePhv1z30oxazimuEswFWocPQDCDrOcepE4OVEcwi85/lRjN14LklJkwww7YBQXn2Bg==}
-    engines: {node: '>=18.17.1'}
+  /@fluid-tools/build-cli@0.39.0-264124(@types/node@18.17.6):
+    resolution: {integrity: sha512-KOPn6+tXwkV2Ggn0YwGBHNtz4i+16HC8mmA2/nUY0gt2jDNI3sPhmx3wXlGwFdHkbsI3T7fPqbsOpuSr44fgEg==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/version-tools': 0.39.0
-      '@fluidframework/build-tools': 0.39.0(@types/node@18.17.6)
-      '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/build-tools': 0.39.0-264124(@types/node@18.17.6)
+      '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
       '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
@@ -3636,23 +3631,22 @@ packages:
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.63.0(@types/node@18.17.6)
       async: 3.2.5
-      chalk: 5.3.0
+      chalk: 2.4.2
       change-case: 3.1.0
       danger: 11.3.1
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
       execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.2.0
+      fs-extra: 9.1.0
       globby: 11.1.0
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
       json5: 2.2.3
-      jssm: 5.98.2
+      jssm: 5.89.2
       latest-version: 5.1.0
       minimatch: 7.4.6
-      node-fetch: 3.3.2
+      node-fetch: 2.7.0
       npm-check-updates: 16.14.20
       oclif: 4.10.1
       prettier: 3.2.5
@@ -3681,15 +3675,14 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/build-cli@0.39.0(@types/node@18.17.6)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-6YA9Bnm+url3ZRrIf+dwePhv1z30oxazimuEswFWocPQDCDrOcepE4OVEcwi85/lRjN14LklJkwww7YBQXn2Bg==}
-    engines: {node: '>=18.17.1'}
+  /@fluid-tools/build-cli@0.39.0-264124(@types/node@18.17.6)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-KOPn6+tXwkV2Ggn0YwGBHNtz4i+16HC8mmA2/nUY0gt2jDNI3sPhmx3wXlGwFdHkbsI3T7fPqbsOpuSr44fgEg==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/version-tools': 0.39.0
-      '@fluidframework/build-tools': 0.39.0(@types/node@18.17.6)(webpack-cli@4.10.0)
-      '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/build-tools': 0.39.0-264124(@types/node@18.17.6)(webpack-cli@4.10.0)
+      '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
       '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.17.6)
       '@oclif/core': 3.26.5
       '@oclif/plugin-autocomplete': 3.0.16
@@ -3699,23 +3692,22 @@ packages:
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.63.0(@types/node@18.17.6)
       async: 3.2.5
-      chalk: 5.3.0
+      chalk: 2.4.2
       change-case: 3.1.0
       danger: 11.3.1
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
       execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.2.0
+      fs-extra: 9.1.0
       globby: 11.1.0
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
       json5: 2.2.3
-      jssm: 5.98.2
+      jssm: 5.89.2
       latest-version: 5.1.0
       minimatch: 7.4.6
-      node-fetch: 3.3.2
+      node-fetch: 2.7.0
       npm-check-updates: 16.14.20
       oclif: 4.10.1
       prettier: 3.2.5
@@ -3744,9 +3736,9 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools@0.39.0:
-    resolution: {integrity: sha512-HWZxKOnbfpdlI9hNVD72b6PZcg+DCO1bFnx30gYacTYXQZOZltD/v+pMXfgBqvkfN6z4kGQlBDjUZrkuU3FGuA==}
-    engines: {node: '>=18.17.1'}
+  /@fluid-tools/version-tools@0.39.0-264124:
+    resolution: {integrity: sha512-CVq50WXgAH4gJUu2Ghzq7x3//gWCEZc8cPC5qD6CT5eiFOg5GLEf35bKjOSMj+fqIUigtoWj1j+uIUhnddwYLQ==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 3.26.5
@@ -3766,13 +3758,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.39.0(@types/node@18.17.6):
-    resolution: {integrity: sha512-z6c5x7WkOQL/X01SY/lfUcRr7OohlfzAneKi2J6q/jBjWBLoyaQcnmU6CNeGC3xQh0mO480sa0Iei4irHqKkUA==}
-    engines: {node: '>=18.17.1'}
+  /@fluidframework/build-tools@0.39.0-264124(@types/node@18.17.6):
+    resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.39.0
-      '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.63.0(@types/node@18.17.6)
@@ -3784,7 +3776,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       detect-indent: 6.1.0
       find-up: 7.0.0
-      fs-extra: 11.2.0
+      fs-extra: 9.1.0
       glob: 7.2.3
       ignore: 5.3.0
       json5: 2.2.3
@@ -3808,13 +3800,13 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/build-tools@0.39.0(@types/node@18.17.6)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-z6c5x7WkOQL/X01SY/lfUcRr7OohlfzAneKi2J6q/jBjWBLoyaQcnmU6CNeGC3xQh0mO480sa0Iei4irHqKkUA==}
-    engines: {node: '>=18.17.1'}
+  /@fluidframework/build-tools@0.39.0-264124(@types/node@18.17.6)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-b3Msu343idUVQb8PzQMdcwANT249/Rbz0CrMSOD/NhqCvZ4uXilBUJi6V0Eq1YPQiAl6VJlywpjgGNCemSg3Rw==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.39.0
-      '@fluidframework/bundle-size-tools': 0.39.0(webpack-cli@4.10.0)
+      '@fluid-tools/version-tools': 0.39.0-264124
+      '@fluidframework/bundle-size-tools': 0.39.0-264124(webpack-cli@4.10.0)
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.63.0(@types/node@18.17.6)
@@ -3826,7 +3818,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       detect-indent: 6.1.0
       find-up: 7.0.0
-      fs-extra: 11.2.0
+      fs-extra: 9.1.0
       glob: 7.2.3
       ignore: 5.3.0
       json5: 2.2.3
@@ -3850,8 +3842,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.39.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-X1eaDPuvQ3BHhB4+COK1sEauQxyRcXZ8aZdhqETASgLJqL3VqMlCEGqu3uGsENSkG55BU0zyFBTziZiW4aRIRQ==}
+  /@fluidframework/bundle-size-tools@0.39.0-264124(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-nVRbK5X1SnRoZRA6jkxKYtDQ5cRZ1oH6XBJxkvwoPEUsjPNHaco+juwsMDucu0oBA/FnMhOZEz5DtiQz4sBbgQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -7180,6 +7172,15 @@ packages:
       uri-js: 4.4.1
     dev: true
 
+  /ajv@8.12.0:
+    resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
+    dependencies:
+      fast-deep-equal: 3.1.3
+      json-schema-traverse: 1.0.0
+      require-from-string: 2.0.2
+      uri-js: 4.4.1
+    dev: true
+
   /ajv@8.13.0:
     resolution: {integrity: sha512-PRA911Blj99jR5RMeTunVbNXMF6Lp4vZXnk5GQjcnUWUTsrXtekg/pnmFFI2u/I36Y/2bITGS30GZCXei6uNkA==}
     dependencies:
@@ -7303,7 +7304,6 @@ packages:
   /are-we-there-yet@3.0.1:
     resolution: {integrity: sha512-QZW4EDmGwlYur0Yyf/b2uGucHQMa8aFUP7eu9ddR73vvhFyt4V0Vl3QHPcTNJ8l6qYOBdxgXdnBXQrHilfRQBg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
-    deprecated: This package is no longer supported.
     dependencies:
       delegates: 1.0.0
       readable-stream: 3.6.2
@@ -7479,6 +7479,11 @@ packages:
 
   /asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
+
+  /at-least-node@1.0.0:
+    resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
+    engines: {node: '>= 4.0.0'}
+    dev: true
 
   /available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
@@ -8609,11 +8614,6 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    dev: true
-
-  /data-uri-to-buffer@4.0.1:
-    resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
-    engines: {node: '>= 12'}
     dev: true
 
   /data-uri-to-buffer@6.0.1:
@@ -9758,18 +9758,6 @@ packages:
       sprintf-js: 1.1.2
       tmp: 0.0.33
 
-  /fetch-blob@3.2.0:
-    resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
-    engines: {node: ^12.20 || >= 14.13}
-    dependencies:
-      node-domexception: 1.0.0
-      web-streams-polyfill: 3.3.3
-    dev: true
-
-  /fflate@0.8.2:
-    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
-    dev: true
-
   /figures@3.2.0:
     resolution: {integrity: sha512-yaduQFRKLXYOGgEn6AZau90j3ggSOyiqXU0F9JZfeXYhNa+Jk4X+s45A2zg5jns87GAFa34BBm2kXw4XpNcbdg==}
     engines: {node: '>=8'}
@@ -9943,13 +9931,6 @@ packages:
       combined-stream: 1.0.8
       mime-types: 2.1.35
 
-  /formdata-polyfill@4.0.10:
-    resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
-    engines: {node: '>=12.20.0'}
-    dependencies:
-      fetch-blob: 3.2.0
-    dev: true
-
   /formidable@1.2.6:
     resolution: {integrity: sha512-KcpbcpuLNOwrEjnbpMC0gS+X8ciDoZE1kkqzat4a8vrprf+s9pKNQ/QIwWfbfs4ltgmFl3MD177SNTkve3BwGQ==}
     deprecated: 'Please upgrade to latest, formidable@v2 or formidable@v3! Check these notes: https://bit.ly/2ZEqIau'
@@ -9976,15 +9957,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /fs-extra@11.2.0:
-    resolution: {integrity: sha512-PmDi3uwK5nFuXh7XDTlVnS17xJS7vW36is2+w3xcv8SVxiB4NyATf4ctkVY5bkSjX0Y4nbvZCq1/EjtEyr9ktw==}
-    engines: {node: '>=14.14'}
-    dependencies:
-      graceful-fs: 4.2.11
-      jsonfile: 6.1.0
-      universalify: 2.0.1
-    dev: true
-
   /fs-extra@7.0.1:
     resolution: {integrity: sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==}
     engines: {node: '>=6 <7 || >=8'}
@@ -10001,6 +9973,16 @@ packages:
       graceful-fs: 4.2.11
       jsonfile: 4.0.0
       universalify: 0.1.2
+    dev: true
+
+  /fs-extra@9.1.0:
+    resolution: {integrity: sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      at-least-node: 1.0.0
+      graceful-fs: 4.2.11
+      jsonfile: 6.1.0
+      universalify: 2.0.1
     dev: true
 
   /fs-minipass@2.1.0:
@@ -10062,7 +10044,6 @@ packages:
   /gauge@4.0.4:
     resolution: {integrity: sha512-f9m+BEN5jkg6a0fZjleidjN51VE1X+mPFQ2DJ0uv1V39oCLCbsGe6yjbBnp7eK7z/+GAon99a3nHuqbuuthyPg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
-    deprecated: This package is no longer supported.
     dependencies:
       aproba: 2.0.0
       color-support: 1.1.3
@@ -10271,7 +10252,6 @@ packages:
   /glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -11437,8 +11417,8 @@ packages:
   /jsrsasign@11.0.0:
     resolution: {integrity: sha512-BtRwVKS+5dsgPpAtzJcpo5OoWjSs1/zllSBG0+8o8/aV0Ki76m6iZwHnwnsqoTdhfFZDN1XIdcaZr5ZkP+H2gg==}
 
-  /jssm@5.98.2:
-    resolution: {integrity: sha512-O2xBFBzZjLIN+wA5IA85XIaEan7wjvM2qegwVrVQPClbH/IEhI1GLkLEEfk+TPeHeW8pGOlrd84MnmTcDyxSIQ==}
+  /jssm@5.89.2:
+    resolution: {integrity: sha512-I70+UdH7KZs542loBlsh1xKDsT5Lx5RZWf6hKmujzgvSJj9DRymEe46HUCTd6+hzouIebuNwQo5I2ftMzfrhnQ==}
     engines: {node: '>=10.0.0'}
     dependencies:
       better_git_changelog: 1.6.2
@@ -12470,11 +12450,6 @@ packages:
     resolution: {integrity: sha512-qN8v/s2PAJwGUtr1/hYTpNKlD6Y9rc4p8KSmJXyGdYGZsDGKXrGThikLFP9OCHFeLeEpQzPwiAtdIvBLqm//Hw==}
     dev: true
 
-  /node-domexception@1.0.0:
-    resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
-    engines: {node: '>=10.5.0'}
-    dev: true
-
   /node-fetch@2.7.0:
     resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
     engines: {node: 4.x || >=6.0.0}
@@ -12485,15 +12460,6 @@ packages:
         optional: true
     dependencies:
       whatwg-url: 5.0.0
-    dev: true
-
-  /node-fetch@3.3.2:
-    resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-    dependencies:
-      data-uri-to-buffer: 4.0.1
-      fetch-blob: 3.2.0
-      formdata-polyfill: 4.0.10
     dev: true
 
   /node-gyp-build@4.6.0:
@@ -12749,7 +12715,6 @@ packages:
   /npmlog@6.0.2:
     resolution: {integrity: sha512-/vBvz5Jfr9dT/aFWd0FIRf+T/Q2WBsLENygUaFUqstqsycmZAP/t5BvFJTK0viFmSUxiUKTUplWy5vt+rvKIxg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
-    deprecated: This package is no longer supported.
     dependencies:
       are-we-there-yet: 3.0.1
       console-control-strings: 1.1.0
@@ -13778,7 +13743,6 @@ packages:
   /read-package-json@6.0.4:
     resolution: {integrity: sha512-AEtWXYfopBj2z5N5PbkAOeNHRPUg5q+Nen7QLxV8M2zJq1ym6/lCz3fYNTCXe19puu2d06jfHhrP7v/S2PtMMw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-    deprecated: This package is no longer supported. Please use @npmcli/package-json instead.
     dependencies:
       glob: 10.3.10
       json-parse-even-better-errors: 3.0.1
@@ -15066,7 +15030,7 @@ packages:
     resolution: {integrity: sha512-Y4X9zqrCftUhMeH2EptSSERdVKt/nEdijTOacGD/97EKjhQ/Qs8RTlEGABSJNNN8lac9kheH+af7yAkEWlgneA==}
     engines: {node: '>=10.0.0'}
     dependencies:
-      ajv: 8.13.0
+      ajv: 8.12.0
       lodash.truncate: 4.4.2
       slice-ansi: 4.0.0
       string-width: 4.2.3
@@ -15778,11 +15742,6 @@ packages:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
     dependencies:
       defaults: 1.0.4
-    dev: true
-
-  /web-streams-polyfill@3.3.3:
-    resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
-    engines: {node: '>= 8'}
     dev: true
 
   /webidl-conversions@3.0.1:
