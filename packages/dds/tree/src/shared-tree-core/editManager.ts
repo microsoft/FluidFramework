@@ -43,9 +43,7 @@ import {
 import { createEmitter } from "../events/index.js";
 import {
 	TelemetryEventBatcher,
-	loggerToMonitoringContext,
 	type ITelemetryLoggerExt,
-	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
@@ -133,7 +131,6 @@ export class EditManager<
 	private readonly localCommits: GraphCommit<TChangeset>[] = [];
 
 	private readonly telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStats> | undefined;
-	private readonly mc: MonitoringContext | undefined;
 
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
@@ -152,7 +149,7 @@ export class EditManager<
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
 
 		if (this.logger !== undefined) {
-			this.mc = loggerToMonitoringContext(this.logger);
+			const THRESHOLD = 1000;
 
 			this.telemetryEventBatcher = new TelemetryEventBatcher(
 				{
@@ -160,7 +157,7 @@ export class EditManager<
 					category: "performance",
 				},
 				this.logger,
-				this.mc.config.getNumber("Fluid.SharedTree.RebaseSampling") ?? 1000,
+				THRESHOLD,
 			);
 		}
 
