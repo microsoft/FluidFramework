@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ChangesetLocalId } from "../../../core/index.js";
+import type { ChangesetLocalId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";

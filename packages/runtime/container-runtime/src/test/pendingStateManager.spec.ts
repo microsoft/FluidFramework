@@ -302,7 +302,7 @@ describe("Pending State Manager", () => {
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					contents: { prop1: true },
-					sequenceNumber: i,
+					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
 				process(messages);
@@ -396,8 +396,7 @@ describe("Pending State Manager", () => {
 					undefined,
 				);
 				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage &
-						UnknownContainerRuntimeMessage,
+					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
 				);
 			});
 		});
@@ -536,7 +535,9 @@ describe("Pending State Manager", () => {
 			},
 		];
 
-		function createPendingStateManager(pendingStates?: IPendingMessage[]): PendingStateManager {
+		function createPendingStateManager(
+			pendingStates?: IPendingMessage[],
+		): PendingStateManager {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{

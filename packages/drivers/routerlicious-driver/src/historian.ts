@@ -80,7 +80,7 @@ export class Historian implements IHistorian {
 							headers: new Map(),
 							propsToLog: {},
 							requestUrl: "",
-					  }
+						}
 					: Promise.reject<IR11sResponse<IGitCommitDetails[]>>(error),
 			);
 	}

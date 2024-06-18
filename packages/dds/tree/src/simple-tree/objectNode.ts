@@ -5,23 +5,23 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	cursorForMapTreeNode,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexObjectNodeSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
+	type FlexAllowedTypes,
+	type FlexObjectNodeSchema,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
-	MapTreeNode,
+	type MapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
 	prepareContentForHydration,
@@ -29,23 +29,23 @@ import {
 import { getFlexNode } from "./proxyBinding.js";
 import {
 	NodeKind,
-	ImplicitFieldSchema,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
+	type ImplicitFieldSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
-	TreeFieldFromImplicitField,
-	InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type TreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
+	type FieldSchema,
 	normalizeFieldSchema,
 	type,
-	ImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "./types.js";
-import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
+import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
+import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
@@ -75,6 +75,21 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 /**
+ * Type utility for determining whether or not an implicit field schema has a default value.
+ *
+ * @privateRemarks
+ * TODO: Account for field schemas with default value providers.
+ * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
+ *
+ * @public
+ */
+export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
+	FieldKind.Optional | FieldKind.Identifier
+>
+	? true
+	: false;
+
+/**
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
@@ -89,9 +104,16 @@ export type TreeObjectNode<
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+> = FlattenKeys<
+	{
+		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+	} & {
+		// Field does not have a known default, make it required:
+		readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false
+			? Property
+			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+	}
+>;
 
 /**
  * Maps from simple field keys ("view" keys) to information about the field.

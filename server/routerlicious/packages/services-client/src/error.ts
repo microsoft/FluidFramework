@@ -4,6 +4,17 @@
  */
 
 /**
+ * Represents the internal error code in NetworkError
+ * @internal
+ */
+export enum InternalErrorCode {
+	/**
+	 * The cluster is under draining.
+	 */
+	ClusterDraining = "ClusterDraining",
+}
+
+/**
  * Represents the details associated with a {@link NetworkError}.
  * @internal
  */
@@ -38,6 +49,11 @@ export interface INetworkErrorDetails {
 	 * Refer to {@link NetworkError.source}.
 	 */
 	source?: string;
+	/**
+	 * Represents the internal error code in NetworkError.
+	 * Refer to {@link NetworkError.internalErrorCode}.
+	 */
+	internalErrorCode?: InternalErrorCode;
 }
 
 /**
@@ -90,6 +106,12 @@ export class NetworkError extends Error {
 		 * @public
 		 */
 		public readonly source?: string,
+		/**
+		 * Optional value indicating the internal error code in NetworkError. It can be used
+		 * with code to provide more information of an error
+		 * @internal
+		 */
+		public readonly internalErrorCode?: InternalErrorCode,
 	) {
 		super(message);
 		this.name = "NetworkError";
@@ -106,7 +128,8 @@ export class NetworkError extends Error {
 			this.canRetry === undefined &&
 			this.isFatal === undefined &&
 			this.retryAfterMs === undefined &&
-			this.source === undefined
+			this.source === undefined &&
+			this.internalErrorCode === undefined
 		) {
 			return this.message;
 		}
@@ -118,6 +141,7 @@ export class NetworkError extends Error {
 			retryAfter: this.retryAfter,
 			retryAfterMs: this.retryAfterMs,
 			source: this.source,
+			internalErrorCode: this.internalErrorCode,
 		};
 	}
 
@@ -133,6 +157,7 @@ export class NetworkError extends Error {
 			retryAfterMs: this.retryAfterMs,
 			retryAfter: this.retryAfter,
 			source: this.source,
+			internalErrorCode: this.internalErrorCode,
 		};
 	}
 }
@@ -168,6 +193,7 @@ export function createFluidServiceNetworkError(
 	let isFatal: boolean | undefined;
 	let retryAfter: number | undefined;
 	let source: string | undefined;
+	let internalErrorCode: InternalErrorCode | undefined;
 
 	if (errorData && typeof errorData === "object") {
 		message = errorData.message ?? "Unknown Error";
@@ -175,6 +201,7 @@ export function createFluidServiceNetworkError(
 		isFatal = errorData.isFatal;
 		retryAfter = errorData.retryAfter;
 		source = errorData.source;
+		internalErrorCode = errorData.internalErrorCode;
 	} else if (errorData && typeof errorData === "string") {
 		message = errorData;
 	} else {
@@ -192,6 +219,7 @@ export function createFluidServiceNetworkError(
 				false /* isFatal */,
 				undefined /* retryAfterMs */,
 				source,
+				internalErrorCode,
 			);
 		case 413:
 		case 422:
@@ -202,6 +230,7 @@ export function createFluidServiceNetworkError(
 				isFatal ?? false /* isFatal */,
 				canRetry ? retryAfter : undefined,
 				source,
+				internalErrorCode,
 			);
 		case 429:
 			return new NetworkError(
@@ -211,6 +240,7 @@ export function createFluidServiceNetworkError(
 				false /* isFatal */,
 				retryAfter,
 				source,
+				internalErrorCode,
 			);
 		case 500: {
 			return new NetworkError(
@@ -220,6 +250,7 @@ export function createFluidServiceNetworkError(
 				isFatal ?? false /* isFatal */,
 				canRetry ? retryAfter : undefined,
 				source,
+				internalErrorCode,
 			);
 		}
 		case 502:
@@ -232,6 +263,7 @@ export function createFluidServiceNetworkError(
 				false /* isFatal */,
 				retryAfter,
 				source,
+				internalErrorCode,
 			);
 		default:
 			return new NetworkError(
@@ -241,6 +273,7 @@ export function createFluidServiceNetworkError(
 				true /* isFatal */,
 				undefined /* retryAfterMs */,
 				source,
+				internalErrorCode,
 			);
 	}
 }

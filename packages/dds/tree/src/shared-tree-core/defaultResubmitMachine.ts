@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ChangeRebaser, GraphCommit } from "../core/index.js";
+import type { ChangeRebaser, GraphCommit } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
-import { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
+import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
 /**
  * Default implementation of {@link ResubmitMachine}.
@@ -107,7 +107,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	}
 
 	public peekNextCommit(): GraphCommit<TChange> {
-		assert(this.isInResubmitPhase, "No available commit to resubmit outside of resubmit phase");
+		assert(
+			this.isInResubmitPhase,
+			"No available commit to resubmit outside of resubmit phase",
+		);
 		return this.resubmitQueue[0];
 	}
 

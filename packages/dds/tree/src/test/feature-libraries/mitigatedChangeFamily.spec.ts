@@ -5,11 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import {
+import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	TaggedChange,
-	type ChangeEncodingContext,
+	ChangeEncodingContext,
 } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 import type { ICodecFamily } from "../../codec/index.js";
@@ -87,7 +87,10 @@ const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
-		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
+		assert.equal(
+			mitigatedReturningFamily.buildEditor(arg1),
+			returningFamily.buildEditor(arg1),
+		);
 		assert.equal(
 			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
 			returningRebaser.rebase(arg1, arg2, arg3),

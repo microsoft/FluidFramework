@@ -26,7 +26,11 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 /**
  * @internal
  */
-export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;
+export type SignalListener<T> = (
+	clientId: string,
+	local: boolean,
+	payload: Jsonable<T>,
+) => void;
 
 /**
  * ISignaler defines an interface for working with signals that is similar to the more common
@@ -142,7 +146,10 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
  * DataObject implementation of ISignaler for fluid-static plug-and-play.
  * Allows fluid-static users to get an ISignaler without a custom DataObject.
  */
-class SignalerClass extends DataObject<{ Events: IErrorEvent }> implements EventEmitter, ISignaler {
+class SignalerClass
+	extends DataObject<{ Events: IErrorEvent }>
+	implements EventEmitter, ISignaler
+{
 	private _signaler: InternalSignaler | undefined;
 	private get signaler(): InternalSignaler {
 		assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);

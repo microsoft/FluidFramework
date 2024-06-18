@@ -53,11 +53,9 @@ async function assertEventualConsistencyCore(
 				firstHandle,
 				secondHandle,
 				`Key not found or value not matching ` +
-					`key: ${key}, value in dir first at path ${
-						first.absolutePath
-					}: ${JSON.stringify(firstHandle)} and in second at path ${
-						second.absolutePath
-					}: ${JSON.stringify(secondHandle)}`,
+					`key: ${key}, value in dir first at path ${first.absolutePath}: ${JSON.stringify(
+						firstHandle,
+					)} and in second at path ${second.absolutePath}: ${JSON.stringify(secondHandle)}`,
 			);
 		} else {
 			assert.strictEqual(

@@ -157,7 +157,10 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		}
 
 		dataBinder.attachTo(workspace);
-		var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, "single");
+		var primitiveChildPset = PropertyFactory.create(
+			PrimitiveChildrenTemplate.typeid,
+			"single",
+		);
 
 		dataBinder.register("BINDING", PrimitiveChildrenTemplate.typeid, MyBinding);
 
@@ -178,7 +181,10 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		);
 
 		// Create PSet for inherited child typeid
-		var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, "single");
+		var primitiveChildPset = PropertyFactory.create(
+			PrimitiveChildrenTemplate.typeid,
+			"single",
+		);
 		expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 		dataBinder.attachTo(workspace);
 
@@ -331,7 +337,11 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		var anotherThingRemoveSpy = jest.fn();
 		var textRemoveSpy = jest.fn();
 		var nestedChildRemoveSpy = jest.fn();
-		ParentDataBinding.registerOnPath("another.nested.thing", ["remove"], anotherThingRemoveSpy);
+		ParentDataBinding.registerOnPath(
+			"another.nested.thing",
+			["remove"],
+			anotherThingRemoveSpy,
+		);
 		ParentDataBinding.registerOnPath("text", ["remove"], textRemoveSpy);
 		ParentDataBinding.registerOnPath("node.child", ["remove"], nestedChildRemoveSpy);
 		// Register the base (Child) typeid
@@ -366,7 +376,10 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		);
 
 		// Create PSet for inherited child typeid
-		var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, "single");
+		var primitiveChildPset = PropertyFactory.create(
+			PrimitiveChildrenTemplate.typeid,
+			"single",
+		);
 		expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 		dataBinder.attachTo(workspace);
 
@@ -451,7 +464,10 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		);
 		dataBinder.attachTo(workspace);
 
-		var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, "single");
+		var primitiveChildPset = PropertyFactory.create(
+			PrimitiveChildrenTemplate.typeid,
+			"single",
+		);
 		workspace.root.insert("myPrimitiveChildTemplate", primitiveChildPset);
 
 		// Expect the insertion of ranges to trigger onInsert messages
@@ -918,7 +934,10 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		);
 		dataBinder.attachTo(workspace);
 
-		var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, "single");
+		var primitiveChildPset = PropertyFactory.create(
+			PrimitiveChildrenTemplate.typeid,
+			"single",
+		);
 		workspace.root.insert("myPrimitiveChildTemplate", primitiveChildPset);
 
 		// Expect the insertion of ranges to trigger onInsert messages
@@ -1864,7 +1883,9 @@ describe("DataBinding.registerOnPath() should work for", function () {
 			collectionRemoveSpy,
 		);
 
-		dataBinder.register("BINDING", "NodeProperty", ParentDataBinding, { exactPath: "/parent" });
+		dataBinder.register("BINDING", "NodeProperty", ParentDataBinding, {
+			exactPath: "/parent",
+		});
 		dataBinder.register("BINDING", ArrayContainerTemplate.typeid, InheritedChildDataBinding);
 		dataBinder.register("BINDING", MapContainerTemplate.typeid, InheritedChildDataBinding);
 		dataBinder.register("BINDING", ChildTemplate.typeid, ChildDataBinding);
@@ -1967,7 +1988,12 @@ describe("DataBinding.registerOnPath() should work for", function () {
 			);
 		expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
 		dataBinder._resetDebugCounters();
-		var nestedMap = childArrayProperty.get(["2", "mapCollectionContainer", "nested", "subMap"]);
+		var nestedMap = childArrayProperty.get([
+			"2",
+			"mapCollectionContainer",
+			"nested",
+			"subMap",
+		]);
 		nestedMap.insert(
 			"one",
 			PropertyFactory.create(ChildTemplate.typeid, undefined, { text: "one" }),
@@ -2412,7 +2438,10 @@ describe("DataBinding.registerOnPath() should work for", function () {
 		);
 
 		// Create PSet for inherited child typeid
-		var primitiveChildPset = PropertyFactory.create(PrimitiveChildrenTemplate.typeid, "single");
+		var primitiveChildPset = PropertyFactory.create(
+			PrimitiveChildrenTemplate.typeid,
+			"single",
+		);
 		expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
 		dataBinder.attachTo(workspace);
 
@@ -2682,7 +2711,9 @@ describe("DataBinding.registerOnPath() should work for", function () {
 
 		// When this light is added, the best match is Object3D-1.0.0, so an Object3DDataBinding is created
 		scene.insert("light", PropertyFactory.create("autodesk.samples:Light3D-1.0.0"));
-		console.assert(dataBinder.resolve("scene.light", "BINDING") instanceof Object3DDataBinding);
+		console.assert(
+			dataBinder.resolve("scene.light", "BINDING") instanceof Object3DDataBinding,
+		);
 
 		// When this camera is added, the best match is the Camera3D-1.0.0 specialization,
 		// leading to a Camera3DDataBinding to be instantiated

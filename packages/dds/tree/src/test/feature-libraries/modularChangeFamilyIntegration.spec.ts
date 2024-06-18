@@ -6,16 +6,16 @@
 import { strict as assert } from "assert";
 
 import {
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	FieldKey,
-	FieldKindIdentifier,
-	RevisionTag,
-	TaggedChange,
-	UpPath,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type RevisionTag,
+	type TaggedChange,
+	type UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
@@ -26,11 +26,11 @@ import { leaf } from "../../domains/index.js";
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	FieldKindWithEditor,
-	ModularChangeset,
+	type FieldKindWithEditor,
+	type ModularChangeset,
 	cursorForJsonableTreeNode,
-	SequenceField as SF,
-	EditDescription,
+	type SequenceField as SF,
+	type EditDescription,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -38,8 +38,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
@@ -52,7 +52,7 @@ import {
 	testChangeReceiver,
 } from "../utils.js";
 
-import {
+import type {
 	NodeChangeset,
 	NodeId,
 	// eslint-disable-next-line import/no-internal-modules
@@ -344,11 +344,7 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -496,9 +492,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [
-													{ count: 1, attach: { major: tag2, minor: 2 } },
-												],
+												local: [{ count: 1, attach: { major: tag2, minor: 2 } }],
 											},
 										],
 									]),

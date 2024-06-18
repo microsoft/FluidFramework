@@ -344,8 +344,7 @@
 				// Stop processing, if adding this key would make the chunk too big
 				if (
 					!in_forceInsertion &&
-					in_traversalState.currentChunk.size + insertSize >
-						in_traversalState.maxChunkSize
+					in_traversalState.currentChunk.size + insertSize > in_traversalState.maxChunkSize
 				) {
 					return CHUNK_SIZE_EXCEEDED;
 				}
@@ -403,8 +402,7 @@
 				// Stop processing, if adding this key would make the chunk too big
 				if (
 					!in_forceInsertion &&
-					in_traversalState.currentChunk.size + insertSize >
-						in_traversalState.maxChunkSize
+					in_traversalState.currentChunk.size + insertSize > in_traversalState.maxChunkSize
 				) {
 					return CHUNK_SIZE_EXCEEDED;
 				}
@@ -531,11 +529,7 @@
 			chunkCS: newChunkCS,
 			chunkCSIsEmpty: true,
 			path: in_pathBuilder(state.path, in_key, in_traversalState.stack.length - 1),
-			keys: _extractKeys(
-				newOriginalCS,
-				in_sortKeyEncoder,
-				in_traversalState.stack.length - 1,
-			),
+			keys: _extractKeys(newOriginalCS, in_sortKeyEncoder, in_traversalState.stack.length - 1),
 			useSquareBrackets: context === "map" || context === "set" || context === "array",
 			currentIndex: 0,
 			currentKey: in_key,
@@ -572,8 +566,8 @@
 			// we have to continue with the next adjacent chunk (otherwise we might
 			// skip intermediate chunks)
 			chunkIndex =
-				in_traversalState.chunks[in_traversalState.chunks.length - 2]
-					.correspondingChunkIndex + 1;
+				in_traversalState.chunks[in_traversalState.chunks.length - 2].correspondingChunkIndex +
+				1;
 		}
 
 		// Update the corresponding chunk index
@@ -581,7 +575,8 @@
 
 		// Set the left path boundary. This will correctly return undefined at the index 0
 		// indicating that there is no boundary for the leftmost chunk
-		in_traversalState.currentChunk.startPath = in_traversalState.pathBoundaries[chunkIndex - 1];
+		in_traversalState.currentChunk.startPath =
+			in_traversalState.pathBoundaries[chunkIndex - 1];
 
 		// Update the right most boundary. This can be undefined, if we are already
 		// behind the last path in the boundaries array
@@ -644,9 +639,7 @@
 			maxChunkSize: in_chunkSize || Infinity,
 			pathBoundaries: in_pathBoundaries,
 			currentPathRightBoundary:
-				in_pathBoundaries && in_pathBoundaries.length > 0
-					? in_pathBoundaries[0]
-					: undefined,
+				in_pathBoundaries && in_pathBoundaries.length > 0 ? in_pathBoundaries[0] : undefined,
 			firstModifyWithoutContent: undefined,
 			insertSequenceWithoutLeaf: true,
 			chunkSizeBeforeFirstModifyWithoutContent: undefined,
@@ -775,8 +768,7 @@
 						traversalState,
 						key,
 						false,
-						traversalState.firstInsertInChunk ||
-							traversalState.insertSequenceWithoutLeaf,
+						traversalState.firstInsertInChunk || traversalState.insertSequenceWithoutLeaf,
 					);
 					traversalState.firstModifyWithoutContent = undefined;
 					traversalState.firstInsertInChunk = false;
@@ -812,9 +804,7 @@
 				traversalState.firstInsertInChunk = true;
 				traversalState.insertSequenceWithoutLeaf = true;
 
-				if (
-					!_.some(traversalState.stack, (x) => x.insertOrRemoveOverlapsWithRightBoundary)
-				) {
+				if (!_.some(traversalState.stack, (x) => x.insertOrRemoveOverlapsWithRightBoundary)) {
 					firstDescent = true;
 				}
 
@@ -850,8 +840,7 @@
 				if (traversalState.firstModifyWithoutContent !== undefined) {
 					let parentCS =
 						traversalState.stack[traversalState.firstModifyWithoutContent - 1].chunkCS;
-					let key =
-						traversalState.stack[traversalState.firstModifyWithoutContent].currentKey;
+					let key = traversalState.stack[traversalState.firstModifyWithoutContent].currentKey;
 					if (key.operation === STATIC_PROPERTY) {
 						delete parentCS[key.typeid][key.key];
 						if (_.isEmpty(parentCS[key.typeid])) {
@@ -883,16 +872,13 @@
 			//  We now remove it from the stack to continue processing its parent.
 			if (state === traversalState.stack[traversalState.stack.length - 1]) {
 				// If the operation overlaps with the right boundary, we have to insert it into all overlapping chunks
-				if (
-					_.some(traversalState.stack, (x) => x.insertOrRemoveOverlapsWithRightBoundary)
-				) {
+				if (_.some(traversalState.stack, (x) => x.insertOrRemoveOverlapsWithRightBoundary)) {
 					let path = state.path;
 
 					for (;;) {
 						let pathOverlapsWithRightBoundary =
 							traversalState.currentPathRightBoundary &&
-							traversalState.currentPathRightBoundary.substr(0, path.length) ===
-								path &&
+							traversalState.currentPathRightBoundary.substr(0, path.length) === path &&
 							traversalState.currentPathRightBoundary !== path;
 						if (!pathOverlapsWithRightBoundary) {
 							break;
