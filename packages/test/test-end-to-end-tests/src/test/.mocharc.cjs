@@ -9,6 +9,10 @@ const packageDir = `${__dirname}/../..`;
 const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
 const config = getFluidTestMochaConfig(packageDir);
 
+// TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves.
+// AB#7856
+config.exit = true;
+
 // Heuristic to decide if we're running against our internal r11s deployment in AKS:
 // driver set to 'r11s' + r11sEndpointName set to 'r11s' or not specified at all (if specified with a value other
 // than 'r11s' we're probably running against frs or local docker).
