@@ -280,9 +280,13 @@ export class Session {
 		let right = arr.length - 1;
 		while (left <= right) {
 			const mid = Math.floor((left + right) / 2);
-			const c = comparator(search, arr[mid]);
+			const value = arr[mid];
+			if (value === undefined) {
+				return undefined;
+			}
+			const c = comparator(search, value);
 			if (c === 0) {
-				return arr[mid]; // Found the target, return its index.
+				return value; // Found the target, return its index.
 			} else if (c > 0) {
 				left = mid + 1; // Continue search on right half.
 			} else {
@@ -293,11 +297,12 @@ export class Session {
 	}
 
 	public equals(other: Session): boolean {
-		for (let i = 0; i < this.clusterChain.length; i++) {
-			if (!clustersEqual(this.clusterChain[i], other.clusterChain[i])) {
+		for (const [index, value] of Object.entries(this.clusterChain)) {
+			if (!clustersEqual(value, other.clusterChain[index])) {
 				return false;
 			}
 		}
+
 		return this.sessionUuid === other.sessionUuid;
 	}
 }

@@ -72,17 +72,18 @@ export class SessionSpaceNormalizer {
 			ranges.push([genCount, count]);
 		}
 
-		if (ranges.length === 0) {
+		const firstEntry = ranges[0];
+		if (ranges.length === 0 || firstEntry === undefined) {
 			return ranges;
 		}
 
 		// now we touch up the first and last ranges to ensure that if they contain the
 		// queried IDs they are trimmed to start/end with the queried IDs
-		const [baseGenCount, baseCount] = ranges[0];
-		if (this.rangeContains(ranges[0], firstGenCount)) {
+		const [baseGenCount, baseCount] = firstEntry;
+		if (this.rangeContains(firstEntry, firstGenCount)) {
 			ranges[0] = [firstGenCount, baseCount - (firstGenCount - baseGenCount)];
 			assert(
-				this.rangeContains(ranges[0], firstGenCount),
+				this.rangeContains(firstEntry, firstGenCount),
 				0x952 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {
@@ -93,11 +94,13 @@ export class SessionSpaceNormalizer {
 		}
 
 		const lastRangeIndex = ranges.length - 1;
-		const [limitGenCount, limitCount] = ranges[lastRangeIndex];
-		if (this.rangeContains(ranges[lastRangeIndex], lastGenCount)) {
+		const lastRange = ranges[lastRangeIndex];
+		assert(lastRange !== undefined, 0x956 /* Expected the last range to exist */);
+		const [limitGenCount, limitCount] = lastRange;
+		if (this.rangeContains(lastRange, lastGenCount)) {
 			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
 			assert(
-				this.rangeContains(ranges[lastRangeIndex], lastGenCount),
+				this.rangeContains(lastRange, lastGenCount),
 				0x954 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {
