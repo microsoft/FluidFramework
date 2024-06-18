@@ -41,7 +41,8 @@ export enum ComputedEnum {
 // Define these enum values with functions to avoid static analysis determining their specific value.
 export const numericEnumValue = ((): NumericEnum => NumericEnum.one)();
 export const stringEnumValue = ((): StringEnum => StringEnum.a)();
-export const constHeterogenousEnumValue = ((): ConstHeterogenousEnum => ConstHeterogenousEnum.a)();
+export const constHeterogenousEnumValue = ((): ConstHeterogenousEnum =>
+	ConstHeterogenousEnum.a)();
 export const computedEnumValue = ((): ComputedEnum => ComputedEnum.computed)();
 
 // #region Object (record) types
@@ -71,7 +72,9 @@ export interface ObjectWithOptionalNumber {
 }
 export const objectWithOptionalNumberNotPresent: ObjectWithOptionalNumber = {};
 // @ts-expect-error exactOptionalPropertyTypes requires `optNumber?: number` to allow `undefined` for this assignment
-export const objectWithOptionalNumberUndefined: ObjectWithOptionalNumber = { optNumber: undefined };
+export const objectWithOptionalNumberUndefined: ObjectWithOptionalNumber = {
+	optNumber: undefined,
+};
 export const objectWithOptionalNumberDefined: ObjectWithOptionalNumber = { optNumber: 4 };
 export interface ObjectWithNumberOrUndefined {
 	numOrUndef: number | undefined;
@@ -79,7 +82,9 @@ export interface ObjectWithNumberOrUndefined {
 export const objectWithNumberOrUndefinedUndefined: ObjectWithNumberOrUndefined = {
 	numOrUndef: undefined,
 };
-export const objectWithNumberOrUndefinedNumbered: ObjectWithNumberOrUndefined = { numOrUndef: 5.2 };
+export const objectWithNumberOrUndefinedNumbered: ObjectWithNumberOrUndefined = {
+	numOrUndef: 5.2,
+};
 export const objectWithOptionalUndefinedEnclosingRequiredUndefined: {
 	opt?: { requiredUndefined: number | undefined };
 } = { opt: { requiredUndefined: undefined } };

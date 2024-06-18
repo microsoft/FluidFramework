@@ -79,7 +79,10 @@ import {
  * @param expected - alternate value to compare against after round-trip
  * @returns the round-tripped value cast to the filter result type
  */
-function passThru<T>(v: JsonSerializable<T>, expected?: JsonDeserialized<T>): JsonSerializable<T> {
+function passThru<T>(
+	v: JsonSerializable<T>,
+	expected?: JsonDeserialized<T>,
+): JsonSerializable<T> {
 	const stringified = JSON.stringify(v);
 	const result = JSON.parse(stringified) as JsonDeserialized<T>;
 	assert.deepStrictEqual(result, expected ?? v);
@@ -142,9 +145,7 @@ describe("JsonSerializable", () => {
 				passThru(null) satisfies null;
 			});
 			it("object with literals", () => {
-				const objectResult = passThru(
-					objectWithLiterals,
-				) satisfies typeof objectWithLiterals;
+				const objectResult = passThru(objectWithLiterals) satisfies typeof objectWithLiterals;
 				assert.ok(
 					objectWithLiterals instanceof Object,
 					"objectWithLiterals is at least a plain Object",
@@ -190,10 +191,7 @@ describe("JsonSerializable", () => {
 			});
 
 			it("object with optional `undefined` property is supported", () => {
-				passThru(
-					objectWithOptionalUndefined,
-					{},
-				) satisfies typeof objectWithOptionalUndefined;
+				passThru(objectWithOptionalUndefined, {}) satisfies typeof objectWithOptionalUndefined;
 			});
 
 			it("object with possible type recursion through union", () => {

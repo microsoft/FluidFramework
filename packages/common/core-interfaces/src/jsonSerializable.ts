@@ -60,51 +60,53 @@ import type { JsonTypeWith } from "./jsonType.js";
  * @beta
  */
 export type JsonSerializable<T, TReplaced = never> = /* test for 'any' */ boolean extends (
-	T extends never ? true : false
+	T extends never
+		? true
+		: false
 )
 	? /* 'any' => */ JsonTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
-	? /* 'unknown' => */ JsonTypeWith<TReplaced>
-	: /* test for JSON Encodable primitive types or given alternate */ T extends
-			| null
-			| boolean
-			| number
-			| string
-			| TReplaced
-	? /* primitive types => */ T
-	: // eslint-disable-next-line @typescript-eslint/ban-types
-	/* test for not a function */ Extract<T, Function> extends never
-	? /* not a function => test for object */ T extends object
-		? /* object => test for array */ T extends readonly (infer _)[]
-			? /* array => */ {
-					/* array items may not not allow undefined */
-					/* use homomorphic mapped type to preserve tuple type */
-					[K in keyof T]: JsonForArrayItem<
-						T[K],
-						TReplaced,
-						JsonSerializable<T[K], TReplaced | T>
-					>;
-			  }
-			: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
-			? /* `object` => */ JsonTypeWith<TReplaced>
-			: /* test for enum like types */ IsEnumLike<T> extends true
-			? /* enum or similar simple type (return as-is) => */ T
-			: /* property bag => */ FlattenIntersection<
-					{
-						/* required properties are recursed and may not have undefined values. */
-						[K in NonSymbolWithRequiredPropertyOf<T>]-?: undefined extends T[K]
-							? { ["error required property may not allow undefined value"]: never }
-							: JsonSerializable<T[K], TReplaced | T>;
-					} & {
-						/* optional properties are recursed and allowed to preserve undefined value type. */
-						[K in NonSymbolWithOptionalPropertyOf<T>]?: JsonSerializable<
-							T[K],
-							TReplaced | T | undefined
-						>;
-					} & {
-						/* symbol properties are rejected */
-						[K in keyof T & symbol]: never;
-					}
-			  >
-		: /* not an object => */ never
-	: /* function => */ never;
+		? /* 'unknown' => */ JsonTypeWith<TReplaced>
+		: /* test for JSON Encodable primitive types or given alternate */ T extends
+					| null
+					| boolean
+					| number
+					| string
+					| TReplaced
+			? /* primitive types => */ T
+			: // eslint-disable-next-line @typescript-eslint/ban-types
+				/* test for not a function */ Extract<T, Function> extends never
+				? /* not a function => test for object */ T extends object
+					? /* object => test for array */ T extends readonly (infer _)[]
+						? /* array => */ {
+								/* array items may not not allow undefined */
+								/* use homomorphic mapped type to preserve tuple type */
+								[K in keyof T]: JsonForArrayItem<
+									T[K],
+									TReplaced,
+									JsonSerializable<T[K], TReplaced | T>
+								>;
+							}
+						: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
+							? /* `object` => */ JsonTypeWith<TReplaced>
+							: /* test for enum like types */ IsEnumLike<T> extends true
+								? /* enum or similar simple type (return as-is) => */ T
+								: /* property bag => */ FlattenIntersection<
+										{
+											/* required properties are recursed and may not have undefined values. */
+											[K in NonSymbolWithRequiredPropertyOf<T>]-?: undefined extends T[K]
+												? { ["error required property may not allow undefined value"]: never }
+												: JsonSerializable<T[K], TReplaced | T>;
+										} & {
+											/* optional properties are recursed and allowed to preserve undefined value type. */
+											[K in NonSymbolWithOptionalPropertyOf<T>]?: JsonSerializable<
+												T[K],
+												TReplaced | T | undefined
+											>;
+										} & {
+											/* symbol properties are rejected */
+											[K in keyof T & symbol]: never;
+										}
+									>
+					: /* not an object => */ never
+				: /* function => */ never;

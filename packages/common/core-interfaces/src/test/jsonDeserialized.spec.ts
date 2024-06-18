@@ -81,14 +81,14 @@ import {
 type ContainsAny<T, TRecursion = never> = boolean extends (T extends never ? true : false)
 	? true
 	: T extends TRecursion
-	? never
-	: T extends object
-	? T extends readonly (infer A)[]
-		? ContainsAny<A, TRecursion | T>
-		: {
-				[K in keyof T]-?: ContainsAny<Exclude<Required<T>[K], undefined>, TRecursion | T>;
-		  }[keyof T]
-	: never;
+		? never
+		: T extends object
+			? T extends readonly (infer A)[]
+				? ContainsAny<A, TRecursion | T>
+				: {
+						[K in keyof T]-?: ContainsAny<Exclude<Required<T>[K], undefined>, TRecursion | T>;
+					}[keyof T]
+			: never;
 
 function ContainsAny<T>(_: T): ContainsAny<T> {
 	return undefined as ContainsAny<T>;
@@ -156,7 +156,10 @@ function passThruHandlingBigint<T>(
 /**
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
-function passThruHandlingBigintThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T, bigint> {
+function passThruHandlingBigintThrows<T>(
+	v: T,
+	expectedThrow: Error,
+): JsonDeserialized<T, bigint> {
 	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
 	return undefined as unknown as JsonDeserialized<T, bigint>;
 }
