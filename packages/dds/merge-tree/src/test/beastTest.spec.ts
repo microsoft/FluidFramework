@@ -927,9 +927,7 @@ export function TestPack(verbose = true) {
 				}
 				if (verbose) {
 					log(
-						`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(
-							checkTime / 1000000.0
-						).toFixed(1)}`,
+						`total time ${(totalTime / 1000000.0).toFixed(1)} check time ${(checkTime / 1000000.0).toFixed(1)}`,
 					);
 				}
 				// log(server.getText());
