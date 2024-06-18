@@ -24,7 +24,10 @@ const customThrowsSectionTitle = "Error Handling";
 
 const supportDocsLinkSpan = new SpanNode([
 	new PlainTextNode("For more information about our API support guarantees, see "),
-	LinkNode.createFromPlainText("here", "https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels"),
+	LinkNode.createFromPlainText(
+		"here",
+		"https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
+	),
 	new PlainTextNode("."),
 ]);
 
