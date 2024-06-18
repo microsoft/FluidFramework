@@ -19,7 +19,7 @@ export const alertNodeType = "Alert";
  * @example Example rendering output (in Hugo Markdown)
  *
  * ```md
- * {{% callout TIP Unit tests are super useful! %}}
+ * {{% callout tip "Unit tests are super useful!" %}}
  *
  * More details about unit testing...
  * {{% /callout %}}
