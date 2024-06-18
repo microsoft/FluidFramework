@@ -40,8 +40,11 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- *
+ * * @remarks
+ * This type should only be used via the public `Tree` export.
  * @privateRemarks
+ * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
+ *
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
  * https://github.com/microsoft/rushstack/issues/1958.
