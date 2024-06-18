@@ -31,7 +31,7 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
 	chunkMinSequenceNumber?: number;
 	segmentTexts: JsonSegmentSpecs[];
 	headerMetadata?: MergeTreeHeaderMetadata;
-	attribution?: SerializedAttributionCollection;
+	attribution?: SerializedAttributionCollection | undefined;
 }
 
 export interface MergeTreeHeaderChunkMetadata {
@@ -66,11 +66,11 @@ export interface IJSONSegmentWithMergeInfo {
 	json: IJSONSegment;
 	client?: string;
 	seq?: number;
-	removedClientIds?: string[];
+	removedClientIds?: string[] | undefined;
 	removedSeq?: number;
-	movedClientIds?: string[];
+	movedClientIds?: string[] | undefined;
 	movedSeq?: number;
-	movedSeqs?: number[];
+	movedSeqs?: number[] | undefined;
 }
 
 /**

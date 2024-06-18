@@ -667,6 +667,8 @@ export class PartialSequenceLengths {
 				moveIsLocal ||
 				(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
 
+
+
 		if (removeHappenedFirst) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = removalIsLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;

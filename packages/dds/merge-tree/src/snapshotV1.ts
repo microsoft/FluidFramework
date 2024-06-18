@@ -281,11 +281,10 @@ export class SnapshotV1 {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
-				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
+				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string | undefined } = {
 					json: segment.toJSONObject(),
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				if (segment.seq! > minSeq && segment.seq !== undefined) {
 					raw.seq = segment.seq;
 					raw.client = this.getLongClientId(segment.clientId);

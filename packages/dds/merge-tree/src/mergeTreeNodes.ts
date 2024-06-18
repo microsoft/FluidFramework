@@ -53,18 +53,18 @@ export interface IRemovalInfo {
 	/**
 	 * Local seq at which this segment was removed, if the removal is yet-to-be acked.
 	 */
-	localRemovedSeq?: number;
+	localRemovedSeq?: number | undefined;
 	/**
 	 * Seq at which this segment was removed.
 	 */
-	removedSeq: number;
+	removedSeq: number | undefined;
 	/**
 	 * List of client IDs that have removed this segment.
 	 * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
 	 * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
 	 * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
 	 */
-	removedClientIds: number[];
+	removedClientIds: number[] | undefined;
 }
 
 /**
@@ -93,12 +93,12 @@ export interface IMoveInfo {
 	 * Local seq at which this segment was moved if the move is yet-to-be
 	 * acked.
 	 */
-	localMovedSeq?: number;
+	localMovedSeq?: number | undefined;
 
 	/**
 	 * The first seq at which this segment was moved.
 	 */
-	movedSeq: number;
+	movedSeq: number | undefined;
 
 	/**
 	 * All seqs at which this segment was moved. In the case of overlapping,
@@ -108,7 +108,7 @@ export interface IMoveInfo {
 	 *
 	 * The first element corresponds to the seq of the first move
 	 */
-	movedSeqs: number[];
+	movedSeqs: number[] | undefined;
 
 	/**
 	 * A reference to the inserted destination segment corresponding to this
@@ -127,7 +127,7 @@ export interface IMoveInfo {
 	 * first) is stored as the first client in this list. Other clients in the
 	 * list have all issued concurrent ops to move the segment.
 	 */
-	movedClientIds: number[];
+	movedClientIds: number[] | undefined;
 
 	/**
 	 * If this segment was inserted into a concurrently moved range and
@@ -143,7 +143,7 @@ export interface IMoveInfo {
 	 * the client that inserted the segment. This is relevant in partial length
 	 * calculations
 	 */
-	wasMovedOnInsert: boolean;
+	wasMovedOnInsert: boolean | undefined;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {

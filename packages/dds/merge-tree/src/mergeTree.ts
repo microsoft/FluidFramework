@@ -1928,7 +1928,6 @@ export class MergeTree {
 				segment.movedSeq = seq;
 				segment.localMovedSeq = localSeq;
 				segment.movedSeqs = [seq];
-
 				if (!toRemovalInfo(segment)) {
 					movedSegments.push({ segment });
 				}

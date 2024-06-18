@@ -17,7 +17,7 @@ export interface IRequestHeader {
  */
 export interface IRequest {
 	url: string;
-	headers?: IRequestHeader;
+	headers?: IRequestHeader | undefined;
 }
 
 /**
