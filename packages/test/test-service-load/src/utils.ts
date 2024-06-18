@@ -296,6 +296,7 @@ export async function safeExit(code: number, url: string, runId?: number) {
 export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
+	"Fluid.SharedTree.RebaseSampling": 10000,
 	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
 	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
 };
