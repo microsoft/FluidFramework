@@ -20,7 +20,7 @@ function arrayToProp(arr: string[]) {
 	return arr.length === 0 ? undefined : arr;
 }
 
-describe("Document Schema", () => {
+describe("Runtime", () => {
 	const validConfig: IDocumentSchemaCurrent = {
 		version: 1,
 		refSeq: 0,
@@ -36,7 +36,6 @@ describe("Document Schema", () => {
 		explicitSchemaControl: true,
 		compressionLz4: true,
 		opGroupingEnabled: false,
-		gcOp: false,
 		idCompressorMode: "delayed",
 		disallowedVersions: [],
 	};

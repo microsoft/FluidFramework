@@ -120,7 +120,7 @@ describe("Garbage Collection Stats", () => {
 				gcMessagesCount++;
 				lastGCMessage = message;
 			},
-			gcOpSupportedBySchema: true,
+			gcOpAllowed: true,
 		});
 	}
 

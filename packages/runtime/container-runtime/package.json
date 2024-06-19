@@ -291,9 +291,6 @@
 			"RemovedInterfaceDeclaration_ContainerRuntimeMessage": {
 				"backCompat": false,
 				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IDocumentSchemaFeatures": {
-				"forwardCompat": false
 			}
 		}
 	}

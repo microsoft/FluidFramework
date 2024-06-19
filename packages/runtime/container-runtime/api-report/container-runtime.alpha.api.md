@@ -211,7 +211,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         compressionLz4?: true | undefined;
         idCompressorMode?: IdCompressorMode;
         opGroupingEnabled?: true | undefined;
-        gcOp?: true | undefined;
         disallowedVersions?: string[] | undefined;
     };
     // (undocumented)
@@ -402,7 +401,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
-    readonly disableGCToDeferSchemaUpgrade?: boolean;
+    readonly disableGCToPreventGCOp?: boolean;
     readonly enableGroupedBatching?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
@@ -453,7 +452,6 @@ export interface IDocumentSchemaFeatures {
     disallowedVersions: string[];
     // (undocumented)
     explicitSchemaControl: boolean;
-    gcOp: boolean;
     // (undocumented)
     idCompressorMode: IdCompressorMode;
     // (undocumented)

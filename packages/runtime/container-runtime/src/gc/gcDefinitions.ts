@@ -420,7 +420,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 	readonly sessionExpiryTimerStarted?: number | undefined;
-	readonly gcOpSupportedBySchema: boolean;
+	readonly gcOpAllowed: boolean;
 }
 
 /**
@@ -477,6 +477,8 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
+	/** If false, disable any featuers that emit the GC op (Sweep, Tombstone AutoRecovery) */
+	readonly gcOpAllowed: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

@@ -105,7 +105,7 @@ export function generateRuntimeOptions(
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
 		explicitSchemaControl: [true, false],
-		disableGCToDeferSchemaUpgrade: [true, false],
+		disableGCToPreventGCOp: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

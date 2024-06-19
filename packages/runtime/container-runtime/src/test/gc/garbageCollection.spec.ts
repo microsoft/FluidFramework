@@ -201,7 +201,7 @@ describe("Garbage Collection Tests", () => {
 		}
 
 		return GarbageCollector.create({
-			gcOpSupportedBySchema: true,
+			gcOpAllowed: true,
 			...createParams,
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
@@ -549,8 +549,8 @@ describe("Garbage Collection Tests", () => {
 			);
 		});
 
-		it("Autorecovery disabled if gcOpSupportedBySchema is false", async () => {
-			gc = createGarbageCollector({ createParams: { gcOpSupportedBySchema: false } });
+		it("Autorecovery disabled if gcOpAllowed is false", async () => {
+			gc = createGarbageCollector({ createParams: { gcOpAllowed: false } });
 			const spies = {
 				gc: {
 					submitMessage: spy(gc, "submitMessage"),

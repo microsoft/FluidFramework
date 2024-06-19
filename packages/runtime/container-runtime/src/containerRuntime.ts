@@ -420,15 +420,10 @@ export interface IContainerRuntimeOptions {
 
 	/**
 	 * The GC feature (new in 2.0) includes a new runtime op type, the GC op.
-	 * The presence of this new op represents a schema upgrade relative to 1.x,
-	 * so we need to provide a way to defer that schema upgrade for applications to support
-	 * collaboration between 1.x/2.0 clients.
-	 *
-	 * @remarks Once a document is loaded with this options missing or false,
-	 * any clients that don't understand the GC op will close on boot
-	 * (e.g. 1.x clients or those still setting this to true)
+	 * For applications to support collaboration between 1.x/2.0 clients,
+	 * we need a way to disable any GC behavior resulting in the GC op.
 	 */
-	readonly disableGCToDeferSchemaUpgrade?: boolean;
+	readonly disableGCToPreventGCOp?: boolean;
 
 	/**
 	 * Affects the behavior while loading the runtime when the data verification check which
@@ -821,7 +816,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
-			disableGCToDeferSchemaUpgrade = false,
+			disableGCToPreventGCOp = false,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -999,7 +994,6 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				gcOp: !disableGCToDeferSchemaUpgrade,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1029,7 +1023,7 @@ export class ContainerRuntime
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableGroupedBatching,
-				disableGCToDeferSchemaUpgrade,
+				disableGCToPreventGCOp,
 				explicitSchemaControl,
 			},
 			containerScope,
@@ -1630,8 +1624,7 @@ export class ContainerRuntime
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
-			gcOpSupportedBySchema:
-				this.documentsSchemaController.sessionSchema.runtime.gcOp === true,
+			gcOpAllowed: !this.runtimeOptions.disableGCToPreventGCOp,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;

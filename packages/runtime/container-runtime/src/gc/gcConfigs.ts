@@ -51,7 +51,7 @@ export function generateGCConfigs(
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
 		isSummarizerClient: boolean;
-		gcOpSupportedBySchema: boolean;
+		gcOpAllowed: boolean;
 	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean = true;
@@ -100,11 +100,12 @@ export function generateGCConfigs(
 		}
 	}
 
+	const gcOpAllowed = createParams.gcOpAllowed;
 	// The persisted GC generation must indicate Sweep is allowed for this document,
 	// according to the GC Generation option provided this session.
 	// Note that if no generation option is provided, Sweep is allowed for any document.
 	const sweepAllowed =
-		createParams.gcOpSupportedBySchema &&
+		gcOpAllowed &&
 		shouldAllowGcSweep(
 			persistedGcFeatureMatrix ?? {} /* featureMatrix */,
 			createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
@@ -114,7 +115,7 @@ export function generateGCConfigs(
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and tombstoneTimeout is provided and the doc schema supports GC op,
+	 * Assuming overall GC is enabled and tombstoneTimeout is provided and the GC op is allowed,
 	 * the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be allowed in this container.
@@ -123,7 +124,7 @@ export function generateGCConfigs(
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
 	const sweepEnabled: boolean =
-		!gcEnabled || tombstoneTimeoutMs === undefined || !createParams.gcOpSupportedBySchema
+		!gcEnabled || tombstoneTimeoutMs === undefined || !gcOpAllowed
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 				(sweepAllowed && createParams.gcOptions.enableGCSweep === true);
@@ -176,6 +177,7 @@ export function generateGCConfigs(
 	return {
 		gcEnabled, // For this document
 		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
+		gcOpAllowed, // For this session
 		shouldRunSweep, // For this session
 		runFullGC,
 		testMode,

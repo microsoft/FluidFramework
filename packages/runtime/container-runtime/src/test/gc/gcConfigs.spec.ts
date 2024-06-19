@@ -82,7 +82,7 @@ describe("Garbage Collection configurations", () => {
 		gcMetadata?: IGCMetadata,
 		gcOptions?: IGCRuntimeOptions,
 		isSummarizerClient?: boolean,
-		gcOpSupportedBySchema: boolean = true,
+		gcOpAllowed: boolean = true,
 	): GcWithPrivates => {
 		const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && {
 			summaryFormatVersion: 1,
@@ -90,7 +90,7 @@ describe("Garbage Collection configurations", () => {
 			...gcMetadata,
 		};
 		return createGarbageCollector(
-			{ metadata, gcOptions, gcOpSupportedBySchema },
+			{ metadata, gcOptions, gcOpAllowed },
 			undefined /* gcBlobsMap */,
 			undefined /* closeFn */,
 			isSummarizerClient,
@@ -129,7 +129,7 @@ describe("Garbage Collection configurations", () => {
 		};
 
 		return GarbageCollector.create({
-			gcOpSupportedBySchema: true,
+			gcOpAllowed: true,
 			...createParams,
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
@@ -1000,13 +1000,13 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});
-		it("throwOnTombstoneLoad blocked by schema, despite being enabled via override", () => {
+		it("throwOnTombstoneLoad blocked by gcOpAllowed, despite being enabled via override", () => {
 			configProvider.set(throwOnTombstoneLoadOverrideKey, true);
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: true },
 				false /* isSummarizerClient */,
-				false /* gcOpSupportedBySchema */, // This should force throwOnTombstoneLoad to be false
+				false /* gcOpAllowed */, // This should force throwOnTombstoneLoad to be false
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});

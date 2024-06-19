@@ -909,6 +909,7 @@ export class GarbageCollector implements IGarbageCollector {
 				this.deleteSweepReadyNodes(message.contents.deletedNodeIds);
 				break;
 			}
+			//* Or switch to bespoke one?
 			case GarbageCollectionMessageType.TombstoneLoaded: {
 				if (
 					!this.configs.sweepEnabled ||
