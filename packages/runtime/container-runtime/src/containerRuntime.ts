@@ -1821,7 +1821,9 @@ export class ContainerRuntime
 		if (shouldTrackAttribution) {
 			(options.attribution ??= {}).track = true;
 			// Load the runtime attributor module is we want to track attribution.
-			this.loadAndInitializeRuntimeAttributor(context).catch(() => {});
+			this.loadAndInitializeRuntimeAttributor(context).catch((error) => {
+				this.logger.sendErrorEvent({ eventName: "AttributorLoadFailed" }, error);
+			});
 		}
 
 		if (this.summariesDisabled) {
@@ -1966,12 +1968,9 @@ export class ContainerRuntime
 
 	private async loadAndInitializeRuntimeAttributor(context: IContainerContext): Promise<void> {
 		if (this.runtimeAttributorP === undefined) {
-			this.runtimeAttributorP = this.getDelayLoadedRuntimeAttributor().catch(async () => {
-				// Retry once if module load fails.
-				return this.getDelayLoadedRuntimeAttributor();
-			});
+			this.runtimeAttributorP = this.getDelayLoadedRuntimeAttributor();
 		}
-		this.runtimeAttributorP
+		await this.runtimeAttributorP
 			.then(async (attributor) => {
 				this.runtimeAttributorModuleLoaded = true;
 				const pendingRuntimeState = context.pendingLocalState as {
