@@ -20,6 +20,7 @@ import {
 	getSafeFilenameForName,
 	getConciseSignature,
 	getSingleLineExcerptText,
+	isDeprecated,
 } from "../../utilities/index.js";
 
 /**
@@ -189,6 +190,17 @@ export interface DocumentationSuiteOptions {
 	getLinkTextForItem?: (apiItem: ApiItem) => string;
 
 	/**
+	 * Generate a list of "alerts" to display in API items tables for a given API item.
+	 *
+	 * @param apiItem - The API item for which table cell contents are being generated.
+	 *
+	 * @returns The list of "alert" strings to display.
+	 *
+	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetAlertsForItem}
+	 */
+	getAlertsForItem?: (apiItem: ApiItem) => string[];
+
+	/**
 	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
 	 *
 	 * @param apiPackage - The package that may or may not be skipped.
@@ -347,6 +359,32 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
+	 * Default {@link DocumentationSuiteOptions.getHeadingTextForItem}.
+	 *
+	 * Generates alerts for the following tags, if found:
+	 *
+	 * - `@alpha`: "ALPHA"
+	 *
+	 * - `@beta`: "BETA"
+	 *
+	 * - `@deprecated`: "DEPRECATED"
+	 */
+	export function defaultAlertsForItem(apiItem: ApiItem): string[] {
+		const alerts: string[] = [];
+		if (isDeprecated(apiItem)) {
+			alerts.push("Deprecated");
+		}
+
+		const releaseTag = getReleaseTag(apiItem);
+		if (releaseTag === ReleaseTag.Alpha) {
+			alerts.push("Alpha");
+		} else if (releaseTag === ReleaseTag.Beta) {
+			alerts.push("Beta");
+		}
+		return alerts;
+	}
+
+	/**
 	 * Default {@link DocumentationSuiteOptions.skipPackage}.
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
@@ -368,6 +406,7 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultGetUriBaseOverrideForItem,
 	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
+	getAlertsForItem: DefaultDocumentationSuiteOptions.defaultAlertsForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
