@@ -67,11 +67,6 @@ import {
 
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
-/** TODO test cases: //*
- * - gcOpSupportedBySchema false: shouldRunSweep "NO" (even if override config is set)
- * - gcOpSupportedBySchema false: throwOnTombstoneLoad false
- */
-
 type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;
 
 type GcWithPrivates = IGarbageCollector & {
@@ -94,6 +89,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly triggerAutoRecovery: (nodePath: string) => void;
 	runGC: (fullGC: boolean) => Promise<IGCStats>;
 };
 
@@ -205,6 +201,7 @@ describe("Garbage Collection Tests", () => {
 		}
 
 		return GarbageCollector.create({
+			gcOpSupportedBySchema: true,
 			...createParams,
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
@@ -222,7 +219,6 @@ describe("Garbage Collection Tests", () => {
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
 			sessionExpiryTimerStarted: createParams.sessionExpiryTimerStarted,
-			gcOpSupportedBySchema: true,
 		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;
@@ -550,6 +546,21 @@ describe("Garbage Collection Tests", () => {
 			assert(
 				!gc.unreferencedNodesState.has(nodes[0]),
 				"node 0 should not be unreferenced after repairing GC Data",
+			);
+		});
+
+		it("Autorecovery disabled if gcOpSupportedBySchema is false", async () => {
+			gc = createGarbageCollector({ createParams: { gcOpSupportedBySchema: false } });
+			const spies = {
+				gc: {
+					submitMessage: spy(gc, "submitMessage"),
+				},
+			};
+
+			gc.triggerAutoRecovery(""); // nodePath is irrelevant
+			assert(
+				spies.gc.submitMessage.notCalled,
+				"triggerAutoRecovery should no-op if gcOp is not supported in schema",
 			);
 		});
 	});

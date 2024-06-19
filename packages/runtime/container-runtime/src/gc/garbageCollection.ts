@@ -911,7 +911,7 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			case GarbageCollectionMessageType.TombstoneLoaded: {
 				if (
-					this.configs.shouldRunSweep === "NO" ||
+					!this.configs.sweepEnabled ||
 					this.mc.config.getBoolean(disableAutoRecoveryKey) === true
 				) {
 					break;
@@ -1087,7 +1087,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	private triggerAutoRecovery(nodePath: string) {
 		if (
-			this.configs.shouldRunSweep === "NO" ||
+			!this.configs.sweepEnabled ||
 			this.mc.config.getBoolean(disableAutoRecoveryKey) === true
 		) {
 			return;

@@ -36,7 +36,7 @@ describe("Document Schema", () => {
 		explicitSchemaControl: true,
 		compressionLz4: true,
 		opGroupingEnabled: false,
-		gcOp: true,
+		gcOp: false,
 		idCompressorMode: "delayed",
 		disallowedVersions: [],
 	};

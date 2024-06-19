@@ -1391,6 +1391,7 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: false,
+				disableGCToDeferSchemaUpgrade: false,
 				explicitSchemaControl: false,
 			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
