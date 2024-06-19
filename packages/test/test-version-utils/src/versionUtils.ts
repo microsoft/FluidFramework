@@ -427,12 +427,7 @@ function calculateRequestedRange(
 	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
 	if (adjustPublicMajor === false && version.major > 1) {
 		// In this case, we can pretend that 2.0 is RC6 and calculate the range as if it were an internal version.
-		const internalSchemeRange = internalSchema(
-			"2.0.0",
-			"6.0.0",
-			"rc",
-			requested,
-		);
+		const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
 		return internalSchemeRange;
 	} else {
 		// calculate requested major version number
