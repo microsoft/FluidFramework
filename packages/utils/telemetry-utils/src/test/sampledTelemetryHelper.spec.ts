@@ -72,13 +72,7 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("does not include aggregate properties when it shouldn't", () => {
-		const helper = new SampledTelemetryHelper(
-			{ eventName: "testEvent" },
-			logger,
-			1,
-			{},
-			false,
-		);
+		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, false);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
@@ -87,7 +81,7 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("includes aggregate properties when it should", () => {
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, {}, true);
+		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, true);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
@@ -100,7 +94,6 @@ describe("SampledTelemetryHelper", () => {
 			{ eventName: "testEvent", myProp: "myValue" },
 			logger,
 			1,
-			{},
 			false,
 		);
 		helper.measure(() => {});
@@ -116,7 +109,6 @@ describe("SampledTelemetryHelper", () => {
 			{ eventName: "testEvent", myProp: "myValue" },
 			logger,
 			1,
-			{},
 			true,
 		);
 		helper.measure(() => {});
@@ -146,7 +138,6 @@ describe("SampledTelemetryHelper", () => {
 			{ eventName: "testEvent" },
 			logger,
 			3,
-			{},
 			false,
 			bucketProperties,
 		);
@@ -178,14 +169,10 @@ describe("SampledTelemetryHelper", () => {
 			[bucket1, { duration: 1000, count: 1000 }],
 		]);
 
-		// Empty custom metrics to make sure we don't have any custom properties to add to the event
-		const emptyCustomMetrics = {};
-
 		const helper = new SampledTelemetryHelper(
 			{ eventName: "testEvent" },
 			logger,
 			1,
-			emptyCustomMetrics,
 			false,
 			bucketProperties,
 		);
@@ -209,14 +196,10 @@ describe("SampledTelemetryHelper", () => {
 			[bucket2, { prop2: "value2" }],
 		]);
 
-		// Empty custom metrics to make sure we don't have any custom properties to add to the event
-		const emptyCustomMetrics = {};
-
 		const helper = new SampledTelemetryHelper(
 			{ eventName: "testEvent" },
 			logger,
 			5,
-			emptyCustomMetrics,
 			false,
 			bucketProperties,
 		);
@@ -258,7 +241,6 @@ describe("SampledTelemetryHelper", () => {
 			{ eventName: "testEvent" },
 			logger,
 			sampling,
-			{},
 			true /* includeAggregateMetrics */,
 		);
 
@@ -318,6 +300,8 @@ describe("SampledTelemetryHelper with Custom Data", () => {
 			{ eventName: "testEvent" },
 			logger,
 			sampling,
+			undefined,
+			undefined,
 			initialCustomMetrics,
 		);
 

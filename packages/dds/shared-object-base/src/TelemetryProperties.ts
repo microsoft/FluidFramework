@@ -8,6 +8,6 @@
  * The set of properties must be the same for all calls to the `measure` function.
  * @internal
  */
-export interface ITelemetryProperties {
+export interface ProcessTelemetryProperties {
 	sequenceDifference: number;
 }

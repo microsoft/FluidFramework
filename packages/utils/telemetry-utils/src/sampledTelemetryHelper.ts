@@ -54,7 +54,7 @@ interface Measurements {
 }
 
 /**
- * TODO
+ * Implementation of the TelemetryEventMetrics class.
  * @internal
  */
 export interface ITelemetryEventMetrics<TCustomMetrics extends Record<string, number>> {
@@ -62,7 +62,7 @@ export interface ITelemetryEventMetrics<TCustomMetrics extends Record<string, nu
 }
 
 /**
- * TODO
+ * Class that abstracts the process of accumulating custom metrics for a telemetry event.
  * @internal
  */
 export class TelemetryEventMetrics<TCustomMetrics extends Record<string, number>> {
@@ -162,10 +162,13 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 		private readonly eventBase: ITelemetryGenericEventExt,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
-		private readonly customMetricsDefaults?: TCustomMetrics,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
-	) {}
+		private readonly customMetrics?: TCustomMetrics,
+	) {
+		const defaultMetrics: TCustomMetrics = (customMetrics ?? {}) as TCustomMetrics;
+		this.customMetrics = defaultMetrics;
+	}
 
 	/**
 	 * Executes the specified code and keeps track of execution time statistics.
@@ -181,7 +184,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 		codeToMeasure: (event: ITelemetryEventMetrics<TCustomMetrics>) => T,
 		bucket: string = "",
 	): T {
-		const event = TelemetryEventMetrics.start({ ...this.customMetricsDefaults });
+		const event = TelemetryEventMetrics.start({ ...this.customMetrics });
 		const start = performance.now();
 		const returnValue = codeToMeasure(event);
 		const telemetryProperties = event.end();

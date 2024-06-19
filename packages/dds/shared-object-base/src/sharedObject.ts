@@ -46,7 +46,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { ITelemetryProperties } from "./TelemetryProperties.js";
+import { ProcessTelemetryProperties } from "./TelemetryProperties.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
@@ -67,8 +67,8 @@ export abstract class SharedObjectCore<
 		return this;
 	}
 
-	private readonly opProcessingHelper: SampledTelemetryHelper<ITelemetryProperties>;
-	private readonly callbacksHelper: SampledTelemetryHelper<ITelemetryProperties>;
+	private readonly opProcessingHelper: SampledTelemetryHelper<ProcessTelemetryProperties>;
+	private readonly callbacksHelper: SampledTelemetryHelper<ProcessTelemetryProperties>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -154,12 +154,12 @@ export abstract class SharedObjectCore<
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper<ITelemetryProperties>[] {
+	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper<ProcessTelemetryProperties>[] {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
 		);
-		const opProcessingHelper = new SampledTelemetryHelper<ITelemetryProperties>(
+		const opProcessingHelper = new SampledTelemetryHelper<ProcessTelemetryProperties>(
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
@@ -172,10 +172,10 @@ export abstract class SharedObjectCore<
 				["remote", { localOp: false }],
 			]),
 			{
-				sequenceDifference: 0
-			}
+				sequenceDifference: 0,
+			},
 		);
-		const callbacksHelper = new SampledTelemetryHelper<ITelemetryProperties>(
+		const callbacksHelper = new SampledTelemetryHelper<ProcessTelemetryProperties>(
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
@@ -544,7 +544,7 @@ export abstract class SharedObjectCore<
 				this.processCore(message, local, localOpMetadata);
 				event.incrementMetric({
 					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-				})
+				});
 			},
 			local ? "local" : "remote",
 		);
