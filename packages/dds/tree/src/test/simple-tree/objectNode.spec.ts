@@ -121,4 +121,33 @@ describe("ObjectNode", () => {
 		const keys = Object.keys(n);
 		assert.deepEqual(keys, ["foo"]);
 	});
+
+	// it.only("leaf access test", () => {
+	// 	class InnerSchema extends schemaFactory.object("inner", {
+	// 		foo: schemaFactory.optional(schemaFactory.number),
+	// 	}) {}
+	// 	class Schema extends schemaFactory.object("x", {
+	// 		optionalNumber: schemaFactory.optional(schemaFactory.number),
+	// 		requiredNumber: schemaFactory.required(schemaFactory.number),
+	// 		numberSequence: schemaFactory.array(schemaFactory.number),
+	// 		objectSequence: schemaFactory.array(InnerSchema),
+	// 	}) {}
+	// 	const n = hydrate(Schema, {
+	// 		optionalNumber: 0,
+	// 		requiredNumber: 1,
+	// 		numberSequence: [2, 3],
+	// 		objectSequence: [{ foo: 4 }],
+	// 	});
+
+	// 	const accessedValue = n.optionalNumber;
+	// 	assert.deepEqual(accessedValue, 0);
+	// 	const accessedValue2 = n.requiredNumber;
+	// 	assert.deepEqual(accessedValue2, 1);
+	// 	const accessedValue3 = n.numberSequence[0];
+	// 	assert.deepEqual(accessedValue3, 2);
+	// 	const accessedValue5 = n.objectSequence[0].foo;
+	// 	assert.deepEqual(accessedValue5, 4);
+	// 	const accessedValue4 = n.objectSequence[0];
+	// 	assert.deepEqual(accessedValue4, [{ foo: 4 }]);
+	// });
 });

@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../../../../.."
+		},
+		{
+			"path": "../../../../../../FluidFramework"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "node_modules/typescript/lib",
+		"typescript.tsc.autoDetect": "off",
+		"files.associations": {
+			"**/tools/pipelines/**/*.yml": "azure-pipelines",
+			"fence.json": "jsonc",
+			".git-blame-ignore-revs": "ignore"
+		},
+		"biome.searchInPath": false,
+		"biome.lspBin": "node_modules/@biomejs/biome/bin/biome",
+		"search.followSymlinks": false,
+		"inline-bookmarks.view.expanded": true
+	}
+}

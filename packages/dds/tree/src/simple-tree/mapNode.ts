@@ -12,6 +12,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
+	isTreeValue,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -153,6 +154,14 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = getFlexNode(this);
+		const maybeUnboxed = node.get(key);
+		if (maybeUnboxed === undefined) {
+			return undefined as TreeNodeFromImplicitAllowedTypes<T>;
+		}
+		if (isTreeValue(maybeUnboxed)) {
+			return maybeUnboxed as TreeNodeFromImplicitAllowedTypes<T>;
+		}
+
 		const field = node.getBoxed(key);
 		return getProxyForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}

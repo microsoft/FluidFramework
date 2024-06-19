@@ -163,6 +163,9 @@ function createProxyHandler(
 			const fieldInfo = flexKeyMap.get(viewKey);
 
 			if (fieldInfo !== undefined) {
+				// TODO : can we figure out here if the thing is a leaf and just return the value instead of creating a proxy
+				// if (fieldInfo.schema.allowedTypeSet.) {
+
 				const flexNode = getFlexNode(proxy);
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {

@@ -764,7 +764,11 @@ function getOrCreateField(
 	return new MapTreeField(schema, key, parent, mapTrees);
 }
 
-/** Unboxes non-polymorphic leaf nodes to their values, if applicable */
+/**
+ * Returns an unboxed value out of the specified mapTree if possible; otherwise returns a map tree node for the value.
+ *
+ * @remarks Unboxing happens when all the supported types in the schema are leaf nodes.
+ */
 function unboxedUnion<TTypes extends FlexAllowedTypes>(
 	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
 	mapTree: MapTree,
@@ -776,6 +780,20 @@ function unboxedUnion<TTypes extends FlexAllowedTypes>(
 			return mapTree.value as FlexTreeUnboxNodeUnion<TTypes>;
 		}
 		return getOrCreateChild(mapTree, type, parent) as FlexTreeUnboxNodeUnion<TTypes>;
+	}
+	if (schema.allowedTypeSet !== "Any") {
+		// Deliberately being "low level" (vs more functional-style code that requires instantiating an array from the set)
+		// for perf reasons.
+		let allLeaf = true;
+		for (const t of schema.allowedTypeSet) {
+			if (!schemaIsLeaf(t)) {
+				allLeaf = false;
+				break;
+			}
+		}
+		if (allLeaf) {
+			return mapTree.value as FlexTreeUnboxNodeUnion<TTypes>;
+		}
 	}
 
 	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnboxNodeUnion<TTypes>;

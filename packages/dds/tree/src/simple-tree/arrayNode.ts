@@ -18,6 +18,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -468,6 +469,10 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
+			const maybeValue = field.at(maybeIndex);
+			if (!isFlexTreeNode(maybeValue)) {
+				return maybeValue;
+			}
 			const value = field.boxedAt(maybeIndex);
 
 			if (value === undefined) {

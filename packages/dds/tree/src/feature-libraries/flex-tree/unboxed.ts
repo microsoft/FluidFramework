@@ -11,6 +11,7 @@ import {
 	type FlexFieldSchema,
 	type FlexTreeNodeSchema,
 	schemaIsLeaf,
+	Any,
 } from "../typed-schema/index.js";
 
 import type { Context } from "./context.js";
@@ -28,10 +29,14 @@ import { makeTree } from "./lazyNode.js";
  */
 export function unboxedTree<TSchema extends FlexTreeNodeSchema>(
 	context: Context,
-	schema: TSchema,
+	schema: TSchema | TSchema[],
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeUnboxNode<TSchema> {
-	if (schemaIsLeaf(schema)) {
+	if (Array.isArray(schema)) {
+		if (schema.every((s) => schemaIsLeaf(s))) {
+			return cursor.value as FlexTreeUnboxNode<TSchema>;
+		}
+	} else if (schemaIsLeaf(schema)) {
 		return cursor.value as FlexTreeUnboxNode<TSchema>;
 	}
 
@@ -49,7 +54,31 @@ export function unboxedUnion<TTypes extends FlexAllowedTypes>(
 	const type = schema.monomorphicChildType;
 	if (type !== undefined) {
 		return unboxedTree(context, type, cursor) as FlexTreeUnboxNodeUnion<TTypes>;
+	} else if (schema.allowedTypeSet !== Any) {
+		return unboxedTree(
+			context,
+			Array.from(schema.allowedTypeSet),
+			cursor,
+		) as FlexTreeUnboxNodeUnion<TTypes>;
+		// // Deliberately being "low level" (vs more functional-style code that requires instantiating an array from the set)
+		// // for perf reasons.
+		// let allLeaf = true;
+		// for (const t of schema.allowedTypeSet) {
+		// 	if (!schemaIsLeaf(t)) {
+		// 		allLeaf = false;
+		// 		break;
+		// 	}
+		// }
+		// if (allLeaf) {
+		// 	return cursor.value as FlexTreeUnboxNodeUnion<TTypes>;
+		// }
 	}
+
+	// if (isTreeValue(maybeUnboxedContent)) {
+	// 	return maybeUnboxedContent;
+	// } else if (maybeUnboxedContent?.schema instanceof LeafNodeSchema) {
+	// 	return maybeUnboxedContent.value;
+	// }
 	return makeTree(context, cursor) as FlexTreeUnboxNodeUnion<TTypes>;
 }
 

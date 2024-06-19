@@ -196,6 +196,7 @@ describe("SharedTree benchmarks", () => {
 			let tree: FlexTreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
+				// only: true,
 				title: `Deep Tree with Flex Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					tree = flexTreeViewWithContent(makeDeepContent(numberOfNodes));
@@ -339,7 +340,7 @@ describe("SharedTree benchmarks", () => {
 		}
 	});
 
-	describe("acking local commits", () => {
+	describe.skip("acking local commits", () => {
 		const localCommitSize = [1, 25, 100, 500, 1000];
 		for (const size of localCommitSize) {
 			benchmark({
@@ -376,7 +377,7 @@ describe("SharedTree benchmarks", () => {
 	// Note that this runs the computation for several peers.
 	// In practice, this computation is distributed across peers, so the actual time reported is
 	// divided by the number of peers.
-	describe("rebasing commits", () => {
+	describe.skip("rebasing commits", () => {
 		// Each commit generates 2 ops (one for the changeset and one for the UUID minting
 		const opsPerCommit = 2;
 		const sampleSize = 10;

@@ -25,6 +25,8 @@ import {
 	type MapTreeNode,
 	tryGetMapTreeNode,
 	typeNameSymbol,
+	isTreeValue,
+	LeafNodeSchema,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
@@ -64,6 +66,18 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
+
+			const maybeUnboxedContent = asValue.content;
+			if (maybeUnboxedContent === undefined) {
+				return undefined;
+			}
+			if (isTreeValue(maybeUnboxedContent)) {
+				return maybeUnboxedContent;
+			}
+			if (maybeUnboxedContent?.schema instanceof LeafNodeSchema) {
+				return maybeUnboxedContent.value;
+			}
+
 			return getOrCreateNodeProxy(asValue.boxedContent);
 		}
 		case FieldKinds.optional: {
@@ -75,10 +89,20 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
 			//       inner field.
 
-			const maybeContent = asValue.boxedContent;
+			const maybeUnboxedContent = asValue.content;
+			if (maybeUnboxedContent === undefined) {
+				return undefined;
+			}
+			if (isTreeValue(maybeUnboxedContent)) {
+				return maybeUnboxedContent;
+			}
+			if (maybeUnboxedContent?.schema instanceof LeafNodeSchema) {
+				return maybeUnboxedContent.value;
+			}
 
 			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
 			// root field is a special case where the field is always present (even if empty).
+			const maybeContent = asValue.boxedContent;
 			return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
