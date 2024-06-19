@@ -4,7 +4,7 @@
 "@fluidframework/tree": minor
 ---
 
-Unify `IDisposable` interfaces.
+core-interfaces, tree: Unify `IDisposable` interfaces
 
 Public APIs in `@fluidframework/tree` now use `IDisposable` from `@fluidframework/core-interfaces` replacing `disposeSymbol` with "dispose".
 

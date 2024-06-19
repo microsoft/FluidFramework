@@ -1,5 +1,7 @@
 ---
-"@fluidframework/tinylicious-client": minor
+"@fluidframework/": minor
 ---
 
-Promotes `TinyliciousClient` and related types to `@beta`.
+tinylicious-client: Types are now beta
+
+`TinyliciousClient` and related types have been promoted to `@beta`.
