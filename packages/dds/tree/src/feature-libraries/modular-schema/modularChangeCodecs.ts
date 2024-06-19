@@ -63,7 +63,7 @@ import {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 export function makeModularChangeCodecFamily(
@@ -267,10 +267,11 @@ function makeModularChangeCodec(
 			};
 
 			const fieldChangeset = codec.json.decode(field.change, fieldContext);
-			const fieldKind = fieldKinds.get(field.fieldKind);
-			assert(fieldKind !== undefined, "Unknown field kind");
 
-			const crossFieldKeys = fieldKind.kind.changeHandler.getCrossFieldKeys(fieldChangeset);
+			const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
+				fieldChangeset,
+			);
+
 			for (const crossFieldKey of crossFieldKeys) {
 				decoded.crossFieldKeys.set(crossFieldKey, fieldId);
 			}
@@ -487,4 +488,17 @@ function makeModularChangeCodec(
 	};
 
 	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
+}
+
+function getChangeHandler(
+	fieldKinds: FieldKindConfiguration,
+	fieldKind: FieldKindIdentifier,
+): FieldChangeHandler<unknown> {
+	if (fieldKind === genericFieldKind.identifier) {
+		return genericFieldKind.changeHandler;
+	}
+
+	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
+	assert(handler !== undefined, "Unknown field kind");
+	return handler;
 }
