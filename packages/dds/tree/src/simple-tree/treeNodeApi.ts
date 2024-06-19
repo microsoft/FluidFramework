@@ -48,7 +48,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
  * https://github.com/microsoft/rushstack/issues/1958.
- * @public
+ * @sealed @public
  */
 export interface TreeNodeApi {
 	/**
@@ -324,7 +324,7 @@ function getViewKeyFromStoredKey(
  * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
  * to allow efficiently searching for new content (and initial content) of a given type.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeChangeEvents {
 	/**
