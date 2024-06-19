@@ -158,6 +158,15 @@
 			"ClassDeclaration_MockFluidDataStoreContext": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeForReconnection": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MockDeltaManager": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntime": {
+				"backCompat": false
 			}
 		}
 	}

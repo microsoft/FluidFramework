@@ -254,7 +254,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		assert(stats.handleNodeCount === 0, "Expecting no handles for first summary.");
 		// .metadata, .component, and .attributes blobs
 		assert(
-			stats.blobNodeCount >= 3,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			stats.blobNodeCount! >= 3,
 			`Stats expected at least 3 blob nodes, but had ${stats.blobNodeCount}.`,
 		);
 		// root node, data store .channels, default data store, dds .channels, and default root dds
