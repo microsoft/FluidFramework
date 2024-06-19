@@ -244,7 +244,6 @@ interface TestTelemetryProperties {
 	propertyOne: number;
 	propertyTwo: number;
 	propertyThree: number;
-	[key: string]: number;
 }
 
 describe("SampledTelemetryHelper with Custom Data", () => {
@@ -257,9 +256,9 @@ describe("SampledTelemetryHelper with Custom Data", () => {
 	it("Correctly returns computed averages and maxes for custom data", () => {
 		const sampling = 10;
 		const customMetricsDefaults = {
-			"propertyOne": 1,
-			"propertyTwo": 2,
-			"propertyThree": 3,
+			"propertyOne": 0,
+			"propertyTwo": 0,
+			"propertyThree": 0,
 		};
 		const perBucketProperties = new Map<string, ITelemetryBaseProperties>();
 		const helper = new SampledTelemetryHelper<TestTelemetryProperties>(
@@ -268,7 +267,7 @@ describe("SampledTelemetryHelper with Custom Data", () => {
 			sampling,
 			false,
 			perBucketProperties,
-			customMetricsDefaults
+			customMetricsDefaults,
 		);
 
 		for (let i = 0; i < sampling; i++) {
@@ -277,7 +276,6 @@ describe("SampledTelemetryHelper with Custom Data", () => {
 					propertyOne: 1,
 					propertyTwo: 2,
 					propertyThree: 3,
-					propertyFour: 1,
 				});
 			});
 		}

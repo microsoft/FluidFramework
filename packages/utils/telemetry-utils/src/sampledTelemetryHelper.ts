@@ -108,6 +108,14 @@ interface LoggerData {
 }
 
 /**
+ * TODO
+ * @internal
+ */
+export type AllNumber<T> = {
+	[K in keyof T]: K extends string ? number : never;
+};
+
+/**
  * Helper class that executes a specified code block and writes an
  * {@link @fluidframework/core-interfaces#ITelemetryPerformanceEvent} to a specified logger every time a specified
  * number of executions is reached (or when the class is disposed).
@@ -118,9 +126,8 @@ interface LoggerData {
  *
  * @internal
  */
-export class SampledTelemetryHelper<
-	TCustomMetrics extends Record<string, number> = Record<never, number>,
-> implements IDisposable
+export class SampledTelemetryHelper<TCustomMetrics extends AllNumber<TCustomMetrics>>
+	implements IDisposable
 {
 	private _disposed: boolean = false;
 
@@ -215,6 +222,9 @@ export class SampledTelemetryHelper<
 		}
 
 		for (const [key, val] of Object.entries(customData)) {
+			assert(typeof key === "string", "Key should be a string");
+			assert(typeof val === "number", "Value should be a number");
+
 			loggerData.dataSums[key] = (loggerData.dataSums[key] ?? 0) + val;
 			loggerData.dataMaxes[key] = Math.max(
 				loggerData.dataMaxes[key] ?? Number.NEGATIVE_INFINITY,
