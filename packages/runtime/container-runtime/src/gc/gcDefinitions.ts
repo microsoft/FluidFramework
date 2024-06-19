@@ -60,8 +60,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC sweep on / off. */
-export const runSweepKey = "Fluid.GarbageCollection.RunSweep"; //* Remove since it jeopardizes accidental sending GC Op
 /** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */

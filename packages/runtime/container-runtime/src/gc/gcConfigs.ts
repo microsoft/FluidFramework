@@ -29,7 +29,6 @@ import {
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runSessionExpiryKey,
-	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
@@ -121,8 +120,7 @@ export function generateGCConfigs(
 	const sweepEnabled: boolean =
 		!gcEnabled || tombstoneTimeoutMs === undefined
 			? false
-			: mc.config.getBoolean(runSweepKey) ??
-				(sweepAllowed && createParams.gcOptions.enableGCSweep === true);
+			: sweepAllowed && createParams.gcOptions.enableGCSweep === true;
 	const disableDatastoreSweep =
 		mc.config.getBoolean(disableDatastoreSweepKey) === true ||
 		createParams.gcOptions[gcDisableDataStoreSweepOptionName] === true;
