@@ -582,7 +582,7 @@ export class ConnectionManager implements IConnectionManager {
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performance.now();
-		let lastError: any;
+		let lastError: unknown;
 
 		const abortController = new AbortController();
 		const abortSignal = abortController.signal;
@@ -629,7 +629,7 @@ export class ConnectionManager implements IConnectionManager {
 					undefined,
 					LogLevel.verbose,
 				);
-			} catch (origError: any) {
+			} catch (origError: unknown) {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectToDeltaStreamException",
