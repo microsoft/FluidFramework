@@ -2615,7 +2615,8 @@ export class ContainerRuntime
 						local,
 						modernRuntimeMessage,
 					};
-			msg.savedOp = savedOp;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			msg.savedOp = savedOp!;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
 			this.ensureNoDataModelChanges(() => this.processCore(msg));

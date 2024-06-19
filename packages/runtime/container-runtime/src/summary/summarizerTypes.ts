@@ -183,7 +183,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 	/** The size of the gc blobs in this summary. */
 	readonly gcTotalBlobsSize?: number | undefined;
 	/** The number of gc blobs in this summary. */
-	readonly gcBlobNodeCount?: number;
+	readonly gcBlobNodeCount?: number | undefined;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
 	readonly summaryNumber: number;
 }
