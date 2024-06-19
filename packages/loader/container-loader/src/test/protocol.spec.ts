@@ -128,6 +128,8 @@ describe("Protocol", () => {
 					minimumSequenceNumber: 1,
 					clientSequenceNumber: 1,
 					type: MessageType.ClientJoin,
+					// API uses null
+					// eslint-disable-next-line unicorn/no-null
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -139,6 +141,8 @@ describe("Protocol", () => {
 					minimumSequenceNumber: 1,
 					clientSequenceNumber: 2,
 					type: MessageType.ClientJoin,
+					// API uses null
+					// eslint-disable-next-line unicorn/no-null
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -155,11 +159,15 @@ describe("Protocol", () => {
 			for (const [, member] of scrubbedProtocolState.members) {
 				assert(!member.client.user.id, "user id should be empty");
 				assert(
-					!(member.client.user as unknown as any).name,
+					// TODO: use a real type
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					!(member.client.user as any).name,
 					"user name should not be present",
 				);
 				assert(
-					!(member.client.user as unknown as any).additionalDetails?.favoriteColor,
+					// TODO: use a real type
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					!(member.client.user as any).additionalDetails?.favoriteColor,
 					"user additional details should not be present",
 				);
 			}
@@ -202,6 +210,8 @@ describe("Protocol", () => {
 					minimumSequenceNumber: 1,
 					clientSequenceNumber: 1,
 					type: MessageType.ClientJoin,
+					// API uses null
+					// eslint-disable-next-line unicorn/no-null
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -213,6 +223,8 @@ describe("Protocol", () => {
 					minimumSequenceNumber: 1,
 					clientSequenceNumber: 2,
 					type: MessageType.ClientJoin,
+					// API uses null
+					// eslint-disable-next-line unicorn/no-null
 					clientId: null,
 					referenceSequenceNumber: 0,
 					contents: "test content",
@@ -229,19 +241,27 @@ describe("Protocol", () => {
 			for (const [, member] of scrubbedProtocolState.members) {
 				assert(!member.client.user.id, "user id should be empty");
 				assert(
-					!(member.client.user as unknown as any).name,
+					// TODO: use a real type
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					!(member.client.user as  any).name,
 					"user name should not be present",
 				);
 				assert(
-					!(member.client.user as unknown as any).additionalDetails?.favoriteColor,
+					// TODO: use a real type
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					!(member.client.user as any).additionalDetails?.favoriteColor,
 					"user additional details should not be present",
 				);
 			}
 			const protocolState = protocolOpHandler.getProtocolState();
 			for (const [, member] of protocolState.members) {
 				assert(member.client.user.id, "user id should be present");
+				// TODO: use a real type
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				assert((member.client.user as unknown as any).name, "user name should be present");
 				assert(
+					// TODO: use a real type
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(member.client.user as unknown as any).additionalDetails?.favoriteColor,
 					"user additional details should be present",
 				);

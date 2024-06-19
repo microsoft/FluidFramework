@@ -978,7 +978,7 @@ export class ConnectionManager implements IConnectionManager {
 			}),
 		);
 		if (clientJoinSignals.length > 0) {
-			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
+			signalsToProcess = [...signalsToProcess, ...clientJoinSignals];
 		}
 
 		// Unfortunately, there is no defined order between initialSignals (including join & leave signals)
@@ -986,7 +986,7 @@ export class ConnectionManager implements IConnectionManager {
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
 		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
-			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
+			signalsToProcess = [...signalsToProcess, ...connection.initialSignals];
 		}
 
 		this.props.signalHandler(signalsToProcess);
