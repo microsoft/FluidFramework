@@ -20,7 +20,7 @@ importers:
   .:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@commitlint/cli':
         specifier: ^17.6.6
@@ -231,7 +231,7 @@ importers:
         version: 2.19.0
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-private/readme-command':
         specifier: workspace:~
@@ -427,7 +427,7 @@ importers:
         version: 2.3.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -497,7 +497,7 @@ importers:
         version: 5.88.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -546,7 +546,7 @@ importers:
         version: 7.5.4
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -631,7 +631,7 @@ importers:
         version: 6.8.1
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-private/readme-command':
         specifier: workspace:~
