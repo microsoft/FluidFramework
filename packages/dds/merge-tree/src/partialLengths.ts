@@ -555,7 +555,7 @@ export class PartialSequenceLengths {
 	private static updatePartialsAfterInsertion(
 		segment: ISegment,
 		segmentLen: number,
-		remoteObliteratedLen: number | undefined,
+		remoteObliteratedLen: number,
 		obliterateOverlapLen: number = segmentLen,
 		partials: PartialSequenceLengthsSet,
 		seq: number,
@@ -662,10 +662,8 @@ export class PartialSequenceLengths {
 			removalInfo &&
 			(!moveInfo ||
 				moveIsLocal ||
-				(!removalIsLocal &&
-					moveInfo.movedSeq !== undefined &&
-					removalInfo.removedSeq !== undefined &&
-					moveInfo.movedSeq > removalInfo.removedSeq));
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(!removalIsLocal && moveInfo.movedSeq! > removalInfo.removedSeq!));
 
 		if (removeHappenedFirst) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -696,6 +694,7 @@ export class PartialSequenceLengths {
 			} else {
 				segmentLen = -segmentLen;
 			}
+
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const hasOverlap = moveInfo.movedClientIds!.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
@@ -766,7 +765,8 @@ export class PartialSequenceLengths {
 		PartialSequenceLengths.updatePartialsAfterInsertion(
 			segment,
 			segmentLen,
-			remoteObliteratedLen,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			remoteObliteratedLen!,
 			undefined,
 			partials,
 			seqOrLocalSeq,
@@ -845,7 +845,8 @@ export class PartialSequenceLengths {
 			};
 			partialLengths.addOrUpdate(seqPartialLen);
 		} else {
-			seqPartialLen.remoteObliteratedLen = remoteObliteratedLen;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			seqPartialLen.remoteObliteratedLen = remoteObliteratedLen!;
 			seqPartialLen.seglen = seqSeglen;
 			seqPartialLen.len = len;
 			// Assert client id matches
@@ -943,12 +944,11 @@ export class PartialSequenceLengths {
 				const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 
 				const removeHappenedFirst =
-					removalInfo?.removedSeq !== undefined &&
+					removalInfo &&
 					(!moveInfo ||
 						moveIsLocal ||
-						(!removalIsLocal &&
-							moveInfo?.movedSeq !== undefined &&
-							moveInfo.movedSeq > removalInfo.removedSeq));
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						(!removalIsLocal && moveInfo.movedSeq! > removalInfo.removedSeq!));
 
 				if (seq === segment.seq) {
 					// if this segment was moved on insert, its length should
@@ -956,8 +956,9 @@ export class PartialSequenceLengths {
 					if (
 						segment.wasMovedOnInsert &&
 						segment.seq !== undefined &&
-						moveInfo?.movedSeq !== undefined &&
-						moveInfo.movedSeq < segment.seq
+						moveInfo &&
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						moveInfo.movedSeq! < segment.seq
 					) {
 						remoteObliteratedLen += segment.cachedLength;
 					} else {
