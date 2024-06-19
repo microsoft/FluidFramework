@@ -129,9 +129,3 @@ export class RuntimeAttributor implements IRuntimeAttributor {
 		return builder.getSummaryTree();
 	}
 }
-/**
- * @internal
- */
-export function createRuntimeAttributor() {
-	return new RuntimeAttributor();
-}

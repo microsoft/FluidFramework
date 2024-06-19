@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { RuntimeAttributor, createRuntimeAttributor } from "./runtimeAttributor.js";
+export { RuntimeAttributor } from "./runtimeAttributor.js";
 export { enableOnNewFileKey, attributorTreeName } from "./utils.js";
 export { type IProvideRuntimeAttributor, type IRuntimeAttributor } from "./interfaces.js";
-export { MutableStringInterner, InternedStringId, StringInterner } from "./stringInterner.js";
+export { InternedStringId, MutableStringInterner, StringInterner } from "./stringInterner.js";
 export { makeLZ4Encoder } from "./lz4Encoder.js";
 export {
 	AttributorSerializer,

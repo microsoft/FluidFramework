@@ -21,28 +21,95 @@ import {
 	AttachState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	type IAudience,
+	type IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	type IDocumentStorageService,
 	type ISnapshotTree,
 	type ISequencedDocumentMessage,
 	SummaryType,
+	type IQuorumClients,
+	type ISequencedClient,
+	type IClient,
 } from "@fluidframework/driver-definitions/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockQuorumClients,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime } from "../../index.js";
-
-import { makeMockAudience, makeMockQuorum } from "./utils.js";
 
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];
 };
+
+/**
+ * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
+ */
+export function makeMockQuorum(clientIds: string[]): IQuorumClients {
+	const clients = new Map<string, ISequencedClient>();
+	for (const [index, clientId] of clientIds.entries()) {
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email,
+		};
+		clients.set(clientId, {
+			client: {
+				mode: "write",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user,
+				scopes: [],
+			},
+			sequenceNumber: 0,
+		});
+	}
+	return new MockQuorumClients(...clients.entries());
+}
+
+/**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
+export function makeMockAudience(clientIds: string[]): IAudience {
+	const clients = new Map<string, IClient>();
+	for (const [index, clientId] of clientIds.entries()) {
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email,
+		};
+		clients.set(clientId, {
+			mode: "write",
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			user,
+			scopes: [],
+		});
+	}
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		getMember: (clientId: string): IClient | undefined => {
+			return clients.get(clientId);
+		},
+	} as IAudience;
+}
 
 describe("RuntimeAttributor", () => {
 	const clientId = "mock client id";
@@ -116,7 +183,7 @@ describe("RuntimeAttributor", () => {
 
 		assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
 			timestamp: op.timestamp,
-			user: context.audience?.getMember(op.clientId!)?.user,
+			user: context.quorum?.getMember(op.clientId!)?.client.user,
 		});
 	});
 
@@ -167,7 +234,7 @@ describe("RuntimeAttributor", () => {
 		const decoded = decoder.decode(opAttributorBlob.content);
 		assert.deepEqual(decoded.getAttributionInfo(op.sequenceNumber!), {
 			timestamp: op.timestamp,
-			user: context.audience?.getMember(op.clientId!)?.user,
+			user: context.quorum?.getMember(op.clientId!)?.client.user,
 		});
 	});
 
@@ -189,7 +256,10 @@ describe("RuntimeAttributor", () => {
 		const sampleAttributor = new Attributor([
 			[
 				op.sequenceNumber!,
-				{ timestamp: op.timestamp!, user: context.audience.getMember(op.clientId!)!.user },
+				{
+					timestamp: op.timestamp!,
+					user: context.quorum.getMember(op.clientId!)!.client.user,
+				},
 			],
 		]);
 
@@ -231,7 +301,7 @@ describe("RuntimeAttributor", () => {
 
 		assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
 			timestamp: op.timestamp,
-			user: context.audience?.getMember(op.clientId!)?.user,
+			user: context.quorum?.getMember(op.clientId!)?.client.user,
 		});
 	});
 

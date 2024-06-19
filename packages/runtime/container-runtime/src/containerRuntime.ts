@@ -2010,10 +2010,8 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This dynamically imports the module for loading the delta connection. In many cases the delta stream, is not
-	 * required during the critical load flow. So this way we don't have to bundle this in the initial bundle and can
-	 * import this later on when required.
-	 * @returns The delta stream object.
+	 * This dynamically imports the module for loading the attributor. It has been done this so as to not increase
+	 * the runtime bundle size for the apps which does not want to use attributor.
 	 */
 	private async getDelayLoadedRuntimeAttributor(): Promise<IRuntimeAttributor> {
 		assert(this.runtimeAttributorModuleLoaded === false, "Should be loaded only once");
