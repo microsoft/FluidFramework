@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 ---
 
-Added support for optional schema validation on newly inserted content in SharedTree
+tree: Added support for optional schema validation on newly inserted content in SharedTree
 
 When defining how to view a SharedTree, an application can now specify that new content inserted into the tree should
 be subject to schema validation at the time it is inserted, so if it's not valid according to the stored schema in the

@@ -2,7 +2,7 @@
 "@fluidframework/tree": minor
 ---
 
-Breaking change: Removed the `"afterBatch"` event from `Treeview`.
+tree: Breaking change: Removed the `"afterBatch"` event from `Treeview`
 
 This event is no longer necessary.
 In the past, it provided a means for waiting for a batch of changes to finish applying to the tree before taking some action.
