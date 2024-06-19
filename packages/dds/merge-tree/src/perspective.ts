@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { isSegmentPresent, type MergeTree } from "./mergeTree.js";
+import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import type { ISegment } from "./mergeTreeNodes.js";
+import { isSegmentPresent, type ISegment } from "./mergeTreeNodes.js";
 
 /**
  * Defines a side relative to an element in a sequence.
