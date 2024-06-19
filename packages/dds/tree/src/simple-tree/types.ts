@@ -6,7 +6,12 @@
 import type { ErasedType } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema, type WithType, type } from "./schemaTypes.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	type WithType,
+	typeNameSymbol,
+} from "./schemaTypes.js";
 import {
 	type FlexTreeNode,
 	type MapTreeNode,
@@ -53,7 +58,7 @@ export type Unhydrated<T> = T;
  * and thus cause the default/built in `instanceof` to return false despite our type checking and all other APIs treating them as TreeNodes.
  * This class provides a custom `Symbol.hasInstance` to fix `instanceof` for this class and all classes extending it.
  * For now the type-only export prevents use of `instanceof` on this class (but allows it in subclasses like schema classes).
- * @public
+ * @sealed @public
  */
 export abstract class TreeNode implements WithType {
 	/**
@@ -85,11 +90,11 @@ export abstract class TreeNode implements WithType {
 	readonly #brand!: unknown;
 
 	/**
-	 * {@inheritdoc "type"}
+	 * Adds a type symbol for stronger typing.
 	 * @privateRemarks
 	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
 	 */
-	public abstract get [type](): string;
+	public abstract get [typeNameSymbol](): string;
 
 	/**
 	 * Provides `instanceof` support for testing if a value is a `TreeNode`.
@@ -107,10 +112,11 @@ export abstract class TreeNode implements WithType {
 	 * @privateRemarks
 	 * Despite type-only export, this functionality is available outside the package since it is inherited by subclasses.
 	 */
-	public static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(
-		this: TSchema,
-		value: unknown,
-	): value is InstanceType<TSchema>;
+	public static [Symbol.hasInstance]<
+		TSchema extends abstract new (
+			...args: any[]
+		) => TreeNode,
+	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
 
 	public static [Symbol.hasInstance](this: { prototype: object }, value: unknown): boolean {
 		const schema = tryGetSchema(value);
@@ -256,7 +262,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			);
 		}
 
-		const node: FlexTreeNode = isFlexTreeNode(input) ? input : schema.buildRawNode(this, input);
+		const node: FlexTreeNode = isFlexTreeNode(input)
+			? input
+			: schema.buildRawNode(this, input);
 		assert(
 			tryGetSimpleNodeSchema(node.schema) === schema,
 			0x83b /* building node with wrong schema */,
@@ -276,9 +284,10 @@ markEager(TreeNodeValid);
  * This type is used in the construction of {@link TreeNode} as an implementation detail, but leaks into the public API due to how schema are implemented.
  * @privateRemarks
  * A {@link FlexTreeNode}. Includes {@link RawTreeNode}s.
- * @public
+ * @sealed @public
  */
-export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
+export interface InternalTreeNode
+	extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}
 
 export function toFlexTreeNode(node: InternalTreeNode): FlexTreeNode {
 	assert(isFlexTreeNode(node), 0x963 /* Invalid InternalTreeNode */);

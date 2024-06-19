@@ -22,7 +22,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
 

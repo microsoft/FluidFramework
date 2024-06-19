@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-base.esm.primary.json",
+	"extends": "../../../common/build/build-common/api-extractor-base.esm.no-legacy.json",
 	"compiler": {
 		// api-extractor has trouble with Node16 moduleResolution, but Bundler looks okay.
 		"overrideTsconfig": {

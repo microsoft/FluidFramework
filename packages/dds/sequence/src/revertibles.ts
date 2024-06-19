@@ -79,7 +79,9 @@ export type IntervalRevertible =
 			mergeTreeRevertible: MergeTreeDeltaRevertible;
 	  };
 
-type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible & { event: T };
+type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible & {
+	event: T;
+};
 
 function getUpdatedIdFromInterval(interval: SequenceInterval): string {
 	const maybeId = interval.getIntervalId();
@@ -354,7 +356,10 @@ export function appendSharedStringDeltaToRevertibles(
 	// Handle any merge tree delta that is not REMOVE or is REMOVE with no interval endpoints
 	const mergeTreeRevertibles: MergeTreeDeltaRevertible[] = [];
 	// Allow merging MergeTreeDeltaRevertible with previous
-	if (revertibles.length > 0 && isMergeTreeDeltaRevertible(revertibles[revertibles.length - 1])) {
+	if (
+		revertibles.length > 0 &&
+		isMergeTreeDeltaRevertible(revertibles[revertibles.length - 1])
+	) {
 		mergeTreeRevertibles.push(revertibles.pop() as MergeTreeDeltaRevertible);
 	}
 	appendToMergeTreeDeltaRevertibles(delta.deltaArgs, mergeTreeRevertibles);
@@ -410,8 +415,7 @@ function isValidRange(
 		end < string.getLength() &&
 		(start < end ||
 			(start === end &&
-				(startSlide === SlidingPreference.FORWARD ||
-					endSlide !== SlidingPreference.FORWARD)))
+				(startSlide === SlidingPreference.FORWARD || endSlide !== SlidingPreference.FORWARD)))
 	);
 }
 
@@ -434,14 +438,14 @@ function createSequencePlace(
 		? {
 				pos,
 				side: Side.After,
-		  }
+			}
 		: newSlidingPreference === SlidingPreference.FORWARD &&
-		  oldSlidingPreference === SlidingPreference.BACKWARD
-		? {
-				pos,
-				side: Side.Before,
-		  }
-		: pos; // Avoid setting side if possible since stickiness may not be enabled
+				oldSlidingPreference === SlidingPreference.BACKWARD
+			? {
+					pos,
+					side: Side.Before,
+				}
+			: pos; // Avoid setting side if possible since stickiness may not be enabled
 }
 
 function revertLocalDelete(

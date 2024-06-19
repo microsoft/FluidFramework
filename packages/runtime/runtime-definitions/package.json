@@ -65,13 +65,13 @@
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -131,6 +131,12 @@
 			},
 			"InterfaceDeclaration_IFluidDataStoreChannel": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttachMessage": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_InboundAttachMessage": {
+				"backCompat": false
 			}
 		}
 	}

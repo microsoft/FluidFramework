@@ -72,7 +72,7 @@ export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspEr
 export interface IOdspErrorAugmentations {
     facetCodes?: string[];
     redirectLocation?: string;
-    serverEpoch?: string;
+    serverEpoch?: string | undefined;
 }
 
 // @alpha (undocumented)
