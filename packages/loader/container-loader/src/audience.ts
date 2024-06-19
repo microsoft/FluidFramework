@@ -70,12 +70,12 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	 */
 	public removeMember(clientId: string): boolean {
 		const removedClient = this.members.get(clientId);
-		if (removedClient !== undefined) {
+		if (removedClient === undefined) {
+			return false;
+		} else {
 			this.members.delete(clientId);
 			this.emit("removeMember", clientId, removedClient);
 			return true;
-		} else {
-			return false;
 		}
 	}
 

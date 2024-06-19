@@ -4,8 +4,8 @@
  */
 
 import { ISequencedClient } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
+	ISequencedDocumentMessage,
 	IDocumentAttributes,
 	IClientJoin,
 	ICommittedProposal,
@@ -106,7 +106,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		/* eslint-disable no-case-declarations */
 
 		switch (message.type) {
-			case MessageType.ClientJoin:
+			case MessageType.ClientJoin: {
 				const systemJoinMessage = message as ISequencedDocumentSystemMessage;
 				const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
 				const member: ISequencedClient = {
@@ -115,14 +115,16 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				};
 				this._quorum.addMember(join.clientId, member);
 				break;
+			}
 
-			case MessageType.ClientLeave:
+			case MessageType.ClientLeave: {
 				const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
 				const clientId = JSON.parse(systemLeaveMessage.data) as string;
 				this._quorum.removeMember(clientId);
 				break;
+			}
 
-			case MessageType.Propose:
+			case MessageType.Propose: {
 				// back-compat: ADO #1385: This should become unconditional eventually.
 				// Can be done only after Container.processRemoteMessage() stops parsing content!
 				if (typeof message.contents === "string") {
@@ -140,6 +142,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				// On a quorum proposal, immediately send a response to expedite the approval.
 				immediateNoOp = true;
 				break;
+			}
 
 			default:
 		}

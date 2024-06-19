@@ -86,7 +86,7 @@ export class QuorumClients
 	 * @returns a snapshot of the clients in the quorum
 	 */
 	public snapshot(): QuorumClientsSnapshot {
-		this.snapshotCache ??= Array.from(this.members);
+		this.snapshotCache ??= [...this.members];
 
 		return this.snapshotCache;
 	}
@@ -191,14 +191,12 @@ export class QuorumProposals
 	 * @returns arrays of proposals and values
 	 */
 	public snapshot(): QuorumProposalsSnapshot {
-		this.proposalsSnapshotCache ??= Array.from(this.proposals).map(
-			([sequenceNumber, proposal]) => [
-				sequenceNumber,
-				{ sequenceNumber, key: proposal.key, value: proposal.value },
-				[], // rejections, which has been removed
-			],
-		);
-		this.valuesSnapshotCache ??= Array.from(this.values);
+		this.proposalsSnapshotCache ??= [...this.proposals].map(([sequenceNumber, proposal]) => [
+			sequenceNumber,
+			{ sequenceNumber, key: proposal.key, value: proposal.value },
+			[], // rejections, which has been removed
+		]);
+		this.valuesSnapshotCache ??= [...this.values];
 
 		return {
 			proposals: this.proposalsSnapshotCache,
@@ -368,13 +366,13 @@ export class QuorumProposals
 			let proposalKeySeen = false;
 			for (const [, p] of this.proposals) {
 				if (p.key === committedProposal.key) {
-					if (!proposalKeySeen) {
-						// set proposalSettled to true if the proposal key match is unique thus far
-						proposalSettled = true;
-					} else {
+					if (proposalKeySeen) {
 						// set proposalSettled to false if matching proposal key is not unique
 						proposalSettled = false;
 						break;
+					} else {
+						// set proposalSettled to true if the proposal key match is unique thus far
+						proposalSettled = true;
 					}
 					proposalKeySeen = true;
 				}

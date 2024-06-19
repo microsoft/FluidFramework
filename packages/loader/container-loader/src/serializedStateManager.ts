@@ -66,7 +66,9 @@ export interface SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
-	/** This container was attached (as opposed to IPendingDetachedContainerState.attached which is false) */
+	/**
+	 * This container was attached (as opposed to IPendingDetachedContainerState.attached which is false)
+	 */
 	attached: true;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
@@ -83,9 +85,13 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
-	/** The Container's URL in the service, needed to hook up the driver during rehydration */
+	/**
+	 * The Container's URL in the service, needed to hook up the driver during rehydration
+	 */
 	url: string;
-	/** If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected. */
+	/**
+	 * If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected.
+	 */
 	clientId?: string;
 }
 
@@ -95,11 +101,17 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
-	/** This container was not attached (as opposed to IPendingContainerState.attached which is true) */
+	/**
+	 * This container was not attached (as opposed to IPendingContainerState.attached which is true)
+	 */
 	attached: false;
-	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
+	/**
+	 * Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage
+	 */
 	hasAttachmentBlobs: boolean;
-	/** Used by the memory blob storage to persisted attachment blobs */
+	/**
+	 * Used by the memory blob storage to persisted attachment blobs
+	 */
 	attachmentBlobs?: string;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
@@ -241,10 +253,10 @@ export class SerializedStateManager {
 			) {
 				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 				this.refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
-				this.refreshSnapshotP.catch((e) => {
+				this.refreshSnapshotP.catch((error) => {
 					this.mc.logger.sendErrorEvent({
 						eventName: "RefreshLatestSnapshotFailed",
-						error: e,
+						error,
 					});
 				});
 			}

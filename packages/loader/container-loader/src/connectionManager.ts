@@ -71,7 +71,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
 	const message = `Nack (${nackContent.type}): ${nackContent.message}`;
 	const canRetry = nackContent.code !== 403;
 	const retryAfterMs =
-		nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
+		nackContent.retryAfter === undefined ? undefined : nackContent.retryAfter * 1000;
 	return createGenericNetworkError(
 		message,
 		{ canRetry, retryAfterMs },
@@ -191,7 +191,9 @@ interface IPendingConnection {
  * Exposes various controls to influence this process, including manual reconnects, forced read-only mode, etc.
  */
 export class ConnectionManager implements IConnectionManager {
-	/** Connection mode used when reconnecting on error or disconnect. */
+	/**
+	 * Connection mode used when reconnecting on error or disconnect.
+	 */
 	private readonly defaultReconnectionMode: ConnectionMode;
 
 	/**
@@ -202,13 +204,19 @@ export class ConnectionManager implements IConnectionManager {
 	private pendingConnection: IPendingConnection | undefined;
 	private connection: IDocumentDeltaConnection | undefined;
 
-	/** Details about connection. undefined if there is no active connection. */
+	/**
+	 * Details about connection. undefined if there is no active connection.
+	 */
 	private _connectionDetails?: IConnectionDetailsInternal;
 
-	/** file ACL - whether user has only read-only access to a file */
+	/**
+	 * file ACL - whether user has only read-only access to a file
+	 */
 	private _readonlyPermissions: boolean | undefined;
 
-	/** tracks host requiring read-only mode. */
+	/**
+	 * tracks host requiring read-only mode.
+	 */
 	private _forceReadonly = false;
 
 	/**
@@ -216,15 +224,21 @@ export class ConnectionManager implements IConnectionManager {
 	 */
 	private _reconnectMode: ReconnectMode;
 
-	/** True if there is pending (async) reconnection from "read" to "write" */
+	/**
+	 * True if there is pending (async) reconnection from "read" to "write"
+	 */
 	private pendingReconnect = false;
 
 	private clientSequenceNumber = 0;
 	private clientSequenceNumberObserved = 0;
-	/** Counts the number of non-runtime ops sent by the client which may not be acked. */
+	/**
+	 * Counts the number of non-runtime ops sent by the client which may not be acked.
+	 */
 	private localOpsToIgnore = 0;
 
-	/** track clientId used last time when we sent any ops */
+	/**
+	 * track clientId used last time when we sent any ops
+	 */
 	private lastSubmittedClientId: string | undefined;
 
 	private connectFirstConnection = true;
@@ -258,7 +272,9 @@ export class ConnectionManager implements IConnectionManager {
 		return this.connection?.clientId;
 	}
 
-	/** Details about connection. undefined if there is no active connection. */
+	/**
+	 * Details about connection. undefined if there is no active connection.
+	 */
 	public get connectionDetails() {
 		return this._connectionDetails;
 	}
@@ -299,13 +315,13 @@ export class ConnectionManager implements IConnectionManager {
 	 * about current or last connection (if there is no connection at the moment)
 	 */
 	public get connectionProps(): ITelemetryBaseProperties {
-		return this.connection !== undefined
-			? this._connectionProps
-			: {
+		return this.connection === undefined
+			? {
 					...this._connectionProps,
 					// Report how many ops this client sent in last disconnected session
 					sentOps: this.clientSequenceNumber,
-				};
+				}
+			: this._connectionProps;
 	}
 
 	public shouldJoinWrite(): boolean {
@@ -501,8 +517,8 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode) {
-		this.connectCore(reason, connectionMode).catch((e) => {
-			const normalizedError = normalizeError(e, { props: fatalConnectErrorProp });
+		this.connectCore(reason, connectionMode).catch((error) => {
+			const normalizedError = normalizeError(error, { props: fatalConnectErrorProp });
 			this.props.closeHandler(normalizedError);
 		});
 	}
@@ -915,7 +931,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._connectionProps.connectionMode = connection.mode;
 
 		let last = -1;
-		if (initialMessages.length !== 0) {
+		if (initialMessages.length > 0) {
 			this._connectionVerboseProps.connectionInitialOpsFrom =
 				initialMessages[0].sequenceNumber;
 			last = initialMessages[initialMessages.length - 1].sequenceNumber;
@@ -1049,9 +1065,9 @@ export class ConnectionManager implements IConnectionManager {
 		this.triggerConnect(
 			{
 				text:
-					reason.error !== undefined
-						? "Reconnecting due to Error"
-						: `Reconnecting due to: ${reason.text}`,
+					reason.error === undefined
+						? `Reconnecting due to: ${reason.text}`
+						: "Reconnecting due to Error",
 				error: reason.error,
 			},
 			requestedMode,
@@ -1087,10 +1103,10 @@ export class ConnectionManager implements IConnectionManager {
 			this.clientSequenceNumberObserved = 0;
 		}
 
-		if (!isRuntimeMessage(message)) {
-			this.localOpsToIgnore++;
-		} else {
+		if (isRuntimeMessage(message)) {
 			this.localOpsToIgnore = 0;
+		} else {
+			this.localOpsToIgnore++;
 		}
 
 		return {
@@ -1100,10 +1116,10 @@ export class ConnectionManager implements IConnectionManager {
 	}
 
 	public submitSignal(content: string, targetClientId?: string) {
-		if (this.connection !== undefined) {
-			this.connection.submitSignal(content, targetClientId);
-		} else {
+		if (this.connection === undefined) {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
+		} else {
+			this.connection.submitSignal(content, targetClientId);
 		}
 	}
 

@@ -77,7 +77,7 @@ export class ContainerStorageAdapter
 	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param enableSummarizeProtocolTree  - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
+	 * @param enableSummarizeProtocolTree - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
 	 */
 	public constructor(
 		// eslint-disable-next-line import/no-deprecated
@@ -155,7 +155,7 @@ export class ContainerStorageAdapter
 		// and storage is always present in >=0.41.
 		try {
 			return this._storageService.policies;
-		} catch (e) {}
+		} catch {}
 		return undefined;
 	}
 
@@ -289,9 +289,9 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		try {
 			// some browsers may not populate stack unless exception is thrown
 			throw new Error("BlobOnlyStorage not implemented method used");
-		} catch (err) {
-			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
-			throw err;
+		} catch (error) {
+			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, error);
+			throw error;
 		}
 	}
 }

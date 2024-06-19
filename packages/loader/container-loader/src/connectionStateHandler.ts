@@ -28,30 +28,44 @@ const JoinOpTimeoutMs = 45000;
 // Timeout waiting for "self" join signal, before giving up
 const JoinSignalTimeoutMs = 10000;
 
-/** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
+/**
+ * Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler
+ */
 export interface IConnectionStateHandlerInputs {
 	logger: ITelemetryLoggerExt;
 	mc: MonitoringContext;
-	/** Log to telemetry any change in state, included to Connecting */
+	/**
+	 * Log to telemetry any change in state, included to Connecting
+	 */
 	connectionStateChanged: (
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: IConnectionStateChangeReason,
 	) => void;
-	/** Whether to expect the client to join in write mode on next connection */
+	/**
+	 * Whether to expect the client to join in write mode on next connection
+	 */
 	shouldClientJoinWrite: () => boolean;
-	/** (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again */
+	/**
+	 * (Optional) How long should we wait on our previous client's Leave op before transitioning to Connected again
+	 */
 	maxClientLeaveWaitTime: number | undefined;
-	/** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
+	/**
+	 * Log an issue encountered while in the Connecting state. details will be logged as a JSON string
+	 */
 	logConnectionIssue: (
 		eventName: string,
 		category: TelemetryEventCategory,
 		details?: ITelemetryBaseProperties,
 	) => void;
-	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
+	/**
+	 * Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid
+	 */
 	clientShouldHaveLeft: (clientId: string) => void;
 
-	/** Some critical error was hit. Container should be closed and error logged. */
+	/**
+	 * Some critical error was hit. Container should be closed and error logged.
+	 */
 	onCriticalError: (error: unknown) => void;
 }
 
@@ -249,7 +263,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		reason?: IConnectionStateChangeReason<IAnyDriverError>,
 	) {
 		switch (value) {
-			case ConnectionState.Connected:
+			case ConnectionState.Connected: {
 				assert(
 					this._connectionState === ConnectionState.CatchingUp,
 					0x3e1 /* connectivity transitions */,
@@ -266,24 +280,28 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 					this.transitionToConnectedState,
 				);
 				return;
-			case ConnectionState.Disconnected:
+			}
+			case ConnectionState.Disconnected: {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
 				break;
+			}
 			// ConnectionState.EstablishingConnection state would be set when we start establishing connection
 			// during container.connect() or reconnect because of an error.
-			case ConnectionState.EstablishingConnection:
+			case ConnectionState.EstablishingConnection: {
 				assert(
 					this._connectionState === ConnectionState.Disconnected,
 					0x6d2 /* connectivity transition to establishing connection */,
 				);
 				break;
-			case ConnectionState.CatchingUp:
+			}
+			case ConnectionState.CatchingUp: {
 				assert(
 					this._connectionState === ConnectionState.EstablishingConnection,
 					0x3e3 /* connectivity transitions */,
 				);
 				break;
+			}
 			default:
 		}
 		this._connectionState = value;
@@ -352,7 +370,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private connection?: IConnectionDetailsInternal;
 	private _clientId?: string;
 
-	/** Track how long we waited to see "leave" op for previous clientId */
+	/**
+	 * Track how long we waited to see "leave" op for previous clientId
+	 */
 	private waitEvent: PerformanceEvent | undefined;
 
 	public get connectionState(): ConnectionState {

@@ -272,12 +272,12 @@ export async function waitContainerToCatchUp(container: IContainer) {
 			container.off("closed", closedCallback);
 			const baseMessage = "Container closed while waiting to catch up";
 			reject(
-				err !== undefined
-					? wrapError(
+				err === undefined
+					? new GenericError(baseMessage)
+					: wrapError(
 							err,
 							(innerMessage) => new GenericError(`${baseMessage}: ${innerMessage}`),
-						)
-					: new GenericError(baseMessage),
+						),
 			);
 		};
 		container.on("closed", closedCallback);
@@ -591,7 +591,9 @@ export class Container
 		return this._protocolHandler;
 	}
 
-	/** During initialization we pause the inbound queues. We track this state to ensure we only call resume once */
+	/**
+	 * During initialization we pause the inbound queues. We track this state to ensure we only call resume once
+	 */
 	private inboundQueuePausedFromInit = true;
 	private firstConnection = true;
 	private readonly connectionTransitionTimes: number[] = [];
@@ -1082,8 +1084,8 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
-			} catch (exception) {
-				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
+			} catch (error_) {
+				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, error_);
 			}
 
 			this.emit("closed", error);
@@ -1129,7 +1131,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 
-				const maybeError = error !== undefined ? new Error(error.message) : undefined;
+				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
 
 				this.storageAdapter.dispose();
@@ -1138,8 +1140,8 @@ export class Container
 				// about file, like file being overwritten in storage, but client having stale local cache.
 				// Driver need to ensure all caches are cleared on critical errors
 				this.service?.dispose(error);
-			} catch (exception) {
-				this.mc.logger.sendErrorEvent({ eventName: "ContainerDisposeException" }, exception);
+			} catch (error_) {
+				this.mc.logger.sendErrorEvent({ eventName: "ContainerDisposeException" }, error_);
 			}
 
 			this.emit("disposed", error);
@@ -1228,7 +1230,7 @@ export class Container
 		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
-			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
+			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
@@ -1639,25 +1641,28 @@ export class Container
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
 		switch (loadMode.opsBeforeReturn) {
-			case undefined:
+			case undefined: {
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
 					attributes,
-					loadMode.deltaConnection !== "none" ? "all" : "none",
+					loadMode.deltaConnection === "none" ? "none" : "all",
 					lastProcessedSequenceNumber,
 				);
 				break;
+			}
 			case "cached":
-			case "all":
+			case "all": {
 				opsBeforeReturnP = this.attachDeltaManagerOpHandler(
 					attributes,
 					loadMode.opsBeforeReturn,
 					lastProcessedSequenceNumber,
 				);
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(loadMode.opsBeforeReturn);
+			}
 		}
 
 		// ...load in the existing quorum
@@ -1942,9 +1947,8 @@ export class Container
 		clientDetailsOverride?: IClientDetails,
 	): IClient {
 		const client: IClient =
-			loaderOptionsClient !== undefined
-				? structuredClone(loaderOptionsClient)
-				: {
+			loaderOptionsClient === undefined
+				? {
 						details: {
 							capabilities: { interactive: true },
 						},
@@ -1952,7 +1956,8 @@ export class Container
 						permission: [],
 						scopes: [],
 						user: { id: "" },
-					};
+					}
+				: structuredClone(loaderOptionsClient);
 
 		if (clientDetailsOverride !== undefined) {
 			client.details = {
@@ -2145,7 +2150,7 @@ export class Container
 				opsBehind,
 				online: OnlineStatus[isOnline()],
 				lastVisible:
-					this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
+					this.lastVisible === undefined ? undefined : performance.now() - this.lastVisible,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				isDirty: this.isDirty,
@@ -2198,10 +2203,12 @@ export class Container
 		metadata?: any,
 	): number {
 		switch (type) {
-			case MessageType.Operation:
+			case MessageType.Operation: {
 				return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
-			case MessageType.Summarize:
+			}
+			case MessageType.Summarize: {
 				return this.submitSummaryMessage(contents as unknown as ISummaryContent);
+			}
 			default: {
 				const newError = new GenericError(
 					"invalidContainerSubmitOpType",
@@ -2214,7 +2221,9 @@ export class Container
 		}
 	}
 
-	/** @returns clientSequenceNumber of last message in a batch */
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
 	private submitBatch(batch: IBatchMessage[], referenceSequenceNumber?: number): number {
 		let clientSequenceNumber = -1;
 		for (const message of batch) {
@@ -2454,13 +2463,14 @@ export class Container
 		);
 
 		switch (deltaConnectionArg) {
-			case undefined:
+			case undefined: {
 				if (connectionArgs) {
 					// connect to delta stream now since we did not before
 					this.connectToDeltaStream(connectionArgs);
 				}
+			}
 			// intentional fallthrough
-			case "delayed":
+			case "delayed": {
 				assert(
 					this.inboundQueuePausedFromInit,
 					0x346 /* inboundQueuePausedFromInit should be true */,
@@ -2469,10 +2479,13 @@ export class Container
 				this._deltaManager.inbound.resume();
 				this._deltaManager.inboundSignal.resume();
 				break;
-			case "none":
+			}
+			case "none": {
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(deltaConnectionArg);
+			}
 		}
 	}
 }

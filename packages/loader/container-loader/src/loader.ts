@@ -101,7 +101,9 @@ export interface ILoaderOptions extends ILoaderOptions1 {
  * @alpha
  */
 export interface IFluidModuleWithDetails {
-	/** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+	/**
+	 * Fluid code module that implements the runtime factory needed to instantiate the container runtime.
+	 */
 	module: IFluidModule;
 	/**
 	 * Code details associated with the module. Represents a document schema this module supports.
@@ -298,7 +300,7 @@ export class Loader implements IHostLoader {
 			codeLoader,
 			options: options ?? {},
 			scope:
-				options?.provideScopeLoader !== false ? { ...scope, ILoader: this } : { ...scope },
+				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
 			detachedBlobStorage,
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,

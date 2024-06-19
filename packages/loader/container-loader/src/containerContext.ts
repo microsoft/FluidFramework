@@ -82,7 +82,9 @@ export class ContainerContext implements IContainerContext {
 			summaryOp: ISummaryContent,
 			referenceSequenceNumber?: number,
 		) => number,
-		/** @returns clientSequenceNumber of last message in a batch */
+		/**
+		 * @returns clientSequenceNumber of last message in a batch
+		 */
 		public readonly submitBatchFn: (
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,

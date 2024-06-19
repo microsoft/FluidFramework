@@ -113,10 +113,12 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 		case MessageType.Reject:
 		case MessageType.NoOp:
 		case MessageType2.Accept:
-		case MessageType.Summarize:
+		case MessageType.Summarize: {
 			return true;
-		default:
+		}
+		default: {
 			return false;
+		}
 	}
 }
 
@@ -188,9 +190,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
 
-	/** count number of noops sent by the client which may not be acked */
+	/**
+	 * Count the number of noops sent by the client which may not be acked
+	 */
 	private noOpCount: number = 0;
-	/** Track clientSequenceNumber of the last op */
+	/**
+	 * Track clientSequenceNumber of the last op
+	 */
 	private lastClientSequenceNumber: number = 0;
 
 	/**
@@ -526,9 +532,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this.emit(
 			"connect",
 			connection,
-			checkpointSequenceNumber !== undefined
-				? this.lastObservedSeqNumber - this.lastSequenceNumber
-				: undefined,
+			checkpointSequenceNumber === undefined
+				? undefined
+				: this.lastObservedSeqNumber - this.lastSequenceNumber,
 		);
 
 		// If we got some initial ops, then we know the gap and call above fetched ops to fill it.
@@ -655,7 +661,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		let cancelFetch: (op: ISequencedDocumentMessage) => boolean;
 
-		if (to !== undefined) {
+		if (to === undefined) {
+			// Unbound requests are made to proactively fetch ops, but also get up to date in cases where socket
+			// is silent (and connection is "read", thus we might not have any data on how far client is behind).
+			// Once we have any op coming in from socket, we can cancel it as it's not needed any more.
+			// That said, if we have socket connection, make sure we got ops up to checkpointSequenceNumber!
+			cancelFetch = (op: ISequencedDocumentMessage) =>
+				op.sequenceNumber >= this.lastObservedSeqNumber;
+		} else {
 			const lastExpectedOp = to - 1; // make it inclusive!
 
 			// It is possible that due to asynchrony (including await above), required ops were already
@@ -678,13 +691,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// And in practice that does look like the case. The place where this code gets hit is if we lost
 			// connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
 			cancelFetch = (op: ISequencedDocumentMessage) => op.sequenceNumber >= lastExpectedOp;
-		} else {
-			// Unbound requests are made to proactively fetch ops, but also get up to date in cases where socket
-			// is silent (and connection is "read", thus we might not have any data on how far client is behind).
-			// Once we have any op coming in from socket, we can cancel it as it's not needed any more.
-			// That said, if we have socket connection, make sure we got ops up to checkpointSequenceNumber!
-			cancelFetch = (op: ISequencedDocumentMessage) =>
-				op.sequenceNumber >= this.lastObservedSeqNumber;
 		}
 
 		const controller = new AbortController();
@@ -704,8 +710,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		try {
 			this._inbound.on("push", opListener);
 			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
-			this.closeAbortController.signal.onabort = () =>
-				controller.abort(this.closeAbortController.signal.reason);
+			this.closeAbortController.signal.addEventListener("abort", () =>
+				controller.abort(this.closeAbortController.signal.reason),
+			);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -937,7 +944,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					length: messages.length,
 					fetchReason: this.fetchReason,
 					duplicate: duplicate > 0 ? duplicate : undefined,
-					initialGap: initialGap !== 0 ? initialGap : undefined,
+					initialGap: initialGap === 0 ? undefined : initialGap,
 					gap: gap > 0 ? gap : undefined,
 					firstMissing,
 					dmInitialSeqNumber: this.initialSequenceNumber,
@@ -985,13 +992,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 						this.close(error);
 					}
 				}
-			} else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
-				this.pending.push(message);
-				this.fetchMissingDeltas(reason, message.sequenceNumber);
-			} else {
+			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
 				this.lastQueuedSequenceNumber = message.sequenceNumber;
 				this.previouslyProcessedMessage = message;
 				this._inbound.push(message);
+			} else {
+				this.pending.push(message);
+				this.fetchMissingDeltas(reason, message.sequenceNumber);
 			}
 		}
 
@@ -1199,6 +1206,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// and thus can leverage that to trigger recovery. But this is not going to solve all the problems
 			// (the other 50%), and thus these errors below should be looked at even if code below results in
 			// recovery.
+			// eslint-disable-next-line unicorn/no-lonely-if
 			if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
 				this.fetchMissingDeltas("OpsBehind");
 			}

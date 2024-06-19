@@ -52,19 +52,29 @@ export interface IConnectionManager {
 
 	readonly clientId: string | undefined;
 
-	/** The queue of outbound delta messages */
+	/**
+	 * The queue of outbound delta messages
+	 */
 	readonly outbound: IDeltaQueue<IDocumentMessage[]>;
 
-	/** Details of client */
+	/**
+	 * Details of client
+	 */
 	readonly clientDetails: IClientDetails;
 
-	/** Protocol version being used to communicate with the service */
+	/**
+	 * Protocol version being used to communicate with the service
+	 */
 	readonly version: string;
 
-	/** Max message size allowed to the delta manager */
+	/**
+	 * Max message size allowed to the delta manager
+	 */
 	readonly maxMessageSize: number;
 
-	/** Service configuration provided by the service. */
+	/**
+	 * Service configuration provided by the service.
+	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 
 	readonly readOnlyInfo: ReadOnlyInfo;

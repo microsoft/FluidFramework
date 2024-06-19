@@ -140,7 +140,7 @@ export class DeltaQueue<T>
 	}
 
 	private anythingToProcess() {
-		return this.q.length !== 0 && !this.paused && this.error === undefined;
+		return this.q.length > 0 && !this.paused && this.error === undefined;
 	}
 
 	/**

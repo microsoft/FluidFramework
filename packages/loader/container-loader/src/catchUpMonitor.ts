@@ -8,10 +8,14 @@ import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-/** @see CatchUpMonitor for usage */
+/**
+ * @see CatchUpMonitor for usage
+ */
 type CaughtUpListener = () => void;
 
-/** Monitor that emits an event when a Container has caught up to a given point in the op stream */
+/**
+ * Monitor that emits an event when a Container has caught up to a given point in the op stream
+ */
 export type ICatchUpMonitor = IDisposable;
 
 /**

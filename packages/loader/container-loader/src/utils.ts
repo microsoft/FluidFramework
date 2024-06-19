@@ -150,9 +150,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				blobContents = { ...blobContents, ...innerSnapshot.snapshotBlobs };
 				break;
 			}
-			case SummaryType.Attachment:
+			case SummaryType.Attachment: {
 				treeNode.blobs[key] = summaryObject.id;
 				break;
+			}
 			case SummaryType.Blob: {
 				const blobId = uuid();
 				treeNode.blobs[key] = blobId;
@@ -163,10 +164,11 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				blobContents[blobId] = contentString;
 				break;
 			}
-			case SummaryType.Handle:
+			case SummaryType.Handle: {
 				throw new LoggingError(
 					"No handles should be there in summary in detached container!!",
 				);
+			}
 			default: {
 				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
 			}
@@ -354,9 +356,9 @@ export function getDetachedContainerStateFromSerializedContainer(
 export function getAttachedContainerStateFromSerializedContainer(
 	serializedContainer: string | undefined,
 ): IPendingContainerState | undefined {
-	return serializedContainer !== undefined
-		? (JSON.parse(serializedContainer) as IPendingContainerState)
-		: undefined;
+	return serializedContainer === undefined
+		? undefined
+		: (JSON.parse(serializedContainer) as IPendingContainerState);
 }
 
 /**
