@@ -73,7 +73,7 @@ export enum SnapshotFormatSupportType {
 /**
  * Fetches a snapshot from the server with a given version id.
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
- * @param authHeader - token used for authorization in the request
+ * @param authHeader - Authorization header value to be used in the request
  * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)

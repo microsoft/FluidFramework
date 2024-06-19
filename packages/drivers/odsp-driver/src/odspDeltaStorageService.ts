@@ -48,7 +48,7 @@ export class OdspDeltaStorageService {
 	): Promise<IDeltasFetchResult> {
 		return getWithRetryForTokenRefresh(async (options) => {
 			// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
-			// Thus it needs to be done before we call getStorageToken() to reduce extra calls
+			// Thus it needs to be done before we call getAuthHeader() to reduce extra calls
 			const url = this.buildUrl(from, to);
 			const method = "POST";
 			const authHeader = await this.getAuthHeader(

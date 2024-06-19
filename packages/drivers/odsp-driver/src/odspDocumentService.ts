@@ -59,7 +59,7 @@ export class OdspDocumentService
 	 * Creates a new OdspDocumentService instance.
 	 *
 	 * @param resolvedUrl - resolved url identifying document that will be managed by returned service instance.
-	 * @param getStorageToken - function that can provide the storage token. This is is also referred to as
+	 * @param getAuthHeader - function that can provide the Authentication header value. This is is also referred to as
 	 * the "Vroom" token in SPO.
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
 	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
@@ -72,7 +72,7 @@ export class OdspDocumentService
 	 */
 	public static async create(
 		resolvedUrl: IResolvedUrl,
-		getStorageToken: InstrumentedStorageTokenFetcher,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
 		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
 		logger: ITelemetryLoggerExt,
@@ -84,7 +84,7 @@ export class OdspDocumentService
 	): Promise<IDocumentService> {
 		return new OdspDocumentService(
 			getOdspResolvedUrl(resolvedUrl),
-			getStorageToken,
+			getAuthHeader,
 			getWebsocketToken,
 			logger,
 			cache,
@@ -105,7 +105,7 @@ export class OdspDocumentService
 
 	/**
 	 * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
-	 * @param getStorageToken - function that can provide the storage token. This is is also referred to as
+	 * @param getAuthHeader - function that can provide the Authentication header value. This is is also referred to as
 	 * the "Vroom" token in SPO.
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
 	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
@@ -119,7 +119,7 @@ export class OdspDocumentService
 	 */
 	private constructor(
 		public readonly odspResolvedUrl: IOdspResolvedUrl,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
@@ -172,7 +172,7 @@ export class OdspDocumentService
 		if (!this.storageManager) {
 			this.storageManager = new OdspDocumentStorageService(
 				this.odspResolvedUrl,
-				this.getStorageToken,
+				this.getAuthHeader,
 				this.mc.logger,
 				true,
 				this.cache,
@@ -208,7 +208,7 @@ export class OdspDocumentService
 		const snapshotOps = this.storageManager?.ops ?? [];
 		const service = new OdspDeltaStorageService(
 			this.odspResolvedUrl.endpoints.deltaStorageUrl,
-			this.getStorageToken,
+			this.getAuthHeader,
 			this.epochTracker,
 			this.mc.logger,
 		);
@@ -285,7 +285,7 @@ export class OdspDocumentService
 		this.odspDelayLoadedDeltaStream = new module.OdspDelayLoadedDeltaStream(
 			this.odspResolvedUrl,
 			this._policies,
-			this.getStorageToken,
+			this.getAuthHeader,
 			this.getWebsocketToken,
 			this.mc,
 			this.cache,

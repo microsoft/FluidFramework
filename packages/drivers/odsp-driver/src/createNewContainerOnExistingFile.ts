@@ -37,7 +37,7 @@ import { ClpCompliantAppHeader } from "./contractsPublic.js";
  * "alternative file partition" where the main File stub is an ASPX page.
  */
 export async function createNewContainerOnExistingFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
@@ -61,7 +61,7 @@ export async function createNewContainerOnExistingFile(
 
 	const { id: summaryHandle } = await createNewFluidContainerCore<IWriteSummaryResponse>({
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		forceAccessTokenViaAuthorizationHeader,

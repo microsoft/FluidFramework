@@ -154,7 +154,7 @@ function extractShareLinkData(
 }
 
 export async function createNewEmptyFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
@@ -169,7 +169,7 @@ export async function createNewEmptyFluidFile(
 	return getWithRetryForTokenRefresh(async (options) => {
 		const url = initialUrl;
 		const method = "PUT";
-		const authHeader = await getStorageToken(
+		const authHeader = await getAuthHeader(
 			{ ...options, request: { url, method } },
 			"CreateNewFile",
 		);
@@ -217,7 +217,7 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function createNewFluidFileFromSummary(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree,
@@ -241,7 +241,7 @@ export async function createNewFluidFileFromSummary(
 
 	return createNewFluidContainerCore<ICreateFileResponse>({
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		forceAccessTokenViaAuthorizationHeader,

@@ -199,7 +199,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 
 export async function createNewFluidContainerCore<T>(args: {
 	containerSnapshot: IOdspSummaryPayload;
-	getStorageToken: InstrumentedStorageTokenFetcher;
+	getAuthHeader: InstrumentedStorageTokenFetcher;
 	logger: ITelemetryLoggerExt;
 	initialUrl: string;
 	forceAccessTokenViaAuthorizationHeader: boolean;
@@ -210,7 +210,7 @@ export async function createNewFluidContainerCore<T>(args: {
 }): Promise<T> {
 	const {
 		containerSnapshot,
-		getStorageToken: getAuthHeader,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		epochTracker,

@@ -36,14 +36,14 @@ describe("authHeaderFromResponse", () => {
 		assert.equal(result, `Bearer ${token}`);
 	});
 	it("returns authorizationHeader value from TokenResponse when token value is passed as object", async () => {
-		const token = { token: "fake token", authorizationHeader: "SCHEME token token" };
-		const result = authHeaderFromResponse(token);
-		assert.equal(result, token.authorizationHeader);
+		const tokenResponse = { token: "fake token", authorizationHeader: "SCHEME token token" };
+		const result = authHeaderFromResponse(tokenResponse);
+		assert.equal(result, tokenResponse.authorizationHeader);
 	});
-	it("test that fails", async () => {
-		const token = { token: "fake token", authorizationHeader: "SCHEME token token" };
-		const result = authHeaderFromResponse(token);
-		assert.equal(result, "hola");
+	it("returns Bearer authorization header when token is defined and authorizationHeader is not", async () => {
+		const tokenResponse = { token: "fake token"};
+		const result = authHeaderFromResponse(tokenResponse);
+		assert.equal(result, "Bearer fake token");
 	});
 });
 
