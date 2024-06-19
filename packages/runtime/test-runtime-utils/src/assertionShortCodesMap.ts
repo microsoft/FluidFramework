@@ -1570,5 +1570,6 @@ export const shortCodeMap = {
 	"0x9a6": "There should be a channel when generating attach GC data",
 	"0x9a7": "BatchManager does not support rebase",
 	"0x9a8": "should be in fields mode",
-	"0x9a9": "expected to find a parent commit"
+	"0x9a9": "expected to find a parent commit",
+	"0x9aa": "identifier must be type string"
 };
