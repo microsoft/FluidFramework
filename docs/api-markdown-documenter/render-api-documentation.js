@@ -83,7 +83,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
-			if(ApiItemUtilities.isDeprecated(apiItem)) {
+			if (ApiItemUtilities.isDeprecated(apiItem)) {
 				alerts.push("Deprecated");
 			}
 
