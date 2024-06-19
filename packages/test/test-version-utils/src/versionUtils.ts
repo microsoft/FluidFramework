@@ -421,10 +421,10 @@ function calculateRequestedRange(
 	// Currently, this case only applies to calculating N-X for 2.0.0.
 	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
 	if (adjustPublicMajor === false && version.major > 1) {
-		// In this case, we can pretend that 2.0 is RC5 and calculate the range as if it were an internal version.
+		// In this case, we can pretend that 2.0 is RC6 and calculate the range as if it were an internal version.
 		const internalSchemeRange = internalSchema(
 			"2.0.0",
-			"5.0.0", // if we release RC5 this will need to be updated to "6.0.0"
+			"6.0.0",
 			"rc",
 			requested,
 		);
