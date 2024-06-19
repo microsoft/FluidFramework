@@ -230,7 +230,7 @@ stages:
           inputs:
             ArtifactType: M365
 
-        - task: AssetRetention@4
+        - task: AssetRetention@5
           displayName: Guardian Asset Retention
           condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
           inputs:
