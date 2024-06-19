@@ -72,7 +72,13 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("does not include aggregate properties when it shouldn't", () => {
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, false);
+		const helper = new SampledTelemetryHelper(
+			{ eventName: "testEvent" },
+			logger,
+			1,
+			{},
+			false,
+		);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
@@ -81,7 +87,7 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("includes aggregate properties when it should", () => {
-		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, true);
+		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, {}, true);
 		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
@@ -94,6 +100,7 @@ describe("SampledTelemetryHelper", () => {
 			{ eventName: "testEvent", myProp: "myValue" },
 			logger,
 			1,
+			{},
 			false,
 		);
 		helper.measure(() => {});
@@ -104,11 +111,12 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(event.myProp, "myValue");
 	});
 
-	it.skip("includes properties from base event when aggregate properties are included", () => {
+	it("includes properties from base event when aggregate properties are included", () => {
 		const helper = new SampledTelemetryHelper(
 			{ eventName: "testEvent", myProp: "myValue" },
 			logger,
 			1,
+			{},
 			true,
 		);
 		helper.measure(() => {});
@@ -250,6 +258,7 @@ describe("SampledTelemetryHelper", () => {
 			{ eventName: "testEvent" },
 			logger,
 			sampling,
+			{},
 			true /* includeAggregateMetrics */,
 		);
 
