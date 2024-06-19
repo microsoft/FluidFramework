@@ -42,7 +42,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 
 	private getValueToEncode(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
 		if (this.value === 0) {
-			assert(typeof cursor.value === "string", "identifier must be type string");
+			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
 			if (isStableId(cursor.value)) {
 				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
