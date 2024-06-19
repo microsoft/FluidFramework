@@ -28,7 +28,7 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 
 	private readonly opHandler = (
 		message: Pick<ISequencedDocumentMessage, "sequenceNumber">,
-	) => {
+	): void => {
 		if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
 			this.caughtUp = true;
 			this.listener();
@@ -39,7 +39,7 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 	 * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
 	 */
 	constructor(
-		private readonly deltaManager: IDeltaManager<any, any>,
+		private readonly deltaManager: IDeltaManager<unknown, unknown>,
 		private readonly listener: CaughtUpListener,
 	) {
 		this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
@@ -55,12 +55,23 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 		this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
 	}
 
-	public disposed: boolean = false;
-	public dispose() {
-		if (this.disposed) {
+	private _disposed: boolean = false;
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
+	 */
+	public dispose(): void {
+		if (this._disposed) {
 			return;
 		}
-		this.disposed = true;
+		this._disposed = true;
 
 		this.deltaManager.off("op", this.opHandler);
 	}
