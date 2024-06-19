@@ -3,6 +3,8 @@
 "fluid-framework": minor
 ---
 
+tree: object node fields with statically known default values are now optional
+
 Makes object node fields with statically known default values (i.e., `optional` and `identifier` fields) optional when creating trees, where they were previously required.
 
 Example:

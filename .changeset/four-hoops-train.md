@@ -3,7 +3,7 @@
 "fluid-framework": minor
 ---
 
-Remove some types from `@public` that are not needed
+fluid-framework: Remove some types from `@public` that are not needed
 
 Mark the following APIs `@alpha` instead of `@public`:
 

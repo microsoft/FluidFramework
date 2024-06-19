@@ -3,7 +3,7 @@
 "@fluidframework/sequence": minor
 ---
 
-Stop ISharedString extending SharedObject
+sequence: Stop ISharedString extending SharedObject
 
 ISharedString no longer extends SharedSegmentSequence and instead extends the new ISharedSegmentSequence, which may be missing some APIs.
 
