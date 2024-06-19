@@ -400,9 +400,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 
 // @alpha
 export interface IContainerRuntimeOptions {
-    readonly blockGCOpForSchemaCompatibility?: boolean;
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly disableGCToDeferSchemaUpgrade?: boolean;
     readonly enableGroupedBatching?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
