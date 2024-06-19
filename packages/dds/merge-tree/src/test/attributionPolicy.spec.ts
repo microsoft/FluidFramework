@@ -165,17 +165,9 @@ describe("Attribution Policy", () => {
 
 		it("ignores segments inserted locally", () => {
 			const mergeTreeOp = client.insertTextLocal(0, "123");
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 			client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 		});
 
 		it("ignores segments inserted remotely", () => {
@@ -210,8 +202,7 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory:
-						createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+					policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);

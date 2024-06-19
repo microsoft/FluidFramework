@@ -16,7 +16,10 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
 
@@ -44,7 +47,10 @@ const snapshotFileName = "header";
  * {@inheritDoc ISharedCounter}
  * @alpha
  */
-export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
+export class SharedCounter
+	extends SharedObject<ISharedCounterEvents>
+	implements ISharedCounter
+{
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,

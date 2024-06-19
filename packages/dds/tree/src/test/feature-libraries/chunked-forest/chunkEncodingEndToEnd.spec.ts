@@ -23,8 +23,11 @@ import {
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	TreeShape,
+	UniformChunk,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
 	type Context,
 	DefaultChangeFamily,
@@ -53,8 +56,6 @@ import {
 import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { StableId } from "../../../../../../runtime/id-compressor/dist/index.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 
 const options = {
@@ -80,7 +81,7 @@ const schemaWithIdentifier = schemaFactory.object("parent", {
 	identifier: schemaFactory.identifier,
 });
 
-function getIdentifierEncodingContext(id: StableId) {
+function getIdentifierEncodingContext(id: string) {
 	const config = new TreeConfiguration(schemaWithIdentifier, () => ({
 		identifier: id,
 	}));
@@ -252,11 +253,36 @@ describe("End to end chunked encoding", () => {
 			assert.equal(identifierValue, testIdCompressor.recompress(id));
 		});
 
-		it("is the uncompressed value when it is an unknown/invalid identifier", () => {
+		it("is the uncompressed value when it is an unknown  identifier", () => {
 			// generate an id from a different id compressor.
 			const nodeKeyManager = new MockNodeKeyManager();
 			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
 
+			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
+
+			const forestSummarizer = new ForestSummarizer(
+				checkout.forest,
+				new RevisionTagCodec(testIdCompressor),
+				fieldBatchCodec,
+				encoderContext,
+				options,
+				testIdCompressor,
+			);
+
+			function stringifier(content: unknown) {
+				return JSON.stringify(content);
+			}
+			const { summary } = forestSummarizer.getAttachSummary(stringifier);
+			const tree = summary.tree.ForestTree;
+			assert(tree.type === SummaryType.Blob);
+			const treeContent = JSON.parse(tree.content as string);
+			const identifierValue = treeContent.fields.data[0][1];
+			// Check that the identifierValue is the original uncompressed id.
+			assert.equal(identifierValue, id);
+		});
+
+		it("is the uncompressed value when it is not a UUID", () => {
+			const id = "invalidUUID";
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(

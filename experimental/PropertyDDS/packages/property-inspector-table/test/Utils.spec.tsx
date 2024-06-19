@@ -10,7 +10,11 @@ import {
 	defaultInspectorTableChildGetter,
 	defaultInspectorTableNameGetter,
 } from "../src/InspectorTable.js";
-import type { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes.js";
+import type {
+	IColumns,
+	IInspectorRow,
+	IInspectorSearchMatch,
+} from "../src/InspectorTableTypes.js";
 import { search, showNextResult } from "../src/utils.js";
 
 import {
@@ -217,11 +221,11 @@ describe("InspectorTable", () => {
 			});
 
 			it("should respect collection constants", () => {
-				const testRows = toTableRows(
-					{ data: rootProxy, id: initId } as IInspectorRow,
-					props,
-					{ depth: -1, addDummy: true, followReferences: false },
-				);
+				const testRows = toTableRows({ data: rootProxy, id: initId } as IInspectorRow, props, {
+					depth: -1,
+					addDummy: true,
+					followReferences: false,
+				});
 				const sampleCollectionConstRow = findRow("SampleCollectionConst", testRows);
 				const constRow = findRow("numbersConst", sampleCollectionConstRow.children!);
 
@@ -279,10 +283,7 @@ describe("InspectorTable", () => {
 		it("should work expansion of complex types", () => {
 			const testId = "Point3D";
 			// We add a second one to check there is no interference
-			const expanded = getExpandedMap([
-				initId + "/" + testId,
-				initId + "/CoordinateSystem3D",
-			]);
+			const expanded = getExpandedMap([initId + "/" + testId, initId + "/CoordinateSystem3D"]);
 			fillExpanded(expanded, rows, props);
 			const pointRow = findRow(testId, rows);
 			expect(pointRow.children!.length).toEqual(workspace.get(testId).getIds().length);
