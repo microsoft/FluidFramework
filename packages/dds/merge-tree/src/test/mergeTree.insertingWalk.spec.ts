@@ -8,7 +8,11 @@
 import { strict as assert } from "assert";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
+import {
+	LocalClientId,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { MergeBlock, MaxNodesInBlock } from "../mergeTreeNodes.js";
@@ -220,10 +224,7 @@ describe("MergeTree.insertingWalk", () => {
 						testData.mergeTree.getLength(testData.refSeq, localClientId),
 						testData.initialText.length + 1,
 					);
-					const currentValue = testData.textHelper.getText(
-						testData.refSeq,
-						localClientId,
-					);
+					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(currentValue, `a${testData.initialText}`);
 				});
@@ -244,10 +245,7 @@ describe("MergeTree.insertingWalk", () => {
 						testData.mergeTree.getLength(testData.refSeq, localClientId),
 						testData.initialText.length + 1,
 					);
-					const currentValue = testData.textHelper.getText(
-						testData.refSeq,
-						localClientId,
-					);
+					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(currentValue, `${testData.initialText}a`);
 				});
@@ -268,10 +266,7 @@ describe("MergeTree.insertingWalk", () => {
 						testData.mergeTree.getLength(testData.refSeq, localClientId),
 						testData.initialText.length + 1,
 					);
-					const currentValue = testData.textHelper.getText(
-						testData.refSeq,
-						localClientId,
-					);
+					const currentValue = testData.textHelper.getText(testData.refSeq, localClientId);
 					assert.equal(currentValue.length, testData.initialText.length + 1);
 					assert.equal(
 						currentValue,

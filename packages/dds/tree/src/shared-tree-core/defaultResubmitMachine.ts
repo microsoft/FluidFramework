@@ -107,7 +107,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	}
 
 	public peekNextCommit(): GraphCommit<TChange> {
-		assert(this.isInResubmitPhase, "No available commit to resubmit outside of resubmit phase");
+		assert(
+			this.isInResubmitPhase,
+			"No available commit to resubmit outside of resubmit phase",
+		);
 		return this.resubmitQueue[0];
 	}
 

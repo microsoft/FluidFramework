@@ -114,7 +114,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// We don't want to sequence any of A's changes yet
 		const collection = sharedStringA.getIntervalCollection("comments");
-		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		collection.add({
+			start: { pos: 1, side: Side.After },
+			end: { pos: 0, side: Side.Before },
+		});
 		containerA.disconnect();
 		await provider.ensureSynchronized(containerB);
 		// No matter how I arrange a connect or disconnect here, it seems to change the internal state such

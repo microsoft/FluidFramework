@@ -111,7 +111,10 @@ export interface IFluidDataStoreRuntime
 	 * Api to upload a blob of data.
 	 * @param blob - blob to be uploaded.
 	 */
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Submits the signal to be sent to other clients.
