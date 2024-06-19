@@ -85,7 +85,7 @@ export type TransformListeners<
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @public
+ * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -267,7 +267,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
 	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
-	public on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off {
+	public on<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
 		const off: Off = () => {
 			const currentListeners = this.listeners.get(eventName);
 			if (currentListeners?.delete(off) === true) {

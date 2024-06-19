@@ -260,10 +260,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				// In addition to that, in its current form, doing this in ConnectionState.CatchingUp is dangerous as
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
-				assert(
-					this.catchUpMonitor === undefined,
-					0x3eb /* catchUpMonitor should be gone */,
-				);
+				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
 				this.catchUpMonitor = new CatchUpMonitor(
 					this.deltaManager,
 					this.transitionToConnectedState,
@@ -735,7 +732,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 		assert(
 			!this.waitingForLeaveOp,
-			"leave timer can't be set as we have not had access to quorum",
+			0x99d /* leave timer can't be set as we have not had access to quorum */,
 		);
 
 		// This check is required for scenario of loading container from pending state, and ensuring there is no way

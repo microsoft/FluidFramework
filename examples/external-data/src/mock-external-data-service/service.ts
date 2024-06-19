@@ -187,9 +187,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			}
 			webhook.registerSubscriber(subscriberUrl);
 			console.log(
-				formatLogMessage(
-					`Registered for webhook notifications at URL: "${subscriberUrl}".`,
-				),
+				formatLogMessage(`Registered for webhook notifications at URL: "${subscriberUrl}".`),
 			);
 		} catch (error) {
 			if (error instanceof ApiError) {
@@ -220,9 +218,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			if (typeof subscriberUrl !== "string") {
 				throw new InvalidRequestError("Missing or unexpected data in request body");
 			} else if (isWebUri(subscriberUrl) === undefined) {
-				throw new InvalidRequestError(
-					`Provided subscriber URL is invalid ${subscriberUrl}`,
-				);
+				throw new InvalidRequestError(`Provided subscriber URL is invalid ${subscriberUrl}`);
 			}
 			const externalTaskListId = request.body.externalTaskListId;
 			if (externalTaskListId === undefined || typeof externalTaskListId !== "string") {
@@ -362,9 +358,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 						),
 						error,
 					);
-					result
-						.status(500)
-						.json({ message: "Failed to set task data due to an error." });
+					result.status(500).json({ message: "Failed to set task data due to an error." });
 				},
 			);
 		}

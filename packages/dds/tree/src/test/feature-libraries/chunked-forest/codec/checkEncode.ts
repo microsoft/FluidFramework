@@ -92,7 +92,18 @@ function testDecode(
 	// TODO: check chunk matches schema
 
 	// Check decode
-	const result = decode(chunk, idCompressor ?? testIdCompressor);
+	const result = decode(
+		chunk,
+		idCompressor !== undefined
+			? {
+					idCompressor,
+					originatorId: idCompressor.localSessionId,
+				}
+			: {
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				},
+	);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
 	// handles can't be roundtripped through JSON. the FluidSerializer can't be
@@ -117,7 +128,18 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(parsed, idCompressor ?? testIdCompressor);
+		const parsedResult = decode(
+			parsed,
+			idCompressor !== undefined
+				? {
+						idCompressor,
+						originatorId: idCompressor.localSessionId,
+					}
+				: {
+						idCompressor: testIdCompressor,
+						originatorId: testIdCompressor.localSessionId,
+					},
+		);
 		assert.deepEqual(parsedResult, result);
 	}
 

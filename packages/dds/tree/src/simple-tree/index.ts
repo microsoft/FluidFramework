@@ -26,7 +26,7 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	type,
+	typeNameSymbol,
 	type WithType,
 	type AllowedTypes,
 	FieldKind,
@@ -37,9 +37,8 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	type ApplyKind,
 } from "./schemaTypes.js";
-import * as InternalSimpleTreeTypes from "./internalTypes.js";
-export { InternalSimpleTreeTypes };
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
@@ -81,7 +80,11 @@ export {
 // TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
 // See docs on TreeNode for more details.
 export type { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent, type TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	TreeArrayNode,
+	IterableTreeArrayContent,
+	type TreeArrayNodeBase,
+} from "./arrayNode.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,

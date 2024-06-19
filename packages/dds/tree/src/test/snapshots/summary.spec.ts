@@ -6,7 +6,7 @@
 import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 import { SharedTreeFormatVersion, type SharedTreeOptions } from "../../shared-tree/index.js";
 import { useSnapshotDirectory } from "./snapshotTools.js";
-import { generateTestTrees } from "./testTrees.js";
+import { generateTestTrees } from "./testTreeScenarios.js";
 import { takeSummarySnapshot } from "./utils.js";
 
 describe("snapshot tests", () => {
@@ -22,18 +22,11 @@ describe("snapshot tests", () => {
 				const options: SharedTreeOptions = {
 					treeEncodeType,
 					formatVersion:
-						SharedTreeFormatVersion[
-							formatVersionKey as keyof typeof SharedTreeFormatVersion
-						],
+						SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion],
 				};
 				const testTrees = generateTestTrees(options);
 
-				for (const {
-					name: testName,
-					runScenario,
-					skip = false,
-					only = false,
-				} of testTrees) {
+				for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
 					const itFn = only ? it.only : skip ? it.skip : it;
 
 					itFn(testName, async () => {

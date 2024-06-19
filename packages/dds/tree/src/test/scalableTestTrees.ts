@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { type FieldKey, type UpPath, moveToDetachedField, rootFieldKey } from "../core/index.js";
+import {
+	type FieldKey,
+	type UpPath,
+	moveToDetachedField,
+	rootFieldKey,
+} from "../core/index.js";
 import { jsonSchema, leaf } from "../domains/index.js";
 import {
 	FieldKinds,
@@ -35,7 +40,10 @@ const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
+	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [
+		() => linkedListSchema,
+		leaf.number,
+	]),
 });
 
 const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {

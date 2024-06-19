@@ -428,12 +428,11 @@
 				);
 
 				if (lastDeltaChangeSetIndex === -1) {
-					let { node, deltaIndex } =
-						await this._btreeManager._storage.getNodeExpectingDelta(
-							originalNodeRef,
-							previousSubId,
-							false,
-						);
+					let { node, deltaIndex } = await this._btreeManager._storage.getNodeExpectingDelta(
+						originalNodeRef,
+						previousSubId,
+						false,
+					);
 					newNode = node;
 					lastDeltaChangeSetIndex = deltaIndex;
 				}
