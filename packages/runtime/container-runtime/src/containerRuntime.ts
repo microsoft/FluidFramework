@@ -1213,7 +1213,7 @@ export class ContainerRuntime
 	 * Used to delay transition to "connected" state while we upload
 	 * attachment blobs that were added while disconnected
 	 */
-	private delayConnectClientId?: string;
+	private delayConnectClientId?: string | undefined;
 
 	private ensureNoDataModelChangesCalls = 0;
 
@@ -3404,11 +3404,11 @@ export class ContainerRuntime
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLoggerExt;
+			logger?: ITelemetryLoggerExt | undefined;
 			/** True to run GC sweep phase after the mark phase */
-			runSweep?: boolean;
+			runSweep?: boolean | undefined;
 			/** True to generate full GC data */
-			fullGC?: boolean;
+			fullGC?: boolean | undefined;
 		},
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
@@ -3942,7 +3942,7 @@ export class ContainerRuntime
 	private submit(
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
-		metadata?: { localId: string; blobId?: string },
+		metadata?: { localId: string; blobId?: string | undefined },
 	): void {
 		this.verifyNotClosed();
 

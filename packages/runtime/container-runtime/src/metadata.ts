@@ -22,5 +22,5 @@ export interface IBlobMetadata {
  * ContainerRuntime needs to know if this is a replayed savedOp as those need to be skipped in stashed ops scenarios.
  */
 export interface ISavedOpMetadata {
-	savedOp?: boolean;
+	savedOp?: boolean | undefined;
 }

@@ -135,7 +135,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
 
-	readonly documentSchema?: IDocumentSchema;
+	readonly documentSchema?: IDocumentSchema | undefined;
 }
 
 /**
@@ -143,9 +143,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
  */
 export interface ICreateContainerMetadata {
 	/** Runtime version of the container when it was first created */
-	createContainerRuntimeVersion?: string;
+	createContainerRuntimeVersion?: string | undefined;
 	/** Timestamp of the container when it was first created */
-	createContainerTimestamp?: number;
+	createContainerTimestamp?: number | undefined;
 }
 
 /**

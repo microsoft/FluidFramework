@@ -36,8 +36,8 @@ interface ICommonProps {
 	usageType: NodeUsageType;
 	completedGCRuns: number;
 	isTombstoned: boolean;
-	lastSummaryTime?: number;
-	headers?: RuntimeHeaderData;
+	lastSummaryTime?: number | undefined;
+	headers?: RuntimeHeaderData | undefined;
 }
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -67,13 +67,13 @@ interface INodeUsageProps extends ICommonProps {
 	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
 	packagePath: readonly string[] | undefined;
 	/** In case of Revived - what node added the reference? */
-	fromId?: string;
+	fromId?: string | undefined;
 	/** In case of Revived - was it revived due to autorecovery? */
-	autorecovery?: true;
+	autorecovery?: true | undefined;
 	/** URL (including query string) if this usage came from a request */
-	requestUrl?: string;
+	requestUrl?: string | undefined;
 	/** Original request headers if this usage came from a request or handle.get */
-	requestHeaders?: string;
+	requestHeaders?: string | undefined;
 }
 
 /**

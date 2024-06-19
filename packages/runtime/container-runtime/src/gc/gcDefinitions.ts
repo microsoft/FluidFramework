@@ -157,7 +157,7 @@ export interface IGCMetadata {
 	 *
 	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
 	 */
-	readonly gcFeatureMatrix?: GCFeatureMatrix;
+	readonly gcFeatureMatrix?: GCFeatureMatrix | undefined;
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
@@ -167,7 +167,7 @@ export interface IGCMetadata {
 	 */
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
-	readonly sessionExpiryTimeoutMs?: number;
+	readonly sessionExpiryTimeoutMs?: number | undefined;
 	/**
 	 * How long to wait after an object is unreferenced before it becomes a Tombstone.
 	 *
@@ -341,11 +341,11 @@ export interface IGarbageCollector {
 	/** Run garbage collection and update the reference / used state of the system. */
 	collectGarbage(
 		options: {
-			logger?: ITelemetryLoggerExt;
-			runSweep?: boolean;
-			fullGC?: boolean;
+			logger?: ITelemetryLoggerExt | undefined;
+			runSweep?: boolean | undefined;
+			fullGC?: boolean | undefined;
 		},
-		telemetryContext?: ITelemetryContext,
+		telemetryContext?: ITelemetryContext | undefined,
 	): Promise<IGCStats | undefined>;
 	/** Summarizes the GC data and returns it as a summary tree. */
 	summarize(
@@ -398,7 +398,7 @@ export interface IGCNodeUpdatedProps {
 	 */
 	timestampMs: number | undefined;
 	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
-	packagePath?: readonly string[];
+	packagePath?: readonly string[] | undefined;
 	/** The original request for loads to preserve it in telemetry */
 	request?: IRequest;
 	/** If the node was loaded via request path, the header data. May be modified from the original request */

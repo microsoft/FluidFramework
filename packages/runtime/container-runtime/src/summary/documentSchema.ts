@@ -66,7 +66,8 @@ export interface IDocumentSchema {
 	// Sequence number when this schema became active.
 	refSeq: number;
 
-	runtime: Record<string, DocumentSchemaValueType>;
+	// Not sure if this had an effect?
+	runtime: Record<string, DocumentSchemaValueType | undefined>;
 }
 
 /**
@@ -127,10 +128,11 @@ export type IDocumentSchemaCurrent = {
 	version: 1;
 	refSeq: number;
 
+	// Making this compatible with `runtime: Record<string, DocumentSchemaValueType>;` in line 69 in this file seems tricky
 	runtime: {
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
-			? true
-			: IDocumentSchemaFeatures[P];
+			? true | undefined
+			: IDocumentSchemaFeatures[P] | undefined;
 	};
 };
 
@@ -347,12 +349,12 @@ function same(
 	return true;
 }
 
-function boolToProp(b: boolean) {
+function boolToProp(b: boolean | undefined) {
 	return b ? true : undefined;
 }
 
-function arrayToProp(arr: string[]) {
-	return arr.length === 0 ? undefined : arr;
+function arrayToProp(arr: string[] | undefined) {
+	return arr?.length === 0 ? undefined : arr;
 }
 
 /* eslint-disable jsdoc/check-indentation */
@@ -459,7 +461,7 @@ export class DocumentsSchemaController {
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
-			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
+			(features.disallowedVersions ?? []).length === 0 || (features.explicitSchemaControl ?? false),
 			0x949 /* not supported */,
 		);
 
