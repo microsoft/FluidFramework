@@ -88,7 +88,9 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
 			return ["@fluid-private"].includes(packageScope);
 		},
-		minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
+		// Temporary workaround to ensure APIs temporarily tagged as `@alpha` (to mean "legacy") are included in the API docs.
+		// This min level should be set back to Beta once legacy APIs have been cleaned up to not use `@alpha`.
+		minimumReleaseLevel: ReleaseTag.Alpha, // Don't include `@internal` items in docs published to the public website.
 	});
 
 	logProgress("Generating API documentation...");
