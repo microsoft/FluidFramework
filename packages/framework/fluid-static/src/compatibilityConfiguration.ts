@@ -43,5 +43,7 @@ export const compatibilityModeRuntimeOptions: Record<
 		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
 		// It introduces a new type of op which is not compatible with 1.x clients.
 		enableRuntimeIdCompressor: "on",
+		// Enable GC Sweep going forward
+		gcOptions: { enableGCSweep: true },
 	},
 };
