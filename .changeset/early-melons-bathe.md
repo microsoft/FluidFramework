@@ -2,7 +2,7 @@
 "@fluidframework/container-loader": minor
 ---
 
-IDetachedBlobStorage is deprecated and replaced with a default in memory store for detached blobs
+container-loader: IDetachedBlobStorage is deprecated and replaced with a default in memory store for detached blobs
 
 IDetachedBlobStorage will be removed in a future release without a replacement.
 
