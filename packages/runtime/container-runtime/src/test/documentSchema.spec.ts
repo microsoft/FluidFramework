@@ -289,7 +289,8 @@ describe("Runtime", () => {
 					compressionLz4: boolToProp(featuresModified.compressionLz4),
 					idCompressorMode: featuresModified.idCompressorMode,
 					opGroupingEnabled: boolToProp(featuresModified.opGroupingEnabled),
-					disallowedVersions: arrayToProp(featuresModified.disallowedVersions),
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					disallowedVersions: arrayToProp(featuresModified.disallowedVersions!),
 				},
 			};
 			assert.deepEqual(
@@ -364,7 +365,7 @@ describe("Runtime", () => {
 		const message = controller.maybeSendSchemaMessage();
 
 		assert(message !== undefined);
-		assert(message.runtime.opGroupingEnabled === true);
+		assert(message.runtime?.opGroupingEnabled === true);
 
 		// Validate that client will attempt to send only one such message.
 		// This is important, as otherwise we will keep sending them forever. Not only this is useless,
@@ -493,7 +494,7 @@ describe("Runtime", () => {
 
 		const message = controller3.maybeSendSchemaMessage();
 		assert(message !== undefined, "message sent");
-		assert(message.runtime.idCompressorMode === "on");
+		assert(message.runtime?.idCompressorMode === "on");
 
 		controller3.processDocumentSchemaOp(
 			message,

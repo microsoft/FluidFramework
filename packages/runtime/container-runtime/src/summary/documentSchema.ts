@@ -67,7 +67,7 @@ export interface IDocumentSchema {
 	refSeq: number;
 
 	// Not sure if this had an effect?
-	runtime: Record<string, DocumentSchemaValueType | undefined>;
+	runtime: Record<string, DocumentSchemaValueType | undefined> | undefined;
 }
 
 /**
@@ -92,8 +92,8 @@ export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
 	// - Legacy behavior - changing schema without leveraging schema change ops.
 	// - New behavior - changes in schema require ops and take into affect with delay.
-	explicitSchemaControl: boolean | undefined;
-	compressionLz4: boolean | undefined;
+	explicitSchemaControl: boolean;
+	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
 
@@ -496,7 +496,7 @@ export class DocumentsSchemaController {
 					},
 				} satisfies IDocumentSchemaCurrent);
 
-		checkRuntimeCompatibility(this.documentSchema, "document");
+		checkRuntimeCompatibility(this.documentSchema as IDocumentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
 
 		// Use legacy behavior only if both document and options tell us to use legacy.
@@ -527,9 +527,9 @@ export class DocumentsSchemaController {
 		}
 
 		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
-		checkRuntimeCompatibility(this.desiredSchema, "desired");
-		checkRuntimeCompatibility(this.sessionSchema, "session");
-		checkRuntimeCompatibility(this.futureSchema, "future");
+		checkRuntimeCompatibility(this.desiredSchema as IDocumentSchema, "desired");
+		checkRuntimeCompatibility(this.sessionSchema as IDocumentSchema, "session");
+		checkRuntimeCompatibility(this.futureSchema as IDocumentSchema, "future");
 	}
 
 	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {

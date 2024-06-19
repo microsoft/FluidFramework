@@ -291,6 +291,21 @@
 			"RemovedInterfaceDeclaration_ContainerRuntimeMessage": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IDocumentSchemaChangeMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDocumentSchemaFeatures": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IGeneratedSummaryStats": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDocumentSchema": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeMetadata": {
+				"backCompat": false
 			}
 		}
 	}

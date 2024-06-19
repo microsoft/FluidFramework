@@ -113,9 +113,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly closeFn: (error?: ICriticalContainerError) => void;
     collectGarbage(options: {
-        logger?: ITelemetryLoggerExt;
-        runSweep?: boolean;
-        fullGC?: boolean;
+        logger?: ITelemetryLoggerExt | undefined;
+        runSweep?: boolean | undefined;
+        fullGC?: boolean | undefined;
     }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
     // (undocumented)
     get connected(): boolean;
@@ -388,9 +388,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
     readonly disableIsolatedChannels?: true;
     // (undocumented)
     readonly documentSchema?: IDocumentSchema;
-    readonly lastMessage?: ISummaryMetadataMessage;
+    readonly lastMessage?: ISummaryMetadataMessage | undefined;
     // @deprecated (undocumented)
-    readonly message?: ISummaryMetadataMessage;
+    readonly message?: ISummaryMetadataMessage | undefined;
     // (undocumented)
     readonly summaryFormatVersion: 1;
     readonly summaryNumber?: number;
@@ -415,8 +415,8 @@ export interface IContainerRuntimeOptions {
 
 // @alpha (undocumented)
 export interface ICreateContainerMetadata {
-    createContainerRuntimeVersion?: string;
-    createContainerTimestamp?: number;
+    createContainerRuntimeVersion?: string | undefined;
+    createContainerTimestamp?: number | undefined;
 }
 
 // @alpha
@@ -427,7 +427,7 @@ export interface IDocumentSchema {
     // (undocumented)
     refSeq: number;
     // (undocumented)
-    runtime: Record<string, DocumentSchemaValueType>;
+    runtime: Record<string, DocumentSchemaValueType | undefined> | undefined;
     // (undocumented)
     version: number;
 }
@@ -440,7 +440,7 @@ export type IDocumentSchemaCurrent = {
     version: 1;
     refSeq: number;
     runtime: {
-        [P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean ? true : IDocumentSchemaFeatures[P];
+        [P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean ? true | undefined : IDocumentSchemaFeatures[P] | undefined;
     };
 };
 
@@ -448,7 +448,7 @@ export type IDocumentSchemaCurrent = {
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
-    disallowedVersions: string[];
+    disallowedVersions: string[] | undefined;
     // (undocumented)
     explicitSchemaControl: boolean;
     // (undocumented)
@@ -493,11 +493,11 @@ export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFlui
 // @alpha
 export interface IGCMetadata {
     readonly gcFeature?: GCVersion;
-    readonly gcFeatureMatrix?: GCFeatureMatrix;
-    readonly sessionExpiryTimeoutMs?: number;
+    readonly gcFeatureMatrix?: GCFeatureMatrix | undefined;
+    readonly sessionExpiryTimeoutMs?: number | undefined;
     // @deprecated
     readonly sweepEnabled?: boolean;
-    readonly tombstoneTimeoutMs?: number;
+    readonly tombstoneTimeoutMs?: number | undefined;
 }
 
 // @alpha (undocumented)
@@ -516,9 +516,9 @@ export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {
 // @alpha
 export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly dataStoreCount: number;
-    readonly gcBlobNodeCount?: number;
+    readonly gcBlobNodeCount?: number | undefined;
     readonly gcStateUpdatedDataStoreCount?: number;
-    readonly gcTotalBlobsSize?: number;
+    readonly gcTotalBlobsSize?: number | undefined;
     readonly summarizedDataStoreCount: number;
     readonly summaryNumber: number;
 }
@@ -573,7 +573,7 @@ export interface IRefreshSummaryAckOptions {
 // @alpha
 export interface IRetriableFailureError extends Error {
     // (undocumented)
-    readonly retryAfterSeconds?: number;
+    readonly retryAfterSeconds?: number | undefined;
 }
 
 // @alpha

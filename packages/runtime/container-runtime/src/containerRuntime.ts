@@ -221,6 +221,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	type IDocumentSchema,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -2241,10 +2242,11 @@ export class ContainerRuntime
 
 		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
 			this.deltaManager.lastSequenceNumber,
-		);
+		) as IDocumentSchema;
 
 		// Is document schema explicit control on?
-		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const explicitSchemaControl = documentSchema?.runtime!.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
