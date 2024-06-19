@@ -55,7 +55,6 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManagerErased;
@@ -71,7 +70,7 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
-	readonly idCompressor?: IIdCompressor;
+	readonly idCompressor?: IIdCompressor | undefined;
 
 	/**
 	 * Returns the channel with the given id
