@@ -38,7 +38,7 @@ export interface IErrorEvent extends IEvent {
 
 /**
  * Base interface for event providers.
- * @public
+ * @sealed @public
  */
 export interface IEventProvider<TEvent extends IEvent> {
 	/**
