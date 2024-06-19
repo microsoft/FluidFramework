@@ -88,7 +88,7 @@
 		"moment": "^2.21.0",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0-265463",
+		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
