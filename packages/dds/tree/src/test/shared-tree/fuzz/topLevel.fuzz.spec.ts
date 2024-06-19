@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
@@ -38,8 +38,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe("Fuzz - Top-Level", () => {
-	const runsPerBatch = 50;
+describeFuzz("Fuzz - Top-Level", ({ testCount }) => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
@@ -75,7 +74,7 @@ describe("Fuzz - Top-Level", () => {
 
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			saveFailures: {
 				directory: failureDirectory,
 			},
@@ -110,7 +109,7 @@ describe("Fuzz - Top-Level", () => {
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			reconnectProbability: 0.0,
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,

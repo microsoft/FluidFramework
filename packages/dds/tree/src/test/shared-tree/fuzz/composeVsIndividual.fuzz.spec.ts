@@ -10,6 +10,7 @@ import {
 	type AsyncGenerator,
 	combineReducersAsync,
 	takeAsync,
+	describeFuzz,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
@@ -89,9 +90,8 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe("Fuzz - composed vs individual changes", () => {
+describeFuzz("Fuzz - composed vs individual changes", ({ testCount }) => {
 	const opsPerRun = 20;
-	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
@@ -145,7 +145,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			validateTree(tree.checkout, childTreeView);
 		});
 		createDDSFuzzSuite(model, {
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			numberOfClients: 1,
 			emitter,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
@@ -74,9 +74,8 @@ const initialTreeJson = jsonableTreeFromFieldCursor(
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe("Fuzz - anchor stability", () => {
+describeFuzz("Fuzz - anchor stability", ({ testCount }) => {
 	const opsPerRun = 20;
-	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
@@ -131,7 +130,7 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		createDDSFuzzSuite(model, {
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			numberOfClients: 1,
 			emitter,
 			saveFailures: {
@@ -213,7 +212,7 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		createDDSFuzzSuite(model, {
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			numberOfClients: 2,
 			emitter,

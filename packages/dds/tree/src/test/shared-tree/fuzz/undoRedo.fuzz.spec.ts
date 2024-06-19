@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
+import {
+	type AsyncGenerator,
+	takeAsync,
+	describeFuzz,
+} from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
@@ -53,8 +57,7 @@ interface UndoRedoFuzzTestState extends FuzzTestState {
 	unsubscribe?: (() => void)[];
 }
 
-describe("Fuzz - revert", () => {
-	const runsPerBatch = 20;
+describeFuzz("Fuzz - revert", ({ testCount }) => {
 	const opsPerRun = 20;
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
@@ -142,7 +145,7 @@ describe("Fuzz - revert", () => {
 			tearDown(state);
 		});
 		createDDSFuzzSuite(model, {
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			numberOfClients: 3,
 			detachedStartOptions: {
 				numOpsBeforeAttach: 0,
@@ -197,7 +200,7 @@ describe("Fuzz - revert", () => {
 			tearDown(state);
 		});
 		createDDSFuzzSuite(model, {
-			defaultTestCount: runsPerBatch,
+			defaultTestCount: testCount,
 			numberOfClients: 3,
 			detachedStartOptions: {
 				numOpsBeforeAttach: 0,

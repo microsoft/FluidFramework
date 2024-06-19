@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
@@ -29,8 +29,7 @@ import {
 import type { Operation } from "./operationTypes.js";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
-describe("Fuzz - move", () => {
-	const runsPerBatch = 50;
+describeFuzz("Fuzz - move", ({ testCount }) => {
 	const opsPerRun = 30;
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		intraFieldMove: 1,
@@ -71,7 +70,7 @@ describe("Fuzz - move", () => {
 			maxNumberOfClients: 4,
 			clientAddProbability: 1,
 		},
-		defaultTestCount: runsPerBatch,
+		defaultTestCount: testCount,
 		saveFailures: {
 			directory: failureDirectory,
 		},
