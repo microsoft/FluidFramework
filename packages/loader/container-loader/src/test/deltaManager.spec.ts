@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -185,7 +185,10 @@ describe("Loader", () => {
 				}
 
 				it("Infinite frequency parameters disables periodic noops completely", async () => {
-					const noopHeuristic = new NoopHeuristic(Infinity, Infinity);
+					const noopHeuristic = new NoopHeuristic(
+						Number.POSITIVE_INFINITY,
+						Number.POSITIVE_INFINITY,
+					);
 
 					noopHeuristic.on("wantsNoop", () => {
 						assert.fail("Heuristic shouldn't request noops with Infinite thresholds");
@@ -200,7 +203,7 @@ describe("Loader", () => {
 
 				it("Infinite time frequency will not generate noops at time intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(Infinity, 100);
+					const noopHeuristic = new NoopHeuristic(Number.POSITIVE_INFINITY, 100);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -217,7 +220,7 @@ describe("Loader", () => {
 
 				it("Infinite op frequency will not generate noops at op intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(100, Infinity);
+					const noopHeuristic = new NoopHeuristic(100, Number.POSITIVE_INFINITY);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -232,7 +235,7 @@ describe("Loader", () => {
 
 				it("1k op frequency will generate noop at op intervals", async () => {
 					let counter = 0;
-					const noopHeuristic = new NoopHeuristic(Infinity, 1000);
+					const noopHeuristic = new NoopHeuristic(Number.POSITIVE_INFINITY, 1000);
 					noopHeuristic.on("wantsNoop", () => {
 						counter++;
 						noopHeuristic.notifyMessageSent();
@@ -515,9 +518,9 @@ describe("Loader", () => {
 							read: async () => {
 								await new Promise<void>((resolve) => {
 									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									abortSignal!.onabort = () => {
+									abortSignal!.addEventListener("abort", () => {
 										resolve();
-									};
+									});
 								});
 
 								throw new Error(abortSignal?.reason);

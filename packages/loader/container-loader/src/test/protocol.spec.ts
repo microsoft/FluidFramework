@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { type IClientDetails, type IUser } from "@fluidframework/driver-definitions";
 import {
@@ -58,9 +58,9 @@ describe("Protocol", () => {
 					timestamp: 1,
 				},
 			];
-			messages.forEach((message) => {
+			for (const message of messages) {
 				assert.doesNotThrow(() => protocolOpHandler.processMessage(message, false));
-			});
+			}
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 		});
 
@@ -146,13 +146,13 @@ describe("Protocol", () => {
 					data: JSON.stringify(clientJoin2),
 				},
 			];
-			messages.forEach((message) => {
+			for (const message of messages) {
 				assert.doesNotThrow(() => protocolOpHandler.processMessage(message, false));
-			});
+			}
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 
 			const scrubbedProtocolState = protocolOpHandler.getProtocolState(true);
-			scrubbedProtocolState.members.forEach(([, member]) => {
+			for (const [, member] of scrubbedProtocolState.members) {
 				assert(!member.client.user.id, "user id should be empty");
 				assert(
 					!(member.client.user as unknown as any).name,
@@ -162,7 +162,7 @@ describe("Protocol", () => {
 					!(member.client.user as unknown as any).additionalDetails?.favoriteColor,
 					"user additional details should not be present",
 				);
-			});
+			}
 		});
 
 		it("does not scrub user data from protocol state quorum", () => {
@@ -220,13 +220,13 @@ describe("Protocol", () => {
 					data: JSON.stringify(clientJoin2),
 				},
 			];
-			messages.forEach((message) => {
+			for (const message of messages) {
 				assert.doesNotThrow(() => protocolOpHandler.processMessage(message, false));
-			});
+			}
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 
 			const scrubbedProtocolState = protocolOpHandler.getProtocolState(true);
-			scrubbedProtocolState.members.forEach(([, member]) => {
+			for (const [, member] of scrubbedProtocolState.members) {
 				assert(!member.client.user.id, "user id should be empty");
 				assert(
 					!(member.client.user as unknown as any).name,
@@ -236,16 +236,16 @@ describe("Protocol", () => {
 					!(member.client.user as unknown as any).additionalDetails?.favoriteColor,
 					"user additional details should not be present",
 				);
-			});
+			}
 			const protocolState = protocolOpHandler.getProtocolState();
-			protocolState.members.forEach(([, member]) => {
+			for (const [, member] of protocolState.members) {
 				assert(member.client.user.id, "user id should be present");
 				assert((member.client.user as unknown as any).name, "user name should be present");
 				assert(
 					(member.client.user as unknown as any).additionalDetails?.favoriteColor,
 					"user additional details should be present",
 				);
-			});
+			}
 		});
 	});
 });

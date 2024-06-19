@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -462,7 +462,9 @@ describe("serializedStateManager", () => {
 				isDirtyF,
 				() => false,
 			);
-			savedOps.forEach((savedOp) => serializedStateManager.addProcessedOp(savedOp));
+			for (const savedOp of savedOps) {
+				serializedStateManager.addProcessedOp(savedOp);
+			}
 
 			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);

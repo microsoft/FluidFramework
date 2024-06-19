@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -75,9 +75,13 @@ describe("loader unit test", () => {
 		try {
 			await loader.rehydrateDetachedContainerFromSnapshot(`{"foo":"bar"}`);
 			assert.fail("should fail");
-		} catch (e) {
-			assert.strict(isFluidError(e), `should be a Fluid error: ${e}`);
-			assert.strictEqual(e.errorType, FluidErrorTypes.usageError, "should be a usage error");
+		} catch (error) {
+			assert.strict(isFluidError(error), `should be a Fluid error: ${error}`);
+			assert.strictEqual(
+				error.errorType,
+				FluidErrorTypes.usageError,
+				"should be a usage error",
+			);
 		}
 	});
 

@@ -9,7 +9,7 @@ export const failProxy = <T extends object>() => {
 			if (p === "then") {
 				return undefined;
 			}
-			throw Error(`${p.toString()} not implemented`);
+			throw new Error(`${p.toString()} not implemented`);
 		},
 	});
 	return proxy;

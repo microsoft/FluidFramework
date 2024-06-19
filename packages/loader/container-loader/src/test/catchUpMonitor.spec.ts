@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -24,12 +24,16 @@ class MockDeltaManagerForCatchingUp
 		super();
 	}
 
-	/** Simulate processing op with the given sequence number, to trigger CatchUpMonitor */
+	/**
+	 * Simulate processing op with the given sequence number, to trigger CatchUpMonitor
+	 */
 	emitOpWithSequenceNumber(sequenceNumber: number) {
 		this.emit("op", { sequenceNumber });
 	}
 
-	/** Trigger the CatchUpMonitor by emitting op with the target sequence number */
+	/**
+	 * Trigger the CatchUpMonitor by emitting op with the target sequence number
+	 */
 	emitOpToCatchUp() {
 		this.emitOpWithSequenceNumber(this.lastKnownSeqNumber);
 	}

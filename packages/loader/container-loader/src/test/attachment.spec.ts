@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -146,8 +146,8 @@ describe("runRetriableAttachProcess", () => {
 			const blobCount = 10;
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const storageAdapter = addCallCounts({
-				createBlob: async () => Promise.resolve({ id: uuid() }),
-				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+				createBlob: async () => ({ id: uuid() }),
+				uploadSummaryWithContext: async () => uuid(),
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
@@ -226,8 +226,8 @@ describe("runRetriableAttachProcess", () => {
 					}),
 				);
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual(
@@ -256,8 +256,8 @@ describe("runRetriableAttachProcess", () => {
 					}),
 				);
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<AttachingDataWithoutBlobs>(
@@ -294,8 +294,8 @@ describe("runRetriableAttachProcess", () => {
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<DetachedDataWithOutstandingBlobs>(
@@ -327,13 +327,13 @@ describe("runRetriableAttachProcess", () => {
 					},
 					createOrGetStorageService: async () =>
 						createProxyWithFailDefault<IDocumentStorageService>({
-							createBlob: async () => Promise.resolve({ id: uuid() }),
+							createBlob: async () => ({ id: uuid() }),
 						}),
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<DetachedDataWithOutstandingBlobs>(
@@ -370,7 +370,7 @@ describe("runRetriableAttachProcess", () => {
 						return emptySummary;
 					},
 					createOrGetStorageService: async () => ({
-						createBlob: async () => Promise.resolve({ id: uuid() }),
+						createBlob: async () => ({ id: uuid() }),
 						uploadSummaryWithContext: () => {
 							throw error;
 						},
@@ -378,8 +378,8 @@ describe("runRetriableAttachProcess", () => {
 					detachedBlobStorage,
 				});
 				assert.fail("failure expected");
-			} catch (e) {
-				assert.deepStrictEqual(e, error);
+			} catch (error_) {
+				assert.deepStrictEqual(error_, error);
 			}
 
 			assert.deepStrictEqual<AttachingDataWithBlobs>(
@@ -405,8 +405,8 @@ describe("runRetriableAttachProcess", () => {
 			const blobCount = 10;
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const storageAdapter = addCallCounts({
-				createBlob: async () => Promise.resolve({ id: uuid() }),
-				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+				createBlob: async () => ({ id: uuid() }),
+				uploadSummaryWithContext: async () => uuid(),
 			});
 			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
@@ -459,7 +459,7 @@ describe("runRetriableAttachProcess", () => {
 					createOrGetStorageService: async () =>
 						// only the summary should be left to upload
 						createProxyWithFailDefault<IDocumentStorageService>({
-							uploadSummaryWithContext: async () => Promise.resolve(uuid()),
+							uploadSummaryWithContext: async () => uuid(),
 						}),
 				}),
 			);
