@@ -76,6 +76,7 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
+import { PerspectiveImpl } from "./perspective.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
@@ -87,6 +88,141 @@ import {
 } from "./referencePositions.js";
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import { zamboniSegments } from "./zamboni.js";
+
+/**
+ * @param seg - The segment to check.
+ * @param seq - The latest sequence number to consider.
+ * @param clientId - The ID of the client to consider.
+ * @param refSeq - The reference sequence number,
+ * aka the latest sequence number to consider for other clients' changes.
+ * @param localSeq - The latest local sequence number to consider.
+ * @returns true iff this segment was removed in the given perspective.
+ */
+export function wasRemovedBefore(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+): boolean {
+	if (
+		seg.removedSeq === UnassignedSequenceNumber &&
+		localSeq !== undefined &&
+		seg.localRemovedSeq !== undefined
+	) {
+		return seg.localRemovedSeq <= localSeq;
+	}
+	if (seg.removedClientIds !== undefined && seg.removedClientIds.includes(clientId)) {
+		return (
+			seg.removedSeq !== undefined &&
+			seg.removedSeq !== UnassignedSequenceNumber &&
+			seg.removedSeq <= seq
+		);
+	}
+	return (
+		seg.removedSeq !== undefined &&
+		seg.removedSeq !== UnassignedSequenceNumber &&
+		seg.removedSeq <= refSeq
+	);
+}
+
+/**
+ * @param seg - The segment to check.
+ * @param seq - The latest sequence number to consider.
+ * @param clientId - The ID of the client to consider.
+ * @param refSeq - The reference sequence number,
+ * aka the latest sequence number to consider for other clients' changes.
+ * @param localSeq - The latest local sequence number to consider.
+ * @returns true iff this segment was moved (aka obliterated) in the given perspective.
+ */
+export function wasMovedBefore(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+): boolean {
+	if (
+		seg.movedSeq === UnassignedSequenceNumber &&
+		localSeq !== undefined &&
+		seg.localMovedSeq !== undefined
+	) {
+		return seg.localMovedSeq <= localSeq;
+	}
+	if (seg.movedClientIds !== undefined && seg.movedClientIds.includes(clientId)) {
+		return (
+			seg.movedSeq !== undefined &&
+			seg.movedSeq !== UnassignedSequenceNumber &&
+			seg.movedSeq <= seq
+		);
+	}
+	return (
+		seg.movedSeq !== undefined &&
+		seg.movedSeq !== UnassignedSequenceNumber &&
+		seg.movedSeq <= refSeq
+	);
+}
+
+/**
+ * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
+ */
+export function wasRemovedOrMovedBefore(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+): boolean {
+	return (
+		wasRemovedBefore(seg, seq, clientId, refSeq, localSeq) ||
+		wasMovedBefore(seg, seq, clientId, refSeq, localSeq)
+	);
+}
+
+/**
+ *
+ * @param seg - The segment to check.
+ * @param seq - The latest sequence number to consider.
+ * @param clientId - The ID of the client to consider.
+ * @param refSeq - The reference sequence number,
+ * aka the latest sequence number to consider for other clients' changes.
+ * @param localSeq - The latest local sequence number to consider.
+ * @returns true iff this segment was inserted before the given perspective,
+ * and it was not removed or moved in the given perspective.
+ */
+export function isSegmentPresent(
+	seg: ISegment,
+	seq: number,
+	clientId: number,
+	refSeq: number,
+	localSeq?: number,
+) {
+	// If seg.seq is undefined, then this segment has existed since minSeq.
+	// It may have been moved or removed since.
+	if (seg.seq !== undefined) {
+		if (seg.seq !== UnassignedSequenceNumber) {
+			if (
+				// Clients can only see insertions made by other clients before refseq.
+				(seg.clientId !== clientId && seg.seq > refSeq) ||
+				// Clients can see their own insertions before seq
+				(seg.clientId === clientId && seg.seq > seq)
+			) {
+				return false;
+			}
+		} else if (seg.localSeq !== undefined) {
+			// seg.seq === UnassignedSequenceNumber
+			// If the current perspective does not include local sequence numbers,
+			// then this segment does not exist yet.
+			if (localSeq === undefined || seg.localSeq > localSeq) {
+				return false;
+			}
+		}
+	}
+	if (wasRemovedOrMovedBefore(seg, seq, clientId, refSeq, localSeq)) {
+		return false;
+	}
+	return true;
+}
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -1026,27 +1162,64 @@ export class MergeTree {
 		}
 	}
 
+	/**
+	 * Returns the count of elements before the given reference position from the given perspective.
+	 *
+	 * @param refPos - The reference position to resolve.
+	 * @param refSeq - The number of the latest sequenced change to consider.
+	 * Defaults to including all edits which have been applied.
+	 * @param clientId - The ID of the client from whose perspective to resolve this reference. Defaults to the current client.
+	 * @param localSeq - The local sequence number to consider. Defaults to including all local edits.
+	 * @returns the count of elements before the given reference position in the given perspective.
+	 */
 	public referencePositionToLocalPosition(
 		refPos: ReferencePosition,
-		refSeq = this.collabWindow.currentSeq,
+		refSeq = Number.MAX_SAFE_INTEGER,
 		clientId = this.collabWindow.clientId,
+		localSeq: number | undefined = this.collabWindow.localSeq,
 	): number {
 		const seg: ISegmentLeaf | undefined = refPos.getSegment();
 		if (seg?.parent === undefined) {
+			// We have no idea where this reference is, because it refers to a segment which is not in the tree.
 			return DetachedReferencePosition;
 		}
 		if (refPos.isLeaf()) {
-			return this.getPosition(refPos, refSeq, clientId);
+			return this.getPosition(refPos, refSeq, clientId, localSeq);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
-			const pos = this.getPosition(seg, refSeq, clientId);
-
-			if (isRemovedOrMoved(seg) && refPos.slidingPreference === SlidingPreference.BACKWARD) {
-				return pos === 0 ? 0 : pos - 1;
+			if (
+				seg !== this.startOfTree &&
+				seg !== this.endOfTree &&
+				!isSegmentPresent(seg, refSeq, clientId, refSeq, localSeq)
+			) {
+				const slideSeq =
+					seg.movedSeq !== UnassignedSequenceNumber && seg.movedSeq !== undefined
+						? seg.movedSeq
+						: seg.removedSeq !== UnassignedSequenceNumber && seg.removedSeq !== undefined
+							? seg.removedSeq
+							: refSeq;
+				const slideLocalSeq = seg.localMovedSeq ?? seg.localRemovedSeq;
+				const perspective = new PerspectiveImpl(
+					this,
+					slideSeq,
+					clientId,
+					slideSeq,
+					slideLocalSeq,
+				);
+				const slidSegment = perspective.nextSegment(
+					seg,
+					refPos.slidingPreference === SlidingPreference.FORWARD,
+				);
+				return (
+					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
+					(refPos.slidingPreference === SlidingPreference.FORWARD
+						? 0
+						: slidSegment.cachedLength === 0
+							? 0
+							: slidSegment.cachedLength - 1)
+				);
 			}
-
-			return offset + pos;
+			return this.getPosition(seg, refSeq, clientId, localSeq) + refPos.getOffset();
 		}
 		return DetachedReferencePosition;
 	}
