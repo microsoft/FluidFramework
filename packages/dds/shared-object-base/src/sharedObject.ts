@@ -67,8 +67,8 @@ export abstract class SharedObjectCore<
 		return this;
 	}
 
-	private readonly opProcessingHelper: SampledTelemetryHelper;
-	private readonly callbacksHelper: SampledTelemetryHelper;
+	private readonly opProcessingHelper: SampledTelemetryHelper<ITelemetryProperties>;
+	private readonly callbacksHelper: SampledTelemetryHelper<ITelemetryProperties>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -154,7 +154,7 @@ export abstract class SharedObjectCore<
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper<ITelemetryProperties>[] {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
@@ -171,6 +171,9 @@ export abstract class SharedObjectCore<
 				["local", { localOp: true }],
 				["remote", { localOp: false }],
 			]),
+			{
+				sequenceDifference: 0
+			}
 		);
 		const callbacksHelper = new SampledTelemetryHelper<ITelemetryProperties>(
 			{
@@ -540,7 +543,8 @@ export abstract class SharedObjectCore<
 			(event) => {
 				this.processCore(message, local, localOpMetadata);
 				event.incrementMetric({
-					sequenceNumber: message.sequenceNumber - message.referenceSequenceNumber,
+					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+				})
 			},
 			local ? "local" : "remote",
 		);
