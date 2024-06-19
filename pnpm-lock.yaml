@@ -6135,7 +6135,7 @@ importers:
         specifier: ^7.24.1
         version: 7.24.1(@babel/core@7.24.4)
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -6232,7 +6232,7 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
@@ -6335,7 +6335,7 @@ importers:
         version: 0.6.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
@@ -6476,7 +6476,7 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-experimental/property-common':
         specifier: workspace:~
@@ -6627,7 +6627,7 @@ importers:
         specifier: ^7.24.4
         version: 7.24.4
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-experimental/property-binder':
         specifier: workspace:~
@@ -6805,7 +6805,7 @@ importers:
         version: 1.13.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
@@ -6878,7 +6878,7 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluidframework/build-common':
         specifier: ^2.0.3
@@ -6966,7 +6966,7 @@ importers:
         version: 0.6.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluid-experimental/property-properties':
         specifier: workspace:~
@@ -7036,7 +7036,7 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2
       '@biomejs/biome':
-        specifier: ^1.8.1
+        specifier: ~1.8.1
         version: 1.8.1
       '@fluidframework/build-common':
         specifier: ^2.0.3
