@@ -108,10 +108,10 @@ interface LoggerData {
 }
 
 /**
- * TODO
+ * The structure of the custom data object that can be passed into the logger.
  * @internal
  */
-export type AllNumber<T> = {
+export type CustomMetrics<T> = {
 	[K in keyof T]: K extends string ? number : never;
 };
 
@@ -126,7 +126,7 @@ export type AllNumber<T> = {
  *
  * @internal
  */
-export class SampledTelemetryHelper<TCustomMetrics extends AllNumber<TCustomMetrics>>
+export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustomMetrics>>
 	implements IDisposable
 {
 	private _disposed: boolean = false;
@@ -162,9 +162,9 @@ export class SampledTelemetryHelper<TCustomMetrics extends AllNumber<TCustomMetr
 		private readonly eventBase: ITelemetryGenericEventExt,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
+		private readonly customMetricsDefaults?: TCustomMetrics,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
-		private readonly customMetricsDefaults?: TCustomMetrics,
 	) {}
 
 	/**

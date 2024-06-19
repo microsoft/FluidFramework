@@ -66,7 +66,7 @@ export { ThresholdCounter } from "./thresholdCounter.js";
 export {
 	SampledTelemetryHelper,
 	type ITelemetryEventMetrics,
-	type AllNumber,
+	type CustomMetrics,
 } from "./sampledTelemetryHelper.js";
 export {
 	createSampledLogger,
