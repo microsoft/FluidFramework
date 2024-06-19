@@ -11,8 +11,8 @@ npe scripts.format "npm run format:prettier"
 npe scripts.check:format "npm run check:prettier"
 
 npe scripts.check:biome "biome check . --formatter-enabled=true"
-npe scripts.format:biome "biome check . --formatter-enabled=true --apply"
-npe devDependencies.@biomejs/biome "^1.7.3"
+npe scripts.format:biome "biome check . --formatter-enabled=true --write"
+npe devDependencies.@biomejs/biome "^1.8.1"
 
 
 # sd --fixed-strings '"check:prettier": "p' '"check:prettier:old": "p' package.json
