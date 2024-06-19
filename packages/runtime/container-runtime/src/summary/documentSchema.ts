@@ -461,7 +461,8 @@ export class DocumentsSchemaController {
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
 		assert(
-			(features.disallowedVersions ?? []).length === 0 || (features.explicitSchemaControl ?? false),
+			(features.disallowedVersions ?? []).length === 0 ||
+				(features.explicitSchemaControl ?? false),
 			0x949 /* not supported */,
 		);
 
