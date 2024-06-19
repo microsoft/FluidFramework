@@ -419,13 +419,16 @@ export interface IContainerRuntimeOptions {
 	readonly gcOptions?: IGCRuntimeOptions;
 
 	/**
-	 * When upgrading to 2.0, application authors need to defer the schema upgrade implicit in sending the GC op.
-	 * So provide a way to block the GC op (and all related features - GC Sweep/Tombstone) until ready for schema upgrade.
+	 * The GC feature (new in 2.0) includes a new runtime op type, the GC op.
+	 * The presence of this new op represents a schema upgrade relative to 1.x,
+	 * so we need to provide a way to defer that schema upgrade for applications to support
+	 * collaboration between 1.x/2.0 clients.
 	 *
-	 * If not true, the document schema will express support for GC op (updating if needed),
-	 * and any clients that don't support it will close on boot (e.g. 1.x clients or those still setting this to true)
+	 * @remarks Once a document is loaded with this options missing or false,
+	 * any clients that don't understand the GC op will close on boot
+	 * (e.g. 1.x clients or those still setting this to true)
 	 */
-	readonly blockGCOpForSchemaCompatibility?: boolean;
+	readonly disableGCToDeferSchemaUpgrade?: boolean;
 
 	/**
 	 * Affects the behavior while loading the runtime when the data verification check which
@@ -818,7 +821,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
-			blockGCOpForSchemaCompatibility = false,
+			disableGCToDeferSchemaUpgrade = false,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -996,7 +999,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				gcOp: !blockGCOpForSchemaCompatibility,
+				gcOp: !disableGCToDeferSchemaUpgrade,
 				disallowedVersions: [],
 			},
 			(schema) => {
@@ -1026,7 +1029,7 @@ export class ContainerRuntime
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableGroupedBatching,
-				blockGCOpForSchemaCompatibility,
+				disableGCToDeferSchemaUpgrade,
 				explicitSchemaControl,
 			},
 			containerScope,
@@ -1778,7 +1781,7 @@ export class ContainerRuntime
 					: ({
 							clientId,
 							client: audience.getMember(clientId),
-						} satisfies ISelf);
+					  } satisfies ISelf);
 			};
 
 			let oldClientId = this.clientId;
@@ -2222,7 +2225,7 @@ export class ContainerRuntime
 							status: 200,
 							mimeType: "fluid/object",
 							value: blob,
-						}
+					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
 				return await this.channelCollection.request(request);
@@ -2623,13 +2626,13 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
-					}
+				  }
 				: // Unrecognized message will be ignored.
-					{
+				  {
 						message,
 						local,
 						modernRuntimeMessage,
-					};
+				  };
 			msg.savedOp = savedOp;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
@@ -3733,12 +3736,12 @@ export class ContainerRuntime
 							proposalHandle: undefined,
 							ackHandle: this.loadedFromVersionId,
 							referenceSequenceNumber: summaryRefSeqNum,
-						}
+					  }
 					: {
 							proposalHandle: lastAck.summaryOp.contents.handle,
 							ackHandle: lastAck.summaryAck.contents.handle,
 							referenceSequenceNumber: summaryRefSeqNum,
-						};
+					  };
 
 			let handle: string;
 			try {
@@ -4357,10 +4360,10 @@ export class ContainerRuntime
 							await this.blobManager.attachAndGetPendingBlobs(props?.stopBlobAttachingSignal),
 						),
 					),
-				)
+			  )
 			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
 					logAndReturnPendingState(event, getSyncState()),
-				);
+			  );
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

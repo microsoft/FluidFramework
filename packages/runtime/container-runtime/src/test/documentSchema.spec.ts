@@ -20,7 +20,7 @@ function arrayToProp(arr: string[]) {
 	return arr.length === 0 ? undefined : arr;
 }
 
-describe("Runtime", () => {
+describe("Document Schema", () => {
 	const validConfig: IDocumentSchemaCurrent = {
 		version: 1,
 		refSeq: 0,
