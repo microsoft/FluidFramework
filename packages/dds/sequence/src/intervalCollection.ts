@@ -12,13 +12,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
-	DetachedReferencePosition,
 	ISegment,
 	LocalReferencePosition,
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 	addProperties,
@@ -235,12 +233,7 @@ export function createIntervalIndex() {
 	const helpers: IIntervalHelpers<Interval> = {
 		create: createInterval,
 	};
-	const lc = new LocalIntervalCollection<Interval>(
-		undefined as any as Client,
-		"",
-		helpers,
-		{},
-	);
+	const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
 	return lc;
 }
 
@@ -255,7 +248,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		private readonly client: Client,
 		private readonly label: string,
 		private readonly helpers: IIntervalHelpers<TInterval>,
-		private readonly options: Partial<SequenceOptions>,
 		/** Callback invoked each time one of the endpoints of an interval slides. */
 		private readonly onPositionChange?: (
 			interval: TInterval,
@@ -343,7 +335,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 			intervalType,
 			op,
 			undefined,
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 	}
 
@@ -406,14 +397,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
 	) {
-		const newInterval = interval.modify(
-			this.label,
-			start,
-			end,
-			op,
-			localSeq,
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
-		) as TInterval | undefined;
+		const newInterval = interval.modify(this.label, start, end, op, localSeq) as
+			| TInterval
+			| undefined;
 		if (newInterval) {
 			this.removeExistingInterval(interval);
 			this.add(newInterval);
@@ -447,7 +433,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 				ReferenceType.Transient,
 				ref.properties,
 				ref.slidingPreference,
-				ref.canSlideToEndpoint,
 			);
 		};
 		if (interval instanceof SequenceInterval) {
@@ -1012,7 +997,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		private readonly requiresClient: boolean,
 		private readonly emitter: IValueOpEmitter,
 		serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
-		private readonly options: Partial<SequenceOptions> = {},
+		_options: Partial<SequenceOptions> = {},
 	) {
 		super();
 
@@ -1060,7 +1045,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	private rebasePositionWithSegmentSlide(
 		pos: number | "start" | "end",
 		seqNumberFrom: number,
-		localSeq: number,
+		localSeqFrom: number,
 	): number | "start" | "end" | undefined {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
@@ -1070,36 +1055,24 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			return pos;
 		}
 
-		const { clientId } = this.client.getCollabWindow();
-		const { segment, offset } = this.client.getContainingSegment(
-			pos,
-			{
-				referenceSequenceNumber: seqNumberFrom,
-				clientId: this.client.getLongClientId(clientId),
-			},
-			localSeq,
+		const currentSeq = this.client.getCurrentSeq();
+		const clientId = this.client.getClientId();
+		const perspective = this.client.createPerspective(
+			currentSeq,
+			clientId,
+			currentSeq,
+			localSeqFrom,
 		);
-
-		// if segment is undefined, it slid off the string
-		assert(segment !== undefined, 0x54e /* No segment found */);
-
-		const segoff =
-			getSlideToSegoff(
-				{ segment, offset },
-				undefined,
-				this.options.mergeTreeReferencesCanSlideToEndpoint,
-			) ?? segment;
-
-		// case happens when rebasing op, but concurrently entire string has been deleted
-		if (segoff.segment === undefined || segoff.offset === undefined) {
-			return DetachedReferencePosition;
+		const slidPlace = perspective.slidePlace(
+			{ pos, side: Side.Before },
+			seqNumberFrom,
+			this.client.getClientId(),
+			localSeqFrom,
+		);
+		if (slidPlace.pos === undefined) {
+			return slidPlace.side === Side.After ? "start" : "end";
 		}
-
-		assert(
-			offset !== undefined && 0 <= offset && offset < segment.cachedLength,
-			0x54f /* Invalid offset */,
-		);
-		return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+		return slidPlace.pos;
 	}
 
 	private computeRebasedPositions(
@@ -1121,6 +1094,18 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 		if (end !== undefined) {
 			rebased.end = this.rebasePositionWithSegmentSlide(end, sequenceNumber, localSeq);
+			if (
+				typeof rebased.end === "number" &&
+				typeof rebased.start === "number" &&
+				(rebased.end < rebased.start ||
+					(rebased.endSide === Side.Before &&
+						rebased.startSide === Side.After &&
+						rebased.end === rebased.start))
+			) {
+				// Do not invert the range. End slides as far as start and no further.
+				rebased.end = rebased.start;
+				rebased.endSide = rebased.startSide;
+			}
 		}
 		return rebased;
 	}
@@ -1148,7 +1133,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			client,
 			label,
 			this.helpers,
-			this.options,
 			(interval, previousInterval) => this.emitChange(interval, previousInterval, true, true),
 		);
 		if (this.savedSerializedIntervals) {
@@ -1178,7 +1162,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					intervalType,
 					undefined,
 					true,
-					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
 					interval.addProperties(properties);
@@ -1237,17 +1220,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return this.localCollection.idIntervalIndex.getIntervalById(id);
 	}
 
-	private assertStickinessEnabled(start: SequencePlace, end: SequencePlace) {
-		if (
-			!(typeof start === "number" && typeof end === "number") &&
-			!this.options.intervalStickinessEnabled
-		) {
-			throw new UsageError(
-				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
-			);
-		}
-	}
-
 	/**
 	 * {@inheritdoc IIntervalCollection.add}
 	 */
@@ -1276,8 +1248,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 
-		this.assertStickinessEnabled(start, end);
-
 		const interval: TInterval = this.localCollection.addInterval(
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
@@ -1286,9 +1256,19 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
-			if (!this.isCollaborating && interval instanceof SequenceInterval) {
+			const localSeq = this.getNextLocalSeq();
+
+			if (interval instanceof SequenceInterval) {
 				setSlideOnRemove(interval.start);
 				setSlideOnRemove(interval.end);
+				// Remember that these reference positions do not exist on other clients until localSeq is acked.
+				// Any sliding caused by concurrent removes is resolved when this add op is acked.
+				// This means any slides performed by this client before acking the add op should be considered local,
+				// and rebased over concurrent inserts.
+				interval.start.localCreate = localSeq;
+				interval.start.localCreateRefSeq = this.client?.getCollabWindow().currentSeq;
+				interval.end.localCreate = localSeq;
+				interval.start.localCreateRefSeq = this.client?.getCollabWindow().currentSeq;
 			}
 			const serializedInterval: ISerializedInterval = {
 				start: startPos,
@@ -1300,7 +1280,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				startSide,
 				endSide,
 			};
-			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
@@ -1395,11 +1374,23 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
 				);
 			}
+			const localSeq = this.getNextLocalSeq();
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
-				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+				if (newInterval instanceof SequenceInterval) {
 					setSlideOnRemove(newInterval.start);
 					setSlideOnRemove(newInterval.end);
+					if (localSeq) {
+						// other clients don't know about the new start and end of this interval until this change op is sequenced.
+						// Slides caused by concurrent removes are resolved at the point the change op is sequenced.
+						// We need to record the local sequence number and refSeq at which the interval was changed so that we can
+						// re-slide when we receive concurrent remove/insert ops.
+						const refSeq = this.client?.getCollabWindow().currentSeq;
+						newInterval.start.localCreate = localSeq;
+						newInterval.start.localCreateRefSeq = refSeq;
+						newInterval.end.localCreate = localSeq;
+						newInterval.end.localCreateRefSeq = refSeq;
+					}
 				}
 			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
@@ -1415,7 +1406,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				[reservedIntervalIdKey]: interval.getIntervalId(),
 				...props,
 			};
-			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating) {
 				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 			}
@@ -1662,17 +1652,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.addPendingChange(intervalId, rebased);
 		}
 
-		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
-		if (
-			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
-			(startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition)
-		) {
-			if (localInterval) {
-				this.localCollection?.removeExistingInterval(localInterval);
-			}
-			return undefined;
-		}
-
 		if (localInterval !== undefined) {
 			// we know we must be using `SequenceInterval` because `this.client` exists
 			assert(
@@ -1703,11 +1682,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(
-			segoff,
-			undefined,
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
-		);
+		const newSegoff = getSlideToSegoff(segoff, undefined);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
 			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
 				? undefined
@@ -1720,6 +1695,28 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (!(interval instanceof SequenceInterval)) {
 			return;
 		}
+
+		if (
+			interval.start.localCreate !== undefined &&
+			interval.start.localSlide === interval.start.localCreate
+		) {
+			interval.start.localSlide = undefined;
+			interval.start.segmentBeforeLocalSlide = undefined;
+			interval.start.offsetBeforeLocalSlide = undefined;
+		}
+		interval.start.localCreate = undefined;
+		interval.start.localCreateRefSeq = undefined;
+
+		if (
+			interval.end.localCreate !== undefined &&
+			interval.end.localSlide === interval.end.localCreate
+		) {
+			interval.end.localSlide = undefined;
+			interval.end.segmentBeforeLocalSlide = undefined;
+			interval.end.offsetBeforeLocalSlide = undefined;
+		}
+		interval.end.localCreate = undefined;
+		interval.end.localCreateRefSeq = undefined;
 
 		if (
 			!refTypeIncludesFlag(interval.start, ReferenceType.StayOnRemove) &&
@@ -1772,8 +1769,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					startReferenceSlidingPreference(interval.stickiness),
-					startReferenceSlidingPreference(interval.stickiness) === SlidingPreference.BACKWARD,
 				);
+				interval.end.setBoundingReference(interval.start);
 				if (props) {
 					interval.start.addProperties(props);
 				}
@@ -1793,8 +1790,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					undefined,
 					undefined,
 					endReferenceSlidingPreference(interval.stickiness),
-					endReferenceSlidingPreference(interval.stickiness) === SlidingPreference.FORWARD,
 				);
+				interval.end.setBoundingReference(interval.start);
 				if (props) {
 					interval.end.addProperties(props);
 				}

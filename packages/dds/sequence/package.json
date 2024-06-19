@@ -253,6 +253,15 @@
 			},
 			"TypeAliasDeclaration_SharedStringRevertible": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_LocalReferencePosition": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IntervalLocator": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceInterval": {
+				"forwardCompat": false
 			}
 		}
 	}

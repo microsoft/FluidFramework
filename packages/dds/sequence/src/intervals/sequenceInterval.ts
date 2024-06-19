@@ -17,15 +17,12 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	compareReferencePositions,
-	createDetachedLocalReferencePosition,
 	createMap,
 	getSlideToSegoff,
 	maxReferencePosition,
 	minReferencePosition,
-	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	SequencePlace,
@@ -352,7 +349,6 @@ export class SequenceInterval implements ISerializableInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const stickiness = computeStickinessFromSide(
@@ -361,27 +357,18 @@ export class SequenceInterval implements ISerializableInterval {
 			endPos ?? this.end.getSegment()?.endpointType,
 			endSide ?? this.endSide,
 		);
-		const getRefType = (baseType: ReferenceType): ReferenceType => {
-			let refType = baseType;
-			if (op === undefined) {
-				refType &= ~ReferenceType.SlideOnRemove;
-				refType |= ReferenceType.StayOnRemove;
-			}
-			return refType;
-		};
 
 		let startRef = this.start;
 		if (startPos !== undefined) {
 			startRef = createPositionReference(
 				this.client,
 				startPos,
-				getRefType(this.start.refType),
+				// getRefType(this.start.refType),
+				this.start.refType,
 				op,
 				undefined,
 				localSeq,
 				startReferenceSlidingPreference(stickiness),
-				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-				useNewSlidingBehavior,
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -393,18 +380,18 @@ export class SequenceInterval implements ISerializableInterval {
 			endRef = createPositionReference(
 				this.client,
 				endPos,
-				getRefType(this.end.refType),
+				this.end.refType,
 				op,
 				undefined,
 				localSeq,
 				endReferenceSlidingPreference(stickiness),
-				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-				useNewSlidingBehavior,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
 			}
 		}
+
+		endRef.setBoundingReference(startRef);
 
 		const newInterval = new SequenceInterval(
 			this.client,
@@ -434,7 +421,6 @@ export function createPositionReferenceFromSegoff(
 	localSeq?: number,
 	fromSnapshot?: boolean,
 	slidingPreference?: SlidingPreference,
-	canSlideToEndpoint?: boolean,
 ): LocalReferencePosition {
 	if (segoff === "start" || segoff === "end") {
 		return client.createLocalReferencePosition(
@@ -443,7 +429,6 @@ export function createPositionReferenceFromSegoff(
 			refType,
 			undefined,
 			slidingPreference,
-			canSlideToEndpoint,
 		);
 	}
 
@@ -454,26 +439,17 @@ export function createPositionReferenceFromSegoff(
 			refType,
 			undefined,
 			slidingPreference,
-			canSlideToEndpoint,
 		);
 		return ref;
 	}
 
-	// Creating references on detached segments is allowed for:
-	// - Transient segments
-	// - References coming from a remote client (location may have been concurrently removed)
-	// - References being rebased to a new sequence number
-	//   (segment they originally referred to may have been removed with no suitable replacement)
-	if (
-		!op &&
-		!localSeq &&
-		!fromSnapshot &&
-		!refTypeIncludesFlag(refType, ReferenceType.Transient)
-	) {
-		throw new UsageError("Non-transient references need segment");
-	}
-
-	return createDetachedLocalReferencePosition(slidingPreference, refType);
+	return client.createLocalReferencePosition(
+		slidingPreference === SlidingPreference.BACKWARD ? "start" : "end",
+		undefined,
+		refType,
+		undefined,
+		slidingPreference,
+	);
 }
 
 function createPositionReference(
@@ -484,8 +460,6 @@ function createPositionReference(
 	fromSnapshot?: boolean,
 	localSeq?: number,
 	slidingPreference?: SlidingPreference,
-	exclusive: boolean = false,
-	useNewSlidingBehavior: boolean = false,
 ): LocalReferencePosition {
 	let segoff;
 
@@ -501,13 +475,9 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, undefined, useNewSlidingBehavior);
+			segoff = getSlideToSegoff(segoff, undefined);
 		}
 	} else {
-		assert(
-			(refType & ReferenceType.SlideOnRemove) === 0 || !!fromSnapshot,
-			0x2f6 /* SlideOnRemove references must be op created */,
-		);
 		segoff =
 			pos === "start" || pos === "end"
 				? pos
@@ -522,7 +492,6 @@ function createPositionReference(
 		localSeq,
 		fromSnapshot,
 		slidingPreference,
-		exclusive,
 	);
 }
 
@@ -534,7 +503,6 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	useNewSlidingBehavior: boolean = false,
 ): SequenceInterval {
 	const { startPos, startSide, endPos, endSide } = endpointPosAndSide(
 		start ?? "start",
@@ -554,16 +522,9 @@ export function createSequenceInterval(
 		beginRefType = ReferenceType.Transient;
 		endRefType = ReferenceType.Transient;
 	} else {
-		// All non-transient interval references must eventually be SlideOnRemove
-		// To ensure eventual consistency, they must start as StayOnRemove when
-		// pending (created locally and creation op is not acked)
-		if (op ?? fromSnapshot) {
-			beginRefType |= ReferenceType.SlideOnRemove;
-			endRefType |= ReferenceType.SlideOnRemove;
-		} else {
-			beginRefType |= ReferenceType.StayOnRemove;
-			endRefType |= ReferenceType.StayOnRemove;
-		}
+		// All non-transient interval references are SlideOnRemove
+		beginRefType |= ReferenceType.SlideOnRemove;
+		endRefType |= ReferenceType.SlideOnRemove;
 	}
 
 	const startLref = createPositionReference(
@@ -574,8 +535,6 @@ export function createSequenceInterval(
 		fromSnapshot,
 		undefined,
 		startReferenceSlidingPreference(stickiness),
-		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-		useNewSlidingBehavior,
 	);
 
 	const endLref = createPositionReference(
@@ -586,9 +545,10 @@ export function createSequenceInterval(
 		fromSnapshot,
 		undefined,
 		endReferenceSlidingPreference(stickiness),
-		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-		useNewSlidingBehavior,
 	);
+	if (endRefType !== ReferenceType.Transient) {
+		endLref.setBoundingReference(startLref);
+	}
 
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],

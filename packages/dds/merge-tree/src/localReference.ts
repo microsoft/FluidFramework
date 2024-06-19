@@ -62,12 +62,17 @@ export interface LocalReferencePosition extends ReferencePosition {
 	callbacks?: Partial<
 		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
 	>;
+
+	localCreate?: number;
+	localCreateRefSeq?: number;
+
+	localSlide?: number;
+	segmentBeforeLocalSlide?: ISegment;
+	offsetBeforeLocalSlide?: number;
+
 	readonly trackingCollection: TrackingGroupCollection;
-	/**
-	 * Whether or not this reference position can slide onto one of the two
-	 * special segments representing the position before or after the tree
-	 */
-	readonly canSlideToEndpoint?: boolean;
+	setBoundingReference(ref: ReferencePosition): void;
+	clampToBoundingReference(): void;
 }
 
 /**
@@ -80,6 +85,7 @@ class LocalReference implements LocalReferencePosition {
 	private segment: ISegment | undefined;
 	private offset: number = 0;
 	private listNode: ListNode<LocalReference> | undefined;
+	private _boundingReference: LocalReferencePosition | undefined;
 
 	public callbacks?:
 		| Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>
@@ -92,8 +98,7 @@ class LocalReference implements LocalReferencePosition {
 	constructor(
 		public refType = ReferenceType.Simple,
 		properties?: PropertySet,
-		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
-		public readonly canSlideToEndpoint?: boolean,
+		public slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
@@ -146,6 +151,35 @@ class LocalReference implements LocalReferencePosition {
 
 	public getProperties() {
 		return this.properties;
+	}
+
+	public setBoundingReference(ref: LocalReferencePosition) {
+		if (refTypeIncludesFlag(this.refType, ReferenceType.SlideOnRemove)) {
+			this._boundingReference = ref;
+		}
+	}
+
+	public clampToBoundingReference() {
+		if (this._boundingReference === undefined) {
+			return;
+		}
+		this.link(
+			this._boundingReference.getSegment(),
+			this._boundingReference.getOffset(),
+			(this._boundingReference as LocalReference).getListNode(),
+		);
+		this.slidingPreference =
+			this._boundingReference.slidingPreference ?? this.slidingPreference;
+		// this reference is now equivalent to the bounding reference
+		this._boundingReference = undefined;
+	}
+
+	/**
+	 * The reference that bounds this reference.
+	 * This reference will never slide past the bounding reference.
+	 */
+	public get boundingReference() {
+		return this._boundingReference;
 	}
 }
 
@@ -312,9 +346,8 @@ export class LocalReferenceCollection {
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
-		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties, slidingPreference, canSlideToEndpoint);
+		const ref = new LocalReference(refType, properties, slidingPreference);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);

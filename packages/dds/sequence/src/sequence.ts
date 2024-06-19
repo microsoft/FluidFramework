@@ -147,7 +147,6 @@ export interface ISharedSegmentSequence<T extends ISegment>
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
-		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition;
 
 	/**
@@ -566,7 +565,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
-		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this.client.createLocalReferencePosition(
 			segment,
@@ -574,7 +572,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			refType,
 			properties,
 			slidingPreference,
-			canSlideToEndpoint,
 		);
 	}
 

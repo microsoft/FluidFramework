@@ -97,6 +97,8 @@ export interface ReferencePosition {
 	 */
 	addProperties(newProps: PropertySet): void;
 	isLeaf(): this is ISegment;
+
+	boundingReference?: ReferencePosition;
 }
 
 /**
