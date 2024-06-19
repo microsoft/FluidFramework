@@ -1,11 +1,11 @@
 # @fluid-tools/api-markdown-documenter
 
-## 13.0.1
+## 0.13.1
 
 -   Allow configuration of "alerts" in child item tables.
     -   Default behavior can be overridden via the the `getAlertsForItem` option.
 
-## 13.0.0
+## 0.13.0
 
 ### ⚠ BREAKING CHANGES
 
