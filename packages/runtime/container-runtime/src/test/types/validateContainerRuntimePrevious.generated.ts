@@ -959,6 +959,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeMetadata():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
     use: TypeOnly<old.IContainerRuntimeMetadata>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeMetadata());
 
 /*
@@ -1043,6 +1044,7 @@ declare function get_current_InterfaceDeclaration_IDocumentSchema():
 declare function use_old_InterfaceDeclaration_IDocumentSchema(
     use: TypeOnly<old.IDocumentSchema>): void;
 use_old_InterfaceDeclaration_IDocumentSchema(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentSchema());
 
 /*
@@ -1071,6 +1073,7 @@ declare function get_current_TypeAliasDeclaration_IDocumentSchemaChangeMessage()
 declare function use_old_TypeAliasDeclaration_IDocumentSchemaChangeMessage(
     use: TypeOnly<old.IDocumentSchemaChangeMessage>): void;
 use_old_TypeAliasDeclaration_IDocumentSchemaChangeMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IDocumentSchemaChangeMessage());
 
 /*
@@ -1127,6 +1130,7 @@ declare function get_current_InterfaceDeclaration_IDocumentSchemaFeatures():
 declare function use_old_InterfaceDeclaration_IDocumentSchemaFeatures(
     use: TypeOnly<old.IDocumentSchemaFeatures>): void;
 use_old_InterfaceDeclaration_IDocumentSchemaFeatures(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentSchemaFeatures());
 
 /*
@@ -1497,6 +1501,7 @@ declare function get_current_InterfaceDeclaration_IGeneratedSummaryStats():
 declare function use_old_InterfaceDeclaration_IGeneratedSummaryStats(
     use: TypeOnly<old.IGeneratedSummaryStats>): void;
 use_old_InterfaceDeclaration_IGeneratedSummaryStats(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGeneratedSummaryStats());
 
 /*

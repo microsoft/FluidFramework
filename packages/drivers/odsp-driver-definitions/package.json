@@ -114,6 +114,16 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IOdspError": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IOdspErrorAugmentations": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_OdspError": {
+				"backCompat": false
+			}
+		}
 	}
 }

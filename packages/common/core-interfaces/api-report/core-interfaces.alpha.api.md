@@ -259,7 +259,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly isAttached: boolean;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    readonly routeContext?: IFluidHandleContext;
+    readonly routeContext?: IFluidHandleContext | undefined;
 }
 
 // @public @sealed
@@ -324,11 +324,11 @@ export interface IResponse {
     // (undocumented)
     headers?: {
         [key: string]: any;
-    };
+    } | undefined;
     // (undocumented)
     mimeType: string;
     // (undocumented)
-    stack?: string;
+    stack?: string | undefined;
     // (undocumented)
     status: number;
     // (undocumented)

@@ -75,7 +75,7 @@ export interface ISelf {
 	 * 2) Container is in the process of establishing new connection. Information about old connection is already reset
 	 * (old clientId is no longer in list of members), but clientId has not yet changed to a new value.
 	 */
-	readonly client?: IClient;
+	readonly client?: IClient | undefined;
 }
 
 /**

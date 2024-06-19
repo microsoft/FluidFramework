@@ -275,11 +275,11 @@ export interface IResponse {
     // (undocumented)
     headers?: {
         [key: string]: any;
-    };
+    } | undefined;
     // (undocumented)
     mimeType: string;
     // (undocumented)
-    stack?: string;
+    stack?: string | undefined;
     // (undocumented)
     status: number;
     // (undocumented)

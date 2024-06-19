@@ -17,7 +17,7 @@ interface IResponseException extends Error {
 	message: string;
 	code: number;
 	stack?: string;
-	underlyingResponseHeaders?: { [key: string]: any };
+	underlyingResponseHeaders?: { [key: string]: any } | undefined;
 }
 
 /**
@@ -63,7 +63,8 @@ export function responseToException(response: IResponse, request: IRequest): Err
 		name: "Error",
 		code: response.status,
 		get stack() {
-			return response.stack ?? errWithStack.stack;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return response.stack ?? errWithStack.stack!;
 		},
 		underlyingResponseHeaders: response.headers,
 	};

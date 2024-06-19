@@ -1274,7 +1274,8 @@ export const mixinSummaryHandler = (
 				type: SummaryType.Blob,
 				content,
 			};
-			summary.stats.blobNodeCount++;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			summary.stats.blobNodeCount!++;
 			summary.stats.totalBlobSize += content.length;
 
 			for (const name of path.reverse()) {

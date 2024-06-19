@@ -10,7 +10,7 @@ export interface ISignalEnvelope {
 	/**
 	 * The target for the envelope, undefined for the container
 	 */
-	address?: string;
+	address?: string | undefined;
 
 	/**
 	 * Identifier for the signal being submitted.

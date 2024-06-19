@@ -57,8 +57,8 @@ export interface IChunkedOp {
 	chunkId: number;
 	totalChunks: number;
 	contents: string;
-	originalMetadata?: Record<string, unknown>;
-	originalCompression?: string;
+	originalMetadata?: Record<string, unknown> | undefined;
+	originalCompression?: string | undefined;
 }
 
 /**

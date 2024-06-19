@@ -212,7 +212,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @alpha
-export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidParentContext extends IProvideFluidHandleContext {
     addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     readonly attachState: AttachState;
     // (undocumented)
@@ -243,8 +243,10 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     getQuorum(): IQuorumClients;
     // (undocumented)
-    readonly idCompressor?: IIdCompressor;
-    readonly loadingGroupId?: string;
+    readonly idCompressor?: IIdCompressor | undefined;
+    // (undocumented)
+    readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
+    readonly loadingGroupId?: string | undefined;
     makeLocallyVisible(): void;
     // (undocumented)
     readonly options: Record<string | number, any>;
@@ -267,7 +269,7 @@ export interface IGarbageCollectionData {
 
 // @alpha
 export interface IGarbageCollectionDetailsBase {
-    gcData?: IGarbageCollectionData;
+    gcData?: IGarbageCollectionData | undefined;
     usedRoutes?: string[];
 }
 
@@ -357,7 +359,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 // @alpha
 export interface ISummaryStats {
     // (undocumented)
-    blobNodeCount: number;
+    blobNodeCount: number | undefined;
     // (undocumented)
     handleNodeCount: number;
     // (undocumented)

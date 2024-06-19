@@ -48,7 +48,7 @@ class SummaryNodeWithGC extends SummaryNode {
 			readonly referenceSequenceNumber: number;
 			readonly basePath: EscapedPath | undefined;
 			readonly localPath: EscapedPath;
-			additionalPath?: EscapedPath;
+			additionalPath?: EscapedPath | undefined;
 		},
 	) {
 		super(summary);

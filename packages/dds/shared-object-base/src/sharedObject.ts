@@ -669,7 +669,8 @@ export abstract class SharedObject<
 		const result = this.summarizeCore(this.serializer, telemetryContext);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
-			result.stats.blobNodeCount,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			result.stats.blobNodeCount!,
 			telemetryContext,
 		);
 		this.incrementTelemetryMetric(
@@ -696,7 +697,8 @@ export abstract class SharedObject<
 		);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
-			result.stats.blobNodeCount,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			result.stats.blobNodeCount!,
 			telemetryContext,
 		);
 		this.incrementTelemetryMetric(

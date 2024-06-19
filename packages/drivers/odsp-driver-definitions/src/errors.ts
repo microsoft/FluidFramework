@@ -75,7 +75,7 @@ export interface IOdspErrorAugmentations {
 	 * Server epoch indicates when the file was last modified.
 	 * Used to detect modifications outside Fluid's services
 	 */
-	serverEpoch?: string;
+	serverEpoch?: string | undefined;
 
 	/**
 	 * It is the redirection url at which the network call should have been made. It is due to change

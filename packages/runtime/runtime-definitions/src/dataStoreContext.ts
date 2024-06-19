@@ -29,7 +29,7 @@ import type {
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
-import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import type { IFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -393,9 +393,11 @@ export type CreateChildSummarizerNodeFn = (
  *
  * @alpha
  */
-export interface IFluidParentContext
-	extends IProvideFluidHandleContext,
-		Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidParentContext extends IProvideFluidHandleContext {
+	// Doing this explicitly instead of extending Partial<IProvideFluidDataStoreRegistry> because that doesn't seem
+	// to allow explicit undefined, which we need for the exactOptionalPropertyTypes compiler setting
+	readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
+
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
@@ -403,12 +405,12 @@ export interface IFluidParentContext
 	readonly storage: IDocumentStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
-	readonly idCompressor?: IIdCompressor;
+	readonly idCompressor?: IIdCompressor | undefined;
 	/**
 	 * Represents the loading group to which the data store belongs to. Please refer to this readme for more context.
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	readonly loadingGroupId?: string;
+	readonly loadingGroupId?: string | undefined;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */

@@ -31,7 +31,7 @@ export interface IProgress {
 	 *
 	 * - runWithRetry
 	 */
-	cancel?: AbortSignal;
+	cancel?: AbortSignal | undefined;
 
 	/**
 	 * Called whenever api returns cancellable error and the call is going to be retried.

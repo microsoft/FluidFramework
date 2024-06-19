@@ -41,6 +41,7 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: TypeOnly<old.DriverError>): void;
 use_old_TypeAliasDeclaration_DriverError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -265,6 +266,7 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: TypeOnly<old.IAuthorizationError>): void;
 use_old_InterfaceDeclaration_IAuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*
@@ -349,6 +351,7 @@ declare function get_current_InterfaceDeclaration_IDeltasFetchResult():
 declare function use_old_InterfaceDeclaration_IDeltasFetchResult(
     use: TypeOnly<old.IDeltasFetchResult>): void;
 use_old_InterfaceDeclaration_IDeltasFetchResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltasFetchResult());
 
 /*
@@ -377,6 +380,7 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>): void;
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*
@@ -573,6 +577,7 @@ declare function get_current_InterfaceDeclaration_IDocumentStorageService():
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
     use: TypeOnly<old.IDocumentStorageService>): void;
 use_old_InterfaceDeclaration_IDocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentStorageService());
 
 /*
@@ -797,6 +802,7 @@ declare function get_current_InterfaceDeclaration_ISnapshot():
 declare function use_old_InterfaceDeclaration_ISnapshot(
     use: TypeOnly<old.ISnapshot>): void;
 use_old_InterfaceDeclaration_ISnapshot(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshot());
 
 /*

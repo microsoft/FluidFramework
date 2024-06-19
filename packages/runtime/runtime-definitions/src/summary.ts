@@ -24,7 +24,7 @@ import type {
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
-	blobNodeCount: number;
+	blobNodeCount: number | undefined;
 	handleNodeCount: number;
 	totalBlobSize: number;
 	unreferencedBlobSize: number;

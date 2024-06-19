@@ -71,7 +71,7 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
-	readonly idCompressor?: IIdCompressor;
+	readonly idCompressor?: IIdCompressor | undefined;
 
 	/**
 	 * Returns the channel with the given id

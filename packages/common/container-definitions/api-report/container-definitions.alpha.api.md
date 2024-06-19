@@ -94,11 +94,11 @@ export interface IAudienceOwner extends IAudience {
 // @alpha
 export interface IBatchMessage {
     // (undocumented)
-    compression?: string;
+    compression?: string | undefined;
     // (undocumented)
-    contents?: string;
+    contents?: string | undefined;
     // (undocumented)
-    metadata?: Record<string, unknown>;
+    metadata?: Record<string, unknown> | undefined;
     // (undocumented)
     referenceSequenceNumber?: number;
 }
@@ -437,7 +437,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 // @public
 export interface ISelf {
-    readonly client?: IClient;
+    readonly client?: IClient | undefined;
     readonly clientId: string;
 }
 

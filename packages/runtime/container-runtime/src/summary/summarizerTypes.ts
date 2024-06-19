@@ -181,9 +181,9 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 	/** The number of data stores whose GC reference state was updated in this summary. */
 	readonly gcStateUpdatedDataStoreCount?: number;
 	/** The size of the gc blobs in this summary. */
-	readonly gcTotalBlobsSize?: number;
+	readonly gcTotalBlobsSize?: number | undefined;
 	/** The number of gc blobs in this summary. */
-	readonly gcBlobNodeCount?: number;
+	readonly gcBlobNodeCount?: number | undefined;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
 	readonly summaryNumber: number;
 }
@@ -193,7 +193,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
  * @alpha
  */
 export interface IRetriableFailureError extends Error {
-	readonly retryAfterSeconds?: number;
+	readonly retryAfterSeconds?: number | undefined;
 }
 
 /**

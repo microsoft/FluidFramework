@@ -58,5 +58,5 @@ export interface IGarbageCollectionDetailsBase {
 	/**
 	 * The GC data of this node.
 	 */
-	gcData?: IGarbageCollectionData;
+	gcData?: IGarbageCollectionData | undefined;
 }

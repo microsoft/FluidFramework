@@ -98,7 +98,7 @@ export class SummaryManager
 	private readonly initialDelayMs: number;
 	private latestClientId: string | undefined;
 	private state = SummaryManagerState.Off;
-	private summarizer?: ISummarizer;
+	private summarizer?: ISummarizer | undefined;
 	private _disposed = false;
 
 	public get disposed() {

@@ -75,7 +75,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	}
 
 	private readonly logger: ITelemetryLoggerExt;
-	private runningSummarizer?: RunningSummarizer;
+	private runningSummarizer?: RunningSummarizer | undefined;
 	private _disposed: boolean = false;
 	private starting: boolean = false;
 

@@ -209,6 +209,7 @@ declare function get_current_InterfaceDeclaration_IOdspError():
 declare function use_old_InterfaceDeclaration_IOdspError(
     use: TypeOnly<old.IOdspError>): void;
 use_old_InterfaceDeclaration_IOdspError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IOdspError());
 
 /*
@@ -237,6 +238,7 @@ declare function get_current_InterfaceDeclaration_IOdspErrorAugmentations():
 declare function use_old_InterfaceDeclaration_IOdspErrorAugmentations(
     use: TypeOnly<old.IOdspErrorAugmentations>): void;
 use_old_InterfaceDeclaration_IOdspErrorAugmentations(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IOdspErrorAugmentations());
 
 /*
@@ -629,6 +631,7 @@ declare function get_current_TypeAliasDeclaration_OdspError():
 declare function use_old_TypeAliasDeclaration_OdspError(
     use: TypeOnly<old.OdspError>): void;
 use_old_TypeAliasDeclaration_OdspError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_OdspError());
 
 /*

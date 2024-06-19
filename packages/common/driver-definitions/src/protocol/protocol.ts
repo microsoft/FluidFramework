@@ -294,7 +294,7 @@ export interface ISequencedDocumentMessage {
 	 *
 	 * @deprecated Use ISequencedDocumentMessageExperimental instead.
 	 */
-	compression?: string;
+	compression?: string | undefined;
 }
 
 /**

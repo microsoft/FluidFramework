@@ -110,15 +110,15 @@ type ICreateBlobResponseWithTTL = ICreateBlobResponse &
 interface PendingBlob {
 	blob: ArrayBufferLike;
 	opsent?: boolean;
-	storageId?: string;
+	storageId?: string | undefined;
 	handleP: Deferred<BlobHandle>;
-	uploadP?: Promise<ICreateBlobResponse | void>;
-	uploadTime?: number;
-	minTTLInSeconds?: number;
+	uploadP?: Promise<ICreateBlobResponse | void> | undefined;
+	uploadTime?: number | undefined;
+	minTTLInSeconds?: number | undefined;
 	attached?: boolean;
-	acked?: boolean;
-	abortSignal?: AbortSignal;
-	stashedUpload?: boolean;
+	acked?: boolean | undefined;
+	abortSignal?: AbortSignal | undefined;
+	stashedUpload?: boolean | undefined;
 }
 
 export interface IPendingBlobs {

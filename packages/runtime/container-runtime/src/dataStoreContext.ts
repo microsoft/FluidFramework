@@ -106,8 +106,8 @@ export function createAttributesBlob(
 export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
-	snapshot?: ISnapshotTree;
-	sequenceNumber?: number;
+	snapshot?: ISnapshotTree | undefined;
+	sequenceNumber?: number | undefined;
 }
 
 /**
@@ -138,8 +138,8 @@ export interface IFluidDataStoreContextProps {
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-	readonly pkg?: Readonly<string[]>;
-	readonly loadingGroupId?: string;
+	readonly pkg?: Readonly<string[]> | undefined;
+	readonly loadingGroupId?: string | undefined;
 }
 
 /**
@@ -338,7 +338,7 @@ export abstract class FluidDataStoreContext
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
 	public readonly loadingGroupId: string | undefined;
-	protected pkg?: readonly string[];
+	protected pkg?: readonly string[] | undefined;
 
 	constructor(
 		props: IFluidDataStoreContextProps,

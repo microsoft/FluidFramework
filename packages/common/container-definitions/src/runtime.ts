@@ -116,9 +116,9 @@ export interface IRuntime extends IDisposable {
  * @alpha
  */
 export interface IBatchMessage {
-	contents?: string;
-	metadata?: Record<string, unknown>;
-	compression?: string;
+	contents?: string | undefined;
+	metadata?: Record<string, unknown> | undefined;
+	compression?: string | undefined;
 	referenceSequenceNumber?: number;
 }
 

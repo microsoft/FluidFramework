@@ -20,8 +20,8 @@ interface IGroupedBatchMessageContents {
 
 interface IGroupedMessage {
 	contents?: unknown;
-	metadata?: Record<string, unknown>;
-	compression?: string;
+	metadata?: Record<string, unknown> | undefined;
+	compression?: string | undefined;
 }
 
 function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {

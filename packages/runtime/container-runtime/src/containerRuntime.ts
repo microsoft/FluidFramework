@@ -221,6 +221,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	type IDocumentSchema,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -561,11 +562,11 @@ export interface IPendingRuntimeState {
 	/**
 	 * Pending blobs from BlobManager
 	 */
-	pendingAttachmentBlobs?: IPendingBlobs;
+	pendingAttachmentBlobs?: IPendingBlobs | undefined;
 	/**
 	 * Pending idCompressor state
 	 */
-	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession | undefined;
 
 	/**
 	 * Time at which session expiry timer started.
@@ -1213,7 +1214,7 @@ export class ContainerRuntime
 	 * Used to delay transition to "connected" state while we upload
 	 * attachment blobs that were added while disconnected
 	 */
-	private delayConnectClientId?: string;
+	private delayConnectClientId?: string | undefined;
 
 	private ensureNoDataModelChangesCalls = 0;
 
@@ -2241,10 +2242,11 @@ export class ContainerRuntime
 
 		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
 			this.deltaManager.lastSequenceNumber,
-		);
+		) as IDocumentSchema;
 
 		// Is document schema explicit control on?
-		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const explicitSchemaControl = documentSchema?.runtime!.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2615,7 +2617,8 @@ export class ContainerRuntime
 						local,
 						modernRuntimeMessage,
 					};
-			msg.savedOp = savedOp;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			msg.savedOp = savedOp!;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
@@ -3404,11 +3407,11 @@ export class ContainerRuntime
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLoggerExt;
+			logger?: ITelemetryLoggerExt | undefined;
 			/** True to run GC sweep phase after the mark phase */
-			runSweep?: boolean;
+			runSweep?: boolean | undefined;
 			/** True to generate full GC data */
-			fullGC?: boolean;
+			fullGC?: boolean | undefined;
 		},
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
@@ -3942,7 +3945,7 @@ export class ContainerRuntime
 	private submit(
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
-		metadata?: { localId: string; blobId?: string },
+		metadata?: { localId: string; blobId?: string | undefined },
 	): void {
 		this.verifyNotClosed();
 

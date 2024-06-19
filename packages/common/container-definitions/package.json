@@ -108,6 +108,22 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISelf": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IBatchMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDeltaManager": {
+				"backCompat": false
+			}
+		}
 	}
 }

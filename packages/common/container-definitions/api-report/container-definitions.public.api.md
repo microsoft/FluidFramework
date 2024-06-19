@@ -75,7 +75,7 @@ export { IGenericError }
 
 // @public
 export interface ISelf {
-    readonly client?: IClient;
+    readonly client?: IClient | undefined;
     readonly clientId: string;
 }
 

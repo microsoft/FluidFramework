@@ -109,6 +109,25 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDocumentStorageService": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IAuthorizationError": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_DriverError": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDeltasFetchResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDocumentDeltaConnection": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISnapshot": {
+				"backCompat": false
+			}
+		}
 	}
 }

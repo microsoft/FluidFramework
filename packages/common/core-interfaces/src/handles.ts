@@ -32,7 +32,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	 * The parent IFluidHandleContext that has provided a route path to this IFluidHandleContext or undefined
 	 * at the root.
 	 */
-	readonly routeContext?: IFluidHandleContext;
+	readonly routeContext?: IFluidHandleContext | undefined;
 
 	/**
 	 * Flag indicating whether or not the entity has services attached.
