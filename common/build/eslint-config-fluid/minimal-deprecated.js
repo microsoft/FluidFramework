@@ -249,6 +249,7 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
+		// Disabled because it conflicts with formatter rules
 		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-spacing": "error",
 		"@typescript-eslint/func-call-spacing": "error",
