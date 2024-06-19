@@ -108,9 +108,6 @@ export type ExtractListItemType<List extends FlexList> = List extends FlexList<i
 	? Item
 	: unknown;
 
-/**
- * @public
- */
 export type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown
 	? List
 	: () => List;
