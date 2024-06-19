@@ -23,6 +23,7 @@
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
+@fluidframework/attributor
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/undo-redo
