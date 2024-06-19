@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -116,12 +116,12 @@
 		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^5.0.0-265463",
+		"@fluidframework/protocol-base": "^5.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0-265463",
-		"@fluidframework/server-services-client": "^5.0.0-265463",
-		"@fluidframework/server-services-core": "^5.0.0-265463",
-		"@fluidframework/server-test-utils": "^5.0.0-265463",
+		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-services-client": "^5.0.0",
+		"@fluidframework/server-services-core": "^5.0.0",
+		"@fluidframework/server-test-utils": "^5.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"

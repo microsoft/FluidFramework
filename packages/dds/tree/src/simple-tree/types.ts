@@ -125,7 +125,7 @@ export abstract class TreeNode implements WithType {
 			return false;
 		}
 
-		assert("prototype" in schema, "expected class based schema");
+		assert("prototype" in schema, 0x98a /* expected class based schema */);
 		return inPrototypeChain(schema.prototype, this.prototype);
 	}
 
