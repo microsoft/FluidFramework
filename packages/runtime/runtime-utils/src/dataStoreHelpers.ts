@@ -16,7 +16,7 @@ interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
 	message: string;
 	code: number;
-	stack?: string;
+	stack?: string | undefined;
 	underlyingResponseHeaders?: { [key: string]: any };
 }
 

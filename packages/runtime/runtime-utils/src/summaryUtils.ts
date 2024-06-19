@@ -256,8 +256,10 @@ export function convertToSummaryTreeWithStats(
 	}
 
 	const summaryTree = builder.getSummaryTree();
-	summaryTree.summary.unreferenced = snapshot.unreferenced;
-	summaryTree.summary.groupId = snapshot.groupId;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	summaryTree.summary.unreferenced = snapshot.unreferenced!;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	summaryTree.summary.groupId = snapshot.groupId!;
 	return summaryTree;
 }
 
@@ -318,8 +320,10 @@ export function convertSnapshotTreeToSummaryTree(
 	}
 
 	const summaryTree = builder.getSummaryTree();
-	summaryTree.summary.unreferenced = snapshot.unreferenced;
-	summaryTree.summary.groupId = snapshot.groupId;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	summaryTree.summary.unreferenced = snapshot.unreferenced!;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	summaryTree.summary.groupId = snapshot.groupId!;
 	return summaryTree;
 }
 
@@ -365,8 +369,11 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	}
 	return {
 		entries,
-		unreferenced: summaryTree.unreferenced,
-		groupId: summaryTree.groupId,
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		unreferenced: summaryTree.unreferenced!,
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		groupId: summaryTree.groupId!,
 	};
 }
 
