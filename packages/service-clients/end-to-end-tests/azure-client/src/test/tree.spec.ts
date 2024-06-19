@@ -76,13 +76,22 @@ for (const testOpts of testMatrix) {
 			}
 		}
 
-		async function init(
-			summaryTree: (typeof ephemeralSummaryTrees)[keyof typeof ephemeralSummaryTrees],
+		/**
+		 * Either creates a new azure client with a SharedTree, or loads an azure client from the existing summary tree (the "ephemeral" case).
+		 */
+		async function createOrLoad(
+			summaryTree?: (typeof ephemeralSummaryTrees)[keyof typeof ephemeralSummaryTrees],
 		): Promise<{ containerId: string; treeData: TreeView<typeof StringArray> }> {
 			let containerId: string;
 			let treeData: TreeView<typeof StringArray>;
 
-			if (isEphemeral) {
+			if (summaryTree === undefined) {
+				const { container } = await client.createContainer(schema, "2");
+				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
+				treeData.initialize(new StringArray([]));
+				containerId = await container.attach();
+				await waitForConnection(container);
+			} else {
 				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
 					summaryTree,
 					"test-user-id-1",
@@ -93,12 +102,6 @@ for (const testOpts of testMatrix) {
 				const { container } = await client.getContainer(containerId, schema, "2");
 				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				await waitForConnection(container);
-			} else {
-				const { container } = await client.createContainer(schema, "2");
-				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
-				treeData.initialize(new StringArray([]));
-				containerId = await container.attach();
-				await waitForConnection(container);
 			}
 
 			return {
@@ -107,15 +110,10 @@ for (const testOpts of testMatrix) {
 			};
 		}
 
-		/**
-		 * Scenario: test when an Azure Client container is created,
-		 * it can set the initial objects to SharedTree and do basic SharedTree ops.
-		 *
-		 * Expected behavior: an error should not be thrown nor should a rejected promise
-		 * be returned.
-		 */
-		it("can create a container with SharedTree and do basic ops", async () => {
-			const { treeData } = await init(ephemeralSummaryTrees.createContainerWithSharedTree);
+		it("can create/load a container with SharedTree and do basic ops", async () => {
+			const { treeData } = await createOrLoad(
+				isEphemeral ? ephemeralSummaryTrees.createContainerWithSharedTree : undefined,
+			);
 
 			treeData.root.insertNew("test string 1");
 			assert.strictEqual(treeData.root.length, 1);
@@ -131,16 +129,9 @@ for (const testOpts of testMatrix) {
 			assert.strictEqual(treeData.root.at(0), "test string 1");
 		});
 
-		/**
-		 * Scenario: test when an Azure Client container is created,
-		 * and it can be loaded by another container with SharedTree and do basic SharedTree ops.
-		 *
-		 * Expected behavior: an error should not be thrown nor should a rejected promise
-		 * be returned.
-		 */
 		it("can create/load a container with SharedTree collaborate with basic ops", async () => {
-			const { containerId, treeData } = await init(
-				ephemeralSummaryTrees.createLoadContainerWithSharedTree,
+			const { containerId, treeData } = await createOrLoad(
+				isEphemeral ? ephemeralSummaryTrees.createLoadContainerWithSharedTree : undefined,
 			);
 
 			treeData.root.insertNew("test string 1");
