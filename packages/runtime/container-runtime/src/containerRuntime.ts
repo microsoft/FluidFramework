@@ -1781,7 +1781,7 @@ export class ContainerRuntime
 					: ({
 							clientId,
 							client: audience.getMember(clientId),
-					  } satisfies ISelf);
+						} satisfies ISelf);
 			};
 
 			let oldClientId = this.clientId;
@@ -2225,7 +2225,7 @@ export class ContainerRuntime
 							status: 200,
 							mimeType: "fluid/object",
 							value: blob,
-					  }
+						}
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
 				return await this.channelCollection.request(request);
@@ -2626,13 +2626,13 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
-				  }
+					}
 				: // Unrecognized message will be ignored.
-				  {
+					{
 						message,
 						local,
 						modernRuntimeMessage,
-				  };
+					};
 			msg.savedOp = savedOp;
 
 			// ensure that we observe any re-entrancy, and if needed, rebase ops
@@ -3736,12 +3736,12 @@ export class ContainerRuntime
 							proposalHandle: undefined,
 							ackHandle: this.loadedFromVersionId,
 							referenceSequenceNumber: summaryRefSeqNum,
-					  }
+						}
 					: {
 							proposalHandle: lastAck.summaryOp.contents.handle,
 							ackHandle: lastAck.summaryAck.contents.handle,
 							referenceSequenceNumber: summaryRefSeqNum,
-					  };
+						};
 
 			let handle: string;
 			try {
@@ -4360,10 +4360,10 @@ export class ContainerRuntime
 							await this.blobManager.attachAndGetPendingBlobs(props?.stopBlobAttachingSignal),
 						),
 					),
-			  )
+				)
 			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
 					logAndReturnPendingState(event, getSyncState()),
-			  );
+				);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
