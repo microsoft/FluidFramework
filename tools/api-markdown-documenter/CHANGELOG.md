@@ -2,8 +2,8 @@
 
 ## 13.0.1
 
-- Allow configuration of "alerts" in child item tables.
-    - Default behavior can be overriden via the the `getAlertsForItem` option.
+-   Allow configuration of "alerts" in child item tables.
+    -   Default behavior can be overriden via the the `getAlertsForItem` option.
 
 ## 13.0.0
 
