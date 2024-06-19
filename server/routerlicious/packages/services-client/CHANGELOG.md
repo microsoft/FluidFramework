@@ -1,5 +1,16 @@
 # @fluidframework/server-services-client
 
+## 5.0.0
+
+### Minor Changes
+
+-   server-services-client: Add optional internalErrorCode property to NetworkError and INetworkErrorDetails ([#21465](https://github.com/microsoft/FluidFramework/pull/21465)) [9427e25689](https://github.com/microsoft/FluidFramework/commit/9427e2568924e0bed83d2a6f78a6e2a20be8a29e)
+
+    `NetworkError`s now include an optional property, `internalErrorCode`, which can contain additional information about
+    the internal error.
+
+    You can find more details in [pull request #21429](https://github.com/microsoft/FluidFramework/pull/21429).
+
 ## 4.0.0
 
 ### Major Changes

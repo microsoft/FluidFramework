@@ -10,6 +10,7 @@ import {
 	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
 	forEachField,
+	type Value,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
 
@@ -23,7 +24,7 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
-import type { StableId } from "@fluidframework/id-compressor";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -39,6 +40,19 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		this.explicitKeys = new Set(this.fields.map((f) => f.key));
 	}
 
+	private getValueToEncode(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
+		if (this.value === 0) {
+			assert(typeof cursor.value === "string", "identifier must be type string");
+			if (isStableId(cursor.value)) {
+				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
+				if (sessionSpaceCompressedId !== undefined) {
+					return cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+				}
+			}
+		}
+		return cursor.value;
+	}
+
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -49,19 +63,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-
-		if (this.value === 0) {
-			const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(
-				cursor.value as StableId,
-			);
-			const opSpaceCompressedId =
-				sessionSpaceCompressedId !== undefined
-					? cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId)
-					: cursor.value;
-			encodeValue(opSpaceCompressedId, this.value, outputBuffer);
-		} else {
-			encodeValue(cursor.value, this.value, outputBuffer);
-		}
+		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
 		for (const field of this.fields) {
 			cursor.enterField(brand(field.key));
 			field.shape.encodeField(cursor, cache, outputBuffer);

@@ -19,7 +19,7 @@ import type {
  * Channel for a Fluid Tree DDS.
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @public
+ * @sealed @public
  */
 export interface ITree extends IFluidLoadable {
 	/**
@@ -85,7 +85,9 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
  * Property-bag configuration for {@link TreeViewConfiguration} construction.
  * @public
  */
-export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+export interface ITreeViewConfiguration<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
@@ -106,7 +108,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 /**
  * Configuration for {@link ITree.viewWith}.
- * @public
+ * @sealed @public
  */
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
 	implements Required<ITreeViewConfiguration<TSchema>>
@@ -133,7 +135,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 /**
  * Configuration for how to {@link ITree.schematize | schematize} a tree.
- * @public
+ * @sealed @public
  * @deprecated Please migrate to use {@link TreeViewConfiguration} with {@link ITree.viewWith} instead.
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -183,7 +185,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
- * @public
+ * @sealed @public
  */
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
@@ -245,7 +247,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
  * Information about a view schema's compatibility with the document's stored schema.
  *
  * See SharedTree's README for more information about choosing a compatibility policy.
- * @public
+ * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
 	/**
@@ -319,7 +321,7 @@ export interface SchemaCompatibilityStatus {
 
 /**
  * Events for {@link TreeView}.
- * @public
+ * @sealed @public
  */
 export interface TreeViewEvents {
 	/**

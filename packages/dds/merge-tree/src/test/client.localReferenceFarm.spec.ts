@@ -25,15 +25,15 @@ import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 import { validateRefCount } from "./testUtils.js";
 
-const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
-	{
-		initLen: { min: 2, max: 256 },
-		modLen: { min: 1, max: 256 },
-		opsPerRoundRange: { min: 10, max: 10 },
-		rounds: 10,
-		operations: [removeRange],
-		growthFunc: (input: number) => input * 2,
-	};
+const defaultOptions: Record<"initLen" | "modLen", IConfigRange> &
+	IMergeTreeOperationRunnerConfig = {
+	initLen: { min: 2, max: 256 },
+	modLen: { min: 1, max: 256 },
+	opsPerRoundRange: { min: 10, max: 10 },
+	rounds: 10,
+	operations: [removeRange],
+	growthFunc: (input: number) => input * 2,
+};
 
 describe("MergeTree.Client", () => {
 	beforeEach(() => {

@@ -20,12 +20,12 @@
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check . --formatter-enabled=true",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -86,7 +86,7 @@
 		"mocha": "^10.2.0",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0-265463",
+		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
