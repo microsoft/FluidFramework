@@ -4,7 +4,7 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import { enableOnNewFileKey } from "@fluid-experimental/attributor";
+import { enableOnNewFileKey } from "@fluidframework/attributor/internal";
 
 import { HitCounterContainerRuntimeFactory, IHitCounterAppModel } from "./containerCode.js";
 import { renderHitCounter } from "./view.js";

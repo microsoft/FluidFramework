@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IRuntimeAttributor } from "@fluid-experimental/attributor";
+import type { IRuntimeAttributor } from "@fluidframework/attributor/internal";
 import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { IHitCounter, ITinyliciousUser, greenKey, redKey } from "./dataObject.js";
