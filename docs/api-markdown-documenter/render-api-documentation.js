@@ -5,6 +5,7 @@
 
 import {
 	ApiItemKind,
+	ApiItemUtilities,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
@@ -80,6 +81,22 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
+		getAlertsForItem: (apiItem) => {
+			const alerts = [];
+			if(ApiItemUtilities.isDeprecated(apiItem)) {
+				alerts.push("Deprecated");
+			}
+
+			const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+			if (releaseTag === ReleaseTag.Alpha) {
+				// Temporary workaround for the current `@alpha` => "Legacy" state.
+				// This should be replaced with "Alpha" once that has been cleaned up.
+				alerts.push("Legacy");
+			} else if (releaseTag === ReleaseTag.Beta) {
+				alerts.push("Beta");
+			}
+			return alerts;
+		},
 		skipPackage: (apiPackage) => {
 			const packageName = apiPackage.displayName;
 			const packageScope = PackageName.getScope(packageName);
