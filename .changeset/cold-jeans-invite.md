@@ -42,7 +42,7 @@
 "@fluidframework/map": minor
 "@fluidframework/matrix": minor
 "@fluidframework/merge-tree": minor
-"@fluid-experimental/odsp-client": minor
+"@fluidframework/odsp-client": minor
 "@fluidframework/odsp-doclib-utils": minor
 "@fluidframework/odsp-driver": minor
 "@fluidframework/odsp-driver-definitions": minor

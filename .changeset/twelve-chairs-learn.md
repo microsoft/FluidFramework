@@ -1,5 +1,5 @@
 ---
-"@fluidframework/": minor
+"@fluidframework/runtime-definitions": minor
 ---
 
 runtime-definitions: Make IInboundSignalMessage alpha and readonly

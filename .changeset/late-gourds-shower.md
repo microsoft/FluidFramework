@@ -1,5 +1,5 @@
 ---
-"@fluidframework/": minor
+"@fluidframework/tinylicious-client": minor
 ---
 
 tinylicious-client: Types are now beta
