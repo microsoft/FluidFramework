@@ -1,5 +1,260 @@
 # @fluidframework/tree
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
+
+    A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
+
+    This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
+
+    This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
+
+    Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
+    The full list of such types is:
+
+    -   `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
+    -   `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
+        `ISharedObject`
+    -   `IChannel`
+    -   `IChannelAttributes`
+    -   `IChannelFactory`
+    -   `IExperimentalIncrementalSummaryContext`
+    -   `IGarbageCollectionData`
+    -   `ISummaryStats`
+    -   `ISummaryTreeWithStats`
+    -   `ITelemetryContext`
+    -   `IDeltaManagerErased`
+    -   `IFluidDataStoreRuntimeEvents`
+    -   `IFluidHandleContext`
+    -   `IProvideFluidHandleContext`
+
+    Removed APIs:
+
+    -   `DataObjectClass`: Usages replaced with `SharedObjectKind`.
+    -   `LoadableObjectClass`: Replaced with `SharedObjectKind`.
+    -   `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
+    -
+
+-   tree: Added support for optional schema validation on newly inserted content in SharedTree ([#21011](https://github.com/microsoft/FluidFramework/pull/21011)) [b14e9fa607](https://github.com/microsoft/FluidFramework/commit/b14e9fa607a8281f86d0cfac631e33ef12033e21)
+
+    When defining how to view a SharedTree, an application can now specify that new content inserted into the tree should
+    be subject to schema validation at the time it is inserted, so if it's not valid according to the stored schema in the
+    tree an error is thrown immediately.
+
+    This can be accomplished by passing an `ITreeConfigurationOptions` argument with `enableSchemaValidation` set to `true`
+    when creating a `TreeConfiguration` to use with the SharedTree.
+
+    Since this feature requires additional compute when inserting new content into the tree, it is not enabled by default.
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   tree: A new tree status has been added for SharedTree nodes. ([#21270](https://github.com/microsoft/FluidFramework/pull/21270)) [8760e321b0](https://github.com/microsoft/FluidFramework/commit/8760e321b02177babfb187ae293a17a65723f249)
+
+    `TreeStatus.Created` indicates that a SharedTree node has been constructed but not yet inserted into the tree.
+    Constraints passed to the `runTransaction` API are now marked as `readonly`.
+
+-   tree: Adjusted Listenable multi-event subscription policy. ([#21244](https://github.com/microsoft/FluidFramework/pull/21244)) [a0c1d2c5b1](https://github.com/microsoft/FluidFramework/commit/a0c1d2c5b1e20f3dc469377c093649fc5eb8c3dd)
+
+    `Listenable.on()` no longer supports the same listener function object being registered twice for the same event.
+    The deregister function returned by `Listenable.on()` may now be called multiple times with no effect.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+-   tree: Event types have been renamed ([#21233](https://github.com/microsoft/FluidFramework/pull/21233)) [4d56fd1f99](https://github.com/microsoft/FluidFramework/commit/4d56fd1f99a25f34c69d1aed2b60fbe156fc068f)
+
+    -   `ISubscribable` is renamed to `Listenable`.
+    -   `IsEvent` type helper is renamed to `IsListener`.
+    -   `Events` is renamed to `Listeners`.
+
+-   tree: Move several types into InternalTypes ([#21482](https://github.com/microsoft/FluidFramework/pull/21482)) [64d49dd362](https://github.com/microsoft/FluidFramework/commit/64d49dd3629cefe6260a1d6223e58b10c2ac0cb6)
+
+    The stable public API surface for Tree has been reduced.
+    Several types have been moved into InternalTypes, indicating that they are not fully stable nor intended to be referenced by users of Tree.
+
+    -   NodeBuilderData
+    -   FieldHasDefault
+    -   TreeNodeSchemaNonClass
+    -   TreeArrayNodeBase
+    -   ScopedSchemaName
+    -   DefaultProvider
+    -   typeNameSymbol
+    -   InsertableObjectFromSchemaRecord
+    -   ObjectFromSchemaRecord
+    -   FieldHasDefaultUnsafe
+    -   ObjectFromSchemaRecordUnsafe
+    -   TreeObjectNodeUnsafe
+    -   TreeFieldFromImplicitFieldUnsafe
+    -   TreeNodeFromImplicitAllowedTypesUnsafe
+    -   InsertableTreeNodeFromImplicitAllowedTypesUnsafe
+    -   TreeArrayNodeUnsafe
+    -   TreeMapNodeUnsafe
+    -   InsertableObjectFromSchemaRecordUnsafe
+    -   InsertableTreeFieldFromImplicitFieldUnsafe
+    -   InsertableTypedNodeUnsafe
+    -   NodeBuilderDataUnsafe
+    -   NodeFromSchemaUnsafe
+    -   FlexList
+    -   TreeApi
+
+    Additionally a few more types which could not be moved due to technically limitations have been documented that they should be treated similarly.
+
+    -   TreeNodeApi
+    -   TreeNodeSchemaCore
+    -   All \*Unsafe type (use for construction of recursive schema).
+    -   WithType
+    -   AllowedTypes
+    -   FieldSchemaUnsafe
+
+    Also to reduce confusion `type` was renamed to `typeNameSymbol`, and is now only type exported. `Tree.is` should be used to get type information from `TreeNodes` instead.
+
+-   tree: object node fields with statically known default values are now optional ([#21193](https://github.com/microsoft/FluidFramework/pull/21193)) [21eac41660](https://github.com/microsoft/FluidFramework/commit/21eac41660944208bad42b156d7df05fe6dc6b97)
+
+    Makes object node fields with statically known default values (i.e., `optional` and `identifier` fields) optional when creating trees, where they were previously required.
+
+    Example:
+
+    ```typescript
+    class Foo extends schemaFactory.object("Foo", {
+    	name: schemaFactory.string,
+    	id: schemaFactory.identifier,
+    	nickname: schemaFactory.optional(schemaFactory.string),
+    }) {}
+
+    // Before
+    const foo = new Foo({
+    	name: "Bar",
+    	id: undefined, // Had to explicitly specify `undefined` to opt into default behavior
+    	nickname: undefined, // Had to explicitly specify `undefined` for optional field
+    });
+
+    // After
+    const foo = new Foo({
+    	name: "Bar",
+    	// Can omit `id` and `nickname` fields, as both have statically known defaults!
+    });
+    ```
+
+-   tree: Breaking change: Removed the `"afterBatch"` event from `Treeview` ([#21406](https://github.com/microsoft/FluidFramework/pull/21406)) [69aceb88e5](https://github.com/microsoft/FluidFramework/commit/69aceb88e525d7fb5c93aaa8328ce26a56e2d9cb)
+
+    This event is no longer necessary.
+    In the past, it provided a means for waiting for a batch of changes to finish applying to the tree before taking some action.
+    However, the tree change events exposed via `Tree.on` wait for a batch to complete before firing, so the `"afterBatch"` event provides no additional guarantees.
+    Listeners of this event who wish to respond to changes to the tree view can use `"rootChanged"` instead.
+
+-   tree: Fix AfterBatch event ([#21162](https://github.com/microsoft/FluidFramework/pull/21162)) [cecd740a6c](https://github.com/microsoft/FluidFramework/commit/cecd740a6cadc6d3cdafdba7e22312b3d756c780)
+
+    `TreeViewEvents.afterBatch` is now triggered when appropriate instead of never firing.
+
+-   tree: Breaking change: `TreeStatus.Created` is now `TreeStatus.New` ([#21278](https://github.com/microsoft/FluidFramework/pull/21278)) [5a26346a14](https://github.com/microsoft/FluidFramework/commit/5a26346a145ed54d08cd5a9b4f1c9b177711bd7c)
+
+    `TreeStatus.Created` has been renamed to `TreeStatus.New`.
+
+-   tree: Implement compatibility-based schema evolution API ([#20815](https://github.com/microsoft/FluidFramework/pull/20815)) [64e5763b70](https://github.com/microsoft/FluidFramework/commit/64e5763b70e269418fbb77f75dbd3c82b91b1aff)
+
+    This change adjusts some top-level APIs for using SharedTree to better accommodate applications that need to change their schema.
+    These changes enable forwards compatibility with future work to relax `SharedTree`'s restrictions around view schema and stored schema compatibility.
+    That future work will enable more flexible policies around how applications can update their documents' schemas over time.
+
+    Application authors are encouraged to develop a compatibility policy which they are comfortable with using the guidance in the
+    "Schema Evolvability" section of `@fluidframework/tree`'s readme.
+
+    To make the details of schema compatibilities that SharedTree supports more clear,
+    `TreeView.error` has been functionally replaced with the `compatibility` property.
+    Users desiring the previous strict behavior should use `view.compatibility.isEquivalent` at appropriate places in application logic.
+
+    # `ITree.schematize` removal
+
+    `ITree.schematize` (and its argument `TreeConfiguration`) has been removed. Instead, call `ITree.viewWith` and provide it a `TreeViewConfiguration`.
+    Unlike `schematize`, `viewWith` does not implicitly initialize the document.
+    As such, it doesn't take an `initialTree` property.
+    Instead, applications should initialize their trees in document creation codepaths using the added `TreeView.initialize` API.
+
+    ## Old
+
+    As an example, something like the following code may have been used before for both the document create and document load codepaths:
+
+    ```typescript
+    // -- fluid-framework API for statically defined objects in container schema --
+    const tree = container.initialObjects.myTree;
+    const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+
+    // -- fluid-framework API for dynamically created objects --
+    const tree = await container.create(SharedTree);
+    const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+    ```
+
+    When using the encapsulated API, creating a tree looks a bit different but the call to `schematize` is the same:
+
+    ```typescript
+    // -- encapsulated API --
+    const tree = SharedTree.create(runtime, "foo");
+    const view = tree.schematize(new TreeConfiguration(Point, () => new Point({ x: 0, y: 0 })));
+    ```
+
+    ## New
+
+    After migrating this code away from `schematize` and onto `viewWith`, it would look like this on the create codepath:
+
+    ```typescript
+    const treeConfig = new TreeViewConfiguration({ schema: Point });
+
+    // The following line reflects the first-party API (e.g. @fluidframework/aqueduct). If using the third-party API, obtaining
+    // a SharedTree is unaffected by this changeset.
+    const tree = SharedTree.create(runtime, "foo");
+    const view = tree.viewWith(treeConfig);
+    view.initialize(new Point({ x: 0, y: 0 }));
+    ```
+
+    and this on the load codepath:
+
+    ```typescript
+    // 'tree' would typically be obtained by retrieving it from a well-known location, e.g. within a `DataObject`'s
+    // root directory or in `IFluidContainer.initialObjects`
+    const view = tree.viewWith(treeConfig);
+    ```
+
+    Besides only making the initial tree required to specify in places that actually perform document initialization, this is beneficial for mutation semantics: `tree.viewWith` never modifies the state of the underlying tree.
+    This means applications are free to attempt to view a document using multiple schemas (e.g. legacy versions of their document format) without worrying about altering the document state.
+
+    If existing code used schematize in a context where it wasn't known whether the document needed to be initialized, you can leverage `TreeView.compatibility` like so:
+
+    ```typescript
+    const view = tree.viewWith(config);
+    if (view.compatibility.canInitialize) {
+    	view.initialize(initialTree);
+    }
+    ```
+
+    # Separate `schemaChanged` event on `TreeView`
+
+    The previous `rootChanged` event was called whenever the root was invalidated, which happens on changes to the document schema
+    as well as changes to the root field (i.e. usage of `TreeView.root`'s setter on a local client, or acking such a change made by
+    a remote client).
+
+    There was no distinct `schemaChanged` event, meaning that any time the root changed,
+    clients would have needed to check the `error` state on `TreeView` to see if the document's underlying schema had been changed.
+
+    Now, the latter case of the document's underlying schema changing has been split off into a `schemaChanged` event, which will
+    fire before `rootChanged`.
+    This should allow applications to run slightly less compatibility logic to routine changes to the root field.
+
+-   core-interfaces, tree: Unify `IDisposable` interfaces ([#21184](https://github.com/microsoft/FluidFramework/pull/21184)) [cfcb827851](https://github.com/microsoft/FluidFramework/commit/cfcb827851ffc81486db6c718380150189fb95c5)
+
+    Public APIs in `@fluidframework/tree` now use `IDisposable` from `@fluidframework/core-interfaces` replacing `disposeSymbol` with "dispose".
+
+    `IDisposable` in `@fluidframework/core-interfaces` is now `@sealed` indicating that third parties should not implement it to reserve the ability for Fluid Framework to extend it to include `Symbol.dispose` as a future non-breaking change.
+
+-   tree: Fix bug where reading tree during events could cause issues ([#21172](https://github.com/microsoft/FluidFramework/pull/21172)) [81a648a984](https://github.com/microsoft/FluidFramework/commit/81a648a9843f7940df318b63258d864d1fa91bc1)
+
+    Reading the tree inside of NodeChange and TreeChange events could corrupt internal memory structures leading to invalid data in subsequence reads as well as internal errors being thrown. This bug has been fixed.
+
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes

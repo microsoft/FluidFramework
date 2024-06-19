@@ -732,7 +732,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 
 		assert(
 			!this.waitingForLeaveOp,
-			"leave timer can't be set as we have not had access to quorum",
+			0x99d /* leave timer can't be set as we have not had access to quorum */,
 		);
 
 		// This check is required for scenario of loading container from pending state, and ensuring there is no way
