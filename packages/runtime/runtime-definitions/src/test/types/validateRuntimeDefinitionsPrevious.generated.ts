@@ -321,6 +321,7 @@ declare function get_current_InterfaceDeclaration_IAttachMessage():
 declare function use_old_InterfaceDeclaration_IAttachMessage(
     use: TypeOnly<old.IAttachMessage>): void;
 use_old_InterfaceDeclaration_IAttachMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAttachMessage());
 
 /*
@@ -1143,6 +1144,7 @@ declare function get_current_TypeAliasDeclaration_InboundAttachMessage():
 declare function use_old_TypeAliasDeclaration_InboundAttachMessage(
     use: TypeOnly<old.InboundAttachMessage>): void;
 use_old_TypeAliasDeclaration_InboundAttachMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_InboundAttachMessage());
 
 /*

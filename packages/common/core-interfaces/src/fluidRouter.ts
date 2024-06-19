@@ -17,7 +17,7 @@ export interface IRequestHeader {
  */
 export interface IRequest {
 	url: string;
-	headers?: IRequestHeader;
+	headers?: IRequestHeader | undefined;
 }
 
 /**
@@ -31,6 +31,6 @@ export interface IResponse {
 	value: any;
 	// TODO: Use `unknown` instead (API-Breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	headers?: { [key: string]: any };
-	stack?: string;
+	headers?: { [key: string]: any } | undefined;
+	stack?: string | undefined;
 }

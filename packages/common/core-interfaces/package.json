@@ -104,6 +104,13 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IRequest": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IResponse": {
+				"backCompat": false
+			}
+		}
 	}
 }

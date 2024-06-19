@@ -139,7 +139,7 @@ export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
 
 	constructor(
 		message: string,
-		readonly redirectLocation: string | undefined,
+		readonly redirectLocation: string,
 		props: DriverErrorTelemetryProps,
 	) {
 		// do not log redirectLocation (URL can contain sensitive info)

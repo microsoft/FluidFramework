@@ -131,6 +131,12 @@
 			},
 			"InterfaceDeclaration_IFluidDataStoreChannel": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttachMessage": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_InboundAttachMessage": {
+				"backCompat": false
 			}
 		}
 	}

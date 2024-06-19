@@ -308,7 +308,7 @@ export interface IProvideFluidLoadable {
 // @public (undocumented)
 export interface IRequest {
     // (undocumented)
-    headers?: IRequestHeader;
+    headers?: IRequestHeader | undefined;
     // (undocumented)
     url: string;
 }
@@ -324,11 +324,11 @@ export interface IResponse {
     // (undocumented)
     headers?: {
         [key: string]: any;
-    };
+    } | undefined;
     // (undocumented)
     mimeType: string;
     // (undocumented)
-    stack?: string;
+    stack?: string | undefined;
     // (undocumented)
     status: number;
     // (undocumented)
