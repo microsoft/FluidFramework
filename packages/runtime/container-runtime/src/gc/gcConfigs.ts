@@ -132,6 +132,10 @@ export function generateGCConfigs(
 			: "YES"
 		: "NO";
 
+	// If we aren't running sweep, also disable AutoRecovery which also emits the GC op.
+	// This gives a simple control surface for compability concerns around introducing the new op.
+	const tombstoneAutorecoveryEnabled = shouldRunSweep !== "NO";
+
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
 		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
@@ -172,7 +176,7 @@ export function generateGCConfigs(
 	return {
 		gcEnabled, // For this document
 		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
-		gcOpAllowed: shouldRunSweep !== "NO", //* Try making required, if not too big a pain
+		tombstoneAutorecoveryEnabled,
 		shouldRunSweep, // For this session
 		runFullGC,
 		testMode,
