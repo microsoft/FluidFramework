@@ -923,6 +923,7 @@ declare function get_current_InterfaceDeclaration_IRequest():
 declare function use_old_InterfaceDeclaration_IRequest(
     use: TypeOnly<old.IRequest>): void;
 use_old_InterfaceDeclaration_IRequest(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRequest());
 
 /*
@@ -979,6 +980,7 @@ declare function get_current_InterfaceDeclaration_IResponse():
 declare function use_old_InterfaceDeclaration_IResponse(
     use: TypeOnly<old.IResponse>): void;
 use_old_InterfaceDeclaration_IResponse(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IResponse());
 
 /*
