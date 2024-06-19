@@ -139,7 +139,7 @@ const compressionSuite = (getProvider) => {
 						? {
 								minimumBatchSizeInBytes: 10,
 								compressionAlgorithm: CompressionAlgorithms.lz4,
-						  }
+							}
 						: undefined,
 					chunkSizeInBytes: option.compressionAndChunking.chunking ? 100 : undefined,
 					enableGroupedBatching: option.grouping,
@@ -184,7 +184,7 @@ describeInstallVersions(
 			provider.driver.endpointName !== undefined
 				? {
 						r11s: { r11sEndpointName: provider.driver.endpointName },
-				  }
+					}
 				: undefined;
 		return getVersionedTestObjectProvider(
 			pkgVersion, // base version

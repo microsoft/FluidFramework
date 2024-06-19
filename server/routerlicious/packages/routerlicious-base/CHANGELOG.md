@@ -1,5 +1,22 @@
 # @fluidframework/server-routerlicious-base
 
+## 5.0.0
+
+### Minor Changes
+
+-   server-routerlicious-base: Add support for custom tenant key generators ([#21465](https://github.com/microsoft/FluidFramework/pull/21465)) [9427e25689](https://github.com/microsoft/FluidFramework/commit/9427e2568924e0bed83d2a6f78a6e2a20be8a29e)
+
+    Added support to add a custom tenant key generator instead of using just the default 128-bit sha256 key.
+
+    You can find more details in [pull request #20844](https://github.com/microsoft/FluidFramework/pull/20844).
+
+-   server-routerlicious-base: Remove Riddler HTTP request for performance ([#21465](https://github.com/microsoft/FluidFramework/pull/21465)) [9427e25689](https://github.com/microsoft/FluidFramework/commit/9427e2568924e0bed83d2a6f78a6e2a20be8a29e)
+
+    The `getOrderer` workflow no longer calls `getTenant` when `globalDb` is enabled. This saves two HTTP calls to Riddler
+    and will improve performance.
+
+    You can find more details in [pull request #20773](https://github.com/microsoft/FluidFramework/pull/20773).
+
 ## 4.0.0
 
 ### Major Changes

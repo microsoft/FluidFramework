@@ -23,6 +23,7 @@ import { testEditor } from "./sequenceFieldEditor.test.js";
 import { testSnapshots } from "./sequenceFieldSnapshots.test.js";
 import { testToDelta } from "./sequenceFieldToDelta.test.js";
 import { testUtils } from "./sequenceFieldUtils.test.js";
+import { testGetNestedChanges } from "./sequenceGetNestedChanges.test.js";
 
 describe("SequenceField", () => {
 	testEditor();
@@ -43,4 +44,5 @@ describe("SequenceField", () => {
 	testCodecs();
 	testSnapshots();
 	testReplaceRevisions();
+	testGetNestedChanges();
 });

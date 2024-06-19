@@ -6,21 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import {
-	FieldAnchor,
-	IEditableForest,
-	ITreeSubscriptionCursor,
+	type FieldAnchor,
+	type IEditableForest,
+	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldKind,
-	FlexTreeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
+	type FlexTreeSchema,
 	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import type { TreeContent } from "../../../shared-tree/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
@@ -42,7 +42,10 @@ export function contextWithContentReadonly(content: TreeContent): Context {
 /**
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
-export function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
+export function initializeCursor(
+	context: Context,
+	anchor: FieldAnchor,
+): ITreeSubscriptionCursor {
 	const cursor = context.checkout.forest.allocateCursor();
 	assert.equal(
 		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
@@ -58,7 +61,10 @@ export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootF
  *
  * @returns The initialized context and cursor.
  */
-export function readonlyTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
+export function readonlyTreeWithContent<
+	Kind extends FlexFieldKind,
+	Types extends FlexAllowedTypes,
+>(
 	treeContent: TreeContent,
 ): {
 	context: Context;

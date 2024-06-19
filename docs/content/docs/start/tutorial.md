@@ -68,7 +68,9 @@ The `renderDiceRoller` function is created in a later step. It renders the UI of
 ```js
 const createNewDice = async () => {
 	const { container } = await client.createContainer(containerSchema);
-	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+	const view = container.initialObjects.diceTree.viewWith(treeConfiguration);
+	view.initialize(new Dice({ value: 1 }));
+	const dice = view.root;
 	const id = await container.attach();
 	renderDiceRoller(dice, root);
 	return id;
@@ -82,7 +84,7 @@ Loading a container is more straightforward than creating a new one. When loadin
 ```js
 const loadExistingDice = async (id) => {
 	const { container } = await client.getContainer(id, containerSchema);
-	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+	const dice = container.initialObjects.diceTree.viewWith(treeConfiguration).root;
 	renderDiceRoller(dice, root);
 }
 ```
@@ -221,7 +223,7 @@ The [full code for this application is available](https://github.com/microsoft/F
 [fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
 [@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
 [@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
-[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
+[@fluidframework/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
 [AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
 [TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}

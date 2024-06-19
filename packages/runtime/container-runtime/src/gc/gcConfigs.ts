@@ -122,7 +122,7 @@ export function generateGCConfigs(
 		!gcEnabled || tombstoneTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
-			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
+				(sweepAllowed && createParams.gcOptions.enableGCSweep === true);
 	const disableDatastoreSweep =
 		mc.config.getBoolean(disableDatastoreSweepKey) === true ||
 		createParams.gcOptions[gcDisableDataStoreSweepOptionName] === true;
@@ -199,7 +199,11 @@ export function generateGCConfigs(
  *
  * If there is no Session Expiry timeout, GC can never guarantee an object won't be revived, so return undefined.
  */
-function computeTombstoneTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
+function computeTombstoneTimeout(
+	sessionExpiryTimeoutMs: number | undefined,
+): number | undefined {
 	const bufferMs = oneDayMs;
-	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
+	return (
+		sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
+	);
 }

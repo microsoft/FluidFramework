@@ -8,5 +8,6 @@
 		"rootDir": "src",
 		"outDir": "./lib",
 		"types": ["mocha"],
+		"exactOptionalPropertyTypes": false,
 	},
 }

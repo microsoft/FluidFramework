@@ -9,7 +9,12 @@ export {
 	IMigratableModelEvents,
 	IVersionedModel,
 } from "./migratableModel.js";
-export { IMigrationTool, IMigrationToolEvents, MigrationState } from "./migrationTool.js";
+export {
+	IAcceptedMigrationDetails,
+	IMigrationTool,
+	IMigrationToolEvents,
+	MigrationState,
+} from "./migrationTool.js";
 export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator.js";
 export {
 	ISameContainerMigratableModel,
@@ -20,4 +25,7 @@ export {
 	ISameContainerMigrationToolEvents,
 	SameContainerMigrationState,
 } from "./sameContainerMigrationTool.js";
-export { ISameContainerMigrator, ISameContainerMigratorEvents } from "./sameContainerMigrator.js";
+export {
+	ISameContainerMigrator,
+	ISameContainerMigratorEvents,
+} from "./sameContainerMigrator.js";

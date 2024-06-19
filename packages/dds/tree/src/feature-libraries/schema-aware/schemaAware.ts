@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	TreeNodeSchemaIdentifier,
 	TreeValue,
 	ValueSchema,
 	Multiplicity,
 } from "../../core/index.js";
-import { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
-import { ContextuallyTypedNodeData, typeNameSymbol, valueSymbol } from "../contextuallyTyped.js";
-import {
+import type { Assume, FlattenKeys, _InlineTrick } from "../../util/index.js";
+import type {
+	ContextuallyTypedNodeData,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped.js";
+import type {
 	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
@@ -46,11 +50,11 @@ export type CollectOptions<
 			{ [typeNameSymbol]?: UnbrandedName<TName> } & (TValueSchema extends ValueSchema
 				? { [valueSymbol]: TreeValue<TValueSchema> }
 				: EmptyObject)
-	  > &
+		> &
 			TTypedFields
 	: TValueSchema extends ValueSchema
-	? TreeValue<TValueSchema>
-	: undefined;
+		? TreeValue<TValueSchema>
+		: undefined;
 
 /**
  * Remove type brand from name.
@@ -66,11 +70,13 @@ export type UnbrandedName<TName> = [
  * In Editable mode, unwraps the fields.
  * @internal
  */
-export type TypedFields<TFields extends undefined | { readonly [key: string]: FlexFieldSchema }> = [
+export type TypedFields<
+	TFields extends undefined | { readonly [key: string]: FlexFieldSchema },
+> = [
 	TFields extends { [key: string]: FlexFieldSchema }
 		? {
 				-readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
-		  }
+			}
 		: EmptyObject,
 ][_InlineTrick];
 
@@ -115,12 +121,12 @@ export type InsertableFlexNode<TSchema extends FlexTreeNodeSchema> = FlattenKeys
 		TSchema extends FlexObjectNodeSchema<string, infer TFields extends FlexObjectNodeFields>
 			? TypedFields<TFields>
 			: TSchema extends FlexFieldNodeSchema<string, infer TField extends FlexFieldSchema>
-			? InsertableFlexField<TField>
-			: TSchema extends FlexMapNodeSchema<string, infer TField extends FlexFieldSchema>
-			? {
-					readonly [P in string]: InsertableFlexField<TField>;
-			  }
-			: EmptyObject,
+				? InsertableFlexField<TField>
+				: TSchema extends FlexMapNodeSchema<string, infer TField extends FlexFieldSchema>
+					? {
+							readonly [P in string]: InsertableFlexField<TField>;
+						}
+					: EmptyObject,
 		TSchema extends LeafNodeSchema<string, infer TValueSchema extends ValueSchema>
 			? TValueSchema
 			: undefined,

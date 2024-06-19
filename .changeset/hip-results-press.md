@@ -4,7 +4,7 @@
 "@fluidframework/shared-object-base": minor
 ---
 
-Remove several types from `@public` scope
+fluid-framework: Remove several types from `@public` scope
 
 The following types have been moved from `@public` to `@alpha`:
 

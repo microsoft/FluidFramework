@@ -4,17 +4,17 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { RevisionTag, replaceAtomRevisions } from "../../core/index.js";
+import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
-	Changeset,
-	HasMoveFields,
-	HasRevisionTag,
-	Mark,
-	MarkEffect,
+	type Changeset,
+	type HasMoveFields,
+	type HasRevisionTag,
+	type Mark,
+	type MarkEffect,
 	NoopMarkType,
 } from "./types.js";
-import { MoveMarkEffect } from "./helperTypes.js";
+import type { MoveMarkEffect } from "./helperTypes.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -88,15 +88,11 @@ function updateMoveEffect<TEffect extends HasMoveFields>(
 		? updateRevision(
 				{
 					...effect,
-					finalEndpoint: updateRevision(
-						effect.finalEndpoint,
-						revisionsToReplace,
-						newRevision,
-					),
+					finalEndpoint: updateRevision(effect.finalEndpoint, revisionsToReplace, newRevision),
 				},
 				revisionsToReplace,
 				newRevision,
-		  )
+			)
 		: updateRevision(effect, revisionsToReplace, newRevision);
 }
 
@@ -108,7 +104,10 @@ function updateRevision<T extends HasRevisionTag>(
 	return revisionsToReplace.has(input.revision) ? withRevision(input, newRevision) : input;
 }
 
-function withRevision<T extends HasRevisionTag>(input: T, revision: RevisionTag | undefined): T {
+function withRevision<T extends HasRevisionTag>(
+	input: T,
+	revision: RevisionTag | undefined,
+): T {
 	const updated = { ...input, revision };
 	if (revision === undefined) {
 		delete updated.revision;

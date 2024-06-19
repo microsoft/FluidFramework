@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ProtoNodes } from "./delta.js";
-import {
+import type { ProtoNodes } from "./delta.js";
+import type {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	PlaceUpPath,

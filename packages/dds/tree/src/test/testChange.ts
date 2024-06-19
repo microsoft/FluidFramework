@@ -5,22 +5,22 @@
 
 import { strict as assert, fail } from "assert";
 
-import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
+import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
 	AnchorSet,
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyCodec,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	DeltaFieldMap,
-	DeltaRoot,
-	FieldKey,
-	RevisionTag,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyCodec,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaFieldMap,
+	type DeltaRoot,
+	type FieldKey,
+	type RevisionTag,
+	type TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
@@ -55,7 +55,10 @@ function isNonEmptyChange(
 	return "inputContext" in change;
 }
 
-function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
+function mint(
+	inputContext: readonly number[],
+	intention: number | number[],
+): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
 		inputContext: composeIntentions([], inputContext),
@@ -334,7 +337,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 		? emptyDelta
 		: {
 				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
-		  };
+			};
 }
 
 export function testChangeFamilyFactory(

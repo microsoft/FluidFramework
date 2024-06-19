@@ -85,7 +85,7 @@ export type TransformListeners<
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @public
+ * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -214,7 +214,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
 {
-	private readonly listeners = new Map<
+	protected readonly listeners = new Map<
 		keyof TListeners,
 		Map<Off, (...args: any[]) => TListeners[keyof TListeners]>
 	>();
@@ -267,7 +267,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
 	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
-	public on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off {
+	public on<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
 		const off: Off = () => {
 			const currentListeners = this.listeners.get(eventName);
 			if (currentListeners?.delete(off) === true) {
@@ -306,8 +309,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	}
 }
 
-// This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
-class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
+/**
+ * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
+ */
+export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	extends EventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {

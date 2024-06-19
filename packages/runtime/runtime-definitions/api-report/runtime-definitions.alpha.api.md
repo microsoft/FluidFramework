@@ -157,7 +157,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
-    getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+    getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
@@ -213,7 +213,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 
 // @alpha
 export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
-    addedGCOutboundRoute(fromPath: string, toPath: string): void;
+    addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;
