@@ -363,11 +363,11 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * Generates alerts for the following tags, if found:
 	 *
-	 * - `@alpha`: "ALPHA"
+	 * - `@alpha`: "Alpha"
 	 *
-	 * - `@beta`: "BETA"
+	 * - `@beta`: "Beta"
 	 *
-	 * - `@deprecated`: "DEPRECATED"
+	 * - `@deprecated`: "Deprecated"
 	 */
 	export function defaultGetAlertsForItem(apiItem: ApiItem): string[] {
 		const alerts: string[] = [];
