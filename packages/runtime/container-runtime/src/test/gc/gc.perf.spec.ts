@@ -66,7 +66,6 @@ function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 		getNodePackagePath: async (nodeId: string) => ["gcBenchmarkTestPkg"],
 		getLastSummaryTimestampMs: () => Date.now(),
 		submitMessage: (message: ContainerRuntimeGCMessage) => {},
-		gcOpAllowed: true,
 	}) as GcWithPrivates;
 }
 

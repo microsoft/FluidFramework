@@ -417,14 +417,6 @@ export interface ICompressionRuntimeOptions {
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
 	readonly gcOptions?: IGCRuntimeOptions;
-
-	/**
-	 * The GC feature (new in 2.0) includes a new runtime op type, the GC op.
-	 * For applications to support collaboration between 1.x/2.0 clients,
-	 * we need a way to disable any GC behavior resulting in the GC op.
-	 */
-	readonly disableGCToPreventGCOp?: boolean;
-
 	/**
 	 * Affects the behavior while loading the runtime when the data verification check which
 	 * compares the DeltaManager sequence number (obtained from protocol in summary) to the
@@ -816,7 +808,6 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
-			disableGCToPreventGCOp = false,
 			explicitSchemaControl = false,
 		} = runtimeOptions;
 
@@ -1023,7 +1014,6 @@ export class ContainerRuntime
 				// Requires<> drops undefined from IdCompressorType
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableGroupedBatching,
-				disableGCToPreventGCOp,
 				explicitSchemaControl,
 			},
 			containerScope,
@@ -1624,7 +1614,6 @@ export class ContainerRuntime
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
-			gcOpAllowed: !this.runtimeOptions.disableGCToPreventGCOp,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;

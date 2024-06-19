@@ -51,7 +51,6 @@ export function generateGCConfigs(
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
 		isSummarizerClient: boolean;
-		gcOpAllowed: boolean;
 	},
 ): IGarbageCollectorConfigs {
 	let gcEnabled: boolean = true;
@@ -100,23 +99,19 @@ export function generateGCConfigs(
 		}
 	}
 
-	const gcOpAllowed = createParams.gcOpAllowed;
 	// The persisted GC generation must indicate Sweep is allowed for this document,
 	// according to the GC Generation option provided this session.
 	// Note that if no generation option is provided, Sweep is allowed for any document.
-	const sweepAllowed =
-		gcOpAllowed &&
-		shouldAllowGcSweep(
-			persistedGcFeatureMatrix ?? {} /* featureMatrix */,
-			createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
-		);
+	const sweepAllowed = shouldAllowGcSweep(
+		persistedGcFeatureMatrix ?? {} /* featureMatrix */,
+		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
+	);
 
 	/**
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and tombstoneTimeout is provided and the GC op is allowed,
-	 * the following conditions have to be met to run sweep:
+	 * Assuming overall GC is enabled and tombstoneTimeout is provided, the following conditions have to be met to run sweep:
 	 *
 	 * 1. Sweep should be allowed in this container.
 	 * 2. Sweep should be enabled for this session, optionally restricted to attachment blobs only.
@@ -124,7 +119,7 @@ export function generateGCConfigs(
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
 	const sweepEnabled: boolean =
-		!gcEnabled || tombstoneTimeoutMs === undefined || !gcOpAllowed
+		!gcEnabled || tombstoneTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 				(sweepAllowed && createParams.gcOptions.enableGCSweep === true);
@@ -177,7 +172,7 @@ export function generateGCConfigs(
 	return {
 		gcEnabled, // For this document
 		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
-		gcOpAllowed, // For this session
+		gcOpAllowed: shouldRunSweep !== "NO", //* Try making required, if not too big a pain
 		shouldRunSweep, // For this session
 		runFullGC,
 		testMode,

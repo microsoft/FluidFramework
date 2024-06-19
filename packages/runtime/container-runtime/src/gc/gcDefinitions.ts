@@ -61,7 +61,7 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
 export const gcGenerationOptionName = "gcGeneration";
 
 /** Config key to turn GC sweep on / off. */
-export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+export const runSweepKey = "Fluid.GarbageCollection.RunSweep"; //* Remove since it jeopardizes accidental sending GC Op
 /** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
@@ -420,7 +420,6 @@ export interface IGarbageCollectorCreateParams {
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 	readonly sessionExpiryTimerStarted?: number | undefined;
-	readonly gcOpAllowed: boolean;
 }
 
 /**
@@ -478,7 +477,7 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly sweepEnabled: boolean;
 	/** If false, disable any featuers that emit the GC op (Sweep, Tombstone AutoRecovery) */
-	readonly gcOpAllowed: boolean;
+	readonly gcOpAllowed?: boolean; //*
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

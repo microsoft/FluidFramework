@@ -201,7 +201,6 @@ describe("Garbage Collection Tests", () => {
 		}
 
 		return GarbageCollector.create({
-			gcOpAllowed: true,
 			...createParams,
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
@@ -444,6 +443,7 @@ describe("Garbage Collection Tests", () => {
 
 			// getGCData set up to sometimes return the corrupted data
 			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
 					return fullGC ? defaultGCData : corruptedGCData;
 				},
@@ -549,8 +549,10 @@ describe("Garbage Collection Tests", () => {
 			);
 		});
 
-		it("Autorecovery disabled if gcOpAllowed is false", async () => {
-			gc = createGarbageCollector({ createParams: { gcOpAllowed: false } });
+		it("Autorecovery disabled if enableGCSweep not set", async () => {
+			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: undefined } },
+			});
 			const spies = {
 				gc: {
 					submitMessage: spy(gc, "submitMessage"),

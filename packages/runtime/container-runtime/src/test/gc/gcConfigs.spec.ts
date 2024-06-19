@@ -82,7 +82,6 @@ describe("Garbage Collection configurations", () => {
 		gcMetadata?: IGCMetadata,
 		gcOptions?: IGCRuntimeOptions,
 		isSummarizerClient?: boolean,
-		gcOpAllowed: boolean = true,
 	): GcWithPrivates => {
 		const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && {
 			summaryFormatVersion: 1,
@@ -90,7 +89,7 @@ describe("Garbage Collection configurations", () => {
 			...gcMetadata,
 		};
 		return createGarbageCollector(
-			{ metadata, gcOptions, gcOpAllowed },
+			{ metadata, gcOptions },
 			undefined /* gcBlobsMap */,
 			undefined /* closeFn */,
 			isSummarizerClient,
@@ -129,7 +128,6 @@ describe("Garbage Collection configurations", () => {
 		};
 
 		return GarbageCollector.create({
-			gcOpAllowed: true,
 			...createParams,
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
@@ -693,7 +691,6 @@ describe("Garbage Collection configurations", () => {
 		describe("shouldRunSweep", () => {
 			const testCases: {
 				gcEnabled_doc: boolean;
-				gcOpSupported_doc: boolean;
 				sweepEnabled_doc: boolean;
 				sweepEnabled_session: boolean;
 				disableDataStoreSweep?: "viaGCOption" | "viaConfigProvider";
@@ -702,7 +699,6 @@ describe("Garbage Collection configurations", () => {
 			}[] = [
 				{
 					gcEnabled_doc: false, // Veto
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
 					disableDataStoreSweep: "viaGCOption",
@@ -711,16 +707,6 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: false, // Veto
-					sweepEnabled_doc: true,
-					sweepEnabled_session: true,
-					disableDataStoreSweep: "viaGCOption",
-					runSweep_config: true, // (even this is ignored if schema doesn't support GC op)
-					expectedShouldRunSweep: "NO",
-				},
-				{
-					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: false, // Veto
 					sweepEnabled_session: true,
 					disableDataStoreSweep: "viaGCOption",
@@ -728,7 +714,6 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: false, // Veto
 					disableDataStoreSweep: "viaGCOption",
@@ -736,7 +721,6 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
 					runSweep_config: false, // Veto
@@ -745,7 +729,6 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: false, // Overriden by runSweep_config
 					runSweep_config: true,
@@ -753,14 +736,12 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
 					expectedShouldRunSweep: "YES",
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
 					disableDataStoreSweep: "viaGCOption",
@@ -768,7 +749,6 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
 					disableDataStoreSweep: "viaConfigProvider",
@@ -776,7 +756,6 @@ describe("Garbage Collection configurations", () => {
 				},
 				{
 					gcEnabled_doc: true,
-					gcOpSupported_doc: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
 					runSweep_config: true,
@@ -803,8 +782,6 @@ describe("Garbage Collection configurations", () => {
 							enableGCSweep: testCase.sweepEnabled_session ? true : undefined,
 							[gcGenerationOptionName]: testCase.sweepEnabled_doc ? 1 : 2,
 						} /* gcOptions */,
-						undefined /* isSummarizerClient */,
-						testCase.gcOpSupported_doc /* gcOpSupported */,
 					);
 					assert.equal(
 						gc.configs.gcEnabled,
@@ -813,7 +790,7 @@ describe("Garbage Collection configurations", () => {
 					);
 					assert.equal(
 						gc.configs.sweepEnabled,
-						testCase.sweepEnabled_doc && testCase.gcOpSupported_doc,
+						testCase.sweepEnabled_doc,
 						"PRECONDITION: sweepEnabled set incorrectly",
 					);
 					assert.equal(
@@ -937,10 +914,18 @@ describe("Garbage Collection configurations", () => {
 		beforeEach(() => {
 			configProvider.set(testOverrideSessionExpiryMsKey, defaultSessionExpiryDurationMs); // Required for sweep to be enabled
 		});
-		it("gcDisableThrowOnTombstoneLoad true", () => {
+		it("gcDisableThrowOnTombstoneLoad true (w/ Sweep)", () => {
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: true },
+				false /* isSummarizerClient */,
+			);
+			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
+		});
+		it("gcDisableThrowOnTombstoneLoad true (w/o Sweep)", () => {
+			gc = createGcWithPrivateMembers(
+				undefined /* metadata */,
+				{ enableGCSweep: undefined, [gcDisableThrowOnTombstoneLoadOptionName]: true },
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
@@ -997,16 +982,6 @@ describe("Garbage Collection configurations", () => {
 				undefined /* metadata */,
 				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: false },
 				false /* isSummarizerClient */,
-			);
-			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
-		});
-		it("throwOnTombstoneLoad blocked by gcOpAllowed, despite being enabled via override", () => {
-			configProvider.set(throwOnTombstoneLoadOverrideKey, true);
-			gc = createGcWithPrivateMembers(
-				undefined /* metadata */,
-				{ enableGCSweep: true, [gcDisableThrowOnTombstoneLoadOptionName]: true },
-				false /* isSummarizerClient */,
-				false /* gcOpAllowed */, // This should force throwOnTombstoneLoad to be false
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
 		});

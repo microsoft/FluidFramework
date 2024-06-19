@@ -33,7 +33,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 
-		disableGCToPreventGCOp: true,
+		// Explicitly disable running Sweep, enforcing Tombstone -- Also blocks Tombstone Autorecovery to prevent GC op
+		gcOptions: { enableGCSweep: undefined, gcDisableThrowOnTombstoneLoad: true },
 	},
 	"2": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
