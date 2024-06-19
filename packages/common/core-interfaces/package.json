@@ -110,6 +110,15 @@
 			},
 			"InterfaceDeclaration_IResponse": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IProvideFluidHandleContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidHandleContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISignalEnvelope": {
+				"backCompat": false
 			}
 		}
 	}

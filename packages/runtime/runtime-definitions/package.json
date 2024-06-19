@@ -137,6 +137,21 @@
 			},
 			"TypeAliasDeclaration_InboundAttachMessage": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummaryStats": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizeResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummaryTreeWithStats": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizeInternalResult": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IGarbageCollectionDetailsBase": {
+				"backCompat": false
 			}
 		}
 	}

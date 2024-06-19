@@ -393,10 +393,8 @@ export type CreateChildSummarizerNodeFn = (
  *
  * @alpha
  */
-export interface IFluidParentContext
-	extends IProvideFluidHandleContext {
-
-		// Doing this explicitly instead of extending Partial<IProvideFluidDataStoreRegistry> because that doesn't seem
+export interface IFluidParentContext extends IProvideFluidHandleContext {
+	// Doing this explicitly instead of extending Partial<IProvideFluidDataStoreRegistry> because that doesn't seem
 	// to allow explicit undefined, which we need for the exactOptionalPropertyTypes compiler setting
 	readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry | undefined;
 

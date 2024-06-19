@@ -259,7 +259,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly isAttached: boolean;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
-    readonly routeContext?: IFluidHandleContext;
+    readonly routeContext?: IFluidHandleContext | undefined;
 }
 
 // @public @sealed

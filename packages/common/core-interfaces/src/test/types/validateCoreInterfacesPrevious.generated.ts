@@ -559,6 +559,7 @@ declare function get_current_InterfaceDeclaration_IFluidHandleContext():
 declare function use_old_InterfaceDeclaration_IFluidHandleContext(
     use: TypeOnly<old.IFluidHandleContext>): void;
 use_old_InterfaceDeclaration_IFluidHandleContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidHandleContext());
 
 /*
@@ -839,6 +840,7 @@ declare function get_current_InterfaceDeclaration_IProvideFluidHandleContext():
 declare function use_old_InterfaceDeclaration_IProvideFluidHandleContext(
     use: TypeOnly<old.IProvideFluidHandleContext>): void;
 use_old_InterfaceDeclaration_IProvideFluidHandleContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideFluidHandleContext());
 
 /*
@@ -1009,6 +1011,7 @@ declare function get_current_InterfaceDeclaration_ISignalEnvelope():
 declare function use_old_InterfaceDeclaration_ISignalEnvelope(
     use: TypeOnly<old.ISignalEnvelope>): void;
 use_old_InterfaceDeclaration_ISignalEnvelope(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISignalEnvelope());
 
 /*

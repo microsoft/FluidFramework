@@ -751,6 +751,7 @@ declare function get_current_InterfaceDeclaration_IGarbageCollectionDetailsBase(
 declare function use_old_InterfaceDeclaration_IGarbageCollectionDetailsBase(
     use: TypeOnly<old.IGarbageCollectionDetailsBase>): void;
 use_old_InterfaceDeclaration_IGarbageCollectionDetailsBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGarbageCollectionDetailsBase());
 
 /*
@@ -891,6 +892,7 @@ declare function get_current_InterfaceDeclaration_ISummarizeInternalResult():
 declare function use_old_InterfaceDeclaration_ISummarizeInternalResult(
     use: TypeOnly<old.ISummarizeInternalResult>): void;
 use_old_InterfaceDeclaration_ISummarizeInternalResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizeInternalResult());
 
 /*
@@ -919,6 +921,7 @@ declare function get_current_InterfaceDeclaration_ISummarizeResult():
 declare function use_old_InterfaceDeclaration_ISummarizeResult(
     use: TypeOnly<old.ISummarizeResult>): void;
 use_old_InterfaceDeclaration_ISummarizeResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizeResult());
 
 /*
@@ -1059,6 +1062,7 @@ declare function get_current_InterfaceDeclaration_ISummaryStats():
 declare function use_old_InterfaceDeclaration_ISummaryStats(
     use: TypeOnly<old.ISummaryStats>): void;
 use_old_InterfaceDeclaration_ISummaryStats(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryStats());
 
 /*
@@ -1087,6 +1091,7 @@ declare function get_current_InterfaceDeclaration_ISummaryTreeWithStats():
 declare function use_old_InterfaceDeclaration_ISummaryTreeWithStats(
     use: TypeOnly<old.ISummaryTreeWithStats>): void;
 use_old_InterfaceDeclaration_ISummaryTreeWithStats(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryTreeWithStats());
 
 /*
