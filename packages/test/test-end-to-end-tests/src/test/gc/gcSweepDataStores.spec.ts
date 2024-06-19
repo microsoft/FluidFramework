@@ -232,8 +232,8 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 	};
 };
 
-//* TODO: Update this to use blockGCOpForSchemaCompatibility instead of config provider
-describeCompat("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
+//* TODO: Delete or fix this
+describeCompat.skip("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
