@@ -110,7 +110,7 @@ async function getFileLinkCore(
 			let additionalProps;
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+				const getAuthHeader = toInstrumentedOdspTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
@@ -129,7 +129,7 @@ async function getFileLinkCore(
 					`'${fileItem.sharepointIds.listItemUniqueId}'`,
 				)}`;
 				const method = "POST";
-				const authHeader = await storageTokenFetcher(
+				const authHeader = await getAuthHeader(
 					{ ...options, request: { url, method } },
 					"GetFileLinkCore",
 				);
@@ -212,7 +212,7 @@ async function getFileItemLite(
 			const fileItem = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
 				const { siteUrl, driveId, itemId } = odspUrlParts;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+				const getAuthHeader = toInstrumentedOdspTokenFetcher(
 					logger,
 					odspUrlParts,
 					getToken,
@@ -220,7 +220,7 @@ async function getFileItemLite(
 				);
 				const url = `${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`;
 				const method = "GET";
-				const authHeader = await storageTokenFetcher(
+				const authHeader = await getAuthHeader(
 					{ ...options, request: { url, method } },
 					"GetFileItemLite",
 				);

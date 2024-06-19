@@ -27,7 +27,7 @@ interface IJoinSessionBody {
  * @param path - The API path that is relevant to this request
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
- * @param getStorageToken - A function that is able to provide the access token for this request
+ * @param getAuthHeader - A function that is able to provide the access token for this request
  * @param epochTracker - fetch wrapper which incorporates epoch logic around joinSession call
  * @param requestSocketToken - flag indicating whether joinSession is expected to return access token
  * which is used when establishing websocket connection with collab session backend service.
@@ -42,7 +42,7 @@ export async function fetchJoinSession(
 	path: string,
 	method: "GET" | "POST",
 	logger: ITelemetryLoggerExt,
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	epochTracker: EpochTracker,
 	requestSocketToken: boolean,
 	options: TokenFetchOptionsEx,
@@ -54,10 +54,7 @@ export async function fetchJoinSession(
 	const url = `${getApiRoot(siteOrigin)}/drives/${urlParts.driveId}/items/${
 		urlParts.itemId
 	}/${path}?ump=1`;
-	const authHeader = await getStorageToken(
-		{ ...options, request: { url, method } },
-		"JoinSession",
-	);
+	const authHeader = await getAuthHeader({ ...options, request: { url, method } }, "JoinSession");
 
 	const tokenRefreshProps = options.refresh
 		? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }

@@ -122,7 +122,7 @@ export async function fetchSnapshotWithRedeem(
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
-		storageTokenFetcher: InstrumentedStorageTokenFetcher,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -215,7 +215,7 @@ export async function fetchSnapshotWithRedeem(
 
 async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
-	storageTokenFetcher: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<void> {
@@ -239,7 +239,7 @@ async function redeemSharingLink(
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
 					const url = redeemUrl;
-					const storageToken = await storageTokenFetcher(
+					const storageToken = await getAuthHeader(
 						{ ...tokenFetchOptions, request: { url, method: "GET" } },
 						"RedeemShareLink",
 					);
@@ -285,12 +285,12 @@ async function redeemSharingLink(
 
 async function fetchLatestSnapshotCore(
 	odspResolvedUrl: IOdspResolvedUrl,
-	storageTokenFetcher: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
-		storageTokenFetcher: InstrumentedStorageTokenFetcher,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -330,7 +330,7 @@ async function fetchLatestSnapshotCore(
 			const [response, fetchTime] = await measureP(async () =>
 				snapshotDownloader(
 					odspResolvedUrl,
-					storageTokenFetcher,
+					getAuthHeader,
 					loadingGroupIds,
 					snapshotOptions,
 					controller,
@@ -654,7 +654,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  */
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
-	tokenFetcher: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	loadingGroupIds: string[] | undefined,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
@@ -694,7 +694,7 @@ export async function downloadSnapshot(
 	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 	// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
-	const authHeader = await tokenFetcher(
+	const authHeader = await getAuthHeader(
 		{ refresh: false, request: { url, method } },
 		"downloadSnapshot",
 	);

@@ -27,7 +27,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 export class OdspDeltaStorageService {
 	constructor(
 		private readonly deltaFeedUrl: string,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
@@ -51,7 +51,7 @@ export class OdspDeltaStorageService {
 			// Thus it needs to be done before we call getStorageToken() to reduce extra calls
 			const url = this.buildUrl(from, to);
 			const method = "POST";
-			const authHeader = await this.getStorageToken(
+			const authHeader = await this.getAuthHeader(
 				{ ...options, request: { url, method } },
 				"DeltaStorage",
 			);

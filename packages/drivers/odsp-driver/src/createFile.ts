@@ -47,7 +47,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
@@ -72,10 +72,10 @@ export async function createNewFluidFile(
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
+		itemId = await createNewEmptyFluidFile(getAuthHeader, newFileInfo, logger, epochTracker);
 	} else {
 		const content = await createNewFluidFileFromSummary(
-			getStorageToken,
+			getAuthHeader,
 			newFileInfo,
 			logger,
 			createNewSummary,

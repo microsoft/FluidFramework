@@ -210,7 +210,7 @@ export async function createNewFluidContainerCore<T>(args: {
 }): Promise<T> {
 	const {
 		containerSnapshot,
-		getStorageToken,
+		getStorageToken: getAuthHeader,
 		logger,
 		initialUrl,
 		epochTracker,
@@ -224,7 +224,7 @@ export async function createNewFluidContainerCore<T>(args: {
 			logger,
 			{ eventName: telemetryName },
 			async (event) => {
-				// TODO: get rid of the double token fetch in this function
+				// TODO: get rid of the double token fetch in this function, may be we should disable the POST support when authorizationHeader is used?
 				const snapshotBody = JSON.stringify(containerSnapshot);
 				let url: string;
 				let headers: { [index: string]: string };
@@ -234,7 +234,7 @@ export async function createNewFluidContainerCore<T>(args: {
 				urlObj.searchParams.set("ump", "1");
 				const authInBodyUrl = urlObj.href;
 				const method = "POST";
-				const authHeader = await getStorageToken(
+				const authHeader = await getAuthHeader(
 					{ ...options, request: { url: authInBodyUrl, method } },
 					telemetryName,
 				);
@@ -257,7 +257,7 @@ export async function createNewFluidContainerCore<T>(args: {
 					postBody = postBodyWithAuth;
 				} else {
 					url = initialUrl;
-					const authHeaderNoUmp = await getStorageToken(
+					const authHeaderNoUmp = await getAuthHeader(
 						{ ...options, request: { url, method } },
 						telemetryName,
 					);
