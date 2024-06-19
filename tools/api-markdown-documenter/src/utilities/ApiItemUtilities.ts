@@ -469,7 +469,7 @@ export function getSafeFilenameForName(apiItemName: string): string {
 
 /**
  * Extracts the text from the provided excerpt and adjusts it to be on a single line, and to omit any trailing `;`.
- *
+ * @remarks Useful when a shortened version of a code excerpt is wanted, and especially if the contents need to fit on a single line.
  * @public
  */
 export function getSingleLineExcerptText(excerpt: Excerpt): string {
