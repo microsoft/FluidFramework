@@ -176,7 +176,7 @@ export interface IGCMetadata {
 	 *
 	 * So the full sweep timeout in a session is tombstoneTimeoutMs + sweepGracePeriodMs.
 	 */
-	readonly tombstoneTimeoutMs?: number;
+	readonly tombstoneTimeoutMs?: number | undefined;
 }
 
 /**

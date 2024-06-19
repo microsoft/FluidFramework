@@ -501,8 +501,8 @@ export class DocumentsSchemaController {
 		// Use legacy behavior only if both document and options tell us to use legacy.
 		// Otherwise it's no longer legacy time!
 		this.explicitSchemaControl =
-			this.documentSchema.runtime.explicitSchemaControl === true ||
-			features.explicitSchemaControl;
+			(this.documentSchema.runtime.explicitSchemaControl ?? false) === true ||
+			(features.explicitSchemaControl ?? false);
 
 		// Calculate
 		// - current session schema (overlap of document schema and desired schema)

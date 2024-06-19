@@ -561,7 +561,7 @@ export interface IPendingRuntimeState {
 	/**
 	 * Pending blobs from BlobManager
 	 */
-	pendingAttachmentBlobs?: IPendingBlobs;
+	pendingAttachmentBlobs?: IPendingBlobs | undefined;
 	/**
 	 * Pending idCompressor state
 	 */

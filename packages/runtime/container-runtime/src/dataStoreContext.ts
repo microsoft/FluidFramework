@@ -107,7 +107,7 @@ export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
 	snapshot?: ISnapshotTree | undefined;
-	sequenceNumber?: number;
+	sequenceNumber?: number | undefined;
 }
 
 /**
