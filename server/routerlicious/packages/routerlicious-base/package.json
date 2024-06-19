@@ -132,9 +132,13 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_NexusResources": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"ClassDeclaration_RiddlerResources": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_OrdererManager": {
 				"forwardCompat": false
 			}
 		}

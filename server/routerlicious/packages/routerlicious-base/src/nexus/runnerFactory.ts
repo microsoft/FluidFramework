@@ -47,6 +47,9 @@ class NodeWebSocketServer implements core.IWebSocketServer {
  * @internal
  */
 export class OrdererManager implements core.IOrdererManager {
+	private readonly ordererConnectionTypeMap = new Map<string, "kafka" | "local">();
+	private readonly ordererConnectionCountMap = new Map<string, number>();
+
 	constructor(
 		private readonly globalDbEnabled: boolean,
 		private readonly ordererUrl: string,
@@ -56,31 +59,122 @@ export class OrdererManager implements core.IOrdererManager {
 	) {}
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		if (!this.globalDbEnabled) {
-			const messageMetaData = { documentId, tenantId };
-			Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
-			const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
 
-			Lumberjack.info(
-				`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-				getLumberBaseProperties(documentId, tenantId),
+		if (ordererConnectionType === "local") {
+			Lumberjack.info(`Using local orderer`, getLumberBaseProperties(documentId, tenantId));
+			return this.localOrderManager.get(tenantId, documentId).then((orderer) => {
+				this.updateOrdererConnectionCount(tenantId, documentId, "increment", "local").catch(
+					(error) => {
+						Lumberjack.error(
+							`Failed to update local orderer connection count`,
+							{
+								documentId,
+								tenantId,
+							},
+							error,
+						);
+					},
+				);
+				return orderer;
+			});
+		}
+
+		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
+		return this.kafkaFactory.create(tenantId, documentId).then((orderer) => {
+			this.updateOrdererConnectionCount(tenantId, documentId, "increment", "kafka").catch(
+				(error) => {
+					Lumberjack.error(
+						`Failed to update kafka orderer connection count`,
+						{
+							documentId,
+							tenantId,
+						},
+						error,
+					);
+				},
 			);
+			return orderer;
+		});
+	}
 
-			if (tenant.orderer.url !== this.ordererUrl) {
-				Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-				throw new Error("Invalid ordering service endpoint");
+	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
+		const ordererConnectionCount = await this.updateOrdererConnectionCount(
+			tenantId,
+			documentId,
+			"decrement",
+		);
+
+		if (ordererConnectionCount <= 0) {
+			const key = this.getOrdererConnectionMapKey(tenantId, documentId);
+			const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
+			// Clean up when connection count reaches 0.
+			this.ordererConnectionTypeMap.delete(key);
+			this.ordererConnectionCountMap.delete(key);
+			await (ordererConnectionType === "kafka"
+				? this.kafkaFactory.delete(tenantId, documentId)
+				: this.localOrderManager.remove(tenantId, documentId));
+		}
+	}
+
+	private async updateOrdererConnectionCount(
+		tenantId: string,
+		documentId: string,
+		operation: "increment" | "decrement",
+		ordererType?: "kafka" | "local",
+	): Promise<number> {
+		const ordererConnectionType =
+			ordererType ?? (await this.getOrdererConnectionType(tenantId, documentId));
+		const key = this.getOrdererConnectionMapKey(tenantId, documentId);
+
+		if (!this.ordererConnectionCountMap.has(key)) {
+			if (operation === "decrement") {
+				// If decrementing a connection that doesn't exist, ignore it.
+				return;
 			}
+			this.ordererConnectionTypeMap.set(key, ordererConnectionType);
+			this.ordererConnectionCountMap.set(key, 0);
+		}
+		const ordererConnectionCount =
+			this.ordererConnectionCountMap.get(key) + (operation === "increment" ? 1 : -1);
 
-			if (tenant.orderer.type !== "kafka") {
+		this.ordererConnectionCountMap.set(key, ordererConnectionCount);
+		return ordererConnectionCount;
+	}
+
+	private getOrdererConnectionMapKey(tenantId: string, documentId: string): string {
+		return `${tenantId}/${documentId}`;
+	}
+
+	private async getOrdererConnectionType(
+		tenantId: string,
+		documentId: string,
+	): Promise<"kafka" | "local"> {
+		const key = this.getOrdererConnectionMapKey(tenantId, documentId);
+		if (!this.ordererConnectionTypeMap.has(key)) {
+			if (!this.globalDbEnabled) {
+				const messageMetaData = { documentId, tenantId };
+				Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
+				const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+
 				Lumberjack.info(
-					`Using local orderer`,
+					`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
 					getLumberBaseProperties(documentId, tenantId),
 				);
-				return this.localOrderManager.get(tenantId, documentId);
+
+				if (tenant.orderer.url !== this.ordererUrl) {
+					Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
+					throw new Error("Invalid ordering service endpoint");
+				}
+
+				if (tenant.orderer.type !== "kafka") {
+					this.ordererConnectionTypeMap.set(key, "local");
+				}
 			}
+			this.ordererConnectionTypeMap.set(key, "kafka");
 		}
-		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
-		return this.kafkaFactory.create(tenantId, documentId);
+
+		return this.ordererConnectionTypeMap.get(key);
 	}
 }
 

@@ -85,6 +85,9 @@
 			},
 			"InterfaceDeclaration_IDeliState": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IOrdererManager": {
+				"forwardCompat": false
 			}
 		}
 	}
