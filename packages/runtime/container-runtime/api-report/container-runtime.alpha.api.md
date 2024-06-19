@@ -506,8 +506,6 @@ export interface IGCMetadata {
 // @alpha (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
-    // (undocumented)
-    blockGCOp?: true;
     enableGCSweep?: true;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
