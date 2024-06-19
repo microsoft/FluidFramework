@@ -16,7 +16,10 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
@@ -49,6 +52,7 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 export class OrdererManager implements core.IOrdererManager {
 	private readonly ordererConnectionTypeMap = new Map<string, "kafka" | "local">();
 	private readonly ordererConnectionCountMap = new Map<string, number>();
+	private readonly ordererConnectionCloseTimeoutMap = new Map<string, NodeJS.Timeout>();
 
 	constructor(
 		private readonly globalDbEnabled: boolean,
@@ -60,6 +64,10 @@ export class OrdererManager implements core.IOrdererManager {
 
 	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
 		const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
+		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
+		if (this.ordererConnectionCloseTimeoutMap.has(ordererId)) {
+			clearTimeout(this.ordererConnectionCloseTimeoutMap.get(ordererId));
+		}
 
 		if (ordererConnectionType === "local") {
 			Lumberjack.info(`Using local orderer`, getLumberBaseProperties(documentId, tenantId));
@@ -106,14 +114,25 @@ export class OrdererManager implements core.IOrdererManager {
 		);
 
 		if (ordererConnectionCount <= 0) {
-			const key = this.getOrdererConnectionMapKey(tenantId, documentId);
-			const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
-			// Clean up when connection count reaches 0.
-			this.ordererConnectionTypeMap.delete(key);
-			this.ordererConnectionCountMap.delete(key);
-			await (ordererConnectionType === "kafka"
-				? this.kafkaFactory.delete(tenantId, documentId)
-				: this.localOrderManager.remove(tenantId, documentId));
+			const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
+			if (this.ordererConnectionCloseTimeoutMap.has(ordererId)) {
+				clearTimeout(this.ordererConnectionCloseTimeoutMap.get(ordererId));
+			}
+			this.ordererConnectionCloseTimeoutMap.set(
+				ordererId,
+				setTimeout(() => {
+					this.cleanupOrdererConnection(tenantId, documentId).catch((error) => {
+						Lumberjack.error(
+							`Failed to cleanup orderer connection`,
+							{
+								documentId,
+								tenantId,
+							},
+							error,
+						);
+					});
+				}, 60_000),
+			);
 		}
 	}
 
@@ -125,20 +144,20 @@ export class OrdererManager implements core.IOrdererManager {
 	): Promise<number> {
 		const ordererConnectionType =
 			ordererType ?? (await this.getOrdererConnectionType(tenantId, documentId));
-		const key = this.getOrdererConnectionMapKey(tenantId, documentId);
+		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
 
-		if (!this.ordererConnectionCountMap.has(key)) {
+		if (!this.ordererConnectionCountMap.has(ordererId)) {
 			if (operation === "decrement") {
 				// If decrementing a connection that doesn't exist, ignore it.
 				return;
 			}
-			this.ordererConnectionTypeMap.set(key, ordererConnectionType);
-			this.ordererConnectionCountMap.set(key, 0);
+			this.ordererConnectionTypeMap.set(ordererId, ordererConnectionType);
+			this.ordererConnectionCountMap.set(ordererId, 0);
 		}
 		const ordererConnectionCount =
-			this.ordererConnectionCountMap.get(key) + (operation === "increment" ? 1 : -1);
+			this.ordererConnectionCountMap.get(ordererId) + (operation === "increment" ? 1 : -1);
 
-		this.ordererConnectionCountMap.set(key, ordererConnectionCount);
+		this.ordererConnectionCountMap.set(ordererId, ordererConnectionCount);
 		return ordererConnectionCount;
 	}
 
@@ -150,8 +169,8 @@ export class OrdererManager implements core.IOrdererManager {
 		tenantId: string,
 		documentId: string,
 	): Promise<"kafka" | "local"> {
-		const key = this.getOrdererConnectionMapKey(tenantId, documentId);
-		if (!this.ordererConnectionTypeMap.has(key)) {
+		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
+		if (!this.ordererConnectionTypeMap.has(ordererId)) {
 			if (!this.globalDbEnabled) {
 				const messageMetaData = { documentId, tenantId };
 				Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
@@ -168,13 +187,24 @@ export class OrdererManager implements core.IOrdererManager {
 				}
 
 				if (tenant.orderer.type !== "kafka") {
-					this.ordererConnectionTypeMap.set(key, "local");
+					this.ordererConnectionTypeMap.set(ordererId, "local");
 				}
 			}
-			this.ordererConnectionTypeMap.set(key, "kafka");
+			this.ordererConnectionTypeMap.set(ordererId, "kafka");
 		}
 
-		return this.ordererConnectionTypeMap.get(key);
+		return this.ordererConnectionTypeMap.get(ordererId);
+	}
+
+	private async cleanupOrdererConnection(tenantId: string, documentId: string): Promise<void> {
+		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
+		const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
+		// Clean up when connection count reaches 0.
+		this.ordererConnectionTypeMap.delete(ordererId);
+		this.ordererConnectionCountMap.delete(ordererId);
+		await (ordererConnectionType === "kafka"
+			? this.kafkaFactory.delete(tenantId, documentId)
+			: this.localOrderManager.remove(tenantId, documentId));
 	}
 }
 
@@ -288,7 +318,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					redisConfig2.enableClustering,
 					redisConfig2.slotsRefreshTimeout,
 					retryDelays,
-			  );
+				);
 
 		const clientManager = new services.ClientManager(
 			redisClientConnectionManager,
@@ -303,7 +333,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig2,
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
-				  );
+					);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
 		// Database connection for global db if enabled
@@ -336,8 +366,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// Setup for checkpoint collection
 		const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
 		const operationsDb = await operationsDbMongoManager.getDatabase();
-		const checkpointsCollection =
-			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
+		const checkpointsCollection = operationsDb.collection<core.ICheckpoint>(
+			checkpointsCollectionName,
+		);
 		await checkpointsCollection.createIndex(
 			{
 				documentId: 1,
@@ -372,9 +403,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
 		const redisParamsForThrottling = {
-			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
-				| number
-				| undefined,
+			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
 		};
 
 		const redisClientConnectionManagerForThrottling =
@@ -386,7 +415,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
-				  );
+					);
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -503,7 +532,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 							redisConfig,
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
-					  );
+						);
 
 			redisCache = new services.RedisCache(redisClientConnectionManagerForLogging);
 		}
@@ -582,7 +611,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
-				  );
+					);
 
 		const redisClientConnectionManagerForSub =
 			customizations?.redisClientConnectionManagerForSub
@@ -592,13 +621,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
-				  );
+					);
 
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("nexus:socketIo");
-		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined =
-			config.get("nexus:nodeClusterConfig");
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"nexus:nodeClusterConfig",
+		);
 		const useNodeCluster = config.get("nexus:useNodeCluster");
 		const webServerFactory = useNodeCluster
 			? new services.SocketIoNodeClusterWebServerFactory(
@@ -609,7 +639,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					socketIoConfig,
 					nodeClusterConfig,
 					customizations?.customCreateSocketIoAdapter,
-			  )
+				)
 			: new services.SocketIoWebServerFactory(
 					redisClientConnectionManagerForPub,
 					redisClientConnectionManagerForSub,
@@ -617,7 +647,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					httpServerConfig,
 					socketIoConfig,
 					customizations?.customCreateSocketIoAdapter,
-			  );
+				);
 
 		return new NexusResources(
 			config,
