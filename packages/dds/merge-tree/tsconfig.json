@@ -8,5 +8,6 @@
 		"preserveConstEnums": true,
 		"noImplicitAny": true,
 		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
 	},
 }
