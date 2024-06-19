@@ -69,7 +69,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 	protected readonly children = new Map<string, SummarizerNode>();
 	protected readonly pendingSummaries = new Map<string, SummaryNode>();
 	protected wipReferenceSequenceNumber: number | undefined;
-	private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath } | undefined;
+	private wipLocalPaths:
+		| { localPath: EscapedPath; additionalPath?: EscapedPath | undefined }
+		| undefined;
 	private wipSkipRecursion = false;
 
 	protected readonly logger: ITelemetryLoggerExt;

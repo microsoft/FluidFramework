@@ -193,7 +193,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
  * @alpha
  */
 export interface IRetriableFailureError extends Error {
-	readonly retryAfterSeconds?: number;
+	readonly retryAfterSeconds?: number | undefined;
 }
 
 /**

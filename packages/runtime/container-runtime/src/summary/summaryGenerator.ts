@@ -189,7 +189,7 @@ export class SummarizeResultBuilder {
 export class RetriableSummaryError extends LoggingError implements IRetriableFailureError {
 	constructor(
 		message: string,
-		public readonly retryAfterSeconds?: number,
+		public readonly retryAfterSeconds?: number | undefined,
 		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);

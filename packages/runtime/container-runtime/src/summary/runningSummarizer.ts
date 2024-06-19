@@ -168,7 +168,7 @@ export class RunningSummarizer
 	private summarizingLock: Promise<void> | undefined;
 	private tryWhileSummarizing = false;
 	private readonly pendingAckTimer: PromiseTimer;
-	private heuristicRunner?: ISummarizeHeuristicRunner;
+	private heuristicRunner?: ISummarizeHeuristicRunner | undefined;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
 
