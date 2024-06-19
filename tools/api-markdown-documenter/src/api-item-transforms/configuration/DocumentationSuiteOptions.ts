@@ -325,7 +325,9 @@ export namespace DefaultDocumentationSuiteOptions {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
-				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				let excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				excerpt = trimTrailingSemicolon(excerpt);
+
 				return `${excerpt}${headingTextPostfix}`;
 			}
 			default: {
@@ -350,7 +352,8 @@ export namespace DefaultDocumentationSuiteOptions {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
-				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				return trimTrailingSemicolon(excerpt);
 			}
 			default: {
 				return getConciseSignature(apiItem);
@@ -422,4 +425,14 @@ export function getDocumentationSuiteOptionsWithDefaults(
 		...defaultDocumentationSuiteOptions,
 		...inputOptions,
 	};
+}
+
+/**
+ * Trims a trailing semicolon from the provided text, if the text contains one.
+ */
+function trimTrailingSemicolon(text: string): string {
+	if (text.endsWith(";")) {
+		return text.slice(0, text.length - 1);
+	}
+	return text;
 }
