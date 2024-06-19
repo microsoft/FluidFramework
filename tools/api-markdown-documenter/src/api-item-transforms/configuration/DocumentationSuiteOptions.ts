@@ -369,7 +369,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * - `@deprecated`: "DEPRECATED"
 	 */
-	export function defaultAlertsForItem(apiItem: ApiItem): string[] {
+	export function defaultGetAlertsForItem(apiItem: ApiItem): string[] {
 		const alerts: string[] = [];
 		if (isDeprecated(apiItem)) {
 			alerts.push("Deprecated");
@@ -406,7 +406,7 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultGetUriBaseOverrideForItem,
 	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
 	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
-	getAlertsForItem: DefaultDocumentationSuiteOptions.defaultAlertsForItem,
+	getAlertsForItem: DefaultDocumentationSuiteOptions.defaultGetAlertsForItem,
 	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
 	minimumReleaseLevel: ReleaseTag.Internal, // Include everything in the input model
 };
