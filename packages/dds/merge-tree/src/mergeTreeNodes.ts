@@ -591,17 +591,14 @@ export abstract class BaseSegment implements ISegment {
 
 			case MergeTreeDeltaType.OBLITERATE:
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
-				assert(
-					moveInfo?.movedSeqs !== undefined,
-					0x86e /* On obliterate ack, missing move info! */,
-				);
-				this.localMovedSeq = undefined;
-				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
-				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
 
-				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
-					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
+				this.localMovedSeq = undefined;
+				const seqIdx = moveInfo!.movedSeqs!.indexOf(UnassignedSequenceNumber);
+				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
+				moveInfo!.movedSeqs![seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+
+				if (moveInfo!.movedSeq === UnassignedSequenceNumber) {
+					moveInfo!.movedSeq = opArgs.sequencedMessage!.sequenceNumber;
 					return true;
 				}
 

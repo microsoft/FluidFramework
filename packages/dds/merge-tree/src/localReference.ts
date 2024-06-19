@@ -283,7 +283,7 @@ export class LocalReferenceCollection {
 					if (next.done === true) {
 						subiterators.shift();
 					} else {
-						return { done: next.done as boolean, value: next.value.data };
+						return { done: false, value: next.value.data };
 					}
 				}
 

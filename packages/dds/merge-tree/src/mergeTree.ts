@@ -979,8 +979,7 @@ export class MergeTree {
 					}
 					if (
 						seqLTE(removalInfo.removedSeq, refSeq) ||
-						(removalInfo.removedClientIds !== undefined &&
-							removalInfo.removedClientIds.includes(clientId))
+						removalInfo.removedClientIds!.includes(clientId)
 					) {
 						return 0;
 					}
@@ -992,8 +991,7 @@ export class MergeTree {
 					}
 					if (
 						seqLTE(moveInfo.movedSeq, refSeq) ||
-						(moveInfo.movedClientIds !== undefined &&
-							moveInfo.movedClientIds.includes(clientId))
+						moveInfo.movedClientIds!.includes(clientId)
 					) {
 						return 0;
 					}
