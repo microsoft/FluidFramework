@@ -33,7 +33,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 
-		// Explicitly disable running Sweep, enforcing Tombstone -- Also blocks Tombstone Autorecovery to prevent GC op
+		// Explicitly disable running Sweep and enforcing Tombstone
+		// This ensures we don't send the new GC op which is not compatible with 1.x clients
 		gcOptions: { enableGCSweep: undefined, gcDisableThrowOnTombstoneLoad: true },
 	},
 	"2": {
@@ -43,7 +44,7 @@ export const compatibilityModeRuntimeOptions: Record<
 		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
 		// It introduces a new type of op which is not compatible with 1.x clients.
 		enableRuntimeIdCompressor: "on",
-		// Enable GC Sweep going forward
-		gcOptions: { enableGCSweep: true },
+		// GC is not yet enabled by default, although it could be enabled here from a compat standpoint
+		gcOptions: { enableGCSweep: undefined, gcDisableThrowOnTombstoneLoad: true },
 	},
 };

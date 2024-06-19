@@ -286,7 +286,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			);
 		});
 
-		it("GC is disabled for compat mode 1, and enabled for 2", async function () {
+		it("GC is disabled for both compat modes", async function () {
 			const { container: container_defaultConfig } = await client.createContainer(
 				schema,
 				compatibilityMode,
@@ -296,23 +296,16 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
-			const expectedConfigs =
-				compatibilityMode === "1"
-					? {
-							shouldRunSweep: "NO",
-							tombstoneAutorecoveryEnabled: false,
-							throwOnTombstoneLoad: false,
-						}
-					: {
-							shouldRunSweep: "YES",
-							tombstoneAutorecoveryEnabled: true,
-							throwOnTombstoneLoad: true,
-						};
+			const expectedConfigs = {
+				shouldRunSweep: "NO",
+				tombstoneAutorecoveryEnabled: false,
+				throwOnTombstoneLoad: false,
+			};
 			assert.deepStrictEqual(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
 				expectedConfigs,
-				"Expected GC to be disabled per configs set in constructor",
+				"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 			);
 		});
 
