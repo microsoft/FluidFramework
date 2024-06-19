@@ -97,8 +97,8 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 
 function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
-	seg.movedClientIds = moveInfo.movedClientIds.slice();
-	seg.movedSeqs = [moveInfo.movedSeq];
+	seg.movedClientIds = moveInfo.movedClientIds!.slice();
+	seg.movedSeqs = [moveInfo.movedSeq!];
 	seg.movedSeq = moveInfo.movedSeq;
 	seg.localMovedSeq = moveInfo.localMovedSeq;
 	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
@@ -979,7 +979,7 @@ export class MergeTree {
 					}
 					if (
 						seqLTE(removalInfo.removedSeq, refSeq) ||
-						removalInfo.removedClientIds.includes(clientId)
+						removalInfo.removedClientIds!.includes(clientId)
 					) {
 						return 0;
 					}
@@ -991,7 +991,7 @@ export class MergeTree {
 					}
 					if (
 						seqLTE(moveInfo.movedSeq, refSeq) ||
-						moveInfo.movedClientIds.includes(clientId)
+						moveInfo.movedClientIds!.includes(clientId)
 					) {
 						return 0;
 					}
@@ -1899,24 +1899,23 @@ export class MergeTree {
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
 					// for partialLengths bookkeeping purposes
-					existingMoveInfo.movedClientIds.unshift(clientId);
+					existingMoveInfo.movedClientIds!.unshift(clientId);
 
 					existingMoveInfo.movedSeq = seq;
-					existingMoveInfo.movedSeqs.unshift(seq);
+					existingMoveInfo.movedSeqs!.unshift(seq);
 					if (segment.localRefs?.empty === false) {
 						localOverlapWithRefs.push(segment);
 					}
 				} else {
 					// Do not replace earlier sequence number for move
-					existingMoveInfo.movedClientIds.push(clientId);
-					existingMoveInfo.movedSeqs.push(seq);
+					existingMoveInfo.movedClientIds!.push(clientId);
+					existingMoveInfo.movedSeqs!.push(seq);
 				}
 			} else {
 				segment.movedClientIds = [clientId];
 				segment.movedSeq = seq;
 				segment.localMovedSeq = localSeq;
 				segment.movedSeqs = [seq];
-
 				if (!toRemovalInfo(segment)) {
 					movedSegments.push({ segment });
 				}
@@ -2014,7 +2013,8 @@ export class MergeTree {
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first removal at the head
 					// for partialLengths bookkeeping purposes
-					existingRemovalInfo.removedClientIds.unshift(clientId);
+
+					existingRemovalInfo.removedClientIds!.unshift(clientId);
 
 					existingRemovalInfo.removedSeq = seq;
 					if (segment.localRefs?.empty === false) {
@@ -2022,7 +2022,7 @@ export class MergeTree {
 					}
 				} else {
 					// Do not replace earlier sequence number for remove
-					existingRemovalInfo.removedClientIds.push(clientId);
+					existingRemovalInfo.removedClientIds!.push(clientId);
 				}
 			} else {
 				segment.removedClientIds = [clientId];

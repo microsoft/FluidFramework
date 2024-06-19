@@ -13,8 +13,8 @@ export interface ListNode<T> {
 }
 
 export interface ListNodeRange<T> {
-	first: ListNode<T>;
-	last: ListNode<T>;
+	first: ListNode<T> | undefined;
+	last: ListNode<T> | undefined;
 }
 
 class HeadNode<T> {

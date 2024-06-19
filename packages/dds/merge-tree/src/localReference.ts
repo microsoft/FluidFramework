@@ -59,15 +59,15 @@ function _validateReferenceType(refType: ReferenceType) {
  * @alpha
  */
 export interface LocalReferencePosition extends ReferencePosition {
-	callbacks?: Partial<
-		Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>
-	>;
+	callbacks?:
+		| Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>
+		| undefined;
 	readonly trackingCollection: TrackingGroupCollection;
 	/**
 	 * Whether or not this reference position can slide onto one of the two
 	 * special segments representing the position before or after the tree
 	 */
-	readonly canSlideToEndpoint?: boolean;
+	readonly canSlideToEndpoint?: boolean | undefined;
 }
 
 /**
@@ -91,7 +91,7 @@ class LocalReference implements LocalReferencePosition {
 
 	constructor(
 		public refType = ReferenceType.Simple,
-		properties?: PropertySet,
+		properties: PropertySet | undefined,
 		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 		public readonly canSlideToEndpoint?: boolean,
 	) {
@@ -283,7 +283,7 @@ export class LocalReferenceCollection {
 					if (next.done === true) {
 						subiterators.shift();
 					} else {
-						return { done: next.done, value: next.value.data };
+						return { done: false, value: next.value.data };
 					}
 				}
 

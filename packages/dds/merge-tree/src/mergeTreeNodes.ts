@@ -50,7 +50,7 @@ export interface IMergeNodeCommon {
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegment & { parent?: MergeBlock };
+export type ISegmentLeaf = ISegment & { parent?: MergeBlock | undefined };
 export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
@@ -61,18 +61,18 @@ export interface IRemovalInfo {
 	/**
 	 * Local seq at which this segment was removed, if the removal is yet-to-be acked.
 	 */
-	localRemovedSeq?: number;
+	localRemovedSeq?: number | undefined;
 	/**
 	 * Seq at which this segment was removed.
 	 */
-	removedSeq: number;
+	removedSeq: number | undefined;
 	/**
 	 * List of client IDs that have removed this segment.
 	 * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
 	 * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
 	 * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
 	 */
-	removedClientIds: number[];
+	removedClientIds: number[] | undefined;
 }
 
 /**
@@ -103,12 +103,12 @@ export interface IMoveInfo {
 	 * Local seq at which this segment was moved if the move is yet-to-be
 	 * acked.
 	 */
-	localMovedSeq?: number;
+	localMovedSeq?: number | undefined;
 
 	/**
 	 * The first seq at which this segment was moved.
 	 */
-	movedSeq: number;
+	movedSeq: number | undefined;
 
 	/**
 	 * All seqs at which this segment was moved. In the case of overlapping,
@@ -118,7 +118,7 @@ export interface IMoveInfo {
 	 *
 	 * The first element corresponds to the seq of the first move
 	 */
-	movedSeqs: number[];
+	movedSeqs: number[] | undefined;
 
 	/**
 	 * A reference to the inserted destination segment corresponding to this
@@ -128,7 +128,7 @@ export interface IMoveInfo {
 	 *
 	 * Currently this field is unused, as we only support obliterate operations
 	 */
-	moveDst?: ReferencePosition;
+	moveDst?: ReferencePosition | undefined;
 
 	/**
 	 * List of client IDs that have moved this segment.
@@ -137,7 +137,7 @@ export interface IMoveInfo {
 	 * first) is stored as the first client in this list. Other clients in the
 	 * list have all issued concurrent ops to move the segment.
 	 */
-	movedClientIds: number[];
+	movedClientIds: number[] | undefined;
 
 	/**
 	 * If this segment was inserted into a concurrently moved range and
@@ -153,7 +153,7 @@ export interface IMoveInfo {
 	 * the client that inserted the segment. This is relevant in partial length
 	 * calculations
 	 */
-	wasMovedOnInsert: boolean;
+	wasMovedOnInsert: boolean | undefined;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {
@@ -187,7 +187,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * and exist primarily as a bucket for local references to slide onto during
 	 * deletion of regular segments.
 	 */
-	readonly endpointType?: "start" | "end";
+	readonly endpointType?: "start" | "end" | undefined;
 
 	/**
 	 * The length of the contents of the node.
@@ -208,12 +208,12 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * 2. Storage of multiple "channels" of information (ex: track property changes separately from insertion,
 	 * or only attribute certain property modifications, etc.)
 	 */
-	attribution?: IAttributionCollection<AttributionKey>;
+	attribution?: IAttributionCollection<AttributionKey> | undefined;
 
 	/**
 	 * Manages pending local state for properties on this segment.
 	 */
-	propertyManager?: PropertiesManager;
+	propertyManager?: PropertiesManager | undefined;
 	/**
 	 * Local seq at which this segment was inserted.
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
@@ -221,7 +221,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 *
 	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
-	localSeq?: number;
+	localSeq?: number | undefined;
 	/**
 	 * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
 	 * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
@@ -230,12 +230,12 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
 	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
-	localRemovedSeq?: number;
+	localRemovedSeq?: number | undefined;
 	/**
 	 * Seq at which this segment was inserted.
 	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
 	 */
-	seq?: number;
+	seq?: number | undefined;
 	/**
 	 * Short clientId for the client that inserted this segment.
 	 */
@@ -243,11 +243,11 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	/**
 	 * Local references added to this segment.
 	 */
-	localRefs?: LocalReferenceCollection;
+	localRefs?: LocalReferenceCollection | undefined;
 	/**
 	 * Properties that have been added to this segment via annotation.
 	 */
-	properties?: PropertySet;
+	properties?: PropertySet | undefined;
 
 	/**
 	 * Add properties to this segment via annotation.
@@ -308,8 +308,8 @@ export interface ISegmentAction<TClientData> {
  * @internal
  */
 export interface ISegmentChanges {
-	next?: ISegment;
-	replaceCurrent?: ISegment;
+	next?: ISegment | undefined;
+	replaceCurrent?: ISegment | undefined;
 }
 /**
  * @internal
@@ -347,7 +347,7 @@ export interface NodeAction<TClientData> {
  * @internal
  */
 export interface InsertContext {
-	candidateSegment?: ISegment;
+	candidateSegment?: ISegment | undefined;
 	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
@@ -370,7 +370,7 @@ export interface SegmentActions<TClientData> {
 export interface SegmentGroup {
 	segments: ISegment[];
 	previousProps?: PropertySet[];
-	localSeq?: number;
+	localSeq?: number | undefined;
 	refSeq: number;
 }
 
@@ -401,8 +401,8 @@ export const MaxNodesInBlock = 8;
  */
 export class MergeBlock implements IMergeNodeCommon {
 	public children: IMergeNode[];
-	public needsScour?: boolean;
-	public parent?: MergeBlock;
+	public needsScour?: boolean | undefined;
+	public parent?: MergeBlock | undefined;
 	public index: number = 0;
 	public ordinal: string = "";
 	public cachedLength: number | undefined = 0;
@@ -432,7 +432,7 @@ export class MergeBlock implements IMergeNodeCommon {
 	 * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
 	 * objects are always defined.
 	 */
-	partialLengths?: PartialSequenceLengths;
+	partialLengths?: PartialSequenceLengths | undefined;
 
 	public constructor(public childCount: number) {
 		this.children = new Array<IMergeNode>(MaxNodesInBlock);
@@ -466,8 +466,8 @@ export class MergeBlock implements IMergeNodeCommon {
 	}
 }
 
-export function seqLTE(seq: number, minOrRefSeq: number) {
-	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
+export function seqLTE(seq: number | undefined, minOrRefSeq: number) {
+	return seq !== UnassignedSequenceNumber && seq! <= minOrRefSeq;
 }
 
 /**
@@ -496,9 +496,9 @@ export abstract class BaseSegment implements ISegment {
 	public properties?: PropertySet;
 	public localRefs?: LocalReferenceCollection;
 	public abstract readonly type: string;
-	public localSeq?: number;
-	public localRemovedSeq?: number;
-	public localMovedSeq?: number;
+	public localSeq?: number | undefined;
+	public localRemovedSeq?: number | undefined;
+	public localMovedSeq?: number | undefined;
 
 	public addProperties(
 		newProps: PropertySet,
@@ -591,11 +591,13 @@ export abstract class BaseSegment implements ISegment {
 
 			case MergeTreeDeltaType.OBLITERATE:
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
+
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
+
 				this.localMovedSeq = undefined;
-				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+				const seqIdx = moveInfo.movedSeqs!.indexOf(UnassignedSequenceNumber);
 				assert(seqIdx !== -1, 0x86f /* expected movedSeqs to contain unacked seq */);
-				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
+				moveInfo.movedSeqs![seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {
 					moveInfo.movedSeq = opArgs.sequencedMessage!.sequenceNumber;

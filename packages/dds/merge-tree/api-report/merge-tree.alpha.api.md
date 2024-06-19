@@ -58,13 +58,13 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
-    localMovedSeq?: number;
+    localMovedSeq?: number | undefined;
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
-    localRemovedSeq?: number;
+    localRemovedSeq?: number | undefined;
     // (undocumented)
-    localSeq?: number;
+    localSeq?: number | undefined;
     // (undocumented)
     movedClientIds?: number[];
     // (undocumented)
@@ -225,7 +225,7 @@ export interface IAttributionCollectionSerializer {
     populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
     // (undocumented)
     serializeAttributionCollections(segments: Iterable<{
-        attribution?: IAttributionCollection<AttributionKey>;
+        attribution?: IAttributionCollection<AttributionKey> | undefined;
         cachedLength: number;
     }>): SerializedAttributionCollection;
 }
@@ -416,12 +416,12 @@ export interface IMergeTreeTextHelper {
 
 // @alpha
 export interface IMoveInfo {
-    localMovedSeq?: number;
-    movedClientIds: number[];
-    movedSeq: number;
-    movedSeqs: number[];
-    moveDst?: ReferencePosition;
-    wasMovedOnInsert: boolean;
+    localMovedSeq?: number | undefined;
+    movedClientIds: number[] | undefined;
+    movedSeq: number | undefined;
+    movedSeqs: number[] | undefined;
+    moveDst?: ReferencePosition | undefined;
+    wasMovedOnInsert: boolean | undefined;
 }
 
 // @alpha
@@ -433,9 +433,9 @@ export interface IRelativePosition {
 
 // @alpha
 export interface IRemovalInfo {
-    localRemovedSeq?: number;
-    removedClientIds: number[];
-    removedSeq: number;
+    localRemovedSeq?: number | undefined;
+    removedClientIds: number[] | undefined;
+    removedSeq: number | undefined;
 }
 
 // @alpha
@@ -444,22 +444,22 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     append(segment: ISegment): void;
-    attribution?: IAttributionCollection<AttributionKey>;
+    attribution?: IAttributionCollection<AttributionKey> | undefined;
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    readonly endpointType?: "start" | "end";
-    localRefs?: LocalReferenceCollection;
-    localRemovedSeq?: number;
-    localSeq?: number;
-    properties?: PropertySet;
-    propertyManager?: PropertiesManager;
+    readonly endpointType?: "start" | "end" | undefined;
+    localRefs?: LocalReferenceCollection | undefined;
+    localRemovedSeq?: number | undefined;
+    localSeq?: number | undefined;
+    properties?: PropertySet | undefined;
+    propertyManager?: PropertiesManager | undefined;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
-    seq?: number;
+    seq?: number | undefined;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -525,8 +525,8 @@ export class LocalReferenceCollection {
 // @alpha @sealed (undocumented)
 export interface LocalReferencePosition extends ReferencePosition {
     // (undocumented)
-    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
-    readonly canSlideToEndpoint?: boolean;
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>> | undefined;
+    readonly canSlideToEndpoint?: boolean | undefined;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
 }
@@ -669,10 +669,10 @@ export interface ReferencePosition {
     getSegment(): ISegment | undefined;
     // (undocumented)
     isLeaf(): this is ISegment;
-    properties?: PropertySet;
+    properties?: PropertySet | undefined;
     // (undocumented)
     refType: ReferenceType;
-    slidingPreference?: SlidingPreference;
+    slidingPreference?: SlidingPreference | undefined;
 }
 
 // @alpha
@@ -702,7 +702,7 @@ export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDrive
 // @alpha @deprecated (undocumented)
 export interface SegmentGroup {
     // (undocumented)
-    localSeq?: number;
+    localSeq?: number | undefined;
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)

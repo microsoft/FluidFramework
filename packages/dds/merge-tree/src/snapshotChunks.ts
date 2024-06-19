@@ -25,13 +25,13 @@ export interface MergeTreeChunkLegacy extends VersionedMergeTreeChunk {
 	chunkStartSegmentIndex: number;
 	chunkSegmentCount: number;
 	chunkLengthChars: number;
-	totalLengthChars?: number;
-	totalSegmentCount?: number;
-	chunkSequenceNumber?: number;
-	chunkMinSequenceNumber?: number;
+	totalLengthChars?: number | undefined;
+	totalSegmentCount?: number | undefined;
+	chunkSequenceNumber?: number | undefined;
+	chunkMinSequenceNumber?: number | undefined;
 	segmentTexts: JsonSegmentSpecs[];
-	headerMetadata?: MergeTreeHeaderMetadata;
-	attribution?: SerializedAttributionCollection;
+	headerMetadata?: MergeTreeHeaderMetadata | undefined;
+	attribution?: SerializedAttributionCollection | undefined;
 }
 
 export interface MergeTreeHeaderChunkMetadata {
@@ -53,7 +53,7 @@ export interface MergeTreeChunkV1 extends VersionedMergeTreeChunk {
 	length: number;
 	segments: JsonSegmentSpecs[];
 	headerMetadata: MergeTreeHeaderMetadata | undefined;
-	attribution?: SerializedAttributionCollection;
+	attribution?: SerializedAttributionCollection | undefined;
 }
 
 /**
@@ -66,11 +66,11 @@ export interface IJSONSegmentWithMergeInfo {
 	json: IJSONSegment;
 	client?: string;
 	seq?: number;
-	removedClientIds?: string[];
+	removedClientIds?: string[] | undefined;
 	removedSeq?: number;
-	movedClientIds?: string[];
+	movedClientIds?: string[] | undefined;
 	movedSeq?: number;
-	movedSeqs?: number[];
+	movedSeqs?: number[] | undefined;
 }
 
 /**

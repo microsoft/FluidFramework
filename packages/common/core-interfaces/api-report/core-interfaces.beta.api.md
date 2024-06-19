@@ -259,7 +259,7 @@ export interface IProvideFluidLoadable {
 // @public (undocumented)
 export interface IRequest {
     // (undocumented)
-    headers?: IRequestHeader;
+    headers?: IRequestHeader | undefined;
     // (undocumented)
     url: string;
 }
