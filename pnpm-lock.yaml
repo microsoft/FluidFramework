@@ -12684,12 +12684,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../container-runtime-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -12721,9 +12715,6 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
-      '@fluid-private/stochastic-test-utils':
-        specifier: workspace:~
-        version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
         specifier: ^0.39.0
         version: 0.39.0(@types/node@18.19.1)
