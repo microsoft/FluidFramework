@@ -104,15 +104,13 @@
 	"pnpm": {
 		"commentsOverrides": [
 			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
-			"path-scurry is overridden because earlier versions are incompatible with the most recent node types. The dep comes from rimraf, which is a dev dependency, so this override does not affect production code.",
-			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+			"path-scurry is overridden because earlier versions are incompatible with the most recent node types. The dep comes from rimraf, which is a dev dependency, so this override does not affect production code."
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
 			"rimraf>path-scurry@<=1.10.1": "^1.11.1",
 			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.4",
-			"sharp": "^0.33.2"
+			"socket.io-parser": "^4.2.4"
 		},
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
