@@ -181,7 +181,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 	/** The number of data stores whose GC reference state was updated in this summary. */
 	readonly gcStateUpdatedDataStoreCount?: number;
 	/** The size of the gc blobs in this summary. */
-	readonly gcTotalBlobsSize?: number;
+	readonly gcTotalBlobsSize?: number | undefined;
 	/** The number of gc blobs in this summary. */
 	readonly gcBlobNodeCount?: number;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */

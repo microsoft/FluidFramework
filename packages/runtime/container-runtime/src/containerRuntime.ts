@@ -565,7 +565,7 @@ export interface IPendingRuntimeState {
 	/**
 	 * Pending idCompressor state
 	 */
-	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession | undefined;
 
 	/**
 	 * Time at which session expiry timer started.
