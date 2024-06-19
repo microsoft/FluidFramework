@@ -18,8 +18,8 @@ export interface IBatchManagerOptions {
 }
 
 export interface BatchSequenceNumbers {
-	referenceSequenceNumber?: number;
-	clientSequenceNumber?: number;
+	referenceSequenceNumber?: number | undefined;
+	clientSequenceNumber?: number | undefined;
 }
 
 /**

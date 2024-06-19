@@ -91,8 +91,8 @@ export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
 	// - Legacy behavior - changing schema without leveraging schema change ops.
 	// - New behavior - changes in schema require ops and take into affect with delay.
-	explicitSchemaControl: boolean;
-	compressionLz4: boolean;
+	explicitSchemaControl: boolean | undefined;
+	compressionLz4: boolean | undefined;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
 
@@ -106,7 +106,7 @@ export interface IDocumentSchemaFeatures {
 	 * it gets added to any document metadata (documents that gets open by this runtime) and there is no way to clear it from document's
 	 * metadata.
 	 */
-	disallowedVersions: string[];
+	disallowedVersions: string[] | undefined;
 }
 
 /**

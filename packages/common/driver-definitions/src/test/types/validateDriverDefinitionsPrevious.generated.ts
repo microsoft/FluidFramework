@@ -351,6 +351,7 @@ declare function get_current_InterfaceDeclaration_IDeltasFetchResult():
 declare function use_old_InterfaceDeclaration_IDeltasFetchResult(
     use: TypeOnly<old.IDeltasFetchResult>): void;
 use_old_InterfaceDeclaration_IDeltasFetchResult(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltasFetchResult());
 
 /*
@@ -379,6 +380,7 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>): void;
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*
@@ -800,6 +802,7 @@ declare function get_current_InterfaceDeclaration_ISnapshot():
 declare function use_old_InterfaceDeclaration_ISnapshot(
     use: TypeOnly<old.ISnapshot>): void;
 use_old_InterfaceDeclaration_ISnapshot(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshot());
 
 /*

@@ -17,7 +17,7 @@ export interface IGarbageCollectionNodeData {
 	/**
 	 * If the node is unreferenced, the timestamp of when it was marked unreferenced.
 	 */
-	unreferencedTimestampMs?: number;
+	unreferencedTimestampMs?: number | undefined;
 }
 
 /**

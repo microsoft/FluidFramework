@@ -55,7 +55,7 @@ interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps
 	gcConfigs: Omit<IGarbageCollectorConfigs, "persistedGcFeatureMatrix"> & {
 		[K in keyof GCFeatureMatrix]: GCFeatureMatrix[K];
 	};
-	timeout?: number;
+	timeout?: number | undefined;
 }
 
 /** Properties passed to nodeUsed function when a node is used. */

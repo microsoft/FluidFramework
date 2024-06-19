@@ -445,7 +445,7 @@ export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
     // @deprecated
-    compression?: string;
+    compression?: string | undefined;
     contents: unknown;
     data?: string;
     // @deprecated
