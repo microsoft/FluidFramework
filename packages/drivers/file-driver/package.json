@@ -98,6 +98,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"VariableDeclaration_FluidFetchReaderFileSnapshotWriter": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
