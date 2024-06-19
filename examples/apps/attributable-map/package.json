@@ -35,8 +35,8 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/attributable-map": "workspace:~",
-		"@fluidframework/attributor": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/attributor": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
