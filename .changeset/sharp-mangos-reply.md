@@ -3,4 +3,6 @@
 "@fluidframework/tree": minor
 ---
 
-Breaking change: `TreeStatus.Created` has been renamed to `TreeStatus.New`
+tree: Breaking change: `TreeStatus.Created` is now `TreeStatus.New`
+
+`TreeStatus.Created` has been renamed to `TreeStatus.New`.

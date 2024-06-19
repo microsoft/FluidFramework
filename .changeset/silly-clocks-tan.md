@@ -1,8 +1,8 @@
 ---
-"@fluidframework/tree": major
+"@fluidframework/tree": minor
 ---
 
-Implement compatibility-based schema evolution API
+tree: Implement compatibility-based schema evolution API
 
 This change adjusts some top-level APIs for using SharedTree to better accommodate applications that need to change their schema.
 These changes enable forwards compatibility with future work to relax `SharedTree`'s restrictions around view schema and stored schema compatibility.

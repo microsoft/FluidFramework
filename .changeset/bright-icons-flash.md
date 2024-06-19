@@ -9,7 +9,7 @@
 "@fluidframework/tree": minor
 ---
 
-Type Erase ISharedObjectKind
+fluid-framework: Type Erase ISharedObjectKind
 
 A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
 
