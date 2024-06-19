@@ -94,7 +94,7 @@
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^5.0.7",
 		"sinon": "^9.2.3",
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.3.0",
