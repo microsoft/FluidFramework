@@ -45,7 +45,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		// Create one for errors that is always enabled
 		// It can be silenced by replacing console.error if the debug namespace is not enabled.
 		const debugErr = registerDebug(namespace);
-		debugErr.log = function (...args) {
+		debugErr.log = function (...args: unknown[]): void {
 			if (debug.enabled === true) {
 				// if the namespace is enabled, just use the default logger
 				registerDebug.log(...args);

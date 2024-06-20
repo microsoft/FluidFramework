@@ -74,9 +74,9 @@ export class ContainerContext implements IContainerContext {
 		public readonly loader: ILoader,
 		public readonly submitFn: (
 			type: MessageType,
-			contents: any,
+			contents: unknown,
 			batch: boolean,
-			appData: any,
+			appData: unknown,
 		) => number,
 		public readonly submitSummaryFn: (
 			summaryOp: ISummaryContent,

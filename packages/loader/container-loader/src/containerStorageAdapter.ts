@@ -57,7 +57,7 @@ export class ContainerStorageAdapter
 	/**
 	 * Whether the adapter will enforce sending combined summary trees.
 	 */
-	public get summarizeProtocolTree() {
+	public get summarizeProtocolTree(): boolean {
 		return this._summarizeProtocolTree === true;
 	}
 
@@ -140,13 +140,13 @@ export class ContainerStorageAdapter
 		);
 	}
 
-	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {
+	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents): void {
 		for (const [id, value] of Object.entries(snapshotBlobs)) {
 			this.blobContents[id] = value;
 		}
 	}
 
-	public clearPendingState() {
+	public clearPendingState(): void {
 		this.loadingGroupIdSnapshotsFromPendingState = undefined;
 	}
 
@@ -155,13 +155,17 @@ export class ContainerStorageAdapter
 		// and storage is always present in >=0.41.
 		try {
 			return this._storageService.policies;
-		} catch {}
+		} catch {
+			// No-op
+		}
 		return undefined;
 	}
 
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
+		// API called below uses null
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
@@ -220,6 +224,8 @@ export class ContainerStorageAdapter
 	}
 
 	public async getVersions(
+		// API used below uses null
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,
@@ -276,6 +282,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	/* eslint-disable @typescript-eslint/unbound-method */
+	// eslint-disable-next-line @rushstack/no-new-null
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
 	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
@@ -321,8 +328,8 @@ async function getBlobContentsFromTreeCore(
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
-) {
-	const treePs: Promise<any>[] = [];
+): Promise<unknown[]> {
+	const treePs: Promise<unknown>[] = [];
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
 			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
@@ -343,7 +350,7 @@ async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
-) {
+): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
@@ -365,7 +372,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
 	root = true,
-) {
+): void {
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
 			getBlobManagerTreeFromTreeWithBlobContents(subTree, blobs);
@@ -385,7 +392,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 function getBlobManagerTreeFromTreeWithBlobContents(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
-) {
+): void {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);

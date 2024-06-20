@@ -446,7 +446,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			},
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-			closeHandler: (error: ICriticalContainerError) => this.close(error),
+			closeHandler: (error: ICriticalContainerError | undefined) => this.close(error),
 			disconnectHandler: (reason: IConnectionStateChangeReason) =>
 				this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
