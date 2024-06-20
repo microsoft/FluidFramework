@@ -28,6 +28,7 @@
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
+@fluidframework/attributor
 @fluid-private/test-loader-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
@@ -41,7 +42,6 @@ fluid-framework
 @fluid-experimental/data-object-base
 @fluidframework/fluid-telemetry
 @fluidframework/app-insights-logger
-@fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler
 @fluidframework/tinylicious-driver

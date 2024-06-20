@@ -1,4 +1,4 @@
-# @fluid-experimental/attributor
+# @fluidframework/attributor
 
 ## 2.0.0-rc.5.0.0
 

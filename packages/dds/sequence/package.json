@@ -140,6 +140,7 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/attributor": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",

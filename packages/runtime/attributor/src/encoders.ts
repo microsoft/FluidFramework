@@ -10,6 +10,9 @@ import { type AttributionInfo } from "@fluidframework/runtime-definitions/intern
 import { type IAttributor } from "./attributor.js";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
 
+/**
+ * @internal
+ */
 export interface Encoder<TDecoded, TEncoded> {
 	encode(decoded: TDecoded): TEncoded;
 	decode(encoded: TEncoded): TDecoded;
@@ -17,24 +20,26 @@ export interface Encoder<TDecoded, TEncoded> {
 
 // Note: the encoded format doesn't matter as long as it's serializable;
 // these types could be weakened.
+/**
+ * @internal
+ */
 export type TimestampEncoder = Encoder<number[], number[]>;
 
+/**
+ * @internal
+ */
 export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
 		const deltaTimestamps: number[] = Array.from({ length: timestamps.length });
 		let prev = 0;
-		for (const [i, timestamp] of timestamps.entries()) {
-			deltaTimestamps[i] = timestamp - prev;
-			prev = timestamp;
+		for (let i = 0; i < timestamps.length; i++) {
+			deltaTimestamps[i] = timestamps[i] - prev;
+			prev = timestamps[i];
 		}
-
 		return deltaTimestamps;
 	},
 	decode: (encoded: unknown) => {
-		assert(
-			Array.isArray(encoded),
-			0x4b0 /* Encoded timestamps should be an array of numbers */,
-		);
+		assert(Array.isArray(encoded), "Encoded timestamps should be an array of numbers");
 		const timestamps: number[] = Array.from({ length: encoded.length });
 		let cumulativeSum = 0;
 		for (let i = 0; i < encoded.length; i++) {
@@ -45,8 +50,14 @@ export const deltaEncoder: TimestampEncoder = {
 	},
 };
 
+/**
+ * @internal
+ */
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
+/**
+ * @internal
+ */
 export interface SerializedAttributor {
 	interner: readonly string[] /* result of calling getSerializable() on a StringInterner */;
 	seqs: number[];
@@ -54,6 +65,9 @@ export interface SerializedAttributor {
 	attributionRefs: InternedStringId[];
 }
 
+/**
+ * @internal
+ */
 export class AttributorSerializer implements IAttributorSerializer {
 	public constructor(
 		private readonly makeAttributor: (
@@ -96,15 +110,13 @@ export class AttributorSerializer implements IAttributorSerializer {
 		const timestamps = this.timestampEncoder.decode(encodedTimestamps);
 		assert(
 			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
-			0x4b1 /* serialized attribution columns should have the same length */,
+			"serialized attribution columns should have the same length",
 		);
 		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
-		for (const [i, key] of seqs.entries()) {
-			// Non null asserting, we asserted seqs, timestamps and attributionRefs have the same length above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const timestamp = timestamps[i]!;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const ref = attributionRefs[i]!;
+		for (let i = 0; i < seqs.length; i++) {
+			const key = seqs[i];
+			const timestamp = timestamps[i];
+			const ref = attributionRefs[i];
 			const user = JSON.parse(interner.getString(ref)) as IUser;
 			entries[i] = [key, { user, timestamp }];
 		}
@@ -114,6 +126,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 
 /**
  * Creates an encoder which composes `a` and `b`.
+ * @internal
  */
 export const chain = <T1, T2, T3>(
 	a: Encoder<T1, T2>,

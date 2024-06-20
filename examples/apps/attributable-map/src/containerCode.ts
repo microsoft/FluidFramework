@@ -4,7 +4,10 @@
  */
 
 import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { IProvideRuntimeAttributor, IRuntimeAttributor } from "@fluid-experimental/attributor";
+import type {
+	IProvideRuntimeAttributor,
+	IRuntimeAttributor,
+} from "@fluidframework/attributor/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";

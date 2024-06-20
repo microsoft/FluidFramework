@@ -4,7 +4,6 @@
  */
 
 import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
-import { createRuntimeAttributor, mixinAttributor } from "@fluid-experimental/attributor";
 import {
 	IContainer,
 	IContainerContext,
@@ -17,8 +16,6 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
-
-const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
 /**
  * ModelContainerRuntimeFactoryWithAttribution is an abstract class that gives a basic structure for container runtime initialization with attributor enabled.
@@ -44,7 +41,7 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const runtime = await containerRuntimeWithAttribution.loadRuntime({
+		const runtime = await ContainerRuntime.loadRuntime({
 			context,
 			registryEntries: this.registryEntries,
 			provideEntryPoint: async (
@@ -54,7 +51,6 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 					this.createModel(containerRuntime, container),
 			}),
 			runtimeOptions: this.runtimeOptions,
-			containerScope: { IRuntimeAttributor: createRuntimeAttributor() },
 			existing,
 		});
 

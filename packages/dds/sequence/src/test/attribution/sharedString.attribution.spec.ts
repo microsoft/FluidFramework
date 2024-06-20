@@ -23,6 +23,15 @@ import {
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	type IAttributor,
+	OpStreamAttributor,
+	AttributorSerializer,
+	type Encoder,
+	chain as chainEncoders,
+	deltaEncoder,
+	makeLZ4Encoder,
+} from "@fluidframework/attributor/internal";
+import {
 	type Jsonable,
 	type IFluidDataStoreRuntime,
 	type IChannelServices,
@@ -36,7 +45,6 @@ import {
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -45,14 +53,7 @@ import {
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
-import {
-	AttributorSerializer,
-	type Encoder,
-	chain as chainEncoders,
-	deltaEncoder,
-} from "../../encoders.js";
-import { makeLZ4Encoder } from "../../lz4Encoder.js";
+import { SharedString } from "../../sequenceFactory.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -401,9 +402,6 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	undefined | symbol
 >;
 
-/* eslint-disable @rushstack/no-new-null, @typescript-eslint/ban-types -- the type below needs to accept null and
-  Function; the lint disable is here so as not to interfere with the inline comments explaining what the type does and
-  how it works. */
 /**
  * Used to constrain a type `T` to types that are deserializable from JSON.
  *
@@ -424,14 +422,16 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 		? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
-		: /* test for Jsonable primitive types */ T extends
+		: // eslint-disable-next-line @rushstack/no-new-null
+			/* test for Jsonable primitive types */ T extends
 					| null
 					| boolean
 					| number
 					| string
 					| TReplaced
 			? /* primitive types => */ T
-			: /* test for not a function */ Extract<T, Function> extends never
+			: // eslint-disable-next-line @typescript-eslint/ban-types
+				/* test for not a function */ Extract<T, Function> extends never
 				? /* not a function => test for object */ T extends object
 					? /* object => test for array */ T extends (infer E)[]
 						? /* array => */ JsonDeserialized<E, TReplaced>[]
@@ -452,7 +452,6 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 							}
 					: /* not an object => */ never
 				: /* function => */ never;
-/* eslint-enable @rushstack/no-new-null, @typescript-eslint/ban-types */
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
 	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;

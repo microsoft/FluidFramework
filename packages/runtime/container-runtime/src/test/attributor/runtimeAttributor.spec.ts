@@ -5,43 +5,113 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
+import {
+	type IProvideRuntimeAttributor,
+	enableOnNewFileKey,
+	type IAttributor,
+	AttributorSerializer,
+	chain,
+	deltaEncoder,
+	makeLZ4Encoder,
+	Attributor,
+} from "@fluidframework/attributor/internal";
 import {
 	AttachState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	type IAudience,
+	type IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentStorageService,
 	type ISnapshotTree,
 	type ISequencedDocumentMessage,
+	SummaryType,
+	type IQuorumClients,
+	type ISequencedClient,
+	type IClient,
 } from "@fluidframework/driver-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
-
-import { Attributor } from "../attributor.js";
-import { AttributorSerializer, chain, deltaEncoder } from "../encoders.js";
-import { makeLZ4Encoder } from "../lz4Encoder.js";
 import {
-	type IProvideRuntimeAttributor,
-	createRuntimeAttributor,
-	enableOnNewFileKey,
-	mixinAttributor,
-} from "../mixinAttributor.js";
+	MockDeltaManager,
+	MockQuorumClients,
+} from "@fluidframework/test-runtime-utils/internal";
 
-import { makeMockAudience, makeMockQuorum } from "./utils.js";
+import { ContainerRuntime } from "../../index.js";
 
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];
 };
 
-describe("mixinAttributor", () => {
+/**
+ * Creates a mock {@link @fluidframework/protocol-definitions#IQuorumClients} for testing.
+ */
+export function makeMockQuorum(clientIds: string[]): IQuorumClients {
+	const clients = new Map<string, ISequencedClient>();
+	for (const [index, clientId] of clientIds.entries()) {
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email,
+		};
+		clients.set(clientId, {
+			client: {
+				mode: "write",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user,
+				scopes: [],
+			},
+			sequenceNumber: 0,
+		});
+	}
+	return new MockQuorumClients(...clients.entries());
+}
+
+/**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
+export function makeMockAudience(clientIds: string[]): IAudience {
+	const clients = new Map<string, IClient>();
+	for (const [index, clientId] of clientIds.entries()) {
+		const stringId = String.fromCharCode(index + 65);
+		const name = stringId.repeat(10);
+		const userId = `${name}@microsoft.com`;
+		const email = userId;
+		const user = {
+			id: userId,
+			name,
+			email,
+		};
+		clients.set(clientId, {
+			mode: "write",
+			details: { capabilities: { interactive: true } },
+			permission: [],
+			user,
+			scopes: [],
+		});
+	}
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		getMember: (clientId: string): IClient | undefined => {
+			return clients.get(clientId);
+		},
+	} as IAudience;
+}
+
+describe("RuntimeAttributor", () => {
 	const clientId = "mock client id";
 	const getMockContext = (): Partial<IContainerContext> => {
 		return {
@@ -63,10 +133,6 @@ describe("mixinAttributor", () => {
 		};
 	};
 
-	const getScope = (): FluidObject<IProvideRuntimeAttributor> => ({
-		IRuntimeAttributor: createRuntimeAttributor(),
-	});
-
 	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 	let injectedSettings: Record<string, ConfigTypes> = {};
 
@@ -87,21 +153,22 @@ describe("mixinAttributor", () => {
 		injectedSettings[enableOnNewFileKey] = val;
 	};
 
-	const AttributingContainerRuntime = mixinAttributor();
-
 	it("Attributes ops", async () => {
 		setEnableOnNew(true);
 		const context = getMockContext() as IContainerContext;
-		const containerRuntime = await AttributingContainerRuntime.loadRuntime({
+		const containerRuntime = await ContainerRuntime.loadRuntime({
 			context,
 			registryEntries: [],
-			containerScope: getScope(),
-			provideEntryPoint: async () => ({}),
 			existing: false,
+			runtimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableRuntimeIdCompressor: "on",
+			},
+			provideEntryPoint: async () => ({}),
 		});
 
 		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
-			containerRuntime.scope;
+			containerRuntime.IRuntimeAttributor;
 		assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
 		const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
 
@@ -116,19 +183,22 @@ describe("mixinAttributor", () => {
 
 		assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
 			timestamp: op.timestamp,
-			user: context.audience?.getMember(op.clientId!)?.user,
+			user: context.quorum?.getMember(op.clientId!)?.client.user,
 		});
 	});
 
 	it("includes attribution association data in the summary tree", async () => {
 		setEnableOnNew(true);
 		const context = getMockContext() as IContainerContext;
-		const containerRuntime = await AttributingContainerRuntime.loadRuntime({
+		const containerRuntime = await ContainerRuntime.loadRuntime({
 			context,
 			registryEntries: [],
-			containerScope: getScope(),
-			provideEntryPoint: async () => ({}),
 			existing: false,
+			runtimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableRuntimeIdCompressor: "on",
+			},
+			provideEntryPoint: async () => ({}),
 		});
 
 		const op: Partial<ISequencedDocumentMessage> = {
@@ -155,13 +225,16 @@ describe("mixinAttributor", () => {
 				typeof opAttributorBlob.content === "string",
 		);
 		const decoder = chain(
-			new AttributorSerializer((entries) => new Attributor(entries), deltaEncoder),
+			new AttributorSerializer(
+				(entries) => new Attributor(entries) as IAttributor,
+				deltaEncoder,
+			),
 			makeLZ4Encoder(),
 		);
 		const decoded = decoder.decode(opAttributorBlob.content);
 		assert.deepEqual(decoded.getAttributionInfo(op.sequenceNumber!), {
 			timestamp: op.timestamp,
-			user: context.audience?.getMember(op.clientId!)?.user,
+			user: context.quorum?.getMember(op.clientId!)?.client.user,
 		});
 	});
 
@@ -173,21 +246,28 @@ describe("mixinAttributor", () => {
 		};
 
 		const encoder = chain(
-			new AttributorSerializer((entries) => new Attributor(entries), deltaEncoder),
+			new AttributorSerializer(
+				(entries) => new Attributor(entries) as IAttributor,
+				deltaEncoder,
+			),
 			makeLZ4Encoder(),
 		);
 		const context = getMockContext() as Mutable<IContainerContext>;
 		const sampleAttributor = new Attributor([
 			[
 				op.sequenceNumber!,
-				{ timestamp: op.timestamp!, user: context.audience.getMember(op.clientId!)!.user },
+				{
+					timestamp: op.timestamp!,
+					user: context.quorum.getMember(op.clientId!)!.client.user,
+				},
 			],
 		]);
 
 		const opAttributorBlobId = "mock attributor blob id";
 		const mockStorage: IDocumentStorageService = {
-			readBlob: async (blobId: string) => {
+			readBlob: async (blobId: string): Promise<string> => {
 				assert(blobId === opAttributorBlobId);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return encoder.encode(sampleAttributor);
 			},
 		} as unknown as IDocumentStorageService;
@@ -202,22 +282,26 @@ describe("mixinAttributor", () => {
 		};
 		context.baseSnapshot = snapshot;
 		context.storage = mockStorage;
-		const containerRuntime = await AttributingContainerRuntime.loadRuntime({
+		setEnableOnNew(true);
+		const containerRuntime = await ContainerRuntime.loadRuntime({
 			context,
 			registryEntries: [],
-			containerScope: getScope(),
-			provideEntryPoint: async () => ({}),
 			existing: false,
+			runtimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableRuntimeIdCompressor: "on",
+			},
+			provideEntryPoint: async () => ({}),
 		});
 
 		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
-			containerRuntime.scope;
+			containerRuntime.IRuntimeAttributor;
 		assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
 		const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
 
 		assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
 			timestamp: op.timestamp,
-			user: context.audience?.getMember(op.clientId!)?.user,
+			user: context.quorum?.getMember(op.clientId!)?.client.user,
 		});
 	});
 
@@ -260,17 +344,16 @@ describe("mixinAttributor", () => {
 		for (const { getContext, testName } of testCases) {
 			it(testName, async () => {
 				const context = getContext();
-				const containerRuntime = await AttributingContainerRuntime.loadRuntime({
+				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context,
 					registryEntries: [],
-					containerScope: getScope(),
-					provideEntryPoint: async () => ({}),
 					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: async () => ({}),
 				});
-
-				const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
-					containerRuntime.scope;
-				assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
 
 				const { summary } = await containerRuntime.summarize({
 					fullTree: true,

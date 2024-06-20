@@ -5,10 +5,10 @@
 
 import { type IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IQuorumClients } from "@fluidframework/driver-definitions";
 import {
 	MessageType,
 	type IDocumentMessage,
+	type IQuorumClients,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
@@ -43,6 +43,7 @@ export interface IAttributor {
 
 /**
  * {@inheritdoc IAttributor}
+ * @internal
  */
 export class Attributor implements IAttributor {
 	protected readonly keyToInfo: Map<number, AttributionInfo>;
@@ -83,6 +84,7 @@ export class Attributor implements IAttributor {
 /**
  * Attributor which listens to an op stream and records entries for each op.
  * Sequence numbers are used as attribution keys.
+ * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
 	public constructor(
@@ -95,13 +97,10 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 			if (message.type === MessageType.Operation) {
 				assert(
 					typeof message.clientId === "string",
-					0x966 /* Client id should be present and should be of type string */,
+					"Client id should be present and should be of type string",
 				);
 				const client = quorumClients.getMember(message.clientId);
-				assert(
-					client !== undefined,
-					0x967 /* Received message from user not in the quorumClients */,
-				);
+				assert(client !== undefined, "Received message from user not in the quorumClients");
 				this.keyToInfo.set(message.sequenceNumber, {
 					user: client.client.user,
 					timestamp: message.timestamp,
