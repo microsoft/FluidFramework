@@ -2,39 +2,44 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-// This file is a reporter used with node, so depending on node is fine.
-/* eslint-disable import/no-nodejs-modules */
 /* eslint-disable unicorn/prefer-module */
 
-import * as path from "node:path";
 import * as fs from "node:fs";
+import * as path from "node:path";
+
+import chalk from "chalk";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
-import chalk from "chalk";
+
 import { isChildProcess } from "./Configuration";
 import { pad, getName } from "./ReporterUtilities";
 // eslint-disable-next-line import/no-internal-modules
-import { getSuiteName } from "./mocha/mochaReporterUtilities";
-// eslint-disable-next-line import/no-internal-modules
 import type { CustomBenchmarkResults } from "./mocha/customOutputRunner";
+// eslint-disable-next-line import/no-internal-modules
+import { getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
  * Custom mocha reporter for benchmarks that provide their own measurements.
  *
  * @remarks
- * It can be used by passing the JavaScript version of this file to mocha's --reporter option.
+ * It can be used by passing the JavaScript version of this file to mocha's --reporter option. {@link https://www.npmjs.com/package/mocha-junit-reporter}
  *
  * This reporter takes output from mocha events and prints a user-friendly version of the results, in addition
  * to writing them to a file.
- * The path of the output file can be controlled with --reporterOptions reportDir=<path>.
+ * The path of the output file can be controlled with `--reporterOptions reportDir=<path>`.
  *
- * This reporter is coupled to customOutputRunner.ts, and depends on how it emits the actual benchmark data.
+ * This reporter is coupled to {@link @fluid-tools/benchmark#benchmarkCustom}, and depends on how it emits the actual benchmark data.
  *
- * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
+ * @see {@link https://mochajs.org/api/tutorial-custom-reporter.html} for more information about custom mocha reporters.
  */
 class MochaCustomBenchmarkReporter {
+	/**
+	 * Map to store suit data.
+	 */
 	private readonly inProgressSuites: Map<string, [string, CustomBenchmarkResults][]> = new Map();
+	/**
+	 * The Output dir.
+	 */
 	private readonly outputDirectory: string;
 
 	public constructor(runner: Runner, options?: { reporterOptions?: { reportDir?: string } }) {

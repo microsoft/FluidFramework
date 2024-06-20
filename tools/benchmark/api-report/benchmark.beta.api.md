@@ -23,9 +23,6 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
     benchmarkFnAsync: () => Promise<unknown>;
 }
 
-// @alpha
-export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
-
 // @public
 export interface BenchmarkData {
     readonly elapsedSeconds: number;
@@ -112,16 +109,6 @@ export interface CustomBenchmark extends BenchmarkTimingOptions {
 // @public (undocumented)
 export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark & BenchmarkDescription;
 
-// @alpha
-export interface CustomBenchmarkOptions {
-    // (undocumented)
-    only: boolean;
-    // (undocumented)
-    runBenchmark: (reporter: IMeasurementReporter) => Promise<void>;
-    // (undocumented)
-    title: string;
-}
-
 // @public
 export function geometricMean(values: number[]): number;
 
@@ -133,11 +120,6 @@ export interface HookArguments {
 
 // @public
 export type HookFunction = () => void | Promise<unknown>;
-
-// @alpha
-export interface IMeasurementReporter {
-    addMeasurement(key: string, value: number): void;
-}
 
 // @public (undocumented)
 export interface IMemoryTestObject extends MemoryTestObjectProps {
