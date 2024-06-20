@@ -101,6 +101,7 @@ export interface TreeNodeSchemaCore<
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
+	readonly apiChange?: unknown;
 
 	/**
 	 * Data used to define this schema.
