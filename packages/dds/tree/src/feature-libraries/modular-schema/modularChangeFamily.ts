@@ -428,7 +428,7 @@ export class ModularChangeFamily
 		metadata: RevisionMetadataSource,
 	): void {
 		for (const fieldIdKey of affectedFields.keys()) {
-			const fieldId = fieldIdFromFieldIdKey(fieldIdKey);
+			const fieldId = normalizeFieldId(fieldIdFromFieldIdKey(fieldIdKey), change.nodeAliases);
 			const fieldChange = fieldChangeFromId(change.fieldChanges, change.nodeChanges, fieldId);
 
 			if (
