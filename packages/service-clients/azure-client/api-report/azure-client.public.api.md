@@ -4,21 +4,6 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import type { ContainerSchema } from '@fluidframework/fluid-static';
-import type { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import type { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import type { IFluidContainer } from '@fluidframework/fluid-static';
-import type { IMember } from '@fluidframework/fluid-static';
-import type { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/driver-definitions';
-import { ScopeType } from '@fluidframework/driver-definitions/internal';
-
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
