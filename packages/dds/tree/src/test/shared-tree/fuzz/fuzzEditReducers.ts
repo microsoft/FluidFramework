@@ -132,6 +132,23 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
  */
 export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	const field = navigateToField(tree, fieldEdit.field);
+	if (fieldEdit.constraint !== undefined) {
+		switch (fieldEdit.constraint.content.type) {
+			case "nodeConstraint": {
+				const constraintNodePath = fieldEdit.constraint.content.content;
+				const constraintNode =
+					constraintNodePath !== undefined
+						? navigateToNode(tree, constraintNodePath)
+						: undefined;
+				if (constraintNode !== undefined) {
+					tree.checkout.editor.addNodeExistsConstraint(constraintNode.anchorNode);
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
 	switch (fieldEdit.change.type) {
 		case "sequence":
 			assert(field.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));

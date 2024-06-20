@@ -59,6 +59,7 @@ import {
 	FieldEdit,
 	CrossFieldMove,
 	FieldDownPath,
+	NodeConstraint,
 } from "./operationTypes.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
@@ -212,6 +213,7 @@ export interface EditGeneratorOpWeights {
 	fieldSelection: FieldSelectionWeights;
 	synchronizeTrees: number;
 	schema: number;
+	nodeConstraint: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	set: 0,
@@ -228,6 +230,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	fieldSelection: defaultFieldSelectionWeights,
 	synchronizeTrees: 0,
 	schema: 0,
+	nodeConstraint: 0,
 };
 
 export interface EditGeneratorOptions {
@@ -431,15 +434,34 @@ export const makeTreeEditGenerator = (
 		}
 	}
 
+	const constraintGenerator = createWeightedGenerator<NodeConstraint, FuzzTestState>([
+		[
+			(state): NodeConstraint => ({
+				type: "nodeConstraint",
+				content: maybeDownPathFromNode(
+					// Selecting the parent node here, since the field is possibly empty.
+					selectTreeField(viewFromState(state), state.random, weights.fieldSelection)
+						.content.parent,
+				),
+			}),
+			weights.nodeConstraint,
+		],
+	]);
+
 	return (state) => {
 		let fieldInfo: FuzzField;
 		let change: ReturnType<typeof fieldEditChangeGenerator>;
+		let constraint: ReturnType<typeof constraintGenerator> | undefined;
 		// This could be surfaced as a config option if desired. In practice, the corresponding assert is most
 		// likely to be hit during when a test is badly configured, in which case the remedy is to fix the config,
 		// as opposed to increasing the number of attempts.
 		let attemptsRemaining = 20;
 		do {
 			fieldInfo = selectTreeField(viewFromState(state), state.random, weights.fieldSelection);
+			constraint =
+				sumWeights([weights.nodeConstraint]) > 0
+					? assertNotDone(constraintGenerator({ ...state }))
+					: undefined;
 			change = fieldEditChangeGenerator({ ...state, fieldInfo });
 			attemptsRemaining -= 1;
 		} while (change === "no-valid-selections" && attemptsRemaining > 0);
@@ -450,6 +472,13 @@ export const makeTreeEditGenerator = (
 				type: "fieldEdit",
 				field: fieldDownPathFromField(fieldInfo.content),
 				change,
+				constraint:
+					constraint !== undefined
+						? {
+								type: "constraint",
+								content: constraint,
+						  }
+						: undefined,
 			},
 		};
 	};
@@ -531,11 +560,13 @@ export function makeOpGenerator(
 		fieldSelection,
 		schema,
 		synchronizeTrees,
+		nodeConstraint: constraints,
 		...others
 	} = weights;
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
 	// updated to take into account the new weights.
 	assert(Object.keys(others).length === 0, "Unexpected weight");
+	// constraint weights are not included, since you cannot have edits with constraints if all edit weights are set to 0.
 	const editWeight = sumWeights([insert, remove, intraFieldMove, crossFieldMove, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);

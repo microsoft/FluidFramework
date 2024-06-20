@@ -15,6 +15,15 @@ export interface TreeEdit {
 	edit: FieldEdit;
 }
 
+// Currently only node constraints are supported, but more constraint types may be added in the future.
+export interface Constraint {
+	type: "constraint";
+	content: NodeConstraint;
+}
+export interface NodeConstraint {
+	type: "nodeConstraint";
+	content: undefined | DownPath;
+}
 export interface TransactionBoundary {
 	type: "transactionBoundary";
 	boundary: "start" | "abort" | "commit";
@@ -36,6 +45,11 @@ export interface FieldEdit {
 	field: FieldDownPath;
 	/** The edit performed on the field */
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
+	/**
+	 * The constraint that we want to enforce on the edit.
+	 * Set to undefined for edits without constraints.
+	 */
+	constraint: Constraint | undefined;
 }
 
 export interface Insert {

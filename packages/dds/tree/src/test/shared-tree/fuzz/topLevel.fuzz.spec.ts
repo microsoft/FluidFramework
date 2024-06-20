@@ -55,6 +55,7 @@ describe("Fuzz - Top-Level", () => {
 		abort: 0,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 1,
+		nodeConstraint: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -92,6 +93,7 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skipMinimization: true,
 		};
 		createDDSFuzzSuite(model, options);
 	});
