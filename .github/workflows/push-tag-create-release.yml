@@ -39,8 +39,9 @@ jobs:
           cd build-tools
           pnpm install --frozen-lockfile
           pnpm run build:compile
-          cd packages/build-cli
+          # We want flub available to call, so we run npm link in the build-cli package, which creates shims that are avilable on the PATH
           # Use npm link instead of pnpm link because it handles bins better
+          cd packages/build-cli
           npm link
 
       - name: Check build-tools installation
