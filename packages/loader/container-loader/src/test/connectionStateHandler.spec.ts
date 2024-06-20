@@ -35,11 +35,11 @@ import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
+	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
 {
 	lastSequenceNumber: number = 5;
 	lastKnownSeqNumber: number = 10;
-	catchUp(seq = 10) {
+	catchUp(seq = 10): void {
 		this.lastKnownSeqNumber = seq;
 		this.lastSequenceNumber = seq;
 		this.emit("op", { sequenceNumber: this.lastKnownSeqNumber });
@@ -77,7 +77,7 @@ describe("ConnectionStateHandler Tests", () => {
 		});
 	}
 
-	async function tickClock(tickValue: number) {
+	async function tickClock(tickValue: number): Promise<void> {
 		clock.tick(tickValue);
 
 		// Yield the event loop because the outbound op will be processed asynchronously.
@@ -87,12 +87,12 @@ describe("ConnectionStateHandler Tests", () => {
 	function createHandler(
 		connectedRaisedWhenCaughtUp: boolean,
 		readClientsWaitForJoinSignal: boolean,
-	) {
+	): IConnectionStateHandler {
 		const handler = createConnectionStateHandlerCore(
 			connectedRaisedWhenCaughtUp,
 			readClientsWaitForJoinSignal,
 			handlerInputs,
-			deltaManagerForCatchingUp as any,
+			deltaManagerForCatchingUp as unknown as IDeltaManager<unknown, unknown>,
 			undefined,
 		);
 		handler.initProtocol(protocolHandler);
