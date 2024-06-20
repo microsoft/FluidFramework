@@ -61,7 +61,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		members: [string, ISequencedClient][],
 		proposals: [number, ISequencedProposal, string[]][],
 		values: [string, ICommittedProposal][],
-		sendProposal: (key: string, value: any) => number,
+		sendProposal: (key: string, value: unknown) => number,
 	) {
 		this._quorum = new Quorum(members, proposals, values, sendProposal);
 	}
@@ -73,7 +73,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		};
 	}
 
-	setConnectionState(connected: boolean, clientId: string | undefined) {
+	setConnectionState(connected: boolean, clientId: string | undefined): void {
 		this._quorum.setConnectionState(connected, clientId);
 	}
 
@@ -81,7 +81,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		return this._quorum.snapshot();
 	}
 
-	public close() {
+	public close(): void {
 		this._quorum.close();
 	}
 
@@ -102,8 +102,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		this.minimumSequenceNumber = message.minimumSequenceNumber;
 
 		let immediateNoOp = false;
-
-		/* eslint-disable no-case-declarations */
 
 		switch (message.type) {
 			case MessageType.ClientJoin: {
@@ -146,8 +144,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
 			default:
 		}
-
-		/* eslint-enable no-case-declarations */
 
 		// Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
 		// want to move that logic to this class.
