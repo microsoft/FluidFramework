@@ -273,7 +273,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 				...this.eventBase,
 				...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
 				...measurements,
-				...processedCustomData, // If the processedCustomData doesn't exist and this is undefined, things work as expected
+				...processedCustomData,
 			};
 
 			this.logger.sendPerformanceEvent(telemetryEvent);
