@@ -151,7 +151,7 @@ An Error
 
 ## Variable Details
 
-### TestConst (BETA) {#testconst-variable}
+### TestConst {#testconst-variable}
 
 Test Constant
 

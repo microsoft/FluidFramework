@@ -15,9 +15,7 @@ import {
 import {
 	type ApiMemberKind,
 	getQualifiedApiItemName,
-	getReleaseTag,
 	getUnscopedPackageName,
-	releaseTagToString,
 	getSafeFilenameForName,
 	getConciseSignature,
 } from "../../utilities/index.js";
@@ -296,13 +294,6 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
 	 */
 	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
-		// If the API is `@alpha` or `@beta`, append a notice to the heading text
-		const releaseTag = getReleaseTag(apiItem);
-		const headingTextPostfix =
-			releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta
-				? ` (${releaseTagToString(releaseTag).toUpperCase()})`
-				: "";
-
 		switch (apiItem.kind) {
 			case ApiItemKind.Model: {
 				return "API Overview";
@@ -313,11 +304,10 @@ export namespace DefaultDocumentationSuiteOptions {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
-				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-				return `${excerpt}${headingTextPostfix}`;
+				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 			}
 			default: {
-				return `${apiItem.displayName}${headingTextPostfix}`;
+				return apiItem.displayName;
 			}
 		}
 	}

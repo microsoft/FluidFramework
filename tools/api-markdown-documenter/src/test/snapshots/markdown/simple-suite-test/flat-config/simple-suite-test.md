@@ -974,7 +974,7 @@ A union type
 
 # Variable Details
 
-## testConst (BETA) {#testconst-variable}
+## testConst {#testconst-variable}
 
 Test Constant
 
@@ -1274,7 +1274,7 @@ An Error
 
 ### Variable Details
 
-#### TestConst (BETA) {#testnamespace-testconst-variable}
+#### TestConst {#testnamespace-testconst-variable}
 
 Test Constant
 
