@@ -41,7 +41,7 @@ describe("authHeaderFromResponse", () => {
 		assert.equal(result, tokenResponse.authorizationHeader);
 	});
 	it("returns Bearer authorization header when token is defined and authorizationHeader is not", async () => {
-		const tokenResponse = { token: "fake token"};
+		const tokenResponse = { token: "fake token" };
 		const result = authHeaderFromResponse(tokenResponse);
 		assert.equal(result, "Bearer fake token");
 	});
