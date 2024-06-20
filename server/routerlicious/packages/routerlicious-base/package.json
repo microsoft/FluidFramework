@@ -91,7 +91,7 @@
 		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
-		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@4.0.0",
+		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/body-parser": "^1.19.2",
 		"@types/bytes": "^3.0.0",
@@ -130,13 +130,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_NexusResources": {
-				"backCompat": false
-			},
-			"ClassDeclaration_RiddlerResources": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
