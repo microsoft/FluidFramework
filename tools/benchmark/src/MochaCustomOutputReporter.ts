@@ -26,11 +26,11 @@ import { getSuiteName } from "./mocha/mochaReporterUtilities";
  *
  * This reporter takes output from mocha events and prints a user-friendly version of the results, in addition
  * to writing them to a file.
-* The path of the output file can be controlled with `--reporterOptions reportDir=<path>`.
+ * The path of the output file can be controlled with `--reporterOptions reportDir=<path>`.
  *
  * This reporter is coupled to {@link @fluid-tools/benchmark#benchmarkCustom}, and depends on how it emits the actual benchmark data.
  *
-* @see {@link https://mochajs.org/api/tutorial-custom-reporter.html} for more information about custom mocha reporters.
+ * @see {@link https://mochajs.org/api/tutorial-custom-reporter.html} for more information about custom mocha reporters.
  */
 class MochaCustomBenchmarkReporter {
 	/**
