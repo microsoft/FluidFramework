@@ -29,7 +29,7 @@
 			},
 			"DDSes": {
 				"Map": {
-					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"],
+					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"]
 				},
 				"Tree": { "Interfaces": ["ITree"] }
 			}
