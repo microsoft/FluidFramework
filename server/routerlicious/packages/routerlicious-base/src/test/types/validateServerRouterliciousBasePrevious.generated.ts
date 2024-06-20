@@ -405,7 +405,6 @@ declare function get_current_ClassDeclaration_NexusResources():
 declare function use_old_ClassDeclaration_NexusResources(
     use: TypeOnly<old.NexusResources>): void;
 use_old_ClassDeclaration_NexusResources(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_NexusResources());
 
 /*
@@ -514,7 +513,6 @@ declare function get_old_ClassDeclaration_RiddlerResources():
 declare function use_current_ClassDeclaration_RiddlerResources(
     use: TypeOnly<current.RiddlerResources>): void;
 use_current_ClassDeclaration_RiddlerResources(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_RiddlerResources());
 
 /*
