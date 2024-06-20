@@ -28,6 +28,8 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
 	 */
 	public static readonly Type = "https://graph.microsoft.com/types/cell";
 
+	public apiChange?: unknown;
+
 	/**
 	 * {@inheritDoc CellFactory.attributes}
 	 */
