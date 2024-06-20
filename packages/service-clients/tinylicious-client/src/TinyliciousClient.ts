@@ -4,26 +4,30 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IContainer,
-	type IFluidModuleWithDetails,
-	type IHostLoader,
+import type {
+	IContainer,
+	IFluidModuleWithDetails,
+	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import type { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerSchema,
+	IFluidContainer,
+	CompatibilityMode,
+} from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -33,13 +37,15 @@ import {
 } from "@fluidframework/tinylicious-driver/internal";
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import type { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
  * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
- * @internal
+ *
+ * @sealed
+ * @beta
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -63,15 +69,17 @@ export class TinyliciousClient {
 	/**
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatibilityMode);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
@@ -113,16 +121,18 @@ export class TinyliciousClient {
 	 * Accesses the existing container given its unique ID in the tinylicious server.
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
+		compatibilityMode: CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loader = this.createLoader(containerSchema);
+		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const container = await loader.resolve({ url: id });
 		const rootDataObject = await this.getContainerEntryPoint(container);
 		const fluidContainer = createFluidContainer<TContainerSchema>({
@@ -143,9 +153,13 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema): IHostLoader {
+	private createLoader(
+		schema: ContainerSchema,
+		compatibilityMode: CompatibilityMode,
+	): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
+			compatibilityMode,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

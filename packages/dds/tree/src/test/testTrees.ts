@@ -7,19 +7,23 @@ import { strict as assert } from "assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ITreeCursorSynchronous, JsonableTree, Multiplicity } from "../core/index.js";
+import {
+	type ITreeCursorSynchronous,
+	type JsonableTree,
+	Multiplicity,
+} from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
-	AllowedTypesToFlexInsertableTree,
+	type AllowedTypesToFlexInsertableTree,
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
-	FullSchemaPolicy,
-	InsertableFlexField,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type FullSchemaPolicy,
+	type InsertableFlexField,
 	SchemaBuilderBase,
-	SchemaLibrary,
+	type SchemaLibrary,
 	cursorForJsonableTreeNode,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
@@ -28,13 +32,14 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 } from "../feature-libraries/index.js";
-import { TreeContent } from "../shared-tree/index.js";
+import type { TreeContent } from "../shared-tree/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 interface TestTree {
 	readonly name: string;
 	readonly schemaData: FlexTreeSchema;
 	readonly policy: FullSchemaPolicy;
-	readonly treeFactory: () => JsonableTree[];
+	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
 }
 
 function testTree<T extends FlexTreeNodeSchema>(
@@ -63,6 +68,48 @@ function testField<T extends FlexFieldSchema>(
 		schemaData: schema,
 		treeFactory: () => {
 			const cursor = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, data);
+			return jsonableTreeFromFieldCursor(cursor);
+		},
+		policy: defaultSchemaPolicy,
+	};
+}
+
+function testIdentifierField(name: string, schemaLibrary: SchemaLibrary): TestTree {
+	const schema = new SchemaBuilderBase(FieldKinds.required, {
+		scope: name,
+		lint: { rejectForbidden: false, rejectEmpty: false },
+		libraries: [schemaLibrary],
+	}).intoSchema(FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]));
+	return {
+		name,
+		schemaData: schema,
+		treeFactory: (idCompressor?: IIdCompressor) => {
+			assert(idCompressor !== undefined, "idCompressor must be provided");
+			const cursor = cursorsForTypedFieldData(
+				{ schema },
+				schema.rootFieldSchema,
+				idCompressor.decompress(idCompressor.generateCompressedId()),
+			);
+			return jsonableTreeFromFieldCursor(cursor);
+		},
+		policy: defaultSchemaPolicy,
+	};
+}
+
+function testTreeWithIdentifier(name: string, schemaLibrary: SchemaLibrary): TestTree {
+	const schema = new SchemaBuilderBase(FieldKinds.required, {
+		scope: name,
+		lint: { rejectForbidden: false, rejectEmpty: false },
+		libraries: [schemaLibrary],
+	}).intoSchema(hasIdentifierField);
+	return {
+		name,
+		schemaData: schema,
+		treeFactory: (idCompressor?: IIdCompressor) => {
+			assert(idCompressor !== undefined, "idCompressor must be provided");
+			const cursor = cursorsForTypedFieldData({ schema }, schema.rootFieldSchema, {
+				field: idCompressor.decompress(idCompressor.generateCompressedId()),
+			});
 			return jsonableTreeFromFieldCursor(cursor);
 		},
 		policy: defaultSchemaPolicy,
@@ -113,6 +160,9 @@ export const hasAnyValueField = builder.object("hasAnyValueField", {
 export const hasOptionalField = builder.object("hasOptionalField", {
 	field: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 });
+export const hasIdentifierField = builder.object("hasIdentifierField", {
+	field: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
+});
 export const allTheFields = builder.object("allTheFields", {
 	optional: FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
 	valueField: leaf.number,
@@ -137,7 +187,10 @@ export const numericMap = builder.map(
 
 type NumericMapData = AllowedTypesToFlexInsertableTree<[typeof numericMap]>;
 
-export const anyMap = builder.map("anyMap", FlexFieldSchema.create(FieldKinds.sequence, [Any]));
+export const anyMap = builder.map(
+	"anyMap",
+	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
+);
 
 export const recursiveType = builder.objectRecursive("recursiveType", {
 	field: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
@@ -158,6 +211,8 @@ export const testTrees: readonly TestTree[] = [
 		FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 		[1, 2, 3],
 	),
+	testTreeWithIdentifier("node-with-identifier-field", library),
+	testIdentifierField("identifier-field", library),
 	testTree("true boolean", library, leaf.boolean, true),
 	testTree("false boolean", library, leaf.boolean, false),
 	testTree("hasMinimalValueField", library, hasMinimalValueField, {

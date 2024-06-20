@@ -7,22 +7,22 @@ import { strict as assert } from "node:assert";
 
 import {
 	CheckoutFlexTreeView,
-	TransactionConstraint,
+	type TransactionConstraint,
 	Tree,
-	rollback,
+	type rollback,
 } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeConfiguration,
-	ValidateRecursiveSchema,
-	TreeView,
-	InsertableTypedNode,
+	TreeViewConfiguration,
+	type ValidateRecursiveSchema,
+	type TreeView,
+	type InsertableTypedNode,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { hydrate } from "../simple-tree/utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { runTransaction } from "../../shared-tree/treeApi.js";
 
@@ -36,12 +36,12 @@ describe("treeApi", () => {
 		}) {}
 
 		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			return getView(
-				new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child,
-				})),
-			);
+			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+			view.initialize({
+				content: 42,
+				child,
+			});
+			return view;
 		}
 
 		/**
@@ -101,7 +101,7 @@ describe("treeApi", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getViewOrError();
+				const checkoutView = view.getView();
 				assert(checkoutView instanceof CheckoutFlexTreeView);
 				const { undoStack, redoStack } = createTestUndoRedoStacks(
 					checkoutView.checkout.events,
@@ -140,14 +140,15 @@ describe("treeApi", () => {
 
 			it("respects a violated node existence constraint after sequencing", () => {
 				// Create two connected trees with child nodes
-				const config = new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child: {},
-				}));
+				const config = new TreeViewConfiguration({ schema: TestObject });
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
-				const viewA = treeA.schematize(config);
-				const viewB = treeB.schematize(config);
+				const viewA = treeA.viewWith(config);
+				const viewB = treeB.viewWith(config);
+				viewA.initialize({
+					content: 42,
+					child: {},
+				});
 				provider.processMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
@@ -195,10 +196,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -210,10 +208,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -224,7 +219,7 @@ describe("treeApi", () => {
 			it.skip("emits change events", () => {
 				const view = getTestObjectView();
 				let event = false;
-				view.events.on("afterBatch", () => (event = true));
+				view.events.on("rootChanged", () => (event = true));
 				view.root.content = 44;
 				Tree.runTransaction(view, (root) => {
 					root.content = 43;
@@ -235,7 +230,7 @@ describe("treeApi", () => {
 			it.skip("emits change events on rollback", () => {
 				const view = getTestObjectView();
 				let eventCount = 0;
-				view.events.on("afterBatch", () => (eventCount += 1));
+				view.events.on("rootChanged", () => (eventCount += 1));
 				Tree.runTransaction(view, (r) => {
 					r.content = 43;
 					return Tree.runTransaction.rollback;
@@ -267,10 +262,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -282,10 +274,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -318,7 +307,7 @@ describe("treeApi", () => {
 				// One firing of events during the initial change and another during rollback, plus 'treeChanged' fires twice
 				// each time (detach and attach passes).
 				assert.equal(shallowEventCount, 2);
-				assert.equal(deepEventCount, 4);
+				assert.equal(deepEventCount, 2);
 			});
 
 			// TODO: When SchematizingSimpleTreeView supports forking, add test coverage to ensure that transactions work properly on forks

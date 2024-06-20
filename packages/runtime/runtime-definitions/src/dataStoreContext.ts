@@ -19,15 +19,14 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	IClientDetails,
+	IDocumentStorageService,
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -212,7 +211,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(
+		pkg: Readonly<string | string[]>,
+		loadingGroupId?: string,
+	): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -234,7 +236,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * Returns the current quorum.
@@ -293,17 +298,12 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
 	 */
-	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.
 	 */
-	process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
-	): void;
+	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
 	/**
 	 * Processes the signal.
@@ -500,26 +500,20 @@ export interface IFluidParentContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(
-		srcHandle: { absolutePath: string },
-		outboundHandle: { absolutePath: string },
-	): void;
-
-	/**
 	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
 	 * @param address - The address of the channel that is dirty.
 	 */
 	setChannelDirty(address: string): void;
+
+	/**
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
+	 */
+	addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
 }
 
 /**
@@ -556,17 +550,6 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-
-	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 *
-	 * @param fromPath - The absolute path of the node that added the reference.
-	 * @param toPath - The absolute path of the outbound node that is referenced.
-	 */
-	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
 }
 
 /**

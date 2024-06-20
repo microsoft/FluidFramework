@@ -181,7 +181,8 @@ const PropertyError = {
 	 *
 	 * Part of the path entered to Property.resolvePath was not valid.
 	 */
-	INVALID_PATH_TOKEN: "PR-005: ResolvePath error: accessed a child via an invalid path syntax: ",
+	INVALID_PATH_TOKEN:
+		"PR-005: ResolvePath error: accessed a child via an invalid path syntax: ",
 
 	/**
 	 * methods: MapProperty.insert, NodeProperty.insert, ReferenceMapProperty.insert, Workspace.insert,
@@ -616,7 +617,8 @@ const PropertyError = {
 	 * Property.getValue takes one parameter: in_id.
 	 * It can either be a string or an array of strings. It cannot be an empty array.
 	 */
-	CANNOT_BE_EMPTY_ARRAY: "PR-095: Property.getValue parameter: in_id cannot be an empty array.",
+	CANNOT_BE_EMPTY_ARRAY:
+		"PR-095: Property.getValue parameter: in_id cannot be an empty array.",
 
 	/**
 	 * methods: EnumArrayProperty.set
@@ -721,7 +723,8 @@ const PropertyError = {
 	 *
 	 * .deserialize takes on parameter: a serialized object. It cannot be undefined.
 	 */
-	DESERIALIZE_EMPTY_CHANGESET: "PR-121: ValueProperty.deserialize() called on an empty changeset",
+	DESERIALIZE_EMPTY_CHANGESET:
+		"PR-121: ValueProperty.deserialize() called on an empty changeset",
 
 	/**
 	 * methods: IntMapProperty.insert, UintMapProperty.insert
@@ -751,7 +754,8 @@ const PropertyError = {
 	 *
 	 * The string you passed as a first parameter to .fromString contains non-numerical characters.
 	 */
-	CANNOT_PARSE_INVALID_CHARACTERS: "PR-125: Cannot parse. String contains invalid characters: ",
+	CANNOT_PARSE_INVALID_CHARACTERS:
+		"PR-125: Cannot parse. String contains invalid characters: ",
 
 	/**
 	 * methods: Property constructor
@@ -796,7 +800,8 @@ const PropertyError = {
 	 * values from a custom property. To get the value of a primitive property, use .getValue instead.
 	 */
 	NO_VALUE_PROPERTY_GETVALUES:
-		"PR-134: Cannot use .getValues on value properties or strings. " + "Use .getValue instead.",
+		"PR-134: Cannot use .getValues on value properties or strings. " +
+		"Use .getValue instead.",
 
 	/**
 	 * methods: Property.setValues, ArrayProperty.insertRange, ArrayProperty.removeRange,
@@ -987,7 +992,8 @@ const PropertyError = {
 	 *
 	 * EnumArrayProperty.set only accepts a string or number as input for in_value
 	 */
-	VALUE_STRING_OR_NUMBER: "PR-181: in_value should be a string or a number. This is not valid: ",
+	VALUE_STRING_OR_NUMBER:
+		"PR-181: in_value should be a string or a number. This is not valid: ",
 
 	/**
 	 * methods: ArrayProperty.set
@@ -1237,7 +1243,8 @@ const PropertyFactoryError = {
 	/**
 	 * The ‘context’ field in your template should be a string.
 	 */
-	CONTEXT_SHOULD_BE_STRING: 'PF-038: The "context" value should be a string. This is not valid: ',
+	CONTEXT_SHOULD_BE_STRING:
+		'PF-038: The "context" value should be a string. This is not valid: ',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1252,7 +1259,8 @@ const PropertyFactoryError = {
 	 *
 	 * In your template, the field ‘length’ should be a number.
 	 */
-	LENGTH_SHOULD_BE_NUMBER: 'PF-040: The "length" value should be a number. This is not valid: ',
+	LENGTH_SHOULD_BE_NUMBER:
+		'PF-040: The "length" value should be a number. This is not valid: ',
 
 	/**
 	 * methods: PropertyFactory.convertToTemplates, PropertyFactory.registerFrom
@@ -1383,7 +1391,8 @@ const PropertyFactoryError = {
 	 * deepCopy function which could have an arbitrary target specified. This doesn’t happen in the case of
 	 * the serializeCanonical.
 	 */
-	INVALID_TARGET_PROPERTY_TEMPLATE: "PF-053 Copying into incompatible target property template: ",
+	INVALID_TARGET_PROPERTY_TEMPLATE:
+		"PF-053 Copying into incompatible target property template: ",
 
 	/**
 	 * methods: PropertyFactory.loadTemplate
@@ -1515,7 +1524,8 @@ const RepositoryError = {
 	/**
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.
 	 */
-	LOCAL_AND_REMOTE_BRANCH_NOT_EQUAL: "RE-007: Remote branch urn must equal the local branch urn",
+	LOCAL_AND_REMOTE_BRANCH_NOT_EQUAL:
+		"RE-007: Remote branch urn must equal the local branch urn",
 
 	/**
 	 * INTERNAL ERROR - If you encounter this error, please contact the development team.

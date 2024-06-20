@@ -4,13 +4,14 @@
  */
 
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-	ISummaryTree,
 	ITree,
 	SummaryTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	IGarbageCollectionData,
@@ -322,6 +323,33 @@ export const channelsTreeName = ".channels";
 
 /**
  * Contains telemetry data relevant to summarization workflows.
+ * This object, in contrast to ITelemetryContext, is expected to be modified directly by various summarize methods.
+ * @internal
+ */
+export interface ITelemetryContextExt {
+	/**
+	 * Sets value for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
+	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
+	 * @param value - value to attribute to this summary telemetry data
+	 */
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+
+	/**
+	 * Sets multiple values for telemetry data being tracked.
+	 * @param prefix - unique prefix to tag this data with (ex: "fluid:summarize:")
+	 * @param property - property name of the telemetry data being tracked (ex: "Options")
+	 * @param values - A set of values to attribute to this summary telemetry data.
+	 */
+	setMultiple(
+		prefix: string,
+		property: string,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
+	): void;
+}
+
+/**
+ * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
  * @alpha
  */
@@ -345,26 +373,6 @@ export interface ITelemetryContext {
 		property: string,
 		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void;
-
-	/**
-	 * Get the telemetry data being tracked
-	 *
-	 * @deprecated This interface should only be used for instrumenting, not for attempting to read already-set telemetry data.
-	 *
-	 * @param prefix - unique prefix for this data (ex: "fluid:map:")
-	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
-	 * @returns undefined if item not found
-	 */
-	get(prefix: string, property: string): TelemetryBaseEventPropertyType;
-
-	/**
-	 * Returns a serialized version of all the telemetry data.
-	 * Should be used when logging in telemetry events.
-	 *
-	 * @deprecated This interface should only be used for instrumenting. A concrete implementation will likely have a serialize function
-	 * but this functionality should not be used by other code being given an ITelemetryContext.
-	 */
-	serialize(): string;
 }
 
 /**

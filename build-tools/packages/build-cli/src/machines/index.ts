@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { FluidReleaseMachine } from "./fluidReleaseMachine";
-export type { MachineState } from "./types";
+export { FluidReleaseMachine } from "./fluidReleaseMachine.js";
+export type { MachineState } from "./types.js";

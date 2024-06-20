@@ -14,9 +14,9 @@ import {
 	type IChannel,
 	type IChannelServices,
 } from '@fluidframework/datastore-definitions/internal';
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import type { SessionId } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,

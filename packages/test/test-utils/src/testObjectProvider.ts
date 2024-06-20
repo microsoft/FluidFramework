@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import {
 	IContainer,
@@ -22,6 +21,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -531,7 +531,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -895,7 +898,10 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.createContainer}
 	 */
-	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+	public async createContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",

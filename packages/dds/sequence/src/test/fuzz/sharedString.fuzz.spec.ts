@@ -36,7 +36,8 @@ export function makeSharedStringOperationGenerator(
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	const usableWeights =
+		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
@@ -45,7 +46,7 @@ export function makeSharedStringOperationGenerator(
 			alwaysLeaveChar
 				? lengthSatisfies((length) => {
 						return length > 1;
-				  })
+					})
 				: hasNonzeroLength,
 		],
 		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],

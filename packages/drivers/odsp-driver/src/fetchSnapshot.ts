@@ -6,7 +6,7 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
 	NonRetryableError,
@@ -23,7 +23,6 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -240,10 +239,7 @@ async function redeemSharingLink(
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-					const storageToken = await storageTokenFetcher(
-						tokenFetchOptions,
-						"RedeemShareLink",
-					);
+					const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
 					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
 					const { url, headers } = getUrlAndHeadersWithAuth(
 						redeemUrl,
@@ -272,11 +268,9 @@ async function redeemSharingLink(
 							eventName: "ShareLinkRedeemFailedWithTenantDomain",
 							details: JSON.stringify({
 								length: redeemUrl?.length,
-								shareLinkUrlLength:
-									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem.length,
-								queryParamsLength: new URL(
-									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-								).search.length,
+								shareLinkUrlLength: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem.length,
+								queryParamsLength: new URL(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem)
+									.search.length,
 								useHeaders: forceAccessTokenViaAuthorizationHeader,
 							}),
 						},
@@ -525,10 +519,7 @@ async function fetchLatestSnapshotCore(
 				snapshot.sequenceNumber = undefined;
 			} else if (canCache) {
 				const fluidEpoch = odspResponse.headers.get("x-fluid-epoch");
-				assert(
-					fluidEpoch !== undefined,
-					0x1e6 /* "Epoch  should be present in response" */,
-				);
+				assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
 				const value: ISnapshotCachedEntry2 = {
 					...snapshot,
 					cacheEntryTime: Date.now(),

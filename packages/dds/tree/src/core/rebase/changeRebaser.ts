@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../../util/index.js";
+import type { Invariant } from "../../util/index.js";
 
 import type { RevisionTag } from "./types.js";
 
@@ -94,8 +94,8 @@ export interface ChangeRebaser<TChangeset> {
 /**
  * @internal
  */
-export interface TaggedChange<TChangeset> {
-	readonly revision: RevisionTag | undefined;
+export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {
+	readonly revision: TTag;
 	/**
 	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
 	 * The value corresponds to the `revision` of the original changeset being rolled back.
@@ -149,11 +149,11 @@ export function tagChange<T>(change: T, revision: RevisionTag | undefined): Tagg
 	return { revision, change };
 }
 
-export function tagRollbackInverse<T>(
-	inverseChange: T,
-	revision: RevisionTag | undefined,
+export function tagRollbackInverse<TChange, TTag>(
+	inverseChange: TChange,
+	revision: TTag,
 	rollbackOf: RevisionTag | undefined,
-): TaggedChange<T> {
+): TaggedChange<TChange, TTag> {
 	return {
 		revision,
 		change: inverseChange,

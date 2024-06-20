@@ -105,8 +105,19 @@ module.exports = {
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
 		 * When `any` is used, all compiler type checks around that value are ignored.
+		 *
+		 * @see https://typescript-eslint.io/rules/no-explicit-any
 		 */
-		"@typescript-eslint/no-explicit-any": "error",
+		"@typescript-eslint/no-explicit-any": [
+			"error",
+			{
+				/**
+				 * For certain cases, like rest parameters, any is required to allow arbitrary argument types.
+				 * @see https://typescript-eslint.io/rules/no-explicit-any/#ignorerestargs
+				 */
+				ignoreRestArgs: true,
+			},
+		],
 
 		/**
 		 * Requires explicit typing for anything exported from a module. Explicit types for function return

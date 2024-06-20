@@ -4,13 +4,14 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IResolvedUrl,
+	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 

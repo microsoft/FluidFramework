@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ErasedType } from "@fluidframework/core-interfaces";
+import type { ErasedType } from "@fluidframework/core-interfaces";
 import {
-	Brand,
+	type Brand,
 	brand,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/brand.js";
-import { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
+import type { isAssignableTo, requireFalse, requireTrue } from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 

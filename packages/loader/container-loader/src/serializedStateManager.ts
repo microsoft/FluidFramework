@@ -3,33 +3,39 @@
  * Licensed under the MIT License.
  */
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import type {
+	IEventProvider,
+	IEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
-} from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import {
 	type IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import type { ITelemetryBaseLogger, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
-import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+
+import {
+	ISerializableBlobContents,
+	getBlobContentsFromTree,
+} from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 /**
@@ -93,6 +99,8 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	attached: false;
 	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
 	hasAttachmentBlobs: boolean;
+	/** Used by the memory blob storage to persisted attachment blobs */
+	attachmentBlobs?: string;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
 	 * (it's included in ContainerContext passed to instantiateRuntime)
@@ -146,12 +154,16 @@ export class SerializedStateManager {
 		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
+		private readonly supportGetSnapshotApi: () => boolean,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
 
+		// special case handle. Obtaining the last saved op seq num to avoid
+		// refreshing the snapshot before we have processed it. It could cause
+		// a subsequent stashing to have a newer snapshot than allowed.
 		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
 			const savedOpsSize = pendingLocalState.savedOps.length;
 			this.lastSavedOpSequenceNumber =
@@ -191,15 +203,12 @@ export class SerializedStateManager {
 	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
 	 * @returns The snapshot to boot the container from
 	 */
-	public async fetchSnapshot(
-		specifiedVersion: string | undefined,
-		supportGetSnapshotApi: boolean,
-	) {
+	public async fetchSnapshot(specifiedVersion: string | undefined) {
 		if (this.pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
 				this.storageAdapter,
-				supportGetSnapshotApi,
+				this.supportGetSnapshotApi(),
 				specifiedVersion,
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
@@ -209,10 +218,7 @@ export class SerializedStateManager {
 					baseSnapshotTree,
 					this.storageAdapter,
 				);
-				const attributes = await getDocumentAttributes(
-					this.storageAdapter,
-					baseSnapshotTree,
-				);
+				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 				this.snapshot = {
 					baseSnapshot: baseSnapshotTree,
 					snapshotBlobs,
@@ -234,7 +240,7 @@ export class SerializedStateManager {
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
 			) {
 				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
-				this.refreshSnapshotP = this.refreshLatestSnapshot(supportGetSnapshotApi);
+				this.refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
 				this.refreshSnapshotP.catch((e) => {
 					this.mc.logger.sendErrorEvent({
 						eventName: "RefreshLatestSnapshotFailed",
@@ -328,10 +334,7 @@ export class SerializedStateManager {
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
-			this.processedOps.splice(
-				0,
-				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
-			);
+			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -339,9 +342,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0
-						? undefined
-						: this.processedOps[0].sequenceNumber,
+					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
 			});
 		}
 	}
@@ -397,9 +398,7 @@ export class SerializedStateManager {
 			},
 			async () => {
 				if (!this.offlineLoadEnabled) {
-					throw new UsageError(
-						"Can't get pending local state unless offline load is enabled",
-					);
+					throw new UsageError("Can't get pending local state unless offline load is enabled");
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
@@ -422,9 +421,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					loadedGroupIdSnapshots: hasGroupIdSnapshots
-						? loadedGroupIdSnapshots
-						: undefined,
+					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					clientId,
@@ -523,7 +520,7 @@ export async function fetchISnapshot(
 			: {
 					id: snapshot.snapshotTree.id,
 					treeId: snapshot.snapshotTree.id,
-			  };
+				};
 
 	if (snapshot === undefined && specifiedVersion !== undefined) {
 		mc.logger.sendErrorEvent({

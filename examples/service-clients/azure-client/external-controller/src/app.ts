@@ -10,10 +10,10 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { IFluidContainer } from "fluid-framework";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
@@ -50,12 +50,12 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 			tenantId: "",
 			tokenProvider: new AzureFunctionTokenProvider("", azureUser),
 			endpoint: "",
-	  }
+		}
 	: {
 			type: "local",
 			tokenProvider: new InsecureTokenProvider("fooBar", user),
 			endpoint: "http://localhost:7070",
-	  };
+		};
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
@@ -92,12 +92,10 @@ function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerP
 function createDiceRollerControllerPropsFromContainer(
 	container: IFluidContainer,
 ): [DiceRollerControllerProps, DiceRollerControllerProps] {
-	const diceRollerController1Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-		container.initialObjects.map1 as ISharedMap,
-	);
-	const diceRollerController2Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-		container.initialObjects.map2 as ISharedMap,
-	);
+	const diceRollerController1Props: DiceRollerControllerProps =
+		createDiceRollerControllerProps(container.initialObjects.map1 as ISharedMap);
+	const diceRollerController2Props: DiceRollerControllerProps =
+		createDiceRollerControllerProps(container.initialObjects.map2 as ISharedMap);
 	return [diceRollerController1Props, diceRollerController2Props];
 }
 
@@ -140,7 +138,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(containerSchema));
+		({ container, services } = await client.createContainer(containerSchema, "2"));
 		// const map1 = container.initialObjects.map1 as ISharedMap;
 		// map1.set("diceValue", 1);
 		// const map2 = container.initialObjects.map1 as ISharedMap;
@@ -160,7 +158,7 @@ async function start(): Promise<void> {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(id, containerSchema));
+		({ container, services } = await client.getContainer(id, containerSchema, "2"));
 		[diceRollerController1Props, diceRollerController2Props] =
 			createDiceRollerControllerPropsFromContainer(container);
 	}

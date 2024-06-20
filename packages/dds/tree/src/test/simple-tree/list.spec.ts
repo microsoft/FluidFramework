@@ -239,9 +239,7 @@ describe("List", () => {
 					assert.deepEqual(actual, expected);
 				}
 
-				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(
-					expected,
-				)}`, () => {
+				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(expected)}`, () => {
 					const subject = init(createStringList(array));
 					innerTest(subject, subject);
 				});
@@ -368,10 +366,7 @@ describe("List", () => {
 
 				const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 
-				type IterativeFn = (
-					callback: (...args: any[]) => unknown,
-					...args: any[]
-				) => unknown;
+				type IterativeFn = (callback: (...args: any[]) => unknown, ...args: any[]) => unknown;
 
 				// Ensure that invoking 'fnName' on an array-like subject returns the same result
 				// as invoking the same function on a true JS array.  This test helper also logs
@@ -386,7 +381,6 @@ describe("List", () => {
 				// The results of both are compared to the result of invoking the same function on a true JS array.
 				//
 				// The optional 'init' parameter provides an initial state, otherwise both are empty.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				function test3(fnName: string, callback: (...args: any[]) => unknown = predicate) {
 					// Wraps the callback function to log the values of 'this', 'value', and 'index',
 					// which are expected to be identical between a true JS array and our array-like subject.
@@ -420,10 +414,7 @@ describe("List", () => {
 						]);
 
 						// Check the actual result and compare the actual arguments to the callback.
-						function innerTest(
-							subject: readonly string[],
-							fnSource: readonly string[],
-						) {
+						function innerTest(subject: readonly string[], fnSource: readonly string[]) {
 							const actualFn = Reflect.get(fnSource, fnName) as (
 								callback: (...args: any[]) => unknown,
 								...args: any[]
@@ -440,17 +431,16 @@ describe("List", () => {
 							assert.deepEqual(actualArgs, expectedArgs);
 						}
 
-						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(
-							otherArgs,
-						)}) -> ${pretty(expectedResult)}:${pretty(expectedArgs)}`, () => {
+						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(otherArgs)}) -> ${pretty(
+							expectedResult,
+						)}:${pretty(expectedArgs)}`, () => {
 							const subject = createStringList(array);
 							innerTest(subject, subject);
 						});
 
-						it(`Array.prototype.${fnName}.call(${prettyArgs(
-							array,
-							...otherArgs,
-						)}) -> ${pretty(expected)}`, () => {
+						it(`Array.prototype.${fnName}.call(${prettyArgs(array, ...otherArgs)}) -> ${pretty(
+							expected,
+						)}`, () => {
 							innerTest(createStringList(array), Array.prototype);
 						});
 					};

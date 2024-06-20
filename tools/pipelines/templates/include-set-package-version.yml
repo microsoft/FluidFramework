@@ -42,19 +42,10 @@ parameters:
 
 # Set version
 steps:
-- ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - task: Bash@3
-    name: PrependPath
-    displayName: Prepend build-tools CLI to path
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        # Prepend the cli bin dir to the path. See
-        # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
-        # more information.
-        echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
+# These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
+# with the next group of steps.
+- ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
   - template: include-install-pnpm.yml
     parameters:
       buildDirectory: $(Build.SourcesDirectory)/build-tools
@@ -70,7 +61,13 @@ steps:
       script: |
         pnpm i --frozen-lockfile
         pnpm build:compile
+        cd packages/build-cli
+        # Use npm link instead of pnpm link because it handles bins better
+        npm link
+        echo "which flub: $(which flub)"
 
+# These steps install a version of build-tools from the npm registry. As noted above, these steps are mutually exclusive
+# with the previous group of steps.
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
     name: InstallBuildTools
@@ -90,7 +87,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # Output the help and full command list for debugging purposes
-      which flub
+      echo "which flub: $(which flub)"
       flub --help
       flub commands
 

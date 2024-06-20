@@ -13,9 +13,9 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -118,7 +118,10 @@ describe("Outbox", () => {
 		},
 	});
 
-	const getMockSplitter = (enabled: boolean, chunkSizeInBytes: number): Partial<OpSplitter> => ({
+	const getMockSplitter = (
+		enabled: boolean,
+		chunkSizeInBytes: number,
+	): Partial<OpSplitter> => ({
 		chunkSizeInBytes,
 		isBatchChunkingEnabled: enabled,
 		splitFirstBatchMessage: (batch: IBatch): IBatch => {

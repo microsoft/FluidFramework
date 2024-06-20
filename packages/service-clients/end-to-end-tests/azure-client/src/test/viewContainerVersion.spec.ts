@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AxiosResponse } from "axios";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -58,16 +58,15 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.getVersionsOfCurrentDocument,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.getVersionsOfCurrentDocument,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema));
+				({ container } = await client.getContainer(containerId, schema, "2"));
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 			}
 
@@ -121,25 +120,21 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.copyDocumentSuccessfully,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.copyDocumentSuccessfully,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 				containerId = await container.attach();
 
 				if (container.connectionState !== ConnectionState.Connected) {
-					await timeoutPromise(
-						(resolve) => container.once("connected", () => resolve()),
-						{
-							durationMs: connectTimeoutMs,
-							errorMsg: "container connect() timeout",
-						},
-					);
+					await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+						durationMs: connectTimeoutMs,
+						errorMsg: "container connect() timeout",
+					});
 				}
 			}
 
@@ -149,6 +144,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[0],
+				"2",
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -168,17 +164,16 @@ for (const testOpts of testMatrix) {
 			const testKey = "new-key";
 			const expectedValue = "expected-value";
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined =
-					await createContainerFromPayload(
-						ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
-						"test-user-id-1",
-						"test-user-name-1",
-					);
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema));
+				({ container } = await client.getContainer(containerId, schema, "2"));
 				map1 = container.initialObjects.map1 as SharedMap;
 			} else {
-				({ container } = await client.createContainer(schema));
+				({ container } = await client.createContainer(schema, "2"));
 
 				map1 = container.initialObjects.map1 as SharedMap;
 				map1.set(testKey, expectedValue);
@@ -203,6 +198,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[versions.length - 1],
+				"2",
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -215,9 +211,14 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: client should throw an error.
 		 */
 		it("can handle non-existing container", async () => {
-			const resources = client.viewContainerVersion("badidonviewversion", schema, {
-				id: "whatever",
-			});
+			const resources = client.viewContainerVersion(
+				"badidonviewversion",
+				schema,
+				{
+					id: "whatever",
+				},
+				"2",
+			);
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 				assert.strictEqual(
@@ -228,11 +229,7 @@ for (const testOpts of testMatrix) {
 				return true;
 			};
 
-			await assert.rejects(
-				resources,
-				errorFn,
-				"We should not be able to view the container.",
-			);
+			await assert.rejects(resources, errorFn, "We should not be able to view the container.");
 		});
 	});
 }

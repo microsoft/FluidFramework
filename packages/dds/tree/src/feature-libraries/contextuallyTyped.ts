@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	CursorLocationType,
 	EmptyKey,
-	FieldKey,
-	ITreeCursorSynchronous,
-	MapTree,
-	Value,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type MapTree,
+	type Value,
 	isCursor,
 	Multiplicity,
 } from "../core/index.js";
@@ -21,24 +21,28 @@ import { fail, isReadonlyArray } from "../util/index.js";
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema/index.js";
-import { TreeDataContext } from "./fieldGenerator.js";
-import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
+import type { TreeDataContext } from "./fieldGenerator.js";
 import {
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
+	mapTreeFromCursor,
+} from "./mapTreeCursor.js";
+import type { FlexFieldKind } from "./modular-schema/index.js";
+import type {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
 	InsertableFlexNode,
 } from "./schema-aware/index.js";
 import {
-	AllowedTypeSet,
+	type AllowedTypeSet,
 	Any,
-	FlexAllowedTypes,
+	type FlexAllowedTypes,
 	FlexFieldNodeSchema,
-	FlexFieldSchema,
+	type FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
 	LeafNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";
@@ -144,7 +148,8 @@ export const arrayLikeMarkerSymbol: unique symbol = Symbol("flex-tree:arrayLikeM
  * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
  * @internal
  */
-export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
+export interface MarkedArrayLike<TGet, TSet extends TGet = TGet>
+	extends ArrayLikeMut<TGet, TSet> {
 	readonly [arrayLikeMarkerSymbol]: true;
 	[Symbol.iterator](): IterableIterator<TGet>;
 }
@@ -334,7 +339,11 @@ export function cursorForTypedTreeData<T extends FlexTreeNodeSchema>(
 	schema: T,
 	data: InsertableFlexNode<T>,
 ): ITreeCursorSynchronous {
-	return cursorFromContextualData(context, new Set([schema]), data as ContextuallyTypedNodeData);
+	return cursorFromContextualData(
+		context,
+		new Set([schema]),
+		data as ContextuallyTypedNodeData,
+	);
 }
 
 /**

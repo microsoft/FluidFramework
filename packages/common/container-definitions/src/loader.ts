@@ -9,16 +9,18 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
-	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import type {
+	IResolvedUrl,
+	IDocumentMessage,
 	ISequencedProposal,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";
@@ -651,7 +653,7 @@ export interface IContainerLoadMode {
 	 * No trailing ops are applied before container is returned.
 	 * Default value.
 	 */
-	| undefined
+		| undefined
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -673,7 +675,7 @@ export interface IContainerLoadMode {
 	 * Connection to delta stream is made only when Container.connect() call is made. Op processing
 	 * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
 	 */
-	| "none"
+		| "none"
 		/*
 		 * Connection to delta stream is made only when Container.connect() call is made.
 		 * Op fetching from storage is performed and ops are applied as they come in.

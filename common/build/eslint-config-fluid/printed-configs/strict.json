@@ -215,7 +215,10 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "error"
+            "error",
+            {
+                "ignoreRestArgs": true
+            }
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -236,6 +239,9 @@
             "error"
         ],
         "@typescript-eslint/no-implied-eval": [
+            "error"
+        ],
+        "@typescript-eslint/no-import-type-side-effects": [
             "error"
         ],
         "@typescript-eslint/no-inferrable-types": [
@@ -619,6 +625,7 @@
             {
                 "allow": [
                     "@fluidframework/*/internal",
+                    "@fluid-experimental/**",
                     "*/index.js"
                 ]
             }

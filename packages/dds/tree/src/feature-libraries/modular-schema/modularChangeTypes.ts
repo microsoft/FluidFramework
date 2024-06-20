@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from "@tylerbu/sorted-btree-es6";
-import {
+import type { BTree } from "@tylerbu/sorted-btree-es6";
+import type {
 	ChangeAtomId,
 	ChangeAtomIdMap,
 	ChangesetLocalId,
@@ -13,9 +13,9 @@ import {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core/index.js";
-import { Brand } from "../../util/index.js";
-import { TreeChunk } from "../chunked-forest/index.js";
-import { CrossFieldTarget } from "./crossFieldQueries.js";
+import type { Brand } from "../../util/index.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
+import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
 /**
  * @internal

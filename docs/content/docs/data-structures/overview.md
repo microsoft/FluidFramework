@@ -117,6 +117,16 @@ Typical scenarios require the connected clients to "agree" on some course of act
 -   Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
 -   Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
+## DDS Deprecation
+
+With Fluid Framework 2, we made SharedTree DDS Generally Available and encourage developers to use it for new development. This is an incredibly flexible DDS that allows developers to represent a variety of data models (primitives, objects, lists, maps in any nested orientation). Due to this flexibility, it can also support features of various other DDSes in the Fluid repertoire. As SharedTree becomes more feature-rich, we plan to start reducing support for other DDSes that offer a sub-set of the functionality. This process takes the form of a deprecation journey for some of our existing DDSes, but rest assured, we will provide enough runway and support to migrate away from deprecated DDSes. DDS deprecation will follow these steps:
+
+-   **Provide alternative** - The recommended DDS will offer the same or better functionality than the deprecated DDS.
+-   **Migration path to the recommended DDS** - Before we deprecate a DDS, we will provide the ability for developers to migrate their data from their existing data model to the new data model. This will allow you to convert existing Fluid data to your new data model.
+-   **Deprecation of DDSes** - Deprecated DDSes will be marked deprecated in our APIs.
+-   **Deprecated DDS becomes read-only** - Deprecated DDSes will always be readable but we will remove the write APIs for them.
+
+
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
 
 <!-- prettier-ignore-start -->
@@ -142,7 +152,7 @@ Typical scenarios require the connected clients to "agree" on some course of act
 [fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
 [@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
 [@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
-[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
+[@fluidframework/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
 [AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
 [TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}

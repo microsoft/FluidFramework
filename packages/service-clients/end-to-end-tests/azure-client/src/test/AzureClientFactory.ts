@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
-import { v4 as uuid } from "uuid";
 import {
 	AzureClient,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
+import { type ScopeType } from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
 	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
 	AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
 	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
-import { type ScopeType } from "@fluidframework/azure-client/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
+import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
 
@@ -57,12 +57,12 @@ export function createAzureClient(
 				tokenProvider: createAzureTokenProvider(id ?? "foo", name ?? "bar", scopes),
 				endpoint: endPoint,
 				type: "remote",
-		  }
+			}
 		: {
 				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
 				endpoint: "http://localhost:7071",
 				type: "local",
-		  };
+			};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {
@@ -111,12 +111,12 @@ export function createAzureClientLegacy(
 					tokenProvider: createAzureTokenProvider(userID ?? "foo", userName ?? "bar"),
 					endpoint: endPoint,
 					type: "remote",
-			  }
+				}
 			: {
 					tokenProvider: new InsecureTokenProvider("fooBar", user),
 					endpoint: "http://localhost:7071",
 					type: "local",
-			  };
+				};
 	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
 		const testLogger = getTestLogger?.();
 		if (!logger && !testLogger) {

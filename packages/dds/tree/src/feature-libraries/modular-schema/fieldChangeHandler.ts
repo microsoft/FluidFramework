@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
-import {
+import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import type {
 	ChangeEncodingContext,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
@@ -13,12 +13,12 @@ import {
 	RevisionMetadataSource,
 	RevisionTag,
 } from "../../core/index.js";
-import { IdAllocator, Invariant } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
+import type { IdAllocator, Invariant } from "../../util/index.js";
+import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
-import { CrossFieldManager } from "./crossFieldQueries.js";
-import { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
-import { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -70,6 +70,19 @@ export interface FieldChangeHandler<
 	 * and could be removed from the ModularChangeset tree without changing its behavior.
 	 */
 	isEmpty(change: TChangeset): boolean;
+
+	/**
+	 * @param change - The field change to get the child changes from.
+	 *
+	 * @returns The set of `NodeId`s that correspond to nested changes in the given `change`.
+	 * Each `NodeId` is associated with the index of the node in the field in the input context of the changeset
+	 * (or `undefined` if the node is not attached in the input context).
+	 * For all returned entries where the index is defined,
+	 * the indices are are ordered from smallest to largest (with no duplicates).
+	 * The returned array is owned by the caller.
+	 */
+	getNestedChanges(change: TChangeset): [NodeId, number | undefined][];
+
 	createEmpty(): TChangeset;
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
 }
@@ -112,7 +125,6 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RebaseRevisionMetadata,
-		existenceState?: NodeExistenceState,
 	): TChangeset;
 
 	/**
@@ -177,9 +189,9 @@ export type NodeChangeInverter = (change: NodeId) => NodeId;
 /**
  * @internal
  */
-export enum NodeExistenceState {
-	Alive,
-	Dead,
+export enum NodeAttachState {
+	Attached,
+	Detached,
 }
 
 /**
@@ -189,10 +201,10 @@ export type NodeChangeRebaser = (
 	change: NodeId | undefined,
 	baseChange: NodeId | undefined,
 	/**
-	 * Whether or not the node is alive or dead in the input context of change.
-	 * Defaults to Alive if undefined.
+	 * Whether the node is attached to this field in the output context of the base change.
+	 * Defaults to attached if undefined.
 	 */
-	state?: NodeExistenceState,
+	state?: NodeAttachState,
 ) => NodeId | undefined;
 
 /**
@@ -224,14 +236,4 @@ export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
-}
-
-/**
- * @internal
- */
-export function getIntention(
-	rev: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): RevisionTag | undefined {
-	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }

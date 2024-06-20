@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import {
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionTag,
+	offsetChangeAtomId,
+} from "../../../core/index.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellId } from "../../../feature-libraries/sequence-field/index.js";
+import type { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
@@ -20,6 +25,7 @@ function invert(change: SF.Changeset, tag: RevisionTag = tag1): SF.Changeset {
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
@@ -102,7 +108,11 @@ export function testInvert() {
 
 		it("remove => revive (with rollback ID)", () => {
 			const detachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
-			const input = tagChangeInline([Mark.remove(2, brand(0))], tag1, tag2);
+			const input = tagChangeInline(
+				[Mark.remove(2, brand(0), { idOverride: detachId })],
+				tag1,
+				tag3, // This ID should be ignored
+			);
 			const expected = [Mark.revive(2, detachId)];
 			const actual = invertChange(input);
 			assertChangesetsEqual(actual, expected);
@@ -130,13 +140,12 @@ export function testInvert() {
 				Mark.skip(3),
 				Mark.moveIn(1, brand(0)),
 			];
-			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
 			const expected = [
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				Mark.skip(3),
 				Mark.moveOut(1, brand(0), {
 					changes: { ...childChange1, revision: tag1 },
-					idOverride,
+					idOverride: { revision: tag1, localId: brand(1) },
 				}),
 			];
 			const actual = invert(input);
@@ -149,11 +158,10 @@ export function testInvert() {
 				Mark.skip(3),
 				Mark.moveOut(1, brand(0), { changes: childChange1 }),
 			];
-			const idOverride: SF.CellId = { revision: tag1, localId: brand(0) };
 			const expected = [
 				Mark.moveOut(1, brand(0), {
 					changes: { ...childChange1, revision: tag1 },
-					idOverride,
+					idOverride: { revision: tag1, localId: brand(1) },
 				}),
 				Mark.skip(3),
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
@@ -267,7 +275,7 @@ export function testInvert() {
 				{ count: 1 },
 				Mark.moveOut(1, brand(1), {
 					changes: { ...childChange1, revision: tag1 },
-					idOverride: { revision: tag1, localId: brand(1) },
+					idOverride: { revision: tag1, localId: brand(2) },
 				}),
 			];
 
@@ -297,7 +305,7 @@ export function testInvert() {
 				{ count: 1 },
 				Mark.moveOut(1, detachId.localId, {
 					changes: { ...childChange1, revision: tag1 },
-					idOverride: detachId,
+					idOverride: offsetChangeAtomId(detachId, 1),
 				}),
 			];
 			assertChangesetsEqual(inverse, expected);
@@ -307,7 +315,7 @@ export function testInvert() {
 			const moveAndRemove = [
 				Mark.moveOut(1, brand(0), { changes: childChange1 }),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(1))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.remove(1, brand(2))),
 			];
 
 			const inverse = invert(moveAndRemove);
@@ -315,8 +323,8 @@ export function testInvert() {
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 				{ count: 1 },
 				Mark.moveOut(1, brand(0), {
-					cellId: { revision: tag1, localId: brand(1) },
-					idOverride: { revision: tag1, localId: brand(0) },
+					cellId: { revision: tag1, localId: brand(2) },
+					idOverride: { revision: tag1, localId: brand(1) },
 					changes: { ...childChange1, revision: tag1 },
 				}),
 			];
@@ -328,12 +336,12 @@ export function testInvert() {
 			const moves = [
 				Mark.moveOut(1, brand(0), {
 					changes: childChange1,
-					finalEndpoint: { localId: brand(1) },
+					finalEndpoint: { localId: brand(2) },
 				}),
 				{ count: 1 },
-				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+				Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(2))),
 				{ count: 1 },
-				Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
+				Mark.moveIn(1, brand(2), { finalEndpoint: { localId: brand(0) } }),
 			];
 
 			const inverse = invert(moves);
@@ -342,20 +350,20 @@ export function testInvert() {
 					1,
 					brand(0),
 					{ revision: tag1, localId: brand(0) },
-					{ finalEndpoint: { localId: brand(1) } },
+					{ finalEndpoint: { localId: brand(2) } },
 				),
 				{ count: 1 },
 				Mark.attachAndDetach(
-					Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+					Mark.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
 					Mark.moveOut(1, brand(0), {
-						idOverride: { revision: tag1, localId: brand(0) },
+						idOverride: { revision: tag1, localId: brand(1) },
 					}),
 				),
 				{ count: 1 },
-				Mark.moveOut(1, brand(1), {
+				Mark.moveOut(1, brand(2), {
 					changes: { ...childChange1, revision: tag1 },
 					finalEndpoint: { localId: brand(0) },
-					idOverride: { revision: tag1, localId: brand(1) },
+					idOverride: { revision: tag1, localId: brand(3) },
 				}),
 			];
 
@@ -375,26 +383,21 @@ export function testInvert() {
 				];
 
 				const actual = invert(input, tag1);
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag1 },
-					cellId,
-				);
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag1 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 
 			it("remove (same detach ID through metadata)", () => {
 				const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 				const input = [
-					Mark.onEmptyCell(cellId, Mark.remove(1, brand(0), { changes: childChange1 })),
+					Mark.onEmptyCell(
+						cellId,
+						Mark.remove(1, brand(0), { changes: childChange1, idOverride: cellId }),
+					),
 				];
 
-				const actual = invertChange(tagChangeInline(input, tag2, tag1));
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag2 },
-					cellId,
-				);
+				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */));
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 

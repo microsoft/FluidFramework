@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
 import { OpStreamAttributor } from "../attributor.js";

@@ -3,37 +3,40 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
+	IVersion,
+	ISnapshotTree,
+	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
-import * as api from "@fluidframework/protocol-definitions";
 
 /**
  * Document access to underlying storage. It is default implementation of a storage service.
  * Does not read/write anything.
  */
 export class NullBlobStorageService implements IDocumentStorageService {
-	public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return version ? Promise.reject(new Error("Invalid operation")) : null;
 	}
 
-	public async getVersions(versionId: string | null, count: number): Promise<api.IVersion[]> {
+	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		return [];
 	}
 
 	public async uploadSummaryWithContext(
-		summary: api.ISummaryTree,
+		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
 		throw new Error("Invalid operation");
 	}
 
-	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		throw new Error("Invalid operation");
 	}
 
-	public async createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse> {
+	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		throw new Error("Null blob storage can not create blob");
 	}
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {

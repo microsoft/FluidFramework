@@ -46,7 +46,6 @@ const getDefaultCheckpoint = (): IDeliState => {
 		signalClientConnectionNumber: 0,
 		lastSentMSN: 0,
 		nackMessages: undefined,
-		successfullyStartedLambdas: [],
 		checkpointTimestamp: Date.now(),
 	};
 };
@@ -80,7 +79,6 @@ export class DeliLambdaFactory
 	): Promise<IPartitionLambda> {
 		const { documentId, tenantId } = config;
 		let sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
-		let sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined;
 
 		const messageMetaData = {
 			documentId,
@@ -128,20 +126,12 @@ export class DeliLambdaFactory
 				document?.isEphemeralContainer,
 			);
 
-			sessionStartMetric = createSessionMetric(
-				tenantId,
-				documentId,
-				LumberEventName.StartSessionResult,
-				this.serviceConfiguration,
-				document?.isEphemeralContainer,
-			);
-
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 		} catch (error) {
 			const errMsg = "Deli lambda creation failed";
 			context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
 			Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId), error);
-			this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+			this.logSessionFailureMetrics(sessionMetric, errMsg);
 			throw error;
 		}
 
@@ -171,7 +161,7 @@ export class DeliLambdaFactory
 					const errMsg = "Could not load state from summary";
 					context.log?.error(errMsg, { messageMetaData });
 					Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
-					this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
+					this.logSessionFailureMetrics(sessionMetric, errMsg);
 
 					lastCheckpoint = getDefaultCheckpoint();
 				} else {
@@ -224,13 +214,12 @@ export class DeliLambdaFactory
 			this.reverseProducer,
 			this.serviceConfiguration,
 			sessionMetric,
-			sessionStartMetric,
 			this.checkpointService,
 		);
 
 		deliLambda.on("close", (closeType) => {
 			const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-			const handler = async () => {
+			const handler = async (): Promise<void> => {
 				if (
 					closeType === LambdaCloseType.ActivityTimeout ||
 					closeType === LambdaCloseType.Error
@@ -319,16 +308,16 @@ export class DeliLambdaFactory
 					Lumberjack.info(message, baseLumberjackProperties);
 				}
 			};
-			handler().catch((e) => {
-				const message = `Failed to handle session alive and active with exception ${e}`;
+			handler().catch((error) => {
+				const message = `Failed to handle session alive and active with exception ${error}`;
 				context.log?.error(message, { messageMetaData });
-				Lumberjack.error(message, baseLumberjackProperties, e);
+				Lumberjack.error(message, baseLumberjackProperties, error);
 			});
 		});
 
 		deliLambda.on("noClient", () => {
 			const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-			const handler = async () => {
+			const handler = async (): Promise<void> => {
 				// Set activity timer to reduce session grace period for ephemeral containers if cluster is in draining
 				if (document?.isEphemeralContainer && this.clusterDrainingChecker) {
 					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining();
@@ -378,11 +367,9 @@ export class DeliLambdaFactory
 
 	private logSessionFailureMetrics(
 		sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
-		sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		errMsg: string,
-	) {
+	): void {
 		sessionMetric?.error(errMsg);
-		sessionStartMetric?.error(errMsg);
 	}
 
 	public async dispose(): Promise<void> {
@@ -416,18 +403,18 @@ export class DeliLambdaFactory
 					toUtf8(content.content, content.encoding),
 				) as IDeliState;
 				return summaryCheckpoint;
-			} catch (exception) {
+			} catch (error) {
 				const messageMetaData = {
 					documentId,
 					tenantId,
 				};
 				const errorMessage = `Error fetching deli state from summary`;
 				logger?.error(errorMessage, { messageMetaData });
-				logger?.error(JSON.stringify(exception), { messageMetaData });
+				logger?.error(JSON.stringify(error), { messageMetaData });
 				Lumberjack.error(
 					errorMessage,
 					getLumberBaseProperties(documentId, tenantId),
-					exception,
+					error,
 				);
 				return undefined;
 			}

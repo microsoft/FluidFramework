@@ -109,7 +109,11 @@ NodeDependencyManager.prototype.startSession = function (extra = {}) {
  * @param {String} [in_parentRef] -
  *     Reference to the parent node
  */
-NodeDependencyManager.prototype._setNodeStatus = function (in_node, in_newStatus, in_parentRef) {
+NodeDependencyManager.prototype._setNodeStatus = function (
+	in_node,
+	in_newStatus,
+	in_parentRef,
+) {
 	let session = in_node._session;
 	let nodeRef = in_node._ref;
 	let nodeStatus = this._nodeStatus[nodeRef];
@@ -395,7 +399,10 @@ NodeDependencyManager.prototype.getNodeStatus = function (in_nodeRef, in_session
  *
  * @return {Promise} This promise will resolve once all children have reached the COMPLETED status
  */
-NodeDependencyManager.prototype.waitForAllChildrenCompleted = function (in_nodeRef, in_session) {
+NodeDependencyManager.prototype.waitForAllChildrenCompleted = function (
+	in_nodeRef,
+	in_session,
+) {
 	const waitFunction = () => {
 		let node = in_session.nodeStatus[in_nodeRef];
 		let pendingChildren = _.filter(

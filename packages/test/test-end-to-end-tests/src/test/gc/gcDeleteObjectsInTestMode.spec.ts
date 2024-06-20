@@ -13,7 +13,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -153,7 +153,12 @@ async function validateDataStoreReferenceState(
 		referenced,
 		deletedFromGCState,
 	);
-	await validateDataStoreLoad(summarizerContainerRuntime, deleteContent, dataStoreId, referenced);
+	await validateDataStoreLoad(
+		summarizerContainerRuntime,
+		deleteContent,
+		dataStoreId,
+		referenced,
+	);
 
 	let dataStoreTree: ISummaryTree | undefined;
 	const channelsTree = (summary.tree[channelsTreeName] as ISummaryTree).tree;
@@ -381,92 +386,96 @@ async function validateBlobsReferenceState(
 /**
  * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
  */
-describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestObjectProvider) => {
-	// If deleteContent is true, GC is run in test mode where content that is not referenced is
-	// deleted after each GC run.
-	const tests = (deleteContent: boolean = false) => {
-		let provider: ITestObjectProvider;
-		let summarizerContainerRuntime: ContainerRuntime;
-		let mainDataStore: ITestDataObject;
+describeCompat(
+	"GC delete attachment blobs in test mode",
+	"NoCompat",
+	(getTestObjectProvider) => {
+		// If deleteContent is true, GC is run in test mode where content that is not referenced is
+		// deleted after each GC run.
+		const tests = (deleteContent: boolean = false) => {
+			let provider: ITestObjectProvider;
+			let summarizerContainerRuntime: ContainerRuntime;
+			let mainDataStore: ITestDataObject;
 
-		beforeEach("setup", async function () {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-			const testContainerConfig: ITestContainerConfig = {
-				...defaultGCConfig,
-				runtimeOptions: {
-					...defaultGCConfig.runtimeOptions,
-					gcOptions: {
-						runGCInTestMode: deleteContent,
+			beforeEach("setup", async function () {
+				provider = getTestObjectProvider({ syncSummarizer: true });
+				if (provider.driver.type !== "local") {
+					this.skip();
+				}
+				const testContainerConfig: ITestContainerConfig = {
+					...defaultGCConfig,
+					runtimeOptions: {
+						...defaultGCConfig.runtimeOptions,
+						gcOptions: {
+							runGCInTestMode: deleteContent,
+						},
 					},
-				},
-			};
-			const container = await provider.makeTestContainer(testContainerConfig);
-			mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
-			summarizerContainerRuntime = mainDataStore._context
-				.containerRuntime as ContainerRuntime;
-			await waitForContainerConnection(container);
+				};
+				const container = await provider.makeTestContainer(testContainerConfig);
+				mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
+				summarizerContainerRuntime = mainDataStore._context
+					.containerRuntime as ContainerRuntime;
+				await waitForContainerConnection(container);
+			});
+
+			it("marks attachment blobs as referenced / unreferenced correctly", async () => {
+				// Upload couple of attachment blobs and mark them referenced.
+				const blob1Contents = "Blob contents 1";
+				const blob2Contents = "Blob contents 2";
+				const blob1Handle = await mainDataStore._context.uploadBlob(
+					stringToBuffer(blob1Contents, "utf-8"),
+				);
+				const blob2Handle = await mainDataStore._context.uploadBlob(
+					stringToBuffer(blob2Contents, "utf-8"),
+				);
+				mainDataStore._root.set("blob1", blob1Handle);
+				mainDataStore._root.set("blob2", blob2Handle);
+				await validateBlobsReferenceState(
+					provider,
+					summarizerContainerRuntime,
+					deleteContent,
+					blob1Handle,
+					true /* referenced */,
+				);
+				await validateBlobsReferenceState(
+					provider,
+					summarizerContainerRuntime,
+					deleteContent,
+					blob2Handle,
+					true /* referenced */,
+				);
+
+				// Remove blob1's handle and verify its marked as unreferenced.
+				mainDataStore._root.delete("blob1");
+				await validateBlobsReferenceState(
+					provider,
+					summarizerContainerRuntime,
+					deleteContent,
+					blob1Handle,
+					false /* referenced */,
+				);
+
+				// Add blob1's handle back. If deleteContent is true, the blob should get deleted and should
+				// remain unreferenced. Otherwise, it should be referenced back.
+				// Also, if deleteContent is true, it won't be in the GC state in the summary anymore.
+				mainDataStore._root.set("blob1", blob1Handle);
+				await validateBlobsReferenceState(
+					provider,
+					summarizerContainerRuntime,
+					deleteContent,
+					blob1Handle,
+					deleteContent ? false : true /* referenced */,
+					deleteContent ? true : false /* deletedFromGCState */,
+				);
+			});
+		};
+
+		describe("Verify attachment blob state when unreferenced content is marked", () => {
+			tests();
 		});
 
-		it("marks attachment blobs as referenced / unreferenced correctly", async () => {
-			// Upload couple of attachment blobs and mark them referenced.
-			const blob1Contents = "Blob contents 1";
-			const blob2Contents = "Blob contents 2";
-			const blob1Handle = await mainDataStore._context.uploadBlob(
-				stringToBuffer(blob1Contents, "utf-8"),
-			);
-			const blob2Handle = await mainDataStore._context.uploadBlob(
-				stringToBuffer(blob2Contents, "utf-8"),
-			);
-			mainDataStore._root.set("blob1", blob1Handle);
-			mainDataStore._root.set("blob2", blob2Handle);
-			await validateBlobsReferenceState(
-				provider,
-				summarizerContainerRuntime,
-				deleteContent,
-				blob1Handle,
-				true /* referenced */,
-			);
-			await validateBlobsReferenceState(
-				provider,
-				summarizerContainerRuntime,
-				deleteContent,
-				blob2Handle,
-				true /* referenced */,
-			);
-
-			// Remove blob1's handle and verify its marked as unreferenced.
-			mainDataStore._root.delete("blob1");
-			await validateBlobsReferenceState(
-				provider,
-				summarizerContainerRuntime,
-				deleteContent,
-				blob1Handle,
-				false /* referenced */,
-			);
-
-			// Add blob1's handle back. If deleteContent is true, the blob should get deleted and should
-			// remain unreferenced. Otherwise, it should be referenced back.
-			// Also, if deleteContent is true, it won't be in the GC state in the summary anymore.
-			mainDataStore._root.set("blob1", blob1Handle);
-			await validateBlobsReferenceState(
-				provider,
-				summarizerContainerRuntime,
-				deleteContent,
-				blob1Handle,
-				deleteContent ? false : true /* referenced */,
-				deleteContent ? true : false /* deletedFromGCState */,
-			);
+		describe("Verify attachment blob state when unreferenced content is deleted", () => {
+			tests(true /* deleteContent */);
 		});
-	};
-
-	describe("Verify attachment blob state when unreferenced content is marked", () => {
-		tests();
-	});
-
-	describe("Verify attachment blob state when unreferenced content is deleted", () => {
-		tests(true /* deleteContent */);
-	});
-});
+	},
+);

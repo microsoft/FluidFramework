@@ -9,7 +9,12 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FieldAnchor, FieldKey, UpPath, rootFieldKey } from "../../../core/index.js";
+import {
+	type FieldAnchor,
+	type FieldKey,
+	type UpPath,
+	rootFieldKey,
+} from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
 import { isFreedSymbol } from "../../../feature-libraries/flex-tree/lazyEntity.js";
 import {
@@ -79,26 +84,17 @@ describe("LazyField", () => {
 		assert.throws(
 			() => sequenceField.insertAt(0, [1]),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => (optionalField.content = undefined),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 		assert.throws(
 			() => (valueField.content = {}),
 			(e: Error) =>
-				validateAssertionError(
-					e,
-					/only allowed on fields with TreeStatus.InDocument status/,
-				),
+				validateAssertionError(e, /only allowed on fields with TreeStatus.InDocument status/),
 		);
 	});
 

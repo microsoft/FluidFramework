@@ -254,7 +254,7 @@ export class Outbox {
 			return;
 		}
 
-		// Did we disconnect?
+		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
@@ -275,7 +275,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
+		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
@@ -307,6 +307,15 @@ export class Outbox {
 		return this.params.opReentrancy() && !this.rebasing;
 	}
 
+	/**
+	 * As necessary and enabled, compresses and chunks the given batch.
+	 *
+	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
+	 *
+	 * @param batch - Raw or Grouped batch to consider for compression/chunking
+	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
+	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
+	 */
 	private compressBatch(batch: IBatch): IBatch {
 		if (
 			batch.content.length === 0 ||
@@ -373,10 +382,7 @@ export class Outbox {
 
 			this.params.legacySendBatchFn(batch);
 		} else {
-			assert(
-				batch.referenceSequenceNumber !== undefined,
-				0x58e /* Batch must not be empty */,
-			);
+			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
 			this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,

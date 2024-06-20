@@ -13,17 +13,17 @@ import type {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { IClientDetails } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientConfiguration,
-	IClientDetails,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
-import { summarizerClientType } from "./summary/index.js";
 import type { PendingStateManager } from "./pendingStateManager.js";
+import { summarizerClientType } from "./summary/index.js";
 
 /**
  * Base class for DeltaManager proxy that proxy's access to the real DeltaManager.
@@ -100,7 +100,10 @@ export abstract class BaseDeltaManagerProxy
 	}
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		protected readonly deltaManager: IDeltaManager<
+			ISequencedDocumentMessage,
+			IDocumentMessage
+		>,
 	) {
 		super();
 
@@ -192,7 +195,10 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 	private readonly isSummarizerClient: boolean;
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		protected readonly deltaManager: IDeltaManager<
+			ISequencedDocumentMessage,
+			IDocumentMessage
+		>,
 	) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
@@ -237,7 +243,10 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	};
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		protected readonly deltaManager: IDeltaManager<
+			ISequencedDocumentMessage,
+			IDocumentMessage
+		>,
 		private readonly pendingStateManager: Pick<
 			PendingStateManager,
 			"minimumPendingMessageSequenceNumber"
