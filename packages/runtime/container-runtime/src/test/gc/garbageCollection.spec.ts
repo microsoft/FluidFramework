@@ -89,6 +89,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly triggerAutoRecovery: (nodePath: string) => void;
 	runGC: (fullGC: boolean) => Promise<IGCStats>;
 };
 
@@ -442,6 +443,7 @@ describe("Garbage Collection Tests", () => {
 
 			// getGCData set up to sometimes return the corrupted data
 			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
 					return fullGC ? defaultGCData : corruptedGCData;
 				},
@@ -544,6 +546,23 @@ describe("Garbage Collection Tests", () => {
 			assert(
 				!gc.unreferencedNodesState.has(nodes[0]),
 				"node 0 should not be unreferenced after repairing GC Data",
+			);
+		});
+
+		it("Autorecovery disabled if enableGCSweep not set", async () => {
+			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: undefined } },
+			});
+			const spies = {
+				gc: {
+					submitMessage: spy(gc, "submitMessage"),
+				},
+			};
+
+			gc.triggerAutoRecovery(""); // nodePath is irrelevant
+			assert(
+				spies.gc.submitMessage.notCalled,
+				"triggerAutoRecovery should no-op if gcOp is not supported in schema",
 			);
 		});
 	});
