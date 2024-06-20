@@ -300,12 +300,13 @@ for (const testOpts of testMatrix) {
 					new TreeViewConfiguration({ schema: Doll, enableSchemaValidation: true }),
 				);
 
-				view.initialize(new Doll({ nested: new Doll({ nested: new Doll({}) }) }));
-				const depth0 = view.root;
-				const depth1 = depth0.nested;
-				assert(depth1 !== undefined);
-				const depth2 = depth1.nested;
-				assert(depth2 !== undefined);
+				// These nodes in the initial tree are unhydrated...
+				const depth1 = new Doll({ nested: new Doll({}) });
+				const depth0 = new Doll({ nested: depth1 });
+				view.initialize(depth0);
+				// ...and confirmed to be the same nodes we get when we read the tree after initialization
+				assert.equal(view.root, depth0);
+				assert.equal(view.root.nested, depth1);
 				// Record a list of the node events fired
 				const eventLog: string[] = [];
 				Tree.on(depth0, "nodeChanged", () => {
