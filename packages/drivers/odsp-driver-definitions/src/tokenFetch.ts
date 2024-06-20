@@ -152,6 +152,7 @@ export const isTokenFromCache = (
 export type IdentityType = "Consumer" | "Enterprise";
 
 /**
+ * @returns Authorization header value
  * @internal
  */
 export type InstrumentedStorageTokenFetcher = (

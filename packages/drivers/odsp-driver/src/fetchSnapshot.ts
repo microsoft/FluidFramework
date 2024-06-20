@@ -73,25 +73,20 @@ export enum SnapshotFormatSupportType {
 /**
  * Fetches a snapshot from the server with a given version id.
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
- * @param authHeader - Authorization header value to be used in the request
- * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
  * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
+ * @param snapshotDownloader - Implementation of the get/post methods used to fetch the snapshot
  * @returns A promise of the snapshot and the status code of the response
  */
 export async function fetchSnapshot(
 	snapshotUrl: string,
 	// eslint-disable-next-line @rushstack/no-new-null
-	authHeader: string | null,
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	logger: ITelemetryLoggerExt,
-	snapshotDownloader: (
-		url: string,
-		fetchOptions: { [index: string]: RequestInit },
-	) => Promise<IOdspResponse<unknown>>,
+	snapshotDownloader: (url: string) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
@@ -102,14 +97,12 @@ export async function fetchSnapshot(
 
 	const queryString = getQueryString(queryParams);
 	const url = `${snapshotUrl}${path}${queryString}`;
-	const headers = getHeadersWithAuth(authHeader);
 	const response = (await PerformanceEvent.timedExecAsync(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
-		async () => snapshotDownloader(url, { headers }),
+		async () => snapshotDownloader(url),
 	)) as IOdspResponse<IOdspSnapshot>;
 	return convertOdspSnapshotToSnapshotTreeAndBlobs(response.content);
 }

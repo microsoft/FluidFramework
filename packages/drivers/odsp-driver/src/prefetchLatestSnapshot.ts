@@ -83,7 +83,7 @@ export async function prefetchLatestSnapshot(
 		driveId: odspResolvedUrl.driveId,
 		itemId: odspResolvedUrl.itemId,
 	};
-	const tokenFetcher = toInstrumentedOdspTokenFetcher(
+	const getAuthHeader = toInstrumentedOdspTokenFetcher(
 		odspLogger,
 		resolvedUrlData,
 		getStorageToken,
@@ -132,7 +132,7 @@ export async function prefetchLatestSnapshot(
 			);
 			await fetchSnapshotWithRedeem(
 				odspResolvedUrl,
-				tokenFetcher,
+				getAuthHeader,
 				hostSnapshotFetchOptions,
 				forceAccessTokenViaAuthorizationHeader,
 				odspLogger,

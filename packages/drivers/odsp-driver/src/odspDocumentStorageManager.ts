@@ -808,28 +808,25 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		scenarioName?: string,
 	): Promise<api.ISnapshotTree | undefined> {
 		return getWithRetryForTokenRefresh(async (options) => {
-			const url = this.snapshotUrl!;
-			const method = "GET";
-			const storageToken = await this.getAuthHeader(
-				{ ...options, request: { url, method } },
-				"ReadCommit",
-			);
 			const snapshotDownloader = async (
-				downloadUrl: string,
-				fetchOptions: RequestInit,
+				url: string,
 				// eslint-disable-next-line unicorn/consistent-function-scoping
 			): Promise<IOdspResponse<unknown>> => {
+				const authHeader = await this.getAuthHeader(
+					{ ...options, request: { url, method: "GET" } },
+					"ReadCommit",
+				);
+				const headers = getHeadersWithAuth(authHeader);
 				return this.epochTracker.fetchAndParseAsJSON(
-					downloadUrl,
-					fetchOptions,
+					url,
+					{ headers },
 					"snapshotTree",
 					undefined,
 					scenarioName,
 				);
 			};
 			const snapshot = await fetchSnapshot(
-				url,
-				storageToken,
+				this.snapshotUrl!,
 				id,
 				this.fetchFullSnapshot,
 				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
