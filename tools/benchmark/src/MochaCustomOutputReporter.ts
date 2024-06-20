@@ -22,7 +22,7 @@ import { getSuiteName } from "./mocha/mochaReporterUtilities";
  * Custom mocha reporter for benchmarks that provide their own measurements.
  *
  * @remarks
- * It can be used by passing the JavaScript version of this file to mocha's --reporter option.
+ * It can be used by passing the JavaScript version of this file to mocha's --reporter option. {@link https://www.npmjs.com/package/mocha-junit-reporter}
  *
  * This reporter takes output from mocha events and prints a user-friendly version of the results, in addition
  * to writing them to a file.
@@ -33,7 +33,13 @@ import { getSuiteName } from "./mocha/mochaReporterUtilities";
 * @see {@link https://mochajs.org/api/tutorial-custom-reporter.html} for more information about custom mocha reporters.
  */
 class MochaCustomBenchmarkReporter {
+	/**
+	 * Map to store suit data.
+	 */
 	private readonly inProgressSuites: Map<string, [string, CustomBenchmarkResults][]> = new Map();
+	/**
+	 * The Output dir.
+	 */
 	private readonly outputDirectory: string;
 
 	public constructor(runner: Runner, options?: { reporterOptions?: { reportDir?: string } }) {
