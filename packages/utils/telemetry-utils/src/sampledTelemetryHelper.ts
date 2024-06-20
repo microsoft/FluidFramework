@@ -238,7 +238,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 		return loggerData;
 	}
 
-	private processCustomData(loggerData: LoggerData, counts: number): Record<string, number> {
+	private processCustomData(loggerData: LoggerData, count: number): Record<string, number> {
 		const processedCustomData: Record<string, number> = {};
 
 		const dataSums = loggerData.dataSums;
