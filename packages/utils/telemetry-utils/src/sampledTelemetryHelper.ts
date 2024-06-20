@@ -181,13 +181,13 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 	 * @returns Whatever the passed-in code block returns.
 	 */
 	public measure<T>(
-		codeToMeasure: (event: ITelemetryEventMetrics<TCustomMetrics>) => T,
+		codeToMeasure: (metricsTracker: ITelemetryEventMetrics<TCustomMetrics>) => T,
 		bucket: string = "",
 	): T {
-		const event = TelemetryEventMetrics.start({ ...this.customMetrics });
+		const metricsTracker = TelemetryEventMetrics.start({ ...this.customMetrics });
 		const start = performance.now();
-		const returnValue = codeToMeasure(event);
-		const telemetryProperties = event.end();
+		const returnValue = codeToMeasure(metricsTracker);
+		const telemetryProperties = metricsTracker.end();
 		const duration = performance.now() - start;
 
 		const loggerData = this.accumulateCustomData(
@@ -203,10 +203,13 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 			m.totalDuration = (m.totalDuration ?? 0) + duration;
 			m.minDuration = Math.min(m.minDuration ?? duration, duration);
 			m.maxDuration = Math.max(m.maxDuration ?? 0, duration);
-			m.averageDuration = m.totalDuration / m.count;
 		}
 
 		if (m.count >= this.sampleThreshold) {
+			// Computation extracted separately to avoid multiple division operations.
+			if (this.includeAggregateMetrics) {
+				m.averageDuration = (m.totalDuration ?? 0) / m.count;
+			}
 			this.flushBucket(bucket);
 		}
 
@@ -241,12 +244,16 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 	private processCustomData(loggerData: LoggerData, count: number): Record<string, number> {
 		const processedCustomData: Record<string, number> = {};
 
+		if (loggerData.dataSums === undefined || loggerData.dataMaxes === undefined) {
+			return processedCustomData;
+		}
+
 		const dataSums = loggerData.dataSums;
 		const dataMaxes = loggerData.dataMaxes;
 
 		for (const [key, val] of Object.entries(dataSums)) {
-			processedCustomData[`avg_${key}`] = roundToDecimalPlaces(val / counts, 6);
 			// implementation of class guarantees the keys between dataMaxes and dataSums align.
+			processedCustomData[`avg_${key}`] = roundToDecimalPlaces(val / count, 6);
 			processedCustomData[`max_${key}`] = dataMaxes[key] ?? 0;
 		}
 
@@ -261,10 +268,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 
 		const measurements = loggerData.measurements;
 
-		let processedCustomData: Record<string, number> = {};
-		if (loggerData.dataSums !== undefined && loggerData.dataMaxes !== undefined) {
-			processedCustomData = this.processCustomData(loggerData, measurements.count);
-		}
+		const processedCustomData = this.processCustomData(loggerData, measurements.count);
 
 		if (measurements.count !== 0) {
 			const bucketProperties = this.perBucketProperties.get(bucket);
