@@ -24,7 +24,6 @@ export const failSometimeProxy = <T extends object>(handler: Partial<T>): T => {
 			if (p in handler) {
 				return Reflect.get(t, p, r);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return failProxy();
 		},
 	});
