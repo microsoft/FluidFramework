@@ -12,6 +12,7 @@ import {
 	type TreeStoredSchema,
 	rootFieldKey,
 	schemaDataIsEmpty,
+	isCursor,
 } from "../core/index.js";
 import {
 	FieldKinds,
@@ -168,11 +169,14 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeContent): v
 	try {
 		initializeContent(checkout, treeContent.schema, () => {
 			const field = { field: rootFieldKey, parent: undefined };
-			const content = normalizeNewFieldContent(
-				{ schema: treeContent.schema },
-				treeContent.schema.rootFieldSchema,
-				treeContent.initialTree,
-			);
+
+			const content = isCursor(treeContent)
+				? (treeContent as ITreeCursorSynchronous)
+				: normalizeNewFieldContent(
+						{ schema: treeContent.schema },
+						treeContent.schema.rootFieldSchema,
+						treeContent.initialTree,
+					);
 			switch (checkout.storedSchema.rootFieldSchema.kind) {
 				case FieldKinds.optional.identifier: {
 					const fieldEditor = checkout.editor.optionalField(field);
