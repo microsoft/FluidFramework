@@ -20,32 +20,28 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_ITelemetryBaseEvent": {"forwardCompat": false}
+ * "TypeAliasDeclaration_CompatibilityMode": {"forwardCompat": false}
  */
+declare function get_old_TypeAliasDeclaration_CompatibilityMode():
+    TypeOnly<old.CompatibilityMode>;
+declare function use_current_TypeAliasDeclaration_CompatibilityMode(
+    use: TypeOnly<current.CompatibilityMode>): void;
+use_current_TypeAliasDeclaration_CompatibilityMode(
+    get_old_TypeAliasDeclaration_CompatibilityMode());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false}
+ * "TypeAliasDeclaration_CompatibilityMode": {"backCompat": false}
  */
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterfaceDeclaration_ITelemetryBaseLogger": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterfaceDeclaration_ITelemetryBaseLogger": {"backCompat": false}
- */
+declare function get_current_TypeAliasDeclaration_CompatibilityMode():
+    TypeOnly<current.CompatibilityMode>;
+declare function use_old_TypeAliasDeclaration_CompatibilityMode(
+    use: TypeOnly<old.CompatibilityMode>): void;
+use_old_TypeAliasDeclaration_CompatibilityMode(
+    get_current_TypeAliasDeclaration_CompatibilityMode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -74,20 +70,6 @@ declare function use_old_TypeAliasDeclaration_ITinyliciousAudience(
     use: TypeOnly<old.ITinyliciousAudience>): void;
 use_old_TypeAliasDeclaration_ITinyliciousAudience(
     get_current_TypeAliasDeclaration_ITinyliciousAudience());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_TinyliciousClient": {"forwardCompat": false}
- */
-declare function get_old_ClassDeclaration_TinyliciousClient():
-    TypeOnly<old.TinyliciousClient>;
-declare function use_current_ClassDeclaration_TinyliciousClient(
-    use: TypeOnly<current.TinyliciousClient>): void;
-use_current_ClassDeclaration_TinyliciousClient(
-    get_old_ClassDeclaration_TinyliciousClient());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

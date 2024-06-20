@@ -767,7 +767,7 @@ export abstract class SharedObject<
 			// TelemetryContext needs to implment a get function
 			assert(
 				"get" in telemetryContext && typeof telemetryContext.get === "function",
-				"received context must have a get function",
+				0x97e /* received context must have a get function */,
 			);
 
 			const prevTotal = ((telemetryContext as TelemetryContext).get(
@@ -838,6 +838,7 @@ export interface ISharedObjectKind<TSharedObject> {
  * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
  * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
  * Use {@link createSharedObjectKind} to creating an instance of this type.
+ * @sealed
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
