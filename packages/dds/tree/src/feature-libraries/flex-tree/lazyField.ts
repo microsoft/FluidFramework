@@ -129,6 +129,8 @@ export function makeField(
 	);
 	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeThing);
 	if (!usedAnchor) {
+		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
+		// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
 		context.checkout.forest.anchors.forget(fieldAnchor.parent);
 	}
 	return result;
