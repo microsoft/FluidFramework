@@ -64,11 +64,7 @@ import {
 } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import {
-	indexForAt,
-	treeStatusFromAnchorCache,
-	treeStatusFromDetachedField,
-} from "./utilities.js";
+import { indexForAt, treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -95,7 +91,7 @@ export function makeField(
 	const fieldAnchor = cursor.buildFieldAnchor();
 	let usedAnchor = false;
 
-	const makeThing = (): FlexTreeField => {
+	const makeFlexTreeField = (): FlexTreeField => {
 		usedAnchor = true;
 		const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
 			context,
@@ -107,7 +103,7 @@ export function makeField(
 	};
 
 	if (fieldAnchor.parent === undefined) {
-		return makeThing();
+		return makeFlexTreeField();
 	}
 
 	// For the common case (all but roots), cache field associated with its node's anchor and field key.
@@ -119,15 +115,11 @@ export function makeField(
 
 	// If there is no flex tree parent node, skip caching: this is not expected to be a hot path, but should probably be fixed at some point.
 	if (cacheKey === undefined) {
-		return makeThing();
+		return makeFlexTreeField();
 	}
 
-	const innerCache = getOrCreate(
-		fieldCache,
-		cacheKey,
-		() => new Map<FieldKey, FlexTreeField>(),
-	);
-	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeThing);
+	const innerCache = getOrCreate(fieldCache, cacheKey, () => new Map<FieldKey, FlexTreeField>());
+	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
 	if (!usedAnchor) {
 		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
 		// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
@@ -291,7 +283,9 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
 		if (this.treeStatus() !== TreeStatus.InDocument) {
-			throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+			throw new UsageError(
+				"Editing only allowed on fields with TreeStatus.InDocument status",
+			);
 		}
 		return this.getFieldPath();
 	}
@@ -339,7 +333,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 					Array.from(value, (item) =>
 						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
 					),
-				);
+			  );
 
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
@@ -359,10 +353,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 
 	public moveToStart(sourceIndex: number): void;
-	public moveToStart(
-		sourceIndex: number,
-		source: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void;
+	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
 	public moveToStart(
 		sourceIndex: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
@@ -371,10 +362,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 	public moveToEnd(sourceIndex: number): void;
 	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToEnd(
-		sourceIndex: number,
-		source?: FlexTreeSequenceField<FlexAllowedTypes>,
-	): void {
+	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<FlexAllowedTypes>): void {
 		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number): void;
@@ -577,8 +565,8 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 			newContent === undefined
 				? []
 				: isCursor(newContent)
-					? prepareNodeCursorForInsert(newContent)
-					: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
+				? prepareNodeCursorForInsert(newContent)
+				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,
