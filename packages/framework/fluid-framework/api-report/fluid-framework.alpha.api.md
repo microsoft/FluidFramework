@@ -733,6 +733,8 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 
 // @alpha @sealed
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+    // (undocumented)
+    breakingChange?: number;
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
