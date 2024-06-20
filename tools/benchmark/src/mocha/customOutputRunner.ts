@@ -4,17 +4,30 @@
  */
 
 import { Test } from "mocha";
+
+import type { BenchmarkDescription, MochaExclusiveOptions } from "../Configuration";
 import { timer } from "../timer";
 
 /**
  * Options to configure a benchmark that reports custom measurements.
  *
- * @alpha
+ * @internal
  */
-export interface CustomBenchmarkOptions {
-	only: boolean;
+export interface CustomBenchmarkOptions extends MochaExclusiveOptions {
+	/**
+	 * Title about benchmark option
+	 */
 	title: string;
-	runBenchmark: (reporter: IMeasurementReporter) => Promise<void>;
+
+	/**
+	 * Set of options to describe a benchmark.
+	 */
+	decription: BenchmarkDescription;
+
+	/**
+	 * Runs the benchmark.
+	 */
+	run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
 }
 /**
  * This is a wrapper for Mocha's `it` function which runs the specified function `options.runBenchmark`
@@ -24,7 +37,7 @@ export interface CustomBenchmarkOptions {
  * Tests created with this function get tagged with '\@CustomBenchmark', so mocha's --grep/--fgrep
  * options can be used to only run this type of tests by filtering on that value.
  *
- * @alpha
+ * @internal
  */
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 	const itFunction = options.only === true ? it.only : it;
@@ -40,7 +53,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 		};
 
 		const startTime = timer.now();
-		await options.runBenchmark(reporter);
+		await options.run(reporter);
 
 		const results: CustomBenchmarkResults = {
 			aborted: false,
@@ -56,7 +69,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test {
 /**
  * Allows the benchmark code to report custom measurements.
  *
- * @alpha
+ * @internal
  */
 export interface IMeasurementReporter {
 	/**

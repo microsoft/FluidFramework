@@ -23,7 +23,7 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
     benchmarkFnAsync: () => Promise<unknown>;
 }
 
-// @alpha
+// @public
 export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
 
 // @public
@@ -112,12 +112,12 @@ export interface CustomBenchmark extends BenchmarkTimingOptions {
 // @public (undocumented)
 export type CustomBenchmarkArguments = MochaExclusiveOptions & CustomBenchmark & BenchmarkDescription;
 
-// @alpha
-export interface CustomBenchmarkOptions {
+// @public
+export interface CustomBenchmarkOptions extends MochaExclusiveOptions {
     // (undocumented)
-    only: boolean;
+    decription: BenchmarkDescription;
     // (undocumented)
-    runBenchmark: (reporter: IMeasurementReporter) => Promise<void>;
+    run: (reporter: IMeasurementReporter) => void | Promise<unknown>;
     // (undocumented)
     title: string;
 }
@@ -134,7 +134,7 @@ export interface HookArguments {
 // @public
 export type HookFunction = () => void | Promise<unknown>;
 
-// @alpha
+// @public
 export interface IMeasurementReporter {
     addMeasurement(key: string, value: number): void;
 }
