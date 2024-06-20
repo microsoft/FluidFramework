@@ -461,7 +461,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										"./test-package/testnamespace-namespace#bar-variable",
 									),
 								]),
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("BETA")]), // Alert
+								new TableBodyCellNode([CodeSpanNode.createFromPlainText("Beta")]), // Alert
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier

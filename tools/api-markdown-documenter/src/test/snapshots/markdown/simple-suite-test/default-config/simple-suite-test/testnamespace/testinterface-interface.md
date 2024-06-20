@@ -18,13 +18,13 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 
 | Property | Alerts | Type | Description |
 | --- | --- | --- | --- |
-| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | `ALPHA` | boolean | Test interface property |
+| [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | `Alpha` | boolean | Test interface property |
 
 ## Methods
 
 | Method | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
-| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | `ALPHA` | void | Test interface method |
+| [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | `Alpha` | void | Test interface method |
 
 ## Property Details
 
