@@ -213,7 +213,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 
 // @alpha
 export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
-    addedGCOutboundRoute(fromPath: string, toPath: string): void;
+    addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;

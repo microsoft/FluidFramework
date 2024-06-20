@@ -33,7 +33,12 @@ import {
 	ITestFluidObject,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import {
+	ITree,
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeView,
+} from "@fluidframework/tree";
 import { SharedTree, type ISharedTree } from "@fluidframework/tree/internal";
 
 const mapId = "map";
@@ -48,18 +53,19 @@ const registerId = "registerCollection";
 const queueId = "consensusQueue";
 const migrationShimId = "migrationShim";
 
-function treeSetup(dds) {
-	const builder = new SchemaFactory("test");
-	class Bar extends builder.object("bar", {
-		h: builder.optional(builder.handle),
-	}) {}
+const builder = new SchemaFactory("test");
+class Bar extends builder.object("bar", {
+	h: builder.optional(builder.handle),
+}) {}
+function treeSetup(dds: ITree) {
+	const config = new TreeViewConfiguration({ schema: Bar });
 
-	const config = new TreeConfiguration(Bar, () => ({
-		h: undefined,
-	}));
+	const view = dds.viewWith(config);
+	if (view.compatibility.canInitialize) {
+		view.initialize({ h: undefined });
+	}
 
-	const treeView: TreeView<typeof Bar> = dds.schematize(config);
-	return treeView;
+	return view;
 }
 
 async function setup(
@@ -283,18 +289,17 @@ const ddsTypes: aDDSFactory[] = [
 			return this.downCast(tree);
 		},
 		downCast(channel): aDDSType {
-			const tree = channel as ISharedTree;
-			const treeView = treeSetup(tree);
+			const view: TreeView<typeof Bar> = treeSetup(channel as ISharedTree);
 
 			return {
-				id: tree.id,
+				id: channel.id,
 				async storeHandle(handle: IFluidHandle) {
-					treeView.root.h = handle;
+					view.root.h = handle;
 				},
 				async readHandle(): Promise<unknown> {
-					return treeView.root.h;
+					return view.root.h;
 				},
-				handle: tree.handle,
+				handle: channel.handle,
 			};
 		},
 		async getDDS(dataStore) {
@@ -328,9 +333,7 @@ const ddsTypes: aDDSFactory[] = [
 		},
 		async getDDS(dataStore) {
 			const register =
-				await dataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(
-					registerId,
-				);
+				await dataStore.getSharedObject<IConsensusRegisterCollection<FluidObject>>(registerId);
 			return this.downCast(register);
 		},
 	},
@@ -407,25 +410,18 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						apis,
 					);
 
-					const attachedDataStore =
-						(await container1.getEntryPoint()) as ITestFluidObject;
+					const attachedDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 					await provider.ensureSynchronized();
 
 					/**
 					 * create the first detached dds
 					 */
-					const createdDds1 = detachedDds1Utils.createDDS(
-						attachedDataStore.runtime,
-						apis,
-					);
+					const createdDds1 = detachedDds1Utils.createDDS(attachedDataStore.runtime, apis);
 
 					/**
 					 * create the second detached dds and store a handle to the first dds in it
 					 */
-					const createdDds2 = detachedDds2Utils.createDDS(
-						attachedDataStore.runtime,
-						apis,
-					);
+					const createdDds2 = detachedDds2Utils.createDDS(attachedDataStore.runtime, apis);
 					await createdDds2.storeHandle(createdDds1.handle);
 
 					/**
@@ -468,10 +464,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					 * validation
 					 */
 					const handleFromAttached = await attached2.readHandle();
-					assert(
-						isFluidHandle(handleFromAttached),
-						`not a handle: ${handleFromAttached}`,
-					);
+					assert(isFluidHandle(handleFromAttached), `not a handle: ${handleFromAttached}`);
 
 					const refToDetached2 = await getReferencedDDS(handleFromAttached);
 					assert(
@@ -479,10 +472,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						`ids do not match: ${refToDetached2.id}, ${createdDds2.id}`,
 					);
 					const handleFromDetached2 = await refToDetached2.readHandle();
-					assert(
-						isFluidHandle(handleFromDetached2),
-						`not a handle: ${handleFromDetached2}`,
-					);
+					assert(isFluidHandle(handleFromDetached2), `not a handle: ${handleFromDetached2}`);
 
 					const refToDetached1 = await getReferencedDDS(handleFromDetached2);
 					assert(
@@ -506,13 +496,11 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						apis,
 					);
 
-					const attachedDataStore =
-						(await container1.getEntryPoint()) as ITestFluidObject;
+					const attachedDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 
-					const dataStoreB =
-						await attachedDataStore.context.containerRuntime.createDataStore([
-							"default",
-						]);
+					const dataStoreB = await attachedDataStore.context.containerRuntime.createDataStore([
+						"default",
+					]);
 					const dataObjectB = (await dataStoreB.entryPoint.get()) as ITestFluidObject;
 					await provider.ensureSynchronized();
 
@@ -567,10 +555,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 					 * validation
 					 */
 					const handleFromAttached = await attached2.readHandle();
-					assert(
-						isFluidHandle(handleFromAttached),
-						`not a handle: ${handleFromAttached}`,
-					);
+					assert(isFluidHandle(handleFromAttached), `not a handle: ${handleFromAttached}`);
 
 					const refToDetached2 = await getReferencedDDS(handleFromAttached);
 					assert(
@@ -578,10 +563,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						`ids do not match: ${refToDetached2.id}, ${createdDds2.id}`,
 					);
 					const handleFromDetached2 = await refToDetached2.readHandle();
-					assert(
-						isFluidHandle(handleFromDetached2),
-						`not a handle: ${handleFromDetached2}`,
-					);
+					assert(isFluidHandle(handleFromDetached2), `not a handle: ${handleFromDetached2}`);
 
 					const refToDetached1 = await getReferencedDDS(handleFromDetached2);
 					assert(

@@ -51,7 +51,8 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 
 	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
 	const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
-		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
+		const container: IContainerExperimental =
+			await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);

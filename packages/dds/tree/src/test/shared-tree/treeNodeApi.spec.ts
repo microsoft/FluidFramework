@@ -13,7 +13,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeConfiguration,
+	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 	type TreeView,
 	type InsertableTypedNode,
@@ -36,12 +36,12 @@ describe("treeApi", () => {
 		}) {}
 
 		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			return getView(
-				new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child,
-				})),
-			);
+			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+			view.initialize({
+				content: 42,
+				child,
+			});
+			return view;
 		}
 
 		/**
@@ -140,14 +140,15 @@ describe("treeApi", () => {
 
 			it("respects a violated node existence constraint after sequencing", () => {
 				// Create two connected trees with child nodes
-				const config = new TreeConfiguration(TestObject, () => ({
-					content: 42,
-					child: {},
-				}));
+				const config = new TreeViewConfiguration({ schema: TestObject });
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
-				const viewA = treeA.schematize(config);
-				const viewB = treeB.schematize(config);
+				const viewA = treeA.viewWith(config);
+				const viewB = treeB.viewWith(config);
+				viewA.initialize({
+					content: 42,
+					child: {},
+				});
 				provider.processMessages();
 
 				// Tree A removes the child node (this will be sequenced before anything else because the provider sequences ops in the order of submission).
@@ -195,10 +196,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -210,10 +208,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}
@@ -267,10 +262,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : 43,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, number>;
 					}
@@ -282,10 +274,7 @@ describe("treeApi", () => {
 						Math.random() >= 0.5 ? Tree.runTransaction.rollback : otherSymbol,
 					);
 					if (result === Tree.runTransaction.rollback) {
-						type _ = requireAssignableTo<
-							typeof result,
-							typeof Tree.runTransaction.rollback
-						>;
+						type _ = requireAssignableTo<typeof result, typeof Tree.runTransaction.rollback>;
 					} else {
 						type _ = requireAssignableTo<typeof result, typeof otherSymbol>;
 					}

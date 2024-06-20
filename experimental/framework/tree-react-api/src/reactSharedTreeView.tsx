@@ -16,13 +16,16 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type {
 	ITree,
 	SchemaCompatibilityStatus,
-	// eslint-disable-next-line import/no-deprecated
-	TreeConfiguration,
+	TreeViewConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
 	ImplicitFieldSchema,
 } from "@fluidframework/tree";
-import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
+import {
+	configuredSharedTree,
+	typeboxValidator,
+	type InsertableTreeFieldFromImplicitField,
+} from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
@@ -34,37 +37,40 @@ const SharedTree = configuredSharedTree({
 });
 
 /**
- * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
+ * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
  * @param key - See {@link ITreeDataObject.key}.
  * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @public
  */
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	key: string,
-	// eslint-disable-next-line import/no-deprecated
-	treeConfiguration: TreeConfiguration<TSchema>,
+	treeConfiguration: TreeViewConfiguration<TSchema>,
+	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable> {
-	return treeDataObjectInternal(key, treeConfiguration);
+	return treeDataObjectInternal(key, treeConfiguration, createInitialTree);
 }
 
 /**
- * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
+ * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
  * @param key - See {@link ITreeDataObject.key}.
  * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @internal
  */
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	key: string,
-	// eslint-disable-next-line import/no-deprecated
-	treeConfiguration: TreeConfiguration<TSchema>,
+	treeConfiguration: TreeViewConfiguration<TSchema>,
+	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
 	readonly factory: IFluidDataStoreFactory;
 } {
 	class SchemaAwareTreeDataObject extends TreeDataObject<TSchema> {
 		public readonly key = key;
 		public readonly config = treeConfiguration;
+		protected readonly createInitialTree = createInitialTree;
 
 		public static readonly factory = new DataObjectFactory(
 			`TreeDataObject:${key}`,
@@ -89,7 +95,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	readonly key: string;
 
 	/**
-	 * TreeConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 * TreeViewConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
 	 *
 	 * @remarks
 	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
@@ -102,7 +108,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * Future work on tree as well as these utilities should address this limitation.
 	 */
 	// eslint-disable-next-line import/no-deprecated
-	readonly config: TreeConfiguration<TSchema>;
+	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
 	 * The TreeView.
@@ -139,9 +145,9 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
 	/**
 	 * Component to display instead of the {@link TreeViewProps.viewComponent}
-	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeConfiguration}.
+	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeViewConfiguration}.
 	 *
-	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeConfiguration} if possible.
+	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeViewConfiguration} if possible.
 	 */
 	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
 }
@@ -165,7 +171,7 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 		const tree = SharedTree.create(this.runtime);
 		this.#tree = tree.viewWith(this.config);
 		// Initialize the tree content and schema.
-		this.#tree.initialize(this.config.initialTree());
+		this.#tree.initialize(this.createInitialTree());
 		this.root.set(this.key, tree.handle);
 	}
 
@@ -185,8 +191,9 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 
 	public abstract readonly key: string;
 
-	// eslint-disable-next-line import/no-deprecated
-	public abstract readonly config: TreeConfiguration<TSchema>;
+	public abstract readonly config: TreeViewConfiguration<TSchema>;
+
+	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
@@ -308,9 +315,9 @@ function TreeErrorComponent({
 		return (
 			<div>
 				<div>
-					Document is incompatible with current version of the application, but the
-					document format can be updated. This may prevent other versions of the
-					application from opening this document.
+					Document is incompatible with current version of the application, but the document
+					format can be updated. This may prevent other versions of the application from
+					opening this document.
 				</div>
 				<button onClick={upgradeSchema}>Upgrade</button>;
 			</div>
@@ -319,8 +326,8 @@ function TreeErrorComponent({
 		return (
 			<div>
 				Document is incompatible with current version of the application, and the document
-				format cannot be updated. The document is likely from a newer or otherwise
-				incompatible version of the application, or a different application.
+				format cannot be updated. The document is likely from a newer or otherwise incompatible
+				version of the application, or a different application.
 			</div>
 		);
 	}

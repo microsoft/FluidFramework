@@ -19,7 +19,7 @@ import type {
  * Channel for a Fluid Tree DDS.
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @public
+ * @sealed @public
  */
 export interface ITree extends IFluidLoadable {
 	/**
@@ -57,30 +57,10 @@ export interface ITree extends IFluidLoadable {
 	viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
-
-	/**
-	 * Returns a {@link TreeView} using the provided schema.
-	 * If the stored schema is view-compatible with the view schema specified by `config`,
-	 * the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
-	 * See {@link TreeView.compatibility} for information about the compatibility between the view and stored schemas.
-	 *
-	 * @remarks
-	 * If the tree is uninitialized, it will be implicitly initialized by this function.
-	 *
-	 * Note that other clients can modify the document at any time, causing the view to change its compatibility status: see {@link TreeView.events} for how to handle invalidation in these cases.
-	 *
-	 * Only one schematized view may exist for a given ITree at a time.
-	 * If creating a second, the first must be disposed before calling `schematize` again.
-	 * @deprecated Replaced by {@link ITree.viewWith}. Use that method instead. Note that `viewWith` does not implicitly initialize the tree:
-	 * to initialize it, call {@link TreeView.initialize} on the returned view.
-	 */
-	schematize<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot>;
 }
 
 /**
- * Options when schematizing a tree.
+ * Options when constructing a tree view.
  * @public
  */
 export interface ITreeConfigurationOptions {
@@ -105,7 +85,9 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
  * Property-bag configuration for {@link TreeViewConfiguration} construction.
  * @public
  */
-export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+export interface ITreeViewConfiguration<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
@@ -126,7 +108,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 /**
  * Configuration for {@link ITree.viewWith}.
- * @public
+ * @sealed @public
  */
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
 	implements Required<ITreeViewConfiguration<TSchema>>
@@ -153,7 +135,7 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 
 /**
  * Configuration for how to {@link ITree.schematize | schematize} a tree.
- * @public
+ * @sealed @public
  * @deprecated Please migrate to use {@link TreeViewConfiguration} with {@link ITree.viewWith} instead.
  */
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
@@ -203,7 +185,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
- * @public
+ * @sealed @public
  */
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
@@ -265,7 +247,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
  * Information about a view schema's compatibility with the document's stored schema.
  *
  * See SharedTree's README for more information about choosing a compatibility policy.
- * @public
+ * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
 	/**
@@ -339,7 +321,7 @@ export interface SchemaCompatibilityStatus {
 
 /**
  * Events for {@link TreeView}.
- * @public
+ * @sealed @public
  */
 export interface TreeViewEvents {
 	/**

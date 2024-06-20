@@ -124,7 +124,6 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RebaseRevisionMetadata,
-		existenceState?: NodeExistenceState,
 	): TChangeset;
 
 	/**
@@ -189,9 +188,9 @@ export type NodeChangeInverter = (change: NodeId) => NodeId;
 /**
  * @internal
  */
-export enum NodeExistenceState {
-	Alive,
-	Dead,
+export enum NodeAttachState {
+	Attached,
+	Detached,
 }
 
 /**
@@ -201,10 +200,10 @@ export type NodeChangeRebaser = (
 	change: NodeId | undefined,
 	baseChange: NodeId | undefined,
 	/**
-	 * Whether or not the node is alive or dead in the input context of change.
-	 * Defaults to Alive if undefined.
+	 * Whether the node is attached to this field in the output context of the base change.
+	 * Defaults to attached if undefined.
 	 */
-	state?: NodeExistenceState,
+	state?: NodeAttachState,
 ) => NodeId | undefined;
 
 /**

@@ -244,6 +244,34 @@ use_old_InterfaceDeclaration_IFluidErrorBase(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "InterfaceDeclaration_IMockLoggerExt": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IMockLoggerExt():
+    TypeOnly<old.IMockLoggerExt>;
+declare function use_current_InterfaceDeclaration_IMockLoggerExt(
+    use: TypeOnly<current.IMockLoggerExt>): void;
+use_current_InterfaceDeclaration_IMockLoggerExt(
+    get_old_InterfaceDeclaration_IMockLoggerExt());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IMockLoggerExt": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IMockLoggerExt():
+    TypeOnly<current.IMockLoggerExt>;
+declare function use_old_InterfaceDeclaration_IMockLoggerExt(
+    use: TypeOnly<old.IMockLoggerExt>): void;
+use_old_InterfaceDeclaration_IMockLoggerExt(
+    get_current_InterfaceDeclaration_IMockLoggerExt());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "InterfaceDeclaration_IPerformanceEventMarkers": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_IPerformanceEventMarkers():
@@ -440,28 +468,28 @@ use_old_InterfaceDeclaration_ITelemetryLoggerExt(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
+ * "TypeAliasDeclaration_ITelemetryLoggerPropertyBag": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag():
+declare function get_old_TypeAliasDeclaration_ITelemetryLoggerPropertyBag():
     TypeOnly<old.ITelemetryLoggerPropertyBag>;
-declare function use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
+declare function use_current_TypeAliasDeclaration_ITelemetryLoggerPropertyBag(
     use: TypeOnly<current.ITelemetryLoggerPropertyBag>): void;
-use_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
-    get_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag());
+use_current_TypeAliasDeclaration_ITelemetryLoggerPropertyBag(
+    get_old_TypeAliasDeclaration_ITelemetryLoggerPropertyBag());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryLoggerPropertyBag": {"backCompat": false}
+ * "TypeAliasDeclaration_ITelemetryLoggerPropertyBag": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag():
+declare function get_current_TypeAliasDeclaration_ITelemetryLoggerPropertyBag():
     TypeOnly<current.ITelemetryLoggerPropertyBag>;
-declare function use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
+declare function use_old_TypeAliasDeclaration_ITelemetryLoggerPropertyBag(
     use: TypeOnly<old.ITelemetryLoggerPropertyBag>): void;
-use_old_InterfaceDeclaration_ITelemetryLoggerPropertyBag(
-    get_current_InterfaceDeclaration_ITelemetryLoggerPropertyBag());
+use_old_TypeAliasDeclaration_ITelemetryLoggerPropertyBag(
+    get_current_TypeAliasDeclaration_ITelemetryLoggerPropertyBag());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -524,28 +552,28 @@ use_old_InterfaceDeclaration_ITelemetryPerformanceEventExt(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
+ * "TypeAliasDeclaration_ITelemetryPropertiesExt": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_ITelemetryPropertiesExt():
+declare function get_old_TypeAliasDeclaration_ITelemetryPropertiesExt():
     TypeOnly<old.ITelemetryPropertiesExt>;
-declare function use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
+declare function use_current_TypeAliasDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<current.ITelemetryPropertiesExt>): void;
-use_current_InterfaceDeclaration_ITelemetryPropertiesExt(
-    get_old_InterfaceDeclaration_ITelemetryPropertiesExt());
+use_current_TypeAliasDeclaration_ITelemetryPropertiesExt(
+    get_old_TypeAliasDeclaration_ITelemetryPropertiesExt());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
+ * "TypeAliasDeclaration_ITelemetryPropertiesExt": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_ITelemetryPropertiesExt():
+declare function get_current_TypeAliasDeclaration_ITelemetryPropertiesExt():
     TypeOnly<current.ITelemetryPropertiesExt>;
-declare function use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
+declare function use_old_TypeAliasDeclaration_ITelemetryPropertiesExt(
     use: TypeOnly<old.ITelemetryPropertiesExt>): void;
-use_old_InterfaceDeclaration_ITelemetryPropertiesExt(
-    get_current_InterfaceDeclaration_ITelemetryPropertiesExt());
+use_old_TypeAliasDeclaration_ITelemetryPropertiesExt(
+    get_current_TypeAliasDeclaration_ITelemetryPropertiesExt());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -800,6 +828,20 @@ use_old_EnumDeclaration_TelemetryDataTag(
     get_current_EnumDeclaration_TelemetryDataTag());
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassDeclaration_TelemetryEventBatcher": {"backCompat": false}
+ */
+declare function get_current_ClassDeclaration_TelemetryEventBatcher():
+    TypeOnly<current.TelemetryEventBatcher<any>>;
+declare function use_old_ClassDeclaration_TelemetryEventBatcher(
+    use: TypeOnly<old.TelemetryEventBatcher<any>>): void;
+use_old_ClassDeclaration_TelemetryEventBatcher(
+    get_current_ClassDeclaration_TelemetryEventBatcher());
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -1022,6 +1064,34 @@ declare function use_old_FunctionDeclaration_createChildMonitoringContext(
     use: TypeOnly<typeof old.createChildMonitoringContext>): void;
 use_old_FunctionDeclaration_createChildMonitoringContext(
     get_current_FunctionDeclaration_createChildMonitoringContext());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_createMockLoggerExt": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_createMockLoggerExt():
+    TypeOnly<typeof old.createMockLoggerExt>;
+declare function use_current_FunctionDeclaration_createMockLoggerExt(
+    use: TypeOnly<typeof current.createMockLoggerExt>): void;
+use_current_FunctionDeclaration_createMockLoggerExt(
+    get_old_FunctionDeclaration_createMockLoggerExt());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_createMockLoggerExt": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_createMockLoggerExt():
+    TypeOnly<typeof current.createMockLoggerExt>;
+declare function use_old_FunctionDeclaration_createMockLoggerExt(
+    use: TypeOnly<typeof old.createMockLoggerExt>): void;
+use_old_FunctionDeclaration_createMockLoggerExt(
+    get_current_FunctionDeclaration_createMockLoggerExt());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1448,22 +1518,6 @@ use_old_FunctionDeclaration_isTaggedTelemetryPropertyValue(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedFunctionDeclaration_isValidLegacyError": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedFunctionDeclaration_isValidLegacyError": {"backCompat": false}
- */
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "FunctionDeclaration_loggerToMonitoringContext": {"forwardCompat": false}
  */
 declare function get_old_FunctionDeclaration_loggerToMonitoringContext():
@@ -1486,6 +1540,34 @@ declare function use_old_FunctionDeclaration_loggerToMonitoringContext(
     use: TypeOnly<typeof old.loggerToMonitoringContext>): void;
 use_old_FunctionDeclaration_loggerToMonitoringContext(
     get_current_FunctionDeclaration_loggerToMonitoringContext());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_measure": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_measure():
+    TypeOnly<typeof old.measure>;
+declare function use_current_FunctionDeclaration_measure(
+    use: TypeOnly<typeof current.measure>): void;
+use_current_FunctionDeclaration_measure(
+    get_old_FunctionDeclaration_measure());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_measure": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_measure():
+    TypeOnly<typeof current.measure>;
+declare function use_old_FunctionDeclaration_measure(
+    use: TypeOnly<typeof old.measure>): void;
+use_old_FunctionDeclaration_measure(
+    get_current_FunctionDeclaration_measure());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

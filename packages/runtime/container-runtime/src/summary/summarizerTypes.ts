@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, ContainerWarning } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	ContainerWarning,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IEvent,
 	IEventProvider,
@@ -23,7 +26,11 @@ import {
 
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
+import {
+	ISummaryAckMessage,
+	ISummaryNackMessage,
+	ISummaryOpMessage,
+} from "./summaryCollection.js";
 import { SummarizeReason } from "./summaryGenerator.js";
 
 /**
