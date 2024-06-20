@@ -42,7 +42,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,

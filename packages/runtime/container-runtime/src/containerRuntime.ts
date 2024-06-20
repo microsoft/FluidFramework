@@ -4070,7 +4070,7 @@ export class ContainerRuntime
 		const type = containerRuntimeMessage.type;
 		assert(
 			type !== ContainerMessageType.IdAllocation,
-			"IdAllocation should be submitted directly to outbox.",
+			0x9a5 /* IdAllocation should be submitted directly to outbox. */,
 		);
 		const message: BatchMessage = {
 			contents: serializedContent,

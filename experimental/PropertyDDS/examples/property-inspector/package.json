@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -103,7 +103,7 @@
 		"sass-loader": "^7.1.0",
 		"source-map-loader": "^5.0.0",
 		"style-loader": "^1.0.0",
-		"tinylicious": "^5.0.0-265463",
+		"tinylicious": "^5.0.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.4.5",
 		"webpack": "^5.82.0",

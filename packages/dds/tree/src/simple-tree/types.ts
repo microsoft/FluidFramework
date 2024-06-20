@@ -58,7 +58,7 @@ export type Unhydrated<T> = T;
  * and thus cause the default/built in `instanceof` to return false despite our type checking and all other APIs treating them as TreeNodes.
  * This class provides a custom `Symbol.hasInstance` to fix `instanceof` for this class and all classes extending it.
  * For now the type-only export prevents use of `instanceof` on this class (but allows it in subclasses like schema classes).
- * @public
+ * @sealed @public
  */
 export abstract class TreeNode implements WithType {
 	/**
@@ -125,7 +125,7 @@ export abstract class TreeNode implements WithType {
 			return false;
 		}
 
-		assert("prototype" in schema, "expected class based schema");
+		assert("prototype" in schema, 0x98a /* expected class based schema */);
 		return inPrototypeChain(schema.prototype, this.prototype);
 	}
 
@@ -284,7 +284,7 @@ markEager(TreeNodeValid);
  * This type is used in the construction of {@link TreeNode} as an implementation detail, but leaks into the public API due to how schema are implemented.
  * @privateRemarks
  * A {@link FlexTreeNode}. Includes {@link RawTreeNode}s.
- * @public
+ * @sealed @public
  */
 export interface InternalTreeNode
 	extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {}

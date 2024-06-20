@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/attributor",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Operation attributor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,8 +86,7 @@
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
