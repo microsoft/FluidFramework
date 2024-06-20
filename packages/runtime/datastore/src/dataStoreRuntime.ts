@@ -6,7 +6,12 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandle,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
@@ -261,10 +266,7 @@ export class FluidDataStoreRuntime
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
 				if (dataStoreContext.isLocalDataStore) {
-					channelContext = this.createRehydratedLocalChannelContext(
-						path,
-						tree.trees[path],
-					);
+					channelContext = this.createRehydratedLocalChannelContext(path, tree.trees[path]);
 					// This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
 					// data store, if the data store is loaded after the container is attached, then we missed making
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
@@ -279,8 +281,7 @@ export class FluidDataStoreRuntime
 						this,
 						dataStoreContext,
 						dataStoreContext.storage,
-						(content, localOpMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata),
+						(content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
 						(address: string) => this.setChannelDirty(address),
 						path,
 						tree.trees[path],
@@ -369,10 +370,7 @@ export class FluidDataStoreRuntime
 
 					return { mimeType: "fluid/object", status: 200, value: channel };
 				} catch (error) {
-					this.mc.logger.sendErrorEvent(
-						{ eventName: "GetChannelFailedInRequest" },
-						error,
-					);
+					this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
 					return createResponseError(500, `Failed to get Channel: ${error}`, request);
 				}
@@ -487,8 +485,7 @@ export class FluidDataStoreRuntime
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			this.logger,
-			(content, localOpMetadata) =>
-				this.submitChannelOp(channel.id, content, localOpMetadata),
+			(content, localOpMetadata) => this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 		);
 		this.contexts.set(channel.id, context);
@@ -642,7 +639,11 @@ export class FluidDataStoreRuntime
 		);
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	public process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
 		this.verifyNotClosed();
 
 		try {
@@ -656,11 +657,7 @@ export class FluidDataStoreRuntime
 					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
 						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-						this.dataStoreContext.addedGCOutboundRoute(
-							fromPath,
-							toPath,
-							message.timestamp,
-						);
+						this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
 					});
 
 					// If a non-local operation then go and create the object
@@ -764,11 +761,7 @@ export class FluidDataStoreRuntime
 		const summaryBuilder = new SummaryTreeBuilder();
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: IChannelContext) => {
-				const contextSummary = await context.summarize(
-					fullTree,
-					trackState,
-					telemetryContext,
-				);
+				const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
 				summaryBuilder.addWithStats(contextId, contextSummary);
 			},
 		);
@@ -981,7 +974,10 @@ export class FluidDataStoreRuntime
 
 		toFluidHandleInternal(channel.handle).attachGraph();
 
-		assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
+		assert(
+			this.isAttached,
+			0x182 /* "Data store should be attached to attach the channel." */,
+		);
 		assert(
 			this.visibilityState === VisibilityState.GloballyVisible,
 			0x2d0 /* "Data store should be globally visible to attach channels." */,
@@ -1041,10 +1037,7 @@ export class FluidDataStoreRuntime
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x183 /* "There should be a channel context for the op" */,
-				);
+				assert(!!channelContext, 0x183 /* "There should be a channel context for the op" */);
 				channelContext.reSubmit(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -1070,10 +1063,7 @@ export class FluidDataStoreRuntime
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x2ed /* "There should be a channel context for the op" */,
-				);
+				assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 				channelContext.rollback(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -1109,10 +1099,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.ChannelOp: {
 				const envelope = content.content as IEnvelope;
 				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x184 /* "There should be a channel context for the op" */,
-				);
+				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
 				await channelContext.getChannel();
 				return channelContext.applyStashedOp(envelope.contents);
 			}

@@ -29,7 +29,10 @@ import { IDocumentSchema } from "./documentSchema.js";
  * @legacy
  * @alpha
  */
-export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
+export type OmitAttributesVersions<T> = Omit<
+	T,
+	"snapshotFormatVersion" | "summaryFormatVersion"
+>;
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
@@ -92,7 +95,9 @@ export type ReadFluidDataStoreAttributes =
 	| IFluidDataStoreAttributes0
 	| IFluidDataStoreAttributes1
 	| IFluidDataStoreAttributes2;
-export type WriteFluidDataStoreAttributes = IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
+export type WriteFluidDataStoreAttributes =
+	| IFluidDataStoreAttributes1
+	| IFluidDataStoreAttributes2;
 
 export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttributes): number {
 	if (attributes.summaryFormatVersion) {
@@ -183,7 +188,7 @@ export const extractSummaryMetadataMessage = (
 				sequenceNumber: message.sequenceNumber,
 				timestamp: message.timestamp,
 				type: message.type,
-		  };
+			};
 
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
 	/**

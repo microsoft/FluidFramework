@@ -98,8 +98,8 @@ export class QuorumClients
 	 * Adds a new client to the quorum
 	 */
 	public addMember(clientId: string, details: ISequencedClient) {
-		assert(!!clientId, "clientId has to be non-empty string");
-		assert(!this.members.has(clientId), "clientId not found");
+		assert(!!clientId, 0x9a0 /* clientId has to be non-empty string */);
+		assert(!this.members.has(clientId), 0x9a1 /* clientId not found */);
 		this.members.set(clientId, details);
 		this.emit("addMember", clientId, details);
 
@@ -111,8 +111,8 @@ export class QuorumClients
 	 * Removes a client from the quorum
 	 */
 	public removeMember(clientId: string) {
-		assert(!!clientId, "clientId has to be non-empty string");
-		assert(this.members.has(clientId), "clientId not found");
+		assert(!!clientId, 0x9a2 /* clientId has to be non-empty string */);
+		assert(this.members.has(clientId), 0x9a3 /* clientId not found */);
 		this.members.delete(clientId);
 		this.emit("removeMember", clientId);
 
@@ -251,10 +251,7 @@ export class QuorumProposals
 			// A proposal goes through two phases before this promise resolves:
 			// 1. Sequencing - waiting for the proposal to be ack'd by the server.
 			// 2. Approval - waiting for the proposal to be approved by connected clients.
-			const localProposalSequencedHandler = (
-				sequencedCSN: number,
-				sequenceNumber: number,
-			) => {
+			const localProposalSequencedHandler = (sequencedCSN: number, sequenceNumber: number) => {
 				if (sequencedCSN === clientSequenceNumber) {
 					thisProposalSequenceNumber = sequenceNumber;
 					this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
@@ -282,11 +279,7 @@ export class QuorumProposals
 					this.stateEvents.once("connected", () => {
 						// If we don't see the ack by the time reconnection finishes, it failed to send.
 						if (thisProposalSequenceNumber === undefined) {
-							reject(
-								new Error(
-									"Client disconnected without successfully sending proposal",
-								),
-							);
+							reject(new Error("Client disconnected without successfully sending proposal"));
 							removeListeners();
 						}
 					});
@@ -321,7 +314,7 @@ export class QuorumProposals
 		local: boolean,
 		clientSequenceNumber: number,
 	) {
-		assert(!this.proposals.has(sequenceNumber), "sequenceNumber not found");
+		assert(!this.proposals.has(sequenceNumber), 0x9a4 /* sequenceNumber not found */);
 
 		const proposal = new PendingProposal(sequenceNumber, key, value, local);
 		this.proposals.set(sequenceNumber, proposal);

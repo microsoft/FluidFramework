@@ -57,7 +57,7 @@ interface IRunningTimerState extends ITimeout {
 	/**
 	 * Intended restart timeout.
 	 */
-	restart?: ITimeout;
+	restart?: ITimeout | undefined;
 }
 
 const maxSetTimeoutMs = 0x7fffffff; // setTimeout limit is MAX_INT32=(2^31-1).
@@ -260,7 +260,7 @@ export interface IPromiseTimer extends ITimer {
  * @internal
  */
 export class PromiseTimer implements IPromiseTimer {
-	private deferred?: Deferred<IPromiseTimerResult>;
+	private deferred: Deferred<IPromiseTimerResult> | undefined;
 	private readonly timer: Timer;
 
 	/**

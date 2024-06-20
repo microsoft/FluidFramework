@@ -4,7 +4,10 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
@@ -165,13 +168,9 @@ export async function fetchHelper(
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (error.name === "AbortError") {
-				throw new RetryableError(
-					"Fetch Timeout (AbortError)",
-					OdspErrorTypes.fetchTimeout,
-					{
-						driverVersion,
-					},
-				);
+				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorTypes.fetchTimeout, {
+					driverVersion,
+				});
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
@@ -217,7 +216,10 @@ export async function fetchArray(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	const { content, headers, propsToLog, duration } = await fetchHelper(
+		requestInfo,
+		requestInit,
+	);
 	let arrayBuffer: ArrayBuffer;
 	try {
 		arrayBuffer = await content.arrayBuffer();
@@ -251,7 +253,10 @@ export async function fetchAndParseAsJSONHelper<T>(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	const { content, headers, propsToLog, duration } = await fetchHelper(
+		requestInfo,
+		requestInit,
+	);
 	let text: string | undefined;
 	try {
 		text = await content.text();
@@ -423,9 +428,7 @@ export function toInstrumentedOdspTokenFetcher(
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
 									OdspErrorTypes.fetchTokenError,
-									typeof rawCanRetry === "boolean"
-										? rawCanRetry
-										: false /* canRetry */,
+									typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
 									{ method: name, errorMessage, driverVersion },
 								),
 						);
@@ -508,7 +511,9 @@ export function isInstanceOfISnapshot(
  * This tells whether request if for a specific loading group or not. The snapshot which
  * we fetch on initial load, fetches all ungrouped content.
  */
-export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined): boolean {
+export function isSnapshotFetchForLoadingGroup(
+	loadingGroupIds: string[] | undefined,
+): boolean {
 	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
 }
 

@@ -184,10 +184,7 @@ export class OdspDocumentServiceFactoryCore
 						return m;
 					})
 					.catch((error) => {
-						odspLogger.sendErrorEvent(
-							{ eventName: "createNewModuleLoadFailed" },
-							error,
-						);
+						odspLogger.sendErrorEvent({ eventName: "createNewModuleLoadFailed" }, error);
 						throw error;
 					});
 				const _odspResolvedUrl = isNewFileInfo(fileInfo)
@@ -199,11 +196,10 @@ export class OdspDocumentServiceFactoryCore
 							cacheAndTracker.epochTracker,
 							fileEntry,
 							this.hostPolicy.cacheCreateNewSummary ?? true,
-							!!this.hostPolicy.sessionOptions
-								?.forceAccessTokenViaAuthorizationHeader,
+							!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-					  )
+						)
 					: await module.createNewContainerOnExistingFile(
 							getStorageToken,
 							fileInfo,
@@ -212,10 +208,9 @@ export class OdspDocumentServiceFactoryCore
 							cacheAndTracker.epochTracker,
 							fileEntry,
 							this.hostPolicy.cacheCreateNewSummary ?? true,
-							!!this.hostPolicy.sessionOptions
-								?.forceAccessTokenViaAuthorizationHeader,
+							!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
-					  );
+						);
 				const docService = this.createDocumentServiceCore(
 					_odspResolvedUrl,
 					odspLogger,
@@ -241,7 +236,9 @@ export class OdspDocumentServiceFactoryCore
 	 */
 	constructor(
 		private readonly getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-		private readonly getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
+		private readonly getWebsocketToken:
+			| TokenFetcher<OdspResourceTokenFetchOptions>
+			| undefined,
 		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
 		private readonly hostPolicy: HostStoragePolicy = {},
 	) {
@@ -343,7 +340,7 @@ function getSharingLinkParams(
 				scope: SharingLinkScope[createLinkScope],
 				...(createLinkRole && SharingLinkRole[createLinkRole]
 					? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					  { role: SharingLinkRole[createLinkRole] }
+						{ role: SharingLinkRole[createLinkRole] }
 					: {}),
 			};
 		}

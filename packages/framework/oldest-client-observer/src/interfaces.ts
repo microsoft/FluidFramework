@@ -25,7 +25,8 @@ export interface IOldestClientObservableEvents extends IEvent {
  * @legacy
  * @alpha
  */
-export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
+export interface IOldestClientObservable
+	extends IEventProvider<IOldestClientObservableEvents> {
 	getQuorum(): IQuorumClients;
 	// Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
 	// has information about this [container | data store]", which in the case of detached data store may disagree

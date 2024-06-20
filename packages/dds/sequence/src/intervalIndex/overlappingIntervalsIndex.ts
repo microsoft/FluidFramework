@@ -116,10 +116,10 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 					end === undefined
 						? (node: IntervalNode<TInterval>) => {
 								return transientInterval.compareStart(node.key);
-						  }
+							}
 						: (node: IntervalNode<TInterval>) => {
 								return transientInterval.compare(node.key);
-						  };
+							};
 				const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
 				const continueRightFn = (cmpResult: number) => cmpResult >= 0;
 				const actionFn = (node: IntervalNode<TInterval>) => {

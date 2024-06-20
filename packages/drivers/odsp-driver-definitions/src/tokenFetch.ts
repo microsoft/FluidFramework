@@ -84,8 +84,8 @@ export const tokenFromResponse = (
 	tokenResponse === null || typeof tokenResponse === "string"
 		? tokenResponse
 		: tokenResponse === undefined
-		? null
-		: tokenResponse.token;
+			? null
+			: tokenResponse.token;
 
 /**
  * Helper method which returns flag indicating whether token response comes from local cache

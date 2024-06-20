@@ -30,7 +30,10 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions/internal";
-import { toDeltaManagerInternal, TelemetryContext } from "@fluidframework/runtime-utils/internal";
+import {
+	toDeltaManagerInternal,
+	TelemetryContext,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
@@ -54,7 +57,9 @@ import { makeHandlesSerializable, parseHandles } from "./utils.js";
  * @legacy
  * @alpha
  */
-export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
+export abstract class SharedObjectCore<
+		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
+	>
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
@@ -436,9 +441,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		return new Promise<T>((resolve, reject) => {
 			rejectBecauseDispose = () =>
 				reject(
-					new Error(
-						"FluidDataStoreRuntime disposed while this ack-based Promise was pending",
-					),
+					new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"),
 				);
 
 			if (this.runtime.disposed) {
@@ -525,7 +528,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	private process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
@@ -762,18 +769,14 @@ export abstract class SharedObject<
 			// TelemetryContext needs to implment a get function
 			assert(
 				"get" in telemetryContext && typeof telemetryContext.get === "function",
-				"received context must have a get function",
+				0x97e /* received context must have a get function */,
 			);
 
 			const prevTotal = ((telemetryContext as TelemetryContext).get(
 				this.telemetryContextPrefix,
 				propertyName,
 			) ?? 0) as number;
-			telemetryContext.set(
-				this.telemetryContextPrefix,
-				propertyName,
-				prevTotal + incrementBy,
-			);
+			telemetryContext.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
 		}
 	}
 }
@@ -838,6 +841,7 @@ export interface ISharedObjectKind<TSharedObject> {
  * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
  * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
  * Use {@link createSharedObjectKind} to creating an instance of this type.
+ * @sealed
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

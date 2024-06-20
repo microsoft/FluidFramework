@@ -89,6 +89,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly triggerAutoRecovery: (nodePath: string) => void;
 	runGC: (fullGC: boolean) => Promise<IGCStats>;
 };
 
@@ -442,6 +443,7 @@ describe("Garbage Collection Tests", () => {
 
 			// getGCData set up to sometimes return the corrupted data
 			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
 					return fullGC ? defaultGCData : corruptedGCData;
 				},
@@ -546,6 +548,23 @@ describe("Garbage Collection Tests", () => {
 				"node 0 should not be unreferenced after repairing GC Data",
 			);
 		});
+
+		it("Autorecovery disabled if enableGCSweep not set", async () => {
+			gc = createGarbageCollector({
+				createParams: { gcOptions: { enableGCSweep: undefined } },
+			});
+			const spies = {
+				gc: {
+					submitMessage: spy(gc, "submitMessage"),
+				},
+			};
+
+			gc.triggerAutoRecovery(""); // nodePath is irrelevant
+			assert(
+				spies.gc.submitMessage.notCalled,
+				"triggerAutoRecovery should no-op if gcOp is not supported in schema",
+			);
+		});
 	});
 
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
@@ -601,8 +620,8 @@ describe("Garbage Collection Tests", () => {
 					mode === "tombstone"
 						? timeout
 						: mode === "sweep"
-						? timeout - sweepGracePeriodMs
-						: undefined;
+							? timeout - sweepGracePeriodMs
+							: undefined;
 				const gcOptions = { sweepGracePeriodMs };
 				return createGarbageCollector({
 					createParams: { baseSnapshot, gcOptions },
@@ -818,9 +837,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gcState.gcNodes[nodes[3]] = node3Data;
 
-				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([
-					[gcBlobId, gcState],
-				]);
+				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
 				const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
 				// Remove node 3's reference from node 2 so that it is still unreferenced.
@@ -899,9 +916,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				gcState.gcNodes[nodes[3]] = node3Data;
 
-				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([
-					[gcBlobId, gcState],
-				]);
+				const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
 				const garbageCollector = createGCOverride(baseSnapshot, gcBlobMap);
 
 				// Initialize the base state which happens during runtime initialization.
@@ -913,9 +928,7 @@ describe("Garbage Collection Tests", () => {
 
 				// Log pending events explicitly. This is needed because summarizer clients don't log these events
 				// until the next GC run which calls this function.
-				await garbageCollector.telemetryTracker.logPendingEvents(
-					garbageCollector.mc.logger,
-				);
+				await garbageCollector.telemetryTracker.logPendingEvents(garbageCollector.mc.logger);
 				mockLogger.assertMatch(
 					[
 						{
@@ -937,9 +950,7 @@ describe("Garbage Collection Tests", () => {
 				// deleted from unreferencedNodesState otherwise revived events are not logged.
 				garbageCollector.addedOutboundReference(nodes[2], nodes[3], Date.now());
 				garbageCollector.unreferencedNodesState.delete(nodes[3]);
-				await garbageCollector.telemetryTracker.logPendingEvents(
-					garbageCollector.mc.logger,
-				);
+				await garbageCollector.telemetryTracker.logPendingEvents(garbageCollector.mc.logger);
 				mockLogger.assertMatch(
 					[
 						{
@@ -1243,10 +1254,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state, tombstone state and deleted nodes should all be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState !== undefined,
 					"GC state in base snapshot should not be available",
@@ -1268,11 +1276,7 @@ describe("Garbage Collection Tests", () => {
 					1,
 					"Expecting 1 tombstone node",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 			});
 
 			it("resets GC / tombstone state when GC version is newer that the one in base snapshot", async () => {
@@ -1281,10 +1285,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState === undefined,
 					"GC state in base snapshot should be undefined when GC version changes",
@@ -1309,11 +1310,7 @@ describe("Garbage Collection Tests", () => {
 					0,
 					"Expecting no tombstone nodes",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
 					garbageCollector.configs.gcEnabled,
 					true,
@@ -1327,10 +1324,7 @@ describe("Garbage Collection Tests", () => {
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
-				assert(
-					baseSnapshotData !== undefined,
-					"base snapshot was not initialized correctly",
-				);
+				assert(baseSnapshotData !== undefined, "base snapshot was not initialized correctly");
 				assert(
 					baseSnapshotData.gcState === undefined,
 					"GC state in base snapshot should be undefined when GC version changes",
@@ -1359,11 +1353,7 @@ describe("Garbage Collection Tests", () => {
 					0,
 					"Expecting no tombstone nodes",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					1,
-					"Expecting 1 deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 1, "Expecting 1 deleted node");
 				assert.strictEqual(
 					garbageCollector.configs.gcEnabled,
 					true,
@@ -1395,11 +1385,7 @@ describe("Garbage Collection Tests", () => {
 					0,
 					"Expecting no tombstone nodes",
 				);
-				assert.strictEqual(
-					garbageCollector.deletedNodes.size,
-					0,
-					"Expecting no deleted node",
-				);
+				assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting no deleted node");
 				assert.strictEqual(
 					garbageCollector.configs.gcEnabled,
 					true,
@@ -2223,10 +2209,7 @@ describe("Garbage Collection Tests", () => {
 
 		it("can submit GC op compat behavior", async () => {
 			const gcWithPrivates = garbageCollector as GcWithPrivates;
-			const containerRuntimeGCMessage: Omit<
-				ContainerRuntimeGCMessage,
-				"type" | "contents"
-			> & {
+			const containerRuntimeGCMessage: Omit<ContainerRuntimeGCMessage, "type" | "contents"> & {
 				type: string;
 				contents: any;
 			} = {
@@ -2237,9 +2220,7 @@ describe("Garbage Collection Tests", () => {
 
 			assert.doesNotThrow(
 				() =>
-					gcWithPrivates.submitMessage(
-						containerRuntimeGCMessage as ContainerRuntimeGCMessage,
-					),
+					gcWithPrivates.submitMessage(containerRuntimeGCMessage as ContainerRuntimeGCMessage),
 				"Cannot submit GC message with compatDetails",
 			);
 		});

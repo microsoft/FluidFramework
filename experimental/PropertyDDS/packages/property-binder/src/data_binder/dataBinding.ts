@@ -238,7 +238,9 @@ export class DataBinding {
 	 * @param _in_modificationContext - A context object describing the modification.
 	 */
 	onPostCreate(_in_modificationContext: ModificationContext) {
-		console.warn("Calling base class onPostCreate is deprecated; the call is no longer needed");
+		console.warn(
+			"Calling base class onPostCreate is deprecated; the call is no longer needed",
+		);
 	}
 
 	/**
@@ -367,7 +369,10 @@ export class DataBinding {
 	 * @hidden
 	 * @private
 	 */
-	_invokeRemoveCallbacks(in_tokenizedAbsolutePath: (string | number)[], in_simulated: boolean) {
+	_invokeRemoveCallbacks(
+		in_tokenizedAbsolutePath: (string | number)[],
+		in_simulated: boolean,
+	) {
 		if (this._registeredPaths) {
 			this._forEachPrototypeMember("_registeredPaths", (in_registeredPaths) => {
 				this._handleRemovals(
@@ -605,19 +610,13 @@ export class DataBinding {
 				handlerNode.__registeredData.lastTargetPropAbsPath !== targetAbsolutePath;
 			// This will remove existing handlers (_referenceTargetChanged bindings, done below)
 			// and simultaneously fire remove/referenceRemoves if fireRemovals.
-			this._handleRemovals(
-				tokenized,
-				registeredSubPaths,
-				handlerNode,
-				in_indirectionsAtRoot,
-				{
-					simulated: false,
-					calledForReferenceTargetChanged: true,
-					removeRootCallbacks: true,
-					callRootRemovals: true,
-					callRemovals: fireRemovals,
-				},
-			);
+			this._handleRemovals(tokenized, registeredSubPaths, handlerNode, in_indirectionsAtRoot, {
+				simulated: false,
+				calledForReferenceTargetChanged: true,
+				removeRootCallbacks: true,
+				callRootRemovals: true,
+				callRemovals: fireRemovals,
+			});
 		}
 
 		// Insert the handler into the reference property handler data-structure
@@ -675,8 +674,7 @@ export class DataBinding {
 				);
 				// cut off from the end of the absolute path the levels that we traversed upwards
 				console.assert(tokenizedAbsolutePath.length >= numberOfRaiseLevelTokens);
-				tokenizedAbsolutePath.length =
-					tokenizedAbsolutePath.length - numberOfRaiseLevelTokens;
+				tokenizedAbsolutePath.length = tokenizedAbsolutePath.length - numberOfRaiseLevelTokens;
 				absolutePathTokenTypes.length =
 					absolutePathTokenTypes.length - numberOfRaiseLevelTokens;
 				// concatenate the remainder of the absolute path with the relative path stripped of '..' tokens
@@ -756,8 +754,9 @@ export class DataBinding {
 			if (targetAbsolutePath !== handlerNode.__registeredData.lastTargetPropAbsPath) {
 				// We are targetting a new property --- send insert notifications
 				handlerNode.__registeredData.lastTargetPropAbsPath = targetAbsolutePath;
-				const pathRelativeToBaseBinding =
-					in_tokenizedFullPath.concat(tokenizedRegistrySubPath);
+				const pathRelativeToBaseBinding = in_tokenizedFullPath.concat(
+					tokenizedRegistrySubPath,
+				);
 				this._invokeInsertCallbacksForPaths(
 					pathRelativeToBaseBinding,
 					registeredSubPaths,
@@ -839,7 +838,7 @@ export class DataBinding {
 					sourceReferencePropertyInfo.propertyKey !== undefined
 						? sourceReferencePropertyInfo.property.getValue(
 								sourceReferencePropertyInfo.propertyKey,
-						  )
+							)
 						: sourceReferencePropertyInfo.property.getValue();
 				if (
 					sourceReferencePropertyInfo.property.getAbsolutePath() !==
@@ -864,17 +863,13 @@ export class DataBinding {
 				// The property we point to finally exists.
 				// If this code looks familiar, it is because it is a version of the end of
 				// _registerCallbacksForSingleReferenceProperty.
-				const targetProp = this._property!.getRoot().resolvePath(
-					in_rootPath,
-					RESOLVE_NEVER,
-				)!;
+				const targetProp = this._property!.getRoot().resolvePath(in_rootPath, RESOLVE_NEVER)!;
 				const eventualProp = this._dereferenceProperty(targetProp);
 
 				in_rootTypeidHolder.typeid = targetProp.getFullTypeid();
 
 				if (eventualProp) {
-					handlerNode.__registeredData.lastTargetPropAbsPath =
-						eventualProp.getAbsolutePath();
+					handlerNode.__registeredData.lastTargetPropAbsPath = eventualProp.getAbsolutePath();
 				}
 
 				const pathRelativeToBaseBinding = in_tokenizedFullPath.concat(
@@ -1058,8 +1053,7 @@ export class DataBinding {
 								level,
 								{
 									simulated: false,
-									calledForReferenceTargetChanged:
-										in_calledForReferenceTargetChanged,
+									calledForReferenceTargetChanged: in_calledForReferenceTargetChanged,
 									removeRootCallbacks: true,
 									callRootRemovals: false,
 									callRemovals: true,
@@ -1139,8 +1133,7 @@ export class DataBinding {
 										level,
 										{
 											simulated: false,
-											calledForReferenceTargetChanged:
-												in_calledForReferenceTargetChanged,
+											calledForReferenceTargetChanged: in_calledForReferenceTargetChanged,
 											removeRootCallbacks: true,
 											callRootRemovals: false,
 											callRemovals: true,
@@ -1152,16 +1145,13 @@ export class DataBinding {
 							break;
 						default:
 							throw new Error(
-								"ArrayChangeSetIterator: unknown operator " +
-									arrayIterator.opDescription.type,
+								"ArrayChangeSetIterator: unknown operator " + arrayIterator.opDescription.type,
 							);
 					}
 					arrayIterator.next();
 				}
 			} else {
-				throw new Error(
-					"unknown reference context: " + in_context.getSplitTypeID().context,
-				);
+				throw new Error("unknown reference context: " + in_context.getSplitTypeID().context);
 			}
 		} else {
 			// Otherwise the removal of a reference
@@ -1317,9 +1307,7 @@ export class DataBinding {
 									in_tokenizedPath.push(in_childName);
 									visitor(
 										in_child,
-										in_referenceEntry
-											? in_referenceEntry[in_childName]
-											: undefined,
+										in_referenceEntry ? in_referenceEntry[in_childName] : undefined,
 										in_tokenizedPath,
 									);
 									in_tokenizedPath.pop();
@@ -1455,10 +1443,7 @@ export class DataBinding {
 					}
 					if (invokeReferenceRemove && dataBindingHandlers.referenceRemove) {
 						for (let j = 0; j < dataBindingHandlers.referenceRemove.length; j++) {
-							dataBindingHandlers.referenceRemove[j].pathCallback.call(
-								this,
-								removalContext,
-							);
+							dataBindingHandlers.referenceRemove[j].pathCallback.call(this, removalContext);
 						}
 					}
 				}
@@ -1612,20 +1597,14 @@ export class DataBinding {
 					);
 					// Since we have the property, cache it on the context to avoid recomputation
 					modificationContext._hintModifiedProperty(currentProperty);
-					_.each(
-						registeredPaths.__registeredDataBindingHandlers.insert,
-						(in_handler: any) => {
-							// the insert handlers probably should always be called (TODO: even w.r.t. bindToReference?)
-							// console.log('calling insert for: ' + traversalPath + ' currentProperty: ' + currentProperty);
-							// note that the nested ChangeSet supplied is undefined!
-							if (
-								registrationId === undefined ||
-								in_handler.registrationId === registrationId
-							) {
-								in_handler.pathCallback.call(this, modificationContext);
-							}
-						},
-					);
+					_.each(registeredPaths.__registeredDataBindingHandlers.insert, (in_handler: any) => {
+						// the insert handlers probably should always be called (TODO: even w.r.t. bindToReference?)
+						// console.log('calling insert for: ' + traversalPath + ' currentProperty: ' + currentProperty);
+						// note that the nested ChangeSet supplied is undefined!
+						if (registrationId === undefined || in_handler.registrationId === registrationId) {
+							in_handler.pathCallback.call(this, modificationContext);
+						}
+					});
 				}
 				if (
 					currentReferenceProperty &&
@@ -1663,8 +1642,7 @@ export class DataBinding {
 						registeredPaths.__registeredDataBindingHandlers.collectionInsert,
 						(in_handler) => {
 							const rightId =
-								registrationId === undefined ||
-								in_handler.registrationId === registrationId;
+								registrationId === undefined || in_handler.registrationId === registrationId;
 							const isContainer = isCollection(currentProperty);
 							if (rightId && isContainer) {
 								const keys = (currentProperty as any).getIds();
@@ -1690,11 +1668,7 @@ export class DataBinding {
 										in_simulated,
 									);
 
-									in_handler.pathCallback.call(
-										this,
-										currentKey,
-										modificationContext,
-									);
+									in_handler.pathCallback.call(this, currentKey, modificationContext);
 									keyedPath.pop();
 								}
 							}
@@ -1719,9 +1693,7 @@ export class DataBinding {
 					) {
 						const token = unescapeTokenizedStringForMap(keys[i]);
 						traversalStack.push({
-							interestingPaths: interestingPaths
-								? interestingPaths[keys[i]]
-								: undefined,
+							interestingPaths: interestingPaths ? interestingPaths[keys[i]] : undefined,
 							registeredPaths: registeredPaths[keys[i]],
 							traversalToken: token,
 							traversalPath: traversalPath.concat(token),

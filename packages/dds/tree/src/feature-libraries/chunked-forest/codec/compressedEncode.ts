@@ -43,7 +43,10 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
  *
  * Most of the compression strategy comes from the policy provided via `cache`.
  */
-export function compressedEncode(fieldBatch: FieldBatch, cache: EncoderCache): EncodedFieldBatch {
+export function compressedEncode(
+	fieldBatch: FieldBatch,
+	cache: EncoderCache,
+): EncodedFieldBatch {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -414,7 +417,7 @@ export function encodeValue(
 			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
 		} else if (shape === SpecialField.Identifier) {
 			// This case is a special case handling the encoding of identifier fields.
-			assert(value !== undefined, "required value must not be missing");
+			assert(value !== undefined, 0x998 /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else {
 			// EncodedCounter case:

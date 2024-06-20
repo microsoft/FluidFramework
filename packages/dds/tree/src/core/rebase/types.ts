@@ -89,7 +89,10 @@ export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean
 /**
  * @returns a ChangeAtomId with the given revision and local ID.
  */
-export function makeChangeAtomId(localId: ChangesetLocalId, revision?: RevisionTag): ChangeAtomId {
+export function makeChangeAtomId(
+	localId: ChangesetLocalId,
+	revision?: RevisionTag,
+): ChangeAtomId {
 	return revision === undefined ? { localId } : { localId, revision };
 }
 
@@ -97,7 +100,10 @@ export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomI
 	return typeof id === "object" ? id : { localId: id };
 }
 
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+export function taggedAtomId(
+	id: ChangeAtomId,
+	revision: RevisionTag | undefined,
+): ChangeAtomId {
 	return makeChangeAtomId(id.localId, id.revision ?? revision);
 }
 
@@ -163,7 +169,7 @@ export enum CommitKind {
 /**
  * Information about a commit that has been applied.
  *
- * @public
+ * @sealed @public
  */
 export interface CommitMetadata {
 	/**

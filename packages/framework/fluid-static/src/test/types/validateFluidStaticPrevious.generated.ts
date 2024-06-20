@@ -20,6 +20,34 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAliasDeclaration_CompatibilityMode": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_CompatibilityMode():
+    TypeOnly<old.CompatibilityMode>;
+declare function use_current_TypeAliasDeclaration_CompatibilityMode(
+    use: TypeOnly<current.CompatibilityMode>): void;
+use_current_TypeAliasDeclaration_CompatibilityMode(
+    get_old_TypeAliasDeclaration_CompatibilityMode());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_CompatibilityMode": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_CompatibilityMode():
+    TypeOnly<current.CompatibilityMode>;
+declare function use_old_TypeAliasDeclaration_CompatibilityMode(
+    use: TypeOnly<old.CompatibilityMode>): void;
+use_old_TypeAliasDeclaration_CompatibilityMode(
+    get_current_TypeAliasDeclaration_CompatibilityMode());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAliasDeclaration_ContainerAttachProps": {"forwardCompat": false}
  */
 declare function get_old_TypeAliasDeclaration_ContainerAttachProps():
@@ -69,24 +97,7 @@ declare function get_current_InterfaceDeclaration_ContainerSchema():
 declare function use_old_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<old.ContainerSchema>): void;
 use_old_InterfaceDeclaration_ContainerSchema(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerSchema());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedTypeAliasDeclaration_DataObjectClass": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedTypeAliasDeclaration_DataObjectClass": {"backCompat": false}
- */
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -128,7 +139,6 @@ declare function get_current_InterfaceDeclaration_IFluidContainer():
 declare function use_old_InterfaceDeclaration_IFluidContainer(
     use: TypeOnly<old.IFluidContainer>): void;
 use_old_InterfaceDeclaration_IFluidContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidContainer());
 
 /*
@@ -311,40 +321,7 @@ declare function get_current_TypeAliasDeclaration_InitialObjects():
 declare function use_old_TypeAliasDeclaration_InitialObjects(
     use: TypeOnly<old.InitialObjects<any>>): void;
 use_old_TypeAliasDeclaration_InitialObjects(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_InitialObjects());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedTypeAliasDeclaration_LoadableObjectClass": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedTypeAliasDeclaration_LoadableObjectClass": {"backCompat": false}
- */
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedTypeAliasDeclaration_LoadableObjectClassRecord": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedTypeAliasDeclaration_LoadableObjectClassRecord": {"backCompat": false}
- */
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

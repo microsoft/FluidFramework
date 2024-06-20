@@ -4,26 +4,6 @@
 
 ```ts
 
-import type { ConfigTypes } from '@fluidframework/core-interfaces';
-import type { EventEmitter } from '@fluid-internal/client-utils';
-import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import type { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces/internal';
-import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { IUsageError } from '@fluidframework/core-interfaces/internal';
-import { Lazy } from '@fluidframework/core-utils/internal';
-import { LogLevel } from '@fluidframework/core-interfaces';
-import type { Tagged } from '@fluidframework/core-interfaces';
-import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // @alpha
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
@@ -40,15 +20,12 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
 
 // @alpha
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
     eventName: string;
 }
 
 // @alpha
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    // (undocumented)
     category?: TelemetryEventCategory;
-    // (undocumented)
     eventName: string;
 }
 
@@ -72,27 +49,24 @@ export interface ITelemetryLoggerPropertyBags {
 
 // @alpha
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
-    // (undocumented)
     duration?: number;
 }
 
 // @alpha
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
-// @alpha
+// @alpha @deprecated
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel);
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    // (undocumented)
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
+    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
     clear(): void;
-    // (undocumented)
-    events: ITelemetryBaseEvent[];
-    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
+    get events(): readonly ITelemetryBaseEvent[];
+    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
+    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): boolean;
     readonly minLogLevel: LogLevel;
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
     // (undocumented)

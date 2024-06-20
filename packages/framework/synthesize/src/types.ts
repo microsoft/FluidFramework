@@ -33,7 +33,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
 	: {
 			[P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
-	  };
+		};
 
 /**
  * This is a condensed version of Record that requires the object has all
@@ -46,7 +46,7 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
 	: {
 			[P in keyof T]?: Promise<T[P] | undefined>;
-	  };
+		};
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers

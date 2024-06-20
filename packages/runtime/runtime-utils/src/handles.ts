@@ -87,7 +87,9 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
  * @legacy
  * @alpha
  */
-export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
+export function toFluidHandleErased<T>(
+	handle: IFluidHandleInternal<T>,
+): IFluidHandleErased<T> {
 	return handle as unknown as IFluidHandleErased<T>;
 }
 
