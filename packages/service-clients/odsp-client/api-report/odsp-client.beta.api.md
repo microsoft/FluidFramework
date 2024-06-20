@@ -37,6 +37,8 @@ export class OdspClient {
 
 // @beta (undocumented)
 export interface OdspClientProps {
+    // (undocumented)
+    readonly betaApichange?: any;
     readonly configProvider?: IConfigProviderBase;
     readonly connection: OdspConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;

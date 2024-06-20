@@ -54,6 +54,8 @@ export interface OdspClientProps {
 	 * Base interface for providing configurations to control experimental features. If unsure, leave this undefined.
 	 */
 	readonly configProvider?: IConfigProviderBase;
+
+	readonly betaApichange?: any;
 }
 
 /**
