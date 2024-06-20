@@ -217,6 +217,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
+		// TODO: This should not be necessary when receiving changes from other clients.
 		const changeWithRevision = this.changeFamily.rebaser.changeRevision(change, revision);
 
 		const newHead = mintCommit(this.head, {

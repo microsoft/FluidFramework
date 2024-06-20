@@ -227,10 +227,10 @@ function makeModularChangeCodec(
 
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
+		parentId: NodeId | undefined,
 		decoded: ModularChangeset,
 		context: ChangeEncodingContext,
 		idAllocator: IdAllocator,
-		parentId?: NodeId,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -250,16 +250,19 @@ function makeModularChangeCodec(
 				encodeNode: () => fail("Should not encode nodes during field decoding"),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
-					const node = decodeNodeChangesetFromJson(
-						encodedNode,
-						decoded,
-						context,
-						idAllocator,
-					);
 					const nodeId: NodeId = {
 						revision: context.revision,
 						localId: brand(idAllocator.allocate()),
 					};
+
+					const node = decodeNodeChangesetFromJson(
+						encodedNode,
+						nodeId,
+						decoded,
+						context,
+						idAllocator,
+					);
+
 					setInNestedMap(decoded.nodeChanges, nodeId.revision, nodeId.localId, node);
 					setInNestedMap(decoded.nodeToParent, nodeId.revision, nodeId.localId, fieldId);
 					return nodeId;
@@ -289,6 +292,7 @@ function makeModularChangeCodec(
 
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
+		id: NodeId,
 		decoded: ModularChangeset,
 		context: ChangeEncodingContext,
 		idAllocator: IdAllocator,
@@ -299,6 +303,7 @@ function makeModularChangeCodec(
 		if (fieldChanges !== undefined) {
 			decodedChange.fieldChanges = decodeFieldChangesFromJson(
 				fieldChanges,
+				id,
 				decoded,
 				context,
 				idAllocator,
@@ -464,6 +469,7 @@ function makeModularChangeCodec(
 
 			decoded.fieldChanges = decodeFieldChangesFromJson(
 				encodedChange.changes,
+				undefined,
 				decoded,
 				context,
 				idAllocatorFromMaxId(encodedChange.maxId),
