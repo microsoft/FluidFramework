@@ -468,17 +468,32 @@ export function getSafeFilenameForName(apiItemName: string): string {
 }
 
 /**
- * Extracts the text from the provided excerpt and adjusts it to be on a single line, and to omit any trailing `;`.
- * @remarks Useful when a shortened version of a code excerpt is wanted, and especially if the contents need to fit on a single line.
+ * Extracts the text from the provided excerpt and adjusts it to be on a single line.
+ *
+ * @remarks
+ * Useful when a shortened version of a code excerpt is wanted, or if you don't want code formatting to affect
+ * the presentation in the documentation.
+ * This is especially valuable if the contents need to fit on a single line.
+ *
+ * @example
+ * An excerpt of TypeScript code like...
+ *
+ * ```typescript
+ * export interface Foo {
+ * 	bar: string;
+ * 	baz: number;
+ * }
+ * ```
+ *
+ * would become...
+ *
+ * ```typescript
+ *  export interface Foo { bar: string; baz: number; }
+ * ```
+ *
  * @public
  */
 export function getSingleLineExcerptText(excerpt: Excerpt): string {
 	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
-	let signatureExcerpt = excerpt.text.trim().replace(/\s+/g, " ");
-
-	if (signatureExcerpt.endsWith(";")) {
-		signatureExcerpt = signatureExcerpt.slice(0, signatureExcerpt.length - 1);
-	}
-
-	return signatureExcerpt;
+	return excerpt.text.trim().replace(/\s+/g, " ");
 }

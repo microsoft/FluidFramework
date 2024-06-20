@@ -14,13 +14,12 @@ import {
 import {
 	type ApiMemberKind,
 	getQualifiedApiItemName,
-	getReleaseTag,
 	getUnscopedPackageName,
-	releaseTagToString,
 	getSafeFilenameForName,
 	getConciseSignature,
 	getSingleLineExcerptText,
 	isDeprecated,
+	getReleaseTag,
 } from "../../utilities/index.js";
 
 /**
@@ -308,13 +307,6 @@ export namespace DefaultDocumentationSuiteOptions {
 	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
 	 */
 	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
-		// If the API is `@alpha` or `@beta`, append a notice to the heading text
-		const releaseTag = getReleaseTag(apiItem);
-		const headingTextPostfix =
-			releaseTag === ReleaseTag.Alpha || releaseTag === ReleaseTag.Beta
-				? ` (${releaseTagToString(releaseTag).toUpperCase()})`
-				: "";
-
 		switch (apiItem.kind) {
 			case ApiItemKind.Model: {
 				return "API Overview";
@@ -326,10 +318,10 @@ export namespace DefaultDocumentationSuiteOptions {
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
 				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
-				return `${excerpt}${headingTextPostfix}`;
+				return trimTrailingSemicolon(excerpt);
 			}
 			default: {
-				return `${apiItem.displayName}${headingTextPostfix}`;
+				return apiItem.displayName;
 			}
 		}
 	}
@@ -350,7 +342,8 @@ export namespace DefaultDocumentationSuiteOptions {
 				// For signature items, the display-name is not particularly useful information
 				// ("(constructor)", "(call)", etc.).
 				// Instead, we will use a cleaned up variation on the type signature.
-				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				const excerpt = getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
+				return trimTrailingSemicolon(excerpt);
 			}
 			default: {
 				return getConciseSignature(apiItem);
@@ -422,4 +415,14 @@ export function getDocumentationSuiteOptionsWithDefaults(
 		...defaultDocumentationSuiteOptions,
 		...inputOptions,
 	};
+}
+
+/**
+ * Trims a trailing semicolon from the provided text, if the text contains one.
+ */
+function trimTrailingSemicolon(text: string): string {
+	if (text.endsWith(";")) {
+		return text.slice(0, text.length - 1);
+	}
+	return text;
 }

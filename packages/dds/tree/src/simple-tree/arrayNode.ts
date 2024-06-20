@@ -51,7 +51,7 @@ import { assert } from "@fluidframework/core-utils/internal";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -222,7 +222,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
@@ -248,7 +248,7 @@ export const TreeArrayNode = {
 	 * ```
 	 */
 	spread: <T>(content: Iterable<T>) => create(content),
-};
+} as const;
 
 /**
  * Package internal construction API.
@@ -259,7 +259,7 @@ let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
  * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
- * @public
+ * @sealed @public
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {
 	static {
@@ -773,17 +773,20 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, field, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, field, "moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(index, field, "moveToIndex", true);
 		validateIndex(sourceIndex, field, "moveToIndex");
 		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
@@ -1024,6 +1027,6 @@ function validateIndexRange(
 function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	assert(cursor.mode === CursorLocationType.Fields, 0x9a8 /* should be in fields mode */);
 	return cursor;
 }
