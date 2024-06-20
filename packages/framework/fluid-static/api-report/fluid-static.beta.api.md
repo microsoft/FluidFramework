@@ -4,17 +4,6 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-definitions';
-import type { IClient } from '@fluidframework/driver-definitions';
-import type { IContainer } from '@fluidframework/container-definitions/internal';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import type { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
-import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-
 // @public
 export type CompatibilityMode = "1" | "2";
 

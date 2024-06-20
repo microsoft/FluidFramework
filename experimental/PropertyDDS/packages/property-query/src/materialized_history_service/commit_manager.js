@@ -103,9 +103,7 @@ class CommitManager {
 						branch = in_branch;
 						parentCommit = in_parentCommit;
 						parentCommitTemplates = in_parentCommitTemplates;
-						originalBranchSize = Buffer.byteLength(
-							this._serializer.serialize(in_branch),
-						);
+						originalBranchSize = Buffer.byteLength(this._serializer.serialize(in_branch));
 
 						if (branch === undefined) {
 							throw new OperationError(
@@ -156,34 +154,30 @@ class CommitManager {
 							}
 						}
 						templatesCS = getEncodedTemplates(changeSet);
-						return await this._systemMonitor.startSegment(
-							"B-Tree update",
-							true,
-							async () => {
-								return await Promise.all([
-									this._btreeManager.updateBTree(
-										{
-											branchGuid: in_params.branchGuid,
-											commitGuid: in_params.guid,
-											bTreeParameters: branch.bTreeParameters,
-										},
-										parentCommit.rootNodeRef,
-										changeSet,
-										batch,
-									),
-									this._btreeManager.updateBTree(
-										{
-											branchGuid: in_params.branchGuid,
-											commitGuid: in_params.guid,
-											bTreeParameters: branch.bTreeParameters,
-										},
-										parentCommitTemplates.rootNodeRef,
-										templatesCS,
-										batch,
-									),
-								]);
-							},
-						);
+						return await this._systemMonitor.startSegment("B-Tree update", true, async () => {
+							return await Promise.all([
+								this._btreeManager.updateBTree(
+									{
+										branchGuid: in_params.branchGuid,
+										commitGuid: in_params.guid,
+										bTreeParameters: branch.bTreeParameters,
+									},
+									parentCommit.rootNodeRef,
+									changeSet,
+									batch,
+								),
+								this._btreeManager.updateBTree(
+									{
+										branchGuid: in_params.branchGuid,
+										commitGuid: in_params.guid,
+										bTreeParameters: branch.bTreeParameters,
+									},
+									parentCommitTemplates.rootNodeRef,
+									templatesCS,
+									batch,
+								),
+							]);
+						});
 					})
 					.then(async ([rootNode, templatesRootNode]) => {
 						if (!rootNode) {
@@ -212,9 +206,7 @@ class CommitManager {
 						batch = this._storage.startWriteBatch();
 
 						// Create the root commit object
-						let createdDate = in_params.created
-							? new Date(in_params.created)
-							: new Date();
+						let createdDate = in_params.created ? new Date(in_params.created) : new Date();
 						let newCommit = {
 							guid: in_params.guid,
 							branchGuid: in_params.branchGuid,
@@ -625,9 +617,7 @@ class CommitManager {
 
 			let previousNodePromises = [this._storage.get("commit:" + previousCommitGuid)];
 			if (in_params.fetchSchemas) {
-				previousNodePromises.push(
-					this._storage.get("commitTemplates:" + previousCommitGuid),
-				);
+				previousNodePromises.push(this._storage.get("commitTemplates:" + previousCommitGuid));
 			}
 			[previousCommitNode, previousCommitTemplatesNode] =
 				await Promise.all(previousNodePromises);
@@ -656,7 +646,7 @@ class CommitManager {
 				? {
 						changeSet: previousNodeCS,
 						ref: previousCommitNode.rootNodeRef,
-				  }
+					}
 				: undefined,
 			treeLevelDifference: in_params.onlyChanges
 				? commitNode.treeLevels - previousCommitNode.treeLevels
@@ -688,7 +678,7 @@ class CommitManager {
 					? {
 							changeSet: previousNodeTemplatesCS,
 							ref: previousCommitTemplatesNode.rootNodeRef,
-					  }
+						}
 					: undefined,
 				treeLevelDifference: in_params.onlyChanges
 					? commitTemplatesNode.treeLevels - previousCommitTemplatesNode.treeLevels
@@ -789,21 +779,14 @@ class CommitManager {
 						if (path.length > 1) {
 							path = path.slice(0, path.length - 1);
 
-							let chunk1CS = Utils.getFilteredChangeSetByPaths(
-								nodes[i].changeSet,
-								path,
-							);
-							let chunk2CS = Utils.getFilteredChangeSetByPaths(
-								nodes[i + 1].changeSet,
-								path,
-							);
+							let chunk1CS = Utils.getFilteredChangeSetByPaths(nodes[i].changeSet, path);
+							let chunk2CS = Utils.getFilteredChangeSetByPaths(nodes[i + 1].changeSet, path);
 
 							// Check whether both nodes agree with respect to the presence of a changeSet at the specified path
 							// They should either both have no changeset (if the path has been deleted and the boundary was kept)
 							// or should both have a changeset
 							let changeSetsMatch =
-								ChangeSet.isEmptyChangeSet(chunk1CS) ===
-								ChangeSet.isEmptyChangeSet(chunk2CS);
+								ChangeSet.isEmptyChangeSet(chunk1CS) === ChangeSet.isEmptyChangeSet(chunk2CS);
 
 							if (!changeSetsMatch) {
 								logger.error(
@@ -882,10 +865,7 @@ class CommitManager {
 										if (path[0] === "/") {
 											path = path.substr(1);
 										} else {
-											path = this._joinPaths(
-												in_context.getFullPath(),
-												"../" + path,
-											);
+											path = this._joinPaths(in_context.getFullPath(), "../" + path);
 										}
 										in_params.additionalPaths.push(path);
 									}
@@ -897,10 +877,7 @@ class CommitManager {
 					}).concat(in_params.mergedResultChangeSet),
 				);
 
-				if (
-					in_params.pagingLimit !== undefined &&
-					in_params.finalNextPagePath === undefined
-				) {
+				if (in_params.pagingLimit !== undefined && in_params.finalNextPagePath === undefined) {
 					in_params.finalNextPagePath = nextPagePath;
 				}
 			});
@@ -1143,9 +1120,7 @@ class CommitManager {
 							bTreeParameters: in_params.bTreeParameters,
 							convertPathFunction: convertPathToChunkBoundaryFormat,
 							nodeCallback: (node, level) => {
-								let children = InternalNode.prototype.decodeCsChildren(
-									node.changeSet,
-								);
+								let children = InternalNode.prototype.decodeCsChildren(node.changeSet);
 								maxLevel = Math.max(maxLevel, level);
 								if ((!root && d > children.length) || children.length > order) {
 									throw new OperationError(

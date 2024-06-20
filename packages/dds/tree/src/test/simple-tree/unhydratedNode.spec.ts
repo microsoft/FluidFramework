@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { TreeStatus } from "../../../dist/index.js";
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import { SchemaFactory, type FieldProps, type TreeNode } from "../../simple-tree/index.js";
@@ -17,6 +16,7 @@ import type {
 } from "../../simple-tree/schemaTypes.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");

@@ -5,14 +5,13 @@
 
 import { strict as assert, fail } from "assert";
 
+import type { IMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	AllowedUpdateType,
-	CommitKind,
 	type FieldUpPath,
 	type Revertible,
-	RevertibleStatus,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -21,6 +20,8 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
+	RevertibleStatus,
+	CommitKind,
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import {
@@ -31,10 +32,15 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
-import type { ITreeCheckout, RevertibleFactory, TreeContent } from "../../shared-tree/index.js";
+import {
+	TreeCheckout,
+	type ITreeCheckout,
+	type RevertibleFactory,
+	type TreeContent,
+} from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
-	checkoutWithContent,
+	createCheckoutWithContent,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
 	flexTreeViewWithContent,
@@ -167,10 +173,7 @@ describe("sharedTreeView", () => {
 
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 
 				assert.equal(log.length, 2);
 
@@ -194,10 +197,7 @@ describe("sharedTreeView", () => {
 				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 				checkout.editor
 					.sequenceField(rootField)
-					.insert(
-						0,
-						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
-					);
+					.insert(0, cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]));
 				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
@@ -990,6 +990,37 @@ describe("sharedTreeView", () => {
 
 			stacks.unsubscribe();
 		});
+
+		for (const ageToTest of [0, 1, 5]) {
+			itView(`Telemetry logs track reversion age (${ageToTest})`, (view, logger) => {
+				let revertible: Revertible | undefined;
+				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+					if (getRevertible === undefined) {
+						assert.fail("Expected commit to be revertible.");
+					}
+
+					// Only save off the first revertible, as it's the only one we'll use.
+					if (revertible === undefined) {
+						revertible = getRevertible();
+					}
+				});
+
+				// Insert (`ageToTest` + 1) nodes, then revert the first.
+				for (let i = 0; i <= ageToTest; i++) {
+					insertFirstNode(view, "A");
+				}
+				assert(revertible !== undefined, "Expected revertible to be created.");
+				revertible.revert();
+
+				const revertEvents = logger
+					.events()
+					.filter((event) => event.eventName.endsWith(TreeCheckout.revertTelemetryEventName));
+				assert.equal(revertEvents.length, 1);
+				assert.equal(revertEvents[0].age, ageToTest);
+
+				unsubscribe();
+			});
+		}
 	});
 });
 
@@ -1043,7 +1074,7 @@ function getTestValues({ forest }: ITreeCheckout): Value[] {
  */
 function itView(
 	title: string,
-	fn: (view: ITreeCheckout) => void,
+	fn: (view: ITreeCheckout, logger: IMockLoggerExt) => void,
 	initialContent?: TreeContent,
 ): void {
 	const content: TreeContent = initialContent ?? {
@@ -1054,22 +1085,26 @@ function itView(
 		...content,
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
+
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(schematizeFlexTree(provider.trees[0], config).checkout);
+		fn(schematizeFlexTree(provider.trees[0], config).checkout, provider.logger);
 	});
 
 	it(`${title} (reference view)`, () => {
-		fn(checkoutWithContent(content));
+		const { checkout, logger } = createCheckoutWithContent(content);
+		fn(checkout, logger);
 	});
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork());
+		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork(), provider.logger);
 	});
 
 	it(`${title} (reference forked view)`, () => {
-		fn(checkoutWithContent(content).fork());
+		const { checkout, logger } = createCheckoutWithContent(content);
+		const fork = checkout.fork();
+		fn(fork, logger);
 	});
 }

@@ -79,16 +79,16 @@ export function fieldShaper(
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
-			assert(type !== undefined, "field type must be defined in identifier field");
+			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
 			const nodeSchema = storedSchema.nodeSchema.get(type);
-			assert(nodeSchema !== undefined, "nodeSchema must be defined");
+			assert(nodeSchema !== undefined, 0x99a /* nodeSchema must be defined */);
 			assert(
 				nodeSchema instanceof LeafNodeStoredSchema,
-				"nodeSchema must be LeafNodeStoredSchema",
+				0x99b /* nodeSchema must be LeafNodeStoredSchema */,
 			);
 			assert(
 				nodeSchema.leafValue === ValueSchema.String,
-				"identifier field can only be type string",
+				0x99c /* identifier field can only be type string */,
 			);
 			const identifierNodeEncoder = new NodeShape(
 				type,

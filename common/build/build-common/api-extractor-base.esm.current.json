@@ -1,0 +1,10 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "./api-extractor-base.esm.json",
+	// Later this should be set to dummy value forcing all uses to specify the appropriate rollup file.
+	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
+	"apiReport": {
+		// NOTE: "alpha" is temporarily not included to manage transition to direct legacy reporting.
+		"reportVariants": ["public", "beta"]
+	}
+}

@@ -5,7 +5,10 @@
 
 import { strict as assert, fail } from "assert";
 
-import type { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
+import type {
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+} from "../../../../core/index.js";
 import { leaf } from "../../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
@@ -58,13 +61,17 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec/format.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createIdCompressor } from "../../../../../../../runtime/id-compressor/dist/idCompressor.js";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
 const numericShape = new NodeShape(leaf.number.name, true, [], undefined);
-const identifierShape = new NodeShape(leaf.string.name, SpecialField.Identifier, [], undefined);
+const identifierShape = new NodeShape(
+	leaf.string.name,
+	SpecialField.Identifier,
+	[],
+	undefined,
+);
 
 describe("schemaBasedEncoding", () => {
 	it("oneFromSet", () => {

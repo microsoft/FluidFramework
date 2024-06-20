@@ -140,9 +140,18 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 }
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
-	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
-	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
-	[3, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 }],
+	[
+		1,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 },
+	],
+	[
+		2,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 },
+	],
+	[
+		3,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -277,6 +286,7 @@ export class SharedTree
 				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
+				logger: this.logger,
 			},
 		);
 	}

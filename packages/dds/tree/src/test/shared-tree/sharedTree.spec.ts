@@ -195,8 +195,7 @@ describe("SharedTree", () => {
 			assert.equal(schematized.flexTree.content, undefined);
 		});
 
-		// TODO: ensure unhydrated initialTree input is correctly hydrated.
-		it.skip("unhydrated tree input", () => {
+		it("unhydrated tree input", () => {
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
@@ -438,10 +437,7 @@ describe("SharedTree", () => {
 					libraries: [leaf.library],
 				});
 				const node = b.objectRecursive("test node", {
-					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
-						() => node,
-						leaf.number,
-					]),
+					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 				});
 				const schema = b.intoSchema(node);
 
@@ -461,17 +457,14 @@ describe("SharedTree", () => {
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary(
-							(await tree1.summarize()).summary,
-						),
+						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
 					},
 					factory.attributes,
 				);
 
 				containerRuntimeFactory.processAllMessages();
 				const incrementalSummaryContext = {
-					summarySequenceNumber:
-						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
+					summarySequenceNumber: dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
 					latestSummarySequenceNumber:
 						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
@@ -2237,7 +2230,9 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
+			tree1.editor
+				.sequenceField({ parent: undefined, field: rootFieldKey })
+				.remove(0, 99),
 		);
 
 		provider.processMessages();

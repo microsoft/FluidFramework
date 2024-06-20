@@ -17,7 +17,11 @@ import {
 	isFlexTreeNode,
 	isLazy,
 } from "../feature-libraries/index.js";
-import { type RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import {
+	type RestrictiveReadonlyRecord,
+	getOrCreate,
+	isReadonlyArray,
+} from "../util/index.js";
 
 import {
 	booleanSchema,
@@ -66,7 +70,6 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -113,7 +116,7 @@ export type ScopedSchemaName<
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
  * @remarks
- * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by {@link ScopedSchemaName|combining} the {@link SchemaFactory.scope} with the schema's `Name`.
+ * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
  * Therefor two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
@@ -174,10 +177,9 @@ export class SchemaFactory<
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
-			TScope,
-			Name
-		>;
+		return (
+			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
+		) as ScopedSchemaName<TScope, Name>;
 	}
 
 	/**
@@ -704,12 +706,7 @@ export class SchemaFactory<
 			public constructor(
 				data:
 					| Iterable<
-							[
-								string,
-								InsertableTreeNodeFromImplicitAllowedTypes<
-									T & ImplicitAllowedTypes
-								>,
-							]
+							[string, InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>]
 					  >
 					| FlexTreeNode,
 			) {

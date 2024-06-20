@@ -5,7 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
@@ -94,7 +97,7 @@ export interface CheckoutEvents {
  * whichever happens first.
  * This is typically used to clean up any resources associated with the `Revertible` in the host application.
  *
- * @public
+ * @sealed @public
  */
 export type RevertibleFactory = (
 	onRevertibleDisposed?: (revertible: Revertible) => void,
@@ -221,6 +224,7 @@ export function createTreeCheckout(
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
+		logger?: ITelemetryLoggerExt;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -261,6 +265,7 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
+		args?.logger,
 	);
 }
 
@@ -348,6 +353,20 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 }
 
 /**
+ * Metrics derived from a revert operation.
+ *
+ * @see {@link TreeCheckout.revertRevertible}.
+ */
+export interface RevertMetrics {
+	/**
+	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
+	 */
+	readonly age: number;
+
+	// TODO: add other stats as needed for telemetry, etc.
+}
+
+/**
  * An implementation of {@link ITreeCheckoutFork}.
  */
 export class TreeCheckout implements ITreeCheckoutFork {
@@ -373,6 +392,12 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	private readonly removedRootsSnapshots: DetachedFieldIndex[] = [];
 
+	/**
+	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly revertTelemetryEventName = "RevertRevertible";
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -390,6 +415,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revisionTagCodec,
 			idCompressor,
 		),
+		/** Optional logger for telemetry. */
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
 		// when a transaction is started, take a snapshot of the current state of removed roots
 		branch.on("transactionStarted", () => {
@@ -486,7 +513,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 										"Unable to revert a revertible that has been disposed.",
 									);
 								}
-								this.revertRevertible(revision, data.kind);
+
+								const revertMetrics = this.revertRevertible(revision, data.kind);
+								this.logger?.sendTelemetryEvent({
+									eventName: TreeCheckout.revertTelemetryEventName,
+									...revertMetrics,
+								});
+
 								if (release) {
 									revertible.dispose();
 								}
@@ -505,7 +538,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.revertibleCommitBranches.set(revision, branch.fork());
 						this.revertibles.add(revertible);
 						return revertible;
-				  };
+					};
 
 			this.events.emit("commitApplied", data, getRevertible);
 			withinEventContext = false;
@@ -576,6 +609,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this.removedRoots.clone(),
+			this.logger,
 		);
 	}
 
@@ -623,15 +657,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const cursor = this.forest.allocateCursor("getRemovedRoots");
 		for (const { id, root } of this.removedRoots.entries()) {
 			const parentField = this.removedRoots.toFieldKey(root);
-			this.forest.moveCursorToPath(
-				{ parent: undefined, parentField, parentIndex: 0 },
-				cursor,
-			);
+			this.forest.moveCursorToPath({ parent: undefined, parentField, parentIndex: 0 }, cursor);
 			const tree = jsonableTreeFromCursor(cursor);
 			// This method is used for tree consistency comparison.
 			const { major, minor } = id;
-			const finalizedMajor =
-				major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
 			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();
@@ -658,7 +688,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
 		if (this.branch.isTransacting()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}
@@ -692,6 +722,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				? CommitKind.Undo
 				: CommitKind.Redo,
 		);
+
+		// Derive some stats about the reversion to return to the caller.
+		let revertAge = 0;
+		let currentCommit = headCommit;
+		while (commitToRevert.revision !== currentCommit.revision) {
+			revertAge++;
+
+			const parentCommit = currentCommit.parent;
+			assert(parentCommit !== undefined, 0x9a9 /* expected to find a parent commit */);
+			currentCommit = parentCommit;
+		}
+
+		return { age: revertAge };
 	}
 }
 

@@ -35,7 +35,7 @@ import {
 	type TreeNodeSchemaClass,
 	type WithType,
 	type TreeNodeSchema,
-	type,
+	typeNameSymbol,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
@@ -51,7 +51,7 @@ import { assert } from "@fluidframework/core-utils/internal";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -222,10 +222,11 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
  *
- * @public
+ * @sealed @public
  */
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeArrayNodeBase<
+export interface TreeArrayNode<
+	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends TreeArrayNodeBase<
 		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
 		TreeArrayNode
@@ -247,7 +248,7 @@ export const TreeArrayNode = {
 	 * ```
 	 */
 	spread: <T>(content: Iterable<T>) => create(content),
-};
+} as const;
 
 /**
  * Package internal construction API.
@@ -258,7 +259,7 @@ let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
  * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
- * @public
+ * @sealed @public
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {
 	static {
@@ -386,30 +387,106 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	concat(...items: ConcatArray<T>[]): T[];
 	concat(...items: (T | ConcatArray<T>)[]): T[];
 	entries(): IterableIterator<[number, T]>;
-	every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is readonly S[];
-	every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
-	filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
-	filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
-	find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
-	find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
-	findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+	every<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): this is readonly S[];
+	every(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
+	filter<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: any,
+	): S[];
+	filter(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): T[];
+	find<S extends T>(
+		predicate: (value: T, index: number, obj: readonly T[]) => value is S,
+		thisArg?: any,
+	): S | undefined;
+	find(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): T | undefined;
+	findIndex(
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
+		thisArg?: any,
+	): number;
 	flat<A, D extends number = 1>(this: A, depth?: D | undefined): FlatArray<A, D>[];
-	flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This | undefined): U[];
-	forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+	flatMap<U, This = undefined>(
+		callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
+		thisArg?: This | undefined,
+	): U[];
+	forEach(
+		callbackfn: (value: T, index: number, array: readonly T[]) => void,
+		thisArg?: any,
+	): void;
 	includes(searchElement: T, fromIndex?: number | undefined): boolean;
 	indexOf(searchElement: T, fromIndex?: number | undefined): number;
 	join(separator?: string | undefined): string;
 	keys(): IterableIterator<number>;
 	lastIndexOf(searchElement: T, fromIndex?: number | undefined): number;
 	map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
-	reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T, initialValue: T): T;
-	reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduce(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduce<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+	): T;
+	reduceRight(
+		callbackfn: (
+			previousValue: T,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => T,
+		initialValue: T,
+	): T;
+	reduceRight<U>(
+		callbackfn: (
+			previousValue: U,
+			currentValue: T,
+			currentIndex: number,
+			array: readonly T[],
+		) => U,
+		initialValue: U,
+	): U;
 	slice(start?: number | undefined, end?: number | undefined): T[];
-	some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+	some(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: any,
+	): boolean;
 	toLocaleString(): string;
 	toString(): string;
 	values(): IterableIterator<T>;
@@ -696,22 +773,29 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, field, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, field, "moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(index, field, "moveToIndex", true);
 		validateIndex(sourceIndex, field, "moveToIndex");
 		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveRangeToStart(sourceStart: number, sourceEnd: number, source?: TreeArrayNode): void {
+	public moveRangeToStart(
+		sourceStart: number,
+		sourceEnd: number,
+		source?: TreeArrayNode,
+	): void {
 		validateIndexRange(
 			sourceStart,
 			sourceEnd,
@@ -869,7 +953,7 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 
@@ -931,7 +1015,9 @@ function validateIndexRange(
 	validateIndex(startIndex, array, methodName, true);
 	validateIndex(endIndex, array, methodName, true);
 	if (startIndex > endIndex || array.length < endIndex) {
-		throw new UsageError(`Index value passed to TreeArrayNode.${methodName} is out of bounds.`);
+		throw new UsageError(
+			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
+		);
 	}
 }
 
@@ -941,6 +1027,6 @@ function validateIndexRange(
 function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	assert(cursor.mode === CursorLocationType.Fields, 0x9a8 /* should be in fields mode */);
 	return cursor;
 }

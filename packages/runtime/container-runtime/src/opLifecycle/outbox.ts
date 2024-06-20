@@ -275,7 +275,7 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
+		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
 		for (const message of rawBatch.content) {
@@ -382,10 +382,7 @@ export class Outbox {
 
 			this.params.legacySendBatchFn(batch);
 		} else {
-			assert(
-				batch.referenceSequenceNumber !== undefined,
-				0x58e /* Batch must not be empty */,
-			);
+			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
 			this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
