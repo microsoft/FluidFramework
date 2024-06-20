@@ -19,6 +19,8 @@ When making such a request please include if the configuration already works (an
     -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
     -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
     -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
+    -   `exactOptionalPropertyTypes` is currently not fully supported.
+        If used, narrowing members of Fluid Framework types types using `in`, `Reflect.has`, `Object.hasOwn` or `Object.prototype.hasOwnProperty` should be avoided as they may incorrectly exclude `undefined` from the possible values in some cases.
 -   [webpack](https://webpack.js.org/) 5
     -   We are not intending to be prescriptive about what bundler to use.
         Other bundlers which can handle ES Modules should work, but webpack is the only one we actively test.

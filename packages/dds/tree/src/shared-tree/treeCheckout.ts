@@ -679,7 +679,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revertAge++;
 
 			const parentCommit = currentCommit.parent;
-			assert(parentCommit !== undefined, "expected to find a parent commit");
+			assert(parentCommit !== undefined, 0x9a9 /* expected to find a parent commit */);
 			currentCommit = parentCommit;
 		}
 
