@@ -209,7 +209,7 @@ Here are some remarks about the type alias
 
 ## Function Details
 
-### testFunction (ALPHA) {#testfunction-function}
+### testFunction {#testfunction-function}
 
 Test function
 
@@ -305,7 +305,7 @@ A union type
 
 ## Variable Details
 
-### testConst (BETA) {#testconst-variable}
+### testConst {#testconst-variable}
 
 Test Constant
 
