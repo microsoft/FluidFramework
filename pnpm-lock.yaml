@@ -32,7 +32,7 @@ importers:
         version: 2.26.2
       '@fluid-private/changelog-generator-wrapper':
         specifier: workspace:~
-        version: link:tools/changelog-generator-wrapper
+        version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.39.0
         version: 0.39.0(@types/node@18.19.1)
@@ -15583,6 +15583,40 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
 
+  packages/tools/changelog-generator-wrapper:
+    dependencies:
+      '@changesets/cli':
+        specifier: ^2.26.1
+        version: 2.26.2
+      '@changesets/types':
+        specifier: ^5.2.1
+        version: 5.2.1
+      changesets-format-with-issue-links:
+        specifier: ^0.3.0
+        version: 0.3.0(@changesets/cli@2.26.2)
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+    devDependencies:
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.3.0
+        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+
   packages/tools/devtools/devtools:
     dependencies:
       '@fluidframework/container-definitions':
@@ -17033,40 +17067,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-
-  tools/changelog-generator-wrapper:
-    dependencies:
-      '@changesets/cli':
-        specifier: ^2.26.1
-        version: 2.26.2
-      '@changesets/types':
-        specifier: ^5.2.1
-        version: 5.2.1
-      changesets-format-with-issue-links:
-        specifier: ^0.3.0
-        version: 0.3.0(@changesets/cli@2.26.2)
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-    devDependencies:
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.3.0
-        version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
 
   tools/markdown-magic:
     dependencies:

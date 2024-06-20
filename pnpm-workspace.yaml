@@ -13,7 +13,6 @@ packages:
   - "examples/**"
   - "experimental/**"
   - "packages/**"
-  - "tools/changelog-generator-wrapper"
   - "tools/markdown-magic"
 
   # exclude any package.json files that are inside src or output directories
