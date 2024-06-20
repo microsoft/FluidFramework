@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export const failProxy = <T extends object>() => {
-	const proxy = new Proxy<T>({} as any as T, {
-		get: (_, p) => {
+export const failProxy = <T extends object>(): T => {
+	const proxy = new Proxy<T>({} as unknown as T, {
+		get: (_, p): unknown => {
 			if (p === "then") {
 				return undefined;
 			}
@@ -15,9 +15,9 @@ export const failProxy = <T extends object>() => {
 	return proxy;
 };
 
-export const failSometimeProxy = <T extends object>(handler: Partial<T>) => {
+export const failSometimeProxy = <T extends object>(handler: Partial<T>): T => {
 	const proxy = new Proxy<T>(handler as T, {
-		get: (t, p, r) => {
+		get: (t, p, r): unknown => {
 			if (p === "then") {
 				return undefined;
 			}

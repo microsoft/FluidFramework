@@ -41,7 +41,7 @@ describe("Quorum", () => {
 			// Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
 			quorum.on(
 				"approveProposal",
-				(sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+				(sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => {
 					assert.strictEqual(evented, false, "Double event");
 					evented = true;
 					assert.strictEqual(
@@ -145,7 +145,7 @@ describe("Quorum", () => {
 			// Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
 			quorum.on(
 				"approveProposal",
-				(sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+				(sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => {
 					assert.strictEqual(evented, false, "Double event");
 					evented = true;
 					assert.strictEqual(
@@ -506,7 +506,7 @@ describe("Quorum", () => {
 
 				const snapshot = quorum.snapshot();
 
-				const verifyExpectedSnapshot = () => {
+				const verifyExpectedSnapshot = (): void => {
 					assert.strictEqual(
 						snapshot.proposals.length,
 						1,
@@ -551,15 +551,15 @@ describe("Quorum", () => {
 			// Casting details because the contents don't really matter for this test.
 			const client1Info = {
 				clientId: "client1",
-				details: "details1" as any as ISequencedClient,
+				details: "details1" as unknown as ISequencedClient,
 			};
 			const client2Info = {
 				clientId: "client2",
-				details: "details2" as any as ISequencedClient,
+				details: "details2" as unknown as ISequencedClient,
 			};
 			const unexpected = {
 				clientId: "unexpectedId",
-				details: "unexpectedDetails" as any as ISequencedClient,
+				details: "unexpectedDetails" as unknown as ISequencedClient,
 			};
 			let expectedAdd = unexpected;
 			let expectedRemove = unexpected;
@@ -634,18 +634,18 @@ describe("Quorum", () => {
 			// Casting details because the contents don't really matter for this test.
 			const client1Info = {
 				clientId: "client1",
-				details: "details1" as any as ISequencedClient,
+				details: "details1" as unknown as ISequencedClient,
 			};
 			const client2Info = {
 				clientId: "client2",
-				details: "details2" as any as ISequencedClient,
+				details: "details2" as unknown as ISequencedClient,
 			};
 
 			quorum.addMember(client1Info.clientId, client1Info.details);
 
 			const snapshot = quorum.snapshot();
 
-			const verifyExpectedSnapshot = () => {
+			const verifyExpectedSnapshot = (): void => {
 				assert.strictEqual(
 					snapshot.members.length,
 					1,
