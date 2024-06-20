@@ -840,23 +840,23 @@ use_old_VariableDeclaration_snapshotKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_tokenFromResponse": {"forwardCompat": false}
+* "VariableDeclaration_tokenFromResponse": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_tokenFromResponse():
     TypeOnly<typeof old.tokenFromResponse>;
-declare function use_current_RemovedVariableDeclaration_tokenFromResponse(
+declare function use_current_VariableDeclaration_tokenFromResponse(
     use: TypeOnly<typeof current.tokenFromResponse>): void;
-use_current_RemovedVariableDeclaration_tokenFromResponse(
+use_current_VariableDeclaration_tokenFromResponse(
     get_old_VariableDeclaration_tokenFromResponse());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_tokenFromResponse": {"backCompat": false}
+* "VariableDeclaration_tokenFromResponse": {"backCompat": false}
 */
-declare function get_current_RemovedVariableDeclaration_tokenFromResponse():
+declare function get_current_VariableDeclaration_tokenFromResponse():
     TypeOnly<typeof current.tokenFromResponse>;
 declare function use_old_VariableDeclaration_tokenFromResponse(
     use: TypeOnly<typeof old.tokenFromResponse>): void;
 use_old_VariableDeclaration_tokenFromResponse(
-    get_current_RemovedVariableDeclaration_tokenFromResponse());
+    get_current_VariableDeclaration_tokenFromResponse());
