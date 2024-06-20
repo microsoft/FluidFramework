@@ -30,7 +30,6 @@
 			"DDSes": {
 				"Map": {
 					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"],
-					"Classes": ["SharedMap"]
 				},
 				"Tree": { "Interfaces": ["ITree"] }
 			}
