@@ -11,8 +11,8 @@ import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/serv
 export class NoOpLambda implements IPartitionLambda {
 	private opsCount = 0;
 	private lastCheckpointOffset = 0;
-	private idleTimer: NodeJS.Timer | undefined = undefined;
-	private maxTimer: NodeJS.Timer | undefined = undefined;
+	private idleTimer: ReturnType<typeof setInterval> | undefined = undefined;
+	private maxTimer: ReturnType<typeof setInterval> | undefined = undefined;
 	private currentMessage;
 
 	constructor(

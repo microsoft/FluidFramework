@@ -135,7 +135,7 @@ export interface ISocketIoServerConfig {
 
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
-	private readonly pingPongLatencyInterval: NodeJS.Timer | undefined;
+	private readonly pingPongLatencyInterval: ReturnType<typeof setInterval> | undefined;
 	private readonly pingPongLatencyTrackingIntervalMs: number | undefined;
 
 	constructor(
