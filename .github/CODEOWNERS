@@ -46,7 +46,12 @@
 /experimental/dds/tree/src                     @microsoft/fluid-cr-tree
 
 # Fluid Devtools source
-/packages/tools/devtools/**/src                   @microsoft/fluid-cr-devtools
+/packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools
+
+# Non-internal API changes
+/**/api-report/*.public.api.md                 @microsoft/fluid-cr-api
+/**/api-report/*.beta.api.md                   @microsoft/fluid-cr-api
+/**/api-report/*.alpha.api.md                  @microsoft/fluid-cr-api
 
 # Package version files are not generally interesting to review by teams signing up for source tree ownership.
 # If a release team wanted to sign up to block on changes relevant for package release,

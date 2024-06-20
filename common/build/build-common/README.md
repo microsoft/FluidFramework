@@ -17,10 +17,11 @@ Chose `cjs` or `esm` based on primary or only output.
 
 ### Export Set
 
-| Set Name  | ESM | CJS | Description                                                      |
-| --------- | --- | --- | ---------------------------------------------------------------- |
-| no-legacy | ✔️  | ✔️  | package has no /legacy export                                    |
-| current   | ✔️  |     | package has /legacy export (legacy reported via `.alpha.api.md`) |
+| Set Name  | ESM | CJS | Description                                         |
+| --------- | --- | --- | --------------------------------------------------- |
+| no-legacy | ✔️  | ✔️  | package has no /legacy export                       |
+| current   | ✔️  |     | reports non-/legacy APIs                            |
+| legacy    | ✔️  |     | reports /legacy APIs (reported via `.alpha.api.md`) |
 
 ## TypeScript Configurations (`tsconfig.json`)
 

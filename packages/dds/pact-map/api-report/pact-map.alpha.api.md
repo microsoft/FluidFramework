@@ -4,11 +4,6 @@
 
 ```ts
 
-import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import type { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```

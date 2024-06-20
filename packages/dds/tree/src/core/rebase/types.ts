@@ -169,7 +169,7 @@ export enum CommitKind {
 /**
  * Information about a commit that has been applied.
  *
- * @public
+ * @sealed @public
  */
 export interface CommitMetadata {
 	/**

@@ -97,7 +97,7 @@ export interface CheckoutEvents {
  * whichever happens first.
  * This is typically used to clean up any resources associated with the `Revertible` in the host application.
  *
- * @public
+ * @sealed @public
  */
 export type RevertibleFactory = (
 	onRevertibleDisposed?: (revertible: Revertible) => void,
@@ -679,7 +679,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revertAge++;
 
 			const parentCommit = currentCommit.parent;
-			assert(parentCommit !== undefined, "expected to find a parent commit");
+			assert(parentCommit !== undefined, 0x9a9 /* expected to find a parent commit */);
 			currentCommit = parentCommit;
 		}
 

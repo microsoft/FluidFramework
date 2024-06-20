@@ -1,5 +1,32 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-rc.5.0.0
+
+### Major Changes
+
+-   telemetry-utils: BREAKING CHANGE: Update MockLogger's events property is no longer externally mutable ([#21470](https://github.com/microsoft/FluidFramework/pull/21470)) [a9cc448107](https://github.com/microsoft/FluidFramework/commit/a9cc44810707d58f64350d468a922ed0a307ede9)
+
+    If you depended on this mutability to implement some behavior, you should create your own mock logger implementation.
+
+    If you depended on this mutability to work around the logger's self-clearing behavior after running a match check, you
+    can now override this behavior via the `clearEventsAfterCheck` parameter.
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+-   telemetry-utils: Deprecate `MockLogger` for external use. ([#21497](https://github.com/microsoft/FluidFramework/pull/21497)) [ed09fac561](https://github.com/microsoft/FluidFramework/commit/ed09fac5617ef832b2febfd3427a2949f8777bfe)
+
+    No replacement API is given. This type was never intended for use outside of the `fluid-framework` repository.
+    If you were depending on this class for testing purposes, we recommend creating your own mock logger implementation,
+    or copy and adapt the code from `fluid-framework` as needed.
+
 ## 2.0.0-rc.4.0.0
 
 ### Major Changes

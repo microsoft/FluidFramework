@@ -100,9 +100,57 @@ use_old_TypeAliasDeclaration_TaskEventListener(
     get_current_TypeAliasDeclaration_TaskEventListener());
 
 /*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "VariableDeclaration_TaskManager": {"forwardCompat": false}
+ */
+declare function get_old_VariableDeclaration_TaskManager():
+    TypeOnly<typeof old.TaskManager>;
+declare function use_current_VariableDeclaration_TaskManager(
+    use: TypeOnly<typeof current.TaskManager>): void;
+use_current_VariableDeclaration_TaskManager(
+    get_old_VariableDeclaration_TaskManager());
+
+/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedClassDeclaration_TaskManager": {"backCompat": false}
+ * "VariableDeclaration_TaskManager": {"backCompat": false}
  */
+declare function get_current_VariableDeclaration_TaskManager():
+    TypeOnly<typeof current.TaskManager>;
+declare function use_old_VariableDeclaration_TaskManager(
+    use: TypeOnly<typeof old.TaskManager>): void;
+use_old_VariableDeclaration_TaskManager(
+    get_current_VariableDeclaration_TaskManager());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_TaskManager": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_TaskManager():
+    TypeOnly<old.TaskManager>;
+declare function use_current_TypeAliasDeclaration_TaskManager(
+    use: TypeOnly<current.TaskManager>): void;
+use_current_TypeAliasDeclaration_TaskManager(
+    get_old_TypeAliasDeclaration_TaskManager());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_TaskManager": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_TaskManager():
+    TypeOnly<current.TaskManager>;
+declare function use_old_TypeAliasDeclaration_TaskManager(
+    use: TypeOnly<old.TaskManager>): void;
+use_old_TypeAliasDeclaration_TaskManager(
+    get_current_TypeAliasDeclaration_TaskManager());

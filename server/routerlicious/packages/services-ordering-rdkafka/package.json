@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-ordering-rdkafka",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server services rdkafka orderer implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,11 +38,11 @@
 		"sillyname": "^0.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@4.0.0",
+		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/amqplib": "^0.5.17",
 		"@types/debug": "^4.1.5",

@@ -27,7 +27,7 @@ import type { InsertableContent } from "./proxies.js";
  * @typeParam Info - Data used when defining this schema.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
- * @public
+ * @sealed @public
  */
 export type TreeNodeSchema<
 	Name extends string = string,
@@ -46,7 +46,7 @@ export type TreeNodeSchema<
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
  * @privateRemarks
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @public
+ * @sealed @public
  */
 export interface TreeNodeSchemaNonClass<
 	out Name extends string = string,
@@ -67,7 +67,7 @@ export interface TreeNodeSchemaNonClass<
  *
  * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
  * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
- * @public
+ * @sealed @public
  */
 export interface TreeNodeSchemaClass<
 	out Name extends string = string,
@@ -89,7 +89,9 @@ export interface TreeNodeSchemaClass<
 
 /**
  * Data common to all tree node schema.
- * @public
+ * @remarks
+ * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
+ * @sealed @public
  */
 export interface TreeNodeSchemaCore<
 	out Name extends string,
@@ -124,12 +126,17 @@ export interface TreeNodeSchemaCore<
 
 /**
  * Types for use in fields.
+ * @remarks
+ * Type constraint used in schema declaration APIs.
+ * Not intended for direct use outside of package.
  * @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
  * Kind of a field on a node.
+ * @remarks
+ * More kinds may be added over time, so do not assume this is an exhaustive set.
  * @public
  */
 export enum FieldKind {
@@ -155,6 +162,8 @@ export enum FieldKind {
 
 /**
  * Kind of tree node.
+ * @remarks
+ * More kinds may be added over time, so do not assume this is an exhaustive set.
  * @public
  */
 export enum NodeKind {
@@ -290,7 +299,7 @@ export function isConstant(
  * Provides a default value for a field.
  * @remarks
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
- * @public
+ * @sealed @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
@@ -535,7 +544,7 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 /**
  * The type of a {@link TreeNode}.
- * For moore information about the type, use `Tree.schema(theNode)` instead.
+ * For more information about the type, use `Tree.schema(theNode)` instead.
  * @remarks
  * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
  * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
@@ -546,15 +555,17 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
  * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
  * @public
  */
-export const type: unique symbol = Symbol("TreeNode Type");
+export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
 
 /**
- * Adds a {@link "type"} field.
- * @public
+ * Adds a type symbol to a type for stronger typing.
+ * @remarks
+ * An implementation detail of {@link TreeNode}'s strong typing setup: not intended for direct use outside of this package.
+ * @sealed @public
  */
 export interface WithType<TName extends string = string> {
 	/**
-	 * {@inheritdoc "type"}
+	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [type](): TName;
+	get [typeNameSymbol](): TName;
 }

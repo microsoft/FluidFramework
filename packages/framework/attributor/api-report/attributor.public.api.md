@@ -4,10 +4,6 @@
 
 ```ts
 
-import { AttributionInfo } from '@fluidframework/runtime-definitions/internal';
-import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
-import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```

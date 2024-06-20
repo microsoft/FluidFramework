@@ -71,15 +71,15 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
 | [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
 
 # Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
 | --- | --- | --- | --- | --- |
-| [testConst](docs/simple-suite-test#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
+| [testConst](docs/simple-suite-test#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test#testconstwithemptydeprecatedblock-variable) | `Deprecated` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 # Namespaces
 
@@ -974,7 +974,7 @@ A union type
 
 # Variable Details
 
-## testConst (BETA) {#testconst-variable}
+## testConst {#testconst-variable}
 
 Test Constant
 
@@ -1082,7 +1082,7 @@ const bar = foo
 
 | Variable | Alerts | Modifiers | Type | Description |
 | --- | --- | --- | --- | --- |
-| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `BETA` | `readonly` |  | Test Constant |
+| [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | `Beta` | `readonly` |  | Test Constant |
 
 ### Namespaces
 
@@ -1274,7 +1274,7 @@ An Error
 
 ### Variable Details
 
-#### TestConst (BETA) {#testnamespace-testconst-variable}
+#### TestConst {#testnamespace-testconst-variable}
 
 Test Constant
 

@@ -910,7 +910,10 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case GarbageCollectionMessageType.TombstoneLoaded: {
-				if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+				if (
+					!this.configs.tombstoneAutorecoveryEnabled ||
+					this.mc.config.getBoolean(disableAutoRecoveryKey) === true
+				) {
 					break;
 				}
 
@@ -1083,7 +1086,10 @@ export class GarbageCollector implements IGarbageCollector {
 	 * before runnint GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
-		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+		if (
+			!this.configs.tombstoneAutorecoveryEnabled ||
+			this.mc.config.getBoolean(disableAutoRecoveryKey) === true
+		) {
 			return;
 		}
 

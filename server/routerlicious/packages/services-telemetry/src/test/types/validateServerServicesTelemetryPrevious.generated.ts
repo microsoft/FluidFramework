@@ -12,34 +12,16 @@ import type * as old from "@fluidframework/server-services-telemetry-previous";
 import type * as current from "../../index.js";
 
 
-type ValueOf<T> = T[keyof T];
-type OnlySymbols<T> = T extends symbol ? T : never;
-type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
-/**
- * Omit (replace with never) a key if it is a custom symbol,
- * not just symbol or a well known symbol from the global Symbol.
- */
-type SkipUniqueSymbols<Key> = symbol extends Key
-	? Key // Key is symbol or a generalization of symbol, so leave it as is.
-	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
-/**
- * Remove details of T which are incompatible with type testing while keeping as much as is practical.
- *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
- */
+// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
 type TypeOnly<T> = T extends number
 	? number
-	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
+	: T extends string
+	? string
+	: T extends boolean | bigint | symbol
+	? T
+	: {
+			[P in keyof T]: TypeOnly<T[P]>;
+	  };
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -159,7 +141,6 @@ declare function get_current_EnumDeclaration_CommonProperties():
 declare function use_old_EnumDeclaration_CommonProperties(
     use: TypeOnly<old.CommonProperties>): void;
 use_old_EnumDeclaration_CommonProperties(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_CommonProperties());
 
 /*
@@ -424,7 +405,6 @@ declare function get_current_ClassDeclaration_Lumber():
 declare function use_old_ClassDeclaration_Lumber(
     use: TypeOnly<old.Lumber>): void;
 use_old_ClassDeclaration_Lumber(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Lumber());
 
 /*
@@ -449,7 +429,6 @@ declare function get_current_EnumDeclaration_LumberEventName():
 declare function use_old_EnumDeclaration_LumberEventName(
     use: TypeOnly<old.LumberEventName>): void;
 use_old_EnumDeclaration_LumberEventName(
-    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_LumberEventName());
 
 /*

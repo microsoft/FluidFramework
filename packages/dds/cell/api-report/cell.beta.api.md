@@ -4,15 +4,4 @@
 
 ```ts
 
-import type { AttributionKey } from '@fluidframework/runtime-definitions/internal';
-import type { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import type { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import type { Serializable } from '@fluidframework/datastore-definitions/internal';
-import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
-
 ```

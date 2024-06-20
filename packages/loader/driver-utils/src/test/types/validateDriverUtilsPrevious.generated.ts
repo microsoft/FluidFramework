@@ -804,6 +804,34 @@ use_old_VariableDeclaration_blobHeadersBlobName(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "FunctionDeclaration_buildGitTreeHierarchy": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_buildGitTreeHierarchy():
+    TypeOnly<typeof old.buildGitTreeHierarchy>;
+declare function use_current_FunctionDeclaration_buildGitTreeHierarchy(
+    use: TypeOnly<typeof current.buildGitTreeHierarchy>): void;
+use_current_FunctionDeclaration_buildGitTreeHierarchy(
+    get_old_FunctionDeclaration_buildGitTreeHierarchy());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_buildGitTreeHierarchy": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_buildGitTreeHierarchy():
+    TypeOnly<typeof current.buildGitTreeHierarchy>;
+declare function use_old_FunctionDeclaration_buildGitTreeHierarchy(
+    use: TypeOnly<typeof old.buildGitTreeHierarchy>): void;
+use_old_FunctionDeclaration_buildGitTreeHierarchy(
+    get_current_FunctionDeclaration_buildGitTreeHierarchy());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "FunctionDeclaration_buildSnapshotTree": {"forwardCompat": false}
  */
 declare function get_old_FunctionDeclaration_buildSnapshotTree():
@@ -1050,6 +1078,62 @@ declare function use_old_FunctionDeclaration_getDocAttributesFromProtocolSummary
     use: TypeOnly<typeof old.getDocAttributesFromProtocolSummary>): void;
 use_old_FunctionDeclaration_getDocAttributesFromProtocolSummary(
     get_current_FunctionDeclaration_getDocAttributesFromProtocolSummary());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_getGitMode": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_getGitMode():
+    TypeOnly<typeof old.getGitMode>;
+declare function use_current_FunctionDeclaration_getGitMode(
+    use: TypeOnly<typeof current.getGitMode>): void;
+use_current_FunctionDeclaration_getGitMode(
+    get_old_FunctionDeclaration_getGitMode());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_getGitMode": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_getGitMode():
+    TypeOnly<typeof current.getGitMode>;
+declare function use_old_FunctionDeclaration_getGitMode(
+    use: TypeOnly<typeof old.getGitMode>): void;
+use_old_FunctionDeclaration_getGitMode(
+    get_current_FunctionDeclaration_getGitMode());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_getGitType": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_getGitType():
+    TypeOnly<typeof old.getGitType>;
+declare function use_current_FunctionDeclaration_getGitType(
+    use: TypeOnly<typeof current.getGitType>): void;
+use_current_FunctionDeclaration_getGitType(
+    get_old_FunctionDeclaration_getGitType());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_getGitType": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_getGitType():
+    TypeOnly<typeof current.getGitType>;
+declare function use_old_FunctionDeclaration_getGitType(
+    use: TypeOnly<typeof old.getGitType>): void;
+use_old_FunctionDeclaration_getGitType(
+    get_current_FunctionDeclaration_getGitType());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

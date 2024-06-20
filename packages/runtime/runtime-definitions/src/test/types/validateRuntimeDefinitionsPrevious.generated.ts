@@ -335,7 +335,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<current.IContainerRuntimeBase>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeBase(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -350,7 +349,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<old.IContainerRuntimeBase>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -477,7 +475,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -506,7 +503,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<current.IFluidDataStoreContext>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -521,7 +517,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -536,7 +531,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<current.IFluidDataStoreContextDetached>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -551,7 +545,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -678,7 +671,6 @@ declare function get_old_InterfaceDeclaration_IFluidParentContext():
 declare function use_current_InterfaceDeclaration_IFluidParentContext(
     use: TypeOnly<current.IFluidParentContext>): void;
 use_current_InterfaceDeclaration_IFluidParentContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidParentContext());
 
 /*
@@ -693,7 +685,6 @@ declare function get_current_InterfaceDeclaration_IFluidParentContext():
 declare function use_old_InterfaceDeclaration_IFluidParentContext(
     use: TypeOnly<old.IFluidParentContext>): void;
 use_old_InterfaceDeclaration_IFluidParentContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidParentContext());
 
 /*
@@ -1114,8 +1105,35 @@ declare function get_current_InterfaceDeclaration_ITelemetryContext():
 declare function use_old_InterfaceDeclaration_ITelemetryContext(
     use: TypeOnly<old.ITelemetryContext>): void;
 use_old_InterfaceDeclaration_ITelemetryContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITelemetryContext());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_ITelemetryContextExt": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_ITelemetryContextExt():
+    TypeOnly<old.ITelemetryContextExt>;
+declare function use_current_InterfaceDeclaration_ITelemetryContextExt(
+    use: TypeOnly<current.ITelemetryContextExt>): void;
+use_current_InterfaceDeclaration_ITelemetryContextExt(
+    get_old_InterfaceDeclaration_ITelemetryContextExt());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_ITelemetryContextExt": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_ITelemetryContextExt():
+    TypeOnly<current.ITelemetryContextExt>;
+declare function use_old_InterfaceDeclaration_ITelemetryContextExt(
+    use: TypeOnly<old.ITelemetryContextExt>): void;
+use_old_InterfaceDeclaration_ITelemetryContextExt(
+    get_current_InterfaceDeclaration_ITelemetryContextExt());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

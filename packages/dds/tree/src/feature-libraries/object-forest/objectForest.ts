@@ -145,7 +145,10 @@ export class ObjectForest implements IEditableForest {
 		 */
 		const preEdit = (): void => {
 			this.events.emit("beforeChange");
-			assert(this.currentCursors.has(cursor), "missing visitor cursor while editing");
+			assert(
+				this.currentCursors.has(cursor),
+				0x995 /* missing visitor cursor while editing */,
+			);
 			if (this.currentCursors.size > 1) {
 				const unexpectedSources = [...this.currentCursors].flatMap((c) =>
 					c === cursor ? [] : c.source ?? null,

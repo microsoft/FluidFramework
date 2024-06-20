@@ -72,17 +72,17 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
-| [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | `ALPHA` | TTypeParameter | Test function |
+| [testFunction(testParameter, testOptionalParameter)](./simple-suite-test#testfunction-function) | `Alpha` | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](./simple-suite-test#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
 | --- | --- | --- | --- | --- |
-| [testConst](./simple-suite-test#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
-| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
+| [testConst](./simple-suite-test#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [testConstWithEmptyDeprecatedBlock](./simple-suite-test#testconstwithemptydeprecatedblock-variable) | `Deprecated` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
 
@@ -209,7 +209,7 @@ Here are some remarks about the type alias
 
 ## Function Details
 
-### testFunction (ALPHA) {#testfunction-function}
+### testFunction {#testfunction-function}
 
 Test function
 
@@ -305,7 +305,7 @@ A union type
 
 ## Variable Details
 
-### testConst (BETA) {#testconst-variable}
+### testConst {#testconst-variable}
 
 Test Constant
 

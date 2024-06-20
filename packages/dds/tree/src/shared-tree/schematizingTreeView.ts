@@ -19,6 +19,7 @@ import {
 	ViewSchema,
 	defaultSchemaPolicy,
 	ContextSlot,
+	cursorForMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
@@ -35,8 +36,9 @@ import {
 	setField,
 	normalizeFieldSchema,
 	type InsertableContent,
-	cursorFromUnhydratedRoot,
 	type TreeViewConfiguration,
+	mapTreeFromNodeData,
+	prepareContentForHydration,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
@@ -127,12 +129,23 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		}
 
 		this.runSchemaEdit(() => {
+			const mapTree = mapTreeFromNodeData(
+				content as InsertableContent,
+				this.rootFieldSchema.allowedTypes,
+				this.nodeKeyManager,
+				{
+					schema: this.checkout.storedSchema,
+					policy: {
+						...defaultSchemaPolicy,
+						validateSchema: this.config.enableSchemaValidation,
+					},
+				},
+			);
+
+			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
 				schema: this.flexConfig.schema,
-				initialTree:
-					content === undefined
-						? undefined
-						: cursorFromUnhydratedRoot(this.config.schema, content, this.nodeKeyManager),
+				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
 	}

@@ -728,7 +728,7 @@ function addDefaultsToMapTree(
 			}
 			break;
 		default:
-			assert(schema.kind === NodeKind.Leaf, "Unrecognized schema kind");
+			assert(schema.kind === NodeKind.Leaf, 0x989 /* Unrecognized schema kind */);
 			break;
 	}
 }

@@ -1300,7 +1300,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(
 			this.channel !== undefined,
-			"There should be a channel when generating attach GC data",
+			0x9a6 /* There should be a channel when generating attach GC data */,
 		);
 		return this.channel.getAttachGCData(telemetryContext);
 	}

@@ -4,13 +4,6 @@
 
 ```ts
 
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorEvent } from '@fluidframework/core-interfaces';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IRequest } from '@fluidframework/core-interfaces';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-
 // @public
 export type ConnectionMode = "write" | "read";
 

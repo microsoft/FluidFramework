@@ -421,24 +421,34 @@ function calculateRequestedRange(
 		throw new Error(err as string);
 	}
 
-	// calculate requested major version number
-	const requestedMajorVersion = version.major + requested;
-	// if the major version number is bigger than 0 then return it as normal
-	if (requestedMajorVersion > 0) {
-		return `^${requestedMajorVersion}.0.0-0`;
-	}
-	// if the major version number is <= 0 then we return the equivalent pre-releases
-	const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+	// If the base version is a public version and `adjustPublicMajor` is false, then we need to ensure that we
+	// calculate N-1 as he previous major release, regardless if it is public or internal.
+	// Currently, this case only applies to calculating N-X for 2.0.0.
+	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
+	if (adjustPublicMajor === false && version.major > 1) {
+		// In this case, we can pretend that 2.0 is RC6 and calculate the range as if it were an internal version.
+		const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
+		return internalSchemeRange;
+	} else {
+		// calculate requested major version number
+		const requestedMajorVersion = version.major + requested;
+		// if the major version number is bigger than 0 then return it as normal
+		if (requestedMajorVersion > 0) {
+			return `^${requestedMajorVersion}.0.0-0`;
+		}
+		// if the major version number is <= 0 then we return the equivalent pre-releases
+		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
 
-	// Minor number in 0.xx release represent a major change hence different rules
-	// are applied for computing the requested version.
-	const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
-	// too old a version / non existing version requested
-	if (requestedMinorVersion <= 0) {
-		// cap at min version
-		return "^0.0.1-0";
+		// Minor number in 0.xx release represent a major change hence different rules
+		// are applied for computing the requested version.
+		const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+		// too old a version / non existing version requested
+		if (requestedMinorVersion <= 0) {
+			// cap at min version
+			return "^0.0.1-0";
+		}
+		return `^0.${requestedMinorVersion}.0-0`;
 	}
-	return `^0.${requestedMinorVersion}.0-0`;
 }
 
 /**

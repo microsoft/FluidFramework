@@ -27,6 +27,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
+import { Excerpt } from '@microsoft/api-extractor-model';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -84,6 +85,7 @@ declare namespace ApiItemUtilities {
         getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
+        getSingleLineExcerptText,
         getThrowsBlocks,
         getUnscopedPackageName,
         isDeprecated,
@@ -179,6 +181,7 @@ export const defaultConsoleLogger: Logger;
 export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
+    export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetFileNameForItem(apiItem: ApiItem): string;
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
@@ -259,6 +262,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
+    getAlertsForItem?: (apiItem: ApiItem) => string[];
     getFileNameForItem?: (apiItem: ApiItem) => string;
     getHeadingTextForItem?: (apiItem: ApiItem) => string;
     getLinkTextForItem?: (apiItem: ApiItem) => string;
@@ -360,6 +364,9 @@ function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
+function getSingleLineExcerptText(excerpt: Excerpt): string;
 
 // @public
 function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;

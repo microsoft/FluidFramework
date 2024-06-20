@@ -4,21 +4,6 @@
 
 ```ts
 
-import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IMatrixProducer } from '@tiny-calc/nano';
-import { IMatrixReader } from '@tiny-calc/nano';
-import { IMatrixWriter } from '@tiny-calc/nano';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { Serializable } from '@fluidframework/datastore-definitions/internal';
-import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
-
 // @alpha (undocumented)
 export interface IRevertible {
     // (undocumented)

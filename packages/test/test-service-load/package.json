@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -53,7 +53,7 @@
 		"test:stress:tinylicious:report": "npm run test:stress:tinylicious",
 		"test:stress:tinylicious:run": "npm run test:stress:run",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
 	},
@@ -103,7 +103,7 @@
 		"commander": "^5.1.0",
 		"ps-node": "^0.1.6",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0-265463"
+		"tinylicious": "^5.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

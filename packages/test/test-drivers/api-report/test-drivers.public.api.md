@@ -4,29 +4,6 @@
 
 ```ts
 
-import { createLocalResolverCreateNewRequest } from '@fluidframework/local-driver/internal';
-import { createOdspCreateContainerRequest } from '@fluidframework/odsp-driver/internal';
-import { createOdspUrl } from '@fluidframework/odsp-driver/internal';
-import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions/internal';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
-import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver/internal';
-import { InsecureUrlResolver } from '@fluidframework/driver-utils/internal';
-import type { IPersistedCache } from '@fluidframework/odsp-driver-definitions/internal';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ITestDriver } from '@fluid-internal/test-driver-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { LocalDocumentServiceFactory } from '@fluidframework/local-driver/internal';
-import { LocalResolver } from '@fluidframework/local-driver/internal';
-import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver/internal';
-import { OdspDriverUrlResolver } from '@fluidframework/odsp-driver/internal';
-import { OdspEndpoint } from '@fluid-internal/test-driver-definitions';
-import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicious-driver/internal';
-import { RouterliciousEndpoint } from '@fluid-internal/test-driver-definitions';
-import { TestDriverTypes } from '@fluid-internal/test-driver-definitions';
-
 // (No @packageDocumentation comment for this package)
 
 ```

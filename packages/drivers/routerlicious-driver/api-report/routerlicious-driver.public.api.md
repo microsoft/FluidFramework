@@ -4,14 +4,6 @@
 
 ```ts
 
-import { IDocumentService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISession } from '@fluidframework/server-services-client';
-import { ISummaryTree } from '@fluidframework/driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
-
 // @public
 export interface ITokenProvider {
     documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;

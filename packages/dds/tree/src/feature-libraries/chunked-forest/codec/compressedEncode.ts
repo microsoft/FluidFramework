@@ -417,7 +417,7 @@ export function encodeValue(
 			assert(shape.length === 1, 0x740 /* expected a single constant for value */);
 		} else if (shape === SpecialField.Identifier) {
 			// This case is a special case handling the encoding of identifier fields.
-			assert(value !== undefined, "required value must not be missing");
+			assert(value !== undefined, 0x998 /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else {
 			// EncodedCounter case:

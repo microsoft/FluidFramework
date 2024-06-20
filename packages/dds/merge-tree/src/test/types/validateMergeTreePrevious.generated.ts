@@ -41,7 +41,6 @@ declare function get_old_ClassDeclaration_BaseSegment():
 declare function use_current_ClassDeclaration_BaseSegment(
     use: TypeOnly<current.BaseSegment>): void;
 use_current_ClassDeclaration_BaseSegment(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BaseSegment());
 
 /*
@@ -210,7 +209,6 @@ declare function get_old_InterfaceDeclaration_IAttributionCollection():
 declare function use_current_InterfaceDeclaration_IAttributionCollection(
     use: TypeOnly<current.IAttributionCollection<any>>): void;
 use_current_InterfaceDeclaration_IAttributionCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAttributionCollection());
 
 /*
@@ -561,7 +559,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs():
 declare function use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
     use: TypeOnly<current.IMergeTreeDeltaCallbackArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeDeltaCallbackArgs());
 
 /*
@@ -702,7 +699,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
 declare function use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
     use: TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>): void;
 use_current_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs());
 
 /*
@@ -843,7 +839,6 @@ declare function get_old_InterfaceDeclaration_IMergeTreeSegmentDelta():
 declare function use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
     use: TypeOnly<current.IMergeTreeSegmentDelta>): void;
 use_current_InterfaceDeclaration_IMergeTreeSegmentDelta(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeTreeSegmentDelta());
 
 /*
@@ -1040,7 +1035,6 @@ declare function get_old_InterfaceDeclaration_ISegment():
 declare function use_current_InterfaceDeclaration_ISegment(
     use: TypeOnly<current.ISegment>): void;
 use_current_InterfaceDeclaration_ISegment(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISegment());
 
 /*
@@ -1097,7 +1091,6 @@ declare function get_old_InterfaceDeclaration_ITrackingGroup():
 declare function use_current_InterfaceDeclaration_ITrackingGroup(
     use: TypeOnly<current.ITrackingGroup>): void;
 use_current_InterfaceDeclaration_ITrackingGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITrackingGroup());
 
 /*
@@ -1210,7 +1203,6 @@ declare function get_old_ClassDeclaration_Marker():
 declare function use_current_ClassDeclaration_Marker(
     use: TypeOnly<current.Marker>): void;
 use_current_ClassDeclaration_Marker(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Marker());
 
 /*
@@ -1323,7 +1315,6 @@ declare function get_old_TypeAliasDeclaration_MergeTreeDeltaRevertible():
 declare function use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
     use: TypeOnly<current.MergeTreeDeltaRevertible>): void;
 use_current_TypeAliasDeclaration_MergeTreeDeltaRevertible(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_MergeTreeDeltaRevertible());
 
 /*
@@ -1856,7 +1847,6 @@ declare function get_old_InterfaceDeclaration_SegmentGroup():
 declare function use_current_InterfaceDeclaration_SegmentGroup(
     use: TypeOnly<current.SegmentGroup>): void;
 use_current_InterfaceDeclaration_SegmentGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SegmentGroup());
 
 /*
@@ -2053,7 +2043,6 @@ declare function get_old_ClassDeclaration_SortedSegmentSet():
 declare function use_current_ClassDeclaration_SortedSegmentSet(
     use: TypeOnly<current.SortedSegmentSet>): void;
 use_current_ClassDeclaration_SortedSegmentSet(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SortedSegmentSet());
 
 /*
@@ -2082,7 +2071,6 @@ declare function get_old_TypeAliasDeclaration_SortedSegmentSetItem():
 declare function use_current_TypeAliasDeclaration_SortedSegmentSetItem(
     use: TypeOnly<current.SortedSegmentSetItem>): void;
 use_current_TypeAliasDeclaration_SortedSegmentSetItem(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SortedSegmentSetItem());
 
 /*
@@ -2139,7 +2127,6 @@ declare function get_old_ClassDeclaration_TextSegment():
 declare function use_current_ClassDeclaration_TextSegment(
     use: TypeOnly<current.TextSegment>): void;
 use_current_ClassDeclaration_TextSegment(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TextSegment());
 
 /*
@@ -2168,7 +2155,6 @@ declare function get_old_TypeAliasDeclaration_Trackable():
 declare function use_current_TypeAliasDeclaration_Trackable(
     use: TypeOnly<current.Trackable>): void;
 use_current_TypeAliasDeclaration_Trackable(
-    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_Trackable());
 
 /*
@@ -2197,7 +2183,6 @@ declare function get_old_ClassDeclaration_TrackingGroup():
 declare function use_current_ClassDeclaration_TrackingGroup(
     use: TypeOnly<current.TrackingGroup>): void;
 use_current_ClassDeclaration_TrackingGroup(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TrackingGroup());
 
 /*

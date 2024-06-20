@@ -4,13 +4,6 @@
 
 ```ts
 
-import { ContainerKey } from '@fluidframework/devtools-core/internal';
-import { createDevtoolsLogger } from '@fluidframework/devtools-core/internal';
-import { HasContainerKey } from '@fluidframework/devtools-core/internal';
-import { IDevtoolsLogger } from '@fluidframework/devtools-core/internal';
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IFluidContainer } from '@fluidframework/fluid-static';
-
 export { ContainerKey }
 
 export { createDevtoolsLogger }

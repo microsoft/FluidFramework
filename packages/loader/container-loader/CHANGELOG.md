@@ -1,5 +1,26 @@
 # @fluidframework/container-loader
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   container-loader: IDetachedBlobStorage is deprecated and replaced with a default in memory store for detached blobs ([#21144](https://github.com/microsoft/FluidFramework/pull/21144)) [2eebaa1775](https://github.com/microsoft/FluidFramework/commit/2eebaa1775dba0a677a005ba36f6f946c6324c21)
+
+    IDetachedBlobStorage will be removed in a future release without a replacement.
+
+    When applications load a container without specifying ILoaderServices.detachedBlobStorage, an implementation which stores the blobs in memory will be injected by Fluid.
+
+    IDetachedBlobStorage as well as application-defined implementations of it are deprecated and support will be removed for them in a future update.
+    Applications are recommended to stop providing this property on ILoaderServices.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
 ## 2.0.0-rc.4.0.0
 
 ### Major Changes

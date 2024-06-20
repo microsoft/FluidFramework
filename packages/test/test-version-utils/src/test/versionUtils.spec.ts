@@ -53,10 +53,16 @@ describe("versionUtils", () => {
 			});
 		}
 
-		describe("bumping public releases", () => {
+		describe("bumping public releases (adjustPublicMajor = false)", () => {
 			const adjustPublicMajor = false;
 			createTest("1.0.0", -1, adjustPublicMajor, "^0.59.0");
 			createTest("1.0.0", -2, adjustPublicMajor, "^0.58.0");
+			createTest("2.0.0", -1, adjustPublicMajor, "^2.0.0-rc.4.0.0");
+			createTest("2.3.5", -1, adjustPublicMajor, "^2.0.0-rc.4.0.0");
+		});
+
+		describe("bumping public releases (adjustPublicMajor = true)", () => {
+			const adjustPublicMajor = true;
 			createTest("2.0.0", -1, adjustPublicMajor, "^1.0.0");
 			createTest("2.3.5", -1, adjustPublicMajor, "^1.0.0");
 		});
@@ -169,7 +175,7 @@ describe("versionUtils", () => {
 			createTest("0.59.1001", -1, adjustPublicMajor, "^0.58.0");
 			createTest("0.59.1002", -1, adjustPublicMajor, "^0.58.0");
 			createTest("1.1.0", -1, adjustPublicMajor, "^0.59.0");
-			createTest("2.4.5", -1, adjustPublicMajor, "^1.0.0-0");
+			createTest("2.4.5", -1, adjustPublicMajor, "^2.0.0-rc.4.0.0");
 		});
 
 		describe("bumping down public releases (prerelease/dev)", () => {

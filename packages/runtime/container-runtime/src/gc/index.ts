@@ -31,7 +31,6 @@ export {
 	IGCStats,
 	oneDayMs,
 	runSessionExpiryKey,
-	runSweepKey,
 	stableGCVersion,
 	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,

@@ -1,5 +1,17 @@
 # @fluid-experimental/odsp-client
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   odsp-client: Move odsp-client out of experimental ([#21024](https://github.com/microsoft/FluidFramework/pull/21024)) [8461a406f3](https://github.com/microsoft/FluidFramework/commit/8461a406f3086ced7e38a19f70d71cca72667333)
+
+    The scope of the odsp-client package is changed from `@fluid-experimental/odsp-client` to `@fluidframework/odsp-client`.
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes

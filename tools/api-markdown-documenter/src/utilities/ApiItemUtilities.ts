@@ -22,6 +22,7 @@ import {
 	ApiReadonlyMixin,
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
+	type Excerpt,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { type DocSection, StandardTags } from "@microsoft/tsdoc";
@@ -464,4 +465,35 @@ export function getSafeFilenameForName(apiItemName: string): string {
 	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
 	// https://github.com/microsoft/rushstack/issues/1308
 	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
+}
+
+/**
+ * Extracts the text from the provided excerpt and adjusts it to be on a single line.
+ *
+ * @remarks
+ * Useful when a shortened version of a code excerpt is wanted, or if you don't want code formatting to affect
+ * the presentation in the documentation.
+ * This is especially valuable if the contents need to fit on a single line.
+ *
+ * @example
+ * An excerpt of TypeScript code like...
+ *
+ * ```typescript
+ * export interface Foo {
+ * 	bar: string;
+ * 	baz: number;
+ * }
+ * ```
+ *
+ * would become...
+ *
+ * ```typescript
+ *  export interface Foo { bar: string; baz: number; }
+ * ```
+ *
+ * @public
+ */
+export function getSingleLineExcerptText(excerpt: Excerpt): string {
+	// Regex replaces line breaks with spaces to ensure everything ends up on a single line.
+	return excerpt.text.trim().replace(/\s+/g, " ");
 }

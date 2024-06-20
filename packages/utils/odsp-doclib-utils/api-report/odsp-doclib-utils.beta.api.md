@@ -4,13 +4,6 @@
 
 ```ts
 
-import { DriverErrorTelemetryProps } from '@fluidframework/driver-utils/internal';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
-import { IOdspErrorAugmentations } from '@fluidframework/odsp-driver-definitions/internal';
-import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { LoggingError } from '@fluidframework/telemetry-utils/internal';
-import { OdspError } from '@fluidframework/odsp-driver-definitions/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```

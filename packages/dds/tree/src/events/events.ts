@@ -85,7 +85,7 @@ export type TransformListeners<
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @public
+ * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
 	/**

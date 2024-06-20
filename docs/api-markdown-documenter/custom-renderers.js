@@ -16,9 +16,9 @@ export function renderAlertNode(alertNode, writer, context) {
 	writer.ensureNewLine();
 
 	writer.writeLine(
-		`{{% callout ${alertNode.alertKind?.toLocaleLowerCase() ?? "note"} ${
+		`{{% callout ${alertNode.alertKind?.toLocaleLowerCase() ?? "note"} "${
 			alertNode.title ?? ""
-		} %}}`,
+		}" %}}`,
 	);
 
 	MarkdownRenderer.renderNodes(alertNode.children, writer, context);
