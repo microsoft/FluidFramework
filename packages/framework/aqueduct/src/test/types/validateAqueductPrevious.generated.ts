@@ -223,7 +223,6 @@ declare function get_old_InterfaceDeclaration_IDataObjectProps():
 declare function use_current_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<current.IDataObjectProps>): void;
 use_current_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataObjectProps());
 
 /*
@@ -238,7 +237,6 @@ declare function get_current_InterfaceDeclaration_IDataObjectProps():
 declare function use_old_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<old.IDataObjectProps>): void;
 use_old_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataObjectProps());
 
 /*
@@ -296,3 +294,31 @@ declare function use_old_ClassDeclaration_PureDataObjectFactory(
     use: TypeOnly<old.PureDataObjectFactory<any>>): void;
 use_old_ClassDeclaration_PureDataObjectFactory(
     get_current_ClassDeclaration_PureDataObjectFactory());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_createDataObjectKind": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_createDataObjectKind():
+    TypeOnly<typeof old.createDataObjectKind>;
+declare function use_current_FunctionDeclaration_createDataObjectKind(
+    use: TypeOnly<typeof current.createDataObjectKind>): void;
+use_current_FunctionDeclaration_createDataObjectKind(
+    get_old_FunctionDeclaration_createDataObjectKind());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_createDataObjectKind": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_createDataObjectKind():
+    TypeOnly<typeof current.createDataObjectKind>;
+declare function use_old_FunctionDeclaration_createDataObjectKind(
+    use: TypeOnly<typeof old.createDataObjectKind>): void;
+use_old_FunctionDeclaration_createDataObjectKind(
+    get_current_FunctionDeclaration_createDataObjectKind());
