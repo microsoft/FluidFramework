@@ -243,7 +243,7 @@ describe("Protocol", () => {
 				assert(
 					// TODO: use a real type
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					!(member.client.user as  any).name,
+					!(member.client.user as any).name,
 					"user name should not be present",
 				);
 				assert(

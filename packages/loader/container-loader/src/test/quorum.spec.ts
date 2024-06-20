@@ -41,7 +41,12 @@ describe("Quorum", () => {
 			// Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
 			quorum.on(
 				"approveProposal",
-				(sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => {
+				(
+					sequenceNumber: number,
+					key: string,
+					value: unknown,
+					approvalSequenceNumber: number,
+				) => {
 					assert.strictEqual(evented, false, "Double event");
 					evented = true;
 					assert.strictEqual(
@@ -145,7 +150,12 @@ describe("Quorum", () => {
 			// Observe eventing.  We expect a single event, with the correct values, to fire at the right time.
 			quorum.on(
 				"approveProposal",
-				(sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => {
+				(
+					sequenceNumber: number,
+					key: string,
+					value: unknown,
+					approvalSequenceNumber: number,
+				) => {
 					assert.strictEqual(evented, false, "Double event");
 					evented = true;
 					assert.strictEqual(

@@ -69,7 +69,9 @@ const DefaultChunkSize = 16 * 1024;
 
 const fatalConnectErrorProp = { fatalConnectError: true };
 
-function getNackReconnectInfo(nackContent: INackContent): ThrottlingError | GenericNetworkError {
+function getNackReconnectInfo(
+	nackContent: INackContent,
+): ThrottlingError | GenericNetworkError {
 	const message = `Nack (${nackContent.type}): ${nackContent.message}`;
 	const canRetry = nackContent.code !== 403;
 	const retryAfterMs =

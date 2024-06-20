@@ -7,7 +7,10 @@ import assert from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IRuntime, type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	IRuntime,
+	type IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {

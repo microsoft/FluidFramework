@@ -155,7 +155,8 @@ describe("Loader", () => {
 				await yieldEventLoop();
 			}
 
-			const flushPromises = async (): Promise<void> => new Promise((resolve) => process.nextTick(resolve));
+			const flushPromises = async (): Promise<void> =>
+				new Promise((resolve) => process.nextTick(resolve));
 
 			before(() => {
 				clock = useFakeTimers();

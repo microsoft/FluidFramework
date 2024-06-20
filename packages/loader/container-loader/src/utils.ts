@@ -25,7 +25,11 @@ import {
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import { LoggingError, UsageError, type IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	UsageError,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
@@ -301,7 +305,8 @@ export function isDeltaStreamConnectionForbiddenError(
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		(error as Partial<IFluidErrorBase>)?.errorType === DriverErrorTypes.deltaStreamConnectionForbidden
+		(error as Partial<IFluidErrorBase>)?.errorType ===
+			DriverErrorTypes.deltaStreamConnectionForbidden
 	);
 }
 
@@ -337,7 +342,7 @@ export function getDetachedContainerStateFromSerializedContainer(
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
 		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
@@ -370,7 +375,9 @@ export function getAttachedContainerStateFromSerializedContainer(
  * If there are multiple calls they will all get the same promise to wait on.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>): (...args: A) => Promise<R> => {
+export const runSingle = <A extends any[], R>(
+	func: (...args: A) => Promise<R>,
+): ((...args: A) => Promise<R>) => {
 	let running:
 		| {
 				args: A;
