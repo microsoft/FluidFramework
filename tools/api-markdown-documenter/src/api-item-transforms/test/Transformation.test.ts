@@ -522,7 +522,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							),
 						],
 						{
-							title: "bar (BETA)",
+							title: "bar",
 							id: "bar-variable",
 						},
 					),

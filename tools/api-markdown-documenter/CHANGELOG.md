@@ -1,9 +1,14 @@
 # @fluid-tools/api-markdown-documenter
 
-## 0.13.1
+## 0.14.0
 
 -   Allow configuration of "alerts" in child item tables.
     -   Default behavior can be overridden via the the `getAlertsForItem` option.
+
+### ⚠ BREAKING CHANGES
+
+-   Update default policy for `getHeadingTextForItem` to not insert `(BETA)` and `(ALPHA)` postfixes based on release tags.
+    If this is the desired behavior, it can be replicated by overriding `getHeadingTextForItem` to do so.
 
 ## 0.13.0
 
