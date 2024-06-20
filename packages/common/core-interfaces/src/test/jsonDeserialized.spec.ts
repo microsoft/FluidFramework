@@ -50,6 +50,16 @@ import {
 	objectWithOptionalNumberDefined,
 	objectWithNumberOrUndefinedUndefined,
 	objectWithNumberOrUndefinedNumbered,
+	objectWithReadonly,
+	objectWithReadonlyViaGetter,
+	objectWithGetter,
+	objectWithGetterViaValue,
+	objectWithSetter,
+	objectWithSetterViaValue,
+	objectWithMatchedGetterAndSetterProperty,
+	objectWithMatchedGetterAndSetterPropertyViaValue,
+	objectWithMismatchedGetterAndSetterProperty,
+	objectWithMismatchedGetterAndSetterPropertyViaValue,
 	objectWithNever,
 	objectWithPossibleRecursion,
 	objectWithRecursion,
@@ -62,16 +72,12 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
-	classInstanceWithPublicGetter,
-	classInstanceWithPublicSetter,
 	ClassWithPrivateData,
 	ClassWithPrivateMethod,
 	ClassWithPrivateGetter,
 	ClassWithPrivateSetter,
 	ClassWithPublicData,
 	ClassWithPublicMethod,
-	ClassWithPublicGetter,
-	ClassWithPublicSetter,
 } from "./testValues.js";
 
 /**
@@ -274,6 +280,45 @@ describe("JsonDeserialized", () => {
 				resultRead satisfies typeof objectWithString;
 			});
 
+			it("with `readonly`", () => {
+				const resultRead = passThru(objectWithReadonly);
+				ContainsAny(resultRead) satisfies never;
+				objectWithReadonly satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithReadonly;
+			});
+
+			it("with getter implemented via value", () => {
+				const resultRead = passThru(objectWithGetterViaValue);
+				ContainsAny(resultRead) satisfies never;
+				objectWithGetterViaValue satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithGetterViaValue;
+			});
+
+			it("with setter implemented via value", () => {
+				const resultRead = passThru(objectWithSetterViaValue);
+				ContainsAny(resultRead) satisfies never;
+				objectWithSetterViaValue satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithSetterViaValue;
+			});
+
+			it("with matched getter and setter implemented via value", () => {
+				const resultRead = passThru(objectWithMatchedGetterAndSetterPropertyViaValue);
+				ContainsAny(resultRead) satisfies never;
+				objectWithMatchedGetterAndSetterPropertyViaValue satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithMatchedGetterAndSetterPropertyViaValue;
+			});
+
+			it("with mismatched getter and setter implemented via value", () => {
+				const resultRead = passThru(objectWithMismatchedGetterAndSetterPropertyViaValue);
+				ContainsAny(resultRead) satisfies never;
+				objectWithMismatchedGetterAndSetterPropertyViaValue satisfies typeof resultRead;
+				resultRead satisfies typeof objectWithMismatchedGetterAndSetterPropertyViaValue;
+				// @ts-expect-error 'number' is not assignable to type 'string'
+				objectWithMismatchedGetterAndSetterPropertyViaValue.property = -1;
+				// @ts-expect-error 'number' is not assignable to type 'string'
+				resultRead.property = -1;
+			});
+
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
 				ContainsAny(resultRead) satisfies never;
@@ -282,10 +327,7 @@ describe("JsonDeserialized", () => {
 			});
 
 			it("object with optional type recursion", () => {
-				const resultRead = passThru(
-					objectWithRecursion,
-					// no error
-				);
+				const resultRead = passThru(objectWithRecursion);
 				ContainsAny(resultRead) satisfies never;
 				objectWithRecursion satisfies typeof resultRead;
 				resultRead satisfies typeof objectWithRecursion;
@@ -306,10 +348,7 @@ describe("JsonDeserialized", () => {
 			});
 
 			it("simple json (`JsonTypeWith<never>`)", () => {
-				const resultRead = passThru(
-					simpleJson,
-					// no error
-				) satisfies typeof simpleJson;
+				const resultRead = passThru(simpleJson);
 				ContainsAny(resultRead) satisfies never;
 				simpleJson satisfies typeof resultRead;
 				resultRead satisfies typeof simpleJson;
@@ -422,42 +461,92 @@ describe("JsonDeserialized", () => {
 			// These cases are demonstrating defects within the current implementation.
 			// They show "allowed" incorrect use and the unexpected results.
 			describe("known defect expectations", () => {
-				describe("class instance", () => {
-					// TODO: class instance aspect is not important here - replace with object versions
-					it("with public getter (preserves getter that doesn't propagate)", () => {
-						const instanceRead = passThru(
-							classInstanceWithPublicGetter,
-							// @ts-expect-error secret is missing, but required
-							{
-								public: "public",
-							},
-						) satisfies typeof classInstanceWithPublicGetter;
-						assert.ok(
-							classInstanceWithPublicGetter instanceof ClassWithPublicGetter,
-							"classInstanceWithPublicGetter is an instance of ClassWithPublicGetter",
+				describe("getters and setters preserved but do not propagate", () => {
+					it("with `readonly` implemented via getter", () => {
+						const resultRead = passThru(
+							objectWithReadonlyViaGetter,
+							// @ts-expect-error readonly is missing, but required
+							{},
 						);
-						assert.ok(
-							!(instanceRead instanceof ClassWithPublicGetter),
-							"instanceRead is not an instance of ClassWithPublicGetter",
-						);
+						ContainsAny(resultRead) satisfies never;
+						objectWithReadonlyViaGetter satisfies typeof resultRead;
+						resultRead satisfies typeof objectWithReadonlyViaGetter;
 					});
-					// TODO: class instance aspect is not important here - replace with object versions
-					it("with public setter (add value that doesn't propagate)", () => {
-						const instanceRead = passThru(
-							classInstanceWithPublicSetter,
-							// @ts-expect-error secret is missing, but required
-							{
-								public: "public",
-							},
-						) satisfies typeof classInstanceWithPublicSetter;
-						assert.ok(
-							classInstanceWithPublicSetter instanceof ClassWithPublicSetter,
-							"classInstanceWithPublicSetter is an instance of ClassWithPublicSetter",
+
+					it("with getter", () => {
+						const resultRead = passThru(
+							objectWithGetter,
+							// @ts-expect-error getter is missing, but required
+							{},
 						);
-						assert.ok(
-							!(instanceRead instanceof ClassWithPublicSetter),
-							"instanceRead is not an instance of ClassWithPublicSetter",
+						ContainsAny(resultRead) satisfies never;
+						objectWithGetter satisfies typeof resultRead;
+						resultRead satisfies typeof objectWithGetter;
+
+						assert.throws(() => {
+							// @ts-expect-error Cannot assign to 'getter' because it is a read-only property.
+							objectWithGetter.getter = -1;
+						}, new TypeError(
+							"Cannot set property getter of #<ClassImplementsObjectWithGetter> which has only a getter",
+						));
+						// @ts-expect-error Cannot assign to 'getter' because it is a read-only property.
+						resultRead.getter = -1;
+					});
+
+					it("with setter", () => {
+						const resultRead = passThru(
+							objectWithSetter,
+							// @ts-expect-error setter is missing, but required
+							{},
 						);
+						ContainsAny(resultRead) satisfies never;
+						objectWithSetter satisfies typeof resultRead;
+						resultRead satisfies typeof objectWithSetter;
+
+						// Read from setter only produces `undefined` but is typed as `string`.
+						const originalSetterValue = objectWithSetter.setter;
+						assert.equal(originalSetterValue, undefined);
+						// Read from deserialized is the same, but only per lack of propagation.
+						const resultSetterValue = resultRead.setter;
+						assert.equal(resultSetterValue, undefined);
+
+						assert.throws(() => {
+							// @ts-expect-error 'number' is not assignable to type 'string'
+							objectWithSetter.setter = -1;
+						}, new Error("ClassImplementsObjectWithSetter writing 'setter' as -1"));
+						// @ts-expect-error 'number' is not assignable to type 'string'
+						resultRead.setter = -1;
+					});
+
+					it("with matched getter and setter", () => {
+						const resultRead = passThru(
+							objectWithMatchedGetterAndSetterProperty,
+							// @ts-expect-error property is missing, but required
+							{},
+						);
+						ContainsAny(resultRead) satisfies never;
+						objectWithMatchedGetterAndSetterProperty satisfies typeof resultRead;
+						resultRead satisfies typeof objectWithMatchedGetterAndSetterProperty;
+					});
+
+					it("with mismatched getter and setter", () => {
+						const resultRead = passThru(
+							objectWithMismatchedGetterAndSetterProperty,
+							// @ts-expect-error property is missing, but required
+							{},
+						);
+						ContainsAny(resultRead) satisfies never;
+						objectWithMismatchedGetterAndSetterProperty satisfies typeof resultRead;
+						resultRead satisfies typeof objectWithMismatchedGetterAndSetterProperty;
+
+						// @ts-expect-error 'number' is not assignable to type 'string'
+						resultRead.property = -1;
+						assert.throws(() => {
+							// @ts-expect-error 'number' is not assignable to type 'string'
+							objectWithMismatchedGetterAndSetterProperty.property = -1;
+						}, new Error(
+							"ClassImplementsObjectWithMismatchedGetterAndSetterProperty writing 'property' as -1",
+						));
 					});
 				});
 			});

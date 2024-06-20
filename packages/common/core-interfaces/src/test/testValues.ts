@@ -97,22 +97,33 @@ interface ObjectWithReadonly {
 }
 export const objectWithReadonly: ObjectWithReadonly = { readonly: 5 };
 class ClassImplementsObjectWithReadonly implements ObjectWithReadonly {
-	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get readonly(): number {
+		throw new Error("ClassImplementsObjectWithReadonly reading 'readonly'");
 		return 4;
 	}
 }
 export const objectWithReadonlyViaGetter: ObjectWithReadonly =
 	new ClassImplementsObjectWithReadonly();
+
 interface ObjectWithGetter {
 	get getter(): number;
 }
-export const objectWithGetter: ObjectWithGetter = { getter: 0 };
+class ClassImplementsObjectWithGetter implements ObjectWithGetter {
+	public get getter(): number {
+		throw new Error("ClassImplementsObjectWithGetter reading 'getter'");
+		return 4.2;
+	}
+}
+export const objectWithGetter: ObjectWithGetter = new ClassImplementsObjectWithGetter();
+export const objectWithGetterViaValue: ObjectWithGetter = { getter: 0 };
+
 interface ObjectWithSetter {
 	set setter(v: string);
 }
 class ClassImplementsObjectWithSetter implements ObjectWithSetter {
-	public set setter(_: string) {}
+	public set setter(v: string) {
+		throw new Error(`ClassImplementsObjectWithSetter writing 'setter' as ${v}`);
+	}
 }
 export const objectWithSetter: ObjectWithSetter = new ClassImplementsObjectWithSetter();
 export const objectWithSetterViaValue: ObjectWithSetter = { setter: "value" };
@@ -125,11 +136,17 @@ export const objectWithMatchedGetterAndSetterPropertyViaValue: ObjectWithMatched
 class ClassImplementsObjectWithMatchedGetterAndSetterProperty
 	implements ObjectWithMatchedGetterAndSetterProperty
 {
-	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get property(): number {
+		throw new Error(
+			"ClassImplementsObjectWithMatchedGetterAndSetterProperty reading 'property'",
+		);
 		return 2;
 	}
-	public set property(_: number) {}
+	public set property(v: number) {
+		throw new Error(
+			`ClassImplementsObjectWithMatchedGetterAndSetterProperty writing 'property' as ${v}`,
+		);
+	}
 }
 export const objectWithMatchedGetterAndSetterProperty: ObjectWithMatchedGetterAndSetterProperty =
 	new ClassImplementsObjectWithMatchedGetterAndSetterProperty();
@@ -137,19 +154,25 @@ interface ObjectWithMismatchedGetterAndSetterProperty {
 	get property(): number;
 	set property(v: string);
 }
-export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
-	{ property: 0 };
 class ClassImplementsObjectWithMismatchedGetterAndSetterProperty
 	implements ObjectWithMismatchedGetterAndSetterProperty
 {
-	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get property(): number {
+		throw new Error(
+			"ClassImplementsObjectWithMismatchedGetterAndSetterProperty reading 'property'",
+		);
 		return 3;
 	}
-	public set property(_: string) {}
+	public set property(v: string) {
+		throw new Error(
+			`ClassImplementsObjectWithMismatchedGetterAndSetterProperty writing 'property' as ${v}`,
+		);
+	}
 }
 export const objectWithMismatchedGetterAndSetterProperty: ObjectWithMismatchedGetterAndSetterProperty =
 	new ClassImplementsObjectWithMismatchedGetterAndSetterProperty();
+export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
+	{ property: 0 };
 
 // #region Recursive types
 
