@@ -42,16 +42,18 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		}
 		throw new Error("storage service not yet instantiated");
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
 	}
 
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
+		// API used below returns null
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () =>
@@ -85,6 +87,8 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	}
 
 	public async getVersions(
+		// API used below returns null
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,
@@ -146,7 +150,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		);
 	}
 
-	private checkStorageDisposed(callName: string, error: unknown) {
+	private checkStorageDisposed(callName: string, error: unknown): void {
 		if (this._disposed) {
 			this.logger.sendTelemetryEvent(
 				{

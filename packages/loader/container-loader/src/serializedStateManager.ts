@@ -391,9 +391,9 @@ export class SerializedStateManager {
 				attributes.sequenceNumber === 0,
 				0x939 /* trying to set a non attachment snapshot */,
 			);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			this.snapshot = {
 				...snapshot,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				snapshotSequenceNumber: attributes.sequenceNumber as number,
 			};
 		}
