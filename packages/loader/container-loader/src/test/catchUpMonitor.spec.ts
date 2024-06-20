@@ -15,7 +15,7 @@ import { CatchUpMonitor } from "../catchUpMonitor.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
+	implements Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber" | "lastKnownSeqNumber">
 {
 	constructor(
 		public lastSequenceNumber: number = 5,
@@ -27,14 +27,14 @@ class MockDeltaManagerForCatchingUp
 	/**
 	 * Simulate processing op with the given sequence number, to trigger CatchUpMonitor
 	 */
-	emitOpWithSequenceNumber(sequenceNumber: number) {
+	emitOpWithSequenceNumber(sequenceNumber: number): void {
 		this.emit("op", { sequenceNumber });
 	}
 
 	/**
 	 * Trigger the CatchUpMonitor by emitting op with the target sequence number
 	 */
-	emitOpToCatchUp() {
+	emitOpToCatchUp(): void {
 		this.emitOpWithSequenceNumber(this.lastKnownSeqNumber);
 	}
 
@@ -43,12 +43,11 @@ class MockDeltaManagerForCatchingUp
 			lastSequenceNumber?: number;
 			lastKnownSeqNumber?: number;
 		} = {},
-	): MockDeltaManagerForCatchingUp & IDeltaManager<any, any> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	): MockDeltaManagerForCatchingUp & IDeltaManager<unknown, unknown> {
 		return new MockDeltaManagerForCatchingUp(
 			sequenceNumbers.lastSequenceNumber,
 			sequenceNumbers.lastKnownSeqNumber,
-		) as any;
+		) as MockDeltaManagerForCatchingUp & IDeltaManager<unknown, unknown>;
 	}
 }
 

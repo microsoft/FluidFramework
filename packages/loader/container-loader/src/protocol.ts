@@ -30,6 +30,8 @@ export enum SignalType {
 export type ProtocolHandlerBuilder = (
 	attributes: IDocumentAttributes,
 	snapshot: IQuorumSnapshot,
+	// TODO: use a real type (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	sendProposal: (key: string, value: any) => number,
 ) => IProtocolHandler;
 
@@ -45,6 +47,8 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 	constructor(
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
+		// TODO: use a real type (breaking change)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		sendProposal: (key: string, value: any) => number,
 		public readonly audience: IAudienceOwner,
 		private readonly shouldClientHaveLeft: (clientId: string) => boolean,
@@ -98,8 +102,8 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		return super.processMessage(message, local);
 	}
 
-	public processSignal(message: ISignalMessage) {
-		const innerContent = message.content as { content: any; type: string };
+	public processSignal(message: ISignalMessage): void {
+		const innerContent = message.content as { content: unknown; type: string };
 		switch (innerContent.type) {
 			case SignalType.Clear: {
 				const members = this.audience.getMembers();
@@ -138,7 +142,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
  * The protocol handler should strictly handle only ClientJoin, ClientLeave
  * and Clear signal types.
  */
-export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
+export function protocolHandlerShouldProcessSignal(message: ISignalMessage): boolean {
 	// Signal originates from server
 	if (message.clientId === null) {
 		const innerContent = message.content as { content: unknown; type: string };
