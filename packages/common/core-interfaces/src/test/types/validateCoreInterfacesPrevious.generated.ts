@@ -254,20 +254,6 @@ use_old_InterfaceDeclaration_IConfigProviderBase(
     get_current_InterfaceDeclaration_IConfigProviderBase());
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IDisposable": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IDisposable():
-    TypeOnly<old.IDisposable>;
-declare function use_current_InterfaceDeclaration_IDisposable(
-    use: TypeOnly<current.IDisposable>): void;
-use_current_InterfaceDeclaration_IDisposable(
-    get_old_InterfaceDeclaration_IDisposable());
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -364,20 +350,6 @@ declare function use_old_InterfaceDeclaration_IEvent(
     use: TypeOnly<old.IEvent>): void;
 use_old_InterfaceDeclaration_IEvent(
     get_current_InterfaceDeclaration_IEvent());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IEventProvider": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IEventProvider():
-    TypeOnly<old.IEventProvider<any>>;
-declare function use_current_InterfaceDeclaration_IEventProvider(
-    use: TypeOnly<current.IEventProvider<any>>): void;
-use_current_InterfaceDeclaration_IEventProvider(
-    get_old_InterfaceDeclaration_IEventProvider());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -478,20 +450,6 @@ use_old_VariableDeclaration_IFluidHandle(
     get_current_VariableDeclaration_IFluidHandle());
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IFluidHandle": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IFluidHandle():
-    TypeOnly<old.IFluidHandle>;
-declare function use_current_InterfaceDeclaration_IFluidHandle(
-    use: TypeOnly<current.IFluidHandle>): void;
-use_current_InterfaceDeclaration_IFluidHandle(
-    get_old_InterfaceDeclaration_IFluidHandle());
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -562,20 +520,6 @@ use_old_InterfaceDeclaration_IFluidHandleContext(
     get_current_InterfaceDeclaration_IFluidHandleContext());
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IFluidHandleErased": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IFluidHandleErased():
-    TypeOnly<old.IFluidHandleErased<any>>;
-declare function use_current_InterfaceDeclaration_IFluidHandleErased(
-    use: TypeOnly<current.IFluidHandleErased<any>>): void;
-use_current_InterfaceDeclaration_IFluidHandleErased(
-    get_old_InterfaceDeclaration_IFluidHandleErased());
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -644,20 +588,6 @@ declare function use_old_VariableDeclaration_IFluidLoadable(
     use: TypeOnly<typeof old.IFluidLoadable>): void;
 use_old_VariableDeclaration_IFluidLoadable(
     get_current_VariableDeclaration_IFluidLoadable());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "InterfaceDeclaration_IFluidLoadable": {"forwardCompat": false}
- */
-declare function get_old_InterfaceDeclaration_IFluidLoadable():
-    TypeOnly<old.IFluidLoadable>;
-declare function use_current_InterfaceDeclaration_IFluidLoadable(
-    use: TypeOnly<current.IFluidLoadable>): void;
-use_current_InterfaceDeclaration_IFluidLoadable(
-    get_old_InterfaceDeclaration_IFluidLoadable());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
