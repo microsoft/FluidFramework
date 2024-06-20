@@ -58,7 +58,6 @@ import {
 	MergeBlock,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
-	isSegmentPresent,
 	reservedMarkerIdKey,
 	seqLTE,
 	toMoveInfo,
@@ -77,7 +76,7 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PerspectiveImpl } from "./perspective.js";
+import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
