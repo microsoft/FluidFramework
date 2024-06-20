@@ -146,9 +146,21 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly apiCounters: IApiCounters = new InMemoryApiCounters(),
 	) {
 		this.io.on("connection", (socket: Socket) => {
+			/**
+			 * Fluid Socket.io connection URL looks like:
+			 * "<hostname>/socket.io/?documentId=[documentId]&tenantId=[tenantId]&EIO=[3/4]&transport=[websocket/polling]"
+			 * [socket.handshake.query](https://socket.io/docs/v4/server-socket-instance/#sockethandshake) contains parsed query params.
+			 * The following properties are used for **telemetry purposes only.**
+			 * These should **not** be used to identify the tenant and document associated with the socket connection
+			 * for real logic and access purposes without validating against the JWT access token.
+			 */
+			const telemetryProperties = {
+				[BaseTelemetryProperties.tenantId]: socket.handshake.query.tenantId,
+				[BaseTelemetryProperties.documentId]: socket.handshake.query.documentId,
+			};
 			const socketConnectionMetric = Lumberjack.newLumberMetric(
 				LumberEventName.SocketConnection,
-				{},
+				telemetryProperties,
 			);
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
