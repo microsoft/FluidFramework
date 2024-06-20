@@ -20,14 +20,14 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { stub, useFakeTimers } from "sinon";
+import { stub, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("connectionManager", () => {
-	let clock;
+	let clock: SinonFakeTimers;
 	let nextClientId = 0;
 	let _mockDeltaConnection: MockDocumentDeltaConnection | undefined;
 	let mockDocumentService: IDocumentService;
@@ -66,7 +66,7 @@ describe("connectionManager", () => {
 	};
 
 	const mockLogger = new MockLogger();
-	async function waitForConnection() {
+	async function waitForConnection(): Promise<MockDocumentDeltaConnection> {
 		return connectionDeferred.promise;
 	}
 
@@ -115,6 +115,7 @@ describe("connectionManager", () => {
 		const connection = await waitForConnection();
 
 		// Monkey patch connection to be undefined to trigger assert in reconnectOnError
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(connectionManager as any).connection = undefined;
 
 		// Act
@@ -354,9 +355,11 @@ describe("connectionManager", () => {
 		it("readonly permissions", () => {
 			const connectionManager = createConnectionManager();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			(connectionManager as any).set_readonlyPermissions(false);
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: false });
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			(connectionManager as any).set_readonlyPermissions(true);
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
 				readonly: true,
