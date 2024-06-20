@@ -164,6 +164,7 @@
     </ul>
     <ul class="nav" id="fluid-framework-nav">
         <li class="panel {{ if $isAnythingInFFNavActive }}active expanded{{ end }}">
+            {{/* If the user is on v1 of the API docs, clicking on FluidFramework in the left nav should redirect to the complete reference instead of showing options. AB#7513 */}}
             {{if eq $currentApiVersion "v1" }}
                 <a class="area{{if $isFFActive }} active expanded{{ end }} nav-page" href="{{ $FFLink }}">Fluid Framework</a>
             {{ else }}
