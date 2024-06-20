@@ -788,6 +788,7 @@ export class ModularChangeFamily
 			baseFieldToContext: new Map(),
 			baseNodeToRebasedNode: new Map(),
 			rebasedFields: new Set(),
+			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
 			nodeIdPairs: [],
 			affectedNewFields: new BTree(),
 			affectedBaseFields: new BTree(),
@@ -873,7 +874,7 @@ export class ModularChangeFamily
 					baseChangeset,
 					rebaseChild,
 					genId,
-					new RebaseManager(crossFieldTable, field),
+					new RebaseManager(crossFieldTable, field, context.fieldId),
 					rebaseMetadata,
 				);
 			}
@@ -884,7 +885,7 @@ export class ModularChangeFamily
 			rebasedNodes,
 			change.nodeToParent, // XXX
 			change.nodeAliases,
-			change.crossFieldKeys, // XXX
+			crossFieldTable.rebasedCrossFieldKeys,
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
@@ -908,6 +909,7 @@ export class ModularChangeFamily
 		const rebasedFields = this.rebaseFieldMap(
 			change.fieldChanges,
 			baseChange.fieldChanges,
+			undefined,
 			genId,
 			crossFieldTable,
 			metadata,
@@ -920,6 +922,7 @@ export class ModularChangeFamily
 			const baseNodeChange = nodeChangeFromId(baseChange.nodeChanges, baseId);
 
 			const rebasedNode = this.rebaseNodeChange(
+				newId,
 				newNodeChange,
 				baseNodeChange,
 				genId,
@@ -946,11 +949,10 @@ export class ModularChangeFamily
 		metadata: RebaseRevisionMetadata,
 	): void {
 		crossFieldTable.affectedNewFields.forEachPair(([revision, localId, fieldKey]) => {
-			const fieldMap = fieldMapFromNodeId(
-				rebasedFields,
-				rebasedNodes,
-				localId !== undefined ? { revision, localId } : undefined,
-			);
+			const nodeId: NodeId | undefined =
+				localId !== undefined ? { revision, localId } : undefined;
+
+			const fieldMap = fieldMapFromNodeId(rebasedFields, rebasedNodes, nodeId);
 
 			const fieldChange = fieldMap.get(fieldKey);
 			assert(fieldChange !== undefined, "Cross field key registered for empty field");
@@ -976,12 +978,14 @@ export class ModularChangeFamily
 				...fieldChange,
 				change: brand(handler.createEmpty()),
 			};
+
+			const fieldId: FieldId = { nodeId, field: fieldKey };
 			const rebasedField = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
 				rebaseChild,
 				genId,
-				new RebaseManager(crossFieldTable, baseFieldChange),
+				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
 				metadata,
 			);
 
@@ -993,6 +997,7 @@ export class ModularChangeFamily
 				newChange: fieldChange,
 				baseChange: baseFieldChange,
 				rebasedChange: rebasedFieldChange,
+				fieldId,
 				baseNodeIds: [],
 			});
 			crossFieldTable.rebasedFields.add(rebasedFieldChange);
@@ -1039,12 +1044,13 @@ export class ModularChangeFamily
 				change: brand(handler.createEmpty()),
 			};
 
+			const fieldId: FieldId = { nodeId, field: fieldKey };
 			const rebasedField: unknown = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
 				rebaseChild,
 				genId,
-				new RebaseManager(crossFieldTable, baseFieldChange),
+				new RebaseManager(crossFieldTable, baseFieldChange, fieldId),
 				metadata,
 			);
 
@@ -1058,6 +1064,7 @@ export class ModularChangeFamily
 				newChange: fieldChange,
 				baseChange: baseFieldChange,
 				rebasedChange: rebasedFieldChange,
+				fieldId,
 				baseNodeIds: [],
 			});
 			crossFieldTable.rebasedFields.add(rebasedFieldChange);
@@ -1160,7 +1167,7 @@ export class ModularChangeFamily
 			baseFieldChange.change,
 			(id1, id2) => id1 ?? id2,
 			idAllocator,
-			new RebaseManager(table, baseFieldChange),
+			new RebaseManager(table, baseFieldChange, parentFieldIdBase),
 			metadata,
 		);
 
@@ -1171,6 +1178,7 @@ export class ModularChangeFamily
 			newChange: fieldChange,
 			baseChange: baseFieldChange,
 			rebasedChange: rebasedField,
+			fieldId: parentFieldIdBase,
 			baseNodeIds: [],
 		});
 		table.rebasedFields.add(rebasedField);
@@ -1189,6 +1197,7 @@ export class ModularChangeFamily
 	private rebaseFieldMap(
 		change: FieldChangeMap,
 		over: FieldChangeMap,
+		parentId: NodeId | undefined,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
@@ -1197,6 +1206,7 @@ export class ModularChangeFamily
 		const rebasedFields: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of change) {
+			const fieldId: FieldId = { nodeId: parentId, field };
 			const baseChange = over.get(field);
 			if (baseChange === undefined) {
 				rebasedFields.set(field, fieldChange);
@@ -1209,7 +1219,7 @@ export class ModularChangeFamily
 				change2: baseChangeset,
 			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
 
-			const manager = new RebaseManager(crossFieldTable, baseChange);
+			const manager = new RebaseManager(crossFieldTable, baseChange, fieldId);
 
 			const rebaseChild = (
 				child: NodeId | undefined,
@@ -1242,6 +1252,7 @@ export class ModularChangeFamily
 				baseChange,
 				newChange: fieldChange,
 				rebasedChange: rebasedFieldChange,
+				fieldId,
 				baseNodeIds: [],
 			});
 
@@ -1252,6 +1263,7 @@ export class ModularChangeFamily
 	}
 
 	private rebaseNodeChange(
+		id: NodeId,
 		change: NodeChangeset,
 		over: NodeChangeset,
 		genId: IdAllocator,
@@ -1267,6 +1279,7 @@ export class ModularChangeFamily
 				? this.rebaseFieldMap(
 						change?.fieldChanges ?? new Map(),
 						baseMap,
+						id,
 						genId,
 						crossFieldTable,
 						revisionMetadata,
@@ -1984,6 +1997,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	readonly baseFieldToContext: Map<FieldChange, RebaseFieldContext>;
 	readonly baseNodeToRebasedNode: Map<NodeChangeset, NodeChangeset>;
 	readonly rebasedFields: Set<FieldChange>;
+	readonly rebasedCrossFieldKeys: CrossFieldKeyTable;
 
 	/**
 	 * List of (newId, baseId) pairs encountered so far.
@@ -2000,6 +2014,7 @@ interface RebaseFieldContext {
 	baseChange: FieldChange;
 	newChange: FieldChange;
 	rebasedChange: FieldChange;
+	fieldId: FieldId;
 
 	/**
 	 * The set of node IDs in the base changeset which should be included in the rebased field,
@@ -2127,6 +2142,13 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 		return getFirstFromCrossFieldMap(this.getMap(target), revision, id, count);
 	}
 
+	public moveKey(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+	): void {}
+
 	private getMap(target: CrossFieldTarget): CrossFieldMap<unknown> {
 		return target === CrossFieldTarget.Source
 			? this.crossFieldTable.srcTable
@@ -2141,7 +2163,12 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 }
 
 class RebaseManager extends CrossFieldManagerI<FieldChange> {
-	public constructor(table: RebaseTable, currentField: FieldChange, allowInval = true) {
+	public constructor(
+		table: RebaseTable,
+		currentField: FieldChange,
+		private readonly fieldId: FieldId,
+		allowInval = true,
+	) {
 		super(table, currentField, allowInval);
 	}
 
@@ -2195,6 +2222,17 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 		}
 
 		super.set(target, revision, id, count, newValue, invalidateDependents);
+	}
+
+	public override moveKey(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+	): void {
+		super.moveKey(target, revision, id, count);
+		// XXX: Need custom setter which handles key ranges
+		this.table.rebasedCrossFieldKeys.set([target, revision, id, count], this.fieldId);
 	}
 
 	private get table(): RebaseTable {

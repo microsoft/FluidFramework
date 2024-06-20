@@ -223,6 +223,7 @@ const invalidFunc = (): never => fail("Should not be called when converting gene
 const invalidCrossFieldManager: CrossFieldManager = {
 	set: invalidFunc,
 	get: invalidFunc,
+	moveKey: invalidFunc,
 };
 
 export function newGenericChangeset(): GenericChangeset {

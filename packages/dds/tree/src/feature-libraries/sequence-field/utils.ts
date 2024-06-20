@@ -721,6 +721,7 @@ export interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	reset: () => void;
 }
 
+// TODO: Can this be moved to a test utility file?
 /**
  * @internal
  */
@@ -771,6 +772,8 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);
 		},
+
+		moveKey: () => {},
 
 		reset: () => {
 			table.isInvalidated = false;

@@ -134,6 +134,39 @@ describe("ModularChangeFamily integration", () => {
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 
+		it("move over cross-field move", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
+			);
+
+			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 1);
+			const [move1, move2] = getChanges();
+			const rebased = family.rebase(
+				makeAnonChange(move2),
+				tagChangeInline(move1, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
+			);
+
+			const expected = Change.build(
+				{ family, maxId: 1 },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(tag1, brand(0)),
+					MarkMaker.moveIn(1, { localId: brand(1) }),
+				]),
+				Change.field(fieldB, sequence.identifier, [
+					MarkMaker.moveOut(1, { localId: brand(1) }),
+				]),
+			);
+
+			assert.deepEqual(rebased, expected);
+		});
+
 		it("Nested moves both requiring a second pass", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);

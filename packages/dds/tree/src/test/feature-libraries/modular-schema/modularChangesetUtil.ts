@@ -211,6 +211,7 @@ function addNodeToField(
 const dummyCrossFieldManager: CrossFieldManager = {
 	get: (_target, _revision, _id, count, _addDependency) => ({ value: undefined, length: count }),
 	set: () => fail("Not supported"),
+	moveKey: () => fail("Not supported"),
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {

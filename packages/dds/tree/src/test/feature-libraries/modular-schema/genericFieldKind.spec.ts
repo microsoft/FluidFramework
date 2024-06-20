@@ -48,6 +48,7 @@ const revisionMetadata: RebaseRevisionMetadata = {
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
 	set: unexpectedDelegate,
+	moveKey: unexpectedDelegate,
 };
 
 describe("GenericField", () => {

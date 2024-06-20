@@ -82,4 +82,17 @@ export interface CrossFieldManager<T = unknown> {
 		newValue: T,
 		invalidateDependents: boolean,
 	): void;
+
+	/**
+	 * Notifies the system that the specified cross field key range has been moved into this field
+	 * as part of the current rebase or compose.
+	 * This must be called whenever a new cross field key is moved into this field.
+	 * Calling this for a key which was already in the field is tolerated.
+	 */
+	moveKey(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+	): void;
 }
