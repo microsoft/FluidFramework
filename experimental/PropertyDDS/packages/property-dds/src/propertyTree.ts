@@ -29,13 +29,12 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/inter
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
-import cloneDeep from "lodash/cloneDeep.js";
 import lodash from "lodash";
 import { Packr } from "msgpackr";
 import { v4 as uuidv4 } from "uuid";
 
 // eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
-const { isEmpty, findIndex, find, isEqual, range } = lodash;
+const { isEmpty, findIndex, find, isEqual, range, cloneDeep } = lodash;
 
 import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
@@ -377,7 +376,9 @@ export class SharedPropertyTree extends SharedObject {
 			message.type === MessageType.Operation &&
 			message.sequenceNumber > this.skipSequenceNumber
 		) {
-			const change: IPropertyTreeMessage = this.decodeMessage(cloneDeep(message.contents));
+			const change: IPropertyTreeMessage = this.decodeMessage(
+				cloneDeep(message.contents as IPropertyTreeMessage),
+			);
 			const content: IRemotePropertyTreeMessage = {
 				...change,
 				sequenceNumber: message.sequenceNumber,
