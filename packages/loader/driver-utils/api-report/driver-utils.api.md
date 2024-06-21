@@ -121,6 +121,9 @@ export function createGenericNetworkError(message: string, retryInfo: {
 // @internal (undocumented)
 export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<"writeError">;
 
+// @internal
+export function decodeJsonableOrBinary(content: string): unknown;
+
 // @internal (undocumented)
 export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, props: DriverErrorTelemetryProps, storageOnlyReason?: string);
@@ -165,6 +168,9 @@ export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
 
 // @internal (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
+
+// @internal
+export function encodeJsonableOrBinary<T>(content: unknown): string;
 
 // @internal
 export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {

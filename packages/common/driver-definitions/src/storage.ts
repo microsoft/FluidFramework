@@ -314,11 +314,15 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
-	 *
-	 * @privateRemarks
-	 * UnknownShouldBe<string> can be string if {@link IDocumentServiceFactory} becomes internal.
 	 */
 	submitSignal: (content: string, targetClientId?: string) => void;
+
+	/**
+	 * Submits a new signal to the server
+	 * Content is a JS object. It may container properties of type ArrayBuffer.
+	 * Other than such properties, the content should be serializable using JSON.serialize().
+	 */
+	submitSignal2?: (content: unknown, targetClientId?: string) => void;
 }
 
 /**
