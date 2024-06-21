@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
@@ -25,7 +25,8 @@ import * as ws from "ws";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
-import { INexusResourcesCustomizations } from ".";
+import { INexusResourcesCustomizations } from "./customizations";
+import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -40,185 +41,6 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	public close(): Promise<void> {
 		this.webSocketServer.close();
 		return Promise.resolve();
-	}
-}
-
-/**
- * @internal
- */
-export class OrdererManager implements core.IOrdererManager {
-	private readonly ordererConnectionTypeMap = new Map<string, "kafka" | "local">();
-	private readonly ordererConnectionCountMap = new Map<string, number>();
-	private readonly ordererConnectionCloseTimeoutMap = new Map<string, NodeJS.Timeout>();
-
-	constructor(
-		private readonly globalDbEnabled: boolean,
-		private readonly ordererUrl: string,
-		private readonly tenantManager: core.ITenantManager,
-		private readonly localOrderManager: LocalOrderManager,
-		private readonly kafkaFactory: KafkaOrdererFactory,
-	) {}
-
-	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
-		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
-		if (this.ordererConnectionCloseTimeoutMap.has(ordererId)) {
-			// Clear any existing connection timeout because a new connection was added.
-			clearTimeout(this.ordererConnectionCloseTimeoutMap.get(ordererId));
-		}
-
-		if (ordererConnectionType === "local") {
-			Lumberjack.info(`Using local orderer`, getLumberBaseProperties(documentId, tenantId));
-			const localOrderer = await this.localOrderManager.get(tenantId, documentId);
-
-			this.updateOrdererConnectionCount(tenantId, documentId, "increment", "local").catch(
-				(error) => {
-					Lumberjack.error(
-						`Failed to update local orderer connection count`,
-						{
-							documentId,
-							tenantId,
-						},
-						error,
-					);
-				},
-			);
-
-			return localOrderer;
-		}
-
-		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
-		const kafkaOrderer = await this.kafkaFactory.create(tenantId, documentId);
-
-		this.updateOrdererConnectionCount(tenantId, documentId, "increment", "kafka").catch(
-			(error) => {
-				Lumberjack.error(
-					`Failed to update kafka orderer connection count`,
-					{
-						documentId,
-						tenantId,
-					},
-					error,
-				);
-			},
-		);
-
-		return kafkaOrderer;
-	}
-
-	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
-		const ordererConnectionCount = await this.updateOrdererConnectionCount(
-			tenantId,
-			documentId,
-			"decrement",
-		);
-
-		if (ordererConnectionCount <= 0) {
-			const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
-			if (this.ordererConnectionCloseTimeoutMap.has(ordererId)) {
-				// Clear any existing connection timeout before setting a new one.
-				clearTimeout(this.ordererConnectionCloseTimeoutMap.get(ordererId));
-			}
-			const lumberBaseProperties = getLumberBaseProperties(documentId, tenantId);
-			// Cleanup the connection after 60 seconds to avoid frequent connection creation/destruction
-			this.ordererConnectionCloseTimeoutMap.set(
-				ordererId,
-				setTimeout(() => {
-					this.cleanupOrdererConnection(tenantId, documentId)
-						.then(() => {
-							Lumberjack.info(`Successfully cleaned up orderer connection`, {
-								...lumberBaseProperties,
-								remainingConnections: this.ordererConnectionCountMap.size,
-							});
-						})
-						.catch((error) => {
-							Lumberjack.error(
-								`Failed to cleanup orderer connection`,
-								lumberBaseProperties,
-								error,
-							);
-						});
-				}, 60_000),
-			);
-		}
-	}
-
-	private async updateOrdererConnectionCount(
-		tenantId: string,
-		documentId: string,
-		operation: "increment" | "decrement",
-		ordererType?: "kafka" | "local",
-	): Promise<number> {
-		const ordererConnectionType =
-			ordererType ?? (await this.getOrdererConnectionType(tenantId, documentId));
-		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
-
-		if (!this.ordererConnectionCountMap.has(ordererId)) {
-			if (operation === "decrement") {
-				// If decrementing a connection that doesn't exist, ignore it.
-				return;
-			}
-			this.ordererConnectionTypeMap.set(ordererId, ordererConnectionType);
-			this.ordererConnectionCountMap.set(ordererId, 0);
-		}
-		const ordererConnectionCount =
-			this.ordererConnectionCountMap.get(ordererId) + (operation === "increment" ? 1 : -1);
-
-		this.ordererConnectionCountMap.set(ordererId, ordererConnectionCount);
-		return ordererConnectionCount;
-	}
-
-	private getOrdererConnectionMapKey(tenantId: string, documentId: string): string {
-		return `${tenantId}/${documentId}`;
-	}
-
-	private async getOrdererConnectionType(
-		tenantId: string,
-		documentId: string,
-	): Promise<"kafka" | "local"> {
-		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
-		if (!this.ordererConnectionTypeMap.has(ordererId)) {
-			if (!this.globalDbEnabled) {
-				const messageMetaData = { documentId, tenantId };
-				Lumberjack.info(`Global db is disabled, checking orderer URL`, messageMetaData);
-				const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-
-				Lumberjack.info(
-					`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-					getLumberBaseProperties(documentId, tenantId),
-				);
-
-				if (tenant.orderer.url !== this.ordererUrl) {
-					Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-					throw new Error("Invalid ordering service endpoint");
-				}
-
-				if (tenant.orderer.type !== "kafka") {
-					this.ordererConnectionTypeMap.set(ordererId, "local");
-				}
-			}
-			this.ordererConnectionTypeMap.set(ordererId, "kafka");
-		}
-
-		return this.ordererConnectionTypeMap.get(ordererId);
-	}
-
-	private async cleanupOrdererConnection(tenantId: string, documentId: string): Promise<void> {
-		const ordererId = this.getOrdererConnectionMapKey(tenantId, documentId);
-		const ordererConnectionCount = this.ordererConnectionCountMap.get(ordererId) ?? 0;
-		if (ordererConnectionCount > 0) {
-			// There are active connections, so don't close the connection yet.
-			return;
-		}
-		const ordererConnectionType = await this.getOrdererConnectionType(tenantId, documentId);
-		// Clean up internal maps
-		this.ordererConnectionTypeMap.delete(ordererId);
-		this.ordererConnectionCountMap.delete(ordererId);
-		this.ordererConnectionCloseTimeoutMap.delete(ordererId);
-		// Close the connection
-		await (ordererConnectionType === "kafka"
-			? this.kafkaFactory.delete(tenantId, documentId)
-			: this.localOrderManager.remove(tenantId, documentId));
 	}
 }
 
@@ -577,12 +399,16 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 		const serverUrl = config.get("worker:serverUrl");
 
+		const ordererManagerOptions: Partial<IOrdererManagerOptions> | undefined = config.get(
+			"nexus:ordererManagerOptions",
+		);
 		const orderManager = new OrdererManager(
 			globalDbEnabled,
 			serverUrl,
 			tenantManager,
 			localOrderManager,
 			kafkaOrdererFactory,
+			ordererManagerOptions,
 		);
 
 		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
