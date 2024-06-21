@@ -1,5 +1,5 @@
 ---
-title: Fluid Releases and API Tags
+title: Fluid Releases and API Support Levels
 aliases:
   - "/build/releases/"
 ---
