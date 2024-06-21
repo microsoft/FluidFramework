@@ -74,6 +74,54 @@ use_old_InterfaceDeclaration_IKafkaProducerOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOauthBearerConfig():
+    TypeOnly<old.IOauthBearerConfig>;
+declare function use_current_InterfaceDeclaration_IOauthBearerConfig(
+    use: TypeOnly<current.IOauthBearerConfig>): void;
+use_current_InterfaceDeclaration_IOauthBearerConfig(
+    get_old_InterfaceDeclaration_IOauthBearerConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOauthBearerConfig():
+    TypeOnly<current.IOauthBearerConfig>;
+declare function use_old_InterfaceDeclaration_IOauthBearerConfig(
+    use: TypeOnly<old.IOauthBearerConfig>): void;
+use_old_InterfaceDeclaration_IOauthBearerConfig(
+    get_current_InterfaceDeclaration_IOauthBearerConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerResponse": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOauthBearerResponse():
+    TypeOnly<old.IOauthBearerResponse>;
+declare function use_current_InterfaceDeclaration_IOauthBearerResponse(
+    use: TypeOnly<current.IOauthBearerResponse>): void;
+use_current_InterfaceDeclaration_IOauthBearerResponse(
+    get_old_InterfaceDeclaration_IOauthBearerResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOauthBearerResponse": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOauthBearerResponse():
+    TypeOnly<current.IOauthBearerResponse>;
+declare function use_old_InterfaceDeclaration_IOauthBearerResponse(
+    use: TypeOnly<old.IOauthBearerResponse>): void;
+use_old_InterfaceDeclaration_IOauthBearerResponse(
+    get_current_InterfaceDeclaration_IOauthBearerResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRdkafkaResources": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRdkafkaResources():

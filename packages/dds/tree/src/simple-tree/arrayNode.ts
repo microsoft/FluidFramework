@@ -773,17 +773,20 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, field, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(sourceIndex, field, "moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
+		const sourceArray = source ?? this;
+		const field = getSequenceField(sourceArray);
 		validateIndex(index, field, "moveToIndex", true);
 		validateIndex(sourceIndex, field, "moveToIndex");
 		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
@@ -1024,6 +1027,6 @@ function validateIndexRange(
 function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	assert(cursor.mode === CursorLocationType.Fields, 0x9a8 /* should be in fields mode */);
 	return cursor;
 }
