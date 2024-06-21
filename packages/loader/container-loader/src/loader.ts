@@ -183,6 +183,8 @@ export interface ILoaderProps {
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
+
+	readonly legacyChange: string;
 }
 
 /**

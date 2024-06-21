@@ -60,6 +60,8 @@ export interface ILoaderProps {
     readonly configProvider?: IConfigProviderBase;
     readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
+    // (undocumented)
+    readonly legacyChange: string;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
