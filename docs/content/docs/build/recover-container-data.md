@@ -1,4 +1,9 @@
-# Recovering container data
+---
+title: Recovering container data
+aliases:
+  - "/docs/build/recover-container-data/"
+author: marakow
+---
 
 This article explains how to recover data from a Fluid container that is corrupted and can no longer be loaded.
 
@@ -16,19 +21,17 @@ The AzureClient has the following methods to support this scenario.
 
 Retrieve a list of available versions that may be loaded from.
 
-#### Parameters:
+`Parameters:`
 
-* `id`:  The container ID.  This is the same ID used when calling `getContainer`.
-* `options?`:  Optionally, an options object to specify:
-    * `maxCount`:  The maximum number of versions to retrieve.  If there are more versions available than requested, the newest versions will be retrieved.  **Default: 5**
+*   `id`:  The container ID.  This is the same ID used when calling `getContainer`.
+*   `options?`:  Optionally, an options object to specify:
+    *   `maxCount`:  The maximum number of versions to retrieve.  If there are more versions available than requested, the newest versions will be retrieved.  **Default: 5**
 
-#### Returns:
+`Returns:` A promise which resolves to an array of objects that represent available versions (sorted newest to oldest). The objects have the following properties:
 
-A promise which resolves to an array of objects that represent available versions (sorted newest to oldest). The objects have the following properties:
-
-* `id`:  The version ID.
-    * *Note*:  This is different from the container ID, and specifically references a snapshot version rather than the container.
-* `date`:  The timestamp when the version was generated.
+*   `id`:  The version ID.
+    *   *Note*:  This is different from the container ID, and specifically references a snapshot version rather than the container.
+*   `date`:  The timestamp when the version was generated.
 
 ### `viewContainerVersion(id, containerSchema, version, compatibilityMode)`
 
@@ -36,18 +39,16 @@ Load a specific version of a container for viewing only.  Any version retrieved 
 
 The container is loaded in a paused state, meaning it will not apply the subsequent changes to the data that happened after the generation of that snapshot.  When loaded in this state the container data may be read, but not edited.
 
-#### Parameters:
+`Parameters:`
 
-* `id`:  The container ID.  This is the same ID used when calling `getContainer`.
-* `containerSchema`:  The container schema.  This is the same schema used when calling `getContainer`.
-* `version`:  The version object referencing the version to load from.  The version object can be retrieved via `getContainerVersions`.
-* `compatibilityMode`:  The compatibility mode.  This is the same compatibility mode used when calling `getContainer`.
+*   `id`:  The container ID.  This is the same ID used when calling `getContainer`.
+*   `containerSchema`:  The container schema.  This is the same schema used when calling `getContainer`.
+*   `version`:  The version object referencing the version to load from.  The version object can be retrieved via `getContainerVersions`.
+*   `compatibilityMode`:  The compatibility mode.  This is the same compatibility mode used when calling `getContainer`.
 
-#### Returns:
+`Returns:` A promise which resolves to an object representing the loaded container with a single property:
 
-A promise which resolves to an object representing the loaded container with a single property:
-
-* `container`:  The container object.  This is the same type of object as the container object returned by `getContainer`, but is paused in its prior state from the selected version.
+*   `container`:  The container object.  This is the same type of object as the container object returned by `getContainer`, but is paused in its prior state from the selected version.
 
 ## Example
 

@@ -1,4 +1,9 @@
-# Migrating existing usage from 1.x to 2.0
+---
+title: Migrating existing usage from 1.x to 2.0
+aliases:
+  - "/docs/build/migrate-1x-2/"
+author: marakow
+---
 
 Data in containers created using Fluid Framework 1.x can be loaded compatibly by Fluid Framework 2.0 with no special effort required.
 
@@ -32,6 +37,6 @@ Once `"2"` mode is enabled, clients will use the new 2.0 features that will impr
 
 ## Notes
 
-* New containers can and should be created directly in `"2"` mode if clients running 1.x will not need to collaborate on them.
-* Moving straight from 1.x to 2.0 running in `"2"` mode is supported, but runs the risk that any 1.x clients will not be able to collaborate until they are upgraded.  If your deployment strategy is not concerned with this risk, you can migrate directly from 1.x to 2.0 in `"2"` mode.
-* Some features of 2.0 must be enabled at container creation and cannot be enabled after attach.  Most notably, this includes id compression which is a requirement for use of [SharedTree](https://fluidframework.com/docs/data-structures/tree/).  As a result, SharedTree is not supported on containers created in 1.x or on 2.0 running in `"1"` mode.
+*   New containers can and should be created directly in `"2"` mode if clients running 1.x will not need to collaborate on them.
+*   Moving straight from 1.x to 2.0 running in `"2"` mode is supported, but runs the risk that any 1.x clients will not be able to collaborate until they are upgraded.  If your deployment strategy is not concerned with this risk, you can migrate directly from 1.x to 2.0 in `"2"` mode.
+*   Some features of 2.0 must be enabled at container creation and cannot be enabled after attach.  Most notably, this includes id compression which is a requirement for use of [SharedTree](https://fluidframework.com/docs/data-structures/tree/).  As a result, SharedTree is not supported on containers created in 1.x or on 2.0 running in `"1"` mode.
