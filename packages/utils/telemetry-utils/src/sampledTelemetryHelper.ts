@@ -58,7 +58,7 @@ interface Measurements {
  * @internal
  */
 export interface ITelemetryEventMetrics<TCustomMetrics extends Record<string, number>> {
-	incrementMetric(bag: Partial<TCustomMetrics>): void;
+	incrementMetric(bag: TCustomMetrics): void;
 }
 
 /**
@@ -69,12 +69,12 @@ export class TelemetryEventMetrics<TCustomMetrics extends Record<string, number>
 	private constructor(private readonly metrics: TCustomMetrics) {}
 
 	public static start<TCustomMetrics extends Record<string, number>>(
-		defaults: TCustomMetrics,
+		defaultMetrics: TCustomMetrics,
 	): TelemetryEventMetrics<TCustomMetrics> {
-		return new TelemetryEventMetrics<TCustomMetrics>(defaults);
+		return new TelemetryEventMetrics<TCustomMetrics>(defaultMetrics);
 	}
 
-	public incrementMetric(bag: Partial<TCustomMetrics>): void {
+	public incrementMetric(bag: TCustomMetrics): void {
 		for (const [key, value] of Object.entries(bag)) {
 			assert(this.metrics !== undefined, "Metrics object should be defined");
 			assert(typeof key === "string", "Key should be a string");
@@ -111,8 +111,8 @@ interface LoggerData {
  * The structure of the custom data object that can be passed into the logger.
  * @internal
  */
-export type CustomMetrics<T> = {
-	[K in keyof T]: K extends string ? number : never;
+export type CustomMetrics<TKey> = {
+	[K in keyof TKey]: K extends string ? number : never;
 };
 
 /**
