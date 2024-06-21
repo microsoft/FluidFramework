@@ -306,8 +306,8 @@ describe("SampledTelemetryHelper with Custom Data", () => {
 		);
 
 		for (let i = 0; i < sampling; i++) {
-			helper.measure((event) => {
-				event.incrementMetric({
+			helper.measure((metricsTracker) => {
+				metricsTracker.incrementMetric({
 					propertyOne: 1,
 					propertyTwo: 2,
 					propertyThree: 3,

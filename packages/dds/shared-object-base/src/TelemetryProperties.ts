@@ -4,8 +4,9 @@
  */
 
 /**
- * Telemetry properties to include for the {@link TelemetryEventBatcher} logger.
- * The set of properties must be the same for all calls to the `measure` function.
+ * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
+ * This interface is used to define the properties that will be passed to the {@link TelemetryEventBatcher.measure} function
+ * which is called in the {@link SharedObjectCore.process} method.
  */
 export interface ProcessTelemetryProperties {
 	sequenceDifference: number;

@@ -540,9 +540,9 @@ export abstract class SharedObjectCore<
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			(event) => {
+			(metricsTracker) => {
 				this.processCore(message, local, localOpMetadata);
-				event.incrementMetric({
+				metricsTracker.incrementMetric({
 					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
 				});
 			},
