@@ -12,11 +12,20 @@
 		"types": ["node", "mocha"],
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
+
+		// Lib check allows detecting compile errors in our emitted d.ts files which could impact customers
+		// (either just by bring broken, or because they use LibCheck).
+		// The exporter test project contains cases which have produced compile errors in d.ts files in the past, and this validates that they have not regressed.
+		"skipLibCheck": false,
 	},
 	"include": ["./**/*"],
+	"exclude": ["export-testing/exporter/**/*"],
 	"references": [
 		{
 			"path": "../../tsconfig.json",
+		},
+		{
+			"path": "./export-testing/exporter/tsconfig.json",
 		},
 	],
 }
