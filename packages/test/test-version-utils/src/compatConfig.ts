@@ -205,7 +205,7 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
 	const semverVersion = semver.parse(codeVersion);
-	assert(semverVersion !== null, `Unexpected pkg version '${code Version}'`);
+	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
 	// Here we add the minor release to the math. If so, we also need to account for internal releases when
 	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
