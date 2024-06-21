@@ -24,7 +24,6 @@ import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
-let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
 
@@ -198,41 +197,25 @@ export const after = (
 				return false;
 			}
 
-			// eslint-disable-next-line no-unmodified-loop-condition
-			while (odspAuthLock !== undefined) {
-				await odspAuthLock;
-			}
-			let lockResolver: (() => void) | undefined;
-			odspAuthLock = new Promise((resolve) => {
-				lockResolver = () => {
-					resolve();
-					odspAuthLock = undefined;
-				};
-			});
-			try {
-				const [odspTokens, pushTokens] = await Promise.all([
-					tokenManager.getOdspTokens(
-						server,
-						clientConfig,
-						tokenConfig,
-						undefined /* forceRefresh */,
-						options.forceReauth,
-					),
-					tokenManager.getPushTokens(
-						server,
-						clientConfig,
-						tokenConfig,
-						undefined /* forceRefresh */,
-						options.forceReauth,
-					),
-				]);
-				options.odspAccessToken = odspTokens.accessToken;
-				options.pushAccessToken = pushTokens.accessToken;
-				return true;
-			} finally {
-				assert(lockResolver !== undefined, 0x326 /* lockResolver is undefined */);
-				lockResolver();
-			}
+			const [odspTokens, pushTokens] = await Promise.all([
+				tokenManager.getOdspTokens(
+					server,
+					clientConfig,
+					tokenConfig,
+					undefined /* forceRefresh */,
+					options.forceReauth,
+				),
+				tokenManager.getPushTokens(
+					server,
+					clientConfig,
+					tokenConfig,
+					undefined /* forceRefresh */,
+					options.forceReauth,
+				),
+			]);
+			options.odspAccessToken = odspTokens.accessToken;
+			options.pushAccessToken = pushTokens.accessToken;
+			return true;
 		};
 	}
 
@@ -274,7 +257,7 @@ export const after = (
 				true /* forceReauth */,
 			)
 		).accessToken;
-		res.send("Tokens refreshed.");
+		res.end("Tokens refreshed.");
 	});
 
 	app.get("/file*", (req, res) => {
