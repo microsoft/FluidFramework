@@ -131,14 +131,11 @@ describe("Outbox", () => {
 	});
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
-		onSubmitMessage: (
-			content: string,
-			_clientSequenceNumber: number,
-			referenceSequenceNumber: number,
-			_localOpMetadata: unknown,
-			opMetadata: Record<string, unknown> | undefined,
-		): void => {
-			state.pendingOpContents.push({ content, referenceSequenceNumber, opMetadata });
+		onFlushBatch: (batch: BatchMessage[], _clientSequenceNumber: number): void => {
+			batch.forEach(
+				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
+					state.pendingOpContents.push({ content, referenceSequenceNumber, opMetadata }),
+			);
 		},
 	});
 

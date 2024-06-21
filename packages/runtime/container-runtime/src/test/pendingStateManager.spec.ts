@@ -137,16 +137,14 @@ describe("Pending State Manager", () => {
 		});
 
 		const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
-			messages.forEach((message) => {
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify({ type: message.type, contents: message.contents }),
-					message.clientSequenceNumber,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					message.referenceSequenceNumber!,
-					undefined,
-					message.metadata as any as Record<string, unknown> | undefined,
-				);
-			});
+			pendingStateManager.onFlushBatch(
+				messages.map<BatchMessage>((message) => ({
+					contents: JSON.stringify({ type: message.type, contents: message.contents }),
+					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+					metadata: message.metadata as any as Record<string, unknown> | undefined,
+				})),
+				messages[0]?.clientSequenceNumber,
+			);
 		};
 
 		const process = (messages: Partial<ISequencedDocumentMessage>[]) =>
@@ -394,12 +392,14 @@ describe("Pending State Manager", () => {
 					compatDetails: { behavior: "FailToProcess" },
 				};
 
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify(futureRuntimeMessage),
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: JSON.stringify(futureRuntimeMessage),
+							referenceSequenceNumber: 0,
+						},
+					],
 					0,
-					0,
-					undefined,
-					undefined,
 				);
 				pendingStateManager.processPendingLocalMessage(
 					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
@@ -452,13 +452,16 @@ describe("Pending State Manager", () => {
 
 		it("has pending messages but no initial messages", () => {
 			const pendingStateManager = createPendingStateManager(undefined);
+			//* Do as a single batch?
 			for (const message of messages) {
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify(message.content),
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: JSON.stringify(message.content),
+							referenceSequenceNumber: 0,
+						},
+					],
 					0,
-					0,
-					undefined /* localOpMetadata */,
-					undefined /* opMetadata */,
 				);
 			}
 			assert.strictEqual(
@@ -489,13 +492,16 @@ describe("Pending State Manager", () => {
 
 		it("has both pending messages and initial messages", () => {
 			const pendingStateManager = createPendingStateManager(messages);
+			//* Do as a single batch?
 			for (const message of messages) {
-				pendingStateManager.onSubmitMessage(
-					JSON.stringify(message.content),
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: JSON.stringify(message.content),
+							referenceSequenceNumber: 0,
+						},
+					],
 					0,
-					0,
-					undefined /* localOpMetadata */,
-					undefined /* opMetadata */,
 				);
 			}
 			assert.strictEqual(
@@ -589,13 +595,16 @@ describe("Pending State Manager", () => {
 				undefined,
 				"No pending messages should mean no minimum seq number",
 			);
+			//* Do as a single batch?
 			for (const message of messages) {
-				pendingStateManager.onSubmitMessage(
-					message.content,
-					0, // CSN not under test here
-					message.referenceSequenceNumber,
-					message.localOpMetadata,
-					message.opMetadata,
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: JSON.stringify(message.content),
+							referenceSequenceNumber: 0,
+						},
+					],
+					0,
 				);
 			}
 

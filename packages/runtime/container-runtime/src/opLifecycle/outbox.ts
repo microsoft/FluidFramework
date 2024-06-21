@@ -254,7 +254,7 @@ export class Outbox {
 			return;
 		}
 
-		let csn: number | undefined;
+		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
@@ -262,10 +262,10 @@ export class Outbox {
 			const processedBatch = this.compressBatch(
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
-			csn = this.sendBatch(processedBatch);
+			clientSequenceNumber = this.sendBatch(processedBatch);
 		}
 
-		this.persistBatch(rawBatch.content, csn);
+		this.params.pendingStateManager.onFlushBatch(rawBatch.content, clientSequenceNumber);
 	}
 
 	/**
@@ -373,7 +373,7 @@ export class Outbox {
 			});
 		}
 
-		let csn: number;
+		let clientSequenceNumber: number;
 		if (this.params.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
@@ -382,10 +382,10 @@ export class Outbox {
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
-			csn = this.params.legacySendBatchFn(batch);
+			clientSequenceNumber = this.params.legacySendBatchFn(batch);
 		} else {
 			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
-			csn = this.params.submitBatchFn(
+			clientSequenceNumber = this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
@@ -397,25 +397,9 @@ export class Outbox {
 		}
 
 		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
-		csn -= length - 1;
-		assert(csn >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
-		return csn;
-	}
-
-	//* undefined csn means nothing has been submitted yet
-	private persistBatch(batch: BatchMessage[], csn: number | undefined) {
-		// Let the PendingStateManager know that a message was submitted.
-		// In future, need to shift toward keeping batch as a whole!
-		for (const message of batch) {
-			this.params.pendingStateManager.onSubmitMessage(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				csn,
-				message.referenceSequenceNumber,
-				message.localOpMetadata,
-				message.metadata,
-			);
-		}
+		clientSequenceNumber -= length - 1;
+		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+		return clientSequenceNumber;
 	}
 
 	public checkpoint() {

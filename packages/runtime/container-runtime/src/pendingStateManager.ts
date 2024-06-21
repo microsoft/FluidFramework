@@ -16,6 +16,7 @@ import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";
+import type { BatchMessage } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -29,6 +30,7 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
+	batchStartCsn?: number; //* Make required?
 }
 
 export interface IPendingLocalState {
@@ -174,7 +176,7 @@ export class PendingStateManager implements IDisposable {
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		initialLocalState: IPendingLocalState | undefined,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: ITelemetryLoggerExt | undefined, //* Make required (remove ? in process fn)
 	) {
 		if (initialLocalState?.pendingStates) {
 			this.initialMessages.push(...initialLocalState.pendingStates);
@@ -187,31 +189,31 @@ export class PendingStateManager implements IDisposable {
 	public readonly dispose = () => this.disposeOnce.value;
 
 	/**
-	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
-	 * queue.
-	 * @param content - The container message type.
-	 * //* TODO: update caller to increment csn? I wish PSM just took the batch (ok for now since batchIdContext is only used on first message of batch)
-	 * @param clientSequenceNumber - The clientSequenceNumber assigned to the first message in the batch
-	 * @param referenceSequenceNumber - The referenceSequenceNumber of the batch.
-	 * @param localOpMetadata - The local metadata associated with the message.
-	 * @param opMetadata - The op metadata to be included on payload over the wire.
+	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
+	 * acks are processed, to ensure it is successfully sent.
+	 * @param batch - The batch that was flushed
+	 * @param clientSequenceNumber - The CSN of the first message in the batch,
+	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
-	public onSubmitMessage(
-		content: string,
-		clientSequenceNumber: number | undefined,
-		referenceSequenceNumber: number,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) {
-		const pendingMessage: IPendingMessage = {
-			type: "message",
-			referenceSequenceNumber,
-			content,
-			localOpMetadata,
-			opMetadata,
-		};
-
-		this.pendingMessages.push(pendingMessage);
+	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+		for (const message of batch) {
+			//* TODO: Align naming and just destructure in declaration for pendingMessage
+			const {
+				contents: content = "", //* This case won't ever happen...? Used to use ! operator
+				referenceSequenceNumber,
+				localOpMetadata,
+				metadata: opMetadata,
+			} = message;
+			const pendingMessage: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber,
+				content,
+				localOpMetadata,
+				opMetadata,
+				batchStartCsn: clientSequenceNumber,
+			};
+			this.pendingMessages.push(pendingMessage);
+		}
 	}
 
 	/**
@@ -274,7 +276,18 @@ export class PendingStateManager implements IDisposable {
 
 		const messageContent = buildPendingMessageContent(message);
 
-		//* TODO: Can we switch back to comparing CSN...?
+		// Client Sequence Number should match - the server sequences messages in the order received, just like the pending message queue
+		if (this.pendingBatchBeginMessage?.clientSequenceNumber !== pendingMessage.batchStartCsn) {
+			//* TODO: Finalize this event
+			this.logger?.sendErrorEvent({
+				eventName: "CsnMismatch",
+				details: {
+					processingBatch: !!this.pendingBatchBeginMessage,
+					pendingBatchHasCsn: !!pendingMessage.batchStartCsn,
+				},
+			});
+		}
+
 		// Stringified content should match
 		if (pendingMessage.content !== messageContent) {
 			this.stateHandler.close(
