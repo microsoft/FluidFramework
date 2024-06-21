@@ -426,8 +426,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("transactionCommitted", () => {
 			this.removedRootsSnapshots.pop();
 		});
-		// when a transaction is aborted, revert removed roots back to the latest snapshot
-		branch.on("transactionAborted", () => {
+		// after a transaction is rolled back, revert removed roots back to the latest snapshot
+		branch.on("transactionRolledBack", () => {
 			const snapshot = this.removedRootsSnapshots.pop();
 			assert(snapshot !== undefined, "a snapshot for removed roots does not exist");
 			this.removedRoots = snapshot;
