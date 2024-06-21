@@ -197,18 +197,6 @@ export class DetachedFieldIndex {
 	}
 
 	/**
-	 * Returns all entries created by the given revision.
-	 */
-	public *getRoots(revision: RevisionTag): Iterable<ForestRootId> {
-		const roots = this.detachedNodeToField.get(revision);
-		if (roots !== undefined) {
-			for (const { root } of roots.values()) {
-				yield root;
-			}
-		}
-	}
-
-	/**
 	 * Removes all entries created by the given revision, no matter what their latest
 	 * relevant revision is.
 	 */
@@ -275,10 +263,7 @@ export class DetachedFieldIndex {
 					root: root + i,
 					latestRelevantRevision: revision,
 				});
-				this.updateLatestRevision(
-					{ major: nodeId.major, minor: nodeId.minor + i },
-					revision,
-				);
+				this.updateLatestRevision({ major: nodeId.major, minor: nodeId.minor + i }, revision);
 			}
 		}
 		return root;
@@ -287,7 +272,10 @@ export class DetachedFieldIndex {
 	/**
 	 * Updates the latest revision that is relevant to the provided root
 	 */
-	public updateLatestRevision(id: Delta.DetachedNodeId, revision: RevisionTag | undefined): void {
+	public updateLatestRevision(
+		id: Delta.DetachedNodeId,
+		revision: RevisionTag | undefined,
+	): void {
 		const fieldEntry = tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
 		assert(
 			fieldEntry !== undefined,

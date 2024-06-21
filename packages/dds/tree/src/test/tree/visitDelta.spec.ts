@@ -283,7 +283,9 @@ describe("visitDelta", () => {
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index, undefined, [{ id: { minor: 43 }, trees: [content] }]);
+		testTreeVisit(delta, expected, index, undefined, [
+			{ id: { minor: 43 }, trees: [content] },
+		]);
 		assert.equal(index.entries().next().done, true);
 	});
 	it("move node to the right", () => {
@@ -748,7 +750,9 @@ describe("visitDelta", () => {
 			["enterField", rootKey],
 			["exitField", rootKey],
 		];
-		testTreeVisit(delta, expected, index, undefined, [{ id: { minor: 42 }, trees: [content] }]);
+		testTreeVisit(delta, expected, index, undefined, [
+			{ id: { minor: 42 }, trees: [content] },
+		]);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 43 }, root: 1 }]);
 	});
 	it("changes under transient", () => {
