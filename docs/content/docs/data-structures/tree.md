@@ -59,7 +59,7 @@ The `SharedTree` library can be found in the [fluid-framework](https://www.npmjs
 To get started, run the following from a terminal in your project folder:
 
 ```bash
-npm install fluid-framework@rc
+npm install fluid-framework@latest
 ```
 
 ## Usage
@@ -264,7 +264,7 @@ const containerSchema: ContainerSchema = {
     },
 };
 
-const { container, services } = await client.createContainer(containerSchema);
+const { container, services } = await client.createContainer(containerSchema, "2");
 ```
 
 Use `ITree.viewWith` to create a `TreeView` based on your tree configuration.
@@ -512,11 +512,9 @@ For the meaning of "simultaneously", see [Types of distributed data structures](
 
 `SharedTree` supports two node level events: `nodeChanged` and `treeChanged`. Your code can create handlers for these events using the utility class `Tree`. See [Tree utility APIs](#tree-utility-apis).
 
-Additionally, the `TreeView` object includes 3 events that operate over the whole tree. These are `rootChanged`, `afterBatch`, and `commitApplied`.
+Additionally, the `TreeView` object includes 2 events that operate over the whole tree. These are `rootChanged` and `commitApplied`.
 
 `rootChanged` fires when the root field (the field that contains the root node) changes. That is, if a new root node is assigned or the schema changes. This will not fire when the node itself changes.
-
-`afterBatch` fires when a batch of changes has been processed by the Fluid Framework and the `TreeView` object is updated.
 
 `commitApplied` fires whenever a local change is applied outside of a transaction or when a local transaction is committed. This is used to get `Revertible` objects to put on the undo or redo stacks. See [Undo/Redo support](#undoredo-support) and [Transactions](#transactions).
 
@@ -547,7 +545,7 @@ on<K extends keyof TreeChangeEvents>(
 	): () => void;
 ```
 
-`Tree.on` assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes. `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
+`Tree.on` assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes (values of the fields in the node). `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
 
 An `event` object is automatically passed to the `listener`. It has one member:
 
@@ -556,7 +554,7 @@ An `event` object is automatically passed to the `listener`. It has one member:
 The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
 
 ```typescript
-const unsubscribe = Tree.on(myTreeNode, "treeChanged", () => {...});
+const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
 ```
 
 ### Type guard
