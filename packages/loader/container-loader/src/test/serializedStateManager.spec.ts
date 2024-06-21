@@ -931,6 +931,39 @@ describe("serializedStateManager", () => {
 			clock.tick(1);
 			await yieldP;
 		}
+
+		const pendingStateValidation = async (
+			serializedStateManager: SerializedStateManager,
+			snapshotSequenceNumber: number,
+			lastProcessedOpSequenceNumber: number,
+		) => {
+			// pending state validation
+			const state = await serializedStateManager.getPendingLocalState(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			const parsed = JSON.parse(state) as IPendingContainerState;
+			assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
+			const attributes = getAttributesFromPendingState(parsed);
+			assert.strictEqual(
+				attributes.sequenceNumber,
+				snapshotSequenceNumber,
+				"wrong snapshot sequence number",
+			);
+			assert.strictEqual(
+				parsed.savedOps[0].sequenceNumber,
+				snapshotSequenceNumber + 1,
+				"wrong first saved op",
+			);
+			assert.strictEqual(
+				parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
+				lastProcessedOpSequenceNumber,
+				"wrong last saved op",
+			);
+		};
+
 		for (const isDirty of [true, false]) {
 			it(`snapshot refresh at timeout in attach flow, isDirty:${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
@@ -993,29 +1026,80 @@ describe("serializedStateManager", () => {
 				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
 
-				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				);
-				const parsed = JSON.parse(state) as IPendingContainerState;
-				assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
-				const attributes = getAttributesFromPendingState(parsed);
-				assert.strictEqual(
-					attributes.sequenceNumber,
+				// pending state validation
+				await pendingStateValidation(
+					serializedStateManager,
 					snapshotSequenceNumber,
-					"wrong snapshot sequence number",
-				);
-				assert.strictEqual(
-					parsed.savedOps[0].sequenceNumber,
-					snapshotSequenceNumber + 1,
-					"wrong first saved op",
-				);
-				assert.strictEqual(
-					parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
 					lastProcessedOpSequenceNumber,
-					"wrong last saved op",
+				);
+			});
+
+			it(`attach flow, saved event before fetching the snapshot isDirty:${isDirty}`, async () => {
+				const storageAdapter = new MockStorageAdapter();
+				let saved = false;
+				const isDirtyF = () => (saved ? false : isDirty);
+				const serializedStateManager = new SerializedStateManager(
+					undefined,
+					enableOfflineSnapshotRefresh(logger),
+					storageAdapter,
+					true,
+					eventEmitter,
+					isDirtyF,
+					() => false,
+					10,
+				);
+				// equivalent to attach
+				serializedStateManager.setInitialSnapshot({
+					baseSnapshot: snapshot,
+					snapshotBlobs: {
+						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+					},
+				});
+
+				const lastProcessedOpSequenceNumber = 20;
+				let seq = 1;
+				while (seq <= lastProcessedOpSequenceNumber) {
+					serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+				}
+				let snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
+				storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+				if (isDirty) {
+					logger.assertMatchNone([
+						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{ eventName: "serializedStateManager:SnapshotRefreshed" },
+					]);
+					saved = true;
+					eventEmitter.emit("saved");
+				}
+
+				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(snapshotRefreshP, undefined);
+				clock.tick(10);
+				// now it's a promise
+				const initialRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(initialRefreshP instanceof Promise, true);
+				// promise returns the snap seq num
+				assert.strictEqual(
+					await initialRefreshP,
+					snapshotSequenceNumber,
+					"refresh didn't happen",
+				);
+				await yieldEventLoop();
+				// snapshot refresh promise is reset to undefined
+				const secondRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(secondRefreshP, undefined);
+				snapshotSequenceNumber = 18; // latest snapshot will be among processed ops
+				storageAdapter.uploadSummary(snapshotSequenceNumber);
+				clock.tick(10);
+				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
+
+				// pending state validation
+				await pendingStateValidation(
+					serializedStateManager,
+					snapshotSequenceNumber,
+					lastProcessedOpSequenceNumber,
 				);
 			});
 
@@ -1075,29 +1159,77 @@ describe("serializedStateManager", () => {
 				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
 
-				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				);
-				const parsed = JSON.parse(state) as IPendingContainerState;
-				assert.strictEqual(parsed.baseSnapshot.id, "fromStorage", "snapshot was not updated");
-				const attributes = getAttributesFromPendingState(parsed);
-				assert.strictEqual(
-					attributes.sequenceNumber,
+				// pending state validation
+				await pendingStateValidation(
+					serializedStateManager,
 					snapshotSequenceNumber,
-					"wrong snapshot sequence number",
-				);
-				assert.strictEqual(
-					parsed.savedOps[0].sequenceNumber,
-					snapshotSequenceNumber + 1,
-					"wrong first saved op",
-				);
-				assert.strictEqual(
-					parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
 					lastProcessedOpSequenceNumber,
-					"wrong last saved op",
+				);
+			});
+
+			it(`load flow. saved event before fetching the snapshot isDirty: ${isDirty}`, async () => {
+				const storageAdapter = new MockStorageAdapter();
+				let saved = false;
+				const isDirtyF = () => (saved ? false : isDirty);
+				const serializedStateManager = new SerializedStateManager(
+					undefined,
+					enableOfflineSnapshotRefresh(logger),
+					storageAdapter,
+					true,
+					eventEmitter,
+					isDirtyF,
+					() => false,
+					10,
+				);
+
+				await serializedStateManager.fetchSnapshot(undefined);
+				const lastProcessedOpSequenceNumber = 20;
+				let seq = 1;
+				while (seq <= lastProcessedOpSequenceNumber) {
+					serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+				}
+				let snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
+				storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+				if (isDirty) {
+					logger.assertMatchNone([
+						{ eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing" },
+						{ eventName: "serializedStateManager:SnapshotRefreshed" },
+					]);
+					saved = true;
+					eventEmitter.emit("saved");
+				}
+
+				// snapshot refresh promise is undefined before timeout
+				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(snapshotRefreshP, undefined);
+				clock.tick(10);
+				// now it's a promise
+				const initialRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(initialRefreshP instanceof Promise, true);
+
+				// promise returns the snap seq num
+				assert.strictEqual(
+					await initialRefreshP,
+					snapshotSequenceNumber,
+					"refresh didn't happen",
+				);
+				await yieldEventLoop();
+				// snapshot refresh promise is reset to undefined
+				const secondRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(secondRefreshP, undefined);
+				snapshotSequenceNumber = 18;
+				storageAdapter.uploadSummary(snapshotSequenceNumber);
+				clock.tick(10);
+				// after a js turn and another timeout, the snapshot is refreshed
+				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
+
+				// pending state validation
+				await pendingStateValidation(
+					serializedStateManager,
+					snapshotSequenceNumber,
+					lastProcessedOpSequenceNumber,
 				);
 			});
 		}

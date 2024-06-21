@@ -183,6 +183,8 @@ export class SerializedStateManager {
 
 	/**
 	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
+	 * only intended to be used for testing purposes.
+	 * @returns The snapshot sequence number associated with the latest fetched snapshot
 	 */
 	public get refreshSnapshotP(): Promise<number> | undefined {
 		return this._refreshSnapshotP;
