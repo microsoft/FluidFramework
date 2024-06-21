@@ -23,6 +23,7 @@ import {
 	createOdspLogger,
 	getOdspResolvedUrl,
 	toInstrumentedOdspTokenFetcher,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import {
 	downloadSnapshot,
@@ -93,6 +94,7 @@ export async function prefetchLatestSnapshot(
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageTokenFetcher: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -100,6 +102,7 @@ export async function prefetchLatestSnapshot(
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
 			storageTokenFetcher,
+			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
 			undefined,

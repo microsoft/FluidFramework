@@ -50,6 +50,7 @@ import {
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import {
@@ -116,6 +117,7 @@ export async function fetchSnapshotWithRedeem(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -284,6 +286,7 @@ async function fetchLatestSnapshotCore(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -324,6 +327,7 @@ async function fetchLatestSnapshotCore(
 				snapshotDownloader(
 					odspResolvedUrl,
 					getAuthHeader,
+					tokenFetchOptions,
 					loadingGroupIds,
 					snapshotOptions,
 					controller,
@@ -648,6 +652,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
+	tokenFetchOptions: TokenFetchOptionsEx,
 	loadingGroupIds: string[] | undefined,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
@@ -688,7 +693,7 @@ export async function downloadSnapshot(
 	// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
 	const authHeader = await getAuthHeader(
-		{ refresh: false, request: { url, method } },
+		{ ...tokenFetchOptions, request: { url, method } },
 		"downloadSnapshot",
 	);
 	assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);

@@ -55,6 +55,7 @@ import {
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { EpochTracker } from "./epochTracker.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
@@ -603,6 +604,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		const snapshotDownloader = async (
 			finalOdspResolvedUrl: IOdspResolvedUrl,
 			tokenFetcher: InstrumentedStorageTokenFetcher,
+			tokenFetchOptions: TokenFetchOptionsEx,
 			loadingGroupId: string[] | undefined,
 			options: ISnapshotOptions | undefined,
 			controller?: AbortController,
@@ -610,6 +612,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			return downloadSnapshot(
 				finalOdspResolvedUrl,
 				tokenFetcher,
+				tokenFetchOptions,
 				loadingGroupId,
 				options,
 				this.snapshotFormatFetchType,
