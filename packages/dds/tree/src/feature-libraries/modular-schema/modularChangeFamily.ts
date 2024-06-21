@@ -101,9 +101,7 @@ import type {
  * as determined by the schema.
  */
 export class ModularChangeFamily
-	implements
-		ChangeFamily<ModularEditBuilder, ModularChangeset>,
-		ChangeRebaser<ModularChangeset>
+	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
@@ -211,7 +209,7 @@ export class ModularChangeFamily
 				nodeChanges: new Map(),
 				nodeToParent: new Map(),
 				nodeAliases: new Map(),
-				crossFieldKeys: new BTree(),
+				crossFieldKeys: newCrossFieldKeyTable(),
 			}),
 		).change;
 	}
@@ -439,7 +437,13 @@ export class ModularChangeFamily
 				? [fieldChange, emptyChange]
 				: [emptyChange, fieldChange];
 
-			const composedField = this.composeFieldChanges(change1, change2, genId, table, metadata);
+			const composedField = this.composeFieldChanges(
+				change1,
+				change2,
+				genId,
+				table,
+				metadata,
+			);
 
 			if (fieldId.nodeId === undefined) {
 				composedFields.set(fieldId.field, composedField);
@@ -487,7 +491,7 @@ export class ModularChangeFamily
 							genId,
 							crossFieldTable,
 							revisionMetadata,
-						)
+					  )
 					: fieldChange1;
 
 			composedFields.set(field, composedField);
@@ -589,8 +593,7 @@ export class ModularChangeFamily
 		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
-		const nodeExistsConstraint =
-			change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
+		const nodeExistsConstraint = change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
 
 		const composedFieldChanges = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -618,10 +621,7 @@ export class ModularChangeFamily
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 */
-	public invert(
-		change: TaggedChange<ModularChangeset>,
-		isRollback: boolean,
-	): ModularChangeset {
+	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Rollback changesets destroy the nodes created by the change being rolled back.
 		const destroys = isRollback
 			? invertBuilds(change.change.builds, change.revision)
@@ -794,8 +794,8 @@ export class ModularChangeFamily
 			rebasedFields: new Set(),
 			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
 			nodeIdPairs: [],
-			affectedNewFields: new BTree(),
-			affectedBaseFields: new BTree(),
+			affectedNewFields: newBTree(),
+			affectedBaseFields: newBTree(),
 		};
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
@@ -1295,7 +1295,7 @@ export class ModularChangeFamily
 						genId,
 						crossFieldTable,
 						revisionMetadata,
-					)
+				  )
 				: change.fieldChanges;
 
 		const rebasedChange: NodeChangeset = {};
@@ -1465,7 +1465,11 @@ export class ModularChangeFamily
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, oldRevisions, newRevision);
+			updated.refreshers = replaceIdMapRevisions(
+				change.refreshers,
+				oldRevisions,
+				newRevision,
+			);
 		}
 
 		if (newRevision !== undefined) {
@@ -1521,7 +1525,7 @@ export class ModularChangeFamily
 		fields: FieldChangeMap,
 		nodes: ChangeAtomIdMap<NodeChangeset>,
 	): CrossFieldKeyTable {
-		const keys: CrossFieldKeyTable = new BTree();
+		const keys: CrossFieldKeyTable = newCrossFieldKeyTable();
 		this.populateCrossFieldKeyTableForFieldMap(keys, fields, undefined);
 		forEachInNestedMap(nodes, (node, revision, localId) => {
 			if (node.fieldChanges !== undefined) {
@@ -1566,7 +1570,7 @@ function replaceCrossFieldKeyTableRevisions(
 	newRevision: RevisionTag | undefined,
 	nodeAliases: ChangeAtomIdMap<NodeId>,
 ): CrossFieldKeyTable {
-	const updated: CrossFieldKeyTable = new BTree();
+	const updated: CrossFieldKeyTable = newBTree();
 	table.forEachPair(([target, revision, id, count], field) => {
 		const updatedKey: CrossFieldKeyRange = [
 			target,
@@ -2062,10 +2066,7 @@ interface RebaseFieldContext {
 	baseNodeIds: NodeId[];
 }
 
-function newComposeTable(
-	baseChange: ModularChangeset,
-	newChange: ModularChangeset,
-): ComposeTable {
+function newComposeTable(baseChange: ModularChangeset, newChange: ModularChangeset): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
 		baseChange,
@@ -2075,8 +2076,8 @@ function newComposeTable(
 		newToBaseNodeId: new Map(),
 		nodeIdPairs: [],
 		composedNodes: new Set(),
-		affectedBaseFields: new BTree(),
-		affectedNewFields: new BTree(),
+		affectedBaseFields: newBTree(),
+		affectedNewFields: newBTree(),
 	};
 }
 
@@ -2252,7 +2253,11 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 
 				for (const baseFieldId of baseFieldIds) {
 					this.table.affectedBaseFields.set(
-						[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
+						[
+							baseFieldId.nodeId?.revision,
+							baseFieldId.nodeId?.localId,
+							baseFieldId.field,
+						],
 						true,
 					);
 				}
@@ -2322,7 +2327,11 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 
 				for (const baseFieldId of baseFieldIds) {
 					this.table.affectedBaseFields.set(
-						[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
+						[
+							baseFieldId.nodeId?.revision,
+							baseFieldId.nodeId?.localId,
+							baseFieldId.field,
+						],
 						true,
 					);
 				}
@@ -2355,7 +2364,7 @@ function makeModularChangeset(
 		nodeChanges: nodeChanges ?? new Map(),
 		nodeToParent: nodeToParent ?? new Map(),
 		nodeAliases: nodeAliases ?? new Map(),
-		crossFieldKeys: crossFieldKeys ?? new BTree(),
+		crossFieldKeys: crossFieldKeys ?? newCrossFieldKeyTable(),
 	};
 
 	if (revisions !== undefined && revisions.length > 0) {
@@ -2455,7 +2464,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			{ fieldKind, change },
 			new Map(),
 			new Map(),
-			new BTree(),
+			newCrossFieldKeyTable(),
 			this.idAllocator,
 			crossFieldKeys,
 		);
@@ -2481,7 +2490,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined,
 							undefined,
 							change.builds,
-						)
+					  )
 					: buildModularChangesetFromField(
 							change.field,
 							{
@@ -2490,12 +2499,12 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							},
 							new Map(),
 							new Map(),
-							new BTree(),
+							newCrossFieldKeyTable(),
 							this.idAllocator,
 							getChangeHandler(this.fieldKinds, change.fieldKind).getCrossFieldKeys(
 								change.change,
 							),
-						),
+					  ),
 			),
 		);
 		const composedChange: Mutable<ModularChangeset> =
@@ -2523,7 +2532,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 				nodeChange,
 				new Map(),
 				new Map(),
-				new BTree(),
+				newCrossFieldKeyTable(),
 				this.idAllocator,
 			),
 		);
@@ -2694,9 +2703,7 @@ function revisionInfoFromTaggedChange(
 	return revInfos;
 }
 
-function revisionFromTaggedChange(
-	change: TaggedChange<ModularChangeset>,
-): RevisionTag | undefined {
+function revisionFromTaggedChange(change: TaggedChange<ModularChangeset>): RevisionTag | undefined {
 	return change.revision ?? revisionFromRevInfos(change.change.revisions);
 }
 
@@ -2808,12 +2815,7 @@ export function getFieldsForCrossFieldKey(
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		const entry = changeset.crossFieldKeys.getPairOrNextLower([
-			target,
-			revision,
-			id,
-			Infinity,
-		]);
+		const entry = changeset.crossFieldKeys.getPairOrNextLower([target, revision, id, Infinity]);
 		if (entry === undefined) {
 			return fields;
 		}
@@ -2855,4 +2857,30 @@ function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {
 	return (changes.constraintViolationCount ?? 0) === 0
 		? changes.fieldChanges
 		: new Map<FieldKey, FieldChange>();
+}
+
+export function newCrossFieldKeyTable(): CrossFieldKeyTable {
+	return newBTree();
+}
+
+// XXX: Can we use branding to ensure that we never create changesets with B trees with a default comparator?
+function newBTree<K extends unknown[], V>(): BTree<K, V> {
+	return new BTree<K, V>(undefined, compareTuples);
+}
+
+// This assumes that the arrays are the same length.
+function compareTuples(arrayA: unknown[], arrayB: unknown[]): number {
+	for (let i = 0; i < arrayA.length; i++) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const a = arrayA[i] as any;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const b = arrayB[i] as any;
+		if (a < b) {
+			return -1;
+		} else if (a > b) {
+			return 1;
+		}
+	}
+
+	return 0;
 }

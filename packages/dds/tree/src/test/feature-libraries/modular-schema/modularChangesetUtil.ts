@@ -35,6 +35,7 @@ import {
 	getChangeHandler,
 	getFieldsForCrossFieldKey,
 	getParentFieldId,
+	newCrossFieldKeyTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "assert";
@@ -59,10 +60,7 @@ export interface NodeChangesetDescription {
 	readonly fields: FieldChangesetDescription[];
 }
 
-function node(
-	index: number,
-	...fields: FieldChangesetDescription[]
-): NodeChangesetDescription {
+function node(index: number, ...fields: FieldChangesetDescription[]): NodeChangesetDescription {
 	return { index, fields };
 }
 
@@ -92,7 +90,7 @@ interface BuildArgs {
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
 	const nodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
 	const nodeToParent: ChangeAtomIdMap<FieldId> = new Map();
-	const crossFieldKeys: CrossFieldKeyTable = new BTree();
+	const crossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
 
 	const idAllocator = idAllocatorFromMaxId();
 	const fieldChanges = fieldChangeMapFromDescription(
@@ -235,7 +233,7 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 		]),
 	);
 
-	const updatedCrossFieldKeys: CrossFieldKeyTable = new BTree();
+	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
 	for (const key of changeset.crossFieldKeys.keys()) {
 		const fields = getFieldsForCrossFieldKey(changeset, key);
 		assert(fields.length === 1);

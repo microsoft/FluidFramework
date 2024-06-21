@@ -68,6 +68,7 @@ import type {
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+import { newCrossFieldKeyTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -356,7 +357,7 @@ function makeModularChangeCodec(
 						originatorId: context.originatorId,
 						idCompressor: context.idCompressor,
 					}),
-				};
+			  };
 	}
 
 	function decodeDetachedNodes(
@@ -381,7 +382,9 @@ function makeModularChangeCodec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
+				build[1] === undefined
+					? context.revision
+					: revisionTagCodec.decode(build[1], context);
 			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
 		});
 
@@ -453,7 +456,11 @@ function makeModularChangeCodec(
 					change.revisions === undefined
 						? undefined
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
+				changes: encodeFieldChangesForJson(
+					change.fieldChanges,
+					context,
+					change.nodeChanges,
+				),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
 			};
@@ -465,7 +472,7 @@ function makeModularChangeCodec(
 				nodeChanges: new Map(),
 				nodeToParent: new Map(),
 				nodeAliases: new Map(),
-				crossFieldKeys: new BTree(),
+				crossFieldKeys: newCrossFieldKeyTable(),
 			};
 
 			decoded.fieldChanges = decodeFieldChangesFromJson(
