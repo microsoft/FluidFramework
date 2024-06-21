@@ -158,6 +158,8 @@ import {
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
+	type InboundSequencedNonContainerRuntimeMessage,
+	type InboundContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
@@ -2619,26 +2621,31 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			const msg: MessageWithContext = modernRuntimeMessage
-				? {
-						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-						// There is nothing really ensuring that anytime original message.type is Operation that
-						// the result messages will be so. In the end modern bool being true only directs to
-						// throw error if ultimately unrecognized without compat details saying otherwise.
-						message: message as InboundSequencedContainerRuntimeMessage,
-						local,
-						modernRuntimeMessage,
-					}
-				: // Unrecognized message will be ignored.
-					{
-						message,
-						local,
-						modernRuntimeMessage,
-					};
-			msg.savedOp = savedOp;
 
-			// ensure that we observe any re-entrancy, and if needed, rebase ops
+		if (modernRuntimeMessage) {
+			//* Now we know it's never some random op that we just need to pass through
+			const batch = this.remoteMessageProcessor.process(
+				messageCopy as InboundContainerRuntimeMessage, //* Update if check to be a typeguard? Maybe unpacking makes it weird though
+			);
+			const messages = local
+				? this.pendingStateManager.processPendingLocalBatch(batch as any) //* any
+				: batch.map((message) => ({ message, lom: undefined }));
+			messages.forEach(({ message, lom }) => {
+				const msg: MessageWithContext = {
+					message,
+					local,
+					modernRuntimeMessage,
+					savedOp,
+				};
+				this.ensureNoDataModelChanges(() => this.processCore(msg, lom));
+			});
+		} else {
+			const msg: MessageWithContext = {
+				message: messageCopy as InboundSequencedNonContainerRuntimeMessage, //* Could be legacy
+				local,
+				modernRuntimeMessage,
+				savedOp,
+			};
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
@@ -2648,7 +2655,7 @@ export class ContainerRuntime
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
-	private processCore(messageWithContext: MessageWithContext) {
+	private processCore(messageWithContext: MessageWithContext, localOpMetadata?: unknown) {
 		const { message, local } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
@@ -2677,13 +2684,6 @@ export class ContainerRuntime
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
 			);
-
-			let localOpMetadata: unknown;
-			if (local && messageWithContext.modernRuntimeMessage) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					messageWithContext.message,
-				);
-			}
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.
