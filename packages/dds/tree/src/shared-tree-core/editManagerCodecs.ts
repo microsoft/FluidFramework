@@ -3,30 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
-	IMultiFormatCodec,
+	type ICodecOptions,
+	type IJsonCodec,
+	type IMultiFormatCodec,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
 import { makeVersionDispatchingCodec } from "../codec/index.js";
-import {
+import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
 import {
-	JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 	mapIterable,
 } from "../util/index.js";
 
-import { SummaryData } from "./editManager.js";
-import { Commit, EncodedCommit, EncodedEditManager, SequencedCommit } from "./editManagerFormat.js";
+import type { SummaryData } from "./editManager.js";
+import {
+	type Commit,
+	type EncodedCommit,
+	EncodedEditManager,
+	type SequencedCommit,
+} from "./editManagerFormat.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -145,27 +150,24 @@ function makeV1CodecWithVersion<TChangeset>(
 							revision: undefined,
 						}),
 					),
-					branches: Array.from(
-						data.peerLocalBranches.entries(),
-						([sessionId, branch]) => [
-							sessionId,
-							{
-								base: revisionTagCodec.encode(branch.base, {
-									originatorId: sessionId,
+					branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
+						sessionId,
+						{
+							base: revisionTagCodec.encode(branch.base, {
+								originatorId: sessionId,
+								idCompressor: context.idCompressor,
+								revision: undefined,
+							}),
+							commits: branch.commits.map((commit) =>
+								encodeCommit(commit, {
+									originatorId: commit.sessionId,
 									idCompressor: context.idCompressor,
+									schema: context.schema,
 									revision: undefined,
 								}),
-								commits: branch.commits.map((commit) =>
-									encodeCommit(commit, {
-										originatorId: commit.sessionId,
-										idCompressor: context.idCompressor,
-										schema: context.schema,
-										revision: undefined,
-									}),
-								),
-							},
-						],
-					),
+							),
+						},
+					]),
 					version,
 				};
 				return json;

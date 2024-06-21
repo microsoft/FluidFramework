@@ -5,15 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Listenable } from "../../events/index.js";
-import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
+import type { Listenable } from "../../events/index.js";
+import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
-	Anchor,
-	AnchorSet,
-	DetachedField,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	UpPath,
+	type Anchor,
+	type AnchorSet,
+	type DetachedField,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type UpPath,
 	detachedFieldAsKey,
 	rootField,
 } from "../tree/index.js";
@@ -267,4 +267,6 @@ export const enum TreeNavigationResult {
  * TreeNavigationResult, but never "Pending".
  * Can be used when data is never pending.
  */
-export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+export type SynchronousNavigationResult =
+	| TreeNavigationResult.Ok
+	| TreeNavigationResult.NotFound;

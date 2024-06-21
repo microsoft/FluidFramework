@@ -91,10 +91,7 @@ declare class GenericInvariantImplementation<T> implements GenericInvariantInter
 export type EnforceTypeCheckTests =
 	// Add dummy use of type checking types above
 	| requireTrue<
-			isAssignableTo<
-				GenericInvariantImplementation<number>,
-				GenericInvariantInterface<number>
-			>
+			isAssignableTo<GenericInvariantImplementation<number>, GenericInvariantInterface<number>>
 	  >
 
 	// Positive tests
@@ -128,8 +125,12 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<GenericCovariant<Nominal1>, GenericCovariant<Derived1>>>
 
 	// test Contravariant
-	| requireFalse<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Nominal2>>>
-	| requireFalse<isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>>
+	| requireFalse<
+			isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Nominal2>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericContravariant<Derived1>, GenericContravariant<Nominal1>>
+	  >
 	| requireTrue<isAssignableTo<GenericContravariant<Nominal1>, GenericContravariant<Derived1>>>
 
 	// test Invariant
@@ -138,8 +139,12 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAssignableTo<GenericInvariant<Nominal1>, GenericInvariant<Derived1>>>
 
 	// test Multiple parameters
-	| requireFalse<isAssignableTo<GenericMulti<Nominal1, number>, GenericMulti<Derived1, number>>>
-	| requireFalse<isAssignableTo<GenericMulti<number, Nominal1>, GenericMulti<number, Derived1>>>
+	| requireFalse<
+			isAssignableTo<GenericMulti<Nominal1, number>, GenericMulti<Derived1, number>>
+	  >
+	| requireFalse<
+			isAssignableTo<GenericMulti<number, Nominal1>, GenericMulti<number, Derived1>>
+	  >
 	| requireTrue<isAssignableTo<GenericMulti<number, Derived1>, GenericMulti<number, Nominal1>>>
 
 	// test Covariant Interface

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
-import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
+import type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 import {
 	GetTelemetryHistory,
 	type IDevtoolsMessage,
@@ -95,7 +95,11 @@ class DevtoolsLogger implements IDevtoolsLogger {
 	private readonly windowMessageHandler = (
 		event: MessageEvent<Partial<IDevtoolsMessage>>,
 	): void => {
-		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
+		handleIncomingWindowMessage(
+			event,
+			this.inboundMessageHandlers,
+			this.messageLoggingOptions,
+		);
 	};
 
 	/**

@@ -12,34 +12,16 @@ import type * as old from "@fluidframework/server-services-core-previous";
 import type * as current from "../../index.js";
 
 
-type ValueOf<T> = T[keyof T];
-type OnlySymbols<T> = T extends symbol ? T : never;
-type WellKnownSymbols = OnlySymbols<ValueOf<typeof Symbol>>;
-/**
- * Omit (replace with never) a key if it is a custom symbol,
- * not just symbol or a well known symbol from the global Symbol.
- */
-type SkipUniqueSymbols<Key> = symbol extends Key
-	? Key // Key is symbol or a generalization of symbol, so leave it as is.
-	: Key extends symbol
-		? Key extends WellKnownSymbols
-			? Key // Key is a well known symbol from the global Symbol object. These are shared between packages, so they are fine and kept as is.
-			: never // Key is most likely some specialized symbol, typically a unique symbol. These break type comparisons so are removed by replacing them with never.
-		: Key; // Key is not a symbol (for example its a string or number), so leave it as is.
-/**
- * Remove details of T which are incompatible with type testing while keeping as much as is practical.
- *
- * See 'build-tools/packages/build-tools/src/typeValidator/compatibility.ts' for more information.
- */
+// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
 type TypeOnly<T> = T extends number
 	? number
-	: T extends boolean | bigint | string
-		? T
-		: T extends symbol
-			? SkipUniqueSymbols<T>
-			: {
-					[P in keyof T as SkipUniqueSymbols<P>]: TypeOnly<T[P]>;
-				};
+	: T extends string
+	? string
+	: T extends boolean | bigint | symbol
+	? T
+	: {
+			[P in keyof T]: TypeOnly<T[P]>;
+	  };
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -219,7 +201,6 @@ declare function get_old_VariableDeclaration_DefaultServiceConfiguration():
 declare function use_current_VariableDeclaration_DefaultServiceConfiguration(
     use: TypeOnly<typeof current.DefaultServiceConfiguration>): void;
 use_current_VariableDeclaration_DefaultServiceConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_DefaultServiceConfiguration());
 
 /*
@@ -820,7 +801,6 @@ declare function get_old_InterfaceDeclaration_IDeliServerConfiguration():
 declare function use_current_InterfaceDeclaration_IDeliServerConfiguration(
     use: TypeOnly<current.IDeliServerConfiguration>): void;
 use_current_InterfaceDeclaration_IDeliServerConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDeliServerConfiguration());
 
 /*
@@ -857,7 +837,6 @@ declare function get_current_InterfaceDeclaration_IDeliState():
 declare function use_old_InterfaceDeclaration_IDeliState(
     use: TypeOnly<old.IDeliState>): void;
 use_old_InterfaceDeclaration_IDeliState(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeliState());
 
 /*
@@ -1446,7 +1425,6 @@ declare function get_old_InterfaceDeclaration_IOrdererConnection():
 declare function use_current_InterfaceDeclaration_IOrdererConnection(
     use: TypeOnly<current.IOrdererConnection>): void;
 use_current_InterfaceDeclaration_IOrdererConnection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOrdererConnection());
 
 /*
@@ -1471,6 +1449,7 @@ declare function get_old_InterfaceDeclaration_IOrdererManager():
 declare function use_current_InterfaceDeclaration_IOrdererManager(
     use: TypeOnly<current.IOrdererManager>): void;
 use_current_InterfaceDeclaration_IOrdererManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOrdererManager());
 
 /*
@@ -1999,7 +1978,6 @@ declare function get_old_InterfaceDeclaration_IScribe():
 declare function use_current_InterfaceDeclaration_IScribe(
     use: TypeOnly<current.IScribe>): void;
 use_current_InterfaceDeclaration_IScribe(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IScribe());
 
 /*
@@ -2024,7 +2002,6 @@ declare function get_old_InterfaceDeclaration_IScribeServerConfiguration():
 declare function use_current_InterfaceDeclaration_IScribeServerConfiguration(
     use: TypeOnly<current.IScribeServerConfiguration>): void;
 use_current_InterfaceDeclaration_IScribeServerConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IScribeServerConfiguration());
 
 /*
@@ -2121,7 +2098,6 @@ declare function get_old_InterfaceDeclaration_IServerConfiguration():
 declare function use_current_InterfaceDeclaration_IServerConfiguration(
     use: TypeOnly<current.IServerConfiguration>): void;
 use_current_InterfaceDeclaration_IServerConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IServerConfiguration());
 
 /*
@@ -2146,7 +2122,6 @@ declare function get_old_InterfaceDeclaration_IServiceConfiguration():
 declare function use_current_InterfaceDeclaration_IServiceConfiguration(
     use: TypeOnly<current.IServiceConfiguration>): void;
 use_current_InterfaceDeclaration_IServiceConfiguration(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IServiceConfiguration());
 
 /*
@@ -3624,6 +3599,30 @@ declare function use_old_FunctionDeclaration_extractBoxcar(
     use: TypeOnly<typeof old.extractBoxcar>): void;
 use_old_FunctionDeclaration_extractBoxcar(
     get_current_FunctionDeclaration_extractBoxcar());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_httpUsageStorageId": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_httpUsageStorageId():
+    TypeOnly<typeof old.httpUsageStorageId>;
+declare function use_current_VariableDeclaration_httpUsageStorageId(
+    use: TypeOnly<typeof current.httpUsageStorageId>): void;
+use_current_VariableDeclaration_httpUsageStorageId(
+    get_old_VariableDeclaration_httpUsageStorageId());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_httpUsageStorageId": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_httpUsageStorageId():
+    TypeOnly<typeof current.httpUsageStorageId>;
+declare function use_old_VariableDeclaration_httpUsageStorageId(
+    use: TypeOnly<typeof old.httpUsageStorageId>): void;
+use_old_VariableDeclaration_httpUsageStorageId(
+    get_current_VariableDeclaration_httpUsageStorageId());
 
 /*
 * Validate forward compat by using old type in place of current type

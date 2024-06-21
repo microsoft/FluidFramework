@@ -5,55 +5,57 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	AnchorNode,
+	type AnchorNode,
 	EmptyKey,
-	FieldKey,
-	MapTree,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	Value,
+	type FieldKey,
+	type FieldUpPath,
+	type MapTree,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type Value,
 } from "../../core/index.js";
-import { brand, fail, mapIterable } from "../../util/index.js";
+import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
 import {
-	FlexTreeContext,
+	type FlexTreeContext,
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeFieldNode,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeNodeEvents,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNode,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxField,
-	FlexTreeUnboxNodeUnion,
-	FlexibleFieldContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeFieldNode,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeNodeEvents,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNode,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxField,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleFieldContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
 	indexForAt,
 } from "../flex-tree/index.js";
 import {
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 	isLazy,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
-import { FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
-import { createEmitter } from "../../events/index.js";
+import { type FlexImplicitAllowedTypes, normalizeAllowedTypes } from "../schemaBuilderBase.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import { FieldKinds, type SequenceFieldEditBuilder } from "../default-schema/index.js";
+import { ComposableEventEmitter, type Listenable, type Off } from "../../events/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // #region Nodes
 
@@ -64,12 +66,52 @@ import { createEmitter } from "../../events/index.js";
  */
 export interface MapTreeNode extends FlexTreeNode {
 	readonly mapTree: MapTree;
+	forwardEvents(to: Listenable<FlexTreeNodeEvents>): void;
+}
+
+/**
+ * Checks if the given {@link FlexTreeNode} is a {@link MapTreeNode}.
+ */
+export function isMapTreeNode(flexNode: FlexTreeNode): flexNode is MapTreeNode {
+	return flexNode instanceof EagerMapTreeNode;
 }
 
 /** A node's parent field and its index in that field */
 interface LocationInField {
 	readonly parent: MapTreeField<FlexAllowedTypes>;
 	readonly index: number;
+}
+
+/**
+ * Allows events to be forwarded to another event emitter.
+ * @remarks TODO: After the eventing library is simplified, find a way to support this pattern elegantly in the library.
+ */
+class ForwardingEventEmitter extends ComposableEventEmitter<FlexTreeNodeEvents> {
+	// A map from deregistration functions produced by this class to deregistration functions of Listenables that have been forwarded to
+	private readonly forwardedOffs = new Map<Off, Off[]>();
+
+	public override on<K extends keyof FlexTreeNodeEvents>(
+		eventName: K,
+		listener: FlexTreeNodeEvents[K],
+	): Off {
+		const off = super.on(eventName, listener);
+		// Return a deregister function which...
+		return (): void => {
+			off(); // ...deregisters the event in this emitter,
+			// and also deregisters the event in any Listenable that it gets forwarded to
+			(this.forwardedOffs.get(off) ?? []).forEach((f) => f());
+		};
+	}
+
+	public forwardEvents(to: Listenable<FlexTreeNodeEvents>): void {
+		for (const [eventName, listeners] of this.listeners) {
+			for (const [off, listener] of listeners) {
+				// For every one of our listeners, make the same subscription in the Listenable that we're forwarding to,
+				// and then create a mapping from our deregistration function to theirs, so we can call it later if need be.
+				getOrCreate(this.forwardedOffs, off, () => []).push(to.on(eventName, listener));
+			}
+		}
+	}
 }
 
 /**
@@ -81,7 +123,10 @@ interface LocationInField {
  */
 export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements MapTreeNode {
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
-	private readonly events = createEmitter<FlexTreeNodeEvents>();
+	private readonly events = new ForwardingEventEmitter();
+	public forwardEvents(to: Listenable<FlexTreeNodeEvents>): void {
+		this.events.forwardEvents(to);
+	}
 
 	/**
 	 * Create a new MapTreeNode.
@@ -97,7 +142,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		public readonly mapTree: MapTree,
 		private location: LocationInField | undefined,
 	) {
-		assert(!nodeCache.has(mapTree), "A node already exists for the given MapTree");
+		assert(!nodeCache.has(mapTree), 0x98b /* A node already exists for the given MapTree */);
 		nodeCache.set(mapTree, this);
 
 		// Fully demand the tree to ensure that parent pointers are present and accurate on all nodes.
@@ -119,7 +164,10 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 	 * @remarks A node may only be adopted to a new parent one time, and only if it was not constructed with a parent.
 	 */
 	public adopt(parent: MapTreeField<FlexAllowedTypes>, index: number): void {
-		assert(this.location === undefined, "Node may not be adopted if it already has a parent");
+		assert(
+			this.location === undefined,
+			0x98c /* Node may not be adopted if it already has a parent */,
+		);
 		this.location = { parent, index };
 	}
 
@@ -176,19 +224,25 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 		eventName: K,
 		listener: FlexTreeNodeEvents[K],
 	): () => void {
-		return this.events.on(eventName, listener);
+		switch (eventName) {
+			case "nodeChanged":
+			case "treeChanged":
+				return this.events.on(eventName, listener);
+			default:
+				throw unsupportedUsageError(`Subscribing to ${eventName}`);
+		}
 	}
 
 	public get context(): FlexTreeContext {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		throw unsupportedError("Getting context");
+		return fail("MapTreeNode does not implement context");
 	}
 
 	public get anchorNode(): AnchorNode {
 		// This API is relevant to `LazyTreeNode`s, but not `MapTreeNode`s.
 		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		throw unsupportedError("Reading anchor node");
+		return fail("MapTreeNode does not implement anchorNode");
 	}
 
 	private walkTree(): void {
@@ -201,9 +255,12 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 					{ parent: field, index },
 				);
 				// These next asserts detect the case where `getOrCreateChild` gets a cache hit of a different node than the one we're trying to create
-				assert(child.location !== undefined, "Expected node to have parent");
-				assert(child.location.parent.parent === this, "Node may not be multi-parented");
-				assert(child.location.index === index, "Node may not be multi-parented");
+				assert(child.location !== undefined, 0x98d /* Expected node to have parent */);
+				assert(
+					child.location.parent.parent === this,
+					0x98e /* Node may not be multi-parented */,
+				);
+				assert(child.location.index === index, 0x98f /* Node may not be multi-parented */);
 				child.walkTree();
 			}
 		}
@@ -314,12 +371,12 @@ export class EagerMapTreeMapNode<TSchema extends FlexMapNodeSchema>
 
 	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
 		// `MapTreeNode`s cannot be mutated
-		throw unsupportedError("Setting a map entry");
+		throw unsupportedUsageError("Setting a map entry");
 	}
 
 	public delete(key: string): void {
 		// `MapTreeNode`s cannot be mutated
-		throw unsupportedError("Deleting a map entry");
+		throw unsupportedUsageError("Deleting a map entry");
 	}
 
 	public [Symbol.iterator](): IterableIterator<
@@ -372,7 +429,7 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 	},
 	schema: FlexFieldSchema.empty,
 	get context(): FlexTreeContext {
-		throw new Error("Cannot get context of raw field");
+		return fail("MapTreeField does not implement context");
 	},
 	treeStatus(): TreeStatus {
 		return TreeStatus.New;
@@ -389,7 +446,10 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 		public readonly parent: FlexTreeNode | undefined,
 		public readonly mapTrees: readonly MapTree[],
 	) {
-		assert(!fieldCache.has(mapTrees), "A field already exists for the given MapTrees");
+		assert(
+			!fieldCache.has(mapTrees),
+			0x990 /* A field already exists for the given MapTrees */,
+		);
 		fieldCache.set(mapTrees, this);
 
 		// When this field is created (which only happens one time, because it is cached), all the children become parented for the first time.
@@ -399,7 +459,7 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 			if (mapTreeNodeChild !== undefined) {
 				assert(
 					mapTreeNodeChild.parentField.parent === rootMapTreeField,
-					"Node is already parented under a different field",
+					0x991 /* Node is already parented under a different field */,
 				);
 				mapTreeNodeChild.adopt(this, i);
 			}
@@ -418,7 +478,7 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 
 	public isSameAs(other: FlexTreeField): boolean {
 		if (other.parent === this.parent && other.key === this.key) {
-			assert(other === this, "Expected field to be cached");
+			assert(other === this, 0x992 /* Expected field to be cached */);
 			return true;
 		}
 
@@ -452,7 +512,7 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 	}
 
 	public get context(): FlexTreeContext {
-		throw unsupportedError("Getting context");
+		return fail("MapTreeField does not implement context");
 	}
 
 	public treeStatus(): TreeStatus {
@@ -468,7 +528,7 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 		return unboxedUnion(this.schema, this.mapTrees[0], { parent: this, index: 0 });
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T>) {
-		throw unsupportedError("Setting an optional field");
+		throw unsupportedUsageError("Setting an optional field");
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<T> {
@@ -486,7 +546,7 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 			: undefined;
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
-		throw unsupportedError("Setting an optional field");
+		throw unsupportedUsageError("Setting an optional field");
 	}
 
 	public get boxedContent(): FlexTreeTypedNodeUnion<T> | undefined {
@@ -519,34 +579,34 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 	}
 
 	public sequenceEditor(): SequenceFieldEditBuilder {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public insertAt(index: number, value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public insertAtStart(value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public insertAtEnd(value: FlexibleNodeSubSequence<T>): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public removeAt(index: number): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveToStart(sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveToEnd(sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveToIndex(index: unknown, sourceIndex: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveRangeToStart(sourceStart: unknown, sourceEnd: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveRangeToEnd(sourceStart: unknown, sourceEnd: unknown, source?: unknown): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
 	}
 	public moveRangeToIndex(
 		index: unknown,
@@ -554,7 +614,10 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		sourceEnd: unknown,
 		source?: unknown,
 	): void {
-		throw unsupportedError("Editing a sequence");
+		throw unsupportedUsageError("Editing a sequence");
+	}
+	public getFieldPath(): FieldUpPath {
+		throw unsupportedUsageError("Editing a sequence");
 	}
 }
 
@@ -636,7 +699,7 @@ function getOrCreateChild(
 		allowedTypes
 			.map((t) => (isLazy(t) ? t() : t))
 			.find((t): t is FlexTreeNodeSchema => {
-				assert(t !== "Any", "'Any' type is not supported");
+				assert(t !== "Any", 0x993 /* 'Any' type is not supported */);
 				return t.name === mapTree.type;
 			}) ?? fail("Unsupported node schema");
 
@@ -681,7 +744,7 @@ function createNode<TSchema extends FlexTreeNodeSchema>(
 	if (schemaIsObjectNode(nodeSchema)) {
 		return new EagerMapTreeNode(nodeSchema, mapTree, parentField);
 	}
-	assert(false, "Unrecognized node kind");
+	assert(false, 0x994 /* Unrecognized node kind */);
 }
 
 /** Creates a field with the given attributes, or returns a cached field if there is one */
@@ -728,7 +791,11 @@ function unboxedUnion<TTypes extends FlexAllowedTypes>(
 		return getOrCreateChild(mapTree, type, parent) as FlexTreeUnboxNodeUnion<TTypes>;
 	}
 
-	return getOrCreateChild(mapTree, schema.allowedTypes, parent) as FlexTreeUnboxNodeUnion<TTypes>;
+	return getOrCreateChild(
+		mapTree,
+		schema.allowedTypes,
+		parent,
+	) as FlexTreeUnboxNodeUnion<TTypes>;
 }
 
 /** Unboxes non-polymorphic required and optional fields holding leaf nodes to their values, if applicable */
@@ -739,7 +806,8 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 	parentNode: FlexTreeNode,
 ): FlexTreeUnboxField<TFieldSchema> {
 	const fieldSchema = field.schema;
-	const mapTrees = mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
+	const mapTrees =
+		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
 
 	if (fieldSchema.kind === FieldKinds.required) {
 		return unboxedUnion(fieldSchema, mapTrees[0], {
@@ -765,6 +833,10 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 
 // #endregion Caching and unboxing utilities
 
-export function unsupportedError(message?: string): Error {
-	return new Error(`${message ?? "Operation"} is not supported for MapTreeNode trees`);
+export function unsupportedUsageError(message?: string): Error {
+	return new UsageError(
+		`${
+			message ?? "Operation"
+		} is not supported for content that has not yet been inserted into the tree`,
+	);
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
@@ -101,7 +101,8 @@ const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const Mark = <Schema extends TSchema>(tNodeChange: Schema) => CellMark(MarkEffect, tNodeChange);
+const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
+	CellMark(MarkEffect, tNodeChange);
 
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

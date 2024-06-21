@@ -30,6 +30,7 @@ import {
 	IGarbageCollectionData,
 	ISummarizeResult,
 	ITelemetryContextExt,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -228,9 +229,7 @@ export function convertToSummaryTreeWithStats(
 			case TreeEntry.Blob: {
 				const blob = entry.value;
 				const content =
-					blob.encoding === "base64"
-						? IsoBuffer.from(blob.contents, "base64")
-						: blob.contents;
+					blob.encoding === "base64" ? IsoBuffer.from(blob.contents, "base64") : blob.contents;
 				builder.addBlob(entry.path, content);
 				break;
 			}
@@ -266,7 +265,10 @@ export function convertToSummaryTreeWithStats(
  * @param fullTree - true to never use handles, even if id is specified
  * @internal
  */
-export function convertToSummaryTree(snapshot: ITree, fullTree: boolean = false): ISummarizeResult {
+export function convertToSummaryTree(
+	snapshot: ITree,
+	fullTree: boolean = false,
+): ISummarizeResult {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (snapshot.id && !fullTree) {
 		const stats = mergeStats();
@@ -386,7 +388,7 @@ export function processAttachMessageGCData(
 	snapshot: ITree | null,
 	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
 ): boolean {
-	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === gcDataBlobKey);
 
 	// Old attach messages won't have GC Data
 	// (And REALLY old DataStore Attach messages won't even have a snapshot!)

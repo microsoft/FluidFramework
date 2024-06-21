@@ -4,11 +4,6 @@
 
 ```ts
 
-import { DriverError } from '@fluidframework/driver-definitions/internal';
-import { FiveDaysMs } from '@fluidframework/driver-definitions/internal';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-
 // @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops";
 
@@ -274,7 +269,7 @@ export interface TokenFetchOptions {
     tenantId?: string;
 }
 
-// @beta
+// @alpha
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;

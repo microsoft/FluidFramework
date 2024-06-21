@@ -153,7 +153,7 @@ export class PendingStateManager implements IDisposable {
 				message.sequenceNumber !== undefined,
 				0x97c /* saved op should already have a sequence number */,
 			);
-			return message.sequenceNumber >= (snapshotSequenceNumber ?? 0);
+			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
 			if (
@@ -252,7 +252,9 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
+	public processPendingLocalMessage(
+		message: InboundSequencedContainerRuntimeMessage,
+	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 		// Get the next message from the pending queue. Verify a message exists.

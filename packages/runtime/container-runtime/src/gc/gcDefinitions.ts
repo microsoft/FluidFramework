@@ -60,8 +60,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC sweep on / off. */
-export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 /** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
@@ -365,9 +363,18 @@ export interface IGarbageCollector {
 	 */
 	nodeUpdated(props: IGCNodeUpdatedProps): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
+	addedOutboundReference(
+		fromNodePath: string,
+		toNodePath: string,
+		timestampMs: number,
+		autorecovery?: true,
+	): void;
 	/** Called to process a garbage collection message. */
-	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
+	processMessage(
+		message: ContainerRuntimeGCMessage,
+		messageTimestampMs: number,
+		local: boolean,
+	): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
@@ -383,8 +390,11 @@ export interface IGCNodeUpdatedProps {
 	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
 	/** Whether the node (or a subpath) was loaded or changed. */
 	reason: "Loaded" | "Changed";
-	/** The op-based timestamp when the node changed, if applicable */
-	timestampMs?: number;
+	/**
+	 * The op-based timestamp when the node changed. If the update is from receiving an op, this should
+	 * be the timestamp of the op. If not, this should be the timestamp of the last op processed.
+	 */
+	timestampMs: number | undefined;
 	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
 	packagePath?: readonly string[];
 	/** The original request for loads to preserve it in telemetry */
@@ -464,6 +474,8 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
+	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
+	readonly tombstoneAutorecoveryEnabled: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled
