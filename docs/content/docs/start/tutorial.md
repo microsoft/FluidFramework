@@ -10,7 +10,7 @@ In this walkthrough, you'll learn about using the Fluid Framework by examining t
 
 {{< callout note >}}
 
-The demo app uses Fluid Framework 2.0, which is in preview.
+The demo app uses Fluid Framework 2.
 
 {{< /callout >}}
 
@@ -67,13 +67,11 @@ The `renderDiceRoller` function is created in a later step. It renders the UI of
 
 ```js
 const createNewDice = async () => {
-	const { container } = await client.createContainer(containerSchema);
-	const view = container.initialObjects.diceTree.viewWith(treeConfiguration);
-	view.initialize(new Dice({ value: 1 }));
-	const dice = view.root;
+	const { container } = await client.createContainer(containerSchema, "2");
+	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
+	dice.initialize(new Dice({ value: 1 }));
 	const id = await container.attach();
-	renderDiceRoller(dice, root);
-	return id;
+	renderDiceRoller(dice.root, root);
 }
 ```
 
@@ -83,9 +81,9 @@ Loading a container is more straightforward than creating a new one. When loadin
 
 ```js
 const loadExistingDice = async (id) => {
-	const { container } = await client.getContainer(id, containerSchema);
-	const dice = container.initialObjects.diceTree.viewWith(treeConfiguration).root;
-	renderDiceRoller(dice, root);
+	const { container } = await client.getContainer(id, containerSchema, "2");
+	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
+	renderDiceRoller(dice.root, root);
 }
 ```
 
