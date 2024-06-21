@@ -958,7 +958,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		metadata: RebaseRevisionMetadata,
 	): void {
-		crossFieldTable.affectedNewFields.forEachPair(([revision, localId, fieldKey]) => {
+		for (const [revision, localId, fieldKey] of crossFieldTable.affectedNewFields.keys()) {
 			const nodeId: NodeId | undefined =
 				localId !== undefined ? { revision, localId } : undefined;
 
@@ -969,7 +969,7 @@ export class ModularChangeFamily
 
 			if (crossFieldTable.rebasedFields.has(fieldChange)) {
 				// This field has already been processed because there were base changes.
-				return;
+				continue;
 			}
 
 			// This field has no changes in the base changeset, otherwise it would have been added to `crossFieldTable.rebasedFields`
@@ -1011,7 +1011,7 @@ export class ModularChangeFamily
 				baseNodeIds: [],
 			});
 			crossFieldTable.rebasedFields.add(rebasedFieldChange);
-		});
+		}
 	}
 
 	// This processes fields which have no new changes but have been invalidated by another field.
@@ -1034,7 +1034,7 @@ export class ModularChangeFamily
 			assert(baseFieldChange !== undefined, "Cross field key registered for empty field");
 			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
 				// This field has already been processed because there were changes to rebase.
-				return;
+				continue;
 			}
 
 			// This field has no changes in the new changeset, otherwise it would have been added to
