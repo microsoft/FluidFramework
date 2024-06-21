@@ -328,7 +328,7 @@ export class ModularChangeFamily
 		assert(context !== undefined, 0x8cc /* Should have context for every invalidated field */);
 		const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
-		const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
+		const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 		const composeNodes = (child1: NodeId | undefined, child2: NodeId | undefined): NodeId => {
 			if (
 				child1 !== undefined &&
