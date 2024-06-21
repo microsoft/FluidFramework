@@ -436,8 +436,8 @@ export const makeTreeEditGenerator = (
 				type: "nodeConstraint",
 				content: maybeDownPathFromNode(
 					// Selecting the parent node here, since the field is possibly empty.
-					selectTreeField(viewFromState(state), state.random, weights.fieldSelection)
-						.content.parent,
+					selectTreeField(viewFromState(state), state.random, weights.fieldSelection).content
+						.parent,
 				),
 			}),
 			weights.nodeConstraint,
@@ -473,7 +473,7 @@ export const makeTreeEditGenerator = (
 						? {
 								type: "constraint",
 								content: constraint,
-						  }
+							}
 						: undefined,
 			},
 		};
