@@ -49,6 +49,7 @@ import type {
 	TransactionBoundary,
 	UndoRedo,
 	CrossFieldMove,
+	Constraint,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
@@ -75,6 +76,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 	},
 	schemaChange: (state, operation) => {
 		applySchemaOp(state, operation);
+	},
+	constraint: (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 export const fuzzReducer: AsyncReducer<
@@ -132,23 +136,6 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
  */
 export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	const field = navigateToField(tree, fieldEdit.field);
-	if (fieldEdit.constraint !== undefined) {
-		switch (fieldEdit.constraint.content.type) {
-			case "nodeConstraint": {
-				const constraintNodePath = fieldEdit.constraint.content.content;
-				const constraintNode =
-					constraintNodePath !== undefined
-						? navigateToNode(tree, constraintNodePath)
-						: undefined;
-				if (constraintNode !== undefined) {
-					tree.checkout.editor.addNodeExistsConstraint(constraintNode.anchorNode);
-				}
-				break;
-			}
-			default:
-				break;
-		}
-	}
 	switch (fieldEdit.change.type) {
 		case "sequence":
 			assert(field.is(tree.currentSchema.objectNodeFieldsObject.sequenceChildren));
@@ -304,6 +291,25 @@ export function applyUndoRedoEdit(
 		}
 		default:
 			unreachableCase(operation);
+	}
+}
+
+export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
+	const tree = viewFromState(state);
+	switch (constraint.content.type) {
+		case "nodeConstraint": {
+			const constraintNodePath = constraint.content.content;
+			const constraintNode =
+				constraintNodePath !== undefined
+					? navigateToNode(tree, constraintNodePath)
+					: undefined;
+			if (constraintNode !== undefined) {
+				tree.checkout.editor.addNodeExistsConstraint(constraintNode.anchorNode);
+			}
+			break;
+		}
+		default:
+			break;
 	}
 }
 

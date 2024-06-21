@@ -8,7 +8,12 @@ import type { DownPath } from "../../../feature-libraries/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
-export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo | SchemaChange;
+export type TreeOperation =
+	| TreeEdit
+	| TransactionBoundary
+	| UndoRedo
+	| SchemaChange
+	| Constraint;
 
 export interface TreeEdit {
 	type: "treeEdit";
@@ -17,6 +22,7 @@ export interface TreeEdit {
 
 // Currently only node constraints are supported, but more constraint types may be added in the future.
 export interface Constraint {
+	type: "constraint";
 	content: NodeConstraint;
 }
 export interface NodeConstraint {
@@ -44,11 +50,6 @@ export interface FieldEdit {
 	field: FieldDownPath;
 	/** The edit performed on the field */
 	change: SequenceFieldEdit | RequiredFieldEdit | OptionalFieldEdit;
-	/**
-	 * The constraint that we want to enforce on the edit.
-	 * Set to undefined for edits without constraints.
-	 */
-	constraint: Constraint | undefined;
 }
 
 export interface Insert {

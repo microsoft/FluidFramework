@@ -64,7 +64,7 @@ import type {
 	FieldEdit,
 	CrossFieldMove,
 	FieldDownPath,
-	NodeConstraint,
+	Constraint,
 } from "./operationTypes.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
@@ -430,34 +430,15 @@ export const makeTreeEditGenerator = (
 		}
 	}
 
-	const constraintGenerator = createWeightedGenerator<NodeConstraint, FuzzTestState>([
-		[
-			(state): NodeConstraint => ({
-				type: "nodeConstraint",
-				content: maybeDownPathFromNode(
-					// Selecting the parent node here, since the field is possibly empty.
-					selectTreeField(viewFromState(state), state.random, weights.fieldSelection).content
-						.parent,
-				),
-			}),
-			weights.nodeConstraint,
-		],
-	]);
-
 	return (state) => {
 		let fieldInfo: FuzzField;
 		let change: ReturnType<typeof fieldEditChangeGenerator>;
-		let constraint: ReturnType<typeof constraintGenerator> | undefined;
 		// This could be surfaced as a config option if desired. In practice, the corresponding assert is most
 		// likely to be hit during when a test is badly configured, in which case the remedy is to fix the config,
 		// as opposed to increasing the number of attempts.
 		let attemptsRemaining = 20;
 		do {
 			fieldInfo = selectTreeField(viewFromState(state), state.random, weights.fieldSelection);
-			constraint =
-				sumWeights([weights.nodeConstraint]) > 0
-					? assertNotDone(constraintGenerator({ ...state }))
-					: undefined;
 			change = fieldEditChangeGenerator({ ...state, fieldInfo });
 			attemptsRemaining -= 1;
 		} while (change === "no-valid-selections" && attemptsRemaining > 0);
@@ -468,13 +449,6 @@ export const makeTreeEditGenerator = (
 				type: "fieldEdit",
 				field: fieldDownPathFromField(fieldInfo.content),
 				change,
-				constraint:
-					constraint !== undefined
-						? {
-								type: "constraint",
-								content: constraint,
-							}
-						: undefined,
 			},
 		};
 	};
@@ -534,6 +508,31 @@ export const makeUndoRedoEditGenerator = (
 	]);
 };
 
+export const makeConstraintEditGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<Constraint, FuzzTestState> => {
+	const opWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeightsArg,
+	};
+	return createWeightedGenerator<Constraint, FuzzTestState>([
+		[
+			(state): Constraint => ({
+				type: "constraint",
+				content: {
+					type: "nodeConstraint",
+					content: maybeDownPathFromNode(
+						// Selecting the parent node here, since the field is possibly empty.
+						selectTreeField(viewFromState(state), state.random, opWeights.fieldSelection)
+							.content.parent,
+					),
+				},
+			}),
+			opWeights.nodeConstraint,
+		],
+	]);
+};
+
 export function makeOpGenerator(
 	weightsArg: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
@@ -556,16 +555,17 @@ export function makeOpGenerator(
 		fieldSelection,
 		schema,
 		synchronizeTrees,
-		nodeConstraint: constraints,
+		nodeConstraint,
 		...others
 	} = weights;
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
 	// updated to take into account the new weights.
 	assert(Object.keys(others).length === 0, "Unexpected weight");
-	// constraint weights are not included, since you cannot have edits with constraints if all edit weights are set to 0.
 	const editWeight = sumWeights([insert, remove, intraFieldMove, crossFieldMove, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
+	// Currently we only support node constraints, but this may be expanded in the future.
+	const constraintWeight = nodeConstraint;
 
 	const syncGenerator = createWeightedGenerator<Operation, FuzzTestState>(
 		(
@@ -580,10 +580,15 @@ export function makeOpGenerator(
 					weights.synchronizeTrees,
 				],
 				[() => schemaEditGenerator, weights.schema],
+				[
+					() => makeConstraintEditGenerator(weights),
+					constraintWeight,
+					(state: FuzzTestState) => viewFromState(state).checkout.transaction.inProgress(),
+				],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
-			.map(([f, weight]) => [f(), weight]),
+			.map(([f, weight, acceptanceCriteria]) => [f(), weight, acceptanceCriteria]),
 	);
 	return async (state) => {
 		return syncGenerator(state);
