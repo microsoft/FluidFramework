@@ -37,7 +37,12 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { type IdAllocator, type Mutable, brand, idAllocatorFromMaxId } from "../../util/index.js";
+import {
+	type IdAllocator,
+	type Mutable,
+	brand,
+	idAllocatorFromMaxId,
+} from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -370,11 +375,7 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -522,9 +523,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [
-													{ count: 1, attach: { major: tag2, minor: 2 } },
-												],
+												local: [{ count: 1, attach: { major: tag2, minor: 2 } }],
 											},
 										],
 									]),

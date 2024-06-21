@@ -1,12 +1,12 @@
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import {
+import type {
 	ChangeAtomIdMap,
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
 	RevisionMetadataSource,
 } from "../../../core/index.js";
-import {
+import type {
 	CrossFieldManager,
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -14,7 +14,7 @@ import {
 	ModularChangeset,
 	NodeId,
 } from "../../../feature-libraries/index.js";
-import {
+import type {
 	CrossFieldKeyTable,
 	FieldChange,
 	FieldId,
@@ -22,8 +22,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	brand,
 	fail,
 	idAllocatorFromMaxId,
@@ -59,7 +59,10 @@ export interface NodeChangesetDescription {
 	readonly fields: FieldChangesetDescription[];
 }
 
-function node(index: number, ...fields: FieldChangesetDescription[]): NodeChangesetDescription {
+function node(
+	index: number,
+	...fields: FieldChangesetDescription[]
+): NodeChangesetDescription {
 	return { index, fields };
 }
 
@@ -209,7 +212,10 @@ function addNodeToField(
 }
 
 const dummyCrossFieldManager: CrossFieldManager = {
-	get: (_target, _revision, _id, count, _addDependency) => ({ value: undefined, length: count }),
+	get: (_target, _revision, _id, count, _addDependency) => ({
+		value: undefined,
+		length: count,
+	}),
 	set: () => fail("Not supported"),
 	moveKey: () => fail("Not supported"),
 };

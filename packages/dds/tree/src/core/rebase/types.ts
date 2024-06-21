@@ -83,7 +83,11 @@ export function getFromChangeAtomIdMap<T>(
 	return tryGetFromNestedMap(map, id.revision, id.localId);
 }
 
-export function setInChangeAtomIdMap<T>(map: ChangeAtomIdMap<T>, id: ChangeAtomId, value: T): void {
+export function setInChangeAtomIdMap<T>(
+	map: ChangeAtomIdMap<T>,
+	id: ChangeAtomId,
+	value: T,
+): void {
 	setInNestedMap(map, id.revision, id.localId, value);
 }
 
