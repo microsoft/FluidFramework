@@ -118,10 +118,7 @@ export abstract class RestWrapper {
 
 	protected generateQueryString(queryStringValues?: QueryStringType) {
 		if (this.defaultQueryString || queryStringValues) {
-			const queryStringMap = {
-				...this.defaultQueryString,
-				...queryStringValues,
-			};
+			const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
 
 			return getQueryString(queryStringMap);
 		}
