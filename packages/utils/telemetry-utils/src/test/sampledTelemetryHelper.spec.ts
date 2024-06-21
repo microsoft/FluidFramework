@@ -20,6 +20,16 @@ import type {
 } from "../telemetryTypes.js";
 
 /**
+ * @remarks Initialized in advance to extract its keys for type checking.
+ * Arbitrary properties that can be logged with the telemetry event.
+ */
+interface TestTelemetryProperties {
+	propertyOne: number;
+	propertyTwo: number;
+	propertyThree: number;
+}
+
+/**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper
  * so we can test it.
  */
@@ -269,31 +279,13 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(logger.events[0].maxDuration, maxDuration);
 		assert.strictEqual(logger.events[0].minDuration, minDuration);
 	});
-});
-
-/**
- * @remarks Initialized in advance to extract its keys for type checking.
- * Arbitrary properties that can be logged with the telemetry event.
- */
-interface TestTelemetryProperties {
-	propertyOne: number;
-	propertyTwo: number;
-	propertyThree: number;
-}
-
-describe("SampledTelemetryHelper with Custom Data", () => {
-	let logger: TestLogger;
-
-	beforeEach(() => {
-		logger = new TestLogger();
-	});
 
 	it("Correctly returns computed averages and maxes for custom data", () => {
-		const sampling = 10;
+		const sampling = 3;
 		const initialCustomMetrics = {
-			"propertyOne": 0,
-			"propertyTwo": 0,
-			"propertyThree": 0,
+			"propertyOne": 1,
+			"propertyTwo": 2,
+			"propertyThree": 3,
 		};
 
 		const helper = new SampledTelemetryHelper<TestTelemetryProperties>(
@@ -306,22 +298,22 @@ describe("SampledTelemetryHelper with Custom Data", () => {
 		);
 
 		for (let i = 0; i < sampling; i++) {
-			helper.measure((metricsTracker) => {
-				metricsTracker.incrementMetric({
-					propertyOne: 1,
-					propertyTwo: 2,
-					propertyThree: 3,
-				});
+			helper.measure(() => {
+				return {
+					propertyOne: i + 1,
+					propertyTwo: i + 2,
+					propertyThree: i + 3,
+				};
 			});
 		}
 
 		assert.strictEqual(logger.events.length, 1);
-		assert.strictEqual(logger.events[0].avg_propertyOne, 1);
-		assert.strictEqual(logger.events[0].avg_propertyTwo, 2);
-		assert.strictEqual(logger.events[0].avg_propertyThree, 3);
-		assert.strictEqual(logger.events[0].max_propertyOne, 1);
-		assert.strictEqual(logger.events[0].max_propertyTwo, 2);
-		assert.strictEqual(logger.events[0].max_propertyThree, 3);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 5.6);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 6.7);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 7.8);
+		assert.strictEqual(logger.events[0].max_propertyOne, 10);
+		assert.strictEqual(logger.events[0].max_propertyTwo, 11);
+		assert.strictEqual(logger.events[0].max_propertyThree, 12);
 	});
 });
 

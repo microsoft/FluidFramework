@@ -206,7 +206,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 		}
 
 		if (m.count >= this.sampleThreshold) {
-			// Computation extracted separately to avoid multiple division operations.
+			// Computed separately to avoid multiple division operations.
 			if (this.includeAggregateMetrics) {
 				m.averageDuration = (m.totalDuration ?? 0) / m.count;
 			}

@@ -46,12 +46,20 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { ProcessTelemetryProperties } from "./TelemetryProperties.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";
+
+/**
+ * Custom telemetry properties used in {@link SharedObjectCore} to instantiate {@link TelemetryEventBatcher} class.
+ * This interface is used to define the properties that will be passed to the {@link TelemetryEventBatcher.measure} function
+ * which is called in the {@link SharedObjectCore.process} method.
+ */
+interface ProcessTelemetryProperties {
+	sequenceDifference: number;
+}
 
 /**
  * Base class from which all shared objects derive.
