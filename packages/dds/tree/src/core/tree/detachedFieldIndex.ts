@@ -60,6 +60,10 @@ export class DetachedFieldIndex {
 	> = new Map();
 	/**
 	 * A map between revisions and all roots for which the revision is the latest relevant revision.
+	 * 
+	 * The latest relevant revision for a root is the revision that last created or edited that root. 
+	 * This is used to determine when a root can be garbage collected. Once a root's latest relevant revision
+	 * is trimmed from a branch's ancestry, the root is no longer needed for any future edits.
 	 *
 	 * @remarks
 	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
