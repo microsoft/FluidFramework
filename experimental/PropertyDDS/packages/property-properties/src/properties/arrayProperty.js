@@ -16,7 +16,7 @@ const {
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { UniversalDataArray, ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
-const { deepCopy } = _;
+const { cloneDeep: deepCopy } = _;
 
 const { deserializeNonPrimitiveArrayElements } = require("../containerSerializer");
 const { validationsEnabled } = require("../enableValidations");

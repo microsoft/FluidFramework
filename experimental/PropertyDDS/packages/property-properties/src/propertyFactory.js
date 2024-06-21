@@ -12,7 +12,7 @@
  */
 
 const _ = require("lodash");
-const { deepCopy } = _;
+const { cloneDeep: deepCopy } = _;
 
 const {
 	Collection,

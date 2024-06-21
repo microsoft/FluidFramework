@@ -11,7 +11,7 @@ const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
-const { deepCopy } = _;
+const { cloneDeep: deepCopy } = _;
 
 /**
  * @internal

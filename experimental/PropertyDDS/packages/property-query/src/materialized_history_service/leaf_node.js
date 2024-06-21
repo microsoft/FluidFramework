@@ -20,7 +20,7 @@
 		OperationError = require("@fluid-experimental/property-common").OperationError,
 		HTTPStatus = require("http-status"),
 		{ ChangeSet } = require("@fluid-experimental/property-changeset");
-	const { deepCopy } = _;
+	const { cloneDeep: deepCopy } = _;
 
 	let NodeStatus = NodeDependencyManager.NodeStatus;
 
