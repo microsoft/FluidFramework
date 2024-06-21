@@ -69,29 +69,12 @@ export class OrdererManager implements core.IOrdererManager {
 
 		if (ordererConnectionType === "local") {
 			Lumberjack.info(`Using local orderer`, getLumberBaseProperties(documentId, tenantId));
-			return this.localOrderManager.get(tenantId, documentId).then((orderer) => {
-				this.updateOrdererConnectionCount(tenantId, documentId, "increment", "local").catch(
-					(error) => {
-						Lumberjack.error(
-							`Failed to update local orderer connection count`,
-							{
-								documentId,
-								tenantId,
-							},
-							error,
-						);
-					},
-				);
-				return orderer;
-			});
-		}
+			const localOrderer = await this.localOrderManager.get(tenantId, documentId);
 
-		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
-		return this.kafkaFactory.create(tenantId, documentId).then((orderer) => {
-			this.updateOrdererConnectionCount(tenantId, documentId, "increment", "kafka").catch(
+			this.updateOrdererConnectionCount(tenantId, documentId, "increment", "local").catch(
 				(error) => {
 					Lumberjack.error(
-						`Failed to update kafka orderer connection count`,
+						`Failed to update local orderer connection count`,
 						{
 							documentId,
 							tenantId,
@@ -100,8 +83,27 @@ export class OrdererManager implements core.IOrdererManager {
 					);
 				},
 			);
-			return orderer;
-		});
+
+			return localOrderer;
+		}
+
+		Lumberjack.info(`Using Kafka orderer`, getLumberBaseProperties(documentId, tenantId));
+		const kafkaOrderer = await this.kafkaFactory.create(tenantId, documentId);
+
+		this.updateOrdererConnectionCount(tenantId, documentId, "increment", "kafka").catch(
+			(error) => {
+				Lumberjack.error(
+					`Failed to update kafka orderer connection count`,
+					{
+						documentId,
+						tenantId,
+					},
+					error,
+				);
+			},
+		);
+
+		return kafkaOrderer;
 	}
 
 	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
