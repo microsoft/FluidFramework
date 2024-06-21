@@ -110,6 +110,17 @@ describe("ArrayNode", () => {
 		});
 
 		describe("moveToStart", () => {
+			it("move element to start of empty array", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [], array2: [1, 2, 3] });
+				array1.moveToStart(1, array2);
+				assert.deepEqual([...array1], [2]);
+				assert.deepEqual([...array2], [1, 3]);
+			});
+
 			it("move within field", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToStart(1);
@@ -144,6 +155,17 @@ describe("ArrayNode", () => {
 		});
 
 		describe("moveToEnd", () => {
+			it("move element to end of empty array", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [], array2: [1, 2, 3] });
+				array1.moveToEnd(1, array2);
+				assert.deepEqual([...array1], [2]);
+				assert.deepEqual([...array2], [1, 3]);
+			});
+
 			it("move within field", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToEnd(1);
@@ -178,6 +200,17 @@ describe("ArrayNode", () => {
 		});
 
 		describe("moveToIndex", () => {
+			it("move element to start of empty array", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array(schemaFactory.number),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [], array2: [1, 2, 3] });
+				array1.moveToIndex(0, 1, array2);
+				assert.deepEqual([...array1], [2]);
+				assert.deepEqual([...array2], [1, 3]);
+			});
+
 			it("move within field", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				array.moveToIndex(0, 1);
