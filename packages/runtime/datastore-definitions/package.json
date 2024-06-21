@@ -15,10 +15,10 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/public.d.ts"
+				"types": "./lib/index.d.ts"
 			},
 			"require": {
-				"types": "./dist/public.d.ts"
+				"types": "./dist/index.d.ts"
 			}
 		},
 		"./legacy": {
