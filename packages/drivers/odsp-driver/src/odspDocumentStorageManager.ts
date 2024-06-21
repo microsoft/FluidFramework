@@ -813,7 +813,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return getWithRetryForTokenRefresh(async (options) => {
 			const snapshotDownloader = async (
 				url: string,
-				// eslint-disable-next-line unicorn/consistent-function-scoping
 			): Promise<IOdspResponse<unknown>> => {
 				const authHeader = await this.getAuthHeader(
 					{ ...options, request: { url, method: "GET" } },

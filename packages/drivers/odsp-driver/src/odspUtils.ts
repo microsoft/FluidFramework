@@ -65,6 +65,10 @@ export interface IOdspResponse<T> {
 	duration: number;
 }
 
+/**
+ * This interface captures the portion of TokenFetchOptions required for refreshing tokens
+ * It is controlled by logic in getWithRetryForTokenRefresh to specify what is the required refresh behavior
+ */
 export interface TokenFetchOptionsEx {
 	refresh: boolean;
 	claims?: string;
