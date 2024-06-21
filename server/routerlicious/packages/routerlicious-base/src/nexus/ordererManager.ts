@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import type { LocalOrderManager } from "@fluidframework/server-memory-orderer";
 import type {
