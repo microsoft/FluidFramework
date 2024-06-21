@@ -196,13 +196,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> = ({
 							<MenuItem
 								className={classes.menuItem}
 								onClick={() =>
-									handleContextMenuItemClick(
-										"copy",
-										options,
-										name,
-										urn,
-										showModal,
-									)
+									handleContextMenuItemClick("copy", options, name, urn, showModal)
 								}
 							>
 								<SvgIcon svgId="copy-16" className={classes.menuIcon} />
@@ -214,14 +208,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> = ({
 							<MenuItem
 								className={classes.menuItem}
 								onClick={() =>
-									handleContextMenuItemClick(
-										"edit",
-										options,
-										name,
-										urn,
-										showModal,
-										hideModal,
-									)
+									handleContextMenuItemClick("edit", options, name, urn, showModal, hideModal)
 								}
 							>
 								<SvgIcon svgId="edit-16" className={classes.menuIcon} />
@@ -232,13 +219,7 @@ export const ItemMenu: React.FunctionComponent<IItemMenuProps> = ({
 							<MenuItem
 								className={classes.menuItem}
 								onClick={() =>
-									handleContextMenuItemClick(
-										"share",
-										options,
-										name,
-										urn,
-										showModal,
-									)
+									handleContextMenuItemClick("share", options, name, urn, showModal)
 								}
 							>
 								<SvgIcon svgId="share-16" className={classes.menuIcon} />

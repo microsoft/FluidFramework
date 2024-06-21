@@ -1189,11 +1189,7 @@ describe("visitDelta", () => {
 				const end = cycle ? pointA : { minor: 42 };
 				describe("1-step", () => {
 					it("Rename ordering: 1/1", () => {
-						const index = makeDetachedFieldIndex(
-							"",
-							testRevisionTagCodec,
-							testIdCompressor,
-						);
+						const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
 						index.createEntry(pointA);
 						const rename: DeltaDetachedNodeRename = {
 							count: 1,
@@ -1209,7 +1205,7 @@ describe("visitDelta", () => {
 									["exitField", rootKey],
 									["enterField", rootKey],
 									["exitField", rootKey],
-							  ]
+								]
 							: [
 									["enterField", rootKey],
 									["exitField", rootKey],
@@ -1218,21 +1214,15 @@ describe("visitDelta", () => {
 									["exitField", field0],
 									["enterField", rootKey],
 									["exitField", rootKey],
-							  ];
+								];
 						testTreeVisit(delta, expected, index);
-						assert.deepEqual(Array.from(index.entries()), [
-							{ id: end, root: cycle ? 0 : 1 },
-						]);
+						assert.deepEqual(Array.from(index.entries()), [{ id: end, root: cycle ? 0 : 1 }]);
 					});
 				});
 				describe("2-step", () => {
 					for (let ordering = 1; ordering <= 2; ordering++) {
 						it(`Rename ordering: ${ordering}/2`, () => {
-							const index = makeDetachedFieldIndex(
-								"",
-								testRevisionTagCodec,
-								testIdCompressor,
-							);
+							const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
 							index.createEntry(pointA);
 							const pointB = { minor: 2 };
 							const rename1: DeltaDetachedNodeRename = {
@@ -1313,11 +1303,7 @@ describe("visitDelta", () => {
 								["enterField", rootKey],
 								["exitField", rootKey],
 							];
-							const index = makeDetachedFieldIndex(
-								"",
-								testRevisionTagCodec,
-								testIdCompressor,
-							);
+							const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
 							index.createEntry(pointA);
 							testTreeVisit(delta, expected, index);
 							assert.deepEqual(Array.from(index.entries()), [{ id: end, root: 3 }]);

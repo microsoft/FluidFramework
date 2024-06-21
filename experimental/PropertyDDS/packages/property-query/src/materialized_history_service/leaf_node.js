@@ -93,15 +93,10 @@
 					this._session.bTreeParameters.initialChunkSizeFactor;
 				// }
 
-				newChunks = chunkChangeSet(
-					newChangeset.getSerializedChangeSet(),
-					newSize,
-					undefined,
-					{
-						pathBuilder: this._session.pathBuilder,
-						sortKeyEncoder: this._session.sortKeyEncoder,
-					},
-				);
+				newChunks = chunkChangeSet(newChangeset.getSerializedChangeSet(), newSize, undefined, {
+					pathBuilder: this._session.pathBuilder,
+					sortKeyEncoder: this._session.sortKeyEncoder,
+				});
 
 				// We have to preserve the startPath since we chunked a ChangeSet that only
 				// contained changes starting at this path
@@ -119,10 +114,7 @@
 				);
 
 				for (let i = 0; i < newChunks.length; i++) {
-					let chunkDeltaCS = _.find(
-						chunkedDeltaCS,
-						(x) => x.correspondingChunkIndex === i,
-					);
+					let chunkDeltaCS = _.find(chunkedDeltaCS, (x) => x.correspondingChunkIndex === i);
 					if (chunkDeltaCS !== undefined) {
 						newChunks[i].deltaCS = chunkDeltaCS.changeSet;
 					} else {
@@ -301,8 +293,7 @@
 						let lastEntry = currentLevel.current[currentLevel.current.length - 1];
 						if (lastEntry.lastSubId === undefined) {
 							ConsoleUtils.assert(
-								lastEntry.ref ===
-									getBaseNodeRef(nodeDefinition.previousNodeRefs[0]),
+								lastEntry.ref === getBaseNodeRef(nodeDefinition.previousNodeRefs[0]),
 							);
 							lastEntry.lastSubId = parseNodeReference(
 								nodeDefinition.previousNodeRefs[0],
@@ -375,8 +366,7 @@
 					let connectionInfo = historyNodesToAdd[k];
 
 					if (connectionInfo.level > 0) {
-						let previousLevelCommits =
-							newHistoryNodeLevels[connectionInfo.level - 1].previous;
+						let previousLevelCommits = newHistoryNodeLevels[connectionInfo.level - 1].previous;
 						let changeSets = await Promise.all(
 							_.map(previousLevelCommits.slice(1), async (toCommitInfo, i) => {
 								/* if (previousLevelNode.ref === baseNodeRef) {
@@ -413,13 +403,12 @@
 									return [leafNodeChangeSet, historyNode.changeSet];
 								} else {
 									// In the higher levels, we just fetch the already existing combined node from the previous level
-									let previousLevelHistoryNode =
-										await this._btreeManager._storage.get(
-											"h:" +
-												parseNodeReference(toCommitInfo.ref).guid +
-												"#" +
-												parseNodeReference(fromCommitInfo.ref).guid,
-										);
+									let previousLevelHistoryNode = await this._btreeManager._storage.get(
+										"h:" +
+											parseNodeReference(toCommitInfo.ref).guid +
+											"#" +
+											parseNodeReference(fromCommitInfo.ref).guid,
+									);
 									return previousLevelHistoryNode.changeSet;
 								}
 							}),
@@ -440,11 +429,7 @@
 							parseNodeReference(connectionInfo.to.ref).guid +
 							"#" +
 							connectionInfo.from.ref.substr(2);
-						await this._btreeManager._storage.store(
-							this.batch,
-							historyNodeRef,
-							historyNode,
-						);
+						await this._btreeManager._storage.store(this.batch, historyNodeRef, historyNode);
 					}
 
 					/* var historyNode = {

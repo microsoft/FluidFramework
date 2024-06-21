@@ -109,9 +109,7 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 				telemetryEventName = k;
 			}
 			if (event.eventName.startsWith(k)) {
-				event.eventName = `${this.transformedEvents.get(k)}${event.eventName.slice(
-					k.length,
-				)}`;
+				event.eventName = `${this.transformedEvents.get(k)}${event.eventName.slice(k.length)}`;
 				break;
 			}
 		}

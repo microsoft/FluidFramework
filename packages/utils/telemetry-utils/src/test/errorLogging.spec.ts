@@ -495,8 +495,7 @@ describe("Error Logging", () => {
 		});
 		it("object error yields correct message", () => {
 			assert.strictEqual(
-				extractLogSafeErrorProperties({ message: "hello" }, false /* sanitizeStack */)
-					.message,
+				extractLogSafeErrorProperties({ message: "hello" }, false /* sanitizeStack */).message,
 				"hello",
 			);
 			assert.strictEqual(
@@ -523,13 +522,11 @@ describe("Error Logging", () => {
 				"hello",
 			);
 			assert.strictEqual(
-				extractLogSafeErrorProperties({ foo: "hello" }, false /* sanitizeStack */)
-					.errorType,
+				extractLogSafeErrorProperties({ foo: "hello" }, false /* sanitizeStack */).errorType,
 				undefined,
 			);
 			assert.strictEqual(
-				extractLogSafeErrorProperties({ errorType: 42 }, false /* sanitizeStack */)
-					.errorType,
+				extractLogSafeErrorProperties({ errorType: 42 }, false /* sanitizeStack */).errorType,
 				undefined,
 			);
 			assert.strictEqual(
@@ -545,10 +542,7 @@ describe("Error Logging", () => {
 			assert(stack?.includes("asdf"), "stack is expected to contain the message");
 			assert(stack?.includes("FooError"), "stack is expected to contain the name");
 
-			const sanitizedStack = extractLogSafeErrorProperties(
-				e1,
-				true /* sanitizeStack */,
-			).stack;
+			const sanitizedStack = extractLogSafeErrorProperties(e1, true /* sanitizeStack */).stack;
 			assert(typeof sanitizedStack === "string");
 			assert(
 				!sanitizedStack?.includes("asdf"),
@@ -811,10 +805,9 @@ describe("normalizeError", () => {
 			}),
 			"nullValue": () => ({
 				input: null,
-				expectedOutput: typicalOutput(
-					"null",
-					"<<natural stack>>",
-				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+				expectedOutput: typicalOutput("null", "<<natural stack>>").withExpectedTelemetryProps({
+					untrustedOrigin: 1,
+				}),
 			}),
 			"undef": () => ({
 				input: undefined,
@@ -825,24 +818,23 @@ describe("normalizeError", () => {
 			}),
 			"false": () => ({
 				input: false,
-				expectedOutput: typicalOutput(
-					"false",
-					"<<natural stack>>",
-				).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
+				expectedOutput: typicalOutput("false", "<<natural stack>>").withExpectedTelemetryProps(
+					{ typeofError: "boolean", untrustedOrigin: 1 },
+				),
 			}),
 			"true": () => ({
 				input: true,
-				expectedOutput: typicalOutput(
-					"true",
-					"<<natural stack>>",
-				).withExpectedTelemetryProps({ typeofError: "boolean", untrustedOrigin: 1 }),
+				expectedOutput: typicalOutput("true", "<<natural stack>>").withExpectedTelemetryProps({
+					typeofError: "boolean",
+					untrustedOrigin: 1,
+				}),
 			}),
 			"number": () => ({
 				input: 3.14,
-				expectedOutput: typicalOutput(
-					"3.14",
-					"<<natural stack>>",
-				).withExpectedTelemetryProps({ typeofError: "number", untrustedOrigin: 1 }),
+				expectedOutput: typicalOutput("3.14", "<<natural stack>>").withExpectedTelemetryProps({
+					typeofError: "number",
+					untrustedOrigin: 1,
+				}),
 			}),
 			"symbol": () => ({
 				input: Symbol("Unique"),
@@ -866,10 +858,9 @@ describe("normalizeError", () => {
 			}),
 			"array": () => ({
 				input: [1, 2, 3],
-				expectedOutput: typicalOutput(
-					"1,2,3",
-					"<<natural stack>>",
-				).withExpectedTelemetryProps({ untrustedOrigin: 1 }),
+				expectedOutput: typicalOutput("1,2,3", "<<natural stack>>").withExpectedTelemetryProps(
+					{ untrustedOrigin: 1 },
+				),
 			}),
 		};
 		function assertMatching(
@@ -940,11 +931,7 @@ describe("normalizeError", () => {
 						const normalized = normalizeError(input, annotations);
 
 						// Assert
-						assert.notEqual(
-							input,
-							normalized,
-							"input should have yielded a new error object",
-						);
+						assert.notEqual(input, normalized, "input should have yielded a new error object");
 						assertMatching(normalized, expectedOutput, annotations, input?.stack);
 						if (
 							input instanceof TestFluidError &&
@@ -973,11 +960,7 @@ describe("normalizeError", () => {
 					const normalized = normalizeError(input, annotations);
 
 					// Assert
-					assert.notEqual(
-						input,
-						normalized,
-						"input should have yielded a new error object",
-					);
+					assert.notEqual(input, normalized, "input should have yielded a new error object");
 					assertMatchingMessageAndStack(normalized, expectedOutput, input?.stack);
 				});
 			}
@@ -1052,7 +1035,11 @@ describe("wrapError", () => {
 describe("wrapErrorAndLog", () => {
 	const mockLogger = new MockLogger();
 	const innerError = new LoggingError("hello");
-	const newError = wrapErrorAndLog(innerError, createTestError, mockLogger.toTelemetryLogger());
+	const newError = wrapErrorAndLog(
+		innerError,
+		createTestError,
+		mockLogger.toTelemetryLogger(),
+	);
 	assert(
 		mockLogger.matchEvents([
 			{

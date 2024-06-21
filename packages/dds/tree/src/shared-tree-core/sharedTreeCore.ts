@@ -18,7 +18,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { type IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	type IFluidSerializer,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -44,6 +47,7 @@ import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./chang
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -66,7 +70,6 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
-
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -138,6 +141,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			policy: schemaPolicy,
 		};
 
+		const rebaseLogger = createChildLogger({
+			logger: this.logger,
+			namespace: "Rebase",
+		});
+
 		assert(
 			runtime.idCompressor !== undefined,
 			0x886 /* IdCompressor must be enabled to use SharedTree */,
@@ -150,7 +158,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = runtime.idCompressor.localSessionId;
-		this.editManager = new EditManager(changeFamily, localSessionId, this.mintRevisionTag);
+		this.editManager = new EditManager(
+			changeFamily,
+			localSessionId,
+			this.mintRevisionTag,
+			rebaseLogger,
+		);
 		this.editManager.localBranch.on("transactionStarted", () => {
 			this.commitEnricher.startNewTransaction();
 		});
@@ -182,7 +195,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			) {
 				assert(
 					change.newCommits.length === 1,
-					"Unexpected number of commits when committing transaction",
+					0x983 /* Unexpected number of commits when committing transaction */,
 				);
 				this.commitEnricher.prepareCommit(change.newCommits[0], true);
 			}
@@ -399,7 +412,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 		assert(
 			this.resubmitMachine.isInResubmitPhase !== false,
-			"Invalid resubmit outside of resubmit phase",
+			0x984 /* Invalid resubmit outside of resubmit phase */,
 		);
 		const enrichedCommit = this.resubmitMachine.peekNextCommit();
 		this.submitCommit(enrichedCommit, localOpMetadata, true);

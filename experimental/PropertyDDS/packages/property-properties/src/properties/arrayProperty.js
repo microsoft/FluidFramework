@@ -397,7 +397,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 									null,
 									in_values[i].value,
 									this._getScope(),
-							  );
+								);
 
 					arr.push(prop);
 				}
@@ -434,10 +434,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 		} else {
 			if (_.isArray(in_values)) {
 				if (in_values.length < this._dataArrayGetLength()) {
-					this.removeRange(
-						in_values.length,
-						this._dataArrayGetLength() - in_values.length,
-					);
+					this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
 				}
 				this.setRange(0, in_values.slice(0, this._dataArrayGetLength()));
 				if (in_values.length > this._dataArrayGetLength()) {
@@ -927,8 +924,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 			}
 			for (var i = iterationStart; i < in_position.length && prop; i++) {
 				if (
-					in_options.referenceResolutionMode ===
-					BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS
+					in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS
 				) {
 					mode =
 						i !== in_position.length - 1
@@ -960,9 +956,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 				var pos = Math.floor(in_position);
 				ConsoleUtils.assert(isFinite(pos), MSG.IN_POSITION_MUST_BE_NUMBER);
 				var result = this._dataArrayGetValue(pos);
-				if (
-					in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS
-				) {
+				if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
 					if (result instanceof Property.ReferenceProperty) {
 						result = result.ref;
 					}
@@ -1044,8 +1038,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 							insertedPropertyInstances.push(createdProperty);
 						}
 						this._insertRangeWithoutDirtying(
-							arrayIterator.opDescription.operation[0] +
-								arrayIterator.opDescription.offset,
+							arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
 							this._deserializeArray(insertedPropertyInstances),
 							false,
 						);
@@ -1057,8 +1050,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 							numRemoved = numRemoved.length;
 						}
 						this._removeRangeWithoutDirtying(
-							arrayIterator.opDescription.operation[0] +
-								arrayIterator.opDescription.offset,
+							arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
 							numRemoved,
 						);
 						break;
@@ -1066,8 +1058,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 						// Handle modifies
 						var propertyDescriptions = arrayIterator.opDescription.operation[1];
 						var startIndex =
-							arrayIterator.opDescription.operation[0] +
-							arrayIterator.opDescription.offset;
+							arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset;
 						for (var i = 0; i < propertyDescriptions.length; ++i) {
 							var modifiedProperty = this.get(startIndex + i, {
 								referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER,
@@ -1080,9 +1071,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 						break;
 					default:
 						console.error(
-							"applyChangeset: " +
-								MSG.UNKNOWN_OPERATION +
-								arrayIterator.opDescription.type,
+							"applyChangeset: " + MSG.UNKNOWN_OPERATION + arrayIterator.opDescription.type,
 						);
 				}
 				arrayIterator.next();
@@ -1094,8 +1083,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 					case ArrayChangeSetIterator.types.INSERT:
 						// Handle inserts
 						this._insertRangeWithoutDirtying(
-							arrayIterator.opDescription.operation[0] +
-								arrayIterator.opDescription.offset,
+							arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
 							this._deserializeArray(arrayIterator.opDescription.operation[1]),
 						);
 						break;
@@ -1107,24 +1095,20 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 						}
 
 						this._removeRangeWithoutDirtying(
-							arrayIterator.opDescription.operation[0] +
-								arrayIterator.opDescription.offset,
+							arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
 							removeLength,
 						);
 						break;
 					case ArrayChangeSetIterator.types.MODIFY:
 						// Handle modifies
 						this._modifyRangeWithoutDirtying(
-							arrayIterator.opDescription.operation[0] +
-								arrayIterator.opDescription.offset,
+							arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
 							this._deserializeArray(arrayIterator.opDescription.operation[1]),
 						);
 						break;
 					default:
 						console.error(
-							"applyChangeset: " +
-								MSG.UNKNOWN_OPERATION +
-								arrayIterator.opDescription.type,
+							"applyChangeset: " + MSG.UNKNOWN_OPERATION + arrayIterator.opDescription.type,
 						);
 				}
 				arrayIterator.next();
@@ -1326,10 +1310,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 				);
 				changes.insert.push([lastPositionInInitialArray, deepCopy(elementsToInsert)]);
 				var scope = this._getScope();
-				var insertedProperties = deserializeNonPrimitiveArrayElements(
-					elementsToInsert,
-					scope,
-				);
+				var insertedProperties = deserializeNonPrimitiveArrayElements(elementsToInsert, scope);
 				this._insertRangeWithoutDirtying(
 					lastPositionInInitialArray + offset,
 					insertedProperties,
@@ -1599,10 +1580,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 					var lastModify = undefined;
 					if (result.modify && result.modify.length > 0) {
 						lastModify = result.modify[result.modify.length - 1];
-						if (
-							lastModify[0] + lastModify[1].length ===
-							currentArrayIndex - op.offset
-						) {
+						if (lastModify[0] + lastModify[1].length === currentArrayIndex - op.offset) {
 							// we need to combine, keep lastModify
 						} else {
 							lastModify = undefined;
@@ -1743,12 +1721,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 								this._getPendingChanges(),
 								in_dirtinessType,
 								in_includeReferencedRepositories,
-						  )
+							)
 						: this._getChangesetForCustomTypeArray(
 								this._getDirtyChanges(),
 								in_dirtinessType,
 								in_includeReferencedRepositories,
-						  ),
+							),
 				);
 
 				return result;

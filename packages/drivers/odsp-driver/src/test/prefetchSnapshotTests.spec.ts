@@ -9,7 +9,11 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { FetchSource, ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,
 	IOdspResolvedUrl,

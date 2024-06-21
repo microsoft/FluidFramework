@@ -44,11 +44,10 @@ describe('RevisionValueCache', () => {
 
 	it('evicts entries when full', () => {
 		const size = 3;
-		const cache = new RevisionValueCache<DummyValue>(
-			size,
-			size * 3 /* ensure all entries are outside of window */,
-			[0, dummyValue]
-		);
+		const cache = new RevisionValueCache<DummyValue>(size, size * 3 /* ensure all entries are outside of window */, [
+			0,
+			dummyValue,
+		]);
 
 		// Fill the cache
 		// Start at 1 because the initial revision is never evicted
