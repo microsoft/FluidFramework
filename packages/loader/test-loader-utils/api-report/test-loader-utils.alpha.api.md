@@ -4,27 +4,6 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/driver-definitions';
-import { IAnyDriverError } from '@fluidframework/driver-definitions/internal';
-import { IClient } from '@fluidframework/driver-definitions';
-import { IClientConfiguration } from '@fluidframework/driver-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
-import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
-import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { IDocumentService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentServiceEvents } from '@fluidframework/driver-definitions/internal';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import { INack } from '@fluidframework/driver-definitions/internal';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISignalClient } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
-import { IStream } from '@fluidframework/driver-definitions/internal';
-import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // (No @packageDocumentation comment for this package)
 
 ```

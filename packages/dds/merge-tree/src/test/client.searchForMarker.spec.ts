@@ -272,11 +272,7 @@ describe("TestClient", () => {
 					client.getClientId(),
 				);
 
-				assert.equal(
-					exp,
-					index - (index % 3),
-					"Marker with label not at expected position",
-				);
+				assert.equal(exp, index - (index % 3), "Marker with label not at expected position");
 			}
 		});
 

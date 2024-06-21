@@ -4,34 +4,6 @@
 
 ```ts
 
-import type { AttachState } from '@fluidframework/container-definitions';
-import type { FluidObject } from '@fluidframework/core-interfaces';
-import type { IAudience } from '@fluidframework/container-definitions';
-import type { IClientDetails } from '@fluidframework/driver-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import type { IIdCompressor } from '@fluidframework/id-compressor';
-import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import type { IQuorumClients } from '@fluidframework/driver-definitions';
-import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResponse } from '@fluidframework/core-interfaces';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import type { ISignalMessage } from '@fluidframework/driver-definitions';
-import type { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
-import type { ISummaryTree } from '@fluidframework/driver-definitions';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { ITree } from '@fluidframework/driver-definitions/internal';
-import type { IUser } from '@fluidframework/driver-definitions';
-import type { SummaryTree } from '@fluidframework/driver-definitions/internal';
-import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
-import type { TelemetryEventPropertyTypeExt } from '@fluidframework/telemetry-utils/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```

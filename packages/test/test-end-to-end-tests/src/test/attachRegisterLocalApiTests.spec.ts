@@ -570,15 +570,11 @@ describeCompat(
 				toFluidHandleInternal(dataStore2.handle).bind(
 					toFluidHandleInternal(dataStore3.handle),
 				);
-				toFluidHandleInternal(dataStore2.handle).bind(
-					toFluidHandleInternal(channel3.handle),
-				);
+				toFluidHandleInternal(dataStore2.handle).bind(toFluidHandleInternal(channel3.handle));
 				toFluidHandleInternal(dataStore3.handle).bind(
 					toFluidHandleInternal(dataStore2.handle),
 				);
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(channel2.handle),
-				);
+				toFluidHandleInternal(dataStore3.handle).bind(toFluidHandleInternal(channel2.handle));
 
 				toFluidHandleInternal(dataStore2.handle).attachGraph();
 				assert.strictEqual(

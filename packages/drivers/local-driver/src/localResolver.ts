@@ -64,7 +64,10 @@ export class LocalResolver implements IUrlResolver {
 		return resolved;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		let url = relativeUrl;
 		if (url.startsWith("/")) {
 			url = url.substr(1);
@@ -74,7 +77,10 @@ export class LocalResolver implements IUrlResolver {
 			throw new Error("Url should contain tenant and docId!!");
 		}
 		const [, , documentId] = parsedUrl.pathname.split("/");
-		assert(!!documentId, 0x09a /* "'documentId' must be a defined, non-zero length string." */);
+		assert(
+			!!documentId,
+			0x09a /* "'documentId' must be a defined, non-zero length string." */,
+		);
 
 		return `http://localhost:3000/${documentId}/${url}`;
 	}

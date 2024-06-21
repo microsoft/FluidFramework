@@ -4,7 +4,7 @@
  */
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
@@ -154,7 +154,10 @@ export const defaultOptions: IApplyStashedOpFarmConfig = {
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
 
-function runApplyStashedOpFarmTests(opts: IApplyStashedOpFarmConfig, extraSeed?: number): void {
+function runApplyStashedOpFarmTests(
+	opts: IApplyStashedOpFarmConfig,
+	extraSeed?: number,
+): void {
 	doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
 		it(`applyStashedOpFarm_${clientCount}`, async () => {
 			const random = makeRandom(0xdeadbeef, 0xfeedbed, clientCount, extraSeed ?? 0);

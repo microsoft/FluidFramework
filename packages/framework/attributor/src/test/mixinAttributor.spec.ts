@@ -7,15 +7,22 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { type ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentStorageService,
 	type ISnapshotTree,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 
 import { Attributor } from "../attributor.js";

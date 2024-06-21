@@ -6,24 +6,24 @@
 import { strict as assert } from "assert";
 
 import {
-	Anchor,
-	AnchorNode,
+	type Anchor,
+	type AnchorNode,
 	AnchorSet,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaVisitor,
-	DetachedField,
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
-	FieldKey,
-	FieldUpPath,
-	JsonableTree,
-	PathVisitor,
-	PlaceUpPath,
-	ProtoNodes,
-	RangeUpPath,
-	UpPath,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaVisitor,
+	type DetachedField,
+	type DetachedPlaceUpPath,
+	type DetachedRangeUpPath,
+	type FieldKey,
+	type FieldUpPath,
+	type JsonableTree,
+	type PathVisitor,
+	type PlaceUpPath,
+	type ProtoNodes,
+	type RangeUpPath,
+	type UpPath,
 	anchorSlot,
 	clonePath,
 	getDetachedFieldContainingPath,
@@ -38,6 +38,7 @@ import {
 	announceTestDelta,
 	applyTestDelta,
 	expectEqualPaths,
+	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
 
@@ -252,7 +253,11 @@ describe("AnchorSet", () => {
 			count: 1,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+		const detachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 
 		announceTestDelta(
 			makeDelta(detachMark, makePath([fieldFoo, 3])),
@@ -286,7 +291,11 @@ describe("AnchorSet", () => {
 			count: 3,
 			detach: detachId,
 		};
-		const detachedFieldIndex = makeDetachedFieldIndex("repair", testRevisionTagCodec);
+		const detachedFieldIndex = makeDetachedFieldIndex(
+			"repair",
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 
 		announceTestDelta(
 			makeDelta(detachMark, makePath([fieldFoo, 3])),
@@ -567,30 +576,30 @@ describe("AnchorSet", () => {
 			},
 			beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {
 				log.logger(
-					`visitSubtreeChange.beforeAttach-src:${rangeToString(
-						source,
-					)}-dst:${placeToString(destination)}`,
+					`visitSubtreeChange.beforeAttach-src:${rangeToString(source)}-dst:${placeToString(
+						destination,
+					)}`,
 				)();
 			},
 			afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
 				log.logger(
-					`visitSubtreeChange.afterAttach-src:${placeToString(
-						source,
-					)}-dst:${rangeToString(destination)}`,
+					`visitSubtreeChange.afterAttach-src:${placeToString(source)}-dst:${rangeToString(
+						destination,
+					)}`,
 				)();
 			},
 			beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {
 				log.logger(
-					`visitSubtreeChange.beforeDetach-src:${rangeToString(
-						source,
-					)}-dst:${placeToString(destination)}`,
+					`visitSubtreeChange.beforeDetach-src:${rangeToString(source)}-dst:${placeToString(
+						destination,
+					)}`,
 				)();
 			},
 			afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
 				log.logger(
-					`visitSubtreeChange.afterDetach-src:${placeToString(
-						source,
-					)}-dst:${rangeToString(destination)}`,
+					`visitSubtreeChange.afterDetach-src:${placeToString(source)}-dst:${rangeToString(
+						destination,
+					)}`,
 				)();
 			},
 		};

@@ -4,54 +4,6 @@
 
 ```ts
 
-import { BaseSegment } from '@fluidframework/merge-tree/internal';
-import { Client } from '@fluidframework/merge-tree/internal';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
-import { IJSONSegment } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IRelativePosition } from '@fluidframework/merge-tree/internal';
-import { ISegment } from '@fluidframework/merge-tree/internal';
-import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
-import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
-import { MapLike } from '@fluidframework/merge-tree/internal';
-import { Marker } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaRevertible } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree/internal';
-import { PropertiesManager } from '@fluidframework/merge-tree/internal';
-import { PropertySet } from '@fluidframework/merge-tree/internal';
-import { ReferencePosition } from '@fluidframework/merge-tree/internal';
-import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { reservedMarkerIdKey } from '@fluidframework/merge-tree/internal';
-import { reservedRangeLabelsKey } from '@fluidframework/merge-tree/internal';
-import { reservedTileLabelsKey } from '@fluidframework/merge-tree/internal';
-import { Serializable } from '@fluidframework/datastore-definitions/internal';
-import { SharedObject } from '@fluidframework/shared-object-base/internal';
-import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { SlidingPreference } from '@fluidframework/merge-tree/internal';
-import { TextSegment } from '@fluidframework/merge-tree/internal';
-import { TrackingGroup } from '@fluidframework/merge-tree/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 export { BaseSegment }
 
 export { ISegment }

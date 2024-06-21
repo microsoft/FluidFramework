@@ -11,7 +11,11 @@ const ADO_API_TOKEN = process.env.ADO_API_TOKEN;
 
 // The workspace where the new files/folder created in this script will be stored.
 const BASE_OUTPUT_FOLDER = process.env.BASE_OUTPUT_FOLDER;
-if (BUILD_ID === undefined || ADO_API_TOKEN === undefined || BASE_OUTPUT_FOLDER === undefined) {
+if (
+	BUILD_ID === undefined ||
+	ADO_API_TOKEN === undefined ||
+	BASE_OUTPUT_FOLDER === undefined
+) {
 	throw new Error(
 		"One or more required environment variables are undefined. Please specify 'BUILD_ID', 'ADO_API_TOKEN', and 'BASE_OUTPUT_FOLDER' in order to run this script.",
 	);
@@ -60,5 +64,8 @@ for (const stage of stages) {
 
 	const stageData = await stageResponse.json();
 	// Save the API data to a JSON file.
-	fs.writeFileSync(`${BASE_OUTPUT_FOLDER}/stageFiles/${stage}.json`, JSON.stringify(stageData));
+	fs.writeFileSync(
+		`${BASE_OUTPUT_FOLDER}/stageFiles/${stage}.json`,
+		JSON.stringify(stageData),
+	);
 }

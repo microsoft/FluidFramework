@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IClient, ISignalMessage } from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
+import { ISignalMessage } from "@fluidframework/driver-definitions/internal";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
@@ -95,7 +96,12 @@ describe("DeltaConnectionMetadata update tests", () => {
 			new LocalPersistentCache(2000),
 			{ snapshotOptions: { timeout: 2000 } },
 		);
-		const locator: OdspFluidDataStoreLocator = { driveId, itemId, siteUrl, dataStorePath: "/" };
+		const locator: OdspFluidDataStoreLocator = {
+			driveId,
+			itemId,
+			siteUrl,
+			dataStorePath: "/",
+		};
 		const request = createOdspUrl(locator);
 		const resolvedUrl = await resolver.resolve({ url: request });
 		logger = new MockLogger().toTelemetryLogger();

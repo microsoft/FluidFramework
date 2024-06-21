@@ -20,7 +20,6 @@ import express from "express";
 import nconf from "nconf";
 import WebpackDevServer from "webpack-dev-server";
 
-import { createManifestResponse } from "./bohemiaIntercept.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
@@ -58,8 +57,6 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
  * @internal
  */
 export const before = (app: express.Application) => {
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	app.get("/getclientsidewebparts", async (req, res) => res.send(await createManifestResponse()));
 	app.get("/", (req, res) => res.redirect("/new"));
 };
 
@@ -129,8 +126,8 @@ export const after = (
 			options.tenantSecret =
 				options.mode === "docker"
 					? options.tenantSecret ??
-					  config.get("fluid:webpack:docker:tenantSecret") ??
-					  "create-new-tenants-if-going-to-production"
+						config.get("fluid:webpack:docker:tenantSecret") ??
+						"create-new-tenants-if-going-to-production"
 					: options.tenantSecret ?? config.get("fluid:webpack:tenantSecret");
 
 			if (options.mode === "r11s") {
@@ -313,7 +310,11 @@ export const after = (
 		// For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
 		// instead of using actual storage service to which the connection is made. This will enable testing
 		// orderer even if the blob storage services are down.
-		if (documentId !== "new" && documentId !== "manualAttach" && documentId !== "testorderer") {
+		if (
+			documentId !== "new" &&
+			documentId !== "manualAttach" &&
+			documentId !== "testorderer"
+		) {
 			// The `id` is not for a new document. We assume the user is trying to load an existing document and
 			// redirect them to - http://localhost:8080/doc/<id>.
 			const reqUrl = req.url.replace(documentId, `doc/${documentId}`);
@@ -350,18 +351,15 @@ const fluid = (
     <title>${documentId}</title>
 </head>
 <body style="margin: 0; height: 100%;">
-    <div id="content" style="min-height: 100%;">
-    </div>
+    <div id="content" style="min-height: 100%;"></div>
 
     <script src="/code/fluid-loader.bundle.js"></script>
     ${umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
-        var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
         var fluidStarted = false;
         FluidLoader.start(
             "${documentId}",
-            pkgJson,
             window["${umd.library}"],
             options,
             document.getElementById("content"))

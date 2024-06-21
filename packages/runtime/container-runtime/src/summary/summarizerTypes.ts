@@ -3,15 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, ContainerWarning } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	ContainerWarning,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
-import { IDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -20,7 +26,11 @@ import {
 
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
+import {
+	ISummaryAckMessage,
+	ISummaryNackMessage,
+	ISummaryOpMessage,
+} from "./summaryCollection.js";
 import { SummarizeReason } from "./summaryGenerator.js";
 
 /**

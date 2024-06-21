@@ -6,15 +6,18 @@
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { validateMessages } from "@fluidframework/driver-base/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	type IStream,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
@@ -99,11 +102,10 @@ export class OdspDeltaStorageService {
 					clearTimeout(timer);
 					const deltaStorageResponse = response.content;
 					const messages =
-						deltaStorageResponse.value.length > 0 &&
-						"op" in deltaStorageResponse.value[0]
+						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
 							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
 									(operation) => operation.op,
-							  )
+								)
 							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
 
 					event.end({
@@ -166,8 +168,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		// Don't use cache for ops is snapshot is fetched from network or if it was not fetched at all.
 		this.useCacheForOps =
-			this.useCacheForOps &&
-			this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
+			this.useCacheForOps && this.storageManagerGetter()?.isFirstSnapshotFromNetwork === false;
 		let opsFromSnapshot = 0;
 		let opsFromCache = 0;
 		let opsFromStorage = 0;

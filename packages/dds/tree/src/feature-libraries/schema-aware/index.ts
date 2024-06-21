@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	InsertableFlexNode,
 	InsertableFlexField,
 	AllowedTypesToFlexInsertableTree,
 	ApplyMultiplicity,
-
 	// Internal
 	CollectOptions,
 	TypedFields,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
@@ -62,7 +62,9 @@ export type MergeTreeMaintenanceType =
 /**
  * @alpha
  */
-export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
+export type MergeTreeDeltaOperationTypes =
+	| MergeTreeDeltaOperationType
+	| MergeTreeMaintenanceType;
 
 /**
  * @alpha

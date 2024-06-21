@@ -4,13 +4,6 @@
 
 ```ts
 
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorEvent } from '@fluidframework/core-interfaces';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IRequest } from '@fluidframework/core-interfaces';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-
 // @public
 export type ConnectionMode = "write" | "read";
 
@@ -113,7 +106,7 @@ export interface IBlob {
     encoding: "utf-8" | "base64";
 }
 
-// @public
+// @alpha
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
@@ -440,7 +433,7 @@ export interface ISequencedClient {
     sequenceNumber: number;
 }
 
-// @public
+// @alpha
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -474,12 +467,12 @@ export interface ISignalClient {
     referenceSequenceNumber?: number;
 }
 
-// @public
+// @alpha
 export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
 }
 
-// @public
+// @alpha
 export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
@@ -636,7 +629,7 @@ export interface ITokenClaims {
     ver: string;
 }
 
-// @public
+// @alpha
 export interface ITrace {
     action: string;
     service: string;

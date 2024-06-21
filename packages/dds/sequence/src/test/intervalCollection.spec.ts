@@ -24,12 +24,20 @@ import {
 
 import { IIntervalCollection, Side, type SequencePlace } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
-import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import {
+	ISerializableInterval,
+	IntervalStickiness,
+	SequenceInterval,
+} from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { ISharedString, SharedStringClass } from "../sharedString.js";
 
 import { assertInterval } from "./intervalIndexTestUtils.js";
-import { assertConsistent, assertSequenceIntervals, type Client } from "./intervalTestUtils.js";
+import {
+	assertConsistent,
+	assertSequenceIntervals,
+	type Client,
+} from "./intervalTestUtils.js";
 import { constructClients, loadClient } from "./multiClientTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
@@ -1129,11 +1137,7 @@ describe("SharedString interval collections", () => {
 				const labels = s.getIntervalCollectionLabels();
 				for (const label of labels) {
 					assert.equal(label, infoArray[i].label, `Bad label ${i}: ${label}`);
-					assert.equal(
-						label,
-						createInfo[i].label,
-						`Bad label ${i}: ${createInfo[i].label}`,
-					);
+					assert.equal(label, createInfo[i].label, `Bad label ${i}: ${createInfo[i].label}`);
 					assert.equal(
 						createInfo[i].local,
 						infoArray[i].local,
@@ -1665,10 +1669,7 @@ describe("SharedString interval collections", () => {
 			assert(intervalId);
 			sharedString.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
@@ -1692,10 +1693,7 @@ describe("SharedString interval collections", () => {
 			assert(intervalId);
 			sharedString.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
 
 			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
@@ -1830,10 +1828,7 @@ describe("SharedString interval collections", () => {
 
 			assert.strictEqual(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.strictEqual(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-			assert.strictEqual(
-				interval1.start.getSegment()?.constructor.name,
-				"StartOfTreeSegment",
-			);
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "StartOfTreeSegment");
 			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "EndOfTreeSegment");
 
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
@@ -2155,8 +2150,6 @@ describe("the start and end positions of intervals are updated in response to ed
 			removeRange: [8, 10],
 			expected: ["end", "end"],
 			skip: [
-				// TODO: #8112: re-enable once empty intervals are no longer skipped when using the new slide behavior.
-				"rebase interval over removal",
 				// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
 				"slide interval loaded from summary",
 			],
@@ -2185,8 +2178,6 @@ describe("the start and end positions of intervals are updated in response to ed
 			removeRange: [7, 10],
 			expected: ["end", "end"],
 			skip: [
-				// TODO: #8112: re-enable once empty intervals are no longer skipped when using the new slide behavior.
-				"rebase interval over removal",
 				// TODO: #8111: enable after interval side is correctly loaded from summary for endpoints at start or end.
 				"slide interval loaded from summary",
 			],
@@ -2325,12 +2316,7 @@ describe("the start and end positions of intervals are updated in response to ed
 				containerRuntimeFactory.processAllMessages();
 
 				clients.push(
-					await loadClient(
-						containerRuntimeFactory,
-						clients[0],
-						"fromSummary",
-						stringFactory,
-					),
+					await loadClient(containerRuntimeFactory, clients[0], "fromSummary", stringFactory),
 				);
 
 				assert.notEqual(

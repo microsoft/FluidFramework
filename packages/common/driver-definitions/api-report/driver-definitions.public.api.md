@@ -4,22 +4,8 @@
 
 ```ts
 
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorEvent } from '@fluidframework/core-interfaces';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IRequest } from '@fluidframework/core-interfaces';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-
 // @public
 export type ConnectionMode = "write" | "read";
-
-// @public
-export interface IBranchOrigin {
-    id: string;
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-}
 
 // @public
 export interface ICapabilities {
@@ -72,41 +58,6 @@ export interface ISequencedClient {
 }
 
 // @public
-export interface ISequencedDocumentMessage {
-    clientId: string | null;
-    clientSequenceNumber: number;
-    // @deprecated
-    compression?: string;
-    contents: unknown;
-    data?: string;
-    // @deprecated
-    expHash1?: string;
-    metadata?: unknown;
-    minimumSequenceNumber: number;
-    origin?: IBranchOrigin;
-    referenceSequenceNumber: number;
-    sequenceNumber: number;
-    serverMetadata?: unknown;
-    timestamp: number;
-    traces?: ITrace[];
-    type: string;
-}
-
-// @public
-export interface ISignalMessage extends ISignalMessageBase {
-    clientId: string | null;
-}
-
-// @public
-export interface ISignalMessageBase {
-    clientConnectionNumber?: number;
-    content: unknown;
-    referenceSequenceNumber?: number;
-    targetClientId?: string;
-    type?: string;
-}
-
-// @public
 export interface ISummaryAttachment {
     // (undocumented)
     id: string;
@@ -140,13 +91,6 @@ export interface ISummaryTree {
     // (undocumented)
     type: SummaryType.Tree;
     unreferenced?: true;
-}
-
-// @public
-export interface ITrace {
-    action: string;
-    service: string;
-    timestamp: number;
 }
 
 // @public

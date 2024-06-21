@@ -16,17 +16,15 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ConnectionMode,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorTypes,
 	IDocumentMessage,
 	MessageType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
@@ -70,7 +68,10 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
-	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
+	(
+		event: "connect",
+		listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void,
+	);
 	(event: "establishingConnection", listener: (reason: IConnectionStateChangeReason) => void);
 	(
 		event: "cancelEstablishingConnection",
@@ -471,9 +472,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// Inbound signal queue
 		this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
 			if (this.handler === undefined) {
-				throw new Error(
-					"Attempted to process an inbound signal without a handler attached",
-				);
+				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
 			this.handler.processSignal({
 				clientId: message.clientId,
@@ -1039,8 +1038,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			if (message.type === MessageType.NoOp) {
 				this.noOpCount--;
 			}
-			const clientSeqNumGap =
-				message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
+			const clientSeqNumGap = message.clientSequenceNumber - this.lastClientSequenceNumber - 1;
 			this.noOpCount -= clientSeqNumGap;
 			if (this.noOpCount < 0) {
 				throw new Error(`gap in client sequence number: ${clientSeqNumGap}`);
@@ -1144,10 +1142,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				// Knowing about this mechanism, we could ask for op we already observed to increase validation.
 				// This is especially useful when coming out of offline mode or loading from
 				// very old cached (by client / driver) snapshot.
-				assert(
-					n === this.lastQueuedSequenceNumber,
-					0x0f2 /* "previouslyProcessedMessage" */,
-				);
+				assert(n === this.lastQueuedSequenceNumber, 0x0f2 /* "previouslyProcessedMessage" */);
 				assert(from > 1, 0x0f3 /* "not positive" */);
 				from--;
 			}

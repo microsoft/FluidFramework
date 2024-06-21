@@ -74,7 +74,7 @@ export interface IEvent {
     (event: string, listener: (...args: any[]) => void): any;
 }
 
-// @public
+// @public @sealed
 export interface IEventProvider<TEvent extends IEvent> {
     readonly off: IEventTransformer<this, TEvent>;
     readonly on: IEventTransformer<this, TEvent>;
@@ -242,7 +242,7 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 // @public (undocumented)
 export const IFluidHandle = "IFluidHandle";
 
-// @public
+// @public @sealed
 export interface IFluidHandle<out T = unknown> {
     readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
     get(): Promise<T>;
@@ -262,7 +262,7 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
-// @public
+// @public @sealed
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
 }
 
@@ -276,7 +276,7 @@ export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, 
 // @public (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 
-// @public
+// @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
     // (undocumented)
     readonly handle: IFluidHandle;
@@ -345,9 +345,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 // @public
 export interface ITelemetryBaseLogger {
-    // (undocumented)
     minLogLevel?: LogLevel;
-    // (undocumented)
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 

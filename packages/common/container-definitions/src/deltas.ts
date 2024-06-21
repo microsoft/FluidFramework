@@ -10,16 +10,14 @@ import type {
 	IEvent,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
-import type {
-	IClientDetails,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
 	ITokenClaims,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -94,7 +92,10 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `processingTime`: The amount of time it took to process the inbound operation (op), expressed in milliseconds.
 	 */
-	(event: "op", listener: (message: ISequencedDocumentMessage, processingTime: number) => void);
+	(
+		event: "op",
+		listener: (message: ISequencedDocumentMessage, processingTime: number) => void,
+	);
 
 	/**
 	 * Emitted periodically with latest information on network roundtrip latency
@@ -148,7 +149,9 @@ export interface IDeltaManagerEvents extends IEvent {
  * @sealed
  * @alpha
  */
-export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
+export interface IDeltaManager<T, U>
+	extends IEventProvider<IDeltaManagerEvents>,
+		IDeltaSender {
 	/**
 	 * The queue of inbound delta messages
 	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime

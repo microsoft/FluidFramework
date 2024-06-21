@@ -4,26 +4,6 @@
 
 ```ts
 
-import { IClient } from '@fluidframework/driver-definitions';
-import { ICreateBlobResponse } from '@fluidframework/driver-definitions/internal';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
-import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentServiceEvents } from '@fluidframework/driver-definitions/internal';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
-import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
-import { ISummaryHandle } from '@fluidframework/driver-definitions';
-import { ISummaryTree } from '@fluidframework/driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-import { ITree } from '@fluidframework/driver-definitions/internal';
-import { IVersion } from '@fluidframework/driver-definitions/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // (No @packageDocumentation comment for this package)
 
 ```

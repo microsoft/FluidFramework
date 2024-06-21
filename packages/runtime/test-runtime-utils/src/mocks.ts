@@ -38,19 +38,26 @@ import type { IClient } from "@fluidframework/driver-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
-	ISequencedDocumentMessage,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { ITreeEntry, MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	ITreeEntry,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
+import type {
+	IIdCompressorCore,
+	IdCreationRange,
+} from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 	FlushMode,
 	IFluidDataStoreChannel,
 	VisibilityState,
+	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -100,7 +107,11 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	public process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
 		this.handler?.process(message, local, localOpMetadata);
 	}
 
@@ -289,7 +300,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return this.isAllocationMessage(message.contents);
 	}
 
-	private isAllocationMessage(message: any): message is IMockContainerRuntimeIdAllocationMessage {
+	private isAllocationMessage(
+		message: any,
+	): message is IMockContainerRuntimeIdAllocationMessage {
 		return (
 			message !== undefined &&
 			(message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation"
@@ -372,17 +385,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		// and in the order they were allocated
 		const orderedMessages = messagesToResubmit
 			.filter((message) => message.content.type === "idAllocation")
-			.concat(
-				messagesToResubmit.filter((message) => message.content.type !== "idAllocation"),
-			);
+			.concat(messagesToResubmit.filter((message) => message.content.type !== "idAllocation"));
 		orderedMessages.forEach((pendingMessage) => {
 			if (pendingMessage.content.type === "idAllocation") {
 				this.submit(pendingMessage.content, pendingMessage.localOpMetadata);
 			} else {
-				this.dataStoreRuntime.reSubmit(
-					pendingMessage.content,
-					pendingMessage.localOpMetadata,
-				);
+				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			}
 		});
 	}
@@ -711,7 +719,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 /**
  * @alpha
  */
-export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+export class MockAudience
+	extends TypedEventEmitter<IAudienceEvents>
+	implements IAudienceOwner
+{
 	private readonly audienceMembers: Map<string, IClient>;
 	private _currentClientId: string | undefined;
 
@@ -745,7 +756,7 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 			: {
 					clientId: this._currentClientId,
 					client: undefined,
-			  };
+				};
 	}
 
 	public setCurrentClientId(clientId: string): void {
@@ -970,7 +981,11 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
+	public process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
 		});
@@ -1006,12 +1021,6 @@ export class MockFluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;
 	}
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {}
 
 	public async summarize(
 		fullTree?: boolean,
@@ -1049,6 +1058,14 @@ export class MockFluidDataStoreRuntime
 				tree: {},
 			},
 			stats,
+		};
+	}
+
+	public getAttachGCData(
+		telemetryContext?: ITelemetryContext | undefined,
+	): IGarbageCollectionData {
+		return {
+			gcNodes: {},
 		};
 	}
 

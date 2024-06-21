@@ -9,9 +9,9 @@ import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-too
 
 import {
 	EmptyKey,
-	FieldKey,
-	ITreeCursor,
-	JsonableTree,
+	type FieldKey,
+	type ITreeCursor,
+	type JsonableTree,
 	TreeStoredSchemaRepository,
 	initializeForest,
 	moveToDetachedField,
@@ -39,9 +39,9 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import { brand, JsonCompatible } from "../../../util/index.js";
+import { brand, type JsonCompatible } from "../../../util/index.js";
 
-import { testRevisionTagCodec } from "../../utils.js";
+import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
@@ -86,11 +86,7 @@ function bench(
 				before: () => {
 					const cloned = clone(json);
 					assert.deepEqual(cloned, json, "clone() must return an equivalent tree.");
-					assert.notEqual(
-						cloned,
-						json,
-						"clone() must not return the same tree instance.",
-					);
+					assert.notEqual(cloned, json, "clone() must not return the same tree instance.");
 				},
 				benchmarkFn: () => {
 					clone(json);
@@ -103,9 +99,7 @@ function bench(
 				[
 					"MapCursor",
 					() =>
-						cursorForMapTreeNode(
-							mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree)),
-						),
+						cursorForMapTreeNode(mapTreeFromCursor(cursorForJsonableTreeNode(encodedTree))),
 				],
 				[
 					"object-forest Cursor",
@@ -115,6 +109,7 @@ function bench(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
 							testRevisionTagCodec,
+							testIdCompressor,
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -135,13 +130,12 @@ function bench(
 				[
 					"chunked-forest Cursor",
 					() => {
-						const forest = buildChunkedForest(
-							makeTreeChunker(schema, defaultSchemaPolicy),
-						);
+						const forest = buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy));
 						initializeForest(
 							forest,
 							[cursorForJsonableTreeNode(encodedTree)],
 							testRevisionTagCodec,
+							testIdCompressor,
 						);
 						const cursor = forest.allocateCursor();
 						moveToDetachedField(forest, cursor);
@@ -196,7 +190,10 @@ const canada = generateCanada(
 	isInPerformanceTestingMode ? undefined : [2, 10],
 );
 
-function extractCoordinatesFromCanada(cursor: ITreeCursor, calculate: (x: number) => void): void {
+function extractCoordinatesFromCanada(
+	cursor: ITreeCursor,
+	calculate: (x: number) => void,
+): void {
 	cursor.enterField(Canada.SharedTreeFieldKey.features);
 	cursor.enterNode(0);
 	cursor.enterField(EmptyKey);
@@ -304,7 +301,10 @@ function extractAvgValsFromCitm(
 }
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
+const twitter = generateTwitterJsonByByteSize(
+	isInPerformanceTestingMode ? 2500000 : 466906,
+	true,
+);
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
 const citm = isInPerformanceTestingMode
 	? generateCitmJson(2, 2500000)

@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
@@ -39,7 +40,12 @@ async function createMatrixForReconnection(
 
 	let matrix: SharedMatrix;
 	if (summary !== undefined) {
-		matrix = await matrixFactory.load(dataStoreRuntime, id, services, matrixFactory.attributes);
+		matrix = await matrixFactory.load(
+			dataStoreRuntime,
+			id,
+			services,
+			matrixFactory.attributes,
+		);
 	} else {
 		matrix = matrixFactory.create(dataStoreRuntime, id);
 		matrix.connect(services);

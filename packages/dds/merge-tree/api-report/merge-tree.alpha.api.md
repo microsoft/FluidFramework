@@ -4,17 +4,6 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // @alpha (undocumented)
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
