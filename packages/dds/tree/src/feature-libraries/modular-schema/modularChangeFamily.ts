@@ -1024,7 +1024,11 @@ export class ModularChangeFamily
 	): void {
 		const baseChange = crossFieldTable.baseChange;
 		for (const [revision, localId, fieldKey] of crossFieldTable.affectedBaseFields.keys()) {
-			const nodeId = localId !== undefined ? { revision, localId } : undefined;
+			const nodeId =
+				localId !== undefined
+					? normalizeNodeId({ revision, localId }, baseChange.nodeAliases)
+					: undefined;
+
 			const baseFieldChange = fieldMapFromNodeId(
 				baseChange.fieldChanges,
 				baseChange.nodeChanges,
@@ -2843,7 +2847,8 @@ function normalizeFieldId(fieldId: FieldId, nodeAliases: ChangeAtomIdMap<NodeId>
 }
 
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdMap<NodeId>): NodeId {
-	return getFromChangeAtomIdMap(nodeAliases, nodeId) ?? nodeId;
+	const dealiased = getFromChangeAtomIdMap(nodeAliases, nodeId);
+	return dealiased !== undefined ? normalizeNodeId(dealiased, nodeAliases) : nodeId;
 }
 
 function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {
