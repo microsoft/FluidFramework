@@ -47,6 +47,18 @@ browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 	popupElement.textContent =
 		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
 
+	function setTheme(): void {
+		const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+		if (prefersDarkScheme) {
+			document.body.style.backgroundColor = "#292929";
+			document.body.style.color = "#ffffff";
+		} else {
+			document.body.style.backgroundColor = "#ffffff";
+			document.body.style.color = "#292929";
+		}
+	}
+	setTheme();
+
 	document.body.append(popupElement);
 	initializePopupView(popupElement, tabId).then(() => {
 		console.debug(`Rendered popup for tab ${tabId}!`);
