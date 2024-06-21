@@ -21,12 +21,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -50,12 +45,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -79,12 +69,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -108,12 +93,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -159,9 +139,7 @@ export function getQueryString(queryParams: QueryStringType): string {
 	for (const key of Object.keys(queryParams)) {
 		if (queryParams[key] !== undefined) {
 			const startChar = queryString === "" ? "?" : "&";
-			queryString += `${startChar}${key}=${encodeURIComponent(
-				queryParams[key],
-			)}`;
+			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
 		}
 	}
 
