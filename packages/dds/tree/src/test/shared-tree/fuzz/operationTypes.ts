@@ -17,7 +17,6 @@ export interface TreeEdit {
 
 // Currently only node constraints are supported, but more constraint types may be added in the future.
 export interface Constraint {
-	type: "constraint";
 	content: NodeConstraint;
 }
 export interface NodeConstraint {
