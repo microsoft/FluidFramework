@@ -163,7 +163,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> | unknown;
+    getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
