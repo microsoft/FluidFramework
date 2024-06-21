@@ -8,11 +8,11 @@ import path from "path";
 
 import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
+import type { IPublicClientConfig } from "@fluidframework/odsp-doclib-utils/internal";
+import { getOdspCredentials } from "@fluid-private/test-drivers";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
-	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 import Axios from "axios";
@@ -24,10 +24,54 @@ import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
-let odspAuthStage = 0;
 let odspAuthLock: Promise<void> | undefined;
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
+
+function getPublicClientConfig(): IPublicClientConfig {
+	const clientId = process.env.local__testing__clientId;
+	if (!clientId) {
+		// See the "SharePoint" section of webpack-fluid-loader's README for prerequisites to running examples against odsp.
+		throw new Error(
+			"Client ID environment variable not set: local__testing__clientId. Did you run the getkeys tool?",
+		);
+	}
+	return {
+		clientId,
+	};
+}
+
+function getTestTenantCredentials(mode: "spo" | "spo-df"): {
+	tokenConfig: OdspTokenConfig;
+	siteUrl: string;
+	server: string;
+} {
+	const credentials = getOdspCredentials(mode === "spo" ? "odsp" : "odsp-df", 0);
+	// If we wanted to allow some mechanism for user selection, we could add it here.
+	const { username, password } = credentials[0];
+
+	const emailServer = username.substr(username.indexOf("@") + 1);
+
+	let siteUrl: string;
+	if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
+		siteUrl = emailServer;
+	} else {
+		const tenantName = emailServer.substr(0, emailServer.indexOf("."));
+		siteUrl = `https://${tenantName}.sharepoint.com`;
+	}
+
+	const { host } = new URL(siteUrl);
+
+	return {
+		tokenConfig: {
+			type: "password",
+			username,
+			password,
+		},
+		siteUrl,
+		server: host,
+	};
+}
 
 /**
  * @returns A portion of a webpack config needed to add support for the
@@ -77,12 +121,6 @@ export const after = (
 	const config: nconf.Provider = nconf
 		.env({ parseValues: true, separator: "__" })
 		.file(path.join(baseDir, "config.json"));
-	const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
-		type: "browserLogin",
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		navigator: (url: string) => response.redirect(url),
-		redirectUriCallback,
-	});
 
 	// Check that tinylicious is running when it is selected
 	switch (options.mode) {
@@ -150,9 +188,10 @@ export const after = (
 
 	let readyP: ((req: express.Request, res: express.Response) => Promise<boolean>) | undefined;
 	if (options.mode === "spo-df" || options.mode === "spo") {
-		if (!options.forceReauth && options.odspAccessToken) {
-			odspAuthStage = options.pushAccessToken ? 2 : 1;
-		}
+		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+		options.server = server;
+		const clientConfig = getPublicClientConfig();
+
 		readyP = async (req: express.Request, res: express.Response) => {
 			if (req.url === "/favicon.ico") {
 				// ignore these
@@ -171,42 +210,25 @@ export const after = (
 				};
 			});
 			try {
-				const originalUrl = `${getThisOrigin(options)}${req.url}`;
-				if (odspAuthStage >= 2) {
-					if (!options.odspAccessToken || !options.pushAccessToken) {
-						throw Error("Failed to authenticate.");
-					}
-					return true;
-				}
-
-				options.server = getServer(options.mode);
-
-				if (odspAuthStage === 0) {
-					await tokenManager.getOdspTokens(
-						options.server,
-						getMicrosoftConfiguration(),
-						buildTokenConfig(res, async (tokens: IOdspTokens) => {
-							options.odspAccessToken = tokens.accessToken;
-							return originalUrl;
-						}),
-						true /* forceRefresh */,
+				const [odspTokens, pushTokens] = await Promise.all([
+					tokenManager.getOdspTokens(
+						server,
+						clientConfig,
+						tokenConfig,
+						undefined /* forceRefresh */,
 						options.forceReauth,
-					);
-					odspAuthStage = 1;
-					return false;
-				}
-				await tokenManager.getPushTokens(
-					options.server,
-					getMicrosoftConfiguration(),
-					buildTokenConfig(res, async (tokens: IOdspTokens) => {
-						options.pushAccessToken = tokens.accessToken;
-						return originalUrl;
-					}),
-					true /* forceRefresh */,
-					options.forceReauth,
-				);
-				odspAuthStage = 2;
-				return false;
+					),
+					tokenManager.getPushTokens(
+						server,
+						clientConfig,
+						tokenConfig,
+						undefined /* forceRefresh */,
+						options.forceReauth,
+					),
+				]);
+				options.odspAccessToken = odspTokens.accessToken;
+				options.pushAccessToken = pushTokens.accessToken;
+				return true;
 			} finally {
 				assert(lockResolver !== undefined, 0x326 /* lockResolver is undefined */);
 				lockResolver();
@@ -222,17 +244,16 @@ export const after = (
 			return;
 		}
 
-		assert(options.server !== undefined, 0x327 /* options.server is undefined */);
-		await tokenManager.getOdspTokens(
-			options.server,
-			getMicrosoftConfiguration(),
-			buildTokenConfig(res, async (tokens: IOdspTokens) => {
-				options.odspAccessToken = tokens.accessToken;
-				return `${getThisOrigin(options)}/pushLogin`;
-			}),
+		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
+		const tokens = await tokenManager.getOdspTokens(
+			server,
+			getPublicClientConfig(),
+			tokenConfig,
 			undefined /* forceRefresh */,
 			true /* forceReauth */,
 		);
+		options.odspAccessToken = tokens.accessToken;
+		res.redirect(`${getThisOrigin(options)}/pushLogin`);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -243,16 +264,17 @@ export const after = (
 			return;
 		}
 
-		assert(options.server !== undefined, 0x328 /* options.server is undefined */);
+		const { tokenConfig, server } = getTestTenantCredentials(options.mode);
 		options.pushAccessToken = (
 			await tokenManager.getPushTokens(
-				options.server,
-				getMicrosoftConfiguration(),
-				buildTokenConfig(res),
+				server,
+				getPublicClientConfig(),
+				tokenConfig,
 				undefined /* forceRefresh */,
 				true /* forceReauth */,
 			)
 		).accessToken;
+		res.send("Tokens refreshed.");
 	});
 
 	app.get("/file*", (req, res) => {

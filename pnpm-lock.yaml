@@ -4705,6 +4705,9 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../example-utils
+      '@fluid-private/test-drivers':
+        specifier: workspace:~
+        version: link:../../../packages/test/test-drivers
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions

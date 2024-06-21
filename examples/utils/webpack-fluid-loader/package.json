@@ -84,6 +84,7 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
