@@ -118,7 +118,10 @@ export abstract class RestWrapper {
 
 	protected generateQueryString(queryStringValues?: QueryStringType) {
 		if (this.defaultQueryString || queryStringValues) {
-			const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
+			const queryStringMap = {
+				...this.defaultQueryString,
+				...queryStringValues,
+			};
 
 			return getQueryString(queryStringMap);
 		}
@@ -137,6 +140,7 @@ export function getQueryString(queryParams: QueryStringType): string {
 		if (value !== undefined) {
 			const startChar = queryString === "" ? "?" : "&";
 			queryString += `${startChar}${key}=${encodeURIComponent(value)}`;
+			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
 		}
 	}
 

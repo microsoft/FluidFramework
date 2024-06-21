@@ -26,7 +26,10 @@ import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import {
+	RouterliciousErrorTypes,
+	throwR11sNetworkError,
+} from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";
@@ -109,9 +112,10 @@ export function getPropsToLogFromResponse(headers: {
 	return additionalProps;
 }
 
-export class RouterliciousRestWrapper extends RestWrapper {
+class RouterliciousRestWrapper extends RestWrapper {
 	private readonly restLess = new RestLessClient();
 	private token: ITokenResponse | undefined;
+	private readonly retryCounter = new Map<string, number>();
 
 	constructor(
 		logger: ITelemetryLoggerExt,
@@ -131,19 +135,34 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		statusCode: number,
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
+		// Check whether this request has been made before or if it is a retry.
+		const originalRequestUrl = requestConfig.url;
+		const requestKey = `${requestConfig.method ?? ""}|${
+			requestConfig.url ?? ""
+		}`;
+		const requestRetryCount = this.retryCounter.get(requestKey);
+		if (requestRetryCount) {
+			requestConfig.url = `${requestConfig.url}&retryCount=${requestRetryCount}`;
+		}
+
 		const config = {
 			...requestConfig,
 			headers: await this.generateHeaders(requestConfig.headers),
 		};
 
-		const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
-		const fetchRequestConfig = axiosRequestConfigToFetchRequestConfig(translatedConfig);
+		const translatedConfig = this.useRestLess
+			? this.restLess.translate(config)
+			: config;
+		const fetchRequestConfig =
+			axiosRequestConfigToFetchRequestConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
 			const perfStart = performance.now();
 			const result = await fetch(...fetchRequestConfig).catch(async (error) => {
 				// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
-				const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
+				const isNetworkError = ["TypeError", "FetchError"].includes(
+					error?.name,
+				);
 				const errorMessage = isNetworkError
 					? `NetworkError: ${error.message}`
 					: safeStringify(error);
@@ -152,13 +171,23 @@ export class RouterliciousRestWrapper extends RestWrapper {
 				// the error message will start with NetworkError as defined in restWrapper.ts
 				// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 				// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
-				const err = errorMessage.includes("failed, reason: self signed certificate")
-					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
-							driverVersion,
-						})
-					: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
-							driverVersion,
-						});
+				const err = errorMessage.includes(
+					"failed, reason: self signed certificate",
+				)
+					? new NonRetryableError(
+							errorMessage,
+							RouterliciousErrorTypes.sslCertError,
+							{
+								driverVersion,
+							},
+						)
+					: new GenericNetworkError(
+							errorMessage,
+							errorMessage.startsWith("NetworkError"),
+							{
+								driverVersion,
+							},
+						);
 				throw err;
 			});
 			return {
@@ -184,6 +213,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
 		// Success
 		if (response.ok || response.status === statusCode) {
+			// on successful response, remove the entry from the retryCounter map
+			this.retryCounter.delete(requestKey);
 			const result = responseBody as T;
 			const headers = headersToMap(response.headers);
 			return {
@@ -200,7 +231,14 @@ export class RouterliciousRestWrapper extends RestWrapper {
 				},
 			};
 		}
+
 		// Failure
+		// on failure, add the request entry into the retryCounter map to count the subsequent retries
+		this.retryCounter.set(
+			requestKey,
+			requestRetryCount ? requestRetryCount + 1 : 1,
+		);
+
 		if (response.status === 401 && canRetry) {
 			// Refresh Authorization header and retry once
 			this.token = await this.fetchRefreshedToken(true /* refreshToken */);
@@ -210,7 +248,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			// Retry based on retryAfter[Seconds]
 			return new Promise<IR11sResponse<T>>((resolve, reject) =>
 				setTimeout(() => {
-					this.request<T>(config, statusCode).then(resolve).catch(reject);
+					// use the original request URL without the retryCount appended
+					this.request<T>({ ...config, url: originalRequestUrl }, statusCode)
+						.then(resolve)
+						.catch(reject);
 				}, responseBody.retryAfter * 1000),
 			);
 		}
@@ -375,7 +416,9 @@ export function toInstrumentedR11sOrdererTokenFetcher(
 	tokenProvider: ITokenProvider,
 	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
-	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+	const fetchOrdererToken = async (
+		refreshToken?: boolean,
+	): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{
@@ -402,7 +445,9 @@ export function toInstrumentedR11sStorageTokenFetcher(
 	tokenProvider: ITokenProvider,
 	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
-	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+	const fetchStorageToken = async (
+		refreshToken?: boolean,
+	): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			{
