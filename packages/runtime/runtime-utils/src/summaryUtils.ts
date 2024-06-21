@@ -386,7 +386,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
  * @internal
  */
 export function processAttachMessageGCData(
-	snapshot: ITree | null,
+	snapshot: ITree | undefined,
 	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
 ): boolean {
 	const gcDataEntry = snapshot?.entries.find((e) => e.path === gcDataBlobKey);
