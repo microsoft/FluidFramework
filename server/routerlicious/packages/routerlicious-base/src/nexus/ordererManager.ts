@@ -43,7 +43,7 @@ export class OrdererManager implements IOrdererManager {
 		private readonly tenantManager: ITenantManager,
 		private readonly localOrderManager: LocalOrderManager,
 		private readonly kafkaFactory: KafkaOrdererFactory,
-		options: Partial<IOrdererManagerOptions>,
+		options: Partial<IOrdererManagerOptions> = {},
 	) {
 		this.options = { ...DefaultOrdererManagerOptions, ...options };
 	}

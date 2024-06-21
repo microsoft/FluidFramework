@@ -131,6 +131,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_NexusResources": {
+				"forwardCompat": false
+			},
 			"ClassDeclaration_OrdererManager": {
 				"forwardCompat": false
 			}
