@@ -114,6 +114,7 @@ export function getOdspCredentials(
 				? process.env.login__odsp__test__accounts
 				: process.env.login__odspdf__test__accounts;
 		if (loginAccounts === undefined) {
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			const inCi = !!process.env.TF_BUILD;
 			const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
 			throw new Error(

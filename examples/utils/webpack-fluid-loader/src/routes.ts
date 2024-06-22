@@ -6,10 +6,10 @@
 import fs from "fs";
 import path from "path";
 
+import { getOdspCredentials } from "@fluid-private/test-drivers";
 import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IPublicClientConfig } from "@fluidframework/odsp-doclib-utils/internal";
-import { getOdspCredentials } from "@fluid-private/test-drivers";
 import {
 	OdspTokenConfig,
 	OdspTokenManager,
@@ -108,14 +108,14 @@ export const before = (app: express.Application) => {
  */
 export const after = (
 	app: express.Application,
-	server: WebpackDevServer,
+	webpackServer: WebpackDevServer,
 	baseDir: string,
 	env: Partial<RouteOptions>,
 ) => {
 	const options: RouteOptions = {
 		mode: "local",
 		...env,
-		...{ port: server.options.port ?? 8080 },
+		...{ port: webpackServer.options.port ?? 8080 },
 	};
 	const config: nconf.Provider = nconf
 		.env({ parseValues: true, separator: "__" })
