@@ -55,18 +55,8 @@ describe("Outbox", () => {
 		opsResubmitted: number;
 		isReentrant: boolean;
 	}
-	const state: State = {
-		deltaManagerFlushCalls: 0,
-		canSendOps: true,
-		batchesSubmitted: [],
-		batchesCompressed: [],
-		batchesSplit: [],
-		individualOpsSubmitted: [],
-		pendingOpContents: [],
-		opsSubmitted: 0,
-		opsResubmitted: 0,
-		isReentrant: false,
-	};
+	// state will be set to defaults in beforeEach
+	const state: State = {} as any;
 
 	const mockLogger = new MockLogger();
 	const getMockDeltaManager = (): Partial<
@@ -131,6 +121,7 @@ describe("Outbox", () => {
 	});
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
+		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], _clientSequenceNumber: number): void => {
 			batch.forEach(
 				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
@@ -239,11 +230,11 @@ describe("Outbox", () => {
 	beforeEach(() => {
 		state.deltaManagerFlushCalls = 0;
 		state.canSendOps = true;
-		state.batchesSubmitted.splice(0);
-		state.batchesCompressed.splice(0);
-		state.batchesSplit.splice(0);
-		state.individualOpsSubmitted.splice(0);
-		state.pendingOpContents.splice(0);
+		state.batchesSubmitted = [];
+		state.batchesCompressed = [];
+		state.batchesSplit = [];
+		state.individualOpsSubmitted = [];
+		state.pendingOpContents = [];
 		state.opsSubmitted = 0;
 		state.opsResubmitted = 0;
 		state.isReentrant = false;

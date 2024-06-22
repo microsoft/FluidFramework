@@ -126,7 +126,7 @@ export class Outbox {
 	}
 
 	/**
-	 * If we detect that the reference sequence number of the incoming message does not match
+	 * If the reference sequence number of the next message being submitted does not match
 	 * what was already in the batch managers, this means that batching has been interrupted so
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
 	 * message as the first message.
@@ -356,6 +356,7 @@ export class Outbox {
 	 * Sends the batch object to the container context to be sent over the wire.
 	 *
 	 * @param batch - batch to be sent
+	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
 	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
