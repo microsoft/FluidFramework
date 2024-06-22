@@ -452,13 +452,13 @@ describe("Pending State Manager", () => {
 
 		it("has pending messages but no initial messages", () => {
 			const pendingStateManager = createPendingStateManager(undefined);
-			//* Do as a single batch?
+			// let each message be its own batch
 			for (const message of messages) {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify(message.content),
-							referenceSequenceNumber: 0,
+							contents: message.content,
+							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
 					0,
@@ -492,13 +492,13 @@ describe("Pending State Manager", () => {
 
 		it("has both pending messages and initial messages", () => {
 			const pendingStateManager = createPendingStateManager(messages);
-			//* Do as a single batch?
+			// let each message be its own batch
 			for (const message of messages) {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify(message.content),
-							referenceSequenceNumber: 0,
+							contents: message.content,
+							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
 					0,
@@ -595,13 +595,13 @@ describe("Pending State Manager", () => {
 				undefined,
 				"No pending messages should mean no minimum seq number",
 			);
-			//* Do as a single batch?
+			// Each message has a different reference sequence number so let them each be their own batch
 			for (const message of messages) {
 				pendingStateManager.onFlushBatch(
 					[
 						{
-							contents: JSON.stringify(message.content),
-							referenceSequenceNumber: 0,
+							contents: message.content,
+							referenceSequenceNumber: message.referenceSequenceNumber,
 						},
 					],
 					0,

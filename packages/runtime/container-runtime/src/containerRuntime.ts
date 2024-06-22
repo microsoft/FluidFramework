@@ -644,7 +644,9 @@ export const makeLegacySendBatchFn =
 	) =>
 	(batch: IBatch) => {
 		//* TODO: add good test coverage for csn logic (e.g. need a test with batch > 1 msg)
-		let clientSequenceNumber: number | undefined;
+
+		// Default to negative one to match Container.submitBatch behavior
+		let clientSequenceNumber: number = -1;
 		for (const message of batch.content) {
 			clientSequenceNumber = submitFn(
 				MessageType.Operation,
@@ -654,14 +656,10 @@ export const makeLegacySendBatchFn =
 				message.metadata,
 			);
 		}
-		//* Double check this logic / explanation
-		assert(
-			clientSequenceNumber !== undefined,
-			"This implies an empty batch, which shouldn't come to this codepath",
-		);
 
 		deltaManager.flush();
 
+		// Default to -1
 		return clientSequenceNumber;
 	};
 

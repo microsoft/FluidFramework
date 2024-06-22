@@ -30,7 +30,7 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	batchStartCsn?: number; //* Make required?
+	batchStartCsn?: number;
 }
 
 export interface IPendingLocalState {
@@ -197,9 +197,8 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
 		for (const message of batch) {
-			//* TODO: Align naming and just destructure in declaration for pendingMessage
 			const {
-				contents: content = "", //* This case won't ever happen...? Used to use ! operator
+				contents: content = "",
 				referenceSequenceNumber,
 				localOpMetadata,
 				metadata: opMetadata,
@@ -276,11 +275,11 @@ export class PendingStateManager implements IDisposable {
 
 		const messageContent = buildPendingMessageContent(message);
 
-		// Client Sequence Number should match - the server sequences messages in the order received, just like the pending message queue
+		// Client Sequence Number should match per batch
+		// The server sequences messages in the order received, just like the pending message queue
 		if (this.pendingBatchBeginMessage?.clientSequenceNumber !== pendingMessage.batchStartCsn) {
-			//* TODO: Finalize this event
 			this.logger?.sendErrorEvent({
-				eventName: "CsnMismatch",
+				eventName: "PendingClientSequenceNumberMismatch",
 				details: {
 					processingBatch: !!this.pendingBatchBeginMessage,
 					pendingBatchHasCsn: !!pendingMessage.batchStartCsn,
