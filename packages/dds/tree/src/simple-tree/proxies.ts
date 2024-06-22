@@ -25,6 +25,7 @@ import {
 	type MapTreeNode,
 	tryGetMapTreeNode,
 	typeNameSymbol,
+	isTreeValue,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
@@ -59,23 +60,34 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		case FieldKinds.required: {
 			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>;
 
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(asValue.boxedContent);
+			const maybeUnboxedContent = asValue.content;
+			if (maybeUnboxedContent === undefined) {
+				return undefined;
+			}
+			if (isTreeValue(maybeUnboxedContent)) {
+				return maybeUnboxedContent;
+			}
+
+			return getOrCreateNodeProxy(maybeUnboxedContent);
 		}
 		case FieldKinds.optional: {
 			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>;
 
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
+			const maybeUnboxedContent = asValue.content;
+			if (maybeUnboxedContent === undefined) {
+				return undefined;
+			}
+			if (isTreeValue(maybeUnboxedContent)) {
+				return maybeUnboxedContent;
+			}
 
-			const maybeContent = asValue.boxedContent;
+			return getOrCreateNodeProxy(maybeUnboxedContent);
 
-			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
-			// root field is a special case where the field is always present (even if empty).
-			return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
+			// const maybeContent = asValue.boxedContent;
+
+			// // Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
+			// // root field is a special case where the field is always present (even if empty).
+			// return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {

@@ -16,6 +16,7 @@ import {
 	writeWideSimpleTreeNewValue,
 	type WideTreeNode,
 } from "./benchmarkUtilities.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -80,6 +81,322 @@ describe("SimpleTree benchmarks", () => {
 				},
 			});
 		}
+
+		describe.only("Access to leaves", () => {
+			describe("Optional object property", () => {
+				const factory = new SchemaFactory("test");
+				class MyInnerSchema extends factory.object("inner", {
+					value: factory.optional(factory.number),
+				}) {}
+				class MySchema extends factory.object("root", {
+					value: factory.optional(factory.number),
+					leafUnion: factory.optional([factory.number, factory.string]),
+					complexUnion: factory.optional([factory.number, MyInnerSchema]),
+				}) {}
+				let tree: MySchema;
+				let readNumber: number | undefined;
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from leaf`,
+					before: () => {
+						tree = new MySchema({ value: 1 });
+					},
+					benchmarkFn: () => {
+						readNumber = tree.value;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of two leaves`,
+					before: () => {
+						tree = new MySchema({ leafUnion: 1 });
+					},
+					benchmarkFn: () => {
+						readNumber = tree.leafUnion as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of leaf and non-leaf`,
+					before: () => {
+						tree = new MySchema({ complexUnion: 1 });
+					},
+					benchmarkFn: () => {
+						readNumber = tree.complexUnion as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read undefined from leaf`,
+					before: () => {
+						tree = new MySchema({});
+					},
+					benchmarkFn: () => {
+						readNumber = tree.value;
+					},
+					after: () => {
+						assert.equal(readNumber, undefined);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read undefined from union of two leaves`,
+					before: () => {
+						tree = new MySchema({});
+					},
+					benchmarkFn: () => {
+						readNumber = tree.leafUnion as number;
+					},
+					after: () => {
+						assert.equal(readNumber, undefined);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read undefined from union of leaf and non-leaf`,
+					before: () => {
+						tree = new MySchema({});
+					},
+					benchmarkFn: () => {
+						readNumber = tree.complexUnion as number;
+					},
+					after: () => {
+						assert.equal(readNumber, undefined);
+					},
+				});
+			});
+
+			describe("Required object property", () => {
+				const factory = new SchemaFactory("test");
+				class MyInnerSchema extends factory.object("inner", {
+					value: factory.number,
+				}) {}
+				class MySchema extends factory.object("root", {
+					value: factory.number,
+					leafUnion: [factory.number, factory.string],
+					complexUnion: [factory.number, MyInnerSchema],
+				}) {}
+				let tree: MySchema;
+				let readNumber: number | undefined;
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from leaf`,
+					before: () => {
+						tree = new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 });
+					},
+					benchmarkFn: () => {
+						readNumber = tree.value;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of two leaves`,
+					before: () => {
+						tree = new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 });
+					},
+					benchmarkFn: () => {
+						readNumber = tree.leafUnion as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of leaf and non-leaf`,
+					before: () => {
+						tree = new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 });
+					},
+					benchmarkFn: () => {
+						readNumber = tree.complexUnion as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+			});
+
+			describe("Map keys", () => {
+				const factory = new SchemaFactory("test");
+				class MyInnerSchema extends factory.object("inner", {
+					value: factory.number,
+				}) {}
+				class NumberMap extends factory.map("root", [factory.number]) {}
+				let treeWithMapOfNumber: NumberMap;
+				class NumberStringMap extends factory.map("root", [factory.number, factory.string]) {}
+				let treeWithMapOfNumberOrString: NumberStringMap;
+				class NumberObjectMap extends factory.map("root", [factory.number, MyInnerSchema]) {}
+				let treeWithMapOfNumberOrObject: NumberObjectMap;
+				let readNumber: number | undefined;
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from leaf`,
+					before: () => {
+						treeWithMapOfNumber = new NumberMap([["a", 1]]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithMapOfNumber.get("a");
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of two leaves`,
+					before: () => {
+						treeWithMapOfNumberOrString = new NumberStringMap([["a", 1]]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithMapOfNumberOrString.get("a") as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of leaf and non-leaf`,
+					before: () => {
+						treeWithMapOfNumberOrObject = new NumberObjectMap([["a", 1]]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithMapOfNumberOrObject.get("a") as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read undefined from leaf`,
+					before: () => {
+						treeWithMapOfNumber = new NumberMap([["a", 1]]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithMapOfNumber.get("b");
+					},
+					after: () => {
+						assert.equal(readNumber, undefined);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read undefined from union of two leaves`,
+					before: () => {
+						treeWithMapOfNumberOrString = new NumberStringMap([["a", 1]]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithMapOfNumberOrString.get("b") as number;
+					},
+					after: () => {
+						assert.equal(readNumber, undefined);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read undefined from union of leaf and non-leaf`,
+					before: () => {
+						treeWithMapOfNumberOrObject = new NumberObjectMap([["a", 1]]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithMapOfNumberOrObject.get("b") as number;
+					},
+					after: () => {
+						assert.equal(readNumber, undefined);
+					},
+				});
+			});
+
+			describe("Array entries", () => {
+				const factory = new SchemaFactory("test");
+				class MyInnerSchema extends factory.object("inner", {
+					value: factory.number,
+				}) {}
+				class NumberArray extends factory.array("root", [factory.number]) {}
+				let treeWithArrayOfNumber: NumberArray;
+				class NumberStringArray extends factory.array("root", [
+					factory.number,
+					factory.string,
+				]) {}
+				let treeWithArrayOfNumberOrString: NumberStringArray;
+				class NumberObjectArray extends factory.array("root", [
+					factory.number,
+					MyInnerSchema,
+				]) {}
+				let treeWithArrayOfNumberOrObject: NumberObjectArray;
+				let readNumber: number | undefined;
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from leaf`,
+					before: () => {
+						treeWithArrayOfNumber = new NumberArray([1]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithArrayOfNumber[0];
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of two leaves`,
+					before: () => {
+						treeWithArrayOfNumberOrString = new NumberStringArray([1]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithArrayOfNumberOrString[0] as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Read value from union of leaf and non-leaf`,
+					before: () => {
+						treeWithArrayOfNumberOrObject = new NumberObjectArray([1]);
+					},
+					benchmarkFn: () => {
+						readNumber = treeWithArrayOfNumberOrObject[0] as number;
+					},
+					after: () => {
+						assert.equal(readNumber, 1);
+					},
+				});
+			});
+		});
 	});
 
 	describe(`Edit SimpleTree`, () => {
