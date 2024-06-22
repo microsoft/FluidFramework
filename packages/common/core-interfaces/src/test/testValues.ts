@@ -55,6 +55,9 @@ export const objectWithString = { string: "" };
 export const objectWithSymbol = { symbol: Symbol("objectSymbol") };
 export const objectWithBigint = { bigint: 0n };
 export const objectWithFunction = { function: (): void => {} };
+export const objectWithStringOrSymbol = {
+	stringOrSymbol: Symbol("objectSymbol") as string | symbol,
+};
 export const objectWithBigintOrString = { bigintOrString: "not bigint" as string | bigint };
 export const objectWithFunctionOrSymbol = {
 	functionOrSymbol: ((): void => {}) as (() => void) | symbol,
@@ -212,10 +215,10 @@ export const objectWithAlternatingRecursion: ObjectWithAlternatingRecursionA = {
 	},
 };
 
-type ObjectWithSymbolAndRecursion = {
-	recurse: ObjectWithSymbolAndRecursion | symbol;
+export type ObjectWithSymbolOrRecursion = {
+	recurse: ObjectWithSymbolOrRecursion | symbol;
 };
-export const objectWithSymbolAndRecursion: ObjectWithSymbolAndRecursion = {
+export const objectWithSymbolOrRecursion: ObjectWithSymbolOrRecursion = {
 	recurse: { recurse: Symbol("stop") },
 };
 
@@ -287,20 +290,20 @@ export class ClassWithPublicMethod {
 	}
 }
 export const classInstanceWithPublicMethod = new ClassWithPublicMethod();
-export class ClassWithPublicGetter {
-	public public = "public";
-	public get secret(): number {
-		return this.public.length;
-	}
-}
-export const classInstanceWithPublicGetter = new ClassWithPublicGetter();
-export class ClassWithPublicSetter {
-	public public = "public";
-	public set secret(v: string) {
-		this.public = v;
-	}
-}
-export const classInstanceWithPublicSetter = new ClassWithPublicSetter();
+// export class ClassWithPublicGetter {
+// 	public public = "public";
+// 	public get secret(): number {
+// 		return this.public.length;
+// 	}
+// }
+// export const classInstanceWithPublicGetter = new ClassWithPublicGetter();
+// export class ClassWithPublicSetter {
+// 	public public = "public";
+// 	public set secret(v: string) {
+// 		this.public = v;
+// 	}
+// }
+// export const classInstanceWithPublicSetter = new ClassWithPublicSetter();
 // #endregion
 
 // #endregion

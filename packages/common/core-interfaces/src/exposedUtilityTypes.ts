@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonTypeWith, NonNullJsonObject } from "./jsonType.js";
+import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
 
 /**
  * Returns non-symbol keys for optional properties of an object type.
@@ -196,13 +196,28 @@ export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
 			: /* non-object => T as is */ T;
 
 /**
- * Basic test for type equality ignoring differentiation between:
- * - `any` versus `unknown`
- * - `object` versus `{}`
+ * Test for type equality
+ *
+ * @returns IfSame if identical and IfDifferent otherwise.
+ *
+ * Implementation derived from https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
  *
  * @beta
  */
-export type IsSameType<T, U> = [T] extends [U] ? ([U] extends [T] ? true : false) : false;
+export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X
+	? 1
+	: 2) extends <T>() => T extends Y ? 1 : 2
+	? IfSame
+	: IfDifferent;
+
+/**
+ * Test for type equality
+ *
+ * @returns `true` if identical and `false` otherwise.
+ *
+ * @beta
+ */
+export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
 
 /**
  * Test for non-public properties (class instance type)
@@ -212,7 +227,7 @@ export type IsSameType<T, U> = [T] extends [U] ? ([U] extends [T] ? true : false
  * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type HasNonPublicProperties<T> = IsSameType<T, ReplaceRecursionWith<T, any>>;
+export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
 
 /**
  * Sentinel type for use when marking points of recursion (in a recursive type).
@@ -258,15 +273,15 @@ export type JsonDeserializedImpl<T, TReplaced> = /* test for 'any' */ boolean ex
 				TNoRecursion,
 				JsonDeserializedFilter<TNoRecursion, TReplaced, 0>
 			> extends true
-			? /* same => test for non-public properties (class instance type) */
+			? /* same (no filtering needed) => test for non-public properties (class instance type) */
 				HasNonPublicProperties<T> extends true
-				? /* no hidden properties => deserialized T is just T */ T
-				: /* hidden props => test if array properties that are the problem */ T extends readonly (infer _)[]
+				? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
 					? /* array => */ {
 							/* use homomorphic mapped type to preserve tuple type */
 							[K in keyof T]: JsonDeserializedFilter<T[K], TReplaced>;
 						} // JsonDeserializedFilter<T, TReplaced>
 					: /* not array => error */ DeserializationErrorPerNonPublicProperties
+				: /* no hidden properties => deserialized T is just T */ T
 			: /* filtering is needed => */ JsonDeserializedFilter<T, TReplaced>
 		: /* unreachable else for infer */ never;
 
@@ -331,7 +346,7 @@ export type JsonDeserializedFilter<
 								>;
 							}
 						: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
-							? /* `object` => */ NonNullJsonObject
+							? /* `object` => */ NonNullJsonObjectWith<TReplaced>
 							: /* test for enum like types */ IsEnumLike<T> extends true
 								? /* enum or similar simple type (return as-is) => */ T
 								: /* property bag => */ FlattenIntersection<

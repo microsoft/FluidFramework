@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import type { DeserializationErrorPerNonPublicProperties } from "../exposedUtilityTypes.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
-import type { JsonTypeWith, NonNullJsonObject } from "../jsonType.js";
+import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
-import type { ObjectWithNumberOrUndefined, ObjectWithOptionalNumber } from "./testValues.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 import {
 	boolean,
 	number,
@@ -42,6 +42,7 @@ import {
 	objectWithFunction,
 	objectWithBigintOrString,
 	objectWithFunctionOrSymbol,
+	objectWithStringOrSymbol,
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalBigint,
@@ -65,6 +66,7 @@ import {
 	objectWithRecursion,
 	objectWithEmbeddedRecursion,
 	objectWithAlternatingRecursion,
+	objectWithSymbolOrRecursion,
 	simpleJson,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
@@ -79,26 +81,6 @@ import {
 	ClassWithPublicData,
 	ClassWithPublicMethod,
 } from "./testValues.js";
-
-/**
- * Type filter to determine if T is or contains `any` type.
- * Use by checking if result `satisfied never`.
- */
-type ContainsAny<T, TRecursion = never> = boolean extends (T extends never ? true : false)
-	? true
-	: T extends TRecursion
-		? never
-		: T extends object
-			? T extends readonly (infer A)[]
-				? ContainsAny<A, TRecursion | T>
-				: {
-						[K in keyof T]-?: ContainsAny<Exclude<Required<T>[K], undefined>, TRecursion | T>;
-					}[keyof T]
-			: never;
-
-function ContainsAny<T>(_: T): ContainsAny<T> {
-	return undefined as ContainsAny<T>;
-}
 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
@@ -174,193 +156,177 @@ describe("JsonDeserialized", () => {
 	describe("positive compilation tests", () => {
 		describe("supported primitive types are preserved", () => {
 			it("`boolean`", () => {
-				passThru(boolean) satisfies boolean;
+				const resultRead = passThru(boolean);
+				assertIdenticalTypes(resultRead, boolean);
 			});
 			it("`number`", () => {
-				passThru(number) satisfies number;
+				const resultRead = passThru(number);
+				assertIdenticalTypes(resultRead, number);
 			});
 			it("`string`", () => {
-				passThru(string) satisfies string;
+				const resultRead = passThru(string);
+				assertIdenticalTypes(resultRead, string);
 			});
 			it("numeric enum", () => {
-				passThru(numericEnumValue) satisfies NumericEnum;
+				const resultRead = passThru(numericEnumValue);
+				assertIdenticalTypes(resultRead, numericEnumValue);
 			});
 			it("string enum", () => {
-				passThru(stringEnumValue) satisfies StringEnum;
+				const resultRead = passThru(stringEnumValue);
+				assertIdenticalTypes(resultRead, stringEnumValue);
 			});
 			it("const heterogenous enum", () => {
-				passThru(constHeterogenousEnumValue) satisfies ConstHeterogenousEnum;
+				const resultRead = passThru(constHeterogenousEnumValue);
+				assertIdenticalTypes(resultRead, constHeterogenousEnumValue);
 			});
 			it("computed enum", () => {
-				passThru(computedEnumValue) satisfies ComputedEnum;
+				const resultRead = passThru(computedEnumValue);
+				assertIdenticalTypes(resultRead, computedEnumValue);
 			});
 		});
 
 		describe("supported literal types are preserved", () => {
 			it("`true`", () => {
-				passThru(true) satisfies true;
+				const resultRead = passThru(true as const);
+				assertIdenticalTypes(resultRead, true);
 			});
 			it("`false`", () => {
-				passThru(false) satisfies false;
+				const resultRead = passThru(false as const);
+				assertIdenticalTypes(resultRead, false);
 			});
 			it("`0`", () => {
-				passThru(0) satisfies 0;
+				const resultRead = passThru(0 as const);
+				assertIdenticalTypes(resultRead, 0);
 			});
 			it('"string"', () => {
-				passThru("string") satisfies "string";
+				const resultRead = passThru("string" as const);
+				assertIdenticalTypes(resultRead, "string");
 			});
 			it("`null`", () => {
 				// eslint-disable-next-line unicorn/no-null
-				passThru(null) satisfies null;
+				const resultRead = passThru(null);
+				// eslint-disable-next-line unicorn/no-null
+				assertIdenticalTypes(resultRead, null);
 			});
 			it("object with literals", () => {
-				const objectRead = passThru(objectWithLiterals) satisfies typeof objectWithLiterals;
+				const resultRead = passThru(objectWithLiterals);
+				// TODO FIX?: `readonly` attribute is lost
+				assertIdenticalTypes(resultRead, objectWithLiterals);
+				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
+				// we can check assignability.
+				resultRead satisfies typeof objectWithLiterals;
 				assert.ok(
 					objectWithLiterals instanceof Object,
 					"objectWithLiterals is at least a plain Object",
 				);
 				assert.ok(
-					objectRead instanceof objectWithLiterals.constructor,
+					resultRead instanceof objectWithLiterals.constructor,
 					"objectRead is same type as objectWithLiterals (plain Object)",
 				);
 			});
 			it("array of literals", () => {
 				const resultRead = passThru(arrayOfLiterals);
-				resultRead satisfies typeof arrayOfLiterals;
-				ContainsAny(resultRead) satisfies never;
+				assertIdenticalTypes(resultRead, arrayOfLiterals);
 			});
 			it("tuple of literals", () => {
 				const resultRead = passThru(tupleWithLiterals);
-				resultRead satisfies typeof tupleWithLiterals;
-				ContainsAny(resultRead) satisfies never;
+				assertIdenticalTypes(resultRead, tupleWithLiterals);
 			});
 			it("specific numeric enum value", () => {
-				passThru(NumericEnum.two) satisfies NumericEnum.two;
+				const resultRead = passThru(NumericEnum.two as const);
+				assertIdenticalTypes(resultRead, NumericEnum.two);
 			});
 			it("specific string enum value", () => {
-				passThru(StringEnum.b) satisfies StringEnum.b;
+				const resultRead = passThru(StringEnum.b as const);
+				assertIdenticalTypes(resultRead, StringEnum.b);
 			});
 			it("specific const heterogenous enum value", () => {
-				passThru(ConstHeterogenousEnum.zero) satisfies ConstHeterogenousEnum.zero;
+				const resultRead = passThru(ConstHeterogenousEnum.zero as const);
+				assertIdenticalTypes(resultRead, ConstHeterogenousEnum.zero);
 			});
 			it("specific computed enum value", () => {
-				passThru(
-					// This assertion is necessary; otherwise, typescript will just use `ComputedEnum`
-					// as type for ComputedEnum.computed.
-					// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-					ComputedEnum.computed as ComputedEnum.computed,
-				) satisfies ComputedEnum.computed;
+				const resultRead = passThru(ComputedEnum.computed as const);
+				assertIdenticalTypes(resultRead, ComputedEnum.computed);
 			});
 		});
 
-		describe("supported object types", () => {
+		describe("fully supported object types are preserved", () => {
 			it("empty object", () => {
 				const resultRead = passThru(emptyObject);
-				ContainsAny(resultRead) satisfies never;
-				emptyObject satisfies typeof resultRead;
-				resultRead satisfies typeof emptyObject;
+				assertIdenticalTypes(resultRead, emptyObject);
 			});
 
-			it("with `boolean`", () => {
+			it("object with `boolean`", () => {
 				const resultRead = passThru(objectWithBoolean);
-				ContainsAny(resultRead) satisfies never;
-				objectWithBoolean satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithBoolean;
+				assertIdenticalTypes(resultRead, objectWithBoolean);
 			});
-			it("with `number`", () => {
+			it("object with `number`", () => {
 				const resultRead = passThru(objectWithNumber);
-				ContainsAny(resultRead) satisfies never;
-				objectWithNumber satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithNumber;
+				assertIdenticalTypes(resultRead, objectWithNumber);
 			});
-			it("with `string`", () => {
+			it("object with `string`", () => {
 				const resultRead = passThru(objectWithString);
-				ContainsAny(resultRead) satisfies never;
-				objectWithString satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithString;
-			});
-
-			it("with `readonly`", () => {
-				const resultRead = passThru(objectWithReadonly);
-				ContainsAny(resultRead) satisfies never;
-				objectWithReadonly satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithReadonly;
-			});
-
-			it("with getter implemented via value", () => {
-				const resultRead = passThru(objectWithGetterViaValue);
-				ContainsAny(resultRead) satisfies never;
-				objectWithGetterViaValue satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithGetterViaValue;
-			});
-
-			it("with setter implemented via value", () => {
-				const resultRead = passThru(objectWithSetterViaValue);
-				ContainsAny(resultRead) satisfies never;
-				objectWithSetterViaValue satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithSetterViaValue;
-			});
-
-			it("with matched getter and setter implemented via value", () => {
-				const resultRead = passThru(objectWithMatchedGetterAndSetterPropertyViaValue);
-				ContainsAny(resultRead) satisfies never;
-				objectWithMatchedGetterAndSetterPropertyViaValue satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithMatchedGetterAndSetterPropertyViaValue;
-			});
-
-			it("with mismatched getter and setter implemented via value", () => {
-				const resultRead = passThru(objectWithMismatchedGetterAndSetterPropertyViaValue);
-				ContainsAny(resultRead) satisfies never;
-				objectWithMismatchedGetterAndSetterPropertyViaValue satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithMismatchedGetterAndSetterPropertyViaValue;
-				// @ts-expect-error 'number' is not assignable to type 'string'
-				objectWithMismatchedGetterAndSetterPropertyViaValue.property = -1;
-				// @ts-expect-error 'number' is not assignable to type 'string'
-				resultRead.property = -1;
+				assertIdenticalTypes(resultRead, objectWithString);
 			});
 
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
-				ContainsAny(resultRead) satisfies never;
-				objectWithPossibleRecursion satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithPossibleRecursion;
+				assertIdenticalTypes(resultRead, objectWithPossibleRecursion);
 			});
-
 			it("object with optional type recursion", () => {
 				const resultRead = passThru(objectWithRecursion);
-				ContainsAny(resultRead) satisfies never;
-				objectWithRecursion satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithRecursion;
+				assertIdenticalTypes(resultRead, objectWithRecursion);
 			});
-
 			it("object with deep type recursion", () => {
 				const resultRead = passThru(objectWithEmbeddedRecursion);
-				ContainsAny(resultRead) satisfies never;
-				objectWithEmbeddedRecursion satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithEmbeddedRecursion;
+				assertIdenticalTypes(resultRead, objectWithEmbeddedRecursion);
 			});
-
 			it("object with alternating type recursion", () => {
 				const resultRead = passThru(objectWithAlternatingRecursion);
-				ContainsAny(resultRead) satisfies never;
-				objectWithAlternatingRecursion satisfies typeof resultRead;
-				resultRead satisfies typeof objectWithAlternatingRecursion;
+				assertIdenticalTypes(resultRead, objectWithAlternatingRecursion);
 			});
 
 			it("simple json (`JsonTypeWith<never>`)", () => {
 				const resultRead = passThru(simpleJson);
-				ContainsAny(resultRead) satisfies never;
-				simpleJson satisfies typeof resultRead;
-				resultRead satisfies typeof simpleJson;
+				assertIdenticalTypes(resultRead, simpleJson);
 			});
 
-			it("non-const enum are supported as themselves", () => {
+			it("non-const enum", () => {
 				// Note: typescript doesn't do a great job checking that a filtered type satisfies an enum
 				// type. The numeric indices are not checked. So far most robust inspection is manually
 				// after any change.
-				passThru(NumericEnum) satisfies typeof NumericEnum;
-				passThru(StringEnum) satisfies typeof StringEnum;
-				passThru(ComputedEnum) satisfies typeof ComputedEnum;
+				const resultNumericRead = passThru(NumericEnum);
+				assertIdenticalTypes(resultNumericRead, NumericEnum);
+				const resultStringRead = passThru(StringEnum);
+				assertIdenticalTypes(resultStringRead, StringEnum);
+				const resultComputedRead = passThru(ComputedEnum);
+				assertIdenticalTypes(resultComputedRead, ComputedEnum);
+			});
+
+			it("object with `readonly`", () => {
+				const resultRead = passThru(objectWithReadonly);
+				assertIdenticalTypes(resultRead, objectWithReadonly);
+			});
+
+			it("object with getter implemented via value", () => {
+				const resultRead = passThru(objectWithGetterViaValue);
+				assertIdenticalTypes(resultRead, objectWithGetterViaValue);
+			});
+			it("object with setter implemented via value", () => {
+				const resultRead = passThru(objectWithSetterViaValue);
+				assertIdenticalTypes(resultRead, objectWithSetterViaValue);
+			});
+			it("object with matched getter and setter implemented via value", () => {
+				const resultRead = passThru(objectWithMatchedGetterAndSetterPropertyViaValue);
+				assertIdenticalTypes(resultRead, objectWithMatchedGetterAndSetterPropertyViaValue);
+			});
+			it("object with mismatched getter and setter implemented via value", () => {
+				const resultRead = passThru(objectWithMismatchedGetterAndSetterPropertyViaValue);
+				assertIdenticalTypes(resultRead, objectWithMismatchedGetterAndSetterPropertyViaValue);
+				// @ts-expect-error 'number' is not assignable to type 'string'
+				objectWithMismatchedGetterAndSetterPropertyViaValue.property = -1;
+				// @ts-expect-error 'number' is not assignable to type 'string'
+				resultRead.property = -1;
 			});
 
 			// Class instances are indistinguishable from general objects by type checking.
@@ -370,7 +336,8 @@ describe("JsonDeserialized", () => {
 				it("with public data (propagated)", () => {
 					const instanceRead = passThru(classInstanceWithPublicData, {
 						public: "public",
-					}) satisfies typeof classInstanceWithPublicData;
+					});
+					assertIdenticalTypes(instanceRead, classInstanceWithPublicData);
 					assert.ok(
 						classInstanceWithPublicData instanceof ClassWithPublicData,
 						"classInstanceWithPublicData is an instance of ClassWithPublicData",
@@ -380,11 +347,162 @@ describe("JsonDeserialized", () => {
 						"instanceRead is not an instance of ClassWithPublicData",
 					);
 				});
+			});
+
+			describe("object with optional property (remains optional)", () => {
+				it("without property", () => {
+					const resultRead = passThru(objectWithOptionalNumberNotPresent);
+					assertIdenticalTypes(resultRead, objectWithOptionalNumberNotPresent);
+				});
+				it("with undefined value (property is removed in value)", () => {
+					const resultRead = passThru(objectWithOptionalNumberUndefined, {});
+					assertIdenticalTypes(resultRead, objectWithOptionalNumberUndefined);
+				});
+				it("with defined value", () => {
+					const resultRead = passThru(objectWithOptionalNumberDefined);
+					assertIdenticalTypes(resultRead, objectWithOptionalNumberDefined);
+				});
+			});
+		});
+
+		describe("partially supported object types are modified", () => {
+			describe("fully unsupported properties are removed", () => {
+				it("object with exactly `bigint`", () => {
+					const resultRead = passThruThrows(
+						objectWithBigint,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `bigint` missing
+					assertIdenticalTypes(resultRead, objectWithBigint);
+				});
+				it("object with exactly `symbol`", () => {
+					const resultRead = passThru(objectWithSymbol, {});
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `symbol` missing
+					assertIdenticalTypes(resultRead, objectWithSymbol);
+				});
+				it("object with exactly `function`", () => {
+					const resultRead = passThru(objectWithFunction, {});
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `function` missing
+					assertIdenticalTypes(resultRead, objectWithFunction);
+				});
+				it("object with exactly `Function | symbol`", () => {
+					const resultRead = passThru(objectWithFunctionOrSymbol, {});
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `functionOrSymbol` missing
+					assertIdenticalTypes(resultRead, objectWithFunctionOrSymbol);
+				});
+				it("object with required exact `undefined`", () => {
+					const resultRead = passThru(objectWithUndefined, {});
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `undef` property (required) should no longer exist
+					resultRead satisfies typeof objectWithUndefined;
+				});
+				it("object with optional exact `undefined`", () => {
+					const resultRead = passThru(objectWithOptionalUndefined, {});
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `undef` property (required) should no longer exist
+					assertIdenticalTypes(resultRead, objectWithOptionalUndefined);
+				});
+				it("object with exactly `never`", () => {
+					const resultRead = passThru(objectWithNever);
+					assertIdenticalTypes(resultRead, {});
+					// @ts-expect-error `never` property (type never) should not be preserved
+					resultRead satisfies typeof objectWithNever;
+				});
+			});
+
+			describe("partially unsupported properties become optional for those supported", () => {
+				describe("object with `undefined`", () => {
+					it("with undefined value", () => {
+						const resultRead = passThru(objectWithNumberOrUndefinedUndefined, {});
+						assertIdenticalTypes(
+							resultRead,
+							createInstanceOf<{
+								numOrUndef?: number;
+							}>(),
+						);
+					});
+
+					it("with defined value", () => {
+						const resultRead = passThru(objectWithNumberOrUndefinedNumbered);
+						assertIdenticalTypes(
+							resultRead,
+							createInstanceOf<{
+								numOrUndef?: number;
+							}>(),
+						);
+					});
+				});
+
+				// TODO FIX: make properties optional
+				it("object with exactly `string | symbol`", () => {
+					const resultRead = passThru(
+						objectWithStringOrSymbol,
+						// value is a symbol; so removed.
+						{},
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ stringOrSymbol?: string }>());
+					// @ts-expect-error { stringOrSymbol: string | symbol; } does not satisfy { stringOrSymbol?: string; }
+					objectWithStringOrSymbol satisfies typeof resultRead;
+				});
+				it("object with exactly `bigint | string`", () => {
+					const resultRead = passThru(
+						objectWithBigintOrString,
+						// value is a string; so no runtime error.
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ bigintOrString?: string }>());
+					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString?: string }
+					objectWithBigintOrString satisfies typeof resultRead;
+				});
+				it("object with recursion and `symbol` unrolls 10 times and then has generic Json", () => {
+					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							recurse?: {
+								recurse?: {
+									recurse?: {
+										recurse?: {
+											recurse?: {
+												recurse?: {
+													recurse?: {
+														recurse?: {
+															recurse?: {
+																recurse?: {
+																	recurse?: JsonTypeWith<never>;
+																};
+															};
+														};
+													};
+												};
+											};
+										};
+									};
+								};
+							};
+						}>(),
+					);
+				});
+			});
+
+			// Class instances are indistinguishable from general objects by type checking.
+			// They are considered supported despite loss of instanceof support after
+			// deserialization.
+			describe("class instance methods and non-public properties are removed", () => {
 				it("with public method (removes method)", () => {
 					const instanceRead = passThru(classInstanceWithPublicMethod, {
 						public: "public",
-						// @ts-expect-error getSecret is missing, but required
-					}) satisfies typeof classInstanceWithPublicMethod;
+					});
+					assertIdenticalTypes(instanceRead, {
+						public: "public",
+					});
+					// @ts-expect-error getSecret is missing, but required
+					instanceRead satisfies typeof classInstanceWithPublicMethod;
+					// @ts-expect-error getSecret is missing, but required
+					assertIdenticalTypes(instanceRead, classInstanceWithPublicMethod);
 					assert.ok(
 						classInstanceWithPublicMethod instanceof ClassWithPublicMethod,
 						"classInstanceWithPublicMethod is an instance of ClassWithPublicMethod",
@@ -399,8 +517,14 @@ describe("JsonDeserialized", () => {
 					it("with private method (removes method)", () => {
 						const instanceRead = passThru(classInstanceWithPrivateMethod, {
 							public: "public",
-							// @ts-expect-error getSecret is missing, but required
-						}) satisfies typeof classInstanceWithPrivateMethod;
+						});
+						assertIdenticalTypes(instanceRead, {
+							public: "public",
+						});
+						// @ts-expect-error getSecret is missing, but required
+						instanceRead satisfies typeof classInstanceWithPrivateMethod;
+						// @ts-expect-error getSecret is missing, but required
+						assertIdenticalTypes(instanceRead, classInstanceWithPrivateMethod);
 						assert.ok(
 							classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
 							"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
@@ -413,8 +537,14 @@ describe("JsonDeserialized", () => {
 					it("with private getter (removes getter)", () => {
 						const instanceRead = passThru(classInstanceWithPrivateGetter, {
 							public: "public",
-							// @ts-expect-error secret is missing, but required
-						}) satisfies typeof classInstanceWithPrivateGetter;
+						});
+						assertIdenticalTypes(instanceRead, {
+							public: "public",
+						});
+						// @ts-expect-error secret is missing, but required
+						instanceRead satisfies typeof classInstanceWithPrivateGetter;
+						// @ts-expect-error secret is missing, but required
+						assertIdenticalTypes(instanceRead, classInstanceWithPrivateGetter);
 						assert.ok(
 							classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
 							"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
@@ -427,8 +557,14 @@ describe("JsonDeserialized", () => {
 					it("with private setter (removes setter)", () => {
 						const instanceRead = passThru(classInstanceWithPrivateSetter, {
 							public: "public",
-							// @ts-expect-error secret is missing, but required
-						}) satisfies typeof classInstanceWithPrivateSetter;
+						});
+						assertIdenticalTypes(instanceRead, {
+							public: "public",
+						});
+						// @ts-expect-error secret is missing, but required
+						instanceRead satisfies typeof classInstanceWithPrivateSetter;
+						// @ts-expect-error secret is missing, but required
+						assertIdenticalTypes(instanceRead, classInstanceWithPrivateSetter);
 						assert.ok(
 							classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
 							"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
@@ -442,8 +578,14 @@ describe("JsonDeserialized", () => {
 						const instanceRead = passThru(classInstanceWithPrivateData, {
 							public: "public",
 							secret: 0,
-							// @ts-expect-error secret is missing, but required
-						}) satisfies typeof classInstanceWithPrivateData;
+						});
+						assertIdenticalTypes(instanceRead, {
+							public: "public",
+						});
+						// @ts-expect-error secret is missing, but required
+						instanceRead satisfies typeof classInstanceWithPrivateData;
+						// @ts-expect-error secret is missing, but required
+						assertIdenticalTypes(instanceRead, classInstanceWithPrivateData);
 						assert.ok(
 							classInstanceWithPrivateData instanceof ClassWithPrivateData,
 							"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
@@ -455,6 +597,14 @@ describe("JsonDeserialized", () => {
 					});
 				});
 			});
+
+			it("`object` (plain object) becomes non-null Json object", () => {
+				const resultRead = passThru(
+					object,
+					// object's value is actually supported; so, no runtime error.
+				);
+				assertIdenticalTypes(resultRead, createInstanceOf<NonNullJsonObjectWith<never>>());
+			});
 		});
 
 		describe("unsupported object types", () => {
@@ -462,26 +612,22 @@ describe("JsonDeserialized", () => {
 			// They show "allowed" incorrect use and the unexpected results.
 			describe("known defect expectations", () => {
 				describe("getters and setters preserved but do not propagate", () => {
-					it("with `readonly` implemented via getter", () => {
+					it("object with `readonly` implemented via getter", () => {
 						const resultRead = passThru(
 							objectWithReadonlyViaGetter,
 							// @ts-expect-error readonly is missing, but required
 							{},
 						);
-						ContainsAny(resultRead) satisfies never;
-						objectWithReadonlyViaGetter satisfies typeof resultRead;
-						resultRead satisfies typeof objectWithReadonlyViaGetter;
+						assertIdenticalTypes(resultRead, objectWithReadonlyViaGetter);
 					});
 
-					it("with getter", () => {
+					it("object with getter", () => {
 						const resultRead = passThru(
 							objectWithGetter,
 							// @ts-expect-error getter is missing, but required
 							{},
 						);
-						ContainsAny(resultRead) satisfies never;
-						objectWithGetter satisfies typeof resultRead;
-						resultRead satisfies typeof objectWithGetter;
+						assertIdenticalTypes(resultRead, objectWithGetter);
 
 						assert.throws(() => {
 							// @ts-expect-error Cannot assign to 'getter' because it is a read-only property.
@@ -493,15 +639,13 @@ describe("JsonDeserialized", () => {
 						resultRead.getter = -1;
 					});
 
-					it("with setter", () => {
+					it("object with setter", () => {
 						const resultRead = passThru(
 							objectWithSetter,
 							// @ts-expect-error setter is missing, but required
 							{},
 						);
-						ContainsAny(resultRead) satisfies never;
-						objectWithSetter satisfies typeof resultRead;
-						resultRead satisfies typeof objectWithSetter;
+						assertIdenticalTypes(resultRead, objectWithSetter);
 
 						// Read from setter only produces `undefined` but is typed as `string`.
 						const originalSetterValue = objectWithSetter.setter;
@@ -518,26 +662,22 @@ describe("JsonDeserialized", () => {
 						resultRead.setter = -1;
 					});
 
-					it("with matched getter and setter", () => {
+					it("object with matched getter and setter", () => {
 						const resultRead = passThru(
 							objectWithMatchedGetterAndSetterProperty,
 							// @ts-expect-error property is missing, but required
 							{},
 						);
-						ContainsAny(resultRead) satisfies never;
-						objectWithMatchedGetterAndSetterProperty satisfies typeof resultRead;
-						resultRead satisfies typeof objectWithMatchedGetterAndSetterProperty;
+						assertIdenticalTypes(resultRead, objectWithMatchedGetterAndSetterProperty);
 					});
 
-					it("with mismatched getter and setter", () => {
+					it("object with mismatched getter and setter", () => {
 						const resultRead = passThru(
 							objectWithMismatchedGetterAndSetterProperty,
 							// @ts-expect-error property is missing, but required
 							{},
 						);
-						ContainsAny(resultRead) satisfies never;
-						objectWithMismatchedGetterAndSetterProperty satisfies typeof resultRead;
-						resultRead satisfies typeof objectWithMismatchedGetterAndSetterProperty;
+						assertIdenticalTypes(resultRead, objectWithMismatchedGetterAndSetterProperty);
 
 						// @ts-expect-error 'number' is not assignable to type 'string'
 						resultRead.property = -1;
@@ -581,10 +721,7 @@ describe("JsonDeserialized", () => {
 					unknownValueOfSimpleRecord,
 					// value is actually supported; so, no runtime error.
 				);
-				// @ts-expect-error `unknown` does not satisfy `JsonTypeWith<never>`
-				unknownValueOfSimpleRecord satisfies typeof resultRead;
-				resultRead satisfies JsonTypeWith<never>;
-				ContainsAny(resultRead) satisfies never;
+				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 			});
 			it("`symbol` becomes `never`", () => {
 				passThruThrows(
@@ -610,53 +747,16 @@ describe("JsonDeserialized", () => {
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				) satisfies never;
 			});
-			it("`object` (plain object) becomes non-null Json object", () => {
-				const resultRead = passThru(
-					object,
-					// object's value is actually supported; so, no runtime error.
-				);
-				resultRead satisfies NonNullJsonObject;
-				ContainsAny(resultRead) satisfies never;
-			});
 			it("`void` becomes `never`", () => {
 				passThru(
 					voidValue,
 					// voidValue is actually `null`; so, no runtime error.
 				) satisfies never;
 			});
+
+			// TODO REMOVE THESE in favor of the ignore-inaccessible-members tests
 			describe("object", () => {
 				describe("drops properties", () => {
-					it("with exactly `bigint`", () => {
-						const resultRead = passThruThrows(
-							objectWithBigint,
-							new TypeError("Do not know how to serialize a BigInt"),
-						);
-						// @ts-expect-error `bigint` missing
-						resultRead satisfies typeof objectWithBigint;
-						objectWithBigint satisfies typeof resultRead;
-					});
-					it("with exactly `symbol`", () => {
-						passThru(
-							objectWithSymbol,
-							{},
-							// @ts-expect-error `symbol` missing
-						) satisfies typeof objectWithSymbol;
-					});
-					it("with exactly `function`", () => {
-						passThru(
-							objectWithFunction,
-							{},
-							// @ts-expect-error `function` missing
-						) satisfies typeof objectWithFunction;
-					});
-					it("with exactly `Function | symbol`", () => {
-						passThru(
-							objectWithFunctionOrSymbol,
-							{},
-							// @ts-expect-error `functionOrSymbol` missing
-						) satisfies typeof objectWithFunctionOrSymbol;
-					});
-
 					describe("of class instance", () => {
 						it("with private method (becomes `DeserializationErrorPerNonPublicProperties`)", () => {
 							const instanceRead = passThru(classInstanceWithPrivateMethod, {
@@ -712,17 +812,6 @@ describe("JsonDeserialized", () => {
 					});
 				});
 
-				it("will only propagate with `string` for `bigint | string`", () => {
-					const resultRead = passThru(
-						objectWithBigintOrString,
-						// value is a string; so no runtime error.
-					);
-					// @ts-expect-error { bigintOrString: string | bigint } does not satisfy { bigintOrString: string }
-					objectWithBigintOrString satisfies typeof resultRead;
-					resultRead satisfies { bigintOrString: string };
-					ContainsAny(resultRead) satisfies never;
-				});
-
 				describe("class instance", () => {
 					it("with private data becomes `DeserializationErrorPerNonPublicProperties` (but propagates)", () => {
 						const instanceRead = passThru(classInstanceWithPrivateData, {
@@ -754,84 +843,22 @@ describe("JsonDeserialized", () => {
 				undefined,
 				new SyntaxError("Unexpected token u in JSON at position 0"),
 			);
-			resultRead satisfies JsonTypeWith<never>;
-			ContainsAny(resultRead) satisfies never;
-		});
-
-		describe("possibly `undefined` property is only supported as optional", () => {
-			describe("with `undefined` in union property becomes optional", () => {
-				it("with undefined value", () => {
-					const objectWithNumberOrUndefinedUndefinedRead = passThru(
-						objectWithNumberOrUndefinedUndefined,
-						{},
-					);
-					// @ts-expect-error `numOrUndef` property (required) should no longer be required
-					objectWithNumberOrUndefinedUndefinedRead satisfies ObjectWithNumberOrUndefined;
-					objectWithNumberOrUndefinedUndefinedRead satisfies Partial<ObjectWithNumberOrUndefined>;
-				});
-
-				it("with defined value", () => {
-					const objectWithNumberOrUndefinedNumberedRead = passThru(
-						objectWithNumberOrUndefinedNumbered,
-					);
-					// @ts-expect-error `numOrUndef` property (required) should no longer be required
-					objectWithNumberOrUndefinedNumberedRead satisfies ObjectWithNumberOrUndefined;
-					objectWithNumberOrUndefinedNumberedRead satisfies Partial<ObjectWithNumberOrUndefined>;
-				});
-			});
-
-			describe("with optional property remains optional", () => {
-				it("without property", () => {
-					const objectWithOptionalNumberNotPresentRead = passThru(
-						objectWithOptionalNumberNotPresent,
-					);
-					objectWithOptionalNumberNotPresentRead satisfies ObjectWithOptionalNumber;
-				});
-				it("with undefined value", () => {
-					const objectWithOptionalNumberUndefinedRead = passThru(
-						objectWithOptionalNumberUndefined,
-						{},
-					);
-					objectWithOptionalNumberUndefinedRead satisfies ObjectWithOptionalNumber;
-				});
-				it("with defined value", () => {
-					const objectWithOptionalNumberDefinedRead = passThru(
-						objectWithOptionalNumberDefined,
-					);
-					objectWithOptionalNumberDefinedRead satisfies ObjectWithOptionalNumber;
-				});
-			});
-		});
-
-		it("`undefined` property is erased", () => {
-			const objectWithUndefinedRead = passThru(objectWithUndefined, {});
-			// @ts-expect-error `undef` property (required) should no longer exist
-			objectWithUndefinedRead satisfies typeof objectWithUndefined;
-			emptyObject satisfies typeof objectWithUndefinedRead;
-
-			const objectWithOptionalUndefinedRead = passThru(objectWithOptionalUndefined, {});
-			objectWithOptionalUndefinedRead satisfies typeof objectWithOptionalUndefined;
-			emptyObject satisfies typeof objectWithOptionalUndefinedRead;
-		});
-
-		it("`never` property is filtered away", () => {
-			// @ts-expect-error `never` property (type never) should not be preserved
-			passThru(objectWithNever) satisfies typeof objectWithNever;
-			passThru(objectWithNever) satisfies Omit<typeof objectWithNever, "never">;
+			assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 		});
 
 		describe("using replaced types", () => {
 			describe("are preserved", () => {
 				it("`bigint`", () => {
-					passThruHandlingBigint(bigint) satisfies bigint;
+					const resultRead = passThruHandlingBigint(bigint);
+					assertIdenticalTypes(resultRead, createInstanceOf<bigint>());
 				});
 				it("object with `bigint`", () => {
-					passThruHandlingBigint(objectWithBigint) satisfies typeof objectWithBigint;
+					const resultRead = passThruHandlingBigint(objectWithBigint);
+					assertIdenticalTypes(resultRead, objectWithBigint);
 				});
 				it("object with optional `bigint`", () => {
-					passThruHandlingBigint(
-						objectWithOptionalBigint,
-					) satisfies typeof objectWithOptionalBigint;
+					const resultRead = passThruHandlingBigint(objectWithOptionalBigint);
+					assertIdenticalTypes(resultRead, objectWithOptionalBigint);
 				});
 			});
 
@@ -841,18 +868,14 @@ describe("JsonDeserialized", () => {
 						unknownValueOfSimpleRecord,
 						// value is actually supported; so, no runtime error.
 					);
-					// @ts-expect-error `unknown` does not satisfy `JsonTypeWith<bigint>`
-					unknownValueOfSimpleRecord satisfies typeof resultRead;
-					resultRead satisfies JsonTypeWith<bigint>;
+					assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<bigint>>());
 				});
 				it("`unknown` (with bigint) becomes `JsonTypeWith<bigint>`", () => {
 					const resultRead = passThruHandlingBigint(
 						unknownValueWithBigint,
 						// value is actually supported; so, no runtime error.
 					);
-					// @ts-expect-error `unknown` does not satisfy `JsonTypeWith<bigint>`
-					unknownValueWithBigint satisfies typeof resultRead;
-					resultRead satisfies JsonTypeWith<bigint>;
+					assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<bigint>>());
 				});
 				it("`symbol` still becomes `never`", () => {
 					passThruHandlingBigintThrows(
@@ -861,10 +884,11 @@ describe("JsonDeserialized", () => {
 					) satisfies never;
 				});
 				it("`object` (plain object) still becomes non-null Json object", () => {
-					passThruHandlingBigint(
+					const resultRead = passThruHandlingBigint(
 						object,
 						// object's value is actually supported; so, no runtime error.
-					) satisfies NonNullJsonObject;
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<NonNullJsonObjectWith<bigint>>());
 				});
 			});
 		});
