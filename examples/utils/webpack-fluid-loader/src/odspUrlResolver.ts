@@ -59,7 +59,10 @@ export class OdspUrlResolver implements IUrlResolver {
 		return `/r11s/${encoded}`;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		return this.driverUrlResolver.getAbsoluteUrl(resolvedUrl, relativeUrl);
 	}
 

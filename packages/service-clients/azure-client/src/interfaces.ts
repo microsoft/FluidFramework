@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IConfigProviderBase, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IUser } from "@fluidframework/driver-definitions";
 import type { ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";

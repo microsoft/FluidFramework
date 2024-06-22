@@ -1,5 +1,9 @@
 # @fluidframework/server-test-utils
 
+## 5.0.0
+
+Dependency updates only.
+
 ## 4.0.0
 
 Dependency updates only.

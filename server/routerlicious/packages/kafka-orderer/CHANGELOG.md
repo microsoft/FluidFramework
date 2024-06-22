@@ -1,5 +1,9 @@
 # @fluidframework/server-kafka-orderer
 
+## 5.0.0
+
+Dependency updates only.
+
 ## 4.0.0
 
 ### Major Changes

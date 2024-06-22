@@ -103,7 +103,9 @@ export interface IFluidCodeDetails {
  * Determines if any object is an IFluidCodeDetails
  * @internal
  */
-export const isFluidCodeDetails = (details: unknown): details is Readonly<IFluidCodeDetails> => {
+export const isFluidCodeDetails = (
+	details: unknown,
+): details is Readonly<IFluidCodeDetails> => {
 	const maybeCodeDetails = details as Partial<IFluidCodeDetails> | undefined;
 	return (
 		typeof maybeCodeDetails === "object" &&

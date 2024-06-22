@@ -26,7 +26,7 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	type,
+	typeNameSymbol,
 	type WithType,
 	type AllowedTypes,
 	FieldKind,
@@ -60,7 +60,11 @@ export type {
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
 export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
-export { getProxyForField, type InsertableContent } from "./proxies.js";
+export {
+	getProxyForField,
+	type InsertableContent,
+	prepareContentForHydration,
+} from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -80,7 +84,11 @@ export {
 // TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
 // See docs on TreeNode for more details.
 export type { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent, type TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	TreeArrayNode,
+	IterableTreeArrayContent,
+	type TreeArrayNodeBase,
+} from "./arrayNode.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
@@ -89,3 +97,4 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode } from "./mapNode.js";
+export { mapTreeFromNodeData } from "./toMapTree.js";

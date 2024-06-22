@@ -18,6 +18,12 @@ export {
 	OdspDriverApiType,
 } from "./odspDriverApi.js";
 export { assertOdspEndpoint, getOdspCredentials, OdspTestDriver } from "./odspTestDriver.js";
-export { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
-export { assertRouterliciousEndpoint, RouterliciousTestDriver } from "./routerliciousTestDriver.js";
+export {
+	RouterliciousDriverApi,
+	RouterliciousDriverApiType,
+} from "./routerliciousDriverApi.js";
+export {
+	assertRouterliciousEndpoint,
+	RouterliciousTestDriver,
+} from "./routerliciousTestDriver.js";
 export { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";

@@ -39,7 +39,11 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import type { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 
 import { hydrate } from "./utils.js";
 
@@ -193,7 +197,9 @@ describe("schemaFactory", () => {
 
 	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
 	it("Typed factories are assignable to default typing", () => {
-		type _check1 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>>;
+		type _check1 = requireTrue<
+			requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>
+		>;
 		type _check2 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>>;
 		type _check3 = requireTrue<
 			requireAssignableTo<SchemaFactory<undefined, "Bar">, SchemaFactory>
@@ -375,8 +381,7 @@ describe("schemaFactory", () => {
 				assert.notDeepEqual(p1, p2);
 			});
 
-			// Walking unhydrated nodes is currently not supported
-			it.skip("unhydrated", () => {
+			it("unhydrated", () => {
 				assert.deepEqual(new Point({ x: 1, y: 2 }), new Point({ x: 1, y: 2 }));
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), new Point({ x: 1, y: 3 }));
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), { x: 1, y: 2 });
@@ -591,7 +596,7 @@ describe("schemaFactory", () => {
 			ComboChildMap,
 		]) {}
 		class ComboRoot extends comboSchemaFactory.object("comboRoot", {
-			root: comboSchemaFactory.optional([ComboParentObject, ComboParentList, ComboParentMap]),
+			root: [ComboParentObject, ComboParentList, ComboParentMap],
 		}) {}
 
 		type ComboParent = ComboParentObject | ComboParentList | ComboParentMap;
@@ -724,9 +729,19 @@ describe("schemaFactory", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
+
+			// Check that nodes in the initial tree are hydrated
 			const view = tree.viewWith(config);
-			view.initialize({ root: undefined });
-			const { parent, nodes } = createComboTree({
+			const { parent: initialParent, nodes: initialNodes } = createComboTree({
+				parentType,
+				childType,
+			});
+
+			view.initialize({ root: initialParent });
+			validate(view, initialNodes);
+
+			// Check that nodes inserted later are hydrated
+			const { parent: insertedParent, nodes: insertedNodes } = createComboTree({
 				parentType,
 				childType,
 			});
@@ -735,10 +750,10 @@ describe("schemaFactory", () => {
 			// Note: as of 2024-03-28, we can't easily test 'treeChanged' because it can fire at a time where the changes
 			// to the tree are not visible in the listener. 'nodeChanged' only fires once we confirmed that a
 			// relevant change was actually applied to the tree so the side effects this test validates already happened.
-			Tree.on(view.root, "nodeChanged", () => validate(view, nodes));
-			view.events.on("rootChanged", () => validate(view, nodes));
-			view.root.root = parent;
-			validate(view, nodes);
+			Tree.on(view.root, "nodeChanged", () => validate(view, insertedNodes));
+			view.events.on("rootChanged", () => validate(view, insertedNodes));
+			view.root.root = insertedParent;
+			validate(view, insertedNodes);
 		}
 
 		for (const parentType of objectTypes) {
@@ -765,20 +780,11 @@ describe("schemaFactory", () => {
 						nodes.sort(compareComboNodes);
 						for (let i = nodes.length - 1; i >= 0; i--) {
 							const node = nodes[i];
-							if (
-								node instanceof ComboChildObject ||
-								node instanceof ComboParentObject
-							) {
+							if (node instanceof ComboChildObject || node instanceof ComboParentObject) {
 								Object.entries(node);
-							} else if (
-								node instanceof ComboChildList ||
-								node instanceof ComboParentList
-							) {
+							} else if (node instanceof ComboChildList || node instanceof ComboParentList) {
 								for (const __ of node.entries());
-							} else if (
-								node instanceof ComboChildMap ||
-								node instanceof ComboParentMap
-							) {
+							} else if (node instanceof ComboChildMap || node instanceof ComboParentMap) {
 								for (const __ of node.entries());
 							}
 							assert.equal(Tree.status(node), TreeStatus.InDocument);

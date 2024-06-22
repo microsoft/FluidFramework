@@ -22,7 +22,6 @@ import {
 	IGarbageCollectorConfigs,
 	UnreferencedState,
 	disableTombstoneKey,
-	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
@@ -289,9 +288,6 @@ export class GCTelemetryTracker {
 				ThrowOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
 				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
 			},
-			sweepFlags: {
-				EnableSweepFlag: this.mc.config.getBoolean(runSweepKey),
-			},
 		};
 
 		if (
@@ -384,8 +380,7 @@ export class GCTelemetryTracker {
 			 */
 			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
 			const active =
-				nodeStateTracker === undefined ||
-				nodeStateTracker.state === UnreferencedState.Active;
+				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
 				const pkg = await this.getNodePackagePath(eventProps.id.value);
 				const fromPkg = eventProps.fromId
@@ -431,9 +426,6 @@ export function sendGCUnexpectedUsageEvent(
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
 		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
-	});
-	event.sweepFlags = JSON.stringify({
-		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
 	event.gcVersion = getGCVersionInEffect(mc.config);
 

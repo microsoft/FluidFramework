@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -58,13 +58,13 @@
 		"check:exports:cjs:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.cjs.json",
 		"check:exports:esm:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.esm.json",
 		"check:exports:esm:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.esm.json",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -106,13 +106,12 @@
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
 		"events_pkg": "npm:events@^3.1.0",
-		"lodash": "^4.17.21",
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.7.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.4.0.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.5.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",

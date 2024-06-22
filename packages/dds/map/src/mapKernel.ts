@@ -208,7 +208,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: [nextVal.value[0], nextVal.value[1].value], done: false };
+						{ value: [nextVal.value[0], nextVal.value[1].value], done: false };
 			},
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
 				return this;
@@ -231,7 +231,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-					  { value: nextVal.value.value as unknown, done: false };
+						{ value: nextVal.value.value as unknown, done: false };
 			},
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
@@ -443,7 +443,11 @@ export class MapKernel {
 	 * For messages from a remote client, this will be undefined.
 	 * @returns True if the operation was processed, false otherwise.
 	 */
-	public tryProcessMessage(op: IMapOperation, local: boolean, localOpMetadata: unknown): boolean {
+	public tryProcessMessage(
+		op: IMapOperation,
+		local: boolean,
+		localOpMetadata: unknown,
+	): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
@@ -542,12 +546,7 @@ export class MapKernel {
 		const previousValue: unknown = previousLocalValue?.value;
 		const successfullyRemoved = this.data.delete(key);
 		if (successfullyRemoved) {
-			this.eventEmitter.emit(
-				"valueChanged",
-				{ key, previousValue },
-				local,
-				this.eventEmitter,
-			);
+			this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
 		}
 		return previousLocalValue;
 	}
@@ -588,11 +587,7 @@ export class MapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(
-				serializable,
-				this.serializer,
-				this.handle,
-			);
+			return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 		} else {
 			throw new Error("Unknown local value type");
 		}
@@ -767,7 +762,10 @@ export class MapKernel {
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
 	 */
-	private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
+	private resubmitMapKeyMessage(
+		op: IMapKeyOperation,
+		localOpMetadata: MapLocalOpMetadata,
+	): void {
 		assert(
 			isMapKeyLocalOpMetadata(localOpMetadata),
 			0x2fe /* Invalid localOpMetadata in submit */,

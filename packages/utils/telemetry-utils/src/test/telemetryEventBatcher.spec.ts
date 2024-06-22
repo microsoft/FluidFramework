@@ -15,6 +15,7 @@ import type {
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
+import { measure } from "../utils.js";
 
 /**
  * @remarks Initialized in advance to extract its keys for type checking.
@@ -24,6 +25,14 @@ interface TestTelemetryProperties {
 	propertyOne: number;
 	propertyTwo: number;
 	propertyThree: number;
+}
+
+/**
+ * @remarks Initialized in advance to extract its keys for type checking.
+ * Arbitrary properties with duration.
+ */
+interface TestTelemetryPropertiesWithDuration extends TestTelemetryProperties {
+	duration: number;
 }
 
 /**
@@ -64,43 +73,47 @@ describe("TelemetryEventBatcher", () => {
 		);
 
 		for (let i = 0; i < threshold - 1; i++) {
-			eventBatcher.measure(() => ({
+			const { output: outputOne } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: 1,
 					propertyTwo: 2,
 					propertyThree: 3,
 				},
 			}));
+			eventBatcher.accumulateAndLog({ ...outputOne.telemetryProperties });
 		}
 		assert.strictEqual(logger.events.length, 0);
 
-		eventBatcher.measure(() => ({
+		const { output: outputTwo } = measure(() => ({
 			telemetryProperties: {
 				propertyOne: 1,
 				propertyTwo: 2,
 				propertyThree: 3,
 			},
 		}));
+		eventBatcher.accumulateAndLog({ ...outputTwo.telemetryProperties });
 		assert.strictEqual(logger.events.length, 1);
 
 		for (let i = 0; i < threshold - 1; i++) {
-			eventBatcher.measure(() => ({
+			const { output: outputThree } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: 1,
 					propertyTwo: 2,
 					propertyThree: 3,
 				},
 			}));
+			eventBatcher.accumulateAndLog({ ...outputThree.telemetryProperties });
 		}
 		assert.strictEqual(logger.events.length, 1);
 
-		eventBatcher.measure(() => ({
+		const { output: outputFour } = measure(() => ({
 			telemetryProperties: {
 				propertyOne: 1,
 				propertyTwo: 2,
 				propertyThree: 3,
 			},
 		}));
+		eventBatcher.accumulateAndLog({ ...outputFour.telemetryProperties });
 		assert.strictEqual(logger.events.length, 2);
 	});
 
@@ -113,55 +126,24 @@ describe("TelemetryEventBatcher", () => {
 		);
 
 		for (let i = 0; i < threshold; i++) {
-			eventBatcher.measure(() => ({
+			const { output } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: 1,
 					propertyTwo: 2,
 					propertyThree: 3,
 				},
 			}));
+			eventBatcher.accumulateAndLog({ ...output.telemetryProperties });
 		}
 
 		assert.strictEqual(logger.events.length, 1);
 
-		assert.strictEqual(logger.events[0].avgpropertyOne, 1);
-		assert.strictEqual(logger.events[0].avgpropertyTwo, 2);
-		assert.strictEqual(logger.events[0].avgpropertyThree, 3);
-		assert.strictEqual(logger.events[0].maxpropertyOne, 1);
-		assert.strictEqual(logger.events[0].maxpropertyTwo, 2);
-		assert.strictEqual(logger.events[0].maxpropertyThree, 3);
-	});
-
-	it("contains correct telemetryProperties returned from the logger", () => {
-		const threshold = 10;
-		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
-			{ eventName: "testEvent" },
-			logger,
-			threshold,
-		);
-
-		for (let i = 0; i < threshold - 1; i++) {
-			eventBatcher.measure(() => ({
-				telemetryProperties: {
-					propertyOne: 1,
-					propertyTwo: 2,
-					propertyThree: 3,
-				},
-			}));
-		}
-		const result = eventBatcher.measure(() => ({
-			telemetryProperties: {
-				propertyOne: 1,
-				propertyTwo: 2,
-				propertyThree: 3,
-			},
-		}));
-
-		assert.strictEqual(logger.events.length, 1);
-
-		assert.strictEqual(result.telemetryProperties.propertyOne, 1);
-		assert.strictEqual(result.telemetryProperties.propertyTwo, 2);
-		assert.strictEqual(result.telemetryProperties.propertyThree, 3);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 1);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 2);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 3);
+		assert.strictEqual(logger.events[0].max_propertyOne, 1);
+		assert.strictEqual(logger.events[0].max_propertyTwo, 2);
+		assert.strictEqual(logger.events[0].max_propertyThree, 3);
 	});
 
 	it("correctly calculates average and max values for multiple events", () => {
@@ -173,43 +155,45 @@ describe("TelemetryEventBatcher", () => {
 		);
 
 		for (let i = 1; i <= threshold; i++) {
-			eventBatcher.measure(() => ({
+			const { output } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: i,
 					propertyTwo: i + 10,
 					propertyThree: i + 100,
 				},
 			}));
+			eventBatcher.accumulateAndLog({ ...output.telemetryProperties });
 		}
 
 		assert.strictEqual(logger.events.length, 1);
 
-		assert.strictEqual(logger.events[0].avgpropertyOne, 5.5);
-		assert.strictEqual(logger.events[0].avgpropertyTwo, 15.5);
-		assert.strictEqual(logger.events[0].avgpropertyThree, 105.5);
-		assert.strictEqual(logger.events[0].maxpropertyOne, 10);
-		assert.strictEqual(logger.events[0].maxpropertyTwo, 20);
-		assert.strictEqual(logger.events[0].maxpropertyThree, 110);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 5.5);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 15.5);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 105.5);
+		assert.strictEqual(logger.events[0].max_propertyOne, 10);
+		assert.strictEqual(logger.events[0].max_propertyTwo, 20);
+		assert.strictEqual(logger.events[0].max_propertyThree, 110);
 
 		// More calls to validate that the average and max are "fresh", i.e. the previous data was cleared when the first telemetry event was generated
 		for (let i = 101; i <= threshold + 100; i++) {
-			eventBatcher.measure(() => ({
+			const { output } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: i,
 					propertyTwo: i + 10,
 					propertyThree: i + 100,
 				},
 			}));
+			eventBatcher.accumulateAndLog({ ...output.telemetryProperties });
 		}
 
 		assert.strictEqual(logger.events.length, 2);
 
-		assert.strictEqual(logger.events[1].avgpropertyOne, 105.5);
-		assert.strictEqual(logger.events[1].avgpropertyTwo, 115.5);
-		assert.strictEqual(logger.events[1].avgpropertyThree, 205.5);
-		assert.strictEqual(logger.events[1].maxpropertyOne, 110);
-		assert.strictEqual(logger.events[1].maxpropertyTwo, 120);
-		assert.strictEqual(logger.events[1].maxpropertyThree, 210);
+		assert.strictEqual(logger.events[1].avg_propertyOne, 105.5);
+		assert.strictEqual(logger.events[1].avg_propertyTwo, 115.5);
+		assert.strictEqual(logger.events[1].avg_propertyThree, 205.5);
+		assert.strictEqual(logger.events[1].max_propertyOne, 110);
+		assert.strictEqual(logger.events[1].max_propertyTwo, 120);
+		assert.strictEqual(logger.events[1].max_propertyThree, 210);
 	});
 
 	it("separately emits event in different instances", () => {
@@ -230,43 +214,47 @@ describe("TelemetryEventBatcher", () => {
 		);
 
 		for (let i = 0; i < thresholdOne - 1; i++) {
-			batcherOne.measure(() => ({
+			const { output: outputOne } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: 1,
 					propertyTwo: 2,
 					propertyThree: 3,
 				},
 			}));
+			batcherOne.accumulateAndLog({ ...outputOne.telemetryProperties });
 		}
 
 		for (let i = 0; i < thresholdTwo - 1; i++) {
-			batcherTwo.measure(() => ({
+			const { output: outputTwo } = measure(() => ({
 				telemetryProperties: {
 					propertyOne: 4,
 					propertyTwo: 5,
 					propertyThree: 6,
 				},
 			}));
+			batcherTwo.accumulateAndLog({ ...outputTwo.telemetryProperties });
 		}
 
 		assert.strictEqual(loggerOne.events.length, 0);
 		assert.strictEqual(loggerTwo.events.length, 0);
 
-		const resultOne = batcherOne.measure(() => ({
+		const { output: resultOne } = measure(() => ({
 			telemetryProperties: {
 				propertyOne: 1,
 				propertyTwo: 2,
 				propertyThree: 3,
 			},
 		}));
+		batcherOne.accumulateAndLog({ ...resultOne.telemetryProperties });
 
-		const resultTwo = batcherTwo.measure(() => ({
+		const { output: resultTwo } = measure(() => ({
 			telemetryProperties: {
 				propertyOne: 4,
 				propertyTwo: 5,
 				propertyThree: 6,
 			},
 		}));
+		batcherTwo.accumulateAndLog({ ...resultTwo.telemetryProperties });
 
 		assert.strictEqual(loggerOne.events.length, 1);
 		assert.strictEqual(loggerTwo.events.length, 1);
@@ -282,7 +270,7 @@ describe("TelemetryEventBatcher", () => {
 
 	it("correctly calculates duration", () => {
 		const threshold = 10;
-		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryProperties>(
+		const eventBatcher = new TelemetryEventBatcher<keyof TestTelemetryPropertiesWithDuration>(
 			{ eventName: "testEvent" },
 			logger,
 			threshold,
@@ -293,7 +281,7 @@ describe("TelemetryEventBatcher", () => {
 		let totalTime = 0; // Sum of all durations.
 
 		for (let i = 1; i <= threshold; i++) {
-			eventBatcher.measure(() => {
+			const { duration, output } = measure(() => {
 				clock.tick(startingPoint + i);
 				totalTime += startingPoint + i;
 
@@ -305,9 +293,10 @@ describe("TelemetryEventBatcher", () => {
 					},
 				};
 			});
+			eventBatcher.accumulateAndLog({ duration, ...output.telemetryProperties });
 		}
 
 		assert.strictEqual(logger.events.length, 1);
-		assert.strictEqual(logger.events[0].duration, totalTime / threshold);
+		assert.strictEqual(logger.events[0].avg_duration, totalTime / threshold);
 	});
 });

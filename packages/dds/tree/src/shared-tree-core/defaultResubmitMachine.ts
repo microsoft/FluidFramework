@@ -49,7 +49,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
 		if (this.isInResubmitPhase) {
 			const toResubmit = this.resubmitQueue.shift();
-			assert(toResubmit === commit, "Unexpected commit submitted during resubmit phase");
+			assert(
+				toResubmit === commit,
+				0x981 /* Unexpected commit submitted during resubmit phase */,
+			);
 		}
 		this.inFlightQueue.push(commit);
 	}
@@ -107,7 +110,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	}
 
 	public peekNextCommit(): GraphCommit<TChange> {
-		assert(this.isInResubmitPhase, "No available commit to resubmit outside of resubmit phase");
+		assert(
+			this.isInResubmitPhase,
+			0x982 /* No available commit to resubmit outside of resubmit phase */,
+		);
 		return this.resubmitQueue[0];
 	}
 
