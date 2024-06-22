@@ -82,7 +82,7 @@ describe("SimpleTree benchmarks", () => {
 			});
 		}
 
-		describe.only("Access to leaves", () => {
+		describe("Access to leaves", () => {
 			describe("Optional object property", () => {
 				const factory = new SchemaFactory("test");
 				class MyInnerSchema extends factory.object("inner", {
