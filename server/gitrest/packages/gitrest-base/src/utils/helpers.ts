@@ -183,7 +183,7 @@ export async function retrieveLatestFullSummaryFromStorage(
 			getLatestFullSummaryFilePath(storageDirectoryPath),
 		);
 		// TODO: This will be converted back to a JSON string for the HTTP response
-		const summary: IWholeFlatSummary = JSON.parse(decompressData(summaryFile));
+		const summary: IWholeFlatSummary = JSON.parse(decompressData(summaryFile).toString());
 		retrieveLatestFullSummaryMetric.setProperty(
 			BaseGitRestTelemetryProperties.emptyFullSummary,
 			false,
@@ -232,11 +232,17 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 	return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
 }
 
-export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {
+export function getGitDirectory(
+	repoPath: string,
+	baseDir?: string,
+	suffixPath?: string,
+): string {
 	return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
-export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
+export function parseStorageRoutingId(
+	storageRoutingId?: string,
+): IStorageRoutingId | undefined {
 	if (!storageRoutingId) {
 		return undefined;
 	}
