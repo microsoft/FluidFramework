@@ -12,6 +12,7 @@ import { handler as fluidCaseHandler } from "./fluidCase.js";
 import { handlers as lockfileHandlers } from "./lockfiles.js";
 import { handler as noJsFileHandler } from "./noJsFiles.js";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages.js";
+import { PackageJsonRepoDirectoryProperty } from "./packageJsonRepoDirectoryProperty.js";
 import { handlers as pnpmHandlers } from "./pnpm.js";
 
 /**
@@ -27,6 +28,7 @@ export const policyHandlers: Handler[] = [
 	...pnpmHandlers,
 	...fluidBuildTasks,
 	noJsFileHandler,
+	PackageJsonRepoDirectoryProperty,
 ];
 
 export { type Handler } from "./common.js";
