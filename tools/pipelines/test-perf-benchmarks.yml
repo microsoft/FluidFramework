@@ -45,10 +45,10 @@ parameters:
   default:
   - endpointName: 'local'
   - endpointName: 'odsp'
-    lockVariableGroupName: 'e2e-odsp-lock'
+    lockVariableGroupName: 'stress-odsp-lock'
     timeoutInMinutes: 360
   - endpointName: 'frs'
-    lockVariableGroupName: 'e2e-frs-lock'
+    lockVariableGroupName: 'stress-frs-lock'
     timeoutInMinutes: 360
 
 variables:
