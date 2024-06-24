@@ -5,6 +5,7 @@
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
 import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 import type { IntervalCollection } from "./intervalCollection.js";
@@ -63,7 +64,11 @@ export interface IMapMessageLocalMetadata {
  * Optional flags that configure options for sequence DDSs
  * @internal
  */
-export interface SequenceOptions {
+export interface SequenceOptions
+	extends Pick<
+		IMergeTreeOptions,
+		"mergeTreeReferencesCanSlideToEndpoint" | "mergeTreeEnableObliterate"
+	> {
 	/**
 	 * Enable the ability to use interval APIs that rely on positions before and
 	 * after individual characters, referred to as "sides". See {@link SequencePlace}
@@ -78,17 +83,6 @@ export interface SequenceOptions {
 	 * The default value is false.
 	 */
 	intervalStickinessEnabled: boolean;
-	/**
-	 * Enable the ability for interval endpoints to slide to the special endpoint
-	 * segments that exist before and after the bounds of the string. This is
-	 * primarily useful for workflows involving interval stickiness, and it is
-	 * suggested to enable both this flag and `intervalStickinessEnabled` at the
-	 * same time.
-	 *
-	 * The default value is false.
-	 */
-	mergeTreeReferencesCanSlideToEndpoint: boolean;
-	[key: string]: boolean;
 }
 
 /**
