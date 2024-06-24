@@ -95,7 +95,8 @@ export interface AttachProcessProps {
 	 * attachment data, and perform any other operations necessary
 	 * for dealing with attachment state changes, like emitting events
 	 *
-	 * @param attachmentData - the updated attachment data	 */
+	 * @param attachmentData - the updated attachment data
+	 */
 	readonly setAttachmentData: (attachmentData: AttachmentData) => void;
 
 	/**
