@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Consensus Register Collection channel factory interface
@@ -14,7 +17,8 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
  * @alpha
  * @deprecated Use `IChannelFactory<IConsensusRegisterCollection>`.
  */
-export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
+export type IConsensusRegisterCollectionFactory =
+	IChannelFactory<IConsensusRegisterCollection>;
 
 /**
  * Events emitted by {@link IConsensusRegisterCollection}.

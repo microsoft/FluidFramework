@@ -5,15 +5,17 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	DeltaDetachedNodeId,
-	DetachedFieldIndex,
-	IEditableForest,
-	RevisionTag,
+	AnchorSet,
+	type DeltaDetachedNodeId,
+	type DetachedFieldIndex,
+	type IEditableForest,
+	type RevisionTag,
+	type TreeStoredSchemaRepository,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
 import {
-	TreeChunk,
+	type TreeChunk,
 	chunkTree,
 	defaultChunkPolicy,
 	intoDelta,
@@ -21,21 +23,36 @@ import {
 	updateRefreshers as updateDataChangeRefreshers,
 } from "../feature-libraries/index.js";
 import { disposeSymbol } from "../util/index.js";
-import { ChangeEnricherCheckout } from "./defaultCommitEnricher.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type {
+	ChangeEnricherMutableCheckout,
+	ChangeEnricherReadonlyCheckout,
+} from "../shared-tree-core/index.js";
 
-export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
+export class SharedTreeReadonlyChangeEnricher
+	implements ChangeEnricherReadonlyCheckout<SharedTreeChange>
+{
 	/**
 	 * @param forest - The state based on which to enrich changes.
 	 * Exclusively owned by the constructed instance.
+	 * @param schema - The schema that corresponds to the forest.
 	 * @param removedRoots - The set of removed roots based on which to enrich changes.
 	 * Exclusively owned by the constructed instance.
 	 */
 	public constructor(
-		private readonly forest: IEditableForest,
-		private readonly removedRoots: DetachedFieldIndex,
+		protected readonly forest: IEditableForest,
+		private readonly schema: TreeStoredSchemaRepository,
+		protected readonly removedRoots: DetachedFieldIndex,
 	) {}
+
+	public fork(): ChangeEnricherMutableCheckout<SharedTreeChange> {
+		return new SharedTreeMutableChangeEnricher(
+			this.forest.clone(this.schema, new AnchorSet()),
+			this.schema,
+			this.removedRoots.clone(),
+		);
+	}
 
 	public updateChangeEnrichments(change: SharedTreeChange): SharedTreeChange {
 		return updateRefreshers(
@@ -57,7 +74,12 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		}
 		return undefined;
 	};
+}
 
+export class SharedTreeMutableChangeEnricher
+	extends SharedTreeReadonlyChangeEnricher
+	implements ChangeEnricherMutableCheckout<SharedTreeChange>
+{
 	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
 		for (const dataOrSchemaChange of change.changes) {
 			const type = dataOrSchemaChange.type;

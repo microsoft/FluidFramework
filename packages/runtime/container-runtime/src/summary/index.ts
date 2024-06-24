@@ -11,7 +11,10 @@ export {
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection.js";
-export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer.js";
+export {
+	defaultMaxAttemptsForSubmitFailures,
+	RunningSummarizer,
+} from "./runningSummarizer.js";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
@@ -63,7 +66,7 @@ export {
 	SummarizeResultPart,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
 } from "./summarizerTypes.js";
 export {

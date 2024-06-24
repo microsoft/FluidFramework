@@ -9,11 +9,11 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ITelemetryLoggerExt,
 	UsageError,
@@ -26,7 +26,11 @@ import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
-import { IJSONSegmentWithMergeInfo, MergeTreeChunkV1, hasMergeInfo } from "./snapshotChunks.js";
+import {
+	IJSONSegmentWithMergeInfo,
+	MergeTreeChunkV1,
+	hasMergeInfo,
+} from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 

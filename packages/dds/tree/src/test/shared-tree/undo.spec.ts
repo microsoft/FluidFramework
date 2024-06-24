@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UpPath, rootFieldKey } from "../../core/index.js";
+import { type UpPath, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { JsonCompatible, brand } from "../../util/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
+import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectJsonTree,
@@ -141,7 +141,15 @@ const testCases: {
 ];
 
 describe("Undo and redo", () => {
-	for (const { name, skip, edit, undoCount, initialState, editedState, undoState } of testCases) {
+	for (const {
+		name,
+		skip,
+		edit,
+		undoCount,
+		initialState,
+		editedState,
+		undoState,
+	} of testCases) {
 		const count = undoCount ?? 1;
 		const itFn = skip ? it.skip : it;
 		itFn(`${name} (act on fork undo on fork)`, () => {

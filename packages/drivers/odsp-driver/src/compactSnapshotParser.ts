@@ -4,8 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ISnapshot,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";
@@ -170,10 +173,7 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(5));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
-						assert(
-							treeNode.getBool(3),
-							0x3db /* Unreferenced if present should be true */,
-						);
+						assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
 						snapshotTree.unreferenced = true;
 						continue;
 					}
@@ -197,11 +197,6 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		if (records.groupId !== undefined) {
-			const groupId = getStringInstance(records.groupId, "groupId should be a string");
-			snapshotTree.groupId = groupId;
-		}
-
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -213,6 +208,10 @@ function readTreeSection(node: NodeCore): {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
+			if (records.groupId !== undefined) {
+				const groupId = getStringInstance(records.groupId, "groupId should be a string");
+				trees[path].groupId = groupId;
+			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
 		} else {
 			trees[path] = { blobs: {}, trees: {} };
@@ -280,7 +279,9 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
+	const [snapshot, durationSnapshotTree] = measure(() =>
+		readSnapshotSection(records.snapshot),
+	);
 	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
 
 	return {

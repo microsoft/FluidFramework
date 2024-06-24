@@ -98,7 +98,8 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		private readonly httpServerConfig?: IHttpServerConfig,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
+		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {}
 
 	public create(requestListener: RequestListener): core.IWebServer {
@@ -112,6 +113,8 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 			server,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
+			undefined /* ioSetup */,
+			this.customCreateAdapter,
 		);
 
 		return new WebServer(httpServer, socketIoServer);
@@ -135,8 +138,7 @@ export class BasicWebServerFactory implements core.IWebServerFactory {
 
 /**
  * Node.js Clustering POC.
- * TODO:
- * - Add more to the heartbeat, like CPU and Memory usage, with related process kill checks: process.cpuUsage() and process.memoryUsage()
+ * This is WIP of a Node.js cluster Socket.io server that spawns a number of workers equal to the number of CPUs.
  */
 
 interface IWorkerMessage<T> {
@@ -379,8 +381,9 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		httpServerConfig?: IHttpServerConfig,
-		private readonly socketIoConfig?: any,
+		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
 		clusterConfig?: Partial<INodeClusterConfig>,
+		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
 	) {
 		super(httpServerConfig, clusterConfig);
 	}
@@ -405,6 +408,7 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
 			setupWorker,
+			this.customCreateAdapter,
 		);
 		return new WebServer(new HttpServer(httpServer), socketIoServer);
 	}

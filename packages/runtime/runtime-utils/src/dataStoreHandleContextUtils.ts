@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Generates the absolute path for a Fluid object given its path and its parent routeContext.
@@ -34,6 +34,6 @@ export function generateHandleContextPath(
 			? `/${normalizedPath}`
 			: `${
 					routeContext.absolutePath === "/" ? "" : routeContext.absolutePath
-			  }/${normalizedPath}`;
+				}/${normalizedPath}`;
 	}
 }

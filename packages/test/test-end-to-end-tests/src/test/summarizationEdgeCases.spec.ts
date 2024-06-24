@@ -33,9 +33,6 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
 			},
-			gcOptions: {
-				gcAllowed: true,
-			},
 		},
 	};
 
@@ -93,9 +90,9 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 			const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
 			const result = await submitSummaryFuncBound(options);
 
-			const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint(
-				"default",
-			)) as IFluidHandle<ITestDataObject> | undefined;
+			const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint("default")) as
+				| IFluidHandle<ITestDataObject>
+				| undefined;
 			if (entryPoint === undefined) {
 				throw new Error("default dataStore must exist");
 			}

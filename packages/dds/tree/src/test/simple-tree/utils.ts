@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { NodeKeyManager, createMockNodeKeyManager } from "../../feature-libraries/index.js";
+import { MockNodeKeyManager, type NodeKeyManager } from "../../feature-libraries/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	toFlexConfig,
+	cursorFromUnhydratedRoot,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { flexTreeWithContent } from "../utils.js";
 
 /**
@@ -28,9 +26,15 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => initialTree);
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? createMockNodeKeyManager());
-	const tree = flexTreeWithContent(flexConfig);
+	const hydratedInitialTree = cursorFromUnhydratedRoot(
+		schema,
+		initialTree,
+		nodeKeyManager ?? new MockNodeKeyManager(),
+	);
+	const tree = flexTreeWithContent({
+		schema: toFlexSchema(schema),
+		initialTree: hydratedInitialTree,
+	});
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
 }
 
@@ -45,20 +49,4 @@ export function pretty(arg: unknown): number | string {
 		return arg;
 	}
 	return JSON.stringify(arg);
-}
-
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof UsageError);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
 }

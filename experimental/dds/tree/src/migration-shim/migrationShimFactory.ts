@@ -7,9 +7,9 @@ import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
-	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
 import { type ITree } from '@fluidframework/tree';
 
 import {
@@ -71,13 +71,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	): Promise<MigrationShim> {
 		// TODO: remove attributes check and move it to an automated test that constructing a MigrationShimFactory and checking its attributes/type matches the oldFactory.
 		assert(attributesMatch(attributes, this.oldFactory.attributes), 0x7ea /* Attributes do not match */);
-		const migrationShim = new MigrationShim(
-			id,
-			runtime,
-			this.oldFactory,
-			this.newFactory,
-			this.populateNewChannelFn
-		);
+		const migrationShim = new MigrationShim(id, runtime, this.oldFactory, this.newFactory, this.populateNewChannelFn);
 		await migrationShim.load(services);
 		return migrationShim;
 	}
@@ -91,13 +85,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim {
 		// Maybe this should throw an error.
-		const migrationShim = new MigrationShim(
-			id,
-			runtime,
-			this.oldFactory,
-			this.newFactory,
-			this.populateNewChannelFn
-		);
+		const migrationShim = new MigrationShim(id, runtime, this.oldFactory, this.newFactory, this.populateNewChannelFn);
 		migrationShim.create();
 		return migrationShim;
 	}

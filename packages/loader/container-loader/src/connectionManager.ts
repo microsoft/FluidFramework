@@ -4,19 +4,32 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import {
-	ICriticalContainerError,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions/internal";
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+	IDisposable,
+	ITelemetryBaseProperties,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ConnectionMode, IClient, IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
 	DriverErrorTypes,
 	IAnyDriverError,
+	IClientConfiguration,
+	IDocumentMessage,
+	INack,
+	INackContent,
+	ISequencedDocumentSystemMessage,
+	ISignalClient,
+	ITokenClaims,
+	MessageType,
+	ScopeType,
+	ISequencedDocumentMessage,
+	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -27,22 +40,6 @@ import {
 	isRuntimeMessage,
 	logNetworkFailure,
 } from "@fluidframework/driver-utils/internal";
-import {
-	ConnectionMode,
-	IClient,
-	IClientConfiguration,
-	IClientDetails,
-	IDocumentMessage,
-	INack,
-	INackContent,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ISignalClient,
-	ISignalMessage,
-	ITokenClaims,
-	MessageType,
-	ScopeType,
-} from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
 	GenericError,
@@ -308,7 +305,7 @@ export class ConnectionManager implements IConnectionManager {
 					...this._connectionProps,
 					// Report how many ops this client sent in last disconnected session
 					sentOps: this.clientSequenceNumber,
-			  };
+				};
 	}
 
 	public shouldJoinWrite(): boolean {
@@ -738,7 +735,10 @@ export class ConnectionManager implements IConnectionManager {
 	 * And report the error if it escapes for any reason.
 	 * @param args - The connection arguments
 	 */
-	private triggerConnect(reason: IConnectionStateChangeReason, connectionMode: ConnectionMode) {
+	private triggerConnect(
+		reason: IConnectionStateChangeReason,
+		connectionMode: ConnectionMode,
+	) {
 		// reconnect() includes async awaits, and that causes potential race conditions
 		// where we might already have a connection. If it were to happen, it's possible that we will connect
 		// with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
@@ -1186,7 +1186,10 @@ export class ConnectionManager implements IConnectionManager {
 		}
 	}
 
-	private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
+	private readonly opHandler = (
+		documentId: string,
+		messagesArg: ISequencedDocumentMessage[],
+	) => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
 		this.props.incomingOpHandler(messages, "opHandler");
 	};

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious-base",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid server base classes for routerlicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,7 +91,7 @@
 		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
-		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@4.0.0",
+		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/body-parser": "^1.19.2",
 		"@types/bytes": "^3.0.0",
@@ -132,9 +132,9 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_NexusResources": {
-				"backCompat": false
+				"forwardCompat": false
 			},
-			"ClassDeclaration_RiddlerResources": {
+			"ClassDeclaration_OrdererManager": {
 				"forwardCompat": false
 			}
 		}

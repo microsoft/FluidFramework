@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IMessageRelay } from "@fluidframework/devtools-core/internal";
+import type { IMessageRelay } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 /**

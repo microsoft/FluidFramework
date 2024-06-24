@@ -8,15 +8,16 @@
 /* eslint-disable unicorn/no-null */
 
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
@@ -115,7 +116,9 @@ describe("DefaultVisualizers unit tests", () => {
 	});
 
 	it("SharedDirectory", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedDirectory.getFactory()] });
+		const runtime = new MockFluidDataStoreRuntime({
+			registry: [SharedDirectory.getFactory()],
+		});
 		const sharedDirectory = SharedDirectory.create(runtime, "test-directory");
 
 		sharedDirectory.set("foo", 37);
@@ -391,7 +394,8 @@ describe("DefaultVisualizers unit tests", () => {
 			"test",
 		);
 
-		sharedTree.schematize(new TreeConfiguration(builder.number, () => 0));
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.number }));
+		view.initialize(0);
 
 		const result = await visualizeSharedTree(
 			sharedTree as unknown as ISharedObject,
@@ -432,14 +436,11 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.array([builder.number, builder.string]),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: [0, 1, 2, 3, "hello", "world"],
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: [0, 1, 2, 3, "hello", "world"],
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -549,7 +550,8 @@ describe("DefaultVisualizers unit tests", () => {
 							children: {
 								name: {
 									nodeKind: "ValueNode",
-									value: 'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
+									value:
+										'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 								},
 								allowedTypes: {
 									value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
@@ -570,7 +572,8 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "shared-tree-test.root-item",
 						},
 						allowedTypes: {
-							value: '{ foo : shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
+							value:
+								'{ foo : shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
 							nodeKind: "ValueNode",
 						},
 					},
@@ -596,18 +599,15 @@ describe("DefaultVisualizers unit tests", () => {
 			foo: builder.map([builder.string, builder.number, builder.handle]),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: new Map([
-							["apple", 1],
-							["banana", 2],
-							["cherry", 3],
-						]),
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: new Map([
+					["apple", 1],
+					["banana", 2],
+					["cherry", 3],
+				]),
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -672,10 +672,12 @@ describe("DefaultVisualizers unit tests", () => {
 							children: {
 								name: {
 									nodeKind: "ValueNode",
-									value: 'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
+									value:
+										'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 								},
 								allowedTypes: {
-									value: "{ apple : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle, banana : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle, cherry : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle }",
+									value:
+										"{ apple : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle, banana : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle, cherry : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle }",
 									nodeKind: "ValueNode",
 								},
 							},
@@ -693,7 +695,8 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "shared-tree-test.root-item",
 						},
 						allowedTypes: {
-							value: '{ foo : shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
+							value:
+								'{ foo : shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
 							nodeKind: "ValueNode",
 						},
 					},
@@ -722,17 +725,14 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: {
-							apple: false,
-							banana: "Taro Bubble Tea",
-						},
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: {
+					apple: false,
+					banana: "Taro Bubble Tea",
+				},
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -785,7 +785,8 @@ describe("DefaultVisualizers unit tests", () => {
 									value: "shared-tree-test.bar-item",
 								},
 								allowedTypes: {
-									value: "{ apple : com.fluidframework.leaf.boolean, banana : com.fluidframework.leaf.string }",
+									value:
+										"{ apple : com.fluidframework.leaf.boolean, banana : com.fluidframework.leaf.string }",
 									nodeKind: "ValueNode",
 								},
 							},
@@ -829,7 +830,8 @@ describe("DefaultVisualizers unit tests", () => {
 		const sharedString = SharedString.create(runtime, "test-string");
 		sharedString.insertText(0, "Hello World!");
 
-		sharedTree.schematize(new TreeConfiguration(builder.handle, () => sharedString.handle));
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: builder.handle }));
+		view.initialize(sharedString.handle);
 
 		const result = await visualizeSharedTree(
 			sharedTree as unknown as ISharedObject,
@@ -875,16 +877,13 @@ describe("DefaultVisualizers unit tests", () => {
 			}),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: {
-							apple: sharedString.handle,
-						},
-					}),
-			),
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: {
+					apple: sharedString.handle,
+				},
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -1003,55 +1002,50 @@ describe("DefaultVisualizers unit tests", () => {
 			]),
 		}) {}
 
-		sharedTree.schematize(
-			new TreeConfiguration(
-				RootNodeSchema,
-				() =>
-					new RootNodeSchema({
-						foo: [
+		const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+		view.initialize(
+			new RootNodeSchema({
+				foo: [
+					{
+						apple: [{ avocado: 16, broccoli: [{ alpaca: "Llama but cuter." }] }],
+						banana: {
+							miniBanana: true,
+						},
+						cherry: 32,
+					},
+					{
+						apple: [
 							{
-								apple: [
-									{ avocado: 16, broccoli: [{ alpaca: "Llama but cuter." }] },
-								],
-								banana: {
-									miniBanana: true,
-								},
-								cherry: 32,
-							},
-							{
-								apple: [
-									{
-										avocado: "Avacado Advocate.",
-										broccoli: [{ alpaca: "Llama but not LLM." }],
-									},
-								],
-								banana: {
-									miniBanana: false,
-								},
-								cherry: undefined,
+								avocado: "Avacado Advocate.",
+								broccoli: [{ alpaca: "Llama but not LLM." }],
 							},
 						],
-						bar: {
-							americano: false,
-							bubbleTea: "Taro Bubble Tea",
-							chaiLatte: {
-								appleCider: true,
-							},
-							dalgona: [
-								{
-									avengers: true,
-								},
-							],
-							espresso: [256, "FiveHundredTwelve"],
+						banana: {
+							miniBanana: false,
 						},
-						baz: 128,
-						foobar: new Map([
-							["anthropology", 1],
-							["biology", 2],
-							["choreography", 3],
-						]),
-					}),
-			),
+						cherry: undefined,
+					},
+				],
+				bar: {
+					americano: false,
+					bubbleTea: "Taro Bubble Tea",
+					chaiLatte: {
+						appleCider: true,
+					},
+					dalgona: [
+						{
+							avengers: true,
+						},
+					],
+					espresso: [256, "FiveHundredTwelve"],
+				},
+				baz: 128,
+				foobar: new Map([
+					["anthropology", 1],
+					["biology", 2],
+					["choreography", 3],
+				]),
+			}),
 		);
 
 		const result = await visualizeSharedTree(
@@ -1096,8 +1090,7 @@ describe("DefaultVisualizers unit tests", () => {
 																			nodeKind: "TreeNode",
 																			children: {
 																				name: {
-																					nodeKind:
-																						"ValueNode",
+																					nodeKind: "ValueNode",
 																					value: "com.fluidframework.leaf.string",
 																				},
 																			},
@@ -1130,7 +1123,8 @@ describe("DefaultVisualizers unit tests", () => {
 															children: {
 																name: {
 																	nodeKind: "ValueNode",
-																	value: 'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
+																	value:
+																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
 																},
 																allowedTypes: {
 																	value: "shared-tree-test.broccoli-object-schema",
@@ -1151,7 +1145,8 @@ describe("DefaultVisualizers unit tests", () => {
 															value: "shared-tree-test.apple-object-schema",
 														},
 														allowedTypes: {
-															value: '{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]> }',
+															value:
+																'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]> }',
 															nodeKind: "ValueNode",
 														},
 													},
@@ -1166,7 +1161,8 @@ describe("DefaultVisualizers unit tests", () => {
 											children: {
 												name: {
 													nodeKind: "ValueNode",
-													value: 'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
+													value:
+														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
 												},
 												allowedTypes: {
 													value: "shared-tree-test.apple-object-schema",
@@ -1204,7 +1200,8 @@ describe("DefaultVisualizers unit tests", () => {
 													value: "shared-tree-test.banana-object",
 												},
 												allowedTypes: {
-													value: "{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
+													value:
+														"{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
 													nodeKind: "ValueNode",
 												},
 											},
@@ -1237,7 +1234,8 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "shared-tree-test.foo-item",
 										},
 										allowedTypes: {
-											value: '{ apple : shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>, banana : shared-tree-test.banana-object, cherry : com.fluidframework.leaf.number }',
+											value:
+												'{ apple : shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>, banana : shared-tree-test.banana-object, cherry : com.fluidframework.leaf.number }',
 											nodeKind: "ValueNode",
 										},
 									},
@@ -1277,8 +1275,7 @@ describe("DefaultVisualizers unit tests", () => {
 																			nodeKind: "TreeNode",
 																			children: {
 																				name: {
-																					nodeKind:
-																						"ValueNode",
+																					nodeKind: "ValueNode",
 																					value: "com.fluidframework.leaf.string",
 																				},
 																			},
@@ -1311,7 +1308,8 @@ describe("DefaultVisualizers unit tests", () => {
 															children: {
 																name: {
 																	nodeKind: "ValueNode",
-																	value: 'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
+																	value:
+																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
 																},
 																allowedTypes: {
 																	value: "shared-tree-test.broccoli-object-schema",
@@ -1332,7 +1330,8 @@ describe("DefaultVisualizers unit tests", () => {
 															value: "shared-tree-test.apple-object-schema",
 														},
 														allowedTypes: {
-															value: '{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]> }',
+															value:
+																'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]> }',
 															nodeKind: "ValueNode",
 														},
 													},
@@ -1347,7 +1346,8 @@ describe("DefaultVisualizers unit tests", () => {
 											children: {
 												name: {
 													nodeKind: "ValueNode",
-													value: 'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
+													value:
+														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
 												},
 												allowedTypes: {
 													value: "shared-tree-test.apple-object-schema",
@@ -1385,7 +1385,8 @@ describe("DefaultVisualizers unit tests", () => {
 													value: "shared-tree-test.banana-object",
 												},
 												allowedTypes: {
-													value: "{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
+													value:
+														"{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
 													nodeKind: "ValueNode",
 												},
 											},
@@ -1403,7 +1404,8 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "shared-tree-test.foo-item",
 										},
 										allowedTypes: {
-											value: '{ apple : shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>, banana : shared-tree-test.banana-object, cherry : com.fluidframework.leaf.number }',
+											value:
+												'{ apple : shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>, banana : shared-tree-test.banana-object, cherry : com.fluidframework.leaf.number }',
 											nodeKind: "ValueNode",
 										},
 									},
@@ -1488,7 +1490,8 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "shared-tree-test.chai-latte-object",
 										},
 										allowedTypes: {
-											value: "{ appleCider : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle }",
+											value:
+												"{ appleCider : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle }",
 											nodeKind: "ValueNode",
 										},
 									},
@@ -1590,7 +1593,8 @@ describe("DefaultVisualizers unit tests", () => {
 									children: {
 										name: {
 											nodeKind: "ValueNode",
-											value: 'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
+											value:
+												'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 										},
 										allowedTypes: {
 											value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
@@ -1611,7 +1615,8 @@ describe("DefaultVisualizers unit tests", () => {
 									value: "shared-tree-test.bar-item",
 								},
 								allowedTypes: {
-									value: '{ americano : com.fluidframework.leaf.boolean, bubbleTea : com.fluidframework.leaf.string, chaiLatte : shared-tree-test.chai-latte-object, dalgona : shared-tree-test.Array<["shared-tree-test.dalgona-object"]>, espresso : shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
+									value:
+										'{ americano : com.fluidframework.leaf.boolean, bubbleTea : com.fluidframework.leaf.string, chaiLatte : shared-tree-test.chai-latte-object, dalgona : shared-tree-test.Array<["shared-tree-test.dalgona-object"]>, espresso : shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
 									nodeKind: "ValueNode",
 								},
 							},
@@ -1688,10 +1693,12 @@ describe("DefaultVisualizers unit tests", () => {
 							children: {
 								name: {
 									nodeKind: "ValueNode",
-									value: 'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]>',
+									value:
+										'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]>',
 								},
 								allowedTypes: {
-									value: "{ anthropology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, biology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, choreography : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object }",
+									value:
+										"{ anthropology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, biology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object, choreography : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object }",
 									nodeKind: "ValueNode",
 								},
 							},
@@ -1709,7 +1716,8 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "shared-tree-test.root-item",
 						},
 						allowedTypes: {
-							value: '{ foo : shared-tree-test.Array<["shared-tree-test.foo-item"]>, bar : shared-tree-test.bar-item, baz : com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean, foobar : shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]> }',
+							value:
+								'{ foo : shared-tree-test.Array<["shared-tree-test.foo-item"]>, bar : shared-tree-test.bar-item, baz : com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean, foobar : shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]> }',
 							nodeKind: "ValueNode",
 						},
 					},

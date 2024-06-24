@@ -25,7 +25,6 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
@@ -97,7 +96,7 @@ export {
 	ICancellableSummarizerController,
 	SubmitSummaryFailureData,
 	SummaryStage,
-	IRetriableFailureResult,
+	IRetriableFailureError,
 	ISummarizeEventProps,
 	IdCompressorMode,
 	IDocumentSchema,

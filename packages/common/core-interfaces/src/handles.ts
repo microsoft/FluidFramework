@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { type ErasedType } from "./erasedType.js";
+import type { ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
- * @public
+ * @alpha
  */
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
 /**
- * @public
+ * @alpha
  */
 export interface IProvideFluidHandleContext {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -20,7 +20,7 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
- * @public
+ * @alpha
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**
@@ -116,7 +116,7 @@ export const fluidHandleSymbol: unique symbol = Symbol.for(
 
 /**
  * Handle to a shared {@link FluidObject}.
- * @public
+ * @sealed @public
  */
 export interface IFluidHandle<out T = unknown> {
 	/**
@@ -144,7 +144,7 @@ export interface IFluidHandle<out T = unknown> {
  * These can only be produced by the Fluid Framework and provide the implementation details needed to power {@link (IFluidHandle:interface)}.
  * @privateRemarks
  * Created from {@link IFluidHandleInternal} using {@link toFluidHandleErased}.
- * @public
+ * @sealed @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}

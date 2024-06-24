@@ -5,19 +5,19 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
-import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -51,10 +51,7 @@ describe("Fuzz - Top-Level", () => {
 		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: Enabling abort fails because aborting a transaction involves applying rollback ops, which may attempt to place
-		// repair data content in places it already exists. This should be fixed by pending work to generate forest deltas
-		// which destroy trees for rollbacks. See AB#6456 for more information.
-		abort: 0,
+		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 1,
 	};

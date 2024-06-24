@@ -5,21 +5,22 @@
 
 import { strict as assert } from "assert";
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	type ISnapshot,
+	IDocumentAttributes,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
+import type { ISnapshotInfo } from "../serializedStateManager.js";
 import {
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
 	getDocumentAttributes,
 	runSingle,
 } from "../utils.js";
-import type { ISnapshotInfo } from "../serializedStateManager.js";
-import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
 
 describe("container-loader utils", () => {
 	describe("runSingle", () => {
@@ -49,10 +50,7 @@ describe("container-loader utils", () => {
 			await p2
 				.then(() => assert.fail("should fail"))
 				.catch((e: Error) =>
-					assert.strictEqual(
-						e.message,
-						"Subsequent calls cannot use different arguments.",
-					),
+					assert.strictEqual(e.message, "Subsequent calls cannot use different arguments."),
 				);
 		});
 	});

@@ -10,29 +10,28 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IResolvedUrl,
 	ISnapshot,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
-import {
 	IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
-import { Deferred } from "@fluidframework/core-utils/internal";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	type IPendingContainerState,
 	SerializedStateManager,
 	type ISerializedStateManagerDocumentStorageService,
 } from "../serializedStateManager.js";
+
 import { failSometimeProxy } from "./failProxy.js";
 
 const snapshot = {
@@ -191,6 +190,7 @@ describe("serializedStateManager", () => {
 			false,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
 
 		await assert.rejects(
@@ -219,11 +219,14 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
 		// equivalent to attach
 		serializedStateManager.setInitialSnapshot({
 			baseSnapshot: snapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
+			snapshotBlobs: {
+				attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
+			},
 		});
 		await serializedStateManager.getPendingLocalState(
 			{ notifyImminentClosure: false },
@@ -246,11 +249,9 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
-		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-			undefined,
-			false,
-		);
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
 		assert(baseSnapshot);
 		assert.strictEqual(version, undefined);
 		const state = await serializedStateManager.getPendingLocalState(
@@ -271,11 +272,9 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
-		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-			undefined,
-			false,
-		);
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
 		assert(baseSnapshot);
 		assert.strictEqual(version?.id, "fromStorage");
 		assert.strictEqual(version.treeId, "fromStorage");
@@ -306,6 +305,7 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
 		void serializedStateManager.waitForInitialRefresh?.then(() =>
 			getLatestSnapshotInfoP.resolve(),
@@ -318,7 +318,7 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-		await serializedStateManager.fetchSnapshot(undefined, false);
+		await serializedStateManager.fetchSnapshot(undefined);
 		lastProcessedOpSequenceNumber = 25;
 		while (seq <= lastProcessedOpSequenceNumber) {
 			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
@@ -356,6 +356,7 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
 		let seq = 1;
 		let lastProcessedOpSequenceNumber = 20;
@@ -366,7 +367,7 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 30;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-		await serializedStateManager.fetchSnapshot(undefined, false);
+		await serializedStateManager.fetchSnapshot(undefined);
 		// new snapshot fetched but not refreshed since processed ops are behind the snapshot
 		await serializedStateManager.waitForInitialRefresh;
 
@@ -419,6 +420,7 @@ describe("serializedStateManager", () => {
 			true,
 			eventEmitter,
 			() => false,
+			() => false,
 		);
 		const lastProcessedOpSequenceNumber = 20;
 		let seq = 1;
@@ -429,7 +431,7 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-		await serializedStateManager.fetchSnapshot(undefined, false);
+		await serializedStateManager.fetchSnapshot(undefined);
 		await serializedStateManager.waitForInitialRefresh;
 
 		const state = await serializedStateManager.getPendingLocalState(
@@ -458,13 +460,11 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
+				() => false,
 			);
 			savedOps.forEach((savedOp) => serializedStateManager.addProcessedOp(savedOp));
 
-			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-				undefined,
-				false,
-			);
+			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 			assert.strictEqual(baseSnapshotTree.id, "fromPending");
 			assert.strictEqual(version, undefined);
@@ -515,8 +515,8 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
+				() => false,
 			);
-
 			const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
 			const lastProcessedOpSequenceNumber = 40;
 			let seq = firstProcessedOpSequenceNumber;
@@ -525,7 +525,7 @@ describe("serializedStateManager", () => {
 			}
 			const snapshotSequenceNumber = 11; // uploading an snapshot too old to be the latest
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
-			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.fetchSnapshot(undefined);
 			await serializedStateManager.waitForInitialRefresh;
 			if (isDirty) {
 				logger.assertMatchNone([
@@ -568,6 +568,7 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
+				() => false,
 			);
 
 			const lastProcessedOpSequenceNumber = 20;
@@ -579,7 +580,7 @@ describe("serializedStateManager", () => {
 			const snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.fetchSnapshot(undefined);
 			// wait to get latest snapshot
 			// this time the snapshot should have been refreshed
 			await serializedStateManager.waitForInitialRefresh;
@@ -631,11 +632,12 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				() => isDirty,
+				() => false,
 			);
 			const snapshotSequenceNumber = 11;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.fetchSnapshot(undefined);
 			await serializedStateManager.waitForInitialRefresh;
 			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
@@ -663,6 +665,7 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
+				() => false,
 			);
 			let seq = 1;
 			let lastProcessedOpSequenceNumber = 20;
@@ -673,7 +676,7 @@ describe("serializedStateManager", () => {
 			const snapshotSequenceNumber = 30;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.fetchSnapshot(undefined);
 			// latest snapshot fetched but we're still behind the snapshot.
 			// next addProcessedOp calls will be responsible for refreshing
 			await serializedStateManager.waitForInitialRefresh;
@@ -734,6 +737,7 @@ describe("serializedStateManager", () => {
 				true,
 				eventEmitter,
 				isDirtyF,
+				() => false,
 			);
 			let seq = 1;
 			while (seq <= 5) {
@@ -743,7 +747,7 @@ describe("serializedStateManager", () => {
 			const snapshotSequenceNumber = 7;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined, false);
+			await serializedStateManager.fetchSnapshot(undefined);
 			// latest snapshot fetched but we're still behind the snapshot.
 			await serializedStateManager.waitForInitialRefresh;
 			while (seq < lastProcessedOpSequenceNumber) {
@@ -783,9 +787,10 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					() => isDirty,
+					() => false,
 				);
 
-				await serializedStateManager.fetchSnapshot(undefined, false);
+				await serializedStateManager.fetchSnapshot(undefined);
 				await serializedStateManager.waitForInitialRefresh;
 
 				const mockRuntime: ISerializedStateManagerRuntime = {
@@ -816,8 +821,8 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					() => isDirty,
+					() => false,
 				);
-
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -826,7 +831,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 5;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined, false);
+				await serializedStateManager.fetchSnapshot(undefined);
 				await serializedStateManager.waitForInitialRefresh;
 
 				const mockRuntime: ISerializedStateManagerRuntime = {
@@ -844,10 +849,7 @@ describe("serializedStateManager", () => {
 				// Since there is no saved event, it should only update the expiry timer
 				// when we're not dirty at fetching time.
 				if (isDirty) {
-					assert.strictEqual(
-						parsed.pendingRuntimeState.sessionExpiryTimerStarted,
-						undefined,
-					);
+					assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 				} else {
 					assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
 				}
@@ -868,8 +870,8 @@ describe("serializedStateManager", () => {
 					true,
 					eventEmitter,
 					isDirtyF,
+					() => false,
 				);
-
 				const lastProcessedOpSequenceNumber = 10;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -878,7 +880,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 5;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined, false);
+				await serializedStateManager.fetchSnapshot(undefined);
 				await serializedStateManager.waitForInitialRefresh;
 				if (isDirty) {
 					saved = true;

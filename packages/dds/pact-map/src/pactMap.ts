@@ -5,18 +5,24 @@
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	type IChannelAttributes,
-	type IChannelStorageService,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { type IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
 
-import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
+import type { IAcceptedPact, IPactMap, IPactMapEvents } from "./interfaces.js";
 
 /**
  * The accepted pact information, if any.
@@ -92,7 +98,10 @@ const snapshotFileName = "header";
 /**
  * {@inheritDoc PactMap}
  */
-export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
+export class PactMapClass<T = unknown>
+	extends SharedObject<IPactMapEvents>
+	implements IPactMap<T>
+{
 	private readonly values = new Map<string, Pact<T>>();
 
 	private readonly incomingOp: EventEmitter = new EventEmitter();
@@ -399,23 +408,12 @@ export class PactMapClass<T = unknown> extends SharedObject<IPactMapEvents> impl
 
 			switch (op.type) {
 				case "set": {
-					this.incomingOp.emit(
-						"set",
-						op.key,
-						op.value,
-						op.refSeq,
-						message.sequenceNumber,
-					);
+					this.incomingOp.emit("set", op.key, op.value, op.refSeq, message.sequenceNumber);
 					break;
 				}
 
 				case "accept": {
-					this.incomingOp.emit(
-						"accept",
-						op.key,
-						message.clientId,
-						message.sequenceNumber,
-					);
+					this.incomingOp.emit("accept", op.key, message.clientId, message.sequenceNumber);
 					break;
 				}
 

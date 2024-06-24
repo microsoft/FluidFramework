@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { type ICriticalContainerError } from "@fluidframework/container-definitions";
-import type { IFluidContainer } from "@fluidframework/fluid-static";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { type ITelemetryConsumer } from "../common/index.js";
-import { type IContainerTelemetry } from "./containerTelemetry.js";
-import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
+
+import type { ITelemetryConsumer } from "../common/index.js";
+
 import {
 	type IFluidContainerSystemEventName,
 	IFluidContainerSystemEventNames,
 } from "./containerSystemEvents.js";
+import type { IContainerTelemetry } from "./containerTelemetry.js";
+import type { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 
 /**
  * This class manages container telemetry intended for customers to consume by wiring together the provided container system events, telemetry producers and consumers together.

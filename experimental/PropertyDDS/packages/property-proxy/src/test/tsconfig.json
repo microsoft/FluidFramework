@@ -5,6 +5,7 @@
 		"outDir": "../../lib/test",
 		"types": ["node", "jest"],
 		"allowJs": true,
+		"noUncheckedIndexedAccess": false,
 	},
 	"include": ["./**/*"],
 	"references": [

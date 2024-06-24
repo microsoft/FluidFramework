@@ -6,10 +6,9 @@
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { SharedDirectory as SharedDirectoryInternal } from "./directory.js";
@@ -81,13 +80,11 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
  * Entrypoint for {@link ISharedDirectory} creation.
  * @alpha
  */
-export const SharedDirectory: ISharedObjectKind<ISharedDirectory> =
-	createSharedObjectKind(DirectoryFactory);
+export const SharedDirectory = createSharedObjectKind<ISharedDirectory>(DirectoryFactory);
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
  * @alpha
- * @deprecated Use ISharedDirectory instead.
  * @privateRemarks
  * This alias is for legacy compat from when the SharedDirectory class was exported as public.
  */

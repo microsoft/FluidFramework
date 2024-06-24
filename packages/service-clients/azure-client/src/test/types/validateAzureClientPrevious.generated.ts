@@ -9,19 +9,11 @@
  */
 
 import type * as old from "@fluidframework/azure-client-previous/internal";
+import type { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-// See 'build-tools/src/type-test-generator/compatibility.ts' for more information.
-type TypeOnly<T> = T extends number
-	? number
-	: T extends string
-	? string
-	: T extends boolean | bigint | symbol
-	? T
-	: {
-			[P in keyof T]: TypeOnly<T[P]>;
-	  };
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -35,7 +27,6 @@ declare function get_old_ClassDeclaration_AzureClient():
 declare function use_current_ClassDeclaration_AzureClient(
     use: TypeOnly<current.AzureClient>): void;
 use_current_ClassDeclaration_AzureClient(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AzureClient());
 
 /*
@@ -50,7 +41,6 @@ declare function get_current_ClassDeclaration_AzureClient():
 declare function use_old_ClassDeclaration_AzureClient(
     use: TypeOnly<old.AzureClient>): void;
 use_old_ClassDeclaration_AzureClient(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AzureClient());
 
 /*
@@ -289,7 +279,6 @@ declare function get_old_InterfaceDeclaration_AzureMember():
 declare function use_current_InterfaceDeclaration_AzureMember(
     use: TypeOnly<current.AzureMember>): void;
 use_current_InterfaceDeclaration_AzureMember(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_AzureMember());
 
 /*
@@ -304,7 +293,6 @@ declare function get_current_InterfaceDeclaration_AzureMember():
 declare function use_old_InterfaceDeclaration_AzureMember(
     use: TypeOnly<old.AzureMember>): void;
 use_old_InterfaceDeclaration_AzureMember(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_AzureMember());
 
 /*
@@ -362,6 +350,34 @@ declare function use_old_InterfaceDeclaration_AzureUser(
     use: TypeOnly<old.AzureUser>): void;
 use_old_InterfaceDeclaration_AzureUser(
     get_current_InterfaceDeclaration_AzureUser());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_CompatibilityMode": {"forwardCompat": false}
+ */
+declare function get_old_TypeAliasDeclaration_CompatibilityMode():
+    TypeOnly<old.CompatibilityMode>;
+declare function use_current_TypeAliasDeclaration_CompatibilityMode(
+    use: TypeOnly<current.CompatibilityMode>): void;
+use_current_TypeAliasDeclaration_CompatibilityMode(
+    get_old_TypeAliasDeclaration_CompatibilityMode());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAliasDeclaration_CompatibilityMode": {"backCompat": false}
+ */
+declare function get_current_TypeAliasDeclaration_CompatibilityMode():
+    TypeOnly<current.CompatibilityMode>;
+declare function use_old_TypeAliasDeclaration_CompatibilityMode(
+    use: TypeOnly<old.CompatibilityMode>): void;
+use_old_TypeAliasDeclaration_CompatibilityMode(
+    get_current_TypeAliasDeclaration_CompatibilityMode());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

@@ -7,17 +7,31 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import type { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import type {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
-import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	SharedObject,
+	ValueType,
+	bindHandles,
+	parseHandles,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	type ITelemetryLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
 import type {
@@ -34,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { LocalValueMaker, makeSerializable } from "./localValues.js";
+import { LocalValueMaker } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -735,9 +749,7 @@ export class SharedDirectory
 						}
 						newSubDir = new SubDirectory(
 							seqData,
-							createInfo === undefined
-								? new Set()
-								: new Set<string>(createInfo.ccIds),
+							createInfo === undefined ? new Set() : new Set<string>(createInfo.ccIds),
 							this,
 							this.runtime,
 							this.serializer,
@@ -1303,11 +1315,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// Create a local value and serialize it.
 		const localValue = this.directory.localValueMaker.fromInMemory(value);
-		const serializableValue = makeSerializable(
-			localValue,
-			this.serializer,
-			this.directory.handle,
-		);
+		bindHandles(localValue, this.serializer, this.directory.handle);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -1321,7 +1329,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: serializableValue,
+			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;
@@ -1473,10 +1481,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (this.index < subdirNames.length) {
 					const subdirName = subdirNames[this.index++];
 					const subdir = this.dirs.get(subdirName);
-					assert(
-						subdir !== undefined,
-						0x8ac /* Could not find expected sub-directory. */,
-					);
+					assert(subdir !== undefined, 0x8ac /* Could not find expected sub-directory. */);
 					return { value: [subdirName, subdir], done: false };
 				}
 				return { value: undefined, done: true };
@@ -1896,15 +1901,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private updatePendingSubDirMessageCount(op: IDirectorySubDirectoryOperation): void {
 		if (op.type === "deleteSubDirectory") {
-			this.incrementPendingSubDirCount(
-				this.pendingDeleteSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.incrementPendingSubDirCount(this.pendingDeleteSubDirectoriesTracker, op.subdirName);
 		} else if (op.type === "createSubDirectory") {
-			this.incrementPendingSubDirCount(
-				this.pendingCreateSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.incrementPendingSubDirCount(this.pendingCreateSubDirectoriesTracker, op.subdirName);
 		}
 	}
 
@@ -1970,16 +1969,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		if (localOpMetadata.type === "createSubDir") {
-			this.decrementPendingSubDirCount(
-				this.pendingCreateSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.decrementPendingSubDirCount(this.pendingCreateSubDirectoriesTracker, op.subdirName);
 			this.submitCreateSubDirectoryMessage(op);
 		} else {
-			this.decrementPendingSubDirCount(
-				this.pendingDeleteSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.decrementPendingSubDirCount(this.pendingDeleteSubDirectoriesTracker, op.subdirName);
 			this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 		}
 	}
@@ -2085,7 +2078,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			) {
 				throw new Error("Rollback op does match last clear");
 			}
-		} else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
+		} else if (
+			(op.type === "delete" || op.type === "set") &&
+			localOpMetadata.type === "edit"
+		) {
 			const key: unknown = op.key;
 			assert(key !== undefined, 0x8ad /* "key" property is missing from edit operation. */);
 			assert(
@@ -2210,10 +2206,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				assert(
-					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
-					0x331 /* Unexpected pending message received */,
-				);
+				if (pendingKeyMessageIds[0] !== localOpMetadata.pendingMessageId) {
+					// TODO: AB#7742: Hitting this block indicates that the pending message Id received
+					// is not consistent with the "next" local op
+					this.logger.sendTelemetryEvent({
+						eventName: "unexpectedPendingMessage",
+						expectedPendingMessage: pendingKeyMessageIds[0],
+						actualPendingMessage: localOpMetadata.pendingMessageId,
+						expectedPendingMessagesLength: pendingKeyMessageIds.length,
+					});
+				}
 				pendingKeyMessageIds.shift();
 				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
@@ -2489,7 +2491,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param subdirName - The name of the subdirectory being deleted
 	 * @param local - Whether the message originated from the local client
 	 */
-	private deleteSubDirectoryCore(subdirName: string, local: boolean): SubDirectory | undefined {
+	private deleteSubDirectoryCore(
+		subdirName: string,
+		local: boolean,
+	): SubDirectory | undefined {
 		const previousValue = this._subdirectories.get(subdirName);
 		// This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
 		// Might want to consider cleaning out the structure more exhaustively though? But not when rollback.

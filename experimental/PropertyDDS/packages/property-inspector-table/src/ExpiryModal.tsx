@@ -178,7 +178,9 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 	const expiryInfoToState = (expiryInfo: IExpiryInfo): IModalExpiryState => {
 		const newState = {} as IModalExpiryState;
 		newState.expiryState = expiryInfo.state;
-		newState.expiresIn = expiryInfo.when ? new Date(expiryInfo.when).toLocaleString() : "never";
+		newState.expiresIn = expiryInfo.when
+			? new Date(expiryInfo.when).toLocaleString()
+			: "never";
 		return newState;
 	};
 
@@ -244,8 +246,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 		return modalState.mode === "default"
 			? "Repository Expiry"
 			: modalState.mode === "expirySelection"
-			? "Set a new retention policy"
-			: "Delete Repository";
+				? "Set a new retention policy"
+				: "Delete Repository";
 	};
 
 	// Renders the life cycle state chip or placeholder
@@ -393,8 +395,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 				{isV1Urn && (
 					<span>
 						<br />
-						Note: You are using a v1 branch urn. You will need to convert it into a v2
-						urn in order to undelete this repository in the inspector app.
+						Note: You are using a v1 branch urn. You will need to convert it into a v2 urn in
+						order to undelete this repository in the inspector app.
 						<br />
 						<br />
 					</span>
@@ -428,8 +430,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 			{modalState.mode === "default"
 				? renderExpiryOverview()
 				: modalState.mode === "expirySelection"
-				? renderNewExpirySelection()
-				: renderDeletionConfirmation()}
+					? renderNewExpirySelection()
+					: renderDeletionConfirmation()}
 		</InspectorModal>
 	);
 };

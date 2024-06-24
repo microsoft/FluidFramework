@@ -13,7 +13,11 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/internal/test/containerRuntime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import type {
+	ISharedMap,
+	ISharedDirectory,
+	SharedDirectory,
+} from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -258,7 +262,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			detachedDataStore.root.set("map", map.handle);
 			map.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			checkForAttachedHandles(map);
 		});
 
@@ -266,7 +270,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			detachedDataStore.root.set(directoryId, directory.handle);
 			directory.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			checkForAttachedHandles(directory);
 		});
 
@@ -283,7 +287,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 				false,
 				"blob should be detached in a detached dds and attached container",
 			);
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			detachedDataStore.root.set(mapId, map.handle);
 			assert.strictEqual(
 				map.handle.isAttached,
@@ -310,7 +314,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 				false,
 				"blob should be detached in a detached dds and attached container",
 			);
-			detachedBlobStorage.blobs.clear();
+			detachedBlobStorage.dispose();
 			detachedDataStore.root.set(directoryId, directory.handle);
 			assert.strictEqual(
 				directory.handle.isAttached,

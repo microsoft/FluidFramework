@@ -4,10 +4,15 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import {
+	type ISharedDirectory,
+	MapFactory,
+	SharedDirectory,
+} from "@fluidframework/map/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
-import { type DataObjectTypes } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -77,4 +82,14 @@ export abstract class DataObject<
 	protected getUninitializedErrorString(item: string): string {
 		return `${item} must be initialized before being accessed.`;
 	}
+}
+
+/**
+ * Utility for creating SharedObjectKind instances for data objects.
+ * @internal
+ */
+export function createDataObjectKind<T extends new (...any) => DataObject>(
+	factory: T,
+): T & SharedObjectKind<InstanceType<T>> {
+	return factory as T & SharedObjectKind<InstanceType<T>>;
 }

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IConfigProviderBase,
-	type ITelemetryBaseLogger,
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
-import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
-import { type IUser } from "@fluidframework/protocol-definitions";
-import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { ICompressionStorageConfig } from "@fluidframework/driver-utils";
+import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
  * Props for initializing a new AzureClient instance
@@ -150,12 +150,13 @@ export interface AzureContainerServices {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AzureUser<T = any> extends IUser {
 	/**
-	 * The user's name
+	 * {@inheritDoc AzureMember.name}
+	 *
 	 */
 	name: string;
 
 	/**
-	 * Custom, app-specific user information
+	 * {@inheritDoc AzureMember.additionalDetails}
 	 */
 	additionalDetails?: T;
 }
@@ -174,12 +175,12 @@ export interface AzureUser<T = any> extends IUser {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AzureMember<T = any> extends IMember {
 	/**
-	 * {@inheritDoc AzureUser.name}
+	 * The user's name
 	 */
 	name: string;
 
 	/**
-	 * {@inheritDoc AzureUser.additionalDetails}
+	 * Custom, app-specific user information
 	 */
 	additionalDetails?: T;
 }

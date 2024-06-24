@@ -8,12 +8,12 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IEventSampler,
 	ITelemetryLoggerExt,
@@ -95,6 +95,13 @@ class OpPerfTelemetry {
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
 	private static readonly PROCESSED_OPS_SAMPLE_RATE = 500;
+
+	/**
+	 * A sampled logger to log Ops that have been processed by the current client, the NoOp sent and the
+	 * size of the ops processed within one sampling window of this log event.
+	 * The data from this logger will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+	 * Note: no log events are sent when sampling is disabled, because logging at every op will be too noisy.
+	 */
 	private readonly opsLogger: ISampledTelemetryLogger;
 
 	/**
@@ -134,8 +141,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 					}
@@ -156,8 +162,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 						this.noOpCountForTelemetry = 0;
@@ -167,7 +172,11 @@ class OpPerfTelemetry {
 				},
 			};
 		})();
-		this.opsLogger = createSampledLogger(logger, opsEventSampler);
+		this.opsLogger = createSampledLogger(
+			logger,
+			opsEventSampler,
+			true /* skipLoggingWhenSamplingIsDisabled */,
+		);
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
@@ -201,10 +210,7 @@ class OpPerfTelemetry {
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
-					assert(
-						latencyStats !== undefined,
-						0x7c2 /* Latency stats for op should exist */,
-					);
+					assert(latencyStats !== undefined, 0x7c2 /* Latency stats for op should exist */);
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,

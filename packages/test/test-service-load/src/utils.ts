@@ -19,7 +19,8 @@ import {
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
+// eslint-disable-next-line import/no-deprecated
+import { type IDetachedBlobStorage, Loader } from "@fluidframework/container-loader/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
@@ -28,7 +29,7 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
@@ -140,6 +141,7 @@ const codeDetails: IFluidCodeDetails = {
 export const createCodeLoader = (options: IContainerRuntimeOptions) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
+// eslint-disable-next-line import/no-deprecated
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
 
@@ -173,10 +175,16 @@ export async function initialize(
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
+	const optionsOverride = getOptionOverride(
+		testConfig,
+		testDriver.type,
+		testDriver.endpointName,
+	);
 
 	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
-	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
+	const containerOptions = random.pick(
+		generateRuntimeOptions(seed, optionsOverride?.container),
+	);
 	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
@@ -295,6 +303,7 @@ export const globalConfigurations: Record<string, ConfigTypes> = {
 	"Fluid.SharedObject.DdsCallbacksTelemetrySampling": 10000,
 	"Fluid.SharedObject.OpProcessingTelemetrySampling": 10000,
 	"Fluid.Driver.ReadBlobTelemetrySampling": 100,
+	"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents": true,
 };
 
 /**

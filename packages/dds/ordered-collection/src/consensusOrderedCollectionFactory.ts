@@ -5,13 +5,16 @@
 
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusQueueClass } from "./consensusQueue.js";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
+import {
+	IConsensusOrderedCollection,
+	IConsensusOrderedCollectionFactory,
+} from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

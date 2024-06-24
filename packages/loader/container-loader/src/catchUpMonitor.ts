@@ -6,7 +6,7 @@
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /** @see CatchUpMonitor for usage */
 type CaughtUpListener = () => void;
@@ -22,7 +22,9 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 	private readonly targetSeqNumber: number;
 	private caughtUp: boolean = false;
 
-	private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+	private readonly opHandler = (
+		message: Pick<ISequencedDocumentMessage, "sequenceNumber">,
+	) => {
 		if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
 			this.caughtUp = true;
 			this.listener();
