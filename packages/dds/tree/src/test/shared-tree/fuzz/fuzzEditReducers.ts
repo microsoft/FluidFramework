@@ -298,7 +298,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 	const tree = viewFromState(state);
 	switch (constraint.content.type) {
 		case "nodeConstraint": {
-			const constraintNodePath = constraint.content.content;
+			const constraintNodePath = constraint.content.path;
 			const constraintNode =
 				constraintNodePath !== undefined
 					? navigateToNode(tree, constraintNodePath)
@@ -309,7 +309,7 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 			break;
 		}
 		default:
-			break;
+			unreachableCase(constraint.content.type);
 	}
 }
 

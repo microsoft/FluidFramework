@@ -521,7 +521,7 @@ export const makeConstraintEditGenerator = (
 				type: "constraint",
 				content: {
 					type: "nodeConstraint",
-					content: maybeDownPathFromNode(
+					path: maybeDownPathFromNode(
 						// Selecting the parent node here, since the field is possibly empty.
 						selectTreeField(viewFromState(state), state.random, opWeights.fieldSelection)
 							.content.parent,

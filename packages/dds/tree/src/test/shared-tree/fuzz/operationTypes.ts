@@ -27,7 +27,8 @@ export interface Constraint {
 }
 export interface NodeConstraint {
 	type: "nodeConstraint";
-	content: undefined | DownPath;
+	/** Undefined when it is the parent of a detached field. */
+	path: undefined | DownPath;
 }
 export interface TransactionBoundary {
 	type: "transactionBoundary";

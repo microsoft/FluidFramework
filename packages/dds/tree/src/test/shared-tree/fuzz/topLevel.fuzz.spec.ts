@@ -54,7 +54,7 @@ describe("Fuzz - Top-Level", () => {
 		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 1,
-		nodeConstraint: 1,
+		nodeConstraint: 3,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
