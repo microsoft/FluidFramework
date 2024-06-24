@@ -1217,7 +1217,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// and thus can leverage that to trigger recovery. But this is not going to solve all the problems
 			// (the other 50%), and thus these errors below should be looked at even if code below results in
 			// recovery.
-			// eslint-disable-next-line unicorn/no-lonely-if
+			// eslint-disable-next-line unicorn/no-lonely-if -- Docs make more sense like this
 			if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
 				this.fetchMissingDeltas("OpsBehind");
 			}

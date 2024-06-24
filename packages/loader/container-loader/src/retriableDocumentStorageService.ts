@@ -52,8 +52,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-		// API used below returns null
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null -- API used below returns null
 	): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(
 			async () =>
