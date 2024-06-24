@@ -120,7 +120,7 @@ export function getOdspCredentials(
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			const inCi = !!process.env.TF_BUILD;
 			const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
-			throw new Error(
+			assert.fail(
 				`Missing secrets from environment. At least one of login__${odspOrOdspdf}__test__tenants or login__${odspOrOdspdf}__test__accounts must be set.${
 					inCi ? "" : "\n\nRun getkeys to populate these environment variables."
 				}`,
