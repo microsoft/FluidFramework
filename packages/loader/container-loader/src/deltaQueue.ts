@@ -56,16 +56,10 @@ export class DeltaQueue<T>
 		return this.processingPromise === undefined && this.q.length === 0;
 	}
 
-	public async waitTillProcessingDone(): Promise<
-		| {
-				count: number;
-				duration: number;
-		  }
-		| {
-				count: number;
-				duration: number;
-		  }
-	> {
+	public async waitTillProcessingDone(): Promise<{
+		count: number;
+		duration: number;
+	}> {
 		return this.processingPromise ?? { count: 0, duration: 0 };
 	}
 
