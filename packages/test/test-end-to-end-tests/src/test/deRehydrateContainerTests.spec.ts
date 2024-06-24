@@ -590,6 +590,7 @@ describeCompat(
 				// so dev builds (i.e. -dev or -dev-rc) sort as before official internal releases.
 				const isCurrentApi =
 					apis.dataRuntime.version.includes("dev") ||
+					apis.dataRuntime.version.match(/2\.0\.0-\d+/) !== null ||
 					semver.gte(apis.dataRuntime.version, "2.0.0-internal.8.0.0");
 
 				if (!isCurrentApi) {
