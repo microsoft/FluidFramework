@@ -273,7 +273,6 @@ describe("Schema Comparison", () => {
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {
-			// TODO: AB#8357, Improve allowsTreeSuperset to ensure it can distinguish between different identifiers.
 			const root = fieldSchema(FieldKinds.optional);
 			const node1 = {
 				name: brand<TreeNodeSchemaIdentifier>("testTree"),
