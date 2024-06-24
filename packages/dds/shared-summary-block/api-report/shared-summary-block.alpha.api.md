@@ -4,11 +4,6 @@
 
 ```ts
 
-import { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { Jsonable } from '@fluidframework/datastore-definitions/internal';
-import { SharedObjectKind } from '@fluidframework/shared-object-base/internal';
-
 // @alpha
 export interface ISharedSummaryBlock extends ISharedObject {
     get<T>(key: string): Jsonable<T>;

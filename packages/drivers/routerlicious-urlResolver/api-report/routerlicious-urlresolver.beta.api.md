@@ -4,12 +4,6 @@
 
 ```ts
 
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-import { IUser } from '@fluidframework/driver-definitions';
-import { Provider } from 'nconf';
-
 // (No @packageDocumentation comment for this package)
 
 ```

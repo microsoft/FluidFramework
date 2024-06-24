@@ -4,26 +4,6 @@
 
 ```ts
 
-import type { ConfigTypes } from '@fluidframework/core-interfaces';
-import type { EventEmitter } from '@fluid-internal/client-utils';
-import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import type { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import type { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces/internal';
-import type { ILoggingError } from '@fluidframework/core-interfaces/internal';
-import type { ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { IUsageError } from '@fluidframework/core-interfaces/internal';
-import { Lazy } from '@fluidframework/core-utils/internal';
-import { LogLevel } from '@fluidframework/core-interfaces';
-import type { Tagged } from '@fluidframework/core-interfaces';
-import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // @alpha
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
@@ -75,7 +55,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @alpha
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
 
-// @alpha
+// @alpha @deprecated
 export class MockLogger implements ITelemetryBaseLogger {
     constructor(minLogLevel?: LogLevel);
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean, clearEventsAfterCheck?: boolean): void;
