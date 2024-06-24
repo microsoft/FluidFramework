@@ -60,3 +60,4 @@ export {
 	RedisClientConnectionManager,
 	IRedisClientConnectionManager,
 } from "./redisClientConnectionManager";
+export { ITenantKeyGenerator, TenantKeyGenerator } from "./tenantKeyGenerator";

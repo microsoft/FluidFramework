@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
@@ -86,7 +86,9 @@ describe("SharedOT", () => {
 
 				// Create docs for this stress run.
 				for (let i = 0; i < numClients; i++) {
-					const dataStoreRuntimeN = new MockFluidDataStoreRuntime();
+					const dataStoreRuntimeN = new MockFluidDataStoreRuntime({
+						registry: [SharedDelta.getFactory()],
+					});
 					const containerRuntimeN =
 						containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
 					const servicesN: IChannelServices = {
@@ -94,7 +96,7 @@ describe("SharedOT", () => {
 						objectStorage: new MockStorage(),
 					};
 
-					const docN = SharedDelta.getFactory().create(dataStoreRuntimeN, `doc-${i}`);
+					const docN = SharedDelta.create(dataStoreRuntimeN, `doc-${i}`);
 					docN.connect(servicesN);
 
 					docs.push(docN);
@@ -114,17 +116,13 @@ describe("SharedOT", () => {
 					trace?.push(
 						`doc${
 							docIndex + 1
-						}.insert(/* position: */ ${position}, /* text: */ ${JSON.stringify(
-							text,
-						)});`,
+						}.insert(/* position: */ ${position}, /* text: */ ${JSON.stringify(text)});`,
 					);
 					docs[docIndex].insert(position, text);
 				};
 
 				const del = (docIndex: number, start: number, end: number) => {
-					trace?.push(
-						`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`,
-					);
+					trace?.push(`doc${docIndex + 1}.delete(/* start: */ ${start}, /* end: */ ${end});`);
 					docs[docIndex].delete(start, end);
 				};
 

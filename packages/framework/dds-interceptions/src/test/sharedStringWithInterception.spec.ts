@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { PropertySet } from "@fluidframework/merge-tree/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { createSharedStringWithInterception } from "../sequence/index.js";
@@ -51,12 +51,10 @@ describe("Shared String with Interception", () => {
 		}
 
 		beforeEach(() => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			sharedString = new SharedString(
-				dataStoreRuntime,
-				documentId,
-				SharedStringFactory.Attributes,
-			);
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				registry: [SharedString.getFactory()],
+			});
+			sharedString = SharedString.create(dataStoreRuntime, documentId);
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			dataStoreContext = {
@@ -75,12 +73,7 @@ describe("Shared String with Interception", () => {
 			let text: string = "123";
 			let syleProps: PropertySet = { style: "bold" };
 			sharedStringWithInterception.insertText(0, text, syleProps);
-			verifyString(
-				sharedStringWithInterception,
-				text,
-				{ ...syleProps, ...userAttributes },
-				2,
-			);
+			verifyString(sharedStringWithInterception, text, { ...syleProps, ...userAttributes }, 2);
 
 			// Replace text in the shared string.
 			text = "aaa";
@@ -223,12 +216,7 @@ describe("Shared String with Interception", () => {
 			useWrapper = false;
 			text = "test";
 			sharedStringWithInterception.replaceText(2, 3, text, props);
-			verifyString(
-				sharedStringWithInterception,
-				"12test",
-				{ ...props, ...userAttributes },
-				2,
-			);
+			verifyString(sharedStringWithInterception, "12test", { ...props, ...userAttributes }, 2);
 
 			// Verify that the annotate on position 0 in the recursiveInterceptionCb annotated the attributes.
 			verifyString(

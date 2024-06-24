@@ -12,9 +12,13 @@ import {
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	Marker,
+	ReferenceType,
+	reservedMarkerIdKey,
+} from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -94,7 +98,6 @@ describeCompat(
 					state: "disabled",
 				},
 			},
-			gcOptions: { gcAllowed: true },
 		};
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,

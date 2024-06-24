@@ -5,7 +5,7 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import { ExecOptions, exec, execSync } from "node:child_process";
+import { ExecOptions, execFileSync, execFile } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -112,6 +112,11 @@ async function removeInstalled(version: string) {
 	}
 }
 
+// See https://github.com/nodejs/node-v0.x-archive/issues/2318.
+// Note that execFile and execFileSync are used to avoid command injection vulnerability flagging from CodeQL.
+const npmCmd =
+	process.platform.includes("win") && !process.platform.includes("darwin") ? "npm.cmd" : "npm";
+
 /**
  * @internal
  */
@@ -144,12 +149,15 @@ export function resolveVersion(requested: string, installed: boolean) {
 		if (found) {
 			return found;
 		}
-		throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
+		throw new Error(
+			`No matching version found in ${baseModulePath} (requested: ${requested})`,
+		);
 	} else {
 		let result: string | undefined;
 		try {
-			result = execSync(
-				`npm v @fluidframework/container-loader@"${requested}" version --json`,
+			result = execFileSync(
+				npmCmd,
+				["v", `@fluidframework/container-loader@${requested}`, "version", "--json"],
 				{ encoding: "utf8" },
 			);
 		} catch (error: any) {
@@ -235,30 +243,51 @@ export async function ensureInstalled(
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				// Added --verbose to try to troubleshoot AB#6195.
-				// We should probably remove it if when find the root cause and fix for that.
-				exec(`npm init --yes --verbose`, options, (error, stdout, stderr) => {
-					if (error) {
-						reject(
-							new Error(
-								`Failed to initialize install directory ${modulePath}\n${stderr}`,
-							),
-						);
-					}
-					resolve();
-				}),
-			);
-			await new Promise<void>((resolve, reject) =>
-				// Added --verbose to try to troubleshoot AB#6195.
-				// We should probably remove it when we find the root cause and fix for that.
-				exec(
-					`npm i --no-package-lock --verbose ${adjustedPackageList
-						.map((pkg) => `${pkg}@${version}`)
-						.join(" ")}`,
+				execFile(
+					npmCmd,
+					// Added --verbose to try to troubleshoot AB#6195.
+					// We should probably remove it if when find the root cause and fix for that.
+					["init", "--yes", "--verbose"],
 					options,
 					(error, stdout, stderr) => {
 						if (error) {
-							reject(new Error(`Failed to install in ${modulePath}\n${stderr}`));
+							const errorString =
+								error instanceof Error
+									? `${error.message}\n${error.stack}`
+									: JSON.stringify(error);
+							reject(
+								new Error(
+									`Failed to initialize install directory ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
+								),
+							);
+						}
+						resolve();
+					},
+				),
+			);
+			await new Promise<void>((resolve, reject) =>
+				execFile(
+					npmCmd,
+					// Added --verbose to try to troubleshoot AB#6195.
+					// We should probably remove it when we find the root cause and fix for that.
+					[
+						"i",
+						"--no-package-lock",
+						"--verbose",
+						...adjustedPackageList.map((pkg) => `${pkg}@${version}`),
+					],
+					options,
+					(error, stdout, stderr) => {
+						if (error) {
+							const errorString =
+								error instanceof Error
+									? `${error.message}\n${error.stack}`
+									: JSON.stringify(error);
+							reject(
+								new Error(
+									`Failed to install in ${modulePath}\nError:${errorString}\nStdOut:${stdout}\nStdErr:${stderr}`,
+								),
+							);
 						}
 						resolve();
 					},
@@ -329,8 +358,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 				typeof exp === "string"
 					? exp
 					: exp.require !== undefined
-					? exp.require.default
-					: exp.default;
+						? exp.require.default
+						: exp.default;
 			if (primaryExport === undefined) {
 				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}
@@ -343,6 +372,84 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 	}
 	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
 };
+
+/**
+ * Helper function for `getRequestedVersion()`. This function calculates the requested version **range**
+ * based on the base version and the requested value, **without** validating it via npm.
+ */
+function calculateRequestedRange(
+	baseVersion: string,
+	requested?: number | string,
+	adjustPublicMajor: boolean = false,
+): string {
+	if (requested === undefined || requested === 0) {
+		return baseVersion;
+	}
+	if (typeof requested === "string") {
+		return requested;
+	}
+	if (requested > 0) {
+		throw new Error("Only negative values are supported for `requested` param.");
+	}
+
+	const scheme = detectVersionScheme(baseVersion);
+
+	// if the baseVersion passed is an internal version
+	if (
+		adjustPublicMajor === false &&
+		(scheme === "internal" || scheme === "internalPrerelease")
+	) {
+		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
+			baseVersion,
+			/** allowPrereleases */ true,
+			/** allowAnyPrereleaseId */ true,
+		);
+
+		const internalSchemeRange = internalSchema(
+			publicVersion.version,
+			internalVersion.version,
+			prereleaseIdentifier,
+			requested,
+		);
+		return internalSchemeRange;
+	}
+
+	let version: semver.SemVer;
+	try {
+		version = new semver.SemVer(baseVersion);
+	} catch (err: unknown) {
+		throw new Error(err as string);
+	}
+
+	// If the base version is a public version and `adjustPublicMajor` is false, then we need to ensure that we
+	// calculate N-1 as he previous major release, regardless if it is public or internal.
+	// Currently, this case only applies to calculating N-X for 2.0.0.
+	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
+	if (adjustPublicMajor === false && version.major > 1) {
+		// In this case, we can pretend that 2.0 is RC6 and calculate the range as if it were an internal version.
+		const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
+		return internalSchemeRange;
+	} else {
+		// calculate requested major version number
+		const requestedMajorVersion = version.major + requested;
+		// if the major version number is bigger than 0 then return it as normal
+		if (requestedMajorVersion > 0) {
+			return `^${requestedMajorVersion}.0.0-0`;
+		}
+		// if the major version number is <= 0 then we return the equivalent pre-releases
+		const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+
+		// Minor number in 0.xx release represent a major change hence different rules
+		// are applied for computing the requested version.
+		const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
+		// too old a version / non existing version requested
+		if (requestedMinorVersion <= 0) {
+			// cap at min version
+			return "^0.0.1-0";
+		}
+		return `^0.${requestedMinorVersion}.0-0`;
+	}
+}
 
 /**
  *
@@ -377,60 +484,26 @@ export function getRequestedVersion(
 	requested?: number | string,
 	adjustPublicMajor: boolean = false,
 ): string {
-	if (requested === undefined || requested === 0) {
-		return baseVersion;
-	}
-	if (typeof requested === "string") {
-		return resolveVersion(requested, false);
-	}
-	if (requested > 0) {
-		throw new Error("Only negative values are supported for `requested` param.");
-	}
-
-	const scheme = detectVersionScheme(baseVersion);
-
-	// if the baseVersion passed is an internal version
-	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
-		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
-			baseVersion,
-			/** allowPrereleases */ true,
-			/** allowAnyPrereleaseId */ true,
-		);
-
-		const internalSchemeRange = internalSchema(
-			publicVersion.version,
-			internalVersion.version,
-			prereleaseIdentifier,
-			requested,
-		);
-		return resolveVersion(internalSchemeRange, false);
-	}
-
-	let version: semver.SemVer;
+	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
 	try {
-		version = new semver.SemVer(baseVersion);
-	} catch (err: unknown) {
-		throw new Error(err as string);
+		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2).
+		// Will throw if the requested version range is not valid.
+		return resolveVersion(calculatedRange, false);
+	} catch (err: any) {
+		// If we tried fetching N-1 and it failed, try N-2. It is possible that we are trying to bump the current branch
+		// to a new version. If that is the case, then N-1 may not be published yet, and we should try to use N-2 in it's place.
+		if (requested === -1) {
+			const resolvedVersion = getRequestedVersion(baseVersion, -2, adjustPublicMajor);
+			// Here we cache the result so we don't have to enter the try/catch flow again.
+			// Note: This will cache the resolved version range (i.e. >=2.0.0-rc.4.0.0 <2.0.0-rc.5.0.0). Because of this,
+			// it will not cause any conflicts when trying to fetch the current version
+			// i.e. `getRequestedVersion("2.0.0-rc.5.0.0", 0, false)` will still return "2.0.0-rc.5.0.0".
+			resolutionCache.set(calculatedRange, resolvedVersion);
+			return resolvedVersion;
+		} else {
+			throw new Error(`Error trying to getRequestedVersion: ${err}`);
+		}
 	}
-
-	// calculate requested major version number
-	const requestedMajorVersion = version.major + requested;
-	// if the major version number is bigger than 0 then return it as normal
-	if (requestedMajorVersion > 0) {
-		return resolveVersion(`^${requestedMajorVersion}.0.0-0`, false);
-	}
-	// if the major version number is <= 0 then we return the equivalent pre-releases
-	const lastPrereleaseVersion = new semver.SemVer("0.59.0");
-
-	// Minor number in 0.xx release represent a major change hence different rules
-	// are applied for computing the requested version.
-	const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
-	// too old a version / non existing version requested
-	if (requestedMinorVersion <= 0) {
-		// cap at min version
-		return "^0.0.1-0";
-	}
-	return resolveVersion(`^0.${requestedMinorVersion}.0-0`, false);
 }
 
 function internalSchema(

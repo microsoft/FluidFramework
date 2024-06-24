@@ -5,13 +5,13 @@
 
 import assert from "node:assert";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
-import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
-	type ITelemetryPerformanceEventExt,
+	ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
 import { ThresholdCounter } from "../thresholdCounter.js";
 

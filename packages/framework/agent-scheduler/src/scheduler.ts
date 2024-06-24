@@ -12,7 +12,10 @@ import {
 	FluidObjectHandle,
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
@@ -20,8 +23,8 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,

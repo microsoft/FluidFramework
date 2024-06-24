@@ -4,7 +4,7 @@
 		"layers": {
 			"Common-Definitions": {
 				"dotSameRank": true,
-				"packages": ["@fluidframework/common-definitions", "@fluidframework/gitresources"]
+				"packages": ["@fluidframework/gitresources"]
 			},
 			"Core-Interfaces": {
 				"packages": ["@fluidframework/core-interfaces"],
@@ -12,14 +12,14 @@
 			},
 			"Protocol-Definitions": {
 				"packages": ["@fluidframework/protocol-definitions"],
-				"deps": ["@fluidframework/common-definitions"]
+				"deps": []
 			},
 			"Driver-Definitions": {
 				"packages": [
 					"@fluidframework/driver-definitions",
 					"@fluidframework/odsp-driver-definitions"
 				],
-				"deps": ["Protocol-Definitions", "Core-Interfaces"]
+				"deps": ["Core-Interfaces"]
 			},
 			"Container-Definitions": {
 				"packages": ["@fluidframework/container-definitions"],
@@ -66,7 +66,7 @@
 					"Core-Interfaces",
 					"Core-Utils",
 					"Client-Utils",
-					"Protocol-Definitions"
+					"Driver-Definitions"
 				]
 			}
 		}
@@ -165,7 +165,7 @@
 			},
 			"Azure-Service-Utils": {
 				"packages": ["@fluidframework/azure-service-utils"],
-				"deps": ["Protocol-Definitions", "Server-Shared-Utils", "Test-Utils"]
+				"deps": ["Driver-Definitions", "Server-Shared-Utils", "Test-Utils"]
 			},
 			"Azure-Service": {
 				"packages": ["@fluidframework/azure-local-service"],

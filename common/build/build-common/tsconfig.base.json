@@ -15,5 +15,7 @@
 		"strict": true,
 		"target": "ES2020",
 		"types": [],
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
 	},
 }

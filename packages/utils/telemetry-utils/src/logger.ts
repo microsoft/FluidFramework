@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
+import { performance } from "@fluid-internal/client-utils";
 import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryBaseProperties,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
-	Tagged,
-	TelemetryBaseEventPropertyType,
+	type Tagged,
+	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 
 import {
@@ -24,8 +23,8 @@ import {
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
-import {
-	type ITelemetryErrorEventExt,
+import type {
+	ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
@@ -34,14 +33,6 @@ import {
 	TelemetryEventCategory,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
-
-export interface Memory {
-	usedJSHeapSize: number;
-}
-
-export interface PerformanceWithMemory extends IsomorphicPerformance {
-	readonly memory: Memory;
-}
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -64,14 +55,15 @@ export enum TelemetryDataTag {
 /**
  * @alpha
  */
-export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
+export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
  * @alpha
  */
-export interface ITelemetryLoggerPropertyBag {
-	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
+export type ITelemetryLoggerPropertyBag = Record<
+	string,
+	TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)
+>;
 
 /**
  * @alpha
@@ -282,10 +274,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		return this.extendProperties(newEvent, includeErrorProps);
 	}
 
-	private extendProperties<T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag>(
-		toExtend: T,
-		includeErrorProps: boolean,
-	): T {
+	private extendProperties<
+		T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag,
+	>(toExtend: T, includeErrorProps: boolean): T {
 		const eventLike: ITelemetryLoggerPropertyBag = toExtend;
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
@@ -430,8 +421,8 @@ export class ChildLogger extends TelemetryLogger {
 				baseLogger.namespace === undefined
 					? namespace
 					: namespace === undefined
-					? baseLogger.namespace
-					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+						? baseLogger.namespace
+						: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
 			const child = new ChildLogger(
 				baseLogger.baseLogger,
@@ -542,7 +533,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * @param loggers - The list of loggers to use as sinks
 	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
-	constructor(
+	public constructor(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 		loggers: ITelemetryBaseLogger[] = [],
@@ -646,10 +637,9 @@ export class PerformanceEvent {
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		markers?: IPerformanceEventMarkers,
-		recordHeapSize: boolean = false,
 		emitLogs: boolean = true,
 	): PerformanceEvent {
-		return new PerformanceEvent(logger, event, markers, recordHeapSize, emitLogs);
+		return new PerformanceEvent(logger, event, markers, emitLogs);
 	}
 
 	/**
@@ -678,7 +668,6 @@ export class PerformanceEvent {
 			logger,
 			event,
 			markers,
-			undefined, // recordHeapSize
 			PerformanceEvent.shouldReport(event, sampleThreshold),
 		);
 		try {
@@ -712,14 +701,12 @@ export class PerformanceEvent {
 		event: ITelemetryGenericEventExt,
 		callback: (event: PerformanceEvent) => Promise<T>,
 		markers?: IPerformanceEventMarkers,
-		recordHeapSize?: boolean,
 		sampleThreshold: number = 1,
 	): Promise<T> {
 		const perfEvent = PerformanceEvent.start(
 			logger,
 			event,
 			markers,
-			recordHeapSize,
 			PerformanceEvent.shouldReport(event, sampleThreshold),
 		);
 		try {
@@ -739,13 +726,11 @@ export class PerformanceEvent {
 	private event?: ITelemetryGenericEventExt;
 	private readonly startTime = performance.now();
 	private startMark?: string;
-	private startMemoryCollection: number | undefined = 0;
 
 	protected constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEventExt,
 		private readonly markers: IPerformanceEventMarkers = { end: true, cancel: "generic" },
-		private readonly recordHeapSize: boolean = false,
 		private readonly emitLogs: boolean = true,
 	) {
 		this.event = { ...event };
@@ -820,19 +805,6 @@ export class PerformanceEvent {
 		event.eventName = `${event.eventName}_${eventNameSuffix}`;
 		if (eventNameSuffix !== "start") {
 			event.duration = this.duration;
-			if (this.startMemoryCollection) {
-				const currentMemory = (performance as PerformanceWithMemory)?.memory
-					?.usedJSHeapSize;
-				const differenceInKBytes = Math.floor(
-					(currentMemory - this.startMemoryCollection) / 1024,
-				);
-				if (differenceInKBytes > 0) {
-					event.usedJSHeapSize = differenceInKBytes;
-				}
-			}
-		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
-				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
@@ -883,7 +855,7 @@ export function convertToBasePropertyType(
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
 				tag: x.tag,
-		  }
+			}
 		: convertToBasePropertyTypeUntagged(x);
 }
 
@@ -948,17 +920,17 @@ export const tagData = <
 				? () => {
 						value: ReturnType<V[P]>;
 						tag: T;
-				  }
+					}
 				: {
 						value: Exclude<V[P], undefined>;
 						tag: T;
-				  })
+					})
 		| (V[P] extends undefined ? undefined : never);
 } =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	Object.entries(values)
 		.filter((e) => e[1] !== undefined)
-		// eslint-disable-next-line unicorn/no-array-reduce, unicorn/prefer-object-from-entries
+		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce((pv, cv) => {
 			const [key, value] = cv;
 			// The ternary form is less legible in this case.
@@ -1010,10 +982,10 @@ export const tagCodeArtifacts = <
 				? () => {
 						value: ReturnType<T[P]>;
 						tag: TelemetryDataTag.CodeArtifact;
-				  }
+					}
 				: {
 						value: Exclude<T[P], undefined>;
 						tag: TelemetryDataTag.CodeArtifact;
-				  })
+					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);

@@ -9,14 +9,21 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
@@ -66,7 +73,8 @@ import {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops.js";
-import { PropertySet } from "./properties.js";
+// eslint-disable-next-line import/no-deprecated
+import { PropertySet, createMap } from "./properties.js";
 import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
@@ -184,8 +192,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public peekPendingSegmentGroups(): SegmentGroup | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
+	public peekPendingSegmentGroups(
+		count: number = 1,
+		// eslint-disable-next-line import/no-deprecated
+	): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
@@ -206,7 +216,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @returns The annotate op if valid, otherwise undefined
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
+	public annotateMarker(
+		marker: Marker,
+		props: PropertySet,
+	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateMarkerOp(marker, props)!;
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
@@ -770,7 +783,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			switch (resetOp.type) {
 				case MergeTreeDeltaType.ANNOTATE:
 					assert(
-						segment.propertyManager?.hasPendingProperties() === true,
+						segment.propertyManager?.hasPendingProperties(resetOp.props) === true,
 						0x036 /* "Segment has no pending properties" */,
 					);
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
@@ -800,7 +813,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					let segInsertOp = segment;
 					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
 						segInsertOp = segment.clone();
-						segInsertOp.properties = resetOp.seg.props;
+						// eslint-disable-next-line import/no-deprecated
+						segInsertOp.properties = createMap();
+						segInsertOp.addProperties(resetOp.seg.props);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);
@@ -1077,7 +1092,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		serializer: IFluidSerializer,
 		catchUpMsgs: ISequencedDocumentMessage[],
 	): ISummaryTreeWithStats {
-		const deltaManager = runtime.deltaManager;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
 		const minSeq = deltaManager.minimumSequenceNumber;
 
 		// Catch up to latest MSN, if we have not had a chance to do it.

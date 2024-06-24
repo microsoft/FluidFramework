@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
-import { DriverError } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	IDriverErrorBase,
+	DriverError,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * ODSP Error types.
@@ -91,7 +94,9 @@ export interface IOdspErrorAugmentations {
  * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
  * @alpha
  */
-export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
+export interface IOdspError
+	extends Omit<IDriverErrorBase, "errorType">,
+		IOdspErrorAugmentations {
 	readonly errorType: OdspErrorTypes;
 }
 

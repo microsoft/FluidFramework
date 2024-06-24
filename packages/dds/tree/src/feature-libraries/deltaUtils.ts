@@ -4,19 +4,15 @@
  */
 
 import {
-	ChangeAtomId,
-	DeltaDetachedNodeId,
-	DeltaRoot,
-	RevisionTag,
+	type ChangeAtomId,
+	type DeltaDetachedNodeId,
+	type DeltaRoot,
 	makeDetachedNodeId,
 } from "../core/index.js";
-import { Mutable } from "../util/index.js";
+import type { Mutable } from "../util/index.js";
 
-export function nodeIdFromChangeAtom(
-	changeAtom: ChangeAtomId,
-	fallbackRevision?: RevisionTag,
-): DeltaDetachedNodeId {
-	return makeDetachedNodeId(changeAtom.revision ?? fallbackRevision, changeAtom.localId);
+export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): DeltaDetachedNodeId {
+	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
 }
 
 /**

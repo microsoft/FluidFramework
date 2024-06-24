@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import { assert, compareArrays } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 import type { ChangeCompressor } from './ChangeCompression.js';
@@ -526,7 +526,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public addLocalEdit(edit: Edit<TChange>): void {
 		this.localEdits.push(edit);
-		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
+		const localEditId: LocalOrderedEditId = {
+			localSequence: this.localEditSequence++,
+			isLocal: true,
+		};
 		this.allEditIds.set(edit.id, localEditId);
 		this.emitAdd(edit, true, false);
 	}
@@ -605,9 +608,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 										startRevision: 0,
 										chunk: this.sequencedEdits.map((edit) => compressEdit(edit)),
 									},
-							  ],
+								],
 					editIds,
-			  }
+				}
 			: {
 					editChunks:
 						this.sequencedEdits.length === 0
@@ -618,9 +621,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 										startRevision: 0,
 										chunk: this.sequencedEdits.map(({ changes }) => ({ changes })),
 									},
-							  ],
+								],
 					editIds,
-			  };
+				};
 	}
 
 	// APIS DEPRECATED DUE TO HISTORY'S PEACEFUL DEATH

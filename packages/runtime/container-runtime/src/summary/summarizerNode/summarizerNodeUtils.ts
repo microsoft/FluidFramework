@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
+import { SummaryObject } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 
 export interface IRefreshSummaryResult {
 	/** Tells whether this summary is tracked by this client. */
@@ -53,7 +56,7 @@ export interface ISummarizerNodeRootContract {
 		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult;
 	validateSummary(): ValidateSummaryResult;
-	completeSummary(proposalHandle: string, validate: boolean): void;
+	completeSummary(proposalHandle: string): void;
 	clearSummary(): void;
 	refreshLatestSummary(
 		proposalHandle: string,
@@ -173,7 +176,9 @@ export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
  * would be located if exists.
  * @param baseSummary - summary to check
  */
-export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo<ISnapshotTree> {
+export function parseSummaryForSubtrees(
+	baseSummary: ISnapshotTree,
+): ISubtreeInfo<ISnapshotTree> {
 	// New versions of snapshots have child nodes isolated in .channels subtree
 	const channelsSubtree = baseSummary.trees[channelsTreeName];
 	if (channelsSubtree !== undefined) {

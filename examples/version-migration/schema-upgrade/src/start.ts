@@ -60,7 +60,8 @@ const render = (model: IVersionedModel) => {
 async function start(): Promise<void> {
 	// If we assumed the container code could consistently present a model to us, we could bake that assumption
 	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
-	// (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
+	// (unknown) container version.  So the ModelLoader would be replaced by e.g. container.getEntryPoint() or
+	// container.getEntryPoint().model if we knew that was the model.
 	const modelLoader = new ModelLoader<IMigratableModel>({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
@@ -88,7 +89,12 @@ async function start(): Promise<void> {
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
+	const migrator = new Migrator(
+		modelLoader,
+		model,
+		id,
+		inventoryListDataTransformationCallback,
+	);
 	migrator.on("migrated", () => {
 		model.close();
 		render(migrator.currentModel);

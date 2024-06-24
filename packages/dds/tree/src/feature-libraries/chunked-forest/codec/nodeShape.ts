@@ -6,23 +6,25 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
+	type FieldKey,
+	type ITreeCursorSynchronous,
+	type TreeNodeSchemaIdentifier,
 	forEachField,
+	type Value,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
 
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
+import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
+import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
-	EncoderCache,
-	FieldEncoder,
-	KeyedFieldEncoder,
-	NodeEncoder,
+	type EncoderCache,
+	type FieldEncoder,
+	type KeyedFieldEncoder,
+	type NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
-import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -38,6 +40,19 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		this.explicitKeys = new Set(this.fields.map((f) => f.key));
 	}
 
+	private getValueToEncode(cursor: ITreeCursorSynchronous, cache: EncoderCache): Value {
+		if (this.value === 0) {
+			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
+			if (isStableId(cursor.value)) {
+				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
+				if (sessionSpaceCompressedId !== undefined) {
+					return cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+				}
+			}
+		}
+		return cursor.value;
+	}
+
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -48,9 +63,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-
-		encodeValue(cursor.value, this.value, outputBuffer);
-
+		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
 		for (const field of this.fields) {
 			cursor.enterField(brand(field.key));
 			field.shape.encodeField(cursor, cache, outputBuffer);
@@ -108,7 +121,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 	}
 
-	public get shape() {
+	public get shape(): NodeShape {
 		return this;
 	}
 }
@@ -129,27 +142,30 @@ export function encodeFieldShapes(
 	]);
 }
 
-function encodeIdentifier(identifier: string, identifiers: DeduplicationTable<string>) {
+function encodeIdentifier(
+	identifier: string,
+	identifiers: DeduplicationTable<string>,
+): string | number {
 	return identifiers.valueToIndex.get(identifier) ?? identifier;
 }
 
 function encodeOptionalIdentifier(
 	identifier: string | undefined,
 	identifiers: DeduplicationTable<string>,
-) {
+): string | number | undefined {
 	return identifier === undefined ? undefined : encodeIdentifier(identifier, identifiers);
 }
 
 function encodeOptionalFieldShape(
 	shape: FieldEncoder | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
+): number | undefined {
 	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
 }
 
 function dedupShape(
 	shape: Shape<EncodedChunkShape>,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
-) {
+): number {
 	return shapes.valueToIndex.get(shape) ?? fail("missing shape");
 }

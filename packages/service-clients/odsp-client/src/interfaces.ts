@@ -27,7 +27,7 @@ export interface OdspConnectionConfig {
 	siteUrl: string;
 
 	/**
-	 * RaaS Drive Id of the tenant where Fluid containers are created
+	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
 
@@ -96,7 +96,7 @@ export interface OdspMember extends IMember {
 	/**
 	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	id: string;
 	/**
 	 * The user's name
 	 */
@@ -112,3 +112,20 @@ export interface OdspMember extends IMember {
  * @beta
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+/**
+ * Represents token response
+ * @beta
+ */
+export interface TokenResponse {
+	/**
+	 * Token value
+	 */
+	token: string;
+
+	/**
+	 * Whether or not the token was obtained from local cache.
+	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
+	 */
+	fromCache?: boolean;
+}

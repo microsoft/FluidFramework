@@ -5,9 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-private/test-loader-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
 // eslint-disable-next-line import/no-internal-modules
@@ -19,13 +20,15 @@ import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
 import { ScheduleManager } from "@fluidframework/container-runtime/internal/test/scheduleManager";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	IClient,
-	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 
 describe("Container Runtime", () => {
 	/**

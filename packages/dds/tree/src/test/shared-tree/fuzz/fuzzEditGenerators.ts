@@ -6,31 +6,31 @@
 import { strict as assert } from "assert";
 
 import {
-	AsyncGenerator,
-	BaseFuzzTestState,
-	Generator,
-	IRandom,
-	Weights,
+	type AsyncGenerator,
+	type BaseFuzzTestState,
+	type Generator,
+	type IRandom,
+	type Weights,
 	createWeightedGenerator,
 	done,
 } from "@fluid-private/stochastic-test-utils";
-import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import type { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 
 import {
 	AllowedUpdateType,
-	FieldKey,
-	FieldUpPath,
-	JsonableTree,
-	UpPath,
+	type FieldKey,
+	type FieldUpPath,
+	type JsonableTree,
+	type UpPath,
 } from "../../../core/index.js";
 import {
-	DownPath,
-	FlexTreeField,
-	FlexTreeNode,
+	type DownPath,
+	type FlexTreeField,
+	type FlexTreeNode,
 	toDownPath,
 	treeSchemaFromStoredSchema,
 } from "../../../feature-libraries/index.js";
-import {
+import type {
 	FlexTreeView,
 	ITreeViewFork,
 	TreeContent,
@@ -41,8 +41,13 @@ import {
 import { brand, fail, getOrCreate, makeArray } from "../../../util/index.js";
 import { schematizeFlexTree } from "../../utils.js";
 
-import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
+	type FuzzNode,
+	type FuzzNodeSchema,
+	type fuzzSchema,
+	initialFuzzSchema,
+} from "./fuzzUtils.js";
+import type {
 	Insert,
 	Remove,
 	SetField,
@@ -115,7 +120,7 @@ export function viewFromState(
 	state.view ??= new Map();
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+		getOrCreate(state.view, client.channel, (tree) => {
 			const treeSchema = treeSchemaFromStoredSchema(tree.storedSchema);
 			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
 				tree,
@@ -142,7 +147,8 @@ export function viewFromState(
 }
 
 function isEmptyStoredSchema(tree: SharedTree): boolean {
-	const rootFieldSchemaData = (tree.storedSchema as unknown as any).rootFieldSchemaData;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const rootFieldSchemaData = (tree.storedSchema as any).rootFieldSchemaData;
 	return rootFieldSchemaData.types.size === 0;
 }
 /**
@@ -271,6 +277,11 @@ export const makeTreeEditGenerator = (
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
+			case "com.fluidframework.leaf.handle":
+				return {
+					type: brand("com.fluidframework.leaf.handle"),
+					value: state.random.handle(),
+				};
 			case "treefuzz.node":
 				return {
 					type: brand("treefuzz.node"),
@@ -278,10 +289,7 @@ export const makeTreeEditGenerator = (
 						requiredChild: [
 							{
 								type: brand("com.fluidframework.leaf.number"),
-								value: state.random.integer(
-									Number.MIN_SAFE_INTEGER,
-									Number.MAX_SAFE_INTEGER,
-								),
+								value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 							},
 						],
 					},
@@ -395,9 +403,7 @@ export const makeTreeEditGenerator = (
 			case "sequence": {
 				return mapBailout(
 					assertNotDone(
-						sequenceFieldEditGenerator(
-							state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
-						),
+						sequenceFieldEditGenerator(state as FuzzTestStateForFieldEdit<SequenceFuzzField>),
 					),
 					(edit) => ({ type: "sequence", edit }),
 				);
@@ -406,18 +412,14 @@ export const makeTreeEditGenerator = (
 				return {
 					type: "optional",
 					edit: assertNotDone(
-						optionalFieldEditGenerator(
-							state as FuzzTestStateForFieldEdit<OptionalFuzzField>,
-						),
+						optionalFieldEditGenerator(state as FuzzTestStateForFieldEdit<OptionalFuzzField>),
 					),
 				};
 			case "required":
 				return {
 					type: "required",
 					edit: assertNotDone(
-						requiredFieldEditGenerator(
-							state as FuzzTestStateForFieldEdit<RequiredFuzzField>,
-						),
+						requiredFieldEditGenerator(state as FuzzTestStateForFieldEdit<RequiredFuzzField>),
 					),
 				};
 			default:
@@ -639,7 +641,10 @@ function selectField(
 
 	const value: FuzzField = { type: "required", content: node.boxedRequiredChild } as const;
 
-	const sequence: FuzzField = { type: "sequence", content: node.boxedSequenceChildren } as const;
+	const sequence: FuzzField = {
+		type: "sequence",
+		content: node.boxedSequenceChildren,
+	} as const;
 
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
 		const childNodes: FuzzNode[] = [];
@@ -691,10 +696,10 @@ function trySelectTreeField(
 		weights.optional === 0
 			? ["recurse"]
 			: weights.recurse === 0
-			? ["optional"]
-			: random.bool(weights.optional / (weights.optional + weights.recurse))
-			? ["optional", "recurse"]
-			: ["recurse", "optional"];
+				? ["optional"]
+				: random.bool(weights.optional / (weights.optional + weights.recurse))
+					? ["optional", "recurse"]
+					: ["recurse", "optional"];
 	const nodeSchema = tree.currentSchema;
 	for (const option of options) {
 		switch (option) {
@@ -710,13 +715,7 @@ function trySelectTreeField(
 				// to the .is typeguard.
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (editable.content?.is(nodeSchema)) {
-					const result = selectField(
-						editable.content,
-						random,
-						weights,
-						filter,
-						nodeSchema,
-					);
+					const result = selectField(editable.content, random, weights, filter, nodeSchema);
 					if (result !== "no-valid-selections") {
 						return result;
 					}

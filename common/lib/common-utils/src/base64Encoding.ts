@@ -37,9 +37,11 @@ export const fromUtf8ToBase64 = (input: string): string =>
 export const toUtf8 = (input: string, encoding: string): string => {
 	switch (encoding) {
 		case "utf8":
-		case "utf-8":
+		case "utf-8": {
 			return input;
-		default:
+		}
+		default: {
 			return IsoBuffer.from(input, encoding).toString();
+		}
 	}
 };

@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ExportDeclaration, ExportedDeclarations, SourceFile } from "ts-morph";
-import { JSDoc, Node, SyntaxKind } from "ts-morph";
+import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from "ts-morph";
+import { Node, SyntaxKind } from "ts-morph";
 
-import { ApiLevel, isKnownApiLevel } from "./apiLevel";
+import type { ApiLevel } from "./apiLevel.js";
+import type { ApiTag } from "./apiTag.js";
+import { isKnownApiTag } from "./apiTag.js";
 
 interface ExportRecord {
 	name: string;
@@ -14,11 +16,12 @@ interface ExportRecord {
 }
 interface ExportRecords {
 	public: ExportRecord[];
+	legacy: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
 	/**
-	 * Entries here represent exports with unrecognized levels.
+	 * Entries here represent exports with unrecognized tags.
 	 * These may be errors or just concerns depending on context.
 	 * ExportedDeclarations provides context for the origin of
 	 * such cases.
@@ -41,57 +44,86 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 }
 
 /**
- * Searches given JSDocs for known {@link ApiLevel} tag.
+ * Searches given JSDocs for known {@link ApiTag} tags.
  *
- * @returns Recognized {@link ApiLevel} from JSDocs or undefined.
+ * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getLevelFromDocs(jsdocs: JSDoc[]): ApiLevel | undefined {
+function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiTag[] | undefined {
+	const tags: ApiTag[] = [];
 	for (const jsdoc of jsdocs) {
 		for (const tag of jsdoc.getTags()) {
 			const tagName = tag.getTagName();
-			if (isKnownApiLevel(tagName)) {
-				return tagName;
+			if (isKnownApiTag(tagName)) {
+				tags.push(tagName);
 			}
 		}
 	}
-	return undefined;
+	return tags.length > 0 ? tags : undefined;
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiLevel} tag.
+ * Searches given Node's JSDocs for known {@link ApiTag} tags.
  *
- * @returns Recognized {@link ApiLevel} from JSDocs or undefined.
+ * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getNodeLevel(node: Node): ApiLevel | undefined {
+function getNodeApiTags(node: Node): ApiTag[] | undefined {
 	if (Node.isJSDocable(node)) {
-		return getLevelFromDocs(node.getJsDocs());
+		return getApiTagsFromDocs(node.getJsDocs());
 	}
 
 	// Some nodes like `ExportSpecifier` are not JSDocable per ts-morph, but
 	// a JSDoc is present.
 	const jsdocChildren = node.getChildrenOfKind(SyntaxKind.JSDoc);
 	if (jsdocChildren.length > 0) {
-		return getLevelFromDocs(jsdocChildren);
+		return getApiTagsFromDocs(jsdocChildren);
 	}
 
 	// Some nodes like `VariableDeclaration`s are not JSDocable, but an ancestor
 	// like `VariableStatement` is and may contain tag.
 	const parent = node.getParent();
 	if (parent !== undefined) {
-		return getNodeLevel(parent);
+		return getNodeApiTags(parent);
 	}
 
 	return undefined;
 }
 
 /**
- * Given a source file extracts all of the named exports and associated API level.
- * Named exports without a recognized level are placed in unknown array.
+ * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
+ *
+ * @remarks One of api-extractor standard tags will always be present as required by
+ * api-extractor. So, "legacy" is treated as priority over other tags for determining
+ * level. Otherwise, exactly one tag is required and will be exact level.
+ *
+ * @returns Computed {@link ApiLevel} from JSDocs or undefined.
+ */
+function getNodeApiLevel(node: Node): ApiLevel | undefined {
+	const apiTags = getNodeApiTags(node);
+	if (apiTags === undefined) {
+		return undefined;
+	}
+	if (apiTags.includes("legacy")) {
+		return "legacy";
+	}
+	if (apiTags.length === 1) {
+		return apiTags[0];
+	}
+	throw new Error(
+		`No known level map from ${node.getSymbol()} with tags [${apiTags.join(",")}] at ${node
+			.getSourceFile()
+			.getFilePath()}:${node.getStartLineNumber()}.`,
+	);
+}
+
+/**
+ * Given a source file extracts all of the named exports and associated API tag.
+ * Named exports without a recognized tag are placed in unknown array.
  */
 export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
 		public: [],
+		legacy: [],
 		beta: [],
 		alpha: [],
 		internal: [],
@@ -99,15 +131,15 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	};
 	// We can't (don't know how to) distinguish duplication in exports
 	// from a type and a value export. We expect however that those will
-	// share the same level. Track and throw if there are different levels.
+	// share the same tag. Track and throw if there are different tags.
 	const foundNameLevels = new Map<string, ApiLevel>();
 	for (const [name, exportedDecls] of exported.entries()) {
 		for (const exportedDecl of exportedDecls) {
-			const level = getNodeLevel(exportedDecl);
+			const level = getNodeApiLevel(exportedDecl);
 			const existingLevel = foundNameLevels.get(name);
 			if (level === undefined) {
 				// Overloads might only have JSDocs for first of set; so ignore
-				// secondary exports without recognized level.
+				// secondary exports without recognized tag.
 				if (existingLevel === undefined) {
 					records.unknown.set(name, { exportedDecl });
 				}
@@ -116,7 +148,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 				foundNameLevels.set(name, level);
 			} else if (level !== existingLevel) {
 				throw new Error(
-					`${name} has been exported twice with different api levels.\nFirst as ${existingLevel} and now as ${level} from ${exportedDecl
+					`${name} has been exported twice with different api level.\nFirst as ${existingLevel} and now as ${level} from ${exportedDecl
 						.getSourceFile()
 						.getFilePath()}:${exportedDecl.getStartLineNumber()}.`,
 				);
@@ -124,12 +156,12 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 		}
 	}
 
-	// If we have found levels for all things exported, then nothing else left to look for.
+	// If we have found tags for all things exported, then nothing else left to look for.
 	if (records.unknown.size === 0) {
 		return records;
 	}
 
-	// Otherwise, look for some special cases where level tagging may appear in source itself.
+	// Otherwise, look for some special cases where tag tagging may appear in source itself.
 
 	// Note that these are not exported declarations, but specifically
 	// given file's export declarations.
@@ -153,7 +185,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 				console.log(
 					`namespace exports of the form 'export * as foo' are speculatively supported. See ${sourceFile.getFilePath()}:${namespaceDecl.getStartLineNumber()}:\n${namespaceDecl.getText()}`,
 				);
-				const namespaceLevel = getNodeLevel(exportDeclaration);
+				const namespaceLevel = getNodeApiLevel(exportDeclaration);
 				if (namespaceLevel === undefined) {
 					unknownExported.exportDecl = exportDeclaration;
 				} else {
@@ -181,7 +213,7 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 			const name = exportSpecifier.getName();
 			const unknownExported = records.unknown.get(name);
 			if (unknownExported !== undefined) {
-				const exportLevel = getNodeLevel(exportSpecifier);
+				const exportLevel = getNodeApiLevel(exportSpecifier);
 				if (exportLevel === undefined) {
 					unknownExported.exportDecl = exportDeclaration;
 				} else {

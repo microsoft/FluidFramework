@@ -369,15 +369,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 				[
 					wrapInSection(
 						[
+							// Summary section
 							wrapInSection([
 								ParagraphNode.createFromPlainText("Test optional property"),
 							]),
+							// Signature section
 							wrapInSection(
 								[
 									FencedCodeBlockNode.createFromPlainText(
 										"testOptionalInterfaceProperty?: number;",
 										"typescript",
 									),
+									new ParagraphNode([
+										new SpanNode([
+											SpanNode.createFromPlainText("Type: ", { bold: true }),
+											SpanNode.createFromPlainText("number"),
+										]),
+									]),
 								],
 								{
 									title: "Signature",
@@ -453,10 +461,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 										"./test-package/testnamespace-namespace#bar-variable",
 									),
 								]),
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("BETA")]), // Alert
+								new TableBodyCellNode([CodeSpanNode.createFromPlainText("Beta")]), // Alert
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier
+								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// Table row for `foo`
@@ -471,6 +480,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									CodeSpanNode.createFromPlainText("readonly"),
 								]), // Modifier
+								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// No entry should be included for `baz` because it is `@alpha`
@@ -479,6 +489,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							TableHeaderCellNode.createFromPlainText("Variable"),
 							TableHeaderCellNode.createFromPlainText("Alerts"),
 							TableHeaderCellNode.createFromPlainText("Modifiers"),
+							TableHeaderCellNode.createFromPlainText("Type"),
 							TableHeaderCellNode.createFromPlainText("Description"),
 						]),
 					),
@@ -511,7 +522,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							),
 						],
 						{
-							title: "bar (BETA)",
+							title: "bar",
 							id: "bar-variable",
 						},
 					),
@@ -631,12 +642,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												CodeSpanNode.createFromPlainText("readonly"),
 											]),
+											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
 									],
 									new TableHeaderRowNode([
 										TableHeaderCellNode.createFromPlainText("Variable"),
 										TableHeaderCellNode.createFromPlainText("Modifiers"),
+										TableHeaderCellNode.createFromPlainText("Type"),
 										TableHeaderCellNode.createFromPlainText("Description"),
 									]),
 								),
@@ -712,11 +725,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"./test-package#world-variable",
 												),
 											]),
+											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
 									],
 									new TableHeaderRowNode([
 										TableHeaderCellNode.createFromPlainText("Variable"),
+										TableHeaderCellNode.createFromPlainText("Type"),
 										TableHeaderCellNode.createFromPlainText("Description"),
 									]),
 								),

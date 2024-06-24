@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type IDisposable } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 
-import { type ContainerKey } from "./CommonInterfaces.js";
-import { type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import type { ContainerKey } from "./CommonInterfaces.js";
+import type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
 
 /**
  * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
@@ -20,7 +20,7 @@ import { type ContainerDevtoolsProps } from "./ContainerDevtools.js";
  * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
  * disposed of on Window unload.
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
- * @beta
+ * @alpha
  */
 export interface IFluidDevtools extends IDisposable {
 	/**

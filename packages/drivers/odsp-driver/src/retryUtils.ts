@@ -5,9 +5,12 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
-import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
+import {
+	canRetryOnError,
+	getRetryDelayFromError,
+} from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { Odsp409Error } from "./epochTracker.js";
 

@@ -1,4 +1,3 @@
-<!-- Front Matter! -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -258,7 +257,7 @@
                 <a href='./simple-suite-test#testfunction-function'>testFunction(testParameter, testOptionalParameter)</a>
               </td>
               <td>
-                <code>ALPHA</code>
+                <code>Alpha</code>
               </td>
               <td>
                 <span>TTypeParameter</span>
@@ -285,7 +284,7 @@
                 <a href='./simple-suite-test#testfunctionreturningintersectiontype-function'>testFunctionReturningIntersectionType()</a>
               </td>
               <td>
-                <code>DEPRECATED</code>
+                <code>Deprecated</code>
               </td>
               <td>
                 <span><a href='./simple-suite-test/testemptyinterface-interface'>TestEmptyInterface</a> &amp; <a href='./simple-suite-test/testinterfacewithtypeparameter-interface'>TestInterfaceWithTypeParameter</a>&lt;number&gt;</span>
@@ -327,6 +326,9 @@
                 Modifiers
               </th>
               <th>
+                Type
+              </th>
+              <th>
                 Description
               </th>
             </tr>
@@ -337,10 +339,12 @@
                 <a href='./simple-suite-test#testconst-variable'>testConst</a>
               </td>
               <td>
-                <code>BETA</code>
+                <code>Beta</code>
               </td>
               <td>
                 <code>readonly</code>
+              </td>
+              <td>
               </td>
               <td>
                 Test Constant
@@ -351,10 +355,13 @@
                 <a href='./simple-suite-test#testconstwithemptydeprecatedblock-variable'>testConstWithEmptyDeprecatedBlock</a>
               </td>
               <td>
-                <code>DEPRECATED</code>
+                <code>Deprecated</code>
               </td>
               <td>
                 <code>readonly</code>
+              </td>
+              <td>
+                <span>string</span>
               </td>
               <td>
                 I have a <code>@deprecated</code> tag with an empty comment block.
@@ -649,7 +656,7 @@
         </h2>
         <section>
           <h3 id="testfunction-function">
-            testFunction (ALPHA)
+            testFunction
           </h3>
           <section>
             <p>
@@ -898,7 +905,7 @@
         </h2>
         <section>
           <h3 id="testconst-variable">
-            testConst (BETA)
+            testConst
           </h3>
           <section>
             <p>
@@ -949,8 +956,11 @@
               Signature
             </h4>
             <code>
-              testConstWithEmptyDeprecatedBlock = &quot;I have a `@deprecated` tag with an empty comment block.&quot;
+              testConstWithEmptyDeprecatedBlock: string
             </code>
+            <p>
+              <span><span><b>Type:</b> </span><span>string</span></span>
+            </p>
           </section>
         </section>
       </section>

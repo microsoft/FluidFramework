@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ISignalMessage, ITree } from "@fluidframework/protocol-definitions";
+import type { ITree, ISignalMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * An envelope wraps the contents with the intended target
@@ -47,10 +47,10 @@ export interface ISignalEnvelope {
 
 /**
  * Represents ISignalMessage with its type.
- * @public
+ * @alpha
  */
 export interface IInboundSignalMessage extends ISignalMessage {
-	type: string;
+	readonly type: string;
 }
 
 /**

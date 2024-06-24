@@ -3,22 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { stub, useFakeTimers } from "sinon";
-import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
+import { strict as assert } from "node:assert";
+
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
-import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import { IClient } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IAnyDriverError,
+	IDocumentService,
+	INack,
+	NackErrorType,
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
-import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { stub, type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("connectionManager", () => {
-	let clock;
+	let clock: SinonFakeTimers;
 	let nextClientId = 0;
 	let _mockDeltaConnection: MockDocumentDeltaConnection | undefined;
 	let mockDocumentService: IDocumentService;
@@ -57,7 +66,7 @@ describe("connectionManager", () => {
 	};
 
 	const mockLogger = new MockLogger();
-	async function waitForConnection() {
+	async function waitForConnection(): Promise<MockDocumentDeltaConnection> {
 		return connectionDeferred.promise;
 	}
 
@@ -102,10 +111,11 @@ describe("connectionManager", () => {
 	it("reconnectOnError - exceptions invoke closeHandler", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "test:reconnectOnError" });
+		connectionManager.connect({ text: "test:reconnectOnError" }, "write");
 		const connection = await waitForConnection();
 
 		// Monkey patch connection to be undefined to trigger assert in reconnectOnError
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(connectionManager as any).connection = undefined;
 
 		// Act
@@ -126,7 +136,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - error, disconnect, and nack handling", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "test:reconnectOnError" });
+		connectionManager.connect({ text: "test:reconnectOnError" }, "write");
 		let connection = await waitForConnection();
 
 		// Act I - retryableError
@@ -140,7 +150,10 @@ describe("connectionManager", () => {
 		connection = await waitForConnection();
 
 		// Assert I
-		assert(oldConnection.disposed, "Old connection should be disposed after emitting an error");
+		assert(
+			oldConnection.disposed,
+			"Old connection should be disposed after emitting an error",
+		);
 		assert.equal(
 			connection.clientId,
 			"mock_client_1",
@@ -148,7 +161,11 @@ describe("connectionManager", () => {
 		);
 		assert(!closed, "Don't expect closeHandler to be called when connection emits an error");
 		assert.equal(disconnectCount, 1, "Expected 1 disconnect from emitting an error");
-		assert.equal(connectionCount, 2, "Expected 2 connections after the first emitted an error");
+		assert.equal(
+			connectionCount,
+			2,
+			"Expected 2 connections after the first emitted an error",
+		);
 
 		// Act II - nonretryable disconnect
 		const disconnectReason: IAnyDriverError = new NonRetryableError(
@@ -210,7 +227,7 @@ describe("connectionManager", () => {
 
 	it("reconnectOnError - nack retryAfter", async () => {
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "test:reconnectOnError" });
+		connectionManager.connect({ text: "test:reconnectOnError" }, "write");
 		let connection = await waitForConnection();
 
 		const nack: Partial<INack> = {
@@ -267,7 +284,7 @@ describe("connectionManager", () => {
 				}
 			},
 		});
-		connectionManager.connect({ text: "Test reconnect" });
+		connectionManager.connect({ text: "Test reconnect" }, "write");
 
 		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
@@ -297,7 +314,7 @@ describe("connectionManager", () => {
 			}),
 		);
 		const connectionManager = createConnectionManager();
-		connectionManager.connect({ text: "Test reconnect" });
+		connectionManager.connect({ text: "Test reconnect" }, "write");
 
 		await clock.tickAsync(retryAfter * 1000 * 10);
 		assert(
@@ -338,9 +355,11 @@ describe("connectionManager", () => {
 		it("readonly permissions", () => {
 			const connectionManager = createConnectionManager();
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			(connectionManager as any).set_readonlyPermissions(false);
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: false });
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 			(connectionManager as any).set_readonlyPermissions(true);
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
 				readonly: true,
@@ -357,7 +376,7 @@ describe("connectionManager", () => {
 
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 
-			connectionManager.connect({ text: "test" });
+			connectionManager.connect({ text: "test" }, "write");
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
 				readonly: true,
 				forced: false,

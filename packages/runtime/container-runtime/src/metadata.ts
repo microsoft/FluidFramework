@@ -19,8 +19,8 @@ export interface IBlobMetadata {
 }
 
 /**
- * The IdCompressor needs to know if this is a replayed savedOp as those need to be skipped in stashed ops scenarios.
+ * ContainerRuntime needs to know if this is a replayed savedOp as those need to be skipped in stashed ops scenarios.
  */
-export interface IIdAllocationMetadata {
+export interface ISavedOpMetadata {
 	savedOp?: boolean;
 }

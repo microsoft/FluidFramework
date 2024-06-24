@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
-import { DriverError } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverError,
+	DriverErrorTypes,
+	IDriverErrorBase,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	GenericNetworkError,
@@ -90,11 +93,7 @@ export function createR11sNetworkError(
 			error = new NonRetryableError(errorMessage, errorType, props);
 			break;
 		case 429:
-			error = createGenericNetworkError(
-				errorMessage,
-				{ canRetry: true, retryAfterMs },
-				props,
-			);
+			error = createGenericNetworkError(errorMessage, { canRetry: true, retryAfterMs }, props);
 			break;
 		case 500:
 		case 502:

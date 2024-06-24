@@ -5,20 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
 import { PerformanceEvent, TelemetryLogger } from "../logger.js";
-import { ITelemetryLoggerExt } from "../telemetryTypes.js";
+import type { ITelemetryLoggerExt } from "../telemetryTypes.js";
 
 class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;
 	public eventsLogged: number = 0;
 
-	constructor() {
+	public constructor() {
 		super();
 	}
 
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		if (event.category === "error") {
 			++this.errorsLogged;
 		}
@@ -35,7 +35,7 @@ describe("PerformanceEvent", () => {
 		callbackCalls++;
 	};
 	const asyncCallback = async (event: PerformanceEvent): Promise<string | void> => {
-		const outerPromise: Promise<string> = new Promise((resolve, reject) => {
+		const outerPromise = new Promise<string>((resolve, reject) => {
 			Promise.resolve("A")
 				.finally(() => {
 					reject(new Error("B"));
@@ -57,13 +57,11 @@ describe("PerformanceEvent", () => {
 	});
 
 	it("Cancel then End", async () => {
-		await PerformanceEvent.timedExecAsync(
-			logger,
-			{ eventName: "Testing" },
-			asyncCallback,
-			{ start: true, end: true, cancel: "generic" },
-			true,
-		);
+		await PerformanceEvent.timedExecAsync(logger, { eventName: "Testing" }, asyncCallback, {
+			start: true,
+			end: true,
+			cancel: "generic",
+		});
 		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 
@@ -74,7 +72,6 @@ describe("PerformanceEvent", () => {
 				{ eventName: "TestingAsyncOnce" },
 				asyncCallback,
 				{ start: true, end: true, cancel: "generic" },
-				true,
 				100, // sampleThreshold
 			);
 
@@ -98,7 +95,6 @@ describe("PerformanceEvent", () => {
 						{ eventName: "TestingAsync" },
 						asyncCallback,
 						{ start: true, end: true, cancel: "generic" },
-						true,
 					),
 				),
 			);
@@ -123,7 +119,6 @@ describe("PerformanceEvent", () => {
 						{ eventName: "TestingAsync" },
 						asyncCallback,
 						{ start: true, end: true, cancel: "generic" },
-						true,
 						20, // sampleThreshold
 					),
 				),
@@ -142,7 +137,6 @@ describe("PerformanceEvent", () => {
 				{ eventName: "TestingAsync", category: "error" },
 				asyncCallback,
 				{ start: true, end: true, cancel: "generic" },
-				true,
 				20, // sampleThreshold
 			);
 

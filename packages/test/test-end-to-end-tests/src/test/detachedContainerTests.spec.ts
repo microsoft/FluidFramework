@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
@@ -19,13 +19,17 @@ import { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -220,7 +224,10 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Attach the container and validate that the DDS is attached.
 		await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-		assert(mapClient1.isAttached(), "The map should be attached after the container attaches.");
+		assert(
+			mapClient1.isAttached(),
+			"The map should be attached after the container attaches.",
+		);
 		await waitForContainerConnection(container);
 		provider.updateDocumentId(container.resolvedUrl);
 		const url: any = await container.getAbsoluteUrl("");
@@ -454,7 +461,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			testChannelId,
 			SharedMap.getFactory().type,
 		);
-		testChannel.handle.attachGraph();
+		toFluidHandleInternal(testChannel.handle).attachGraph();
 		await containerP;
 		await defPromise.promise;
 	});
@@ -643,7 +650,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the root dataStore from the detached container.
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+		const testChannel1 = await dataStore.getSharedObject<ISharedCell>(sharedCellId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -986,24 +993,28 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		assert.strictEqual(container.closed, false, "Container should not be closed");
 	});
 
-	itExpects("Attach can't be called multiple times with different parameters", [], async () => {
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+	itExpects(
+		"Attach can't be called multiple times with different parameters",
+		[],
+		async () => {
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-		const attachP = container.attach(request);
+			const attachP = container.attach(request);
 
-		// the second should fail, as the arguments don't match
-		try {
-			await container.attach({ ...request });
-			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e), "should be a Fluid error");
-			assert.equal(e.message, "Subsequent calls cannot use different arguments.");
-		}
+			// the second should fail, as the arguments don't match
+			try {
+				await container.attach({ ...request });
+				assert.fail("should fail");
+			} catch (e) {
+				assert(isFluidError(e), "should be a Fluid error");
+				assert.equal(e.message, "Subsequent calls cannot use different arguments.");
+			}
 
-		await attachP;
+			await attachP;
 
-		assert.strictEqual(container.closed, false, "Container should not be closed");
-	});
+			assert.strictEqual(container.closed, false, "Container should not be closed");
+		},
+	);
 	itExpects(
 		"Container should be closed when runtime.createSummary fails during attach",
 		[
@@ -1025,20 +1036,14 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 								instantiateRuntime: async (context, existing) => {
 									const entrypoint = provider.createFluidEntryPoint();
 									const runtimeFactory: FluidObject<IRuntimeFactory> =
-										"fluidExport" in entrypoint
-											? entrypoint.fluidExport
-											: entrypoint;
+										"fluidExport" in entrypoint ? entrypoint.fluidExport : entrypoint;
 
-									assert(
-										runtimeFactory.IRuntimeFactory,
-										"entrypoint is not runtime factory",
+									assert(runtimeFactory.IRuntimeFactory, "entrypoint is not runtime factory");
+
+									const runtime = await runtimeFactory.IRuntimeFactory.instantiateRuntime(
+										context,
+										existing,
 									);
-
-									const runtime =
-										await runtimeFactory.IRuntimeFactory.instantiateRuntime(
-											context,
-											existing,
-										);
 
 									return wrapObjectAndOverride<IRuntime>(runtime, {
 										createSummary: () => () => {
@@ -1082,20 +1087,14 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 								instantiateRuntime: async (context, existing) => {
 									const entrypoint = provider.createFluidEntryPoint();
 									const runtimeFactory: FluidObject<IRuntimeFactory> =
-										"fluidExport" in entrypoint
-											? entrypoint.fluidExport
-											: entrypoint;
+										"fluidExport" in entrypoint ? entrypoint.fluidExport : entrypoint;
 
-									assert(
-										runtimeFactory.IRuntimeFactory,
-										"entrypoint is not runtime factory",
+									assert(runtimeFactory.IRuntimeFactory, "entrypoint is not runtime factory");
+
+									const runtime = await runtimeFactory.IRuntimeFactory.instantiateRuntime(
+										context,
+										existing,
 									);
-
-									const runtime =
-										await runtimeFactory.IRuntimeFactory.instantiateRuntime(
-											context,
-											existing,
-										);
 
 									return wrapObjectAndOverride<IRuntime>(runtime, {
 										setAttachState: () => () => {

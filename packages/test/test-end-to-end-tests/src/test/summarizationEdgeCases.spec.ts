@@ -16,6 +16,7 @@ import {
 	ISubmitSummaryOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestContainerConfig,
@@ -31,9 +32,6 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 		runtimeOptions: {
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
-			},
-			gcOptions: {
-				gcAllowed: true,
 			},
 		},
 	};
@@ -63,7 +61,7 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 		const containerRuntime1 = defaultDataStore1._context.containerRuntime;
 		const nonDefaultDataStore1 = await containerRuntime1.createDataStore(TestDataObjectType);
 		const dataObject1 = await (
-			nonDefaultDataStore1.entryPoint as IFluidHandle<ITestDataObject>
+			nonDefaultDataStore1.entryPoint as IFluidHandleInternal<ITestDataObject>
 		).get();
 		// create a dds
 		const dds1 = SharedMap.create(dataObject1._runtime);
@@ -92,9 +90,9 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 			const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
 			const result = await submitSummaryFuncBound(options);
 
-			const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint(
-				"default",
-			)) as IFluidHandle<ITestDataObject> | undefined;
+			const entryPoint = (await summarizerRuntime.getAliasedDataStoreEntryPoint("default")) as
+				| IFluidHandle<ITestDataObject>
+				| undefined;
 			if (entryPoint === undefined) {
 				throw new Error("default dataStore must exist");
 			}

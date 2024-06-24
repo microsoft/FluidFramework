@@ -6,6 +6,7 @@
 import assert from "node:assert";
 
 import * as fetchModule from "node-fetch";
+import { Headers } from "node-fetch";
 import { stub } from "sinon";
 
 /**
@@ -16,7 +17,7 @@ export interface MockResponse {
 	status: number;
 	text: () => Promise<string>;
 	arrayBuffer: () => Promise<unknown>;
-	headers: fetchModule.Headers;
+	headers: Headers;
 	json: () => Promise<unknown>;
 }
 
@@ -29,7 +30,7 @@ export const createResponse = async (
 	status,
 	text: async () => JSON.stringify(response),
 	arrayBuffer: async () => response,
-	headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
+	headers: headers ? new Headers(headers) : new Headers(),
 	json: async () => response,
 });
 
@@ -37,8 +38,9 @@ export const okResponse = async (
 	headers: { [key: string]: string },
 	response: object,
 ): Promise<MockResponse> => createResponse(headers, response, 200);
-export const notFound = async (headers: { [key: string]: string } = {}): Promise<MockResponse> =>
-	createResponse(headers, undefined, 404);
+export const notFound = async (
+	headers: { [key: string]: string } = {},
+): Promise<MockResponse> => createResponse(headers, undefined, 404);
 
 export type FetchCallType = "internal" | "external" | "single";
 

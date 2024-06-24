@@ -86,7 +86,8 @@ export function TelemetryView(): React.ReactElement {
 	 * If `telemetryEvents` is full, new events accumulate in `bufferedEvents` until more space becomes available.
 	 */
 	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
-	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
+	const [maxEventsToDisplay, setMaxEventsToDisplay] =
+		React.useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
 
 	React.useEffect(() => {
@@ -96,10 +97,7 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			[TelemetryEvent.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
-				setBufferedEvents((currentBuffer) => [
-					message.data.event,
-					...(currentBuffer ?? []),
-				]);
+				setBufferedEvents((currentBuffer) => [message.data.event, ...(currentBuffer ?? [])]);
 				return true;
 			},
 			[TelemetryHistory.MessageType]: async (untypedMessage) => {
@@ -340,9 +338,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			// Filter by event name
 			if (customSearch !== "") {
 				filteredEvents = filteredEvents?.filter((event) => {
-					return (
-						event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch
-					);
+					return event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch;
 				});
 			}
 
@@ -474,7 +470,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 						eventName: message.logContent.eventName,
 						information: JSON.stringify(message.logContent, undefined, 2),
 					};
-			  }, []);
+				}, []);
 
 	const columns: TableColumnDefinition<Item>[] = [
 		createTableColumn<Item>({
@@ -482,19 +478,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h4 style={{ margin: "0 0 5px 0" }}>Category</h4>
-						<Dropdown
-							placeholder="Filter Category"
-							size="small"
-							onOptionSelect={handleCategoryChange}
-							style={{ minWidth: "120px", marginBottom: "10px" }}
-						>
-							{getCategories().map((option) => (
-								<Option style={{ minWidth: "120px" }} key={option.key}>
-									{option.text}
-								</Option>
-							))}
-						</Dropdown>
+						<h2 style={{ margin: "0 0 5px 0" }}>Category</h2>
 					</div>
 				);
 			},
@@ -517,33 +501,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h4 style={{ margin: "0 0 5px 0" }}>Event</h4>
-						<Combobox
-							freeform
-							size="small"
-							placeholder="Select an event"
-							onChange={onEventNameChange}
-							onOptionSelect={handleEventNameSelect}
-							style={{ marginBottom: "10px" }}
-						>
-							{customSearch ? (
-								<Option
-									key="freeform"
-									style={{ overflowWrap: "anywhere" }}
-									text={customSearch}
-								>
-									Search for `{customSearch}`
-								</Option>
-							) : undefined}
-							{matchingOptions.map((option) => (
-								<Option
-									key={option}
-									style={{ fontSize: "10px", overflowWrap: "anywhere" }}
-								>
-									{option}
-								</Option>
-							))}
-						</Combobox>
+						<h2 style={{ margin: "0 0 5px 0" }}>Event</h2>
 					</div>
 				);
 			},
@@ -559,84 +517,121 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	];
 
 	return (
-		<SplitPane
-			split="vertical"
-			minSize={540}
-			style={{
-				position: "relative",
-				borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
-				paddingTop: "10px",
-				width: "100%",
-				overflowX: "scroll",
-			}}
-			pane1Style={{ overflowY: "auto" }}
-			pane2Style={{ margin: "10px" }}
-			resizerStyle={{
-				borderRight: `2px solid ${tokens.colorNeutralForeground2}`,
-				borderLeft: `2px solid ${tokens.colorNeutralForeground2}`,
-				zIndex: 1,
-				cursor: "col-resize",
-			}}
-		>
-			<DataGrid
-				items={items}
-				columns={columns}
-				size="extra-small"
-				resizableColumns
-				selectionMode="single"
-				subtleSelection
-				selectedItems={index !== undefined && index >= 0 ? [index] : []}
-				columnSizingOptions={{
-					category: {
-						minWidth: 110,
-						idealWidth: 110,
-					},
-					eventName: {
-						minWidth: 330,
-						idealWidth: 330,
-					},
-				}}
-			>
-				<DataGridHeader>
-					<DataGridRow style={{ whiteSpace: "normal" }}>
-						{({ renderHeaderCell }): JSX.Element => (
-							<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
-						)}
-					</DataGridRow>
-				</DataGridHeader>
-				<DataGridBody<Item>>
-					{({ item, rowId }): JSX.Element => (
-						<DataGridRow<Item>
-							key={rowId}
-							style={{ cursor: "pointer" }}
-							onClick={(): void => {
-								setIndex(Number(rowId));
-								setSelectedEvent(item);
-								usageLogger?.sendTelemetryEvent({
-									eventName: "TelemetryEventClicked",
-								});
-							}}
-						>
-							{({ renderCell }): JSX.Element => (
-								<DataGridCell>{renderCell(item)}</DataGridCell>
-							)}
-						</DataGridRow>
-					)}
-				</DataGridBody>
-			</DataGrid>
-			<div
+		<>
+			<div style={{ display: "flex", gap: "10px" }}>
+				<Dropdown
+					aria-expanded="false"
+					placeholder="Filter Category"
+					size="small"
+					onOptionSelect={handleCategoryChange}
+					style={{ minWidth: "120px", marginBottom: "10px" }}
+					tabIndex={0}
+				>
+					{getCategories().map((option) => (
+						<Option style={{ minWidth: "120px" }} key={option.key}>
+							{option.text}
+						</Option>
+					))}
+				</Dropdown>
+				<Combobox
+					freeform
+					size="small"
+					placeholder="Select an event"
+					onChange={onEventNameChange}
+					onOptionSelect={handleEventNameSelect}
+					style={{ marginBottom: "10px" }}
+				>
+					{customSearch ? (
+						<Option key="freeform" style={{ overflowWrap: "anywhere" }} text={customSearch}>
+							Search for `{customSearch}`
+						</Option>
+					) : undefined}
+					{matchingOptions.map((option) => (
+						<Option key={option} style={{ fontSize: "10px", overflowWrap: "anywhere" }}>
+							{option}
+						</Option>
+					))}
+				</Combobox>
+			</div>
+
+			<SplitPane
+				split="vertical"
+				minSize={540}
 				style={{
 					position: "relative",
-					height: "100%",
+					borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
+					paddingTop: "10px",
+					width: "100%",
+				}}
+				pane1Style={{ overflowY: "auto", overflowX: "scroll" }}
+				pane2Style={{ margin: "10px", overflowY: "auto" }}
+				resizerStyle={{
+					borderRight: `2px solid ${tokens.colorNeutralForeground2}`,
+					borderLeft: `2px solid ${tokens.colorNeutralForeground2}`,
+					zIndex: 1,
+					cursor: "col-resize",
 				}}
 			>
-				<h4 style={{ margin: 0, fontSize: 14 }}>Event Information</h4>
-				{selectedEvent === undefined ? (
-					"Select an event from the table to get started"
-				) : (
-					<pre> {selectedEvent?.information} </pre>
-				)}
-			</div>
-		</SplitPane>
+				<DataGrid
+					items={items}
+					columns={columns}
+					size="extra-small"
+					resizableColumns
+					selectionMode="single"
+					subtleSelection
+					selectedItems={index !== undefined && index >= 0 ? [index] : []}
+					columnSizingOptions={{
+						category: {
+							minWidth: 110,
+							idealWidth: 110,
+						},
+						eventName: {
+							minWidth: 330,
+							idealWidth: 330,
+						},
+					}}
+				>
+					<DataGridHeader>
+						<DataGridRow style={{ whiteSpace: "normal" }}>
+							{({ renderHeaderCell }): JSX.Element => (
+								<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+							)}
+						</DataGridRow>
+					</DataGridHeader>
+					<DataGridBody<Item>>
+						{({ item, rowId }): JSX.Element => (
+							<DataGridRow<Item>
+								key={rowId}
+								style={{ cursor: "pointer" }}
+								onClick={(): void => {
+									setIndex(Number(rowId));
+									setSelectedEvent(item);
+									usageLogger?.sendTelemetryEvent({
+										eventName: "TelemetryEventClicked",
+									});
+								}}
+							>
+								{({ renderCell }): JSX.Element => (
+									<DataGridCell>{renderCell(item)}</DataGridCell>
+								)}
+							</DataGridRow>
+						)}
+					</DataGridBody>
+				</DataGrid>
+				<div
+					style={{
+						position: "relative",
+						height: "100%",
+					}}
+				>
+					<h4 style={{ margin: 0, fontSize: 14 }}>Event Information</h4>
+					{selectedEvent === undefined ? (
+						"Select an event from the table to get started"
+					) : (
+						<pre> {selectedEvent?.information} </pre>
+					)}
+				</div>
+			</SplitPane>
+		</>
 	);
 }

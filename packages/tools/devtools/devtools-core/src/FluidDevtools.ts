@@ -5,12 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type ContainerKey } from "./CommonInterfaces.js";
+import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
-import { type IDevtoolsLogger } from "./DevtoolsLogger.js";
-import { type DevtoolsFeatureFlags } from "./Features.js";
-import { type IContainerDevtools } from "./IContainerDevtools.js";
-import { type IFluidDevtools } from "./IFluidDevtools.js";
+import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
+import type { DevtoolsFeatureFlags } from "./Features.js";
+import type { IContainerDevtools } from "./IContainerDevtools.js";
+import type { IFluidDevtools } from "./IFluidDevtools.js";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -68,7 +68,7 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 
 /**
  * Properties for configuring the Devtools.
- * @beta
+ * @alpha
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -413,7 +413,7 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
- * @beta
+ * @alpha
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);

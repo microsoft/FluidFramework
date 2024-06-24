@@ -4,14 +4,13 @@
  */
 
 import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
+import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import {
-	FluidObject,
-	IFluidHandle,
 	IFluidHandleContext,
-	IRequest,
-} from "@fluidframework/core-interfaces";
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { responseToException } from "@fluidframework/runtime-utils/internal";
+import { FluidHandleBase, responseToException } from "@fluidframework/runtime-utils/internal";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
@@ -20,11 +19,8 @@ import { responseToException } from "@fluidframework/runtime-utils/internal";
  * custom objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the
  * IFluidHandle can be retrieved by calling `get` on it.
  */
-export class RemoteFluidObjectHandle implements IFluidHandle {
+export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 	public get IFluidHandleContext() {
-		return this;
-	}
-	public get IFluidHandle() {
 		return this;
 	}
 
@@ -40,28 +36,27 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
+		super();
 		assert(
 			absolutePath.startsWith("/"),
 			0x19d /* "Handles should always have absolute paths" */,
 		);
 	}
 
-	public async get(): Promise<any> {
+	public async get(): Promise<FluidObject> {
 		if (this.objectP === undefined) {
 			// Add `viaHandle` header to distinguish from requests from non-handle paths.
 			const request: IRequest = {
 				url: this.absolutePath,
 				headers: { [RuntimeHeaders.viaHandle]: true },
 			};
-			this.objectP = this.routeContext
-				.resolveHandle(request)
-				.then<FluidObject>((response) => {
-					if (response.mimeType === "fluid/object") {
-						const fluidObject: FluidObject = response.value;
-						return fluidObject;
-					}
-					throw responseToException(response, request);
-				});
+			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
+				if (response.mimeType === "fluid/object") {
+					const fluidObject: FluidObject = response.value;
+					return fluidObject;
+				}
+				throw responseToException(response, request);
+			});
 		}
 		return this.objectP;
 	}
@@ -70,7 +65,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 		return;
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(handle: IFluidHandleInternal): void {
 		handle.attachGraph();
 	}
 }

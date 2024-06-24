@@ -15,8 +15,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
 
 [
 	{
@@ -51,7 +51,7 @@ import { SharedString } from "../sharedString.js";
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			const sharedString = new SharedString(
+			const sharedString = new SharedStringClass(
 				dataStoreRuntime,
 				id,
 				SharedStringFactory.Attributes,

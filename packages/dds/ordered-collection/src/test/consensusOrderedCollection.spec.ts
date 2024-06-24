@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -16,7 +16,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
+import type { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
+import {
+	ConsensusQueueFactory,
+	type ConsensusQueue,
+} from "../consensusOrderedCollectionFactory.js";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 
@@ -31,12 +35,12 @@ function createConnectedCollection(id: string, runtimeFactory: MockContainerRunt
 	const factory = new ConsensusQueueFactory();
 	const testCollection = factory.create(dataStoreRuntime, id);
 	testCollection.connect(services);
-	return testCollection;
+	return testCollection as ConsensusQueue;
 }
 
-function createLocalCollection(id: string) {
+function createLocalCollection(id: string): ConsensusQueue {
 	const factory = new ConsensusQueueFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusQueue;
 }
 
 function createCollectionForReconnection(
@@ -60,10 +64,10 @@ describe("ConsensusOrderedCollection", () => {
 	function generate(
 		input: any[],
 		output: any[],
-		creator: () => IConsensusOrderedCollection,
+		creator: () => ConsensusOrderedCollection,
 		processMessages: () => void,
 	) {
-		let testCollection: IConsensusOrderedCollection;
+		let testCollection: ConsensusOrderedCollection;
 
 		async function removeItem() {
 			const resP = acquireAndComplete(testCollection);
@@ -110,11 +114,8 @@ describe("ConsensusOrderedCollection", () => {
 
 				const acquiredValue = await removeItem();
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
-				const dataStore = await handle.get();
-				assert.strictEqual(
-					dataStore.handle.absolutePath,
-					testCollection.handle.absolutePath,
-				);
+				const dataStore = (await handle.get()) as ConsensusQueue;
+				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
 
 				assert.strictEqual(await removeItem(), undefined);
 			});
@@ -176,11 +177,7 @@ describe("ConsensusOrderedCollection", () => {
 				testCollection.on("add", addListener);
 
 				const acquireListener = (value) => {
-					assert.strictEqual(
-						value,
-						output[removeCount],
-						"Remove event value not matched",
-					);
+					assert.strictEqual(value, output[removeCount], "Remove event value not matched");
 					removeCount += 1;
 				};
 				testCollection.on("acquire", acquireListener);
@@ -300,11 +297,7 @@ describe("ConsensusOrderedCollection", () => {
 			await waitP;
 
 			// Verify that the remote collection received the added value.
-			assert.equal(
-				addedValue,
-				testValue,
-				"The remote client did not receive the added value",
-			);
+			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
 			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 
 			/**
@@ -380,11 +373,7 @@ describe("ConsensusOrderedCollection", () => {
 			await waitP;
 
 			// Verify that the remote collection received the added value.
-			assert.equal(
-				addedValue,
-				testValue,
-				"The remote client did not receive the added value",
-			);
+			assert.equal(addedValue, testValue, "The remote client did not receive the added value");
 			assert.equal(newlyAdded, true, "The remote client's value was not newly added");
 		});
 	});
@@ -434,7 +423,7 @@ describe("ConsensusOrderedCollection", () => {
 			}
 
 			public async deleteOutboundRoutes() {
-				const deletedHandle = (await this.removeItem()) as IFluidHandle;
+				const deletedHandle = (await this.removeItem()) as IFluidHandleInternal;
 				assert(deletedHandle, "Route must be added before deleting");
 				// Remove deleted handle's route from expected routes.
 				this._expectedRoutes = this._expectedRoutes.filter(

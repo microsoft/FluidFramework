@@ -13,7 +13,11 @@ import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
 import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
 import { type Link } from "../Link.js";
-import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities.js";
+import {
+	getDocumentPathForApiItem,
+	getLinkForApiItem,
+	shouldItemBeIncluded,
+} from "./ApiItemTransformUtilities.js";
 import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
 import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { wrapInSection } from "./helpers/index.js";
@@ -37,13 +41,10 @@ export function createDocument(
 		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
 		: sections;
 
-	const frontMatter = generateFrontMatter(documentItem, config);
-
 	return new DocumentNode({
 		apiItem: documentItem,
 		children: contents,
 		documentPath: getDocumentPathForApiItem(documentItem, config),
-		frontMatter,
 	});
 }
 
@@ -68,30 +69,6 @@ export function getTsdocNodeTransformationOptions(
 }
 
 /**
- * Helper function to generate the front matter based on the provided configuration.
- */
-function generateFrontMatter(
-	documentItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
-): string | undefined {
-	if (config.frontMatter === undefined) {
-		return undefined;
-	}
-
-	if (typeof config.frontMatter === "string") {
-		return config.frontMatter;
-	}
-
-	if (typeof config.frontMatter !== "function") {
-		throw new TypeError(
-			"Invalid `frontMatter` configuration provided. Must be either a string or a function.",
-		);
-	}
-
-	return config.frontMatter(documentItem);
-}
-
-/**
  * Resolves a symbolic link and creates a URL to the target.
  *
  * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
@@ -109,20 +86,36 @@ function resolveSymbolicLink(
 		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
 
 	if (resolvedReference.resolvedApiItem === undefined) {
-		const linkSource =
-			contextApiItem.kind === ApiItemKind.Package
-				? (contextApiItem as ApiPackage).displayName
-				: `${
-						contextApiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
-				  }#${contextApiItem.getScopedNameWithinPackage()}`;
-
 		logger.warning(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${linkSource}":`,
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
+				contextApiItem,
+			)}":`,
 			resolvedReference.errorMessage,
 		);
 
 		return undefined;
 	}
+	const resolvedApiItem = resolvedReference.resolvedApiItem;
+
+	// Return undefined if the resolved API item should be excluded based on release tags
+	if (!shouldItemBeIncluded(resolvedApiItem, config)) {
+		logger.verbose("Excluding link to item based on release tags");
+		return undefined;
+	}
 
 	return getLinkForApiItem(resolvedReference.resolvedApiItem, config);
+}
+
+/**
+ * Creates a scoped member specifier for the provided API item, including the name of the package the item belongs to
+ * if applicable.
+ *
+ * Intended for use in diagnostic messaging.
+ */
+export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
+	return apiItem.kind === ApiItemKind.Package
+		? (apiItem as ApiPackage).displayName
+		: `${
+				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
+		  }#${apiItem.getScopedNameWithinPackage()}`;
 }

@@ -5,13 +5,23 @@
 
 import { strict as assert } from "assert";
 
-import { ChangeFamily, ChangeFamilyEditor, TaggedChange } from "../../core/index.js";
+import type {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	TaggedChange,
+	ChangeEncodingContext,
+} from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
+import type { ICodecFamily } from "../../codec/index.js";
 
 const fallback = "Fallback";
+
+// TODO: use something other than any for the mocking patterns here
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const arg1: any = "arg1";
 const arg2: any = "arg2";
 const arg3: any = "arg3";
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
@@ -28,13 +38,16 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(isRollback, arg2);
 			throw new Error("invert");
 		},
-		rebase: (change: string, over: TaggedChange<string>): string => {
+		rebase: (change: TaggedChange<string>, over: TaggedChange<string>): string => {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			throw new Error("rebase");
 		},
+		changeRevision: (): string => {
+			throw new Error("changeRevision");
+		},
 	},
-	codecs: {} as any,
+	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 	buildEditor: (changeReceiver: (change: string) => void): ChangeFamilyEditor => {
@@ -51,13 +64,14 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string> = {
 			assert.equal(isRollback, arg2);
 			return "invert";
 		},
-		rebase: (change: string, over: TaggedChange<string>): string => {
+		rebase: (change: TaggedChange<string>, over: TaggedChange<string>): string => {
 			assert.equal(change, arg1);
 			assert.equal(over, arg2);
 			return "rebase";
 		},
+		changeRevision: (change: string): string => change,
 	},
-	codecs: {} as any,
+	codecs: {} as unknown as ICodecFamily<string, ChangeEncodingContext>,
 };
 
 const errorLog: unknown[] = [];
@@ -73,7 +87,10 @@ const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
-		assert.equal(mitigatedReturningFamily.buildEditor(arg1), returningFamily.buildEditor(arg1));
+		assert.equal(
+			mitigatedReturningFamily.buildEditor(arg1),
+			returningFamily.buildEditor(arg1),
+		);
 		assert.equal(
 			mitigatedReturningRebaser.rebase(arg1, arg2, arg3),
 			returningRebaser.rebase(arg1, arg2, arg3),

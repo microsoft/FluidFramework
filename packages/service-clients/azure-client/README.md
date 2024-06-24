@@ -59,7 +59,7 @@ const azureClient = new AzureClient(clientProps);
 
 ### Backed by a Live Azure Fluid Relay Instance
 
-When running against a live Azure Fluid Relay instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the Azure Fluid Relay onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetAzureToken` along with the current user object to `AzureFunctionTokenProvider`. Later on, in `AzureFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
+When running against a live Azure Fluid Relay instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the Azure Fluid Relay onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetAzureToken` along with the current user object to `AzureFunctionTokenProvider`. Later on, in `AzureFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and id/name as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
@@ -69,8 +69,8 @@ const clientProps = {
 		type: "remote",
 		tenantId: "YOUR-TENANT-ID-HERE",
 		tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL" + "/api/GetAzureToken", {
-			userId: "test-user",
-			userName: "Test User",
+			id: "test-user",
+			name: "Test User",
 		}),
 		endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
 	},
@@ -106,7 +106,7 @@ const schema = {
 	],
 };
 const azureClient = new AzureClient(props);
-const { container, services } = await azureClient.createContainer(schema);
+const { container, services } = await azureClient.createContainer(schema, "2" /* compatibilityMode */);
 
 // Set any default data on the container's `initialObjects` before attaching
 // Returned ID can be used to fetch the container via `getContainer` below
@@ -121,7 +121,7 @@ Using the `AzureClient` object the developer can create and get Fluid containers
 import { AzureClient } from "@fluidframework/azure-client";
 
 const azureClient = new AzureClient(props);
-const { container, services } = await azureClient.getContainer("_unique-id_", schema);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
 ```
 
 **Note:** When using the `AzureClient` with `tenantId` set to `"local"`, all containers that have been created will be deleted when the instance of the local Azure Fluid Relay service (not client) that was run from the terminal window is closed. However, any containers created when running against a remote Azure Fluid Relay service will be persisted. Container IDs **cannot** be reused between local and remote Azure Fluid Relay services to fetch back the same container.
@@ -143,7 +143,7 @@ const schema = {
 };
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const { container, services } = await azureClient.getContainer("_unique-id_", schema);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = container.initialObjects;
@@ -168,7 +168,7 @@ const schema = {
 	dynamicObjectTypes: [SharedString],
 };
 
-const { container, services } = await azureClient.getContainer("_unique-id_", schema);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
 const map1 = container.initialObjects.map1;
 
 const text1 = await container.create(SharedString);

@@ -1,5 +1,104 @@
 # @fluidframework/datastore-definitions
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
+
+    A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
+
+    This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
+
+    This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
+
+    Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
+    The full list of such types is:
+
+    -   `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
+    -   `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
+        `ISharedObject`
+    -   `IChannel`
+    -   `IChannelAttributes`
+    -   `IChannelFactory`
+    -   `IExperimentalIncrementalSummaryContext`
+    -   `IGarbageCollectionData`
+    -   `ISummaryStats`
+    -   `ISummaryTreeWithStats`
+    -   `ITelemetryContext`
+    -   `IDeltaManagerErased`
+    -   `IFluidDataStoreRuntimeEvents`
+    -   `IFluidHandleContext`
+    -   `IProvideFluidHandleContext`
+
+    Removed APIs:
+
+    -   `DataObjectClass`: Usages replaced with `SharedObjectKind`.
+    -   `LoadableObjectClass`: Replaced with `SharedObjectKind`.
+    -   `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
+    -
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   fluid-framework: Remove several types from `@public` scope ([#21142](https://github.com/microsoft/FluidFramework/pull/21142)) [983e9f09f7](https://github.com/microsoft/FluidFramework/commit/983e9f09f7b10fef9ffa1e9af86166f0ccda7e14)
+
+    The following types have been moved from `@public` to `@alpha`:
+
+    -   `IFluidSerializer`
+    -   `ISharedObjectEvents`
+    -   `IChannelServices`
+    -   `IChannelStorageService`
+    -   `IDeltaConnection`
+    -   `IDeltaHandler`
+
+    These should not be needed by users of the declarative API, which is what `@public` is targeting.
+
+## 2.0.0-rc.4.0.0
+
+### Minor Changes
+
+-   Type Erase IFluidDataStoreRuntime.deltaManager [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Make IFluidDataStoreRuntime.deltaManager have an opaque type.
+    Marks the following types which were reachable from it as alpha:
+
+    -   IConnectionDetails
+    -   IDeltaSender
+    -   IDeltaManagerEvents
+    -   IDeltaManager
+    -   IDeltaQueueEvents
+    -   IDeltaQueue
+    -   ReadOnlyInfo
+
+    As a temporary workaround, users needing access to the full delta manager API can use the `@alpha` `toDeltaManagerInternal` API to retrieve its members, but should migrate away from requiring access to those APIs.
+
+    Implementing a custom `IFluidDataStoreRuntime` is not supported: this is now indicated by it being marked with `@sealed`.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes

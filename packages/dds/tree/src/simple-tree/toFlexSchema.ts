@@ -6,26 +6,31 @@
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type {
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+	SchemaAndPolicy,
+} from "../core/index.js";
 import {
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldKind,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
 	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	FlexTreeSchema,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type NodeKeyManager,
 	TreeNodeSchemaBase,
 	defaultSchemaPolicy,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { TreeContent } from "../shared-tree/index.js";
+import type { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
-import { InsertableContent, extractFactoryContent } from "./proxies.js";
+import type { InsertableContent } from "./proxies.js";
 import {
 	cachedFlexSchemaFromClassSchema,
 	setFlexSchemaFromClassSchema,
@@ -34,16 +39,17 @@ import {
 import {
 	FieldKind,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	normalizeFieldSchema,
 	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeConfiguration } from "./tree.js";
+// eslint-disable-next-line import/no-deprecated
+import { TreeConfiguration, type TreeViewConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -53,24 +59,62 @@ import { TreeConfiguration } from "./tree.js";
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-function cursorFromUnhydratedRoot(
+export function cursorFromUnhydratedRoot(
 	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
+	const data = tree as InsertableContent;
 	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
-		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
-		fail("failed to decode tree")
+		cursorFromNodeData(
+			data,
+			normalizedFieldSchema.allowedTypes,
+			nodeKeyManager,
+			schemaValidationPolicy,
+		) ?? fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
-	const unhydrated = config.initialTree();
+/* eslint-disable import/no-deprecated */
+function isTreeConfiguration(
+	config: TreeViewConfiguration | TreeConfiguration,
+): config is TreeConfiguration {
+	return config instanceof TreeConfiguration;
+}
+/* eslint-enable import/no-deprecated */
+
+/**
+ * Generates a configuration object (schema + initial tree) for a FlexTree.
+ * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
+ * @param nodeKeyManager - See {@link NodeKeyManager}.
+ * @param schemaValidationPolicy - Stored schema and policy for the tree. If the policy specifies
+ * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
+ * object.
+ * @returns A configuration object for a FlexTree.
+ *
+ * @privateremarks
+ * I wrote these docs without a ton of context, they can probably be improved.
+ */
+export function toFlexConfig(
+	// eslint-disable-next-line import/no-deprecated
+	config: TreeViewConfiguration | TreeConfiguration,
+	nodeKeyManager: NodeKeyManager,
+	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
+): TreeContent {
+	const unhydrated = isTreeConfiguration(config) ? config.initialTree() : undefined;
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [cursorFromUnhydratedRoot(config.schema, unhydrated)];
+			: [
+					cursorFromUnhydratedRoot(
+						config.schema,
+						unhydrated,
+						nodeKeyManager,
+						schemaValidationPolicy,
+					),
+				];
 	return {
 		schema: toFlexSchema(config.schema),
 		initialTree,
@@ -130,7 +174,10 @@ export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema): FlexFieldSchema {
+export function convertField(
+	schemaMap: SchemaMap,
+	schema: ImplicitFieldSchema,
+): FlexFieldSchema {
 	let kind: FlexFieldKind;
 	let types: ImplicitAllowedTypes;
 	if (schema instanceof FieldSchema) {
@@ -190,14 +237,13 @@ export function convertNodeSchema(
 		return fromMap.toFlex;
 	}
 
-	const toFlex = () => {
+	const toFlex = (): FlexTreeNodeSchema => {
 		let out: FlexTreeNodeSchema;
 		const kind = schema.kind;
 		switch (kind) {
 			case NodeKind.Leaf: {
 				const cached =
-					cachedFlexSchemaFromClassSchema(schema) ??
-					fail("leaf schema should be pre-cached");
+					cachedFlexSchemaFromClassSchema(schema) ?? fail("leaf schema should be pre-cached");
 				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
@@ -219,8 +265,7 @@ export function convertNodeSchema(
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+				out = cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
 			case NodeKind.Object: {
@@ -240,9 +285,7 @@ export function convertNodeSchema(
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ??
-					FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
+				out = cached ?? FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
 				break;
 			}
 			default:

@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
+	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
@@ -78,8 +78,12 @@ export function shouldAllowGcSweep(
 /**
  * Sorts the given GC state as per the id of the GC nodes. It also sorts the outbound routes array of each node.
  */
-export function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollectionState {
-	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(gcState.gcNodes);
+export function generateSortedGCState(
+	gcState: IGarbageCollectionState,
+): IGarbageCollectionState {
+	const sortableArray: [string, IGarbageCollectionNodeData][] = Object.entries(
+		gcState.gcNodes,
+	);
 	sortableArray.sort(([a], [b]) => a.localeCompare(b));
 	const sortedGCState: IGarbageCollectionState = { gcNodes: {} };
 	for (const [nodeId, nodeData] of sortableArray) {
@@ -280,8 +284,21 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-export function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/** Reformats a request URL to match expected format for a GC node path */
+export function urlToGCNodePath(url: string): string {
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+}
+
+/**
+ * Pulls out the first path segment and formats it as a GC Node path
+ * e.g. "/dataStoreId/ddsId" yields "/dataStoreId"
+ */
+export function dataStoreNodePathOnly(subDataStorePath: string): string {
+	return `/${subDataStorePath.split("/")[1]}`;
 }
 
 /**

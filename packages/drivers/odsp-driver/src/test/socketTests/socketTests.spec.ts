@@ -5,12 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	ITelemetryLoggerExt,
+	MockLogger,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";

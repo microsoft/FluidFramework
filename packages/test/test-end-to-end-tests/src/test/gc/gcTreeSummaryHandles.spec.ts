@@ -15,22 +15,23 @@ import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IAckedSummary,
-	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
 	SummarizerStopReason,
 	SummaryCollection,
 	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverHeader,
 	IDocumentServiceFactory,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -47,7 +48,6 @@ import { wrapObjectAndOverride } from "../../mocking.js";
 async function loadSummarizer(
 	provider: ITestObjectProvider,
 	runtimeFactory: IRuntimeFactory,
-	sequenceNumber: number,
 	summaryVersion?: string,
 	loaderProps?: Partial<ILoaderProps>,
 ) {
@@ -59,10 +59,6 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
-		[LoaderHeader.loadMode]: {
-			opsBeforeReturn: "sequenceNumber",
-		},
-		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
 	const summarizerContainer = await provider.loadContainer(
@@ -121,7 +117,10 @@ class ControlledCancellationToken implements ISummaryCancellationToken {
 
 async function submitFailingSummary(
 	provider: ITestObjectProvider,
-	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
+	summarizerClient: {
+		containerRuntime: ContainerRuntime;
+		summaryCollection: SummaryCollection;
+	},
 	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
 	latestSummaryRefSeqNum: number,
@@ -131,7 +130,6 @@ async function submitFailingSummary(
 	// Submit a summary with a fail token on generate
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
 		latestSummaryRefSeqNum,
@@ -155,7 +153,10 @@ async function submitFailingSummary(
  */
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
-	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
+	summarizerClient: {
+		containerRuntime: ContainerRuntime;
+		summaryCollection: SummaryCollection;
+	},
 	logger: ITelemetryLoggerExt,
 	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
@@ -163,11 +164,11 @@ async function submitAndAckSummary(
 ) {
 	// Wait for all pending ops to be processed by all clients.
 	await provider.ensureSynchronized();
-	const summarySequenceNumber = summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
+	const summarySequenceNumber =
+		summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
 	// Submit a summary
 	const result = await summarizerClient.containerRuntime.submitSummary({
 		fullTree,
-		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
 		latestSummaryRefSeqNum,
@@ -201,15 +202,11 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		// TODO:#4670: Make this compat-version-specific.
 		const defaultFactory = new TestFluidObjectFactory([]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			gcOptions: { gcAllowed: true },
-		};
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				runtimeOptions,
 			},
 		);
 		const logger = createChildLogger();
@@ -238,12 +235,7 @@ describeCompat(
 		};
 
 		const getNewSummarizer = async (summaryVersion?: string) => {
-			return loadSummarizer(
-				provider,
-				runtimeFactory,
-				mainContainer.deltaManager.lastSequenceNumber,
-				summaryVersion,
-			);
+			return loadSummarizer(provider, runtimeFactory, summaryVersion);
 		};
 
 		/**
@@ -291,8 +283,7 @@ describeCompat(
 			latestAckedSummary = summaryResult.ackedSummary;
 			assert(
 				latestSummaryContext &&
-					latestSummaryContext.referenceSequenceNumber >=
-						summaryResult.summarySequenceNumber,
+					latestSummaryContext.referenceSequenceNumber >= summaryResult.summarySequenceNumber,
 				`Did not get expected summary. Expected: ${summaryResult.summarySequenceNumber}. ` +
 					`Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
 			);
@@ -315,20 +306,17 @@ describeCompat(
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
 				(provider as any)._documentServiceFactory =
-					wrapObjectAndOverride<IDocumentServiceFactory>(
-						provider.documentServiceFactory,
-						{
-							createDocumentService: {
-								connectToStorage: {
-									uploadSummaryWithContext: (dss) => async (summary, context) => {
-										uploadSummaryCb(summary, context);
-										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-										return dss.uploadSummaryWithContext(summary, context);
-									},
+					wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
+						createDocumentService: {
+							connectToStorage: {
+								uploadSummaryWithContext: (dss) => async (summary, context) => {
+									uploadSummaryCb(summary, context);
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+									return dss.uploadSummaryWithContext(summary, context);
 								},
 							},
 						},
-					);
+					});
 
 				mainContainer = await createContainer();
 				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;

@@ -1,4 +1,3 @@
-<!--- This is sample front-matter for API item "simple-suite-test" -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -48,7 +47,7 @@
           - Good link (no alias): <a href='docs/simple-suite-test#testclass-class'>TestClass</a>
         </p>
         <p>
-          - Good link (with alias): <a href='docs/simple-suite-test#testfunction-function'>function alias text</a>
+          - Good link (with alias): <span><i>function alias text</i></span>
         </p>
         <p>
           - Bad link (no alias): <span><i>InvalidItem</i></span>
@@ -267,7 +266,7 @@
               <a href='docs/simple-suite-test#testfunctionreturningintersectiontype-function'>testFunctionReturningIntersectionType()</a>
             </td>
             <td>
-              <code>DEPRECATED</code>
+              <code>Deprecated</code>
             </td>
             <td>
               <span><a href='docs/simple-suite-test#testemptyinterface-interface'>TestEmptyInterface</a> &amp; <a href='docs/simple-suite-test#testinterfacewithtypeparameter-interface'>TestInterfaceWithTypeParameter</a>&lt;number&gt;</span>
@@ -309,6 +308,9 @@
               Modifiers
             </th>
             <th>
+              Type
+            </th>
+            <th>
               Description
             </th>
           </tr>
@@ -319,10 +321,12 @@
               <a href='docs/simple-suite-test#testconst-variable'>testConst</a>
             </td>
             <td>
-              <code>BETA</code>
+              <code>Beta</code>
             </td>
             <td>
               <code>readonly</code>
+            </td>
+            <td>
             </td>
             <td>
               Test Constant
@@ -333,10 +337,13 @@
               <a href='docs/simple-suite-test#testconstwithemptydeprecatedblock-variable'>testConstWithEmptyDeprecatedBlock</a>
             </td>
             <td>
-              <code>DEPRECATED</code>
+              <code>Deprecated</code>
             </td>
             <td>
               <code>readonly</code>
+            </td>
+            <td>
+              <span>string</span>
             </td>
             <td>
               I have a <code>@deprecated</code> tag with an empty comment block.
@@ -525,6 +532,37 @@
             <tbody>
               <tr>
                 <td>
+                  <a href='docs/simple-suite-test#testinterface-getterproperty-property'>getterProperty</a>
+                </td>
+                <td>
+                  <code>readonly</code>
+                </td>
+                <td>
+                </td>
+                <td>
+                  <span>boolean</span>
+                </td>
+                <td>
+                  A test getter-only interface property.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a href='docs/simple-suite-test#testinterface-setterproperty-property'>setterProperty</a>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+                <td>
+                  <span>boolean</span>
+                </td>
+                <td>
+                  A test property with a getter and a setter.
+                </td>
+              </tr>
+              <tr>
+                <td>
                   <a href='docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature'>testInterfaceProperty</a>
                 </td>
                 <td>
@@ -677,6 +715,9 @@
               <code>
                 readonly testClassEventProperty: () =&gt; void;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>() =&gt; void</span></span>
+              </p>
             </section>
             <section>
               <h5 id="testclasseventproperty-remarks">
@@ -693,6 +734,52 @@
             Property Details
           </h3>
           <section>
+            <h4 id="testinterface-getterproperty-property">
+              getterProperty
+            </h4>
+            <section>
+              <p>
+                A test getter-only interface property.
+              </p>
+            </section>
+            <section>
+              <h5 id="getterproperty-signature">
+                Signature
+              </h5>
+              <code>
+                get getterProperty(): boolean;
+              </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>boolean</span></span>
+              </p>
+            </section>
+          </section>
+          <section>
+            <h4 id="testinterface-setterproperty-property">
+              setterProperty
+            </h4>
+            <section>
+              <p>
+                A test property with a getter and a setter.
+              </p>
+            </section>
+            <section>
+              <h5 id="setterproperty-signature">
+                Signature
+              </h5>
+              <code>
+                get setterProperty(): boolean;
+                <br>
+                <br>
+                <br>
+                set setterProperty(newValue: boolean);
+              </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>boolean</span></span>
+              </p>
+            </section>
+          </section>
+          <section>
             <h4 id="testinterface-testinterfaceproperty-propertysignature">
               testInterfaceProperty
             </h4>
@@ -708,6 +795,9 @@
               <code>
                 testInterfaceProperty: number;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>number</span></span>
+              </p>
             </section>
             <section>
               <h5 id="testinterfaceproperty-remarks">
@@ -734,6 +824,9 @@
               <code>
                 testOptionalInterfaceProperty?: number;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>number</span></span>
+              </p>
             </section>
           </section>
         </section>
@@ -1175,6 +1268,9 @@
               <code>
                 testProperty: T;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>T</span></span>
+              </p>
             </section>
             <section>
               <h5 id="testproperty-remarks">
@@ -1440,6 +1536,9 @@
               <code>
                 abstract get abstractPropertyGetter(): TestMappedType;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span><a href='docs/simple-suite-test#testmappedtype-typealias'>TestMappedType</a></span></span>
+              </p>
             </section>
           </section>
           <section>
@@ -1458,6 +1557,9 @@
               <code>
                 protected readonly protectedProperty: TestEnum;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span><a href='docs/simple-suite-test#testenum-enum'>TestEnum</a></span></span>
+              </p>
             </section>
           </section>
         </section>
@@ -1787,13 +1889,13 @@
                   <a href='docs/simple-suite-test#testclass-testclassgetterproperty-property'>testClassGetterProperty</a>
                 </td>
                 <td>
-                  <code>readonly</code>, <code>virtual</code>
+                  <code>virtual</code>
                 </td>
                 <td>
                   <span>number</span>
                 </td>
                 <td>
-                  Test class getter-only property
+                  Test class property with both a getter and a setter.
                 </td>
               </tr>
               <tr>
@@ -2000,6 +2102,9 @@
               <code>
                 readonly testClassEventProperty: () =&gt; void;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>() =&gt; void</span></span>
+              </p>
             </section>
             <section>
               <h5 id="testclasseventproperty-remarks">
@@ -2031,6 +2136,9 @@
               <code>
                 get abstractPropertyGetter(): TestMappedType;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span><a href='docs/simple-suite-test#testmappedtype-typealias'>TestMappedType</a></span></span>
+              </p>
             </section>
           </section>
           <section>
@@ -2039,7 +2147,7 @@
             </h4>
             <section>
               <p>
-                Test class getter-only property
+                Test class property with both a getter and a setter.
               </p>
             </section>
             <section>
@@ -2050,7 +2158,14 @@
                 /** @virtual */
                 <br>
                 get testClassGetterProperty(): number;
+                <br>
+                <br>
+                <br>
+                set testClassGetterProperty(newValue: number);
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>number</span></span>
+              </p>
             </section>
             <section>
               <h5 id="testclassgetterproperty-remarks">
@@ -2077,6 +2192,9 @@
               <code>
                 readonly testClassProperty: TTypeParameterB;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>TTypeParameterB</span></span>
+              </p>
             </section>
             <section>
               <h5 id="testclassproperty-remarks">
@@ -2103,6 +2221,9 @@
               <code>
                 static testClassStaticProperty: (foo: number) =&gt; string;
               </code>
+              <p>
+                <span><span><b>Type:</b> </span><span>(foo: number) =&gt; string</span></span>
+              </p>
             </section>
           </section>
         </section>
@@ -2669,7 +2790,7 @@
       </h1>
       <section>
         <h2 id="testconst-variable">
-          testConst (BETA)
+          testConst
         </h2>
         <section>
           <p>
@@ -2720,8 +2841,11 @@
             Signature
           </h3>
           <code>
-            testConstWithEmptyDeprecatedBlock = &quot;I have a `@deprecated` tag with an empty comment block.&quot;
+            testConstWithEmptyDeprecatedBlock: string
           </code>
+          <p>
+            <span><span><b>Type:</b> </span><span>string</span></span>
+          </p>
         </section>
       </section>
     </section>
@@ -2747,6 +2871,9 @@
                   Modifiers
                 </th>
                 <th>
+                  Type
+                </th>
+                <th>
                   Description
                 </th>
               </tr>
@@ -2758,6 +2885,8 @@
                 </td>
                 <td>
                   <code>readonly</code>
+                </td>
+                <td>
                 </td>
                 <td>
                   Test constant in module.
@@ -2975,6 +3104,9 @@
                   Modifiers
                 </th>
                 <th>
+                  Type
+                </th>
+                <th>
                   Description
                 </th>
               </tr>
@@ -2985,10 +3117,12 @@
                   <a href='docs/simple-suite-test#testnamespace-testconst-variable'>TestConst</a>
                 </td>
                 <td>
-                  <code>BETA</code>
+                  <code>Beta</code>
                 </td>
                 <td>
                   <code>readonly</code>
+                </td>
+                <td>
                 </td>
                 <td>
                   Test Constant
@@ -3217,6 +3351,9 @@
                   <code>
                     readonly testClassProperty: string;
                   </code>
+                  <p>
+                    <span><span><b>Type:</b> </span><span>string</span></span>
+                  </p>
                 </section>
               </section>
             </section>
@@ -3498,7 +3635,7 @@
           </h3>
           <section>
             <h4 id="testnamespace-testconst-variable">
-              TestConst (BETA)
+              TestConst
             </h4>
             <section>
               <p>

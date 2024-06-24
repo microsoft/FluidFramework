@@ -6,15 +6,16 @@
 import { strict as assert } from "assert";
 
 import {
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	FieldKey,
-	FieldKindIdentifier,
-	RevisionTag,
-	UpPath,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type RevisionTag,
+	type TaggedChange,
+	type UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
 	tagChange,
@@ -25,21 +26,20 @@ import { leaf } from "../../domains/index.js";
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
-	FieldKindWithEditor,
-	FieldKinds,
-	ModularChangeset,
+	type FieldKindWithEditor,
+	type ModularChangeset,
 	cursorForJsonableTreeNode,
+	type SequenceField as SF,
+	type EditDescription,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
@@ -52,15 +52,13 @@ import {
 	testChangeReceiver,
 } from "../utils.js";
 
-import {
+import type {
 	NodeChangeset,
 	NodeId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
-// eslint-disable-next-line import/no-internal-modules
-import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -103,8 +101,8 @@ describe("ModularChangeFamily integration", () => {
 
 			const [move, remove, expected] = getChanges();
 			const rebased = family.rebase(
-				remove,
-				tagChange(move, tag1),
+				makeAnonChange(remove),
+				tagChangeInline(move, tag1),
 				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
 			);
 			const rebasedDelta = intoDelta(makeAnonChange(rebased), family.fieldKinds);
@@ -125,11 +123,11 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [remove, move] = getChanges();
 			const baseTag = mintRevisionTag();
-			const restore = family.invert(tagChange(remove, baseTag), false);
+			const restore = family.invert(tagChangeInline(remove, baseTag), false);
 			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
 			const rebased = family.rebase(
-				move,
-				tagChange(remove, baseTag),
+				makeAnonChange(move),
+				tagChangeInline(remove, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 			const rebasedDelta = normalizeDelta(
@@ -177,55 +175,47 @@ describe("ModularChangeFamily integration", () => {
 			const [move1, move2, modify] = getChanges();
 			const moves = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 
-			const taggedMoves = tagChange(moves, tag1);
+			const taggedMoves = tagChangeInline(moves, tag1);
 			const rebased = family.rebase(
-				modify,
+				makeAnonChange(modify),
 				taggedMoves,
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
-			const fieldCExpected = [MarkMaker.remove(1, brand(3))];
+			const fieldCExpected = [MarkMaker.remove(1, brand(5))];
 
-			const nodeId2: NodeId = { localId: brand(4) };
+			const nodeId2: NodeId = { localId: brand(6) };
 			const node2Expected: NodeChangeset = {
 				fieldChanges: new Map([
 					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
 				]),
 			};
 
-			const fieldBExpected = purgeUnusedCellOrderingInfo([
+			const fieldBExpected: SF.Changeset = [
 				{ count: 1, changes: nodeId2 },
-				// The two marks below a not essential and only exist because we're currently using tombstone
+				// The two marks below are not essential and only exist because we're using tombstones
 				{ count: 1 },
 				{
 					count: 1,
-					cellId: {
-						revision: tag1,
-						localId: brand(0),
-						adjacentCells: [{ id: brand(0), count: 1 }],
-					},
+					cellId: { revision: tag1, localId: brand(0) },
 				},
-			]);
+			];
 
-			const nodeId1: NodeId = { localId: brand(5) };
+			const nodeId1: NodeId = { localId: brand(7) };
 			const node1Expected: NodeChangeset = {
 				fieldChanges: new Map([
 					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
 				]),
 			};
 
-			const fieldAExpected = purgeUnusedCellOrderingInfo([
+			const fieldAExpected: SF.Changeset = [
 				{ count: 1, changes: nodeId1 },
-				// The two marks below a not essential and only exist because we're currently using tombstones
+				// The two marks below a not essential and only exist because we're using tombstones
 				{ count: 1 },
 				{
 					count: 1,
-					cellId: {
-						revision: tag1,
-						localId: brand(2),
-						adjacentCells: [{ id: brand(2), count: 1 }],
-					},
+					cellId: { revision: tag1, localId: brand(3) },
 				},
-			]);
+			];
 
 			const expected: ModularChangeset = {
 				nodeChanges: nestedMapFromFlatList([
@@ -235,7 +225,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
-				maxId: brand(5),
+				maxId: brand(7),
 			};
 
 			assert.deepEqual(rebased, expected);
@@ -271,8 +261,8 @@ describe("ModularChangeFamily integration", () => {
 			const [move, remove, expected] = getChanges();
 			const baseTag = mintRevisionTag();
 			const rebased = family.rebase(
-				remove,
-				tagChange(move, baseTag),
+				makeAnonChange(remove),
+				tagChangeInline(move, baseTag),
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 
@@ -284,6 +274,26 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			assertDeltaEqual(rebasedDelta, expectedDelta);
+		});
+
+		it("prunes its output", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeBPath: UpPath = { parent: undefined, parentField: fieldB, parentIndex: 0 };
+
+			editor.sequenceField({ parent: nodeAPath, field: fieldA }).remove(0, 1);
+			editor.sequenceField({ parent: nodeBPath, field: fieldB }).remove(0, 1);
+
+			const [editA, editB] = getChanges();
+			const baseTag = mintRevisionTag();
+			const rebased = family.rebase(
+				makeAnonChange(editB),
+				tagChangeInline(editA, baseTag),
+				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
+			);
+
+			assert.deepEqual(rebased, editB);
 		});
 	});
 
@@ -334,11 +344,7 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([
-					makeAnonChange(moveA),
-					makeAnonChange(moveB),
-					makeAnonChange(moveC),
-				]),
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -402,7 +408,7 @@ describe("ModularChangeFamily integration", () => {
 			const [move, insert] = getChanges();
 			const composed = family.compose([makeAnonChange(move), makeAnonChange(insert)]);
 			const expected: DeltaRoot = {
-				build: [{ id: { minor: 1 }, trees: [newNode] }],
+				build: [{ id: { minor: 2 }, trees: [newNode] }],
 				fields: new Map([
 					[
 						fieldA,
@@ -415,7 +421,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [{ count: 1, attach: { minor: 1 } }],
+												local: [{ count: 1, attach: { minor: 2 } }],
 											},
 										],
 									]),
@@ -457,20 +463,20 @@ describe("ModularChangeFamily integration", () => {
 				.insert(0, newNode);
 
 			const [move, insert] = getChanges();
-			const moveTagged = tagChange(move, tag1);
+			const moveTagged = tagChangeInline(move, tag1);
 			const returnTagged = tagRollbackInverse(
-				family.invert(moveTagged, true),
+				family.changeRevision(family.invert(moveTagged, true), tag3, moveTagged.revision),
 				tag3,
 				moveTagged.revision,
 			);
 
-			const moveAndInsert = family.compose([tagChange(insert, tag2), moveTagged]);
+			const moveAndInsert = family.compose([tagChangeInline(insert, tag2), moveTagged]);
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = intoDelta(makeAnonChange(composed), family.fieldKinds);
 			const expected: DeltaRoot = {
 				build: [
 					{
-						id: { major: tag2, minor: 1 },
+						id: { major: tag2, minor: 2 },
 						trees: [newNode],
 					},
 				],
@@ -486,9 +492,7 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [
-													{ count: 1, attach: { major: tag2, minor: 1 } },
-												],
+												local: [{ count: 1, attach: { major: tag2, minor: 2 } }],
 											},
 										],
 									]),
@@ -539,30 +543,29 @@ describe("ModularChangeFamily integration", () => {
 		});
 
 		it("prunes its output", () => {
-			const a: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map([
-					[
-						brand("foo"),
-						{
-							fieldKind: sequence.identifier,
-							change: brand([]),
-						},
-					],
-				]),
-			};
-			const b: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map([
-					[
-						brand("bar"),
-						{
-							fieldKind: sequence.identifier,
-							change: brand([]),
-						},
-					],
-				]),
-			};
+			const a = buildChangeset([
+				{
+					type: "field",
+					field: {
+						parent: undefined,
+						field: brand("foo"),
+					},
+					fieldKind: sequence.identifier,
+					change: brand([]),
+				},
+			]);
+
+			const b = buildChangeset([
+				{
+					type: "field",
+					field: {
+						parent: undefined,
+						field: brand("bar"),
+					},
+					fieldKind: sequence.identifier,
+					change: brand([]),
+				},
+			]);
 
 			const composed = family.compose([makeAnonChange(a), makeAnonChange(b)]);
 			assert.deepEqual(composed, ModularChangeFamily.emptyChange);
@@ -607,10 +610,10 @@ describe("ModularChangeFamily integration", () => {
 				makeAnonChange(modify),
 			]);
 
-			const inverse = family.invert(tagChange(moves, tag1), false);
-			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(3) })];
+			const inverse = family.invert(tagChangeInline(moves, tag1), false);
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(5) })];
 
-			const nodeId2: NodeId = { localId: brand(4) };
+			const nodeId2: NodeId = { revision: tag1, localId: brand(6) };
 			const node2Expected: NodeChangeset = {
 				fieldChanges: new Map([
 					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
@@ -618,18 +621,12 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldBExpected = [
-				MarkMaker.moveOut(1, brand(1), {
-					changes: nodeId2,
-					idOverride: {
-						type: DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(1) },
-					},
-				}),
+				MarkMaker.moveOut(1, brand(2), { changes: nodeId2 }),
 				{ count: 1 },
-				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
 			];
 
-			const nodeId1: NodeId = { localId: brand(2) };
+			const nodeId1: NodeId = { revision: tag1, localId: brand(4) };
 			const node1Expected: NodeChangeset = {
 				fieldChanges: new Map([
 					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
@@ -637,13 +634,7 @@ describe("ModularChangeFamily integration", () => {
 			};
 
 			const fieldAExpected = [
-				MarkMaker.moveOut(1, brand(0), {
-					changes: nodeId1,
-					idOverride: {
-						type: DetachIdOverrideType.Unattach,
-						id: { revision: tag1, localId: brand(0) },
-					},
-				}),
+				MarkMaker.moveOut(1, brand(0), { changes: nodeId1 }),
 				{ count: 1 },
 				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 			];
@@ -656,7 +647,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
-				maxId: brand(5),
+				maxId: brand(7),
 			};
 
 			assert.deepEqual(inverse, expected);
@@ -665,33 +656,33 @@ describe("ModularChangeFamily integration", () => {
 
 	describe("toDelta", () => {
 		it("works when nested changes come from different revisions", () => {
-			const change: ModularChangeset = {
-				nodeChanges: new Map(),
-				fieldChanges: new Map([
-					[
-						brand("foo"),
-						{
-							fieldKind: FieldKinds.sequence.identifier,
-							change: brand([
-								MarkMaker.moveOut(1, brand(0)),
-								MarkMaker.moveIn(1, brand(0)),
-							]),
-							revision: tag1,
-						},
-					],
-					[
-						brand("bar"),
-						{
-							fieldKind: FieldKinds.sequence.identifier,
-							change: brand([
-								MarkMaker.moveOut(2, brand(0)),
-								MarkMaker.moveIn(2, brand(0)),
-							]),
-							revision: tag2,
-						},
-					],
-				]),
-			};
+			const change = buildChangeset([
+				{
+					type: "field",
+					field: {
+						parent: undefined,
+						field: brand("foo"),
+					},
+					fieldKind: sequence.identifier,
+					change: brand([
+						MarkMaker.moveOut(1, { revision: tag1, localId: brand(0) }),
+						MarkMaker.moveIn(1, { revision: tag1, localId: brand(0) }),
+					]),
+				},
+				{
+					type: "field",
+					field: {
+						parent: undefined,
+						field: brand("bar"),
+					},
+					fieldKind: sequence.identifier,
+					change: brand([
+						MarkMaker.moveOut(2, { revision: tag2, localId: brand(0) }),
+						MarkMaker.moveIn(2, { revision: tag2, localId: brand(0) }),
+					]),
+				},
+			]);
+
 			const moveOut1: DeltaMark = {
 				detach: { major: tag1, minor: 0 },
 				count: 1,
@@ -809,4 +800,16 @@ function normalizeDeltaDetachedNodeId(
 	const minor = idMap.get(delta.minor) ?? genId.allocate();
 	idMap.set(delta.minor, minor);
 	return { minor };
+}
+
+function tagChangeInline(
+	change: ModularChangeset,
+	revision: RevisionTag,
+): TaggedChange<ModularChangeset> {
+	return tagChange(family.changeRevision(change, revision), revision);
+}
+
+function buildChangeset(edits: EditDescription[]): ModularChangeset {
+	const editor = family.buildEditor(() => undefined);
+	return editor.buildChanges(edits);
 }

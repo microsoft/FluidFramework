@@ -52,9 +52,6 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		summaryOptions: {
 			summaryConfigOverrides,
 		},
-		gcOptions: {
-			gcAllowed: true,
-		},
 	};
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
@@ -109,7 +106,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		// getting the non-default data store and validate it is loaded
 		const handle2 = defaultDataStore._root.get("dataStore2");
 		const testDataStore: TestDataObject = await handle2.get();
-		assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
+		assert(
+			testDataStore !== undefined,
+			"2nd data store within loaded container is not loaded",
+		);
 
 		// validate the snapshot was fetched from cache
 		const fetchEvent = mockLogger.events.find(
@@ -164,7 +164,10 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		// getting the non-default data store and validate it is loaded
 		const handle2 = defaultDataStore._root.get("dataStore2");
 		const testDataStore: TestDataObject = await handle2.get();
-		assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
+		assert(
+			testDataStore !== undefined,
+			"2nd data store within loaded container is not loaded",
+		);
 
 		// validate the snapshot was fetched from cache
 		const fetchEvent = mockLogger.events.find(

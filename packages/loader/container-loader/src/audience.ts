@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IAudienceEvents, ISelf } from "@fluidframework/container-definitions";
 import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/driver-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.
  */
-export class Audience extends EventEmitter implements IAudienceOwner {
+export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly members = new Map<string, IClient>();
+	private _currentClientId: string | undefined;
 
 	constructor() {
 		super();
@@ -20,18 +22,34 @@ export class Audience extends EventEmitter implements IAudienceOwner {
 		super.setMaxListeners(0);
 	}
 
-	public on(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): this;
-	public on(event: string, listener: (...args: any[]) => void): this {
-		return super.on(event, listener);
+	public getSelf(): ISelf | undefined {
+		return this._currentClientId === undefined
+			? undefined
+			: {
+					clientId: this._currentClientId,
+					client: this.getMember(this._currentClientId),
+				};
+	}
+
+	public setCurrentClientId(clientId: string): void {
+		if (this._currentClientId !== clientId) {
+			const oldId = this._currentClientId;
+			this._currentClientId = clientId;
+			// this.getMember(clientId) could resolve to undefined in these two cases:
+			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
+			// 2) we are loading from stashed state and audience is empty, but we remember and set prior clientId
+			this.emit(
+				"selfChanged",
+				oldId === undefined ? undefined : ({ clientId: oldId } satisfies ISelf),
+				{ clientId, client: this.getMember(clientId) } satisfies ISelf,
+			);
+		}
 	}
 
 	/**
 	 * Adds a new client to the audience
 	 */
-	public addMember(clientId: string, details: IClient) {
+	public addMember(clientId: string, details: IClient): void {
 		// Given that signal delivery is unreliable process, we might observe same client being added twice
 		// In such case we should see exactly same payload (IClient), and should not raise event twice!
 		if (this.members.has(clientId)) {
@@ -52,12 +70,12 @@ export class Audience extends EventEmitter implements IAudienceOwner {
 	 */
 	public removeMember(clientId: string): boolean {
 		const removedClient = this.members.get(clientId);
-		if (removedClient !== undefined) {
+		if (removedClient === undefined) {
+			return false;
+		} else {
 			this.members.delete(clientId);
 			this.emit("removeMember", clientId, removedClient);
 			return true;
-		} else {
-			return false;
 		}
 	}
 

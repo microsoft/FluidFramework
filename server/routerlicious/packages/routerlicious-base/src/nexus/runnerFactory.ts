@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
@@ -25,7 +25,8 @@ import * as ws from "ws";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
-import { INexusResourcesCustomizations } from ".";
+import { INexusResourcesCustomizations } from "./customizations";
+import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -40,42 +41,6 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	public close(): Promise<void> {
 		this.webSocketServer.close();
 		return Promise.resolve();
-	}
-}
-
-/**
- * @internal
- */
-export class OrdererManager implements core.IOrdererManager {
-	constructor(
-		private readonly globalDbEnabled: boolean,
-		private readonly ordererUrl: string,
-		private readonly tenantManager: core.ITenantManager,
-		private readonly localOrderManager: LocalOrderManager,
-		private readonly kafkaFactory: KafkaOrdererFactory,
-	) {}
-
-	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-
-		const messageMetaData = { documentId, tenantId };
-		winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-		Lumberjack.info(
-			`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
-
-		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
-			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			throw new Error("Invalid ordering service endpoint");
-		}
-
-		switch (tenant.orderer.type) {
-			case "kafka":
-				return this.kafkaFactory.create(tenantId, documentId);
-			default:
-				return this.localOrderManager.get(tenantId, documentId);
-		}
 	}
 }
 
@@ -142,7 +107,11 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
 		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
 		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+		const kafkaProducerGlobalAdditionalConfig = config.get(
+			"kafka:lib:producerGlobalAdditionalConfig",
+		);
 		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
 
 		const producer = services.createProducer(
 			kafkaLibrary,
@@ -156,6 +125,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			kafkaMaxBatchSize,
 			kafkaSslCACertFilePath,
 			eventHubConnString,
+			kafkaProducerGlobalAdditionalConfig,
+			oauthBearerConfig,
 		);
 
 		const redisConfig = config.get("redis");
@@ -428,12 +399,16 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 		const serverUrl = config.get("worker:serverUrl");
 
+		const ordererManagerOptions: Partial<IOrdererManagerOptions> | undefined = config.get(
+			"nexus:ordererManagerOptions",
+		);
 		const orderManager = new OrdererManager(
 			globalDbEnabled,
 			serverUrl,
 			tenantManager,
 			localOrderManager,
 			kafkaOrdererFactory,
+			ordererManagerOptions,
 		);
 
 		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
@@ -503,6 +478,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					httpServerConfig,
 					socketIoConfig,
 					nodeClusterConfig,
+					customizations?.customCreateSocketIoAdapter,
 			  )
 			: new services.SocketIoWebServerFactory(
 					redisClientConnectionManagerForPub,
@@ -510,6 +486,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					socketIoAdapterConfig,
 					httpServerConfig,
 					socketIoConfig,
+					customizations?.customCreateSocketIoAdapter,
 			  );
 
 		return new NexusResources(

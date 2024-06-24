@@ -153,9 +153,10 @@ class LocalReference implements LocalReferencePosition {
  * @internal
  */
 export function createDetachedLocalReferencePosition(
+	slidingPreference: SlidingPreference | undefined,
 	refType?: ReferenceType,
 ): LocalReferencePosition {
-	return new LocalReference(refType, undefined);
+	return new LocalReference(refType, undefined, slidingPreference);
 }
 
 interface IRefsAtOffset {
@@ -383,11 +384,7 @@ export class LocalReferenceCollection {
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
-			lref.link(
-				this.segment,
-				lref.getOffset() + this.refsByOffset.length,
-				lref.getListNode(),
-			);
+			lref.link(this.segment, lref.getOffset() + this.refsByOffset.length, lref.getListNode());
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);

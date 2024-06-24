@@ -42,7 +42,8 @@ describe("Runtime", () => {
 
 	function createController(config: unknown) {
 		return new DocumentsSchemaController(
-			false, // existing,
+			true, // existing,
+			0, // snapshotSequenceNumber
 			config as IDocumentSchemaCurrent, // old schema,
 			features,
 			() => {}, // onSchemaChange
@@ -105,10 +106,14 @@ describe("Runtime", () => {
 	});
 
 	it("disallowed versions", () => {
-		const controller = createController({
-			...validConfig,
-			runtime: { ...validConfig.runtime, disallowedVersions: [] },
-		});
+		const controller = new DocumentsSchemaController(
+			true, // existing,
+			0, // snapshotSequenceNumber
+			validConfig, // old schema,
+			{ ...features, disallowedVersions: [] },
+			() => {}, // onSchemaChange
+		);
+
 		assert(controller.sessionSchema.runtime.disallowedVersions === undefined);
 		assert(controller.maybeSendSchemaMessage() === undefined);
 
@@ -129,6 +134,7 @@ describe("Runtime", () => {
 	it("change disallowed versions", () => {
 		const controller = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			// old schema
 			{
 				...validConfig,
@@ -151,6 +157,7 @@ describe("Runtime", () => {
 		// Some runtime that drops one version, and adds another version to disallowed list
 		const controller2 = new DocumentsSchemaController(
 			true, // existing,
+			300, // snapshotSequenceNumber
 			// old schema
 			controller.summarizeDocumentSchema(300),
 			// features requested
@@ -178,13 +185,14 @@ describe("Runtime", () => {
 		// Some runtime that only processes document schema op
 		const controller3 = new DocumentsSchemaController(
 			true, // existing,
+			500, // snapshotSequenceNumber
 			// old schema
-			controller.summarizeDocumentSchema(300),
+			controller.summarizeDocumentSchema(500),
 			features,
 			// onSchemaChange
 			() => {},
 		);
-		controller3.processDocumentSchemaOp(message, true /* local */, 400 /* sequenceNumber */);
+		controller3.processDocumentSchemaOp(message, true /* local */, 600 /* sequenceNumber */);
 		assert.deepEqual(controller3.sessionSchema.runtime.disallowedVersions, [
 			"aaa",
 			"bbb",
@@ -215,6 +223,7 @@ describe("Runtime", () => {
 		const featuresModified = { ...features, explicitSchemaControl };
 		const controller = new DocumentsSchemaController(
 			existing, // existing,
+			0, // snapshotSequenceNumber
 			undefined, // old schema,
 			featuresModified,
 			() => assert(false, "no schema changes!"), // onSchemaChange
@@ -248,10 +257,7 @@ describe("Runtime", () => {
 
 		if (!existing || !explicitSchemaControl) {
 			controller.onDisconnect();
-			assert(
-				controller.maybeSendSchemaMessage() === undefined,
-				"no messages should be sent!",
-			);
+			assert(controller.maybeSendSchemaMessage() === undefined, "no messages should be sent!");
 		}
 
 		// get rid of all properties with undefined values.
@@ -328,6 +334,7 @@ describe("Runtime", () => {
 	function testExistingDocNoChangesInSchema(schema: IDocumentSchemaCurrent) {
 		const controller = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			schema, // old schema,
 			features,
 			() => {}, // onSchemaChange
@@ -348,6 +355,7 @@ describe("Runtime", () => {
 	it("Existing document, changes required; race conditions", () => {
 		const controller = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			validConfig, // old schema,
 			{ ...features, opGroupingEnabled: true },
 			() => {}, // onSchemaChange
@@ -357,6 +365,11 @@ describe("Runtime", () => {
 
 		assert(message !== undefined);
 		assert(message.runtime.opGroupingEnabled === true);
+
+		// Validate that client will attempt to send only one such message.
+		// This is important, as otherwise we will keep sending them forever. Not only this is useless,
+		// but it will also trip asserts as we will have two messages with same sequence number (due to op grouping)
+		assert(controller.maybeSendSchemaMessage() === undefined);
 
 		assert(
 			controller.processDocumentSchemaOp(
@@ -375,6 +388,7 @@ describe("Runtime", () => {
 
 		const controller2 = new DocumentsSchemaController(
 			true, // existing,
+			300, // snapshotSequenceNumber
 			schema, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {}, // onSchemaChange
@@ -428,6 +442,7 @@ describe("Runtime", () => {
 		 */
 		const controller = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			undefined, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
@@ -443,6 +458,7 @@ describe("Runtime", () => {
 		const newSchema = controller.summarizeDocumentSchema(100);
 		const controller2 = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			newSchema, // old schema,
 			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
@@ -464,6 +480,7 @@ describe("Runtime", () => {
 		let schemaChanged = false;
 		const controller3 = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			newSchema, // old schema,
 			{ ...features, idCompressorMode: "on", compressionLz4: false },
 			() => {
@@ -497,6 +514,7 @@ describe("Runtime", () => {
 		schemaChanged = false;
 		const controller4 = new DocumentsSchemaController(
 			true, // existing,
+			0, // snapshotSequenceNumber
 			newSchema, // old schema,
 			{
 				...features,

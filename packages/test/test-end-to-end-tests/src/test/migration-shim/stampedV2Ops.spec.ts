@@ -21,22 +21,16 @@ import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -61,10 +55,7 @@ const builder = new SchemaFactory("test");
 class QuantityType extends builder.object("quantityObj", {
 	quantity: builder.number,
 }) {}
-
-function getNewTreeView(tree: ITree): TreeView<typeof QuantityType> {
-	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
-}
+const treeConfig = new TreeViewConfiguration({ schema: QuantityType });
 
 describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -168,13 +159,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(QuantityType, () => ({
-						quantity,
-					})),
-				)
-				[disposeSymbol]();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ quantity });
+			view.dispose();
 		},
 	);
 
@@ -203,6 +190,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
+		await waitForContainerConnection(container);
 		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
@@ -215,17 +203,20 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
+		await waitForContainerConnection(container1);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
+		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
-		await provider.opProcessingController.pauseProcessing();
+		container1.disconnect();
+		container2.disconnect();
 		shim1.submitMigrateOp();
 
 		// Modifies the legacyTree's quantity value
@@ -241,16 +232,18 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// Wait for "migrated" event on both shims.
 		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
 		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
-		provider.opProcessingController.resumeProcessing();
+		container1.connect();
 		await promise1;
+
+		container2.connect();
 		await promise2;
 		await provider.ensureSynchronized();
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.quantity, node2.quantity, "expected to migrate to the same value");
@@ -316,9 +309,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
-		const view1 = getNewTreeView(newTree1);
+		const view1 = newTree1.viewWith(treeConfig);
 		await provider.ensureSynchronized();
-		const view2 = getNewTreeView(newTree2);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.quantity, originalValue, "Node1 should be the original value");

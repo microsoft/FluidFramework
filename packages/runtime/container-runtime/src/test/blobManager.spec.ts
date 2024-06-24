@@ -19,18 +19,19 @@ import {
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
+	IDocumentStorageService,
 	ISequencedDocumentMessage,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	LoggingError,
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -82,6 +83,7 @@ export class MockRuntime
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.ops = stashed[0];
+		this.baseLogger = mc.logger;
 		this.blobManager = new BlobManager({
 			routeContext: undefined as any,
 			snapshot,
@@ -114,9 +116,7 @@ export class MockRuntime
 				const P = this.processBlobsP.promise.then(async () => {
 					if (!this.connected && this.attachState === AttachState.Attached) {
 						this.unprocessedBlobs.delete(blob);
-						throw new Error(
-							"fake error due to having no connection to storage service",
-						);
+						throw new Error("fake error due to having no connection to storage service");
 					} else {
 						this.unprocessedBlobs.delete(blob);
 						return this.storage.createBlob(blob);
@@ -138,13 +138,13 @@ export class MockRuntime
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		const P = this.blobManager.createBlob(blob, signal);
 		this.handlePs.push(P);
 		return P;
 	}
 
-	public async getBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
+	public async getBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
 		return this.blobManager.getBlob(blobId);
@@ -161,7 +161,7 @@ export class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public logger = this.mc.logger;
+	public baseLogger: ITelemetryLoggerExt;
 
 	private ops: any[] = [];
 	private processBlobsP = new Deferred<void>();
@@ -196,7 +196,7 @@ export class MockRuntime
 	public async processHandles() {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
-		const handles: IFluidHandle<ArrayBufferLike>[] = await Promise.all(handlePs);
+		const handles: IFluidHandleInternal<ArrayBufferLike>[] = await Promise.all(handlePs);
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
@@ -267,7 +267,7 @@ export class MockRuntime
 		return op;
 	}
 
-	public deleteBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
+	public deleteBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
 		this.deletedBlobs.push(blobHandle.absolutePath);
 	}
 
@@ -950,8 +950,7 @@ describe("BlobManager", () => {
 			"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 		[true, undefined].forEach((disableAttachmentBlobsSweep) =>
 			it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
-				injectedSettings[legacyKey_disableAttachmentBlobSweep] =
-					disableAttachmentBlobsSweep;
+				injectedSettings[legacyKey_disableAttachmentBlobSweep] = disableAttachmentBlobsSweep;
 
 				await runtime.attach();
 				await runtime.connect();

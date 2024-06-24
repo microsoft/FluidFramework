@@ -5,13 +5,15 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/driver-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import { getGitType } from "@fluidframework/protocol-base";
-import * as api from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
+	getGitType,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
 	loggerToMonitoringContext,
@@ -50,7 +52,7 @@ export class OdspSummaryUploadManager {
 	}
 
 	public async writeSummaryTree(
-		tree: api.ISummaryTree,
+		tree: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
@@ -82,7 +84,7 @@ export class OdspSummaryUploadManager {
 	private async writeSummaryTreeCore(
 		parentHandle: string | undefined,
 		referenceSequenceNumber: number,
-		tree: api.ISummaryTree,
+		tree: ISummaryTree,
 	): Promise<IWriteSummaryResponse> {
 		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree);
 		const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
@@ -132,16 +134,15 @@ export class OdspSummaryUploadManager {
 					type: snapshot.type,
 				},
 				async () => {
-					const response =
-						await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
-							url,
-							{
-								body: postBody,
-								headers,
-								method: "POST",
-							},
-							"uploadSummary",
-						);
+					const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
+						url,
+						{
+							body: postBody,
+							headers,
+							method: "POST",
+						},
+						"uploadSummary",
+					);
 					return response.content;
 				},
 			);
@@ -161,7 +162,7 @@ export class OdspSummaryUploadManager {
 	 */
 	private async convertSummaryToSnapshotTree(
 		parentHandle: string | undefined,
-		tree: api.ISummaryTree,
+		tree: ISummaryTree,
 		rootNodeName: string,
 		markUnreferencedNodes: boolean = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.MarkUnreferencedNodes",
@@ -189,7 +190,7 @@ export class OdspSummaryUploadManager {
 			let unreferenced: true | undefined;
 			let groupId: string | undefined;
 			switch (summaryObject.type) {
-				case api.SummaryType.Tree: {
+				case SummaryType.Tree: {
 					const result = await this.convertSummaryToSnapshotTree(
 						parentHandle,
 						summaryObject,
@@ -201,23 +202,23 @@ export class OdspSummaryUploadManager {
 					blobs += result.blobs;
 					break;
 				}
-				case api.SummaryType.Blob: {
+				case SummaryType.Blob: {
 					value =
 						typeof summaryObject.content === "string"
 							? {
 									type: "blob",
 									content: summaryObject.content,
 									encoding: "utf-8",
-							  }
+								}
 							: {
 									type: "blob",
 									content: Uint8ArrayToString(summaryObject.content, "base64"),
 									encoding: "base64",
-							  };
+								};
 					blobs++;
 					break;
 				}
-				case api.SummaryType.Handle: {
+				case SummaryType.Handle: {
 					if (!parentHandle) {
 						throw new Error("Parent summary does not exist to reference by handle.");
 					}
@@ -229,14 +230,14 @@ export class OdspSummaryUploadManager {
 					id = `${parentHandle}/${pathKey}`;
 					break;
 				}
-				case api.SummaryType.Attachment: {
+				case SummaryType.Attachment: {
 					id = summaryObject.id;
 					break;
 				}
 				default: {
 					unreachableCase(
 						summaryObject,
-						`Unknown type: ${(summaryObject as api.SummaryObject).type}`,
+						`Unknown type: ${(summaryObject as SummaryObject).type}`,
 					);
 				}
 			}

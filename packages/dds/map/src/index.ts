@@ -15,7 +15,7 @@
  * @packageDocumentation
  */
 
-export {
+export type {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
@@ -27,3 +27,9 @@ export {
 } from "./interfaces.js";
 export { MapFactory, SharedMap } from "./mapFactory.js";
 export { DirectoryFactory, SharedDirectory } from "./directoryFactory.js";
+export type {
+	ICreateInfo,
+	IDirectoryNewStorageFormat,
+	IDirectoryDataObject,
+} from "./directory.js";
+export type { ISerializableValue } from "./internalInterfaces.js";

@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	Marker,
 	MergeTreeDeltaRevertible,
@@ -18,7 +19,6 @@ import {
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -29,8 +29,8 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedString, getTextAndMarkers } from "../sharedString.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass, getTextAndMarkers } from "../sharedString.js";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;
@@ -38,7 +38,7 @@ describe("SharedString", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -57,13 +57,12 @@ describe("SharedString", () => {
 				objectStorage: MockStorage.createFromSummary(summaryTree),
 			};
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			const sharedString2 = new SharedString(
+			const sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
 			);
 			await sharedString2.load(services);
-			await sharedString2.loaded;
 
 			assert.equal(
 				sharedString.getText(),
@@ -108,11 +107,7 @@ describe("SharedString", () => {
 			assert.equal(sharedString.getText(), "hello there!", "Could not replace text");
 
 			sharedString.replaceText(0, 5, "hi");
-			assert.equal(
-				sharedString.getText(),
-				"hi there!",
-				"Could not replace text at beginning",
-			);
+			assert.equal(sharedString.getText(), "hi there!", "Could not replace text at beginning");
 		});
 
 		it("can remove text", async () => {
@@ -388,12 +383,10 @@ describe("SharedString", () => {
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2: IChannelServices = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary(
-					sharedString.getAttachSummary().summary,
-				),
+				objectStorage: MockStorage.createFromSummary(sharedString.getAttachSummary().summary),
 			};
 
-			const sharedString2 = new SharedString(
+			const sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -466,7 +459,7 @@ describe("SharedString", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			sharedString2 = new SharedString(
+			sharedString2 = new SharedStringClass(
 				dataStoreRuntime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,
@@ -677,7 +670,7 @@ describe("SharedString", () => {
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
 			containerRuntimeFactory.createContainerRuntime(runtime2);
-			sharedString2 = new SharedString(
+			sharedString2 = new SharedStringClass(
 				runtime2,
 				"shared-string-2",
 				SharedStringFactory.Attributes,

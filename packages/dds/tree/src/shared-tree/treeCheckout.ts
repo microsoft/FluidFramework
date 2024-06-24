@@ -4,51 +4,60 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { noopValidator } from "../codec/index.js";
 import {
-	Anchor,
-	AnchorLocator,
-	AnchorNode,
+	type Anchor,
+	type AnchorLocator,
+	type AnchorNode,
 	AnchorSet,
-	AnchorSetRootEvents,
-	ChangeFamily,
+	type AnchorSetRootEvents,
+	type ChangeFamily,
 	CommitKind,
-	CommitMetadata,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	IEditableForest,
-	IForestSubscription,
-	JsonableTree,
-	Revertible,
+	type CommitMetadata,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type IEditableForest,
+	type IForestSubscription,
+	type JsonableTree,
+	type Revertible,
 	RevertibleStatus,
-	RevisionTag,
-	RevisionTagCodec,
-	TreeStoredSchema,
+	type RevisionTag,
+	type RevisionTagCodec,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	combineVisitors,
+	makeAnonChange,
 	makeDetachedFieldIndex,
 	rebaseChange,
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
-import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
-	FieldBatchCodec,
-	TreeCompressionStrategy,
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
+import {
+	type FieldBatchCodec,
+	type TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -88,7 +97,7 @@ export interface CheckoutEvents {
  * whichever happens first.
  * This is typically used to clean up any resources associated with the `Revertible` in the host application.
  *
- * @public
+ * @sealed @public
  */
 export type RevertibleFactory = (
 	onRevertibleDisposed?: (revertible: Revertible) => void,
@@ -176,12 +185,12 @@ export interface ITreeCheckout extends AnchorLocator {
 	/**
 	 * Events about this view.
 	 */
-	readonly events: ISubscribable<CheckoutEvents>;
+	readonly events: Listenable<CheckoutEvents>;
 
 	/**
 	 * Events about the root of the tree in this view.
 	 */
-	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+	readonly rootEvents: Listenable<AnchorSetRootEvents>;
 
 	/**
 	 * Returns a JsonableTree for each tree that was removed from (and not restored to) the document.
@@ -210,11 +219,12 @@ export function createTreeCheckout(
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
-		events?: ISubscribable<CheckoutEvents> &
+		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
+		logger?: ITelemetryLoggerExt;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -253,7 +263,9 @@ export function createTreeCheckout(
 		events,
 		mintRevisionTag,
 		revisionTagCodec,
+		idCompressor,
 		args?.removedRoots,
+		args?.logger,
 	);
 }
 
@@ -341,6 +353,20 @@ export interface ITreeCheckoutFork extends ITreeCheckout, IDisposable {
 }
 
 /**
+ * Metrics derived from a revert operation.
+ *
+ * @see {@link TreeCheckout.revertRevertible}.
+ */
+export interface RevertMetrics {
+	/**
+	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
+	 */
+	readonly age: number;
+
+	// TODO: add other stats as needed for telemetry, etc.
+}
+
+/**
  * An implementation of {@link ITreeCheckoutFork}.
  */
 export class TreeCheckout implements ITreeCheckoutFork {
@@ -361,21 +387,31 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
 	>();
 
+	/**
+	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
+	 * @privateRemarks Exposed for testing purposes.
+	 */
+	public static readonly revertTelemetryEventName = "RevertRevertible";
+
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		public readonly events: ISubscribable<CheckoutEvents> &
+		public readonly events: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly idCompressor: IIdCompressor,
 		private readonly removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
+			idCompressor,
 		),
+		/** Optional logger for telemetry. */
+		private readonly logger?: ITelemetryLoggerExt,
 	) {
 		// We subscribe to `beforeChange` rather than `afterChange` here because it's possible that the change is invalid WRT our forest.
 		// For example, a bug in the editor might produce a malformed change object and thus applying the change to the forest will throw an error.
@@ -386,9 +422,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				// Conflicts due to schema will be empty and thus are not applied.
 				for (const change of event.change.change.changes) {
 					if (change.type === "data") {
-						const delta = intoDelta(
-							tagChange(change.innerChange, event.change.revision),
-						);
+						const delta = intoDelta(tagChange(change.innerChange, event.change.revision));
 						this.withCombinedVisitor((visitor) => {
 							visitDelta(delta, visitor, this.removedRoots);
 						});
@@ -430,15 +464,16 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const getRevertible = hasSchemaChange(change)
 				? undefined
 				: (onRevertibleDisposed?: (revertible: Revertible) => void) => {
-						assert(
-							withinEventContext,
-							0x902 /* cannot get a revertible outside of the context of a commitApplied event */,
-						);
-						assert(
-							this.revertibleCommitBranches.get(revision) === undefined,
-							0x903 /* cannot get the revertible more than once */,
-						);
-
+						if (!withinEventContext) {
+							throw new UsageError(
+								"Cannot get a revertible outside of the context of a commitApplied event.",
+							);
+						}
+						if (this.revertibleCommitBranches.get(revision) !== undefined) {
+							throw new UsageError(
+								"Cannot generate the same revertible more than once. Note that this can happen when multiple commitApplied event listeners are registered.",
+							);
+						}
 						const revertibleCommits = this.revertibleCommitBranches;
 						const revertible: DisposableRevertible = {
 							get status(): RevertibleStatus {
@@ -448,21 +483,28 @@ export class TreeCheckout implements ITreeCheckoutFork {
 									: RevertibleStatus.Valid;
 							},
 							revert: (release: boolean = true) => {
-								assert(
-									revertible.status === RevertibleStatus.Valid,
-									0x904 /* a disposed revertible cannot be reverted */,
-								);
-								this.revertRevertible(revision, data.kind);
+								if (revertible.status === RevertibleStatus.Disposed) {
+									throw new UsageError(
+										"Unable to revert a revertible that has been disposed.",
+									);
+								}
+
+								const revertMetrics = this.revertRevertible(revision, data.kind);
+								this.logger?.sendTelemetryEvent({
+									eventName: TreeCheckout.revertTelemetryEventName,
+									...revertMetrics,
+								});
+
 								if (release) {
-									revertible[disposeSymbol]();
+									revertible.dispose();
 								}
 							},
-							[disposeSymbol]: () => revertible.dispose(),
 							dispose: () => {
-								assert(
-									revertible.status === RevertibleStatus.Valid,
-									0x910 /* a disposed revertible cannot be disposed */,
-								);
+								if (revertible.status === RevertibleStatus.Disposed) {
+									throw new UsageError(
+										"Unable to dispose a revertible that has already been disposed.",
+									);
+								}
 								this.disposeRevertible(revertible, revision);
 								onRevertibleDisposed?.(revertible);
 							},
@@ -471,7 +513,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						this.revertibleCommitBranches.set(revision, branch.fork());
 						this.revertibles.add(revertible);
 						return revertible;
-				  };
+					};
 
 			this.events.emit("commitApplied", data, getRevertible);
 			withinEventContext = false;
@@ -492,7 +534,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		assert(!this.isDisposed, 0x911 /* Invalid operation on a disposed TreeCheckout */);
 	}
 
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+	public get rootEvents(): Listenable<AnchorSetRootEvents> {
 		return this.forest.anchors;
 	}
 
@@ -522,7 +564,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			createEmitter(),
 			this.mintRevisionTag,
 			this.revisionTagCodec,
+			this.idCompressor,
 			this.removedRoots.clone(),
+			this.logger,
 		);
 	}
 
@@ -567,21 +611,15 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
-		const cursor = this.forest.allocateCursor();
+		const cursor = this.forest.allocateCursor("getRemovedRoots");
 		for (const { id, root } of this.removedRoots.entries()) {
 			const parentField = this.removedRoots.toFieldKey(root);
-			this.forest.moveCursorToPath(
-				{ parent: undefined, parentField, parentIndex: 0 },
-				cursor,
-			);
+			this.forest.moveCursorToPath({ parent: undefined, parentField, parentIndex: 0 }, cursor);
 			const tree = jsonableTreeFromCursor(cursor);
-			if (tree !== undefined) {
-				// This method is used for tree consistency comparison.
-				const { major, minor } = id;
-				const finalizedMajor =
-					major !== undefined ? this.revisionTagCodec.encode(major) : major;
-				trees.push([finalizedMajor, minor, tree]);
-			}
+			// This method is used for tree consistency comparison.
+			const { major, minor } = id;
+			const finalizedMajor = major !== undefined ? this.revisionTagCodec.encode(major) : major;
+			trees.push([finalizedMajor, minor, tree]);
 		}
 		cursor.free();
 		return trees;
@@ -599,40 +637,53 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
-		assert(
-			!this.branch.isTransacting(),
-			0x7cb /* Undo is not yet supported during transactions */,
-		);
+	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
+		if (this.branch.isTransacting()) {
+			throw new UsageError("Undo is not yet supported during transactions.");
+		}
 
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, 0x7cc /* expected to find a revertible commit */);
 		const commitToRevert = revertibleBranch.getHead();
 
-		let change = this.changeFamily.rebaser.invert(
-			tagChange(commitToRevert.change, revision),
-			false,
+		let change = makeAnonChange(
+			this.changeFamily.rebaser.invert(tagChange(commitToRevert.change, revision), false),
 		);
 
 		const headCommit = this.branch.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
 		if (commitToRevert !== headCommit) {
-			change = rebaseChange(
-				this.changeFamily.rebaser,
-				change,
-				commitToRevert,
-				headCommit,
-				this.mintRevisionTag,
+			change = makeAnonChange(
+				rebaseChange(
+					this.changeFamily.rebaser,
+					change,
+					commitToRevert,
+					headCommit,
+					this.mintRevisionTag,
+				).change,
 			);
 		}
 
 		this.branch.apply(
-			change,
+			change.change,
 			this.mintRevisionTag(),
 			kind === CommitKind.Default || kind === CommitKind.Redo
 				? CommitKind.Undo
 				: CommitKind.Redo,
 		);
+
+		// Derive some stats about the reversion to return to the caller.
+		let revertAge = 0;
+		let currentCommit = headCommit;
+		while (commitToRevert.revision !== currentCommit.revision) {
+			revertAge++;
+
+			const parentCommit = currentCommit.parent;
+			assert(parentCommit !== undefined, 0x9a9 /* expected to find a parent commit */);
+			currentCommit = parentCommit;
+		}
+
+		return { age: revertAge };
 	}
 }
 

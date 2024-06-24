@@ -4,10 +4,10 @@
  */
 
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	ILocationRedirectionError,
 	IUrlResolver,
+	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -17,11 +17,14 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
  * @returns `true` is the error is location redirection error, otherwise `false`.
  * @internal
  */
-export function isLocationRedirectionError(error: any): error is ILocationRedirectionError {
+export function isLocationRedirectionError(
+	error: unknown,
+): error is ILocationRedirectionError {
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		error.errorType === DriverErrorTypes.locationRedirection
+		(error as Partial<ILocationRedirectionError>).errorType ===
+			DriverErrorTypes.locationRedirection
 	);
 }
 
@@ -45,7 +48,7 @@ export async function resolveWithLocationRedirectionHandling<T>(
 	for (;;) {
 		try {
 			return await api(req);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (!isLocationRedirectionError(error)) {
 				throw error;
 			}

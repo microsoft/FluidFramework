@@ -27,7 +27,7 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,

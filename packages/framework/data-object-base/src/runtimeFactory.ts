@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	type RuntimeRequestHandler,
 	// eslint-disable-next-line import/no-deprecated
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntries,
+import type {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -30,6 +31,7 @@ export interface RuntimeFactoryProps {
 	/**
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	requestHandlers?: RuntimeRequestHandler[];
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
@@ -41,6 +43,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly registry: NamedFluidDataStoreRegistryEntries;
 
 	private readonly defaultStoreFactory: IFluidDataStoreFactory;
+	// eslint-disable-next-line import/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 

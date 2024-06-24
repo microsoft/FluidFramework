@@ -149,7 +149,9 @@ data:
                 "shouldDisableDefaultNamespace": {{ .Values.nexus.socketIoAdapter.shouldDisableDefaultNamespace }}
             },
             "socketIo" : {
-                "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}}
+                "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}},
+                "gracefulShutdownEnabled": {{ .Values.nexus.socketIo.gracefulShutdownEnabled}},
+                "pingPongLatencyTrackingEnabled": {{ .Values.nexus.socketIo.pingPongLatencyTrackingEnabled}}
             }
         },
         "client": {
@@ -201,7 +203,8 @@ data:
         },
         "usage": {
             "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
-            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
+            "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }},
+            "httpUsageCountingEnabled": {{ .Values.usage.httpUsageCountingEnabled }}
         },
         "shared": {
             "transientTenants": {{ toJson .Values.shared.transientTenants }},

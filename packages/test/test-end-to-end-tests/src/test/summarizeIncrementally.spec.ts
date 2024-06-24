@@ -12,7 +12,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
 	channelsTreeName,
@@ -86,14 +86,22 @@ function validateDDSStateInSummary(
 	const ddsSummaryObject = ddsChannelsTree[ddsId];
 
 	if (!expectHandle) {
-		assert.strictEqual(ddsSummaryObject.type, SummaryType.Tree, "DDS summary should be a tree");
+		assert.strictEqual(
+			ddsSummaryObject.type,
+			SummaryType.Tree,
+			"DDS summary should be a tree",
+		);
 		return;
 	}
 
 	// The handle id for DDS should be under ".channels/<dataStoreId>/.channels" as that is where the summary tree
 	// for a DDS is.
 	const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}`;
-	assert.strictEqual(ddsSummaryObject.type, SummaryType.Handle, "DDS summary should be a handle");
+	assert.strictEqual(
+		ddsSummaryObject.type,
+		SummaryType.Handle,
+		"DDS summary should be a handle",
+	);
 	assert.strictEqual(ddsSummaryObject.handle, expectedHandleId, "DDS handle is incorrect");
 }
 

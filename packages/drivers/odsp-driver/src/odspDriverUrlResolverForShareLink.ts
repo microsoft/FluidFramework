@@ -16,7 +16,7 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
@@ -171,9 +171,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 	private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
 		if (this.shareLinkFetcherProps === undefined) {
-			throw new Error(
-				"Failed to get share link because share link fetcher props are missing",
-			);
+			throw new Error("Failed to get share link because share link fetcher props are missing");
 		}
 
 		if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {

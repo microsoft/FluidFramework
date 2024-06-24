@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TSchema, Type } from "@sinclair/typebox";
+import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.
@@ -45,6 +45,8 @@ const EncodedFieldBatchBase = Type.Object(
 export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 	version: number,
 	shape: TShapeSchema,
+	// Return type is intentionally derived.
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
 	Type.Composite(
 		[
