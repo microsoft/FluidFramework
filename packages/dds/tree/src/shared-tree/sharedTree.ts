@@ -83,12 +83,16 @@ export interface SharedTreeContentSnapshot {
 	 * This is mainly useful for debugging cases where schematize reports an incompatible view schema.
 	 */
 	readonly schema: TreeStoredSchema;
+
 	/**
-	 * All {@link TreeStatus#InDocument} content.
+	 * All {@link TreeStatus.InDocument} content.
+	 * @privateRemarks TODO: document the structure. Why is this an array?
 	 */
 	readonly tree: JsonableTree[];
+
 	/**
-	 * All {@link TreeStatus#Removed} content.
+	 * All {@link TreeStatus.Removed} content.
+	 * @privateRemarks TODO: document the structure.
 	 */
 	readonly removed: [string | number | undefined, number, JsonableTree][];
 }
