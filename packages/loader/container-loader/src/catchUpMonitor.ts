@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
- * @see CatchUpMonitor for usage
+ * @see {@link CatchUpMonitor} for usage.
  */
 type CaughtUpListener = () => void;
 
