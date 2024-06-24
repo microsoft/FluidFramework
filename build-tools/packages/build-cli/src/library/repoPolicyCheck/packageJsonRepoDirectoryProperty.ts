@@ -15,6 +15,8 @@ export const PackageJsonRepoDirectoryProperty: Handler = {
 			if (pkg.repository.directory !== relativePkgDir) {
 				return `repository.directory is '${pkg.repository.directory}'; expected '${relativePkgDir}'`;
 			}
+		} else if (pkg.repository === undefined) {
+			return `repository value is undefined; expected an object`;
 		} else if (pkg.repository !== relativePkgDir) {
 			return `repository value is a string '${pkg.repository}'; expected an object`;
 		}
