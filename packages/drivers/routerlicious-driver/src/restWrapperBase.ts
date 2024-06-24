@@ -4,6 +4,7 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
+import { buildQueryString, type QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
@@ -32,7 +33,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "GET",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: this.generateQueryString(url, queryString),
+			params: queryString,
 		};
 		return this.request<T>(options, 200);
 	}
@@ -57,7 +59,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "POST",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: this.generateQueryString(url, queryString),
+			params: queryString,
 		};
 		return this.request<T>(options, 201);
 	}
@@ -80,7 +83,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: this.generateQueryString(url, queryString),
+			params: queryString,
 		};
 		return this.request<T>(options, 204);
 	}
@@ -105,7 +109,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
-			url: `${url}${this.generateQueryString(queryString)}`,
+			url: this.generateQueryString(url, queryString),
+			params: queryString,
 		};
 		return this.request<T>(options, 200);
 	}
@@ -116,31 +121,16 @@ export abstract class RestWrapper {
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;
 
-	protected generateQueryString(queryStringValues?: QueryStringType) {
+	protected generateQueryString(url: string, queryStringValues?: QueryStringType) {
 		if (this.defaultQueryString || queryStringValues) {
-			const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
+			const queryStringMap = {
+				...this.defaultQueryString,
+				...queryStringValues,
+			};
 
-			return getQueryString(queryStringMap);
+			return buildQueryString(queryStringMap, url);
 		}
 
 		return "";
 	}
 }
-
-/**
- * Generates query string from the given query parameters.
- * @param queryParams - Query parameters from which to create a query.
- */
-export function getQueryString(queryParams: QueryStringType): string {
-	let queryString = "";
-	for (const key of Object.keys(queryParams)) {
-		if (queryParams[key] !== undefined) {
-			const startChar = queryString === "" ? "?" : "&";
-			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
-		}
-	}
-
-	return queryString;
-}
-
-export type QueryStringType = Record<string, string | number | boolean>;

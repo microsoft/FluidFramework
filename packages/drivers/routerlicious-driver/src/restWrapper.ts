@@ -28,7 +28,8 @@ import safeStringify from "json-stringify-safe";
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { buildQueryString, type QueryStringType } from "./queryStringUtils.js";
+import { RestWrapper } from "./restWrapperBase.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
@@ -39,8 +40,9 @@ const axiosRequestConfigToFetchRequestConfig = (
 ): [RequestInfo, RequestInit] => {
 	const requestInfo: string =
 		requestConfig.baseURL !== undefined
-			? `${requestConfig.baseURL}${requestConfig.url ?? ""}`
+			? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 			: requestConfig.url ?? "";
+
 	const requestInit: RequestInit = {
 		method: requestConfig.method,
 		// NOTE: I believe that although the Axios type permits non-string values in the header, here we are
@@ -133,11 +135,16 @@ class RouterliciousRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
 		// Check whether this request has been made before or if it is a retry.
-		const originalRequestUrl = requestConfig.url;
-		const requestKey = `${requestConfig.method ?? ""}|${requestConfig.url ?? ""}`;
+		// requestKey is built using the HTTP method appended with the complete URL ommitting the 'retry' param
+		const url = new URL(`${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`);
+		url.searchParams.delete("retry");
+		const requestKey = `${requestConfig.method ?? ""}|${url.href}`;
 		const requestRetryCount = this.retryCounter.get(requestKey);
 		if (requestRetryCount) {
-			requestConfig.url = `${requestConfig.url}&retryCount=${requestRetryCount}`;
+			requestConfig.params = requestConfig.params
+				? { ...requestConfig.params, retry: requestRetryCount }
+				: { retry: requestRetryCount };
+			requestConfig.url = buildQueryString(requestConfig.params, requestConfig.url);
 		}
 
 		const config = {
@@ -168,6 +175,9 @@ class RouterliciousRestWrapper extends RestWrapper {
 					: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
 							driverVersion,
 						});
+
+				// on failure, add the request entry into the retryCounter map to count the subsequent retries
+				this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 				throw err;
 			});
 			return {
@@ -219,14 +229,14 @@ class RouterliciousRestWrapper extends RestWrapper {
 		if (response.status === 401 && canRetry) {
 			// Refresh Authorization header and retry once
 			this.token = await this.fetchRefreshedToken(true /* refreshToken */);
-			return this.request<T>(config, statusCode, false);
+			return this.request<T>({ ...config }, statusCode, false);
 		}
 		if (response.status === 429 && responseBody?.retryAfter > 0) {
 			// Retry based on retryAfter[Seconds]
 			return new Promise<IR11sResponse<T>>((resolve, reject) =>
 				setTimeout(() => {
 					// use the original request URL without the retryCount appended
-					this.request<T>({ ...config, url: originalRequestUrl }, statusCode)
+					this.request<T>({ ...config }, statusCode)
 						.then(resolve)
 						.catch(reject);
 				}, responseBody.retryAfter * 1000),

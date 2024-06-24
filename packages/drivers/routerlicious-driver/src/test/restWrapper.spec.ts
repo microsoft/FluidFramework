@@ -17,6 +17,31 @@ import {
 } from "../restWrapper.js";
 import { ITokenResponse } from "../tokens.js";
 
+// import * as fetchModule from "cross-fetch";
+// import { stub } from "sinon";
+
+// interface MockResponse {
+// 	ok: boolean;
+// 	status: number;
+// 	text: () => Promise<string>;
+// 	arrayBuffer: () => Promise<unknown>;
+// 	headers: Headers;
+// 	json: () => Promise<unknown>;
+// }
+
+// const createResponse = async (
+// 	headers: { [key: string]: string },
+// 	response: unknown,
+// 	status: number,
+// ): Promise<MockResponse> => ({
+// 	ok: response !== undefined,
+// 	status,
+// 	text: async () => JSON.stringify(response),
+// 	arrayBuffer: async () => response,
+// 	headers: headers ? new Headers(headers) : new Headers(),
+// 	json: async () => response,
+// });
+
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);
 	const testHost = "http://localhost:3030";
@@ -140,6 +165,33 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
+
+		it("retry query param is appended on subsequent api request", async () => {
+			let retryQueryParamTested = false;
+			// Fail first request with retriable error
+			nock(testHost).get(testPath).reply(401);
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(429, { retryAfter: 0.1 });
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(200);
+			await restWrapper.get(testUrl);
+			assert(retryQueryParamTested);
+		});
 	});
 
 	describe("post()", () => {
@@ -202,6 +254,33 @@ describe("RouterliciousDriverRestWrapper", () => {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
+		});
+
+		it("retry query param is appended on subsequent api request", async () => {
+			let retryQueryParamTested = false;
+			// Fail first request with retriable error
+			nock(testHost).post(testPath).reply(401);
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.post(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(429, { retryAfter: 0.1 });
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.post(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(200);
+			await restWrapper.post(testUrl, { test: "payload" });
+			assert(retryQueryParamTested);
 		});
 	});
 
@@ -266,6 +345,32 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
+		it("retry query param is appended on subsequent api request", async () => {
+			let retryQueryParamTested = false;
+			// Fail first request with retriable error
+			nock(testHost).patch(testPath).reply(401);
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.patch(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(429, { retryAfter: 0.1 });
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.patch(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(200);
+			await restWrapper.patch(testUrl, { test: "payload" });
+			assert(retryQueryParamTested);
+		});
 	});
 
 	describe("delete()", () => {
@@ -328,6 +433,32 @@ describe("RouterliciousDriverRestWrapper", () => {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
+		});
+		it("retry query param is appended on subsequent api request", async () => {
+			let retryQueryParamTested = false;
+			// Fail first request with retriable error
+			nock(testHost).delete(testPath).reply(401, { retryAfter: undefined });
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.delete(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(429, { retryAfter: 0.1 });
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.delete(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(200);
+			await restWrapper.delete(testUrl);
+			assert(retryQueryParamTested);
 		});
 	});
 });
