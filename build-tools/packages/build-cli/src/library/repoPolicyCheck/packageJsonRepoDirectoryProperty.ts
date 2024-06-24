@@ -16,19 +16,22 @@ export const PackageJsonRepoDirectoryProperty: Handler = {
 				return `repository.directory is '${pkg.repository.directory}'; expected '${relativePkgDir}'`;
 			}
 		} else if (pkg.repository !== relativePkgDir) {
-			return `repository is '${pkg.repository}'; expected '${relativePkgDir}'`;
+			return `repository value is a string '${pkg.repository}'; expected an object`;
 		}
 
 		return undefined;
 	},
-	resolver: (file: string, root: string): { resolved: boolean } => {
+	resolver: (file: string, root: string) => {
 		updatePackageJsonFile(file, (json) => {
 			const pkgDir = path.dirname(file);
 			const relativePkgDir = path.relative(root, pkgDir);
 			if (typeof json.repository === "object") {
 				json.repository.directory = relativePkgDir;
 			} else {
-				json.repository = relativePkgDir;
+				return {
+					message: "repository field is a string but should be an object",
+					resolved: false,
+				};
 			}
 		});
 		return { resolved: true };
