@@ -96,9 +96,8 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			fail("'sequence' field is unexpected.");
 		}
 		case FieldKinds.identifier: {
-			const identifier = field.boxedAt(0);
-			assert(identifier !== undefined, 0x91a /* identifier must exist */);
-			return getOrCreateNodeProxy(identifier);
+			// Identifier fields are just value fields that hold strings
+			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>).content as string;
 		}
 
 		default:
