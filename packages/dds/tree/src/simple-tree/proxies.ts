@@ -91,7 +91,8 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		}
 		case FieldKinds.identifier: {
 			// Identifier fields are just value fields that hold strings
-			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>).content as string;
+			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>)
+				.content as string;
 		}
 
 		default:
