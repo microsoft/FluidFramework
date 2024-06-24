@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -115,7 +115,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 		return this.blobs.get(id) as ArrayBufferLike;
 	}
 
-	public uploadSummary(sequenceNumber: number) {
+	public uploadSummary(sequenceNumber: number): void {
 		this.blobs.set(
 			"attributesId",
 			stringToBuffer(
@@ -165,10 +165,10 @@ function generateSavedOp(seq: number): ISequencedDocumentMessage {
 		minimumSequenceNumber: 0,
 		sequenceNumber: seq,
 		type: MessageType.Operation,
-	} as any as ISequencedDocumentMessage;
+	} as unknown as ISequencedDocumentMessage;
 }
 
-function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger) {
+function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger): ITelemetryBaseLogger {
 	return mixinMonitoringContext(logger, {
 		getRawConfig: (name) =>
 			name === "Fluid.Container.enableOfflineSnapshotRefresh" ? true : undefined,
@@ -262,36 +262,40 @@ describe("serializedStateManager", () => {
 				new MockRuntime(),
 				resolvedUrl,
 			);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			assert.strictEqual(JSON.parse(state).baseSnapshot.id, "fromPending");
 		});
 
-		it("can fetch snapshot and get state from it", async () => {
-			const storageAdapter = new MockStorageAdapter();
-			const serializedStateManager = new SerializedStateManager(
-				undefined,
-				enableOfflineSnapshotRefresh(logger),
-				storageAdapter,
-				true,
-				eventEmitter,
-				() => false,
-				() => false,
-			);
-			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
-			assert(baseSnapshot);
-			assert.strictEqual(version?.id, "fromStorage");
-			assert.strictEqual(version.treeId, "fromStorage");
-			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
-				"clientId",
-				new MockRuntime(),
-				resolvedUrl,
-			);
-			const parsed = JSON.parse(state);
-			assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
-			const attributes = getAttributesFromPendingState(parsed);
-			assert.strictEqual(attributes.sequenceNumber, 0);
-			assert.strictEqual(attributes.minimumSequenceNumber, 0);
-		});
+	it("can fetch snapshot and get state from it", async () => {
+		const storageAdapter = new MockStorageAdapter();
+		const serializedStateManager = new SerializedStateManager(
+			undefined,
+			enableOfflineSnapshotRefresh(logger),
+			storageAdapter,
+			true,
+			eventEmitter,
+			() => false,
+			() => false,
+		);
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
+		assert(baseSnapshot);
+		assert.strictEqual(version?.id, "fromStorage");
+		assert.strictEqual(version.treeId, "fromStorage");
+		const state = await serializedStateManager.getPendingLocalState(
+			{ notifyImminentClosure: false },
+			"clientId",
+			new MockRuntime(),
+			resolvedUrl,
+		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const parsed = JSON.parse(state);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		const attributes = getAttributesFromPendingState(parsed);
+		assert.strictEqual(attributes.sequenceNumber, 0);
+		assert.strictEqual(attributes.minimumSequenceNumber, 0);
+	});
 
 		it("get pending state again before getting latest snapshot", async () => {
 			const pending: IPendingContainerState = {
@@ -309,7 +313,8 @@ describe("serializedStateManager", () => {
 				() => false,
 				() => false,
 			);
-			void serializedStateManager.refreshSnapshotP?.then(() =>
+			// eslint-disable-next-line no-void
+		void serializedStateManager.refreshSnapshotP?.then(() =>
 				getLatestSnapshotInfoP.resolve(),
 			);
 			let seq = 1;
@@ -456,7 +461,7 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
 					pending,
 					enableOfflineSnapshotRefresh(logger),
@@ -466,7 +471,9 @@ describe("serializedStateManager", () => {
 					isDirtyF,
 					() => false,
 				);
-				savedOps.forEach((savedOp) => serializedStateManager.addProcessedOp(savedOp));
+				for (const savedOp of savedOps) {
+				serializedStateManager.addProcessedOp(savedOp);
+			}
 
 				const { baseSnapshot, version } =
 					await serializedStateManager.fetchSnapshot(undefined);
@@ -496,10 +503,13 @@ describe("serializedStateManager", () => {
 					new MockRuntime(),
 					resolvedUrl,
 				);
-				const parsed = JSON.parse(state);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const parsed = JSON.parse(state);
 				// We keep using the pending snapshot since there were no summaries since then.
-				assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
-				const attributes = getAttributesFromPendingState(parsed);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const attributes = getAttributesFromPendingState(parsed);
 				assert.strictEqual(attributes.sequenceNumber, 0);
 				assert.strictEqual(attributes.minimumSequenceNumber, 0);
 			});
@@ -511,7 +521,7 @@ describe("serializedStateManager", () => {
 					savedOps: [generateSavedOp(13)],
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -564,7 +574,7 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -661,7 +671,7 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -733,7 +743,7 @@ describe("serializedStateManager", () => {
 					savedOps: [generateSavedOp(lastProcessedOpSequenceNumber)],
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -810,7 +820,9 @@ describe("serializedStateManager", () => {
 					mockRuntime,
 					resolvedUrl,
 				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const parsed = JSON.parse(state);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 			});
 
@@ -851,12 +863,15 @@ describe("serializedStateManager", () => {
 					mockRuntime,
 					resolvedUrl,
 				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const parsed = JSON.parse(state);
 				// Since there is no saved event, it should only update the expiry timer
 				// when we're not dirty at fetching time.
 				if (isDirty) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 				} else {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
 				}
 			});
@@ -867,7 +882,7 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -903,7 +918,9 @@ describe("serializedStateManager", () => {
 					mockRuntime,
 					resolvedUrl,
 				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const parsed = JSON.parse(state);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
 			});
 		}

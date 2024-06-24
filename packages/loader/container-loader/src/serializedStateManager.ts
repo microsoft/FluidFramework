@@ -12,6 +12,7 @@ import type {
 	IEventProvider,
 	IEvent,
 	ITelemetryBaseLogger,
+	Tagged,
 } from "@fluidframework/core-interfaces";
 import { Timer, assert } from "@fluidframework/core-utils/internal";
 import {
@@ -30,6 +31,7 @@ import {
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
+	type TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -66,7 +68,9 @@ export interface SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
-	/** This container was attached (as opposed to IPendingDetachedContainerState.attached which is false) */
+	/**
+	 * This container was attached (as opposed to IPendingDetachedContainerState.attached which is false)
+	 */
 	attached: true;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
@@ -83,9 +87,13 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
-	/** The Container's URL in the service, needed to hook up the driver during rehydration */
+	/**
+	 * The Container's URL in the service, needed to hook up the driver during rehydration
+	 */
 	url: string;
-	/** If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected. */
+	/**
+	 * If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected.
+	 */
 	clientId?: string;
 }
 
@@ -95,11 +103,17 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
-	/** This container was not attached (as opposed to IPendingContainerState.attached which is true) */
+	/**
+	 * This container was not attached (as opposed to IPendingContainerState.attached which is true)
+	 */
 	attached: false;
-	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
+	/**
+	 * Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage
+	 */
 	hasAttachmentBlobs: boolean;
-	/** Used by the memory blob storage to persisted attachment blobs */
+	/**
+	 * Used by the memory blob storage to persisted attachment blobs
+	 */
 	attachmentBlobs?: string;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
@@ -193,7 +207,7 @@ export class SerializedStateManager {
 	/**
 	 * Called whenever an incoming op is processed by the Container
 	 */
-	public addProcessedOp(message: ISequencedDocumentMessage) {
+	public addProcessedOp(message: ISequencedDocumentMessage): void {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
 			this.updateSnapshotAndProcessedOpsMaybe();
@@ -204,13 +218,16 @@ export class SerializedStateManager {
 	 * This wraps the basic functionality of fetching the snapshot for this container during Container load.
 	 *
 	 * If we have pendingLocalState, we get the snapshot from there.
-	 * Otherwise, fetch it from storage (according to specifiedVersion if provided)
+	 * Otherwise, fetch it from storage (according to specifiedVersion if provided).
 	 *
-	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage
+	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage.
 	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
 	 * @returns The snapshot to boot the container from
 	 */
-	public async fetchSnapshot(specifiedVersion: string | undefined) {
+	public async fetchSnapshot(specifiedVersion: string | undefined): Promise<{
+		baseSnapshot: ISnapshot | ISnapshotTree;
+		version: IVersion | undefined;
+	}> {
 		if (this.pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
@@ -372,7 +389,7 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
-	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
+	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined): void {
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,
@@ -384,12 +401,18 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
 			assert(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				attributes.sequenceNumber === 0,
 				0x939 /* trying to set a non attachment snapshot */,
 			);
-			this.snapshot = { ...snapshot, snapshotSequenceNumber: attributes.sequenceNumber };
+			this.snapshot = {
+				...snapshot,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				snapshotSequenceNumber: attributes.sequenceNumber as number,
+			};
 			this.refreshTimer.start();
 		}
 	}
@@ -576,6 +599,8 @@ export async function fetchISnapshotTree(
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshotTree" | "getVersions">,
 	specifiedVersion: string | undefined,
 ): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
+	// API uses null
+	// eslint-disable-next-line unicorn/no-null
 	const versions = await storageAdapter.getVersions(specifiedVersion ?? null, 1);
 	const version = versions[0];
 
