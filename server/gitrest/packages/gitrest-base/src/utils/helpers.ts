@@ -5,6 +5,7 @@
 
 import { PathLike, Stats, type BigIntStats } from "fs";
 import * as path from "path";
+import { inflate, deflate } from "pako";
 import { Request } from "express";
 import {
 	IGetRefParamsExternal,
@@ -111,6 +112,28 @@ export async function exists(
 const latestFullSummaryFilename = "latestFullSummary";
 const getLatestFullSummaryFilePath = (dir: string) => `${dir}/${latestFullSummaryFilename}`;
 
+function compressData(data: string): Uint8Array {
+	return deflate(data);
+}
+function decompressData(data: string | Buffer): Uint8Array {
+	const bufferData = typeof data === "string" ? Buffer.from(data) : data;
+	try {
+		// Pako has its own compression type check that happens before the actual decompression.
+		// We can rely on that to determine if the data is compressed or not.
+		return inflate(bufferData);
+	} catch (error: unknown) {
+		if (
+			typeof error === "string" &&
+			(error === "incorrect header check" || error === "unknown compression method")
+		) {
+			// If the data is not compressed, return the original data.
+			return bufferData;
+		}
+		// Don't log any error information because this specifically deals with customer data.
+		throw new NetworkError(500, "Failed to decompress data");
+	}
+}
+
 export async function persistLatestFullSummaryInStorage(
 	fileSystemManager: IFileSystemManager,
 	storageDirectoryPath: string,
@@ -134,7 +157,7 @@ export async function persistLatestFullSummaryInStorage(
 		}
 		await fileSystemManager.promises.writeFile(
 			getLatestFullSummaryFilePath(storageDirectoryPath),
-			JSON.stringify(latestFullSummary),
+			compressData(JSON.stringify(latestFullSummary)),
 		);
 		persistLatestFullSummaryInStorageMetric.success(
 			"Successfully persisted latest full summary in storage",
@@ -162,7 +185,7 @@ export async function retrieveLatestFullSummaryFromStorage(
 			getLatestFullSummaryFilePath(storageDirectoryPath),
 		);
 		// TODO: This will be converted back to a JSON string for the HTTP response
-		const summary: IWholeFlatSummary = JSON.parse(summaryFile.toString());
+		const summary: IWholeFlatSummary = JSON.parse(decompressData(summaryFile).toString());
 		retrieveLatestFullSummaryMetric.setProperty(
 			BaseGitRestTelemetryProperties.emptyFullSummary,
 			false,
@@ -211,11 +234,17 @@ export function getRepoPath(tenantId: string, documentId?: string, owner?: strin
 	return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
 }
 
-export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {
+export function getGitDirectory(
+	repoPath: string,
+	baseDir?: string,
+	suffixPath?: string,
+): string {
 	return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
-export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
+export function parseStorageRoutingId(
+	storageRoutingId?: string,
+): IStorageRoutingId | undefined {
 	if (!storageRoutingId) {
 		return undefined;
 	}
