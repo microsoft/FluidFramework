@@ -2,6 +2,9 @@
 
 ## 0.14.0
 
+-   Allow configuration of "alerts" in child item tables.
+    -   Default behavior can be overridden via the the `getAlertsForItem` option.
+
 ### ⚠ BREAKING CHANGES
 
 -   Update default policy for `getHeadingTextForItem` to not insert `(BETA)` and `(ALPHA)` postfixes based on release tags.

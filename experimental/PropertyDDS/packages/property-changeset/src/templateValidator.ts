@@ -15,7 +15,7 @@
 
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { queue } from "async";
-import { copy as cloneDeep } from "fastest-json-copy";
+import cloneDeep from "lodash/cloneDeep.js";
 import difference from "lodash/difference.js";
 import each from "lodash/each.js";
 import every from "lodash/every.js";
