@@ -5,7 +5,15 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey, type TreeNodeStoredSchema } from "../core/index.js";
+import {
+	EmptyKey,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	Multiplicity,
+	ObjectNodeStoredSchema,
+	rootFieldKey,
+	type TreeNodeStoredSchema,
+} from "../core/index.js";
 import {
 	FieldKinds,
 	type LazyItem,
@@ -125,7 +133,14 @@ export interface TreeNodeApi {
 	/**
 	 * TODO
 	 */
-	storedSchema(node: TreeNode): TreeNodeStoredSchema;
+	storedSchema(node: TreeNode): NiceStoredSchema;
+}
+
+/**
+ * @public
+ */
+export interface NiceStoredSchema {
+	readonly kind: NodeKind;
 }
 
 /**
@@ -227,12 +242,39 @@ export const treeNodeApi: TreeNodeApi = {
 
 		return shortId;
 	},
-	storedSchema(node: TreeNode): TreeNodeStoredSchema {
-		// throw new Error("TODO");
-		const viewSchema = treeNodeApi.schema(node);
-		return getStoredKey(node) === rootFieldKey
-	}
+	storedSchema(node: TreeNode): NiceStoredSchema {
+		const flexNode = getFlexNode(node);
+		return niceifyStoredSchema(flexNode.schema.stored);
+	},
 };
+
+function niceifyStoredSchema(storedSchema: TreeNodeStoredSchema): NiceStoredSchema {
+	if (storedSchema instanceof LeafNodeStoredSchema) {
+		return {
+			kind: NodeKind.Leaf,
+		};
+	}
+	if (storedSchema instanceof ObjectNodeStoredSchema) {
+		// TODO: docs
+		if (
+			storedSchema.objectNodeFields.size === 1 &&
+			storedSchema.objectNodeFields.has(EmptyKey)
+		) {
+			return {
+				kind: NodeKind.Array,
+			};
+		}
+		return {
+			kind: NodeKind.Object,
+		};
+	}
+	if (storedSchema instanceof MapNodeStoredSchema) {
+		return {
+			kind: NodeKind.Map,
+		};
+	}
+	fail("Unrecognized kind of stored schema.");
+}
 
 /**
  * Returns a schema for a value if the value is a {@link TreeNode} or a {@link TreeLeafValue}.

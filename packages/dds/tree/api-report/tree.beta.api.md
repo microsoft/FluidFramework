@@ -207,6 +207,12 @@ export type Listeners<T extends object> = {
 export interface MakeNominal {
 }
 
+// @public (undocumented)
+export interface NiceStoredSchema {
+    // (undocumented)
+    readonly kind: NodeKind;
+}
+
 // @public
 type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
@@ -431,6 +437,7 @@ export interface TreeNodeApi {
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     shortId(node: TreeNode): number | string | undefined;
     readonly status: (node: TreeNode) => TreeStatus;
+    storedSchema(node: TreeNode): NiceStoredSchema;
 }
 
 // @public
