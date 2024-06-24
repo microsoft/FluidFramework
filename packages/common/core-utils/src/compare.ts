@@ -28,6 +28,8 @@ export const compareArrays = <T>(
 	return (
 		left === right || // Trivial acceptance: 'left' and 'right' are the same instance
 		(left.length === right.length && // Trivial rejection: 'left' and 'right' are different lengths
-			left.every((leftItem, index) => comparator(leftItem, right[index], index)))
+			// non null asserting the right array because we know the lengths are the same
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			left.every((leftItem, index) => comparator(leftItem, right[index]!, index)))
 	);
 };

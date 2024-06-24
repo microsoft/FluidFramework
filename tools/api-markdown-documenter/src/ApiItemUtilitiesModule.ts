@@ -23,6 +23,7 @@ export {
 	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
+	getSingleLineExcerptText,
 	getThrowsBlocks,
 	getUnscopedPackageName,
 	isDeprecated,
