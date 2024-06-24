@@ -82,7 +82,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * ```
  * @privateRemarks
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
- * @public
+ * @sealed @public
  */
 export interface MakeNominal {}
 

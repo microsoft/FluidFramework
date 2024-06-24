@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -106,13 +106,12 @@
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
 		"events_pkg": "npm:events@^3.1.0",
-		"lodash": "^4.17.21",
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
 		"@biomejs/biome": "^1.7.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.4.0.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.5.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",

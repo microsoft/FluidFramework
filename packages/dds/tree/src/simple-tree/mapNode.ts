@@ -29,7 +29,7 @@ import {
 	type WithType,
 	type TreeNodeSchema,
 	type TreeNodeFromImplicitAllowedTypes,
-	type,
+	typeNameSymbol,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type TreeNode, TreeNodeValid } from "./types.js";
@@ -42,7 +42,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
@@ -257,7 +257,7 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 	}

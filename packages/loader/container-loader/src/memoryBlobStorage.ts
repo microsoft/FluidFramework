@@ -44,17 +44,19 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
 	detachedStorage: IDetachedBlobStorage,
 	attachmentBlobs: string,
-) {
+): void {
 	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
 		throw new Error(
 			"DetachedBlobStorage was not provided to the loader during serialize so cannot be provided during rehydrate.",
 		);
 	}
 
-	assert(detachedStorage.size === 0, "Blob storage already initialized");
+	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
-	assert(Array.isArray(maybeAttachmentBlobs), "Invalid attachmentBlobs");
+	assert(Array.isArray(maybeAttachmentBlobs), 0x99f /* Invalid attachmentBlobs */);
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	detachedStorage.initialize(maybeAttachmentBlobs);
 }
 
@@ -73,9 +75,9 @@ export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
 		},
 		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
 		dispose: () => blobs.splice(0),
-		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf-8"))),
+		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf8"))),
 		initialize: (attachmentBlobs: string[]) =>
-			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf-8"))),
+			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
 	};
 	return storage;
 }
