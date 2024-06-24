@@ -1091,8 +1091,8 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
-			} catch (error_) {
-				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, error_);
+			} catch (newError) {
+				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
 
 			this.emit("closed", error);
