@@ -45,7 +45,7 @@ const testConfigs = generatePairwiseOptions({
 	loadOffline: [true, false],
 	useLoadingGroupIdForSnapshotFetch: [true, false],
 	timeoutRefreshInOriginalContainer: [true, false],
-	tiemoutRefreshInLoadedContainer: [true, false],
+	timeoutRefreshInLoadedContainer: [true, false],
 });
 
 /**
@@ -188,7 +188,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 							testConfig.useLoadingGroupIdForSnapshotFetch,
 						"Fluid.Container.snapshotRefreshTimeout":
 							testConfig.timeoutRefreshInOriginalContainer ||
-							testConfig.tiemoutRefreshInLoadedContainer
+							testConfig.timeoutRefreshInLoadedContainer
 								? 100
 								: undefined,
 					}),
@@ -276,7 +276,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await timeoutAwait(getLatestSnapshotInfoP.promise, {
 					errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 				});
-				if (testConfig.tiemoutRefreshInLoadedContainer) {
+				if (testConfig.timeoutRefreshInLoadedContainer) {
 					await timeoutPromise((resolve) => {
 						setTimeout(() => {
 							resolve();
@@ -294,8 +294,11 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			}
 
 			if (testConfig.pendingOps2) {
-				if (!testConfig.loadOffline)
+				if (!testConfig.loadOffline){
+					// making sure container is already connected before pausing processing
+					await waitForContainerConnection(container2);
 					await provider.opProcessingController.pauseProcessing(container2);
+				}
 				map2.set(`${i}`, i++);
 				map2.set(`${i}`, i++);
 				groupIdDataObject2.root.set(`${j}`, j++);

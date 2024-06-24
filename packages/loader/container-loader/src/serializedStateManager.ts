@@ -268,7 +268,7 @@ export class SerializedStateManager {
 			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
 			this._refreshSnapshotP
 				.catch((e) => {
-					this.mc.logger.sendErrorEvent({
+					this.mc.logger.sendTelemetryEvent({
 						eventName: "RefreshLatestSnapshotFailed",
 						error: e,
 					});
