@@ -32,11 +32,12 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
+		"@fluid-experimental/tree": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/odsp-client": "workspace:~",
