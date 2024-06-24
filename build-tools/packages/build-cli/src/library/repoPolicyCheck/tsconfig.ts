@@ -4,7 +4,7 @@
  */
 
 import { readFileSync, writeFileSync } from "fs-extra";
-import { sortJsonc } from "sort-jsonc";
+import { isSortedJsonc, sortJsonc } from "sort-jsonc";
 import type { Handler } from "./common.js";
 
 const match = /(^|\/)tsconfig.*?\.json/i;
@@ -183,24 +183,18 @@ const sortOrder = [
  */
 function sortTsconfig(tsconfigPath: string, write: boolean): boolean {
 	const origString = readFileSync(tsconfigPath).toString();
-	const sortedString = sortJsonc(origString, {
-		sort: sortOrder,
-	});
+	const sorted = isSortedJsonc(origString);
+	const sortedString = sorted
+		? origString
+		: sortJsonc(origString, {
+				sort: sortOrder,
+			});
 
-	// normalize the original and sorted string using prettier so we can compare them safely
-	const config = resolvePrettierConfig(tsconfigPath);
-	if (config !== null) {
-		config.parser = "jsonc";
-	}
-	const normalizedInput = prettier(origString, config ?? { parser: "jsonc" });
-	const normalizedOutput = prettier(sortedString, config ?? { parser: "jsonc" });
-	const updated = normalizedInput !== normalizedOutput;
-
-	if (updated && write) {
-		writeFileSync(tsconfigPath, normalizedOutput);
+	if (!sorted && write) {
+		writeFileSync(tsconfigPath, sortedString);
 	}
 
-	return updated;
+	return !sorted;
 }
 
 /**
