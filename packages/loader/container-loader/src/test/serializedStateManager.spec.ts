@@ -954,7 +954,7 @@ describe("serializedStateManager", () => {
 			serializedStateManager: SerializedStateManager,
 			snapshotSequenceNumber: number,
 			lastProcessedOpSequenceNumber: number,
-		) => {
+		): Promise<void> => {
 			// pending state validation
 			const state = await serializedStateManager.getPendingLocalState(
 				{ notifyImminentClosure: false },
@@ -986,7 +986,7 @@ describe("serializedStateManager", () => {
 			it(`snapshot refresh at timeout in attach flow, isDirty:${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
 					undefined,
 					enableOfflineSnapshotRefresh(logger),
@@ -1055,7 +1055,7 @@ describe("serializedStateManager", () => {
 			it(`attach flow, saved event before fetching the snapshot isDirty:${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
 					undefined,
 					enableOfflineSnapshotRefresh(logger),
@@ -1124,7 +1124,7 @@ describe("serializedStateManager", () => {
 			it(`snapshot refresh at timeout in load flow. isDirty: ${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
 					undefined,
 					enableOfflineSnapshotRefresh(logger),
@@ -1188,7 +1188,7 @@ describe("serializedStateManager", () => {
 			it(`load flow. saved event before fetching the snapshot isDirty: ${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
 					undefined,
 					enableOfflineSnapshotRefresh(logger),
@@ -1257,7 +1257,7 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,
@@ -1324,7 +1324,7 @@ describe("serializedStateManager", () => {
 					baseSnapshot: { ...snapshot, id: "fromPending" },
 				};
 				let saved = false;
-				const isDirtyF = () => (saved ? false : isDirty);
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
 					pending,

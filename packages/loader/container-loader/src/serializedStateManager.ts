@@ -496,7 +496,8 @@ export async function getLatestSnapshotInfo(
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
 			// get the latest non cached snapshot version
-			const specifiedVersion = storageAdapter.getVersions(
+			const specifiedVersion: IVersion[] = await storageAdapter.getVersions(
+				// eslint-disable-next-line unicorn/no-null
 				null,
 				1,
 				"getLatestSnapshotInfo",
