@@ -118,6 +118,8 @@ function compressData(data: string): Uint8Array {
 function decompressData(data: string | Buffer): Uint8Array {
 	const bufferData = typeof data === "string" ? Buffer.from(data) : data;
 	try {
+		// Pako has its own compression type check that happens before the actual decompression.
+		// We can rely on that to determine if the data is compressed or not.
 		return inflate(bufferData);
 	} catch (error: unknown) {
 		if (
