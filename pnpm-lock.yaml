@@ -16273,9 +16273,6 @@ importers:
       recharts:
         specifier: ^2.7.2
         version: 2.10.1(prop-types@15.8.1)(react-dom@17.0.2)(react@17.0.2)
-      scheduler:
-        specifier: ^0.20.0
-        version: 0.20.2
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
