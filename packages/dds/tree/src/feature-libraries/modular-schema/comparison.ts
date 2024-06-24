@@ -195,6 +195,11 @@ export function allowsRepoSuperset(
 		}
 	}
 	for (const [key, schema] of original.nodeSchema) {
+		// If a nodeStoredSchema in 'A' does not exist in the 'B', 'B' can no longer be considered a superset of
+		// 'A', and we can stop the check early.
+		if (!superset.nodeSchema.has(key)) {
+			return false;
+		}
 		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
 		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
 			return false;
@@ -206,5 +211,6 @@ export function allowsRepoSuperset(
 export function normalizeField(
 	schema: TreeFieldStoredSchema | undefined,
 ): TreeFieldStoredSchema {
+	2;
 	return schema ?? storedEmptyFieldSchema;
 }

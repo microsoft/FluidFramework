@@ -283,6 +283,11 @@ describe("Schema Comparison", () => {
 				name: brand<TreeNodeSchemaIdentifier>("testTree2"),
 				schema: new ObjectNodeStoredSchema(new Map()),
 			};
+			const node3 = {
+				name: brand<TreeNodeSchemaIdentifier>("testTree3"),
+				schema: new ObjectNodeStoredSchema(new Map()),
+			};
+
 			const repo1 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
 				nodeSchema: new Map([[node1.name, node1.schema]]),
@@ -291,7 +296,24 @@ describe("Schema Comparison", () => {
 				rootFieldSchema: root,
 				nodeSchema: new Map([[node2.name, node2.schema]]),
 			});
-			testOrder(compareTwoRepo, [repo1, repo2]);
+			const repo3 = new TreeStoredSchemaRepository({
+				rootFieldSchema: root,
+				nodeSchema: new Map([
+					[node1.name, node1.schema],
+					[node2.name, node2.schema],
+				]),
+			});
+			const repo4 = new TreeStoredSchemaRepository({
+				rootFieldSchema: root,
+				nodeSchema: new Map([
+					[node1.name, node1.schema],
+					[node3.name, node3.schema],
+				]),
+			});
+
+			assert.equal(getOrdering(repo1, repo2, compareTwoRepo), Ordering.Incomparable);
+			assert.equal(getOrdering(repo1, repo3, compareTwoRepo), Ordering.Superset);
+			assert.equal(getOrdering(repo3, repo4, compareTwoRepo), Ordering.Incomparable);
 		});
 
 		it("The ordering should be incomparable when there is an `intersection`", () => {
