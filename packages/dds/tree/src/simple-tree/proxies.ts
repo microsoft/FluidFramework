@@ -82,12 +82,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			}
 
 			return getOrCreateNodeProxy(maybeUnboxedContent);
-
-			// const maybeContent = asValue.boxedContent;
-
-			// // Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
-			// // root field is a special case where the field is always present (even if empty).
-			// return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
