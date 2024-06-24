@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey } from "../core/index.js";
+import { Multiplicity, rootFieldKey, type TreeNodeStoredSchema } from "../core/index.js";
 import {
 	FieldKinds,
 	type LazyItem,
@@ -121,6 +121,11 @@ export interface TreeNodeApi {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
+
+	/**
+	 * TODO
+	 */
+	storedSchema(node: TreeNode): TreeNodeStoredSchema;
 }
 
 /**
@@ -222,6 +227,11 @@ export const treeNodeApi: TreeNodeApi = {
 
 		return shortId;
 	},
+	storedSchema(node: TreeNode): TreeNodeStoredSchema {
+		// throw new Error("TODO");
+		const viewSchema = treeNodeApi.schema(node);
+		return getStoredKey(node) === rootFieldKey
+	}
 };
 
 /**
@@ -268,7 +278,7 @@ function getStoredKey(node: TreeNode): string | number {
 		return parentField.index;
 	}
 
-	// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
 	return parentField.parent.key;
 }
 
