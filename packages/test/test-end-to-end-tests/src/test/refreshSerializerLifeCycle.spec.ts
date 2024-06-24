@@ -294,7 +294,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			}
 
 			if (testConfig.pendingOps2) {
-				if (!testConfig.loadOffline){
+				if (!testConfig.loadOffline) {
 					// making sure container is already connected before pausing processing
 					await waitForContainerConnection(container2);
 					await provider.opProcessingController.pauseProcessing(container2);

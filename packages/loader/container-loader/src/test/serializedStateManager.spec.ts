@@ -1364,7 +1364,6 @@ describe("serializedStateManager", () => {
 					snapshotSequenceNumber,
 					lastProcessedOpSequenceNumber,
 				);
-
 			});
 		}
 	});
