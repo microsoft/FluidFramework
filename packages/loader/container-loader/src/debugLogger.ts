@@ -83,7 +83,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		const index = event.eventName.lastIndexOf(eventNamespaceSeparator);
 		const name = event.eventName.slice(Math.max(0, index + 1));
 		if (index > 0) {
-			logger = logger.extend(event.eventName.slice(0, Math.max(0, index)));
+			logger = logger.extend(event.eventName.slice(0, index));
 		}
 		newEvent.eventName = undefined;
 
