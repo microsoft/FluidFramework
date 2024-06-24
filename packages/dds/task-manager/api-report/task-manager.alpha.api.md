@@ -35,4 +35,6 @@ export const TaskManager: ISharedObjectKind<ITaskManager> & SharedObjectKind<ITa
 // @alpha
 export type TaskManager = ITaskManager;
 
+// (No @packageDocumentation comment for this package)
+
 ```
