@@ -6215,9 +6215,6 @@ importers:
       async:
         specifier: ^3.2.2
         version: 3.2.5
-      fastest-json-copy:
-        specifier: ^1.0.1
-        version: 1.0.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -6318,9 +6315,6 @@ importers:
       events_pkg:
         specifier: npm:events@^3.1.0
         version: /events@3.3.0
-      fastest-json-copy:
-        specifier: ^1.0.1
-        version: 1.0.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -6453,9 +6447,6 @@ importers:
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
-      fastest-json-copy:
-        specifier: ^1.0.1
-        version: 1.0.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -6788,9 +6779,6 @@ importers:
       async:
         specifier: ^3.2.2
         version: 3.2.5
-      fastest-json-copy:
-        specifier: ^1.0.1
-        version: 1.0.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -35172,11 +35160,6 @@ packages:
     dependencies:
       strnum: 1.0.5
     dev: true
-
-  /fastest-json-copy@1.0.1:
-    resolution: {integrity: sha512-Y4/wf9ARleMh4so64oyOt+tUAae8HN1W8P4tZfmnTkWjqKPuqZo7HxFQRFiQ/kGH8VRDYPNuh25eHCLxEKRPSA==}
-    engines: {node: '>=10.18'}
-    dev: false
 
   /fastest-levenshtein@1.0.16:
     resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
