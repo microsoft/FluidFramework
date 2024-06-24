@@ -95,7 +95,7 @@ export class SessionSpaceNormalizer {
 
 		const lastRangeIndex = ranges.length - 1;
 		const lastRange = ranges[lastRangeIndex];
-		assert(lastRange !== undefined, 0x956 /* Expected the last range to exist */);
+		assert(lastRange !== undefined, 0x97e /* Expected the last range to exist */);
 		const [limitGenCount, limitCount] = lastRange;
 		if (this.rangeContains(lastRange, lastGenCount)) {
 			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
