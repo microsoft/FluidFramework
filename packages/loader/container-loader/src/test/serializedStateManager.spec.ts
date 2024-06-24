@@ -262,40 +262,40 @@ describe("serializedStateManager", () => {
 				new MockRuntime(),
 				resolvedUrl,
 			);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			assert.strictEqual(JSON.parse(state).baseSnapshot.id, "fromPending");
 		});
 
-	it("can fetch snapshot and get state from it", async () => {
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			undefined,
-			enableOfflineSnapshotRefresh(logger),
-			storageAdapter,
-			true,
-			eventEmitter,
-			() => false,
-			() => false,
-		);
-		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
-		assert(baseSnapshot);
-		assert.strictEqual(version?.id, "fromStorage");
-		assert.strictEqual(version.treeId, "fromStorage");
-		const state = await serializedStateManager.getPendingLocalState(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const parsed = JSON.parse(state);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const attributes = getAttributesFromPendingState(parsed);
-		assert.strictEqual(attributes.sequenceNumber, 0);
-		assert.strictEqual(attributes.minimumSequenceNumber, 0);
-	});
+		it("can fetch snapshot and get state from it", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				undefined,
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
+			assert(baseSnapshot);
+			assert.strictEqual(version?.id, "fromStorage");
+			assert.strictEqual(version.treeId, "fromStorage");
+			const state = await serializedStateManager.getPendingLocalState(
+				{ notifyImminentClosure: false },
+				"clientId",
+				new MockRuntime(),
+				resolvedUrl,
+			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const parsed = JSON.parse(state);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const attributes = getAttributesFromPendingState(parsed);
+			assert.strictEqual(attributes.sequenceNumber, 0);
+			assert.strictEqual(attributes.minimumSequenceNumber, 0);
+		});
 
 		it("get pending state again before getting latest snapshot", async () => {
 			const pending: IPendingContainerState = {
@@ -314,7 +314,7 @@ describe("serializedStateManager", () => {
 				() => false,
 			);
 			// eslint-disable-next-line no-void
-		void serializedStateManager.refreshSnapshotP?.then(() =>
+			void serializedStateManager.refreshSnapshotP?.then(() =>
 				getLatestSnapshotInfoP.resolve(),
 			);
 			let seq = 1;
@@ -472,8 +472,8 @@ describe("serializedStateManager", () => {
 					() => false,
 				);
 				for (const savedOp of savedOps) {
-				serializedStateManager.addProcessedOp(savedOp);
-			}
+					serializedStateManager.addProcessedOp(savedOp);
+				}
 
 				const { baseSnapshot, version } =
 					await serializedStateManager.fetchSnapshot(undefined);
@@ -504,12 +504,12 @@ describe("serializedStateManager", () => {
 					resolvedUrl,
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const parsed = JSON.parse(state);
+				const parsed = JSON.parse(state);
 				// We keep using the pending snapshot since there were no summaries since then.
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+				assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const attributes = getAttributesFromPendingState(parsed);
+				const attributes = getAttributesFromPendingState(parsed);
 				assert.strictEqual(attributes.sequenceNumber, 0);
 				assert.strictEqual(attributes.minimumSequenceNumber, 0);
 			});

@@ -284,14 +284,16 @@ export class SerializedStateManager {
 			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
 			this._refreshSnapshotP
-				.catch((e) => {
-					this.mc.logger.sendTelemetryEvent({
-						eventName: "RefreshLatestSnapshotFailed",
-						error: e,
-					});
-					this._refreshSnapshotP = undefined;
-					this.tryRefreshSnapshot();
-				})
+				.catch(
+					(error: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>) => {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "RefreshLatestSnapshotFailed",
+							error,
+						});
+						this._refreshSnapshotP = undefined;
+						this.tryRefreshSnapshot();
+					},
+				)
 				.finally(() => {
 					this._refreshSnapshotP = undefined;
 				});
