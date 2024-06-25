@@ -311,8 +311,6 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
-				// AB#8288 api-extractor Internal Error: symbol has a ts.SyntaxKind.SourceFile declaration
-				"^packages/framework/fluid-framework/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
