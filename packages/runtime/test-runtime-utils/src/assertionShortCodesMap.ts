@@ -1585,4 +1585,6 @@ export const shortCodeMap = {
 	"0x97b": "snapshotTree should be present to evaluate",
 	"0x97c": "saved op should already have a sequence number",
 	"0x97d": "seq#",
+	"0x97e": "Missing tenant ID!",
+	"0x97f": "Expected at least 1 path part",
 };
