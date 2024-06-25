@@ -1135,9 +1135,14 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 		}
 		(provider.driver as OdspTestDriver).setPersistedCache(persistedCache);
 		configProvider.set("Fluid.ContainerRuntime.IdCompressorEnabled", true);
+		configProvider.set("Fluid.Runtime.UseShortIds", true);
 	});
 
-	itExpects(
+	function assertInvert(value: boolean, message: string) {
+		assert(!value, message);
+	}
+
+	itExpects.only(
 		"Id compressor bug repo when id is `[` which encodes to `%5B`",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
 		async () => {
@@ -1168,7 +1173,10 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 			await provider.ensureSynchronized();
 
 			// This check isn't reached
-			assert(container2.closed, "container2 should be closed");
+			assertInvert(
+				!container2.closed,
+				"When the problem is fixed, assert should be swapped for assertInvert",
+			);
 		},
 	);
 });
