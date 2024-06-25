@@ -115,6 +115,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	tokens: {};
 
 	fileName: string;
+	temporaryFileName?: string;
 
 	summarizer: boolean;
 

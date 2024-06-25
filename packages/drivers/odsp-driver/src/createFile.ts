@@ -72,16 +72,19 @@ export async function createNewFluidFile(
 	}
 
 	let itemId: string;
+	let temporaryFileName: string | undefined;
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
-		itemId = await createNewEmptyFluidFile(
+		const content = await createNewEmptyFluidFile(
 			getStorageToken,
 			newFileInfo,
 			logger,
 			epochTracker,
 			forceAccessTokenViaAuthorizationHeader,
 		);
+		itemId = content.itemId;
+		temporaryFileName = content.temporaryFileName;
 	} else {
 		const content = await createNewFluidFileFromSummary(
 			getStorageToken,
@@ -107,6 +110,7 @@ export async function createNewFluidFile(
 	fileEntry.resolvedUrl = odspResolvedUrl;
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
+	odspResolvedUrl.temporaryFileName = temporaryFileName;
 
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
@@ -168,10 +172,11 @@ export async function createNewEmptyFluidFile(
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-): Promise<string> {
+): Promise<{ itemId: string; temporaryFileName?: string }> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
-	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
+	const temporaryFileName = `${newFileInfo.filename}.tmp`;
+	const encodedFilename = encodeURIComponent(temporaryFileName);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
@@ -217,7 +222,7 @@ export async function createNewEmptyFluidFile(
 				event.end({
 					...fetchResponse.propsToLog,
 				});
-				return content.id;
+				return { itemId: content.id, temporaryFileName };
 			},
 			{ end: true, cancel: "error" },
 		);
