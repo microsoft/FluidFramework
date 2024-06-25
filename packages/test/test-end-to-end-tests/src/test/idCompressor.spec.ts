@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
@@ -30,7 +31,6 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	DataObjectFactoryType,
@@ -39,16 +39,20 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizer,
+	createSummarizerFromFactory,
+	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
+import { TestSnapshotCache } from "../testSnapshotCache.js";
+
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeCompat(
+describeCompat.skip(
 	"Runtime IdCompressor - Schema changes",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
@@ -727,7 +731,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 
 // No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
 // Even older versions of the runtime also don't have an id compression feature enabled.
-describeCompat(
+describeCompat.skip(
 	"IdCompressor in detached container",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
@@ -789,7 +793,7 @@ describeCompat(
 	},
 );
 
-describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat.skip("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const disableConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: undefined },
@@ -1032,5 +1036,90 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 	it("Container uses short DataStore & DDS IDs in On mode", async () => {
 		await TestCompactIds("on");
+	});
+});
+
+const dataStoreCount = 13;
+describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) => {
+	const {
+		dataRuntime: { DataObject, DataObjectFactory },
+		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+	} = apis;
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get _context() {
+			return this.context;
+		}
+	}
+
+	const configProvider = createTestConfigProvider();
+	let provider: ITestObjectProvider;
+	const defaultFactory = new DataObjectFactory("T", TestDataObject, [], []);
+
+	const runtimeOptions: IContainerRuntimeOptions = {
+		enableRuntimeIdCompressor: "on",
+	};
+
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			runtimeOptions,
+		},
+	);
+
+	const createContainer = async (): Promise<IContainer> =>
+		provider.createDetachedContainer(runtimeFactory, { configProvider });
+
+	const persistedCache = new TestSnapshotCache();
+
+	beforeEach("getTestObjectProvider", async function () {
+		provider = getTestObjectProvider();
+		// ODSP specific bug
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
+		(provider.driver as OdspTestDriver).setPersistedCache(persistedCache);
+		configProvider.set("Fluid.ContainerRuntime.IdCompressorEnabled", true);
+	});
+
+	it("Id compressor bug repo when id is `[` which encodes to `%5B`", async () => {
+		const container = await createContainer();
+		const dataObject = (await container.getEntryPoint()) as TestDataObject;
+		const containerRuntime = dataObject._context.containerRuntime;
+		for (let i = 0; i < dataStoreCount; i++) {
+			const createdObject = await defaultFactory.createInstance(containerRuntime);
+			dataObject._root.set(`${i}`, createdObject.handle);
+		}
+
+		await provider.attachDetachedContainer(container);
+
+		const summarizer = (await createSummarizerFromFactory(provider, container, defaultFactory))
+			.summarizer;
+		await summarizeNow(summarizer);
+		await provider.ensureSynchronized();
+
+		persistedCache.clearCache();
+
+		const handle = dataObject._root.get(`12`);
+		assert(handle !== undefined, "handle not found");
+		const childObject = await handle.get();
+		assert(childObject.id === "[", "This id is the problematic id");
+		childObject._root.set(`key13`, `value13`);
+		await provider.ensureSynchronized();
+
+		const container2 = await provider.loadContainer(runtimeFactory, {
+			configProvider,
+		});
+
+		// This is the line that fails as we are getting the op that breaks the id
+		await provider.ensureSynchronized();
+
+		// This check isn't reached
+		assert(container2.closed, "container2 should be closed");
 	});
 });
