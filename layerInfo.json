@@ -133,6 +133,9 @@
 					"@fluid-private/stochastic-test-utils",
 					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
+					"@fluid-private/test-drivers",
+					"@fluid-internal/test-driver-definitions",
+					"@fluid-private/test-pairwise-generator",
 					"@fluidframework/test-runtime-utils"
 				]
 			},

@@ -40,8 +40,6 @@ export type ICriticalContainerError = IErrorBase_2;
 
 export { IErrorBase }
 
-export { IGenericError }
-
 // @public
 export interface ISelf {
     readonly client?: IClient;
@@ -49,7 +47,5 @@ export interface ISelf {
 }
 
 export { IThrottlingWarning }
-
-export { IUsageError }
 
 ```
