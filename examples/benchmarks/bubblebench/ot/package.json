@@ -45,7 +45,10 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/sharejs-json1": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/map": "workspace:~",
 		"ot-json1": "^1.0.1",
 		"react": "^17.0.1"
 	},
@@ -60,6 +63,7 @@
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
+		"@types/react-dom": "^17.0.18",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
