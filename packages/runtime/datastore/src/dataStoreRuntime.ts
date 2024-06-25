@@ -64,7 +64,6 @@ import {
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
-	encodeCompactIdToString,
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
@@ -439,22 +438,28 @@ export class FluidDataStoreRuntime
 			id = idArg;
 			this.validateChannelId(id);
 		} else {
+			/**
+			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
+			 * in the snapshot. So, return uuid() here for now while we identify and fix the issue.
+			 */
+			id = uuid();
+
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
 			// - uuids
 			// In first two cases we will encode result as strings in more compact form, with leading underscore,
 			// to ensure no overlap with user-provided DDS names (see validateChannelId())
-			if (this.visibilityState !== VisibilityState.GloballyVisible) {
-				// container is detached, only one client observes content, no way to hit collisions with other clients.
-				id = encodeCompactIdToString(2 * this.contexts.size, "_");
-			} else {
-				// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-				// We can remove the need to leverage uuid() as fall-back in couple releases.
-				const res =
-					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
-				id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
-			}
+			// if (this.visibilityState !== VisibilityState.GloballyVisible) {
+			// 	// container is detached, only one client observes content, no way to hit collisions with other clients.
+			// 	id = encodeCompactIdToString(2 * this.contexts.size, "_");
+			// } else {
+			// 	// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
+			// 	// We can remove the need to leverage uuid() as fall-back in couple releases.
+			// 	const res =
+			// 		this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+			// 	id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+			// }
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
 
