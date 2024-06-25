@@ -307,6 +307,7 @@ declare function get_old_InterfaceDeclaration_ITestObjectProvider():
 declare function use_current_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<current.ITestObjectProvider>): void;
 use_current_InterfaceDeclaration_ITestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestObjectProvider());
 
 /*

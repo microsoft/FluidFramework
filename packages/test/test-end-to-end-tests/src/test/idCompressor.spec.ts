@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
@@ -1086,34 +1086,38 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 		configProvider.set("Fluid.ContainerRuntime.IdCompressorEnabled", true);
 	});
 
-	it("Id compressor bug repo when id is `[` which encodes to `%5B`", async () => {
-		const container = await createContainer();
-		const dataObject = (await container.getEntryPoint()) as TestDataObject;
-		const containerRuntime = dataObject._context.containerRuntime;
-		for (let i = 0; i < dataStoreCount; i++) {
-			const createdObject = await defaultFactory.createInstance(containerRuntime);
-			dataObject._root.set(`${i}`, createdObject.handle);
-		}
+	itExpects(
+		"Id compressor bug repo when id is `[` which encodes to `%5B`",
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
+		async () => {
+			const container = await createContainer();
+			const dataObject = (await container.getEntryPoint()) as TestDataObject;
+			const containerRuntime = dataObject._context.containerRuntime;
+			for (let i = 0; i < dataStoreCount; i++) {
+				const createdObject = await defaultFactory.createInstance(containerRuntime);
+				dataObject._root.set(`${i}`, createdObject.handle);
+			}
 
-		await provider.attachDetachedContainer(container);
+			await provider.attachDetachedContainer(container);
 
-		persistedCache.clearCache();
+			const handle = dataObject._root.get(`12`);
+			assert(handle !== undefined, "handle not found");
+			const childObject = await handle.get();
+			assert(childObject.id === "[", "This id is the problematic id");
+			childObject._root.set(`key13`, `value13`);
+			await provider.ensureSynchronized();
 
-		const handle = dataObject._root.get(`12`);
-		assert(handle !== undefined, "handle not found");
-		const childObject = await handle.get();
-		assert(childObject.id === "[", "This id is the problematic id");
-		childObject._root.set(`key13`, `value13`);
-		await provider.ensureSynchronized();
+			provider.resetDocumentServiceFactory();
+			// persistedCache.clearCache();
+			const container2 = await provider.loadContainer(runtimeFactory, {
+				configProvider,
+			});
 
-		const container2 = await provider.loadContainer(runtimeFactory, {
-			configProvider,
-		});
+			// This is the line that fails as we are getting the op that breaks the id
+			await provider.ensureSynchronized();
 
-		// This is the line that fails as we are getting the op that breaks the id
-		await provider.ensureSynchronized();
-
-		// This check isn't reached
-		assert(container2.closed, "container2 should be closed");
-	});
+			// This check isn't reached
+			assert(container2.closed, "container2 should be closed");
+		},
+	);
 });

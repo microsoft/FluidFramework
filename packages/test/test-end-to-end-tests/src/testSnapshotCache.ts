@@ -26,9 +26,12 @@ export class TestSnapshotCache implements IPersistedCache {
 	public async put(entry: ICacheEntry, value: ValueWithSnapshot): Promise<void> {
 		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
-		const versionKey = `${value.value.snapshotTree.id}`;
-		this.versionCache.set(versionKey, value);
-		this.versionToCacheKey.set(versionKey, key);
+
+		if (value.value.snapshotTree !== undefined) {
+			const versionKey = `${value.value.snapshotTree.id}`;
+			this.versionCache.set(versionKey, value);
+			this.versionToCacheKey.set(versionKey, key);
+		}
 	}
 	public async removeEntries(file: IFileEntry): Promise<void> {
 		[...this.cache]
