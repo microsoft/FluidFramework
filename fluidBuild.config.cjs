@@ -177,7 +177,6 @@ module.exports = {
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
-			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
 		],
