@@ -819,10 +819,11 @@ export const handlers: Handler[] = [
 					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
 				}
 
-				const pkgDir = path.dirname(file);
-				const relativePkgDir = path.relative(root, pkgDir);
-				if( json.repository?.directory !== relativePkgDir) {
-					ret.push(`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`);
+				const relativePkgDir = path.posix.relative(root, path.dirname(file));
+				if (json.repository?.directory !== relativePkgDir) {
+					ret.push(
+						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
+					);
 				}
 			}
 
@@ -849,13 +850,11 @@ export const handlers: Handler[] = [
 				json.author = author;
 				json.license = licenseId;
 
-				if (json.repository === undefined || typeof json.repository === "string") {
-					json.repository = {
-						type: "git",
-						url: repository,
-						directory: path.posix.relative(root, path.dirname(file)),
-					};
-				}
+				json.repository = {
+					type: "git",
+					url: repository,
+					directory: path.posix.relative(root, path.dirname(file)),
+				};
 
 				json.homepage = homepage;
 			});
