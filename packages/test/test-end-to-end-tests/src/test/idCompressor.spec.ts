@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import type { ISharedMap } from "@fluidframework/map";
+
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -15,7 +21,6 @@ import {
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
@@ -31,9 +36,8 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedDirectory } from "@fluidframework/map";
+import { SharedDirectory, type ISharedMap } from "@fluidframework/map";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
@@ -717,7 +721,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 	});
 });
 
-describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, compatAPIs) => {
 	let provider: ITestObjectProvider;
 	const disableConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: "off" },
@@ -846,13 +850,25 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		);
 	});
 
+	/**
+	 * Function that asserts that the value is not as expected. e have a bug in one of our customer's app where a short
+	 * data store ID created is `[` but in a downloaded snapshot, it is converted to its ASCII equivalent `%5B` in
+	 * certain conditions. So, when an op comes for this data store with id `[`, containers loaded with this snapshot
+	 * cannot find the data store.
+	 *
+	 * While we figure out the fix, we are disabling the ability to create short IDs and this assert validates it.
+	 */
+	function assertInvert(value: boolean, message: string) {
+		assert(!value, message);
+	}
+
 	async function TestCompactIds(enableRuntimeIdCompressor: IdCompressorMode) {
 		const container = await createContainer({
 			runtimeOptions: { enableRuntimeIdCompressor },
 		});
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		// This data store was created in detached container, so it has to be short!
-		assert(
+		assertInvert(
 			defaultDataStore._runtime.id.length <= 2,
 			"short data store ID created in detached container",
 		);
@@ -891,15 +907,14 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		// Check directly that ID compressor is issuing short IDs!
 		// If it does not, the rest of the tests would fail - this helps isolate where the bug is.
 		const idTest = defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
-		assert(typeof idTest === "number", "short IDs should be issued");
-		assert(idTest >= 0, "finalId");
+		assertInvert(typeof idTest === "number" && idTest >= 0, "short IDs should be issued");
 
 		// create another datastore
 		const ds2 = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
 		const entryPoint2 = (await ds2.entryPoint.get()) as ITestDataObject;
 
 		// This data store was created in attached  container, and should have used ID compressor to assign ID!
-		assert(
+		assertInvert(
 			entryPoint2._runtime.id.length <= 2,
 			"short data store ID created in attached container",
 		);
@@ -914,7 +929,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			undefined,
 			SharedDirectory.getFactory().type,
 		);
-		assert(channel.id.length <= 2, "DDS ID created in detached data store");
+		assertInvert(channel.id.length <= 2, "DDS ID created in detached data store");
 
 		// attached data store.
 		await ds2.trySetAlias("foo");
@@ -932,7 +947,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			undefined,
 			SharedDirectory.getFactory().type,
 		);
-		assert(channel2.id.length <= 2, "DDS ID created in attached data store");
+		assertInvert(channel2.id.length <= 2, "DDS ID created in attached data store");
 	}
 
 	it("Container uses short DataStore & DDS IDs in delayed mode", async () => {
@@ -941,5 +956,40 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 	it("Container uses short DataStore & DDS IDs in On mode", async () => {
 		await TestCompactIds("on");
+	});
+
+	it("always uses short data store IDs in detached container", async () => {
+		const loader = provider.makeTestLoader();
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container = await loader.createDetachedContainer(defaultCodeDetails);
+		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		assertInvert(
+			defaultDataStore.context.id.length <= 2,
+			"Default data store's ID should be short",
+		);
+		const dataStore1 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds1 = (await dataStore1.entryPoint.get()) as ITestFluidObject;
+		assertInvert(
+			ds1.context.id.length <= 2,
+			"Data store's ID in detached container should not be short",
+		);
+		const dds1 = compatAPIs.dds.SharedDirectory.create(ds1.runtime);
+		assertInvert(dds1.id.length <= 2, "DDS's ID in detached container should not be short");
+
+		await container.attach(provider.driver.createCreateNewRequest());
+
+		const dataStore2 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds2 = (await dataStore2.entryPoint.get()) as ITestFluidObject;
+		assert(
+			ds2.context.id.length > 8,
+			"Data store's ID in attached container should not be short",
+		);
+		const dds2 = compatAPIs.dds.SharedDirectory.create(ds2.runtime);
+		assert(dds2.id.length > 8, "DDS's ID in attached container should not be short");
 	});
 });
