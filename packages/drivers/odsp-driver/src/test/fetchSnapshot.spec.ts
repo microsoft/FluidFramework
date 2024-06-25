@@ -294,7 +294,7 @@ describe("Tests1 for snapshot fetch", () => {
 			} finally {
 				getDownloadSnapshotStub.restore();
 				assert(
-					getDownloadSnapshotStub.args[0][2]?.[0] === "g1",
+					getDownloadSnapshotStub.args[0][3]?.[0] === "g1",
 					"should ask for g1 groupId",
 				);
 				success = true;
