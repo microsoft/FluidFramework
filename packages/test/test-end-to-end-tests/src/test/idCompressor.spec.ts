@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
@@ -1032,5 +1036,33 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 	it("Container uses short DataStore & DDS IDs in On mode", async () => {
 		await TestCompactIds("on");
+	});
+
+	it("always uses short data store IDs in detached container", async () => {
+		const loader = provider.makeTestLoader();
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container = await loader.createDetachedContainer(defaultCodeDetails);
+		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		assert(defaultDataStore.context.id.length < 8, "Default data store's ID should be short");
+		const dataStore1 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds1 = (await dataStore1.entryPoint.get()) as ITestFluidObject;
+		assert(
+			ds1.context.id.length < 8,
+			"New data store's ID in detached container should be short",
+		);
+
+		await container.attach(provider.driver.createCreateNewRequest());
+
+		const dataStore2 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds2 = (await dataStore2.entryPoint.get()) as ITestFluidObject;
+		assert(
+			ds2.context.id.length > 8,
+			"New data store's ID in attached container should not be short",
+		);
 	});
 });
