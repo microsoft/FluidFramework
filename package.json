@@ -116,7 +116,9 @@
 		"watch:tsc": "pnpm run -r --parallel tsc --watch",
 		"watch:webpack": "pnpm run -r --parallel webpack --watch",
 		"webpack": "fluid-build --task webpack",
-		"webpack:profile": "fluid-build --task webpack:profile"
+		"webpack:profile": "fluid-build --task webpack:profile",
+		"depcheck": "fluid-build --depcheck",
+		"depcheck:fix": "fluid-build --depcheck:fix"
 	},
 	"c8": {
 		"all": true,

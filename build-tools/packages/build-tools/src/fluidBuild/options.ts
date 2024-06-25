@@ -27,6 +27,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	symlink: boolean;
 	fullSymlink: boolean | undefined;
 	depcheck: boolean;
+	depcheckFix: boolean;
 	force: boolean;
 	install: boolean;
 	uninstall: boolean;
@@ -51,6 +52,7 @@ export const options: FastBuildOptions = {
 	symlink: false,
 	fullSymlink: undefined,
 	depcheck: false,
+	depcheckFix: false,
 	force: false,
 	install: false,
 	uninstall: false,
@@ -223,6 +225,13 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "--depcheck") {
 			options.depcheck = true;
+			setBuild(false);
+			continue;
+		}
+
+		if (arg === "--depcheck:fix") {
+			options.depcheck = true;
+			options.depcheckFix = true;
 			setBuild(false);
 			continue;
 		}
