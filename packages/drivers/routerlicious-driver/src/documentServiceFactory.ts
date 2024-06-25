@@ -113,7 +113,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			throw new Error("Parsed url should contain tenant and doc Id!!");
 		}
 		const [, tenantId] = parsedUrl.pathname.split("/");
-		assert(tenantId !== undefined, 0x97e /* "Missing tenant ID!" */);
+		assert(tenantId !== undefined, 0x9ab /* "Missing tenant ID!" */);
 
 		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
