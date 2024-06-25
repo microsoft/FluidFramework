@@ -123,7 +123,7 @@ describe("ObjectNode", () => {
 		assert.deepEqual(keys, ["foo"]);
 	});
 
-	it("test array", () => {
+	it("delete operator", () => {
 		class Schema extends schemaFactory.object("x", {
 			foo: schemaFactory.optional(schemaFactory.number),
 		}) {}
