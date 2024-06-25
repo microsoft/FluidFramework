@@ -53,6 +53,24 @@ To create a Fluid application that can be deployed to Azure, check out the [Azur
 
 {{< /callout >}}
 
+Next, setup the tree schema using `SchemaFactory`. In this example, the tree schema contains a single Dice object initialized with a value of 1. Ithe following steps, `schematize` is called with this `treeConfiguration` to obtain the tree view, which can be used to retrieve the Dice object.
+
+```js
+const sf = new SchemaFactory("fluidHelloWorldSample");
+
+class Dice extends sf.object("Dice", {
+	value: sf.number,
+}) {}
+
+const treeConfiguration = new TreeConfiguration(
+	Dice,
+	() =>
+		new Dice({
+			value: 1,
+		}),
+);
+```
+
 ## Create a Fluid container
 
 Fluid data is stored within containers, and these containers need to be created before other users can load them. Since creation and loading of containers both happen in the browser, a Fluid application needs to be capable of handling both paths.
@@ -68,9 +86,7 @@ The `renderDiceRoller` function is created in a later step. It renders the UI of
 ```js
 const createNewDice = async () => {
 	const { container } = await client.createContainer(containerSchema);
-	const view = container.initialObjects.diceTree.viewWith(treeConfiguration);
-	view.initialize(new Dice({ value: 1 }));
-	const dice = view.root;
+	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
 	const id = await container.attach();
 	renderDiceRoller(dice, root);
 	return id;
@@ -84,7 +100,7 @@ Loading a container is more straightforward than creating a new one. When loadin
 ```js
 const loadExistingDice = async (id) => {
 	const { container } = await client.getContainer(id, containerSchema);
-	const dice = container.initialObjects.diceTree.viewWith(treeConfiguration).root;
+	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
 	renderDiceRoller(dice, root);
 }
 ```
