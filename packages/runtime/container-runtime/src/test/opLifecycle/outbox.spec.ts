@@ -34,7 +34,11 @@ import {
 	OpSplitter,
 	Outbox,
 } from "../../opLifecycle/index.js";
-import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager.js";
+import {
+	IPendingBatchMessage,
+	PendingStateManager,
+	type IPendingMessage,
+} from "../../pendingStateManager.js";
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);
@@ -50,7 +54,7 @@ describe("Outbox", () => {
 		batchesCompressed: IBatch[];
 		batchesSplit: IBatch[];
 		individualOpsSubmitted: any[];
-		pendingOpContents: any[];
+		pendingOpContents: Partial<IPendingMessage>[];
 		opsSubmitted: number;
 		opsResubmitted: number;
 		isReentrant: boolean;
@@ -122,10 +126,15 @@ describe("Outbox", () => {
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
-		onFlushBatch: (batch: BatchMessage[], _clientSequenceNumber: number): void => {
+		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number): void => {
 			batch.forEach(
 				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
-					state.pendingOpContents.push({ content, referenceSequenceNumber, opMetadata }),
+					state.pendingOpContents.push({
+						content,
+						referenceSequenceNumber,
+						opMetadata,
+						batchStartCsn: clientSequenceNumber,
+					}),
 			);
 		},
 	});
@@ -253,16 +262,18 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
 		];
 
+		// Flush 1
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
 		outbox.submitIdAllocation(messages[2]);
 		outbox.submitIdAllocation(messages[3]);
-
 		outbox.flush();
 
+		// Flush 2
 		outbox.submit(messages[4]);
 		outbox.flush();
 
+		// Not Flushed
 		outbox.submit(messages[5]);
 
 		assert.equal(state.opsSubmitted, messages.length - 1);
@@ -276,19 +287,25 @@ describe("Outbox", () => {
 			],
 		);
 		assert.equal(state.deltaManagerFlushCalls, 0);
-		const rawMessagesInFlushOrder = [
-			messages[2],
-			messages[3],
-			messages[0],
-			messages[1],
-			messages[4],
-		];
+
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (ID Allocation)
+			[messages[2], 1],
+			[messages[3], 1],
+			// Flush 1 (Main)
+			[messages[0], 3],
+			[messages[1], 3],
+			// Flush 2 (Main)
+			[messages[4], 5],
+		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -296,27 +313,34 @@ describe("Outbox", () => {
 	it("Will send messages only when allowed, but will store them in the pending state", () => {
 		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 		const messages = [
+			// First batch (canSendOps = true)
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			// Second batch (canSendOps = false)
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
 		];
 		outbox.submit(messages[0]);
+		outbox.submit(messages[1]);
 		outbox.flush();
 
-		outbox.submit(messages[1]);
+		outbox.submit(messages[2]);
 		state.canSendOps = false;
 		outbox.flush();
 
-		assert.equal(state.opsSubmitted, 1);
+		// First two submitted
+		assert.equal(state.opsSubmitted, 2);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[0])]],
+			[[batchedMessage(messages[0]), batchedMessage(messages[0])]],
 		);
+		// All three pending
 		assert.deepEqual(
 			state.pendingOpContents,
-			messages.map((message) => ({
+			messages.map<Partial<IPendingMessage>>((message, i) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: i === 2 ? undefined : 0, // Third batch got no CSN as it was not submitted
 			})),
 		);
 	});
@@ -328,26 +352,43 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
 			createMessage(ContainerMessageType.IdAllocation, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
 		];
 
+		// Flush 1
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
 		outbox.submitIdAllocation(messages[2]);
 		outbox.submit(messages[3]);
+		outbox.flush();
 
+		// Flush 2
+		outbox.submit(messages[4]);
 		outbox.flush();
 
 		assert.equal(state.opsSubmitted, messages.length);
 		assert.equal(state.batchesSubmitted.length, 0);
 		assert.deepEqual(state.individualOpsSubmitted.length, messages.length);
-		assert.equal(state.deltaManagerFlushCalls, 2);
-		const rawMessagesInFlushOrder = [messages[2], messages[0], messages[1], messages[3]];
+		assert.equal(state.deltaManagerFlushCalls, 3);
+
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (ID Allocation)
+			[messages[2], 1],
+			// Flush 1 (Main)
+			[messages[0], 2],
+			[messages[1], 2],
+			[messages[3], 2],
+			// Flush 2 (Main)
+			[messages[4], 5],
+		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: csn,
 			})),
 		);
 	});

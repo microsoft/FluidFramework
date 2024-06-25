@@ -176,7 +176,7 @@ export class PendingStateManager implements IDisposable {
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		initialLocalState: IPendingLocalState | undefined,
-		private readonly logger: ITelemetryLoggerExt | undefined, //* Make required (remove ? in process fn)
+		private readonly logger: ITelemetryLoggerExt | undefined,
 	) {
 		if (initialLocalState?.pendingStates) {
 			this.initialMessages.push(...initialLocalState.pendingStates);

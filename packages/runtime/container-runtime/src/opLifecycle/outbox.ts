@@ -126,10 +126,14 @@ export class Outbox {
 	}
 
 	/**
-	 * If the reference sequence number of the next message being submitted does not match
-	 * what was already in the batch managers, this means that batching has been interrupted so
+	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
 	 * message as the first message.
+	 *
+	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
+	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
+	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
 	private maybeFlushPartialBatch() {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;

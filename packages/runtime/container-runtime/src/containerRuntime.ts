@@ -643,8 +643,6 @@ export const makeLegacySendBatchFn =
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {
-		//* TODO: add good test coverage for csn logic (e.g. need a test with batch > 1 msg)
-
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
 		for (const message of batch.content) {
@@ -659,7 +657,6 @@ export const makeLegacySendBatchFn =
 
 		deltaManager.flush();
 
-		// Default to -1
 		return clientSequenceNumber;
 	};
 
