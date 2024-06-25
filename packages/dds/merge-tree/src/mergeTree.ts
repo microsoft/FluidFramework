@@ -2174,11 +2174,7 @@ export class MergeTree {
 				} /* op.type === MergeTreeDeltaType.ANNOTATE */ else {
 					// TODO Non null asserting, why is this not null?
 					const props = pendingSegmentGroup.previousProps![i]!;
-					const annotateOp = createAnnotateRangeOp(
-						start,
-						start + segment.cachedLength,
-						props,
-					);
+					const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props);
 					this.annotateRange(
 						start,
 						start + segment.cachedLength,

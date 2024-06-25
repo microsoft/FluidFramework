@@ -308,8 +308,8 @@ export class SnapshotV1 {
 					raw.removedClient =
 						segment.removedClientIds !== undefined
 							? // TODO Non null asserting, why is this not null?
-							  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							  this.getLongClientId(segment.removedClientIds[0]!)
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								this.getLongClientId(segment.removedClientIds[0]!)
 							: undefined;
 
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
