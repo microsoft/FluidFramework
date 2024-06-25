@@ -88,7 +88,7 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
  * @param tokenResponse - return value for TokenFetcher method
  * @returns Token value
  * @internal
- * @deprecated - Use authHeaderFromResponse instead
+ * @deprecated - Use authHeaderFromTokenResponse instead
  */
 export const tokenFromResponse = (
 	tokenResponse: string | TokenResponse | null | undefined,
@@ -105,7 +105,7 @@ export const tokenFromResponse = (
  * @returns Authorization header value
  * @internal
  */
-export const authHeaderFromResponse = (
+export const authHeaderFromTokenResponse = (
 	tokenResponse: string | TokenResponse | null | undefined,
 ): string | null => {
 	if (

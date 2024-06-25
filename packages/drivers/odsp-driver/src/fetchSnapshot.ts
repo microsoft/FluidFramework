@@ -77,7 +77,7 @@ export enum SnapshotFormatSupportType {
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
- * @param forceAccessTokenViaAuthorizationHeader - DEPRECATED (true value always used instead): whether to force passing given token via authorization header
+ * @param forceAccessTokenViaAuthorizationHeader - @deprecated Not used, true value always used instead. Whether to force passing given token via authorization header
  * @param snapshotDownloader - Implementation of the get/post methods used to fetch the snapshot. snapshotDownloader is responsible for generating the appropriate headers (including Authorization header) as well as handling any token refreshes before retrying.
  * @returns A promise of the snapshot and the status code of the response
  */
@@ -235,11 +235,11 @@ async function redeemSharingLink(
 					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
 					const url = redeemUrl;
 					const method = "GET";
-					const storageToken = await getAuthHeader(
+					const authHeader = await getAuthHeader(
 						{ ...tokenFetchOptions, request: { url, method } },
 						"RedeemShareLink",
 					);
-					const headers = getHeadersWithAuth(storageToken);
+					const headers = getHeadersWithAuth(authHeader);
 					headers.prefer = "redeemSharingLink";
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});

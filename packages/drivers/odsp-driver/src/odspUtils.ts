@@ -28,7 +28,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	InstrumentedTokenFetcher,
 	OdspErrorTypes,
-	authHeaderFromResponse,
+	authHeaderFromTokenResponse,
 	OdspResourceTokenFetchOptions,
 	TokenFetchOptions,
 	TokenFetcher,
@@ -396,7 +396,7 @@ export function toInstrumentedOdspTokenFetcher(
 					...resolvedUrlParts,
 				}).then(
 					(tokenResponse) => {
-						const authHeader = authHeaderFromResponse(tokenResponse);
+						const authHeader = authHeaderFromTokenResponse(tokenResponse);
 						// This event alone generates so many events that is materially impacts cost of telemetry
 						// Thus do not report end event when it comes back quickly.
 						// Note that most of the hosts do not report if result is comming from cache or not,

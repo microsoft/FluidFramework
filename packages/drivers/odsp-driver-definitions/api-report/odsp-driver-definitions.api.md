@@ -10,7 +10,7 @@ import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 
 // @internal
-export const authHeaderFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
+export const authHeaderFromTokenResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
 // @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops";
