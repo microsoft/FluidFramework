@@ -83,30 +83,48 @@ describe("SimpleTree benchmarks", () => {
 			});
 		}
 
-		function testAccessToLeaf<RootNode>(
-			title: string,
-			treeInitFunction: () => RootNode,
-			treeReadingFunction: (tree: RootNode) => number | undefined,
-			expectedValue: number | undefined,
-		) {
-			let tree: RootNode;
-			let readNumber: number | undefined;
-			benchmark({
-				type: BenchmarkType.Measurement,
-				title,
-				before: () => {
-					tree = treeInitFunction();
-				},
-				benchmarkFn: () => {
-					readNumber = treeReadingFunction(tree);
-				},
-				after: () => {
-					assert.equal(readNumber, expectedValue);
-				},
-			});
-		}
-
 		describe("Access to leaves", () => {
+			/**
+			 * Creates a pair of benchmarks to test accessing leaf values in a tree, one for unhydrated nodes and one for flex
+			 * nodes.
+			 * @param title - The title for the test.
+			 * @param unhydratedNodeInitFunction - Function that returns the test tree with unhydrated nodes.
+			 * @param flexNodeInitFunction - Function that returns the test tree with flex nodes.
+			 * @param treeReadingFunction - Function that reads the leaf value from the tree. It should have no side-effects.
+			 * @param expectedValue - The expected value of the leaf.
+			 */
+			function generateBenchmarkPair<RootNode>(
+				title: string,
+				unhydratedNodeInitFunction: () => RootNode,
+				flexNodeInitFunction: () => RootNode,
+				treeReadingFunction: (tree: RootNode) => number | undefined,
+				expectedValue: number | undefined,
+			) {
+				const unhydratedTree = unhydratedNodeInitFunction();
+				let readNumber: number | undefined;
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `${title} (unhydrated node)`,
+					benchmarkFn: () => {
+						readNumber = treeReadingFunction(unhydratedTree);
+					},
+					after: () => {
+						assert.equal(readNumber, expectedValue);
+					},
+				});
+				const flexTree = flexNodeInitFunction();
+				benchmark({
+					type: BenchmarkType.Measurement,
+					title: `${title} (flex node)`,
+					benchmarkFn: () => {
+						readNumber = treeReadingFunction(flexTree);
+					},
+					after: () => {
+						assert.equal(readNumber, expectedValue);
+					},
+				});
+			}
+
 			describe("Optional object property", () => {
 				const factory = new SchemaFactory("test");
 				class MySchema extends factory.object("root", {
@@ -124,45 +142,44 @@ describe("SimpleTree benchmarks", () => {
 					{
 						title: `Read value from leaf`,
 						initUnhydrated: () => new MySchema({ value: 1 }),
-						read: (tree: MySchema) => tree.value,
+						readFunction: (tree: MySchema) => tree.value,
 						expected: 1,
 					},
 					{
 						title: `Read value from union of two leaves`,
 						initUnhydrated: () => new MySchema({ leafUnion: 1 }),
-						read: (tree: MySchema) => tree.leafUnion as number,
+						readFunction: (tree: MySchema) => tree.leafUnion as number,
 						expected: 1,
 					},
 					{
 						title: `Read value from union of leaf and non-leaf`,
 						initUnhydrated: () => new MySchema({ complexUnion: 1 }),
-						read: (tree: MySchema) => tree.complexUnion as number,
+						readFunction: (tree: MySchema) => tree.complexUnion as number,
 						expected: 1,
 					},
 					{
 						title: `Read undefined from leaf`,
 						initUnhydrated: () => new MySchema({}),
-						read: (tree: MySchema) => tree.value,
+						readFunction: (tree: MySchema) => tree.value,
 						expected: undefined,
 					},
 					{
 						title: `Read undefined from union of two leaves`,
 						initUnhydrated: () => new MySchema({}),
-						read: (tree: MySchema) => tree.leafUnion as number,
+						readFunction: (tree: MySchema) => tree.leafUnion as number,
 						expected: undefined,
 					},
 					{
 						title: `Read undefined from union of leaf and non-leaf`,
 						initUnhydrated: () => new MySchema({}),
-						read: (tree: MySchema) => tree.complexUnion as number,
+						readFunction: (tree: MySchema) => tree.complexUnion as number,
 						expected: undefined,
 					},
 				];
 
-				for (const { title, initUnhydrated, read, expected } of testCases) {
+				for (const { title, initUnhydrated, readFunction, expected } of testCases) {
 					const initFlexNode = () => hydrate(MySchema, initUnhydrated());
-					testAccessToLeaf(`${title} (unhydrated node)`, initUnhydrated, read, expected);
-					testAccessToLeaf(`${title} (flex node)`, initFlexNode, read, expected);
+					generateBenchmarkPair(title, initUnhydrated, initFlexNode, readFunction, expected);
 				}
 			});
 
@@ -182,25 +199,22 @@ describe("SimpleTree benchmarks", () => {
 				const testCases = [
 					{
 						title: `Read value from leaf`,
-						read: (tree: MySchema) => tree.value,
+						readFunction: (tree: MySchema) => tree.value,
 					},
 					{
 						title: `Read value from union of two leaves`,
-						read: (tree: MySchema) => tree.leafUnion as number,
+						readFunction: (tree: MySchema) => tree.leafUnion as number,
 					},
 					{
 						title: `Read value from union of leaf and non-leaf`,
-						read: (tree: MySchema) => tree.complexUnion as number,
+						readFunction: (tree: MySchema) => tree.complexUnion as number,
 					},
 				];
 
-				const expected = 1;
 				const initUnhydrated = () => new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 });
-				const initFlex = () =>
-					hydrate(MySchema, new MySchema({ value: 1, leafUnion: 1, complexUnion: 1 }));
-				for (const { title, read } of testCases) {
-					testAccessToLeaf(`${title} (unhydrated node)`, initUnhydrated, read, expected);
-					testAccessToLeaf(`${title} (flex node)`, initFlex, read, expected);
+				const initFlex = () => hydrate(MySchema, initUnhydrated());
+				for (const { title, readFunction } of testCases) {
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
 				}
 			});
 
@@ -215,25 +229,29 @@ describe("SimpleTree benchmarks", () => {
 				// Just to simplify typing a bit below in a way that keeps TypeScript happy
 				type CombinedTypes = NumberMap | NumberStringMap | NumberObjectMap;
 
-				const testCases = [
+				const valueTestCases = [
 					{
 						title: `Read value from leaf`,
 						mapType: NumberMap,
-						read: (tree: CombinedTypes) => tree.get("a") as number,
-						expected: 1,
 					},
 					{
 						title: `Read value from union of two leaves`,
 						mapType: NumberStringMap,
-						read: (tree: CombinedTypes) => tree.get("a") as number,
-						expected: 1,
 					},
 					{
 						title: `Read value from union of leaf and non-leaf`,
 						mapType: NumberObjectMap,
-						read: (tree: CombinedTypes) => tree.get("a") as number,
-						expected: 1,
 					},
+				];
+
+				for (const { title, mapType } of valueTestCases) {
+					const initUnhydrated = () => new mapType([["a", 1]]);
+					const initFlex = () => hydrate(mapType, initUnhydrated());
+					const readFunction = (tree: CombinedTypes) => tree.get("a") as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, 1);
+				}
+
+				const undefinedTestCases = [
 					{
 						title: `Read undefined from leaf`,
 						mapType: NumberMap,
@@ -254,22 +272,19 @@ describe("SimpleTree benchmarks", () => {
 					},
 				];
 
-				for (const { title, mapType, read, expected } of testCases) {
+				for (const { title, mapType } of undefinedTestCases) {
 					const initUnhydrated = () => new mapType([["a", 1]]);
 					const initFlex = () => hydrate(mapType, initUnhydrated());
-					testAccessToLeaf(`${title} (unhydrated node)`, initUnhydrated, read, expected);
-					testAccessToLeaf(`${title} (flex node)`, initFlex, read, expected);
+					const readFunction = (tree: CombinedTypes) => tree.get("b") as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, readFunction, undefined);
 				}
 			});
 
 			describe("Array entries", () => {
 				const factory = new SchemaFactory("test");
-				class NumberArray extends factory.array("root", [factory.number]) {}
-				class NumberStringArray extends factory.array("root", [
-					factory.number,
-					factory.string,
-				]) {}
-				class NumberObjectArray extends factory.array("root", [
+				class NumArray extends factory.array("root", [factory.number]) {}
+				class NumStringArray extends factory.array("root", [factory.number, factory.string]) {}
+				class NumObjectArray extends factory.array("root", [
 					factory.number,
 					factory.object("inner", { value: factory.number }),
 				]) {}
@@ -277,26 +292,23 @@ describe("SimpleTree benchmarks", () => {
 				const testCases = [
 					{
 						title: `Read value from leaf`,
-						arrayType: NumberArray,
+						arrayType: NumArray,
 					},
 					{
 						title: `Read value from union of two leaves`,
-						arrayType: NumberStringArray,
+						arrayType: NumStringArray,
 					},
 					{
 						title: `Read value from union of leaf and non-leaf`,
-						arrayType: NumberObjectArray,
+						arrayType: NumObjectArray,
 					},
 				];
 
 				for (const { title, arrayType } of testCases) {
 					const initUnhydrated = () => new arrayType([1]);
 					const initFlex = () => hydrate(arrayType, initUnhydrated());
-					const read = (tree: NumberArray | NumberStringArray | NumberObjectArray) =>
-						tree[0] as number;
-					const expected = 1;
-					testAccessToLeaf(`${title} (unhydrated node)`, initUnhydrated, read, expected);
-					testAccessToLeaf(`${title} (flex node)`, initFlex, read, expected);
+					const read = (tree: NumArray | NumStringArray | NumObjectArray) => tree[0] as number;
+					generateBenchmarkPair(title, initUnhydrated, initFlex, read, 1);
 				}
 			});
 		});
