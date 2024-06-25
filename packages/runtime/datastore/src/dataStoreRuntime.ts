@@ -263,7 +263,7 @@ export class FluidDataStoreRuntime
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
 				if (dataStoreContext.isLocalDataStore) {
-					channelContext = this.createRehydratedLocalChannelContext(path, value);
+					channelContext = this.createRehydratedLocalChannelContext(path, subtree);
 					// This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
 					// data store, if the data store is loaded after the container is attached, then we missed making
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
@@ -281,7 +281,7 @@ export class FluidDataStoreRuntime
 						(content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
 						(address: string) => this.setChannelDirty(address),
 						path,
-						value,
+						subtree,
 						this.sharedObjectRegistry,
 						undefined /* extraBlobs */,
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
