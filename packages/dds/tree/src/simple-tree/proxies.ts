@@ -72,9 +72,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>;
 
 			const maybeUnboxedContent = asValue.content;
-			if (maybeUnboxedContent === undefined) {
-				return undefined;
-			}
 			if (!isFlexTreeNode(maybeUnboxedContent)) {
 				return maybeUnboxedContent;
 			}
