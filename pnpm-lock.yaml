@@ -16339,16 +16339,16 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0(@types/node@18.19.1)(vite@4.5.3)
       '@testing-library/dom':
-        specifier: ^8.20.1
+        specifier: ^8.2.0
         version: 8.20.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
-        specifier: ^12.1.5
+        specifier: ^12.0.0
         version: 12.1.5(react-dom@17.0.2)(react@17.0.2)
       '@testing-library/user-event':
-        specifier: ^14.5.1
+        specifier: ^14.4.3
         version: 14.5.1(@testing-library/dom@8.20.1)
       '@types/chai':
         specifier: ^4.0.0
