@@ -230,8 +230,8 @@ export const treeNodeApi: TreeNodeApi = {
 	storedSchema(node: TreeNode): TreeNodeStoredSchema {
 		// throw new Error("TODO");
 		const viewSchema = treeNodeApi.schema(node);
-		return getStoredKey(node) === rootFieldKey
-	}
+		return getStoredKey(node) === rootFieldKey;
+	},
 };
 
 /**
