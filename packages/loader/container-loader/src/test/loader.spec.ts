@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IRuntime } from "@fluidframework/container-definitions/internal";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import {
+	IRuntime,
+	type IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
+import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
@@ -28,12 +31,12 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
-import { IDetachedBlobStorage, Loader } from "../loader.js";
+import { IDetachedBlobStorage, Loader, type ICodeDetailsLoader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 import { failProxy, failSometimeProxy } from "./failProxy.js";
 
-const codeLoader = {
+const codeLoader: ICodeDetailsLoader = {
 	load: async () => {
 		return {
 			details: {
@@ -42,10 +45,10 @@ const codeLoader = {
 			module: {
 				fluidExport: {
 					IRuntimeFactory: {
-						get IRuntimeFactory() {
+						get IRuntimeFactory(): IRuntimeFactory {
 							return this;
 						},
-						async instantiateRuntime(context, existing) {
+						async instantiateRuntime(context, existing): Promise<IRuntime> {
 							return failSometimeProxy<IRuntime>({
 								createSummary: () => ({
 									tree: {},
@@ -75,9 +78,13 @@ describe("loader unit test", () => {
 		try {
 			await loader.rehydrateDetachedContainerFromSnapshot(`{"foo":"bar"}`);
 			assert.fail("should fail");
-		} catch (e) {
-			assert.strict(isFluidError(e), `should be a Fluid error: ${e}`);
-			assert.strictEqual(e.errorType, FluidErrorTypes.usageError, "should be a usage error");
+		} catch (error) {
+			assert.strict(isFluidError(error), `should be a Fluid error: ${error}`);
+			assert.strictEqual(
+				error.errorType,
+				FluidErrorTypes.usageError,
+				"should be a usage error",
+			);
 		}
 	});
 
@@ -137,7 +144,7 @@ describe("loader unit test", () => {
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 			configProvider: {
-				getRawConfig: (name) =>
+				getRawConfig: (name): ConfigTypes =>
 					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
 			},
 		});
@@ -202,7 +209,7 @@ describe("loader unit test", () => {
 			}),
 			detachedBlobStorage,
 			configProvider: {
-				getRawConfig: (name) =>
+				getRawConfig: (name): ConfigTypes =>
 					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
 			},
 		});
