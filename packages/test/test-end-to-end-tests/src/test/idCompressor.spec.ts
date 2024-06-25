@@ -946,7 +946,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 	 *
 	 * While we figure out the fix, we are disabling the ability to create short IDs and this assert validates it.
 	 */
-	function assertInvert(value: unknown, message: string) {
+	function assertInvert(value: boolean, message: string) {
 		assert(!value, message);
 	}
 
@@ -995,8 +995,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		// Check directly that ID compressor is issuing short IDs!
 		// If it does not, the rest of the tests would fail - this helps isolate where the bug is.
 		const idTest = defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
-		assertInvert(typeof idTest === "number", "short IDs should be issued");
-		// assert(idTest >= 0, "finalId");
+		assertInvert(typeof idTest === "number" && idTest >= 0, "short IDs should be issued");
 
 		// create another datastore
 		const ds2 = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
