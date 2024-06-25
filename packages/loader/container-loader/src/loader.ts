@@ -68,11 +68,15 @@ export class RelativeLoader implements ILoader {
 			const container = await this.container.clone(
 				{
 					resolvedUrl: { ...this.container.resolvedUrl },
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					version: request.headers?.[LoaderHeader.version] ?? undefined,
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					loadMode: request.headers?.[LoaderHeader.loadMode],
 				},
 				{
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					canReconnect: request.headers?.[LoaderHeader.reconnect],
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
 				},
 			);
@@ -101,7 +105,9 @@ export interface ILoaderOptions extends ILoaderOptions1 {
  * @alpha
  */
 export interface IFluidModuleWithDetails {
-	/** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+	/**
+	 * Fluid code module that implements the runtime factory needed to instantiate the container runtime.
+	 */
 	module: IFluidModule;
 	/**
 	 * Code details associated with the module. Represents a document schema this module supports.
@@ -298,7 +304,7 @@ export class Loader implements IHostLoader {
 			codeLoader,
 			options: options ?? {},
 			scope:
-				options?.provideScopeLoader !== false ? { ...scope, ILoader: this } : { ...scope },
+				options?.provideScopeLoader === false ? { ...scope } : { ...scope, ILoader: this },
 			detachedBlobStorage,
 			protocolHandlerBuilder,
 			subLogger: subMc.logger,
@@ -377,6 +383,7 @@ export class Loader implements IHostLoader {
 
 		request.headers ??= {};
 		// If set in both query string and headers, use query string.  Also write the value from the query string into the header either way.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
 
@@ -391,12 +398,16 @@ export class Loader implements IHostLoader {
 		return Container.load(
 			{
 				resolvedUrl,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,
 			},
 			{
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				canReconnect: request.headers?.[LoaderHeader.reconnect],
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
 				...this.services,
 			},
