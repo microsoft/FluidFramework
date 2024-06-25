@@ -17,8 +17,6 @@ import {
 	type ValidateRecursiveSchema,
 	type TreeView,
 	type InsertableTypedNode,
-	treeNodeApi,
-	NodeKind,
 } from "../../simple-tree/index.js";
 import { TestTreeProviderLite, createTestUndoRedoStacks, getView } from "../utils.js";
 
@@ -347,27 +345,5 @@ describe("treeApi", () => {
 		assert.equal(Tree.contains(level3, level1), false);
 		assert.equal(Tree.contains(level3, level2), false);
 		assert.equal(Tree.contains(level2, level1), false);
-	});
-
-	describe.only("storedSchema", () => {
-		const schemaFactory = new SchemaFactory(undefined);
-		class TestObject extends schemaFactory.object("TestObject", {
-			content: schemaFactory.number,
-		}) {}
-
-		it("Given schematized tree", () => {
-			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
-			view.initialize({
-				content: 42,
-			});
-			const storedSchema = treeNodeApi.storedSchema(view.root);
-			assert(storedSchema.kind === NodeKind.Object);
-		});
-
-		it("Given free tree", () => {
-			const tree = new TestObject({ content: 42 });
-			const storedSchema = treeNodeApi.storedSchema(tree);
-			assert(storedSchema.kind === NodeKind.Object);
-		});
 	});
 });
