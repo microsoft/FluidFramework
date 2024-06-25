@@ -20,7 +20,7 @@ interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
 
 function isMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage,
+	detachedStorage: IDetachedBlobStorage | undefined,
 ): detachedStorage is MemoryDetachedBlobStorage {
 	return (
 		isObject(detachedStorage) &&
@@ -31,16 +31,20 @@ function isMemoryDetachedBlobStorage(
 
 export function serializeMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage,
+	detachedStorage: IDetachedBlobStorage | undefined,
 ): string | undefined {
-	if (detachedStorage.size > 0 && isMemoryDetachedBlobStorage(detachedStorage)) {
+	if (
+		detachedStorage !== undefined &&
+		detachedStorage.size > 0 &&
+		isMemoryDetachedBlobStorage(detachedStorage)
+	) {
 		return detachedStorage.serialize();
 	}
 }
 
 export function tryInitializeMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage,
+	detachedStorage: IDetachedBlobStorage | undefined,
 	attachmentBlobs: string,
 ) {
 	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
