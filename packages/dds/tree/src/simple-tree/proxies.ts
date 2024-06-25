@@ -56,27 +56,28 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
  * Retrieve the associated proxy for the given field.
  * */
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
+	function tryToUnboxLeaves(
+		flexField:
+			| FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>
+			| FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>,
+	): TreeNode | TreeValue | undefined {
+		const maybeUnboxedContent = flexField.content;
+		return isFlexTreeNode(maybeUnboxedContent)
+			? getOrCreateNodeProxy(maybeUnboxedContent)
+			: maybeUnboxedContent;
+	}
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>;
-
-			const maybeUnboxedContent = asValue.content;
-
-			if (!isFlexTreeNode(maybeUnboxedContent)) {
-				return maybeUnboxedContent;
-			}
-
-			return getOrCreateNodeProxy(maybeUnboxedContent);
+			const typedField = field as FlexTreeTypedField<
+				FlexFieldSchema<typeof FieldKinds.required>
+			>;
+			return tryToUnboxLeaves(typedField);
 		}
 		case FieldKinds.optional: {
-			const asValue = field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>;
-
-			const maybeUnboxedContent = asValue.content;
-			if (!isFlexTreeNode(maybeUnboxedContent)) {
-				return maybeUnboxedContent;
-			}
-
-			return getOrCreateNodeProxy(maybeUnboxedContent);
+			const typedField = field as FlexTreeTypedField<
+				FlexFieldSchema<typeof FieldKinds.optional>
+			>;
+			return tryToUnboxLeaves(typedField);
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
