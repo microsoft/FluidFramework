@@ -353,9 +353,11 @@ export class FluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const id = parser.pathParts[0]!;
+			const id = parser.pathParts[0];
+
+			if (id === undefined) {
+				return create404Response(request);
+			}
 
 			if (id === "_channels" || id === "_custom") {
 				return await this.request(parser.createSubRequest(1));
