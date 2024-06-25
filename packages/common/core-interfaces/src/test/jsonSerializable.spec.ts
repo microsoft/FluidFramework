@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { SerializationErrorPerNonPublicProperties } from "../exposedUtilityTypes.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonSerializable } from "../jsonSerializable.js";
 import type { JsonTypeWith } from "../jsonType.js";
@@ -686,7 +687,6 @@ describe("JsonSerializable", () => {
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateData,
 							{
-								// @ts-expect-error DeserializationErrorPerNonPublicProperties
 								public: "public",
 								// secret is also not allowed but is present
 								secret: 0,
@@ -702,7 +702,6 @@ describe("JsonSerializable", () => {
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateMethod,
 							{
-								// @ts-expect-error DeserializationErrorPerNonPublicProperties
 								public: "public",
 							},
 						);
@@ -716,22 +715,26 @@ describe("JsonSerializable", () => {
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateGetter,
 							{
-								// @ts-expect-error DeserializationErrorPerNonPublicProperties
 								public: "public",
 							},
 						);
-						assertIdenticalTypes(result, SerializationErrorPerNonPublicProperties);
+						assertIdenticalTypes(
+							result,
+							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
+						);
 					});
 					it("with private setter", () => {
 						const result = passThru(
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateSetter,
 							{
-								// @ts-expect-error DeserializationErrorPerNonPublicProperties
 								public: "public",
 							},
 						);
-						assertIdenticalTypes(result, SerializationErrorPerNonPublicProperties);
+						assertIdenticalTypes(
+							result,
+							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
+						);
 					});
 					it("with public method", () => {
 						const result = passThru(

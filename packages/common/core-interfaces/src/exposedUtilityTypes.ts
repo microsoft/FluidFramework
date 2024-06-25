@@ -230,6 +230,97 @@ export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
 export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
 
 /**
+ * Type resulting from {@link JsonSerializable} use given a class with
+ * non-public properties.
+ *
+ * @privateRemarks type is used over interface; so inspection of type
+ * result can be more informative than just the type name.
+ *
+ * @beta
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type SerializationErrorPerNonPublicProperties = {
+	"serialization error": "non-public properties are not supported";
+};
+
+/**
+ * Outer implementation of {@link JsonSerializable} handling meta cases
+ * like classes (with non-public properties).
+ *
+ * @beta
+ */
+export type JsonSerializableImpl<T, TReplaced> = /* test for 'any' */ boolean extends (
+	T extends never
+		? true
+		: false
+)
+	? /* 'any' => */ JsonTypeWith<TReplaced>
+	: /* test for non-public properties (class instance type) */
+		HasNonPublicProperties<T> extends true
+		? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
+			? /* array => */ {
+					/* use homomorphic mapped type to preserve tuple type */
+					[K in keyof T]: JsonSerializableImpl<T[K], TReplaced | T>;
+				}
+			: /* not array => error */ SerializationErrorPerNonPublicProperties
+		: /* no hidden properties => apply filtering => */ JsonSerializableFilter<T, TReplaced>;
+
+/**
+ * Core implementation of {@link JsonSerializable}.
+ */
+export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean extends (
+	T extends never
+		? true
+		: false
+)
+	? /* 'any' => */ JsonTypeWith<TReplaced>
+	: /* test for 'unknown' */ unknown extends T
+		? /* 'unknown' => */ JsonTypeWith<TReplaced>
+		: /* test for JSON Encodable primitive types or given alternate */ T extends // eslint-disable-next-line @rushstack/no-new-null
+					| null
+					| boolean
+					| number
+					| string
+					| TReplaced
+			? /* primitive types => */ T
+			: // eslint-disable-next-line @typescript-eslint/ban-types
+				/* test for not a function */ Extract<T, Function> extends never
+				? /* not a function => test for object */ T extends object
+					? /* object => test for array */ T extends readonly (infer _)[]
+						? /* array => */ {
+								/* array items may not not allow undefined */
+								/* use homomorphic mapped type to preserve tuple type */
+								[K in keyof T]: JsonForArrayItem<
+									T[K],
+									TReplaced,
+									JsonSerializableFilter<T[K], TReplaced | T>
+								>;
+							}
+						: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
+							? /* `object` => */ JsonTypeWith<TReplaced>
+							: /* test for enum like types */ IsEnumLike<T> extends true
+								? /* enum or similar simple type (return as-is) => */ T
+								: /* property bag => */ FlattenIntersection<
+										{
+											/* required properties are recursed and may not have undefined values. */
+											[K in NonSymbolWithRequiredPropertyOf<T>]-?: undefined extends T[K]
+												? { ["error required property may not allow undefined value"]: never }
+												: JsonSerializableFilter<T[K], TReplaced | T>;
+										} & {
+											/* optional properties are recursed and allowed to preserve undefined value type. */
+											[K in NonSymbolWithOptionalPropertyOf<T>]?: JsonSerializableFilter<
+												T[K],
+												TReplaced | T | undefined
+											>;
+										} & {
+											/* symbol properties are rejected */
+											[K in keyof T & symbol]: never;
+										}
+									>
+					: /* not an object => */ never
+				: /* function => */ never;
+
+/**
  * Sentinel type for use when marking points of recursion (in a recursive type).
  * Type is expected to be unique, though no lengths is taken to ensure that.
  *
@@ -240,22 +331,8 @@ export interface RecursionMarker {
 }
 
 /**
- * Type resulting from {@link JsonDeserialized} use given a class with
- * non-public properties.
- *
- * @privateRemarks type is used over interface; so inspection of type
- * result can be more informative than just the type name.
- *
- * @beta
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type DeserializationErrorPerNonPublicProperties = {
-	"deserialization error": "non-public properties are not supported";
-};
-
-/**
  * Outer implementation of {@link JsonDeserialized} handling meta cases
- * like recursive types and classes (with non-public properties).
+ * like recursive types.
  *
  * @beta
  */
@@ -275,12 +352,10 @@ export type JsonDeserializedImpl<T, TReplaced> = /* test for 'any' */ boolean ex
 			> extends true
 			? /* same (no filtering needed) => test for non-public properties (class instance type) */
 				HasNonPublicProperties<T> extends true
-				? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
-					? /* array => */ {
-							/* use homomorphic mapped type to preserve tuple type */
-							[K in keyof T]: JsonDeserializedFilter<T[K], TReplaced>;
-						} // JsonDeserializedFilter<T, TReplaced>
-					: /* not array => error */ DeserializationErrorPerNonPublicProperties
+				? /* hidden props => apply filtering to avoid retaining exact class => */ JsonDeserializedFilter<
+						T,
+						TReplaced
+					>
 				: /* no hidden properties => deserialized T is just T */ T
 			: /* filtering is needed => */ JsonDeserializedFilter<T, TReplaced>
 		: /* unreachable else for infer */ never;
