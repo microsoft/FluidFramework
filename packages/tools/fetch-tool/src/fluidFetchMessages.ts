@@ -120,7 +120,10 @@ async function* loadAllSequencedMessages(
 			lastSeq = parseInt(seq, 10);
 			firstAvailableDelta = lastSeq + 1;
 		} else {
-			throw new Error(`Unexpected structure for 410 error: ${props}`);
+			console.log(props);
+			throw new Error(
+				`Unexpected structure for 410 error: ${error.message}. Props were logged above. This indicates a problem with fetch-tool.`,
+			);
 		}
 	}
 
