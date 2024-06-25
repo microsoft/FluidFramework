@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	ITestDataObject,
@@ -49,8 +48,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
-import { TestSnapshotCache } from "../testSnapshotCache.js";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -1125,15 +1122,12 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createDetachedContainer(runtimeFactory, { configProvider });
 
-	const persistedCache = new TestSnapshotCache();
-
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// ODSP specific bug
 		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
-		(provider.driver as OdspTestDriver).setPersistedCache(persistedCache);
 		configProvider.set("Fluid.ContainerRuntime.IdCompressorEnabled", true);
 		configProvider.set("Fluid.Runtime.UseShortIds", true);
 	});
@@ -1142,7 +1136,7 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 		assert(!value, message);
 	}
 
-	itExpects.only(
+	itExpects(
 		"Id compressor bug repo when id is `[` which encodes to `%5B`",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
 		async () => {
@@ -1164,7 +1158,6 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 			await provider.ensureSynchronized();
 
 			provider.resetDocumentServiceFactory();
-			// persistedCache.clearCache();
 			const container2 = await provider.loadContainer(runtimeFactory, {
 				configProvider,
 			});
