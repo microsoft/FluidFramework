@@ -99,23 +99,29 @@ async function* loadAllSequencedMessages(
 	// reading only 1 op to test if there is mismatch
 	const teststream = deltaStorage.fetchMessages(lastSeq + 1, lastSeq + 2);
 
-	let statusCode;
-	let innerMostErrorCode;
-	let response;
-
 	try {
 		await teststream.read();
 	} catch (error: any) {
-		statusCode = error.getTelemetryProperties().statusCode;
-		innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
+		const statusCode = error.getTelemetryProperties().statusCode;
+		const innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
 		// if there is gap between ops, catch the error and check it is the error we need
 		if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
 			throw error;
 		}
 		// get firstAvailableDelta from the error response, and set current sequence number to that
-		response = JSON.parse(error.getTelemetryProperties().response);
-		firstAvailableDelta = response.error.firstAvailableDelta;
-		lastSeq = firstAvailableDelta - 1;
+
+		const props = error.getTelemetryProperties();
+		const { responseMessage } = props;
+		const [_, seq] =
+			typeof responseMessage === "string"
+				? responseMessage.match(/GenesisSequenceNumber '(\d+)'/) ?? []
+				: [];
+		if (seq !== undefined) {
+			lastSeq = parseInt(seq, 10);
+			firstAvailableDelta = lastSeq + 1;
+		} else {
+			throw new Error(`Unexpected structure for 410 error: ${props}`);
+		}
 	}
 
 	// continue reading rest of the ops
