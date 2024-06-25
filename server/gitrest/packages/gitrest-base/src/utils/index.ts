@@ -33,16 +33,21 @@ export {
 } from "./gitWholeSummaryManager";
 export {
 	checkSoftDeleted,
+	InMemoryRepoManagerFactory,
 	exists,
 	getExternalWriterParams,
 	getFilesystemManagerFactory,
 	getGitDirectory,
+	getGitManagerFactoryParamsFromConfig,
+	getLatestFullSummaryDirectory,
 	getLumberjackBasePropertiesFromRepoManagerParams,
+	getRepoInfoFromParamsAndStorageConfig,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
 	getRepoPath,
 	getRequestPathCategory,
 	getSoftDeletedMarkerPath,
+	isRepoNotExistsError,
 	logAndThrowApiError,
 	parseStorageRoutingId,
 	persistLatestFullSummaryInStorage,
@@ -55,3 +60,7 @@ export {
 	IsomorphicGitRepositoryManager,
 } from "./isomorphicgitManager";
 export { RedisFsConfig, RedisFsManager } from "./redisFs";
+export {
+	Constants as WholeSummaryConstants,
+	convertFullSummaryToWholeSummaryEntries,
+} from "./wholeSummary";

@@ -33,7 +33,7 @@ export function create(
 			repoManagerParams,
 			repoPerDocEnabled,
 		)
-			.then(async (repoManager) => {
+			.then(async ({ repoManager }) => {
 				const fileSystemManagerFactory = getFilesystemManagerFactory(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer,

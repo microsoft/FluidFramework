@@ -11,9 +11,6 @@ import {
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRepositoryManager } from "../definitions";
-import { MemFsManagerFactory } from "../filesystems";
-import { IsomorphicGitManagerFactory } from "../isomorphicgitManager";
-import { NullExternalStorageManager } from "../../externalStorageManager";
 import { IFullGitTree, IWholeSummaryOptions } from "./definitions";
 import {
 	buildFullGitTreeFromGitTree,
@@ -26,7 +23,6 @@ import {
 	writeFullGitTreeAsSummaryTree,
 	writeSummaryTree,
 } from "./coreWriteUtils";
-
 /**
  * Retrieve a git tree from storage, then write it into the in-memory filesystem.
  * This is used when attempting to write a summary tree to memory that references a git tree that is not currently in memory.
@@ -143,27 +139,9 @@ export async function computeLowIoSummaryTreeEntries(
 	writeSummaryTreeOptions: IWriteSummaryTreeOptions,
 	options: IWholeSummaryOptions,
 ): Promise<WholeSummaryTreeEntry[]> {
-	const inMemoryFsManagerFactory = new MemFsManagerFactory();
-	const inMemoryRepoManagerFactory = new IsomorphicGitManagerFactory(
-		{
-			baseDir: "/usr/gitrest",
-			useRepoOwner: true,
-		},
-		{
-			defaultFileSystemManagerFactory: inMemoryFsManagerFactory,
-		},
-		new NullExternalStorageManager(),
-		true /* repoPerDocEnabled */,
-		false /* enableRepositoryManagerMetrics */,
+	const inMemoryRepoManager = await options.inMemoryRepoManagerFactory.create(
+		options.repoManagerParams,
 	);
-	const inMemoryRepoManager = await inMemoryRepoManagerFactory.create({
-		repoOwner: "gitrest",
-		repoName: options.documentId,
-		storageRoutingId: {
-			tenantId: "internal",
-			documentId: options.documentId,
-		},
-	});
 	try {
 		const fullGitTree = await computeInMemoryFullGitTree(
 			payload.entries,
@@ -185,6 +163,6 @@ export async function computeLowIoSummaryTreeEntries(
 		];
 	} finally {
 		// Ensure temporary in-memory volume is destroyed.
-		inMemoryFsManagerFactory.volume.reset();
+		await options.inMemoryRepoManagerFactory.delete(options.repoManagerParams);
 	}
 }

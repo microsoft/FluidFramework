@@ -57,7 +57,10 @@
 		"enableHashmapRedisFs": false,
 		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
-		"enforceStrictPersistedFullSummaryReads": false
+		"enforceStrictPersistedFullSummaryReads": false,
+		"enableLazyRepoInitCompat": false,
+		"enableLazyRepoInit": false,
+		"enableLazyRepoInitForEphemeralContainers": false
 	},
 	"redis": {
 		"host": "redis",

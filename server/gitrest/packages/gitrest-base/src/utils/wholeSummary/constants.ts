@@ -12,4 +12,8 @@ export const Constants = Object.freeze({
 	 * The tree path name used for every {@link IFullGitTree} stored as a single blob.
 	 */
 	FullTreeBlobPath: ".fullTree",
+	/**
+	 * Sha256 hash of "initialsummarysha". Used to refer to the initial summary when using lazy git repo feature.
+	 */
+	InitialSummarySha: "8867f5f7386bad83b7a0fd49d4906046311cbe3c520bac21f225e86abd8055b6",
 });
