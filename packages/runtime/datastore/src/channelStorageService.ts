@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import {
 	IDocumentStorageService,
@@ -47,6 +48,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const id = await this.getIdForPath(path);
+		assert(id !== undefined, "id is undefined in ChannelStorageService.readBlob()")
 		const blob = this.extraBlobs !== undefined ? this.extraBlobs.get(id) : undefined;
 
 		if (blob !== undefined) {
@@ -75,9 +77,7 @@ export class ChannelStorageService implements IChannelStorageService {
 		return Object.keys(tree?.blobs ?? {});
 	}
 
-	private async getIdForPath(path: string): Promise<string> {
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.flattenedTree[path]!;
+	private async getIdForPath(path: string): Promise<string | undefined> {
+		return this.flattenedTree[path];
 	}
 }
