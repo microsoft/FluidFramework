@@ -97,7 +97,7 @@ export function createSummarizerFromFactory(provider: ITestObjectProvider, conta
 }>;
 
 // @internal
-export const createTestConfigProvider: () => ITestConfigProvider;
+export const createTestConfigProvider: (defaults?: Record<string, ConfigTypes>) => ITestConfigProvider;
 
 // @internal
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
