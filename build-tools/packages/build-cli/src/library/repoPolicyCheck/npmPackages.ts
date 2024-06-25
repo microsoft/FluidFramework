@@ -819,7 +819,8 @@ export const handlers: Handler[] = [
 					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
 				}
 
-				const relativePkgDir = path.posix.relative(root, path.dirname(file));
+				// file is already relative to the repo root, so we can use it as-is.
+				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
 				if (json.repository?.directory !== relativePkgDir) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
@@ -845,16 +846,25 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string, root: string): { resolved: boolean } => {
+		resolver: (file: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
 
-				json.repository = {
-					type: "git",
-					url: repository,
-					directory: path.posix.relative(root, path.dirname(file)),
-				};
+				// file is already relative to the repo root, so we can use it as-is.
+				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				json.repository =
+					// The directory field should be omitted from the root package.
+					relativePkgDir === "."
+						? {
+								type: "git",
+								url: repository,
+							}
+						: {
+								type: "git",
+								url: repository,
+								directory: relativePkgDir,
+							};
 
 				json.homepage = homepage;
 			});
