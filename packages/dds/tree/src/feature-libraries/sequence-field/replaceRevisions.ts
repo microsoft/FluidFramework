@@ -83,16 +83,19 @@ function updateMoveEffect<TEffect extends HasMoveFields>(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TEffect {
-	return effect.finalEndpoint !== undefined &&
-		revisionsToReplace.has(effect.finalEndpoint.revision)
+	return effect.finalEndpoint !== undefined
 		? updateRevision(
 				{
 					...effect,
-					finalEndpoint: updateRevision(effect.finalEndpoint, revisionsToReplace, newRevision),
+					finalEndpoint: updateRevision(
+						effect.finalEndpoint,
+						revisionsToReplace,
+						newRevision,
+					),
 				},
 				revisionsToReplace,
 				newRevision,
-			)
+		  )
 		: updateRevision(effect, revisionsToReplace, newRevision);
 }
 
@@ -104,10 +107,7 @@ function updateRevision<T extends HasRevisionTag>(
 	return revisionsToReplace.has(input.revision) ? withRevision(input, newRevision) : input;
 }
 
-function withRevision<T extends HasRevisionTag>(
-	input: T,
-	revision: RevisionTag | undefined,
-): T {
+function withRevision<T extends HasRevisionTag>(input: T, revision: RevisionTag | undefined): T {
 	const updated = { ...input, revision };
 	if (revision === undefined) {
 		delete updated.revision;
