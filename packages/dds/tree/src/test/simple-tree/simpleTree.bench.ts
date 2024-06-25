@@ -83,13 +83,13 @@ describe("SimpleTree benchmarks", () => {
 			});
 		}
 
-		function testAccessToLeaf<RootSchema>(
+		function testAccessToLeaf<RootNode>(
 			title: string,
-			treeInitFunction: () => RootSchema,
-			treeReadingFunction: (tree: RootSchema) => number | undefined,
+			treeInitFunction: () => RootNode,
+			treeReadingFunction: (tree: RootNode) => number | undefined,
 			expectedValue: number | undefined,
 		) {
-			let tree: RootSchema;
+			let tree: RootNode;
 			let readNumber: number | undefined;
 			benchmark({
 				type: BenchmarkType.Measurement,
