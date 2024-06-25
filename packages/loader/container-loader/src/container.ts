@@ -485,7 +485,7 @@ export class Container
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
 	// eslint-disable-next-line import/no-deprecated
-	private readonly detachedBlobStorage: IDetachedBlobStorage;
+	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
@@ -805,7 +805,6 @@ export class Container
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = { ...options };
 		this.scope = scope;
-		this.detachedBlobStorage = detachedBlobStorage ?? createMemoryDetachedBlobStorage();
 		this.protocolHandlerBuilder =
 			protocolHandlerBuilder ??
 			((
@@ -983,6 +982,12 @@ export class Container
 		const enableSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree;
+
+		this.detachedBlobStorage =
+			detachedBlobStorage ??
+			(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === true
+				? createMemoryDetachedBlobStorage()
+				: undefined);
 
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
@@ -1245,7 +1250,8 @@ export class Container
 			baseSnapshot,
 			snapshotBlobs,
 			pendingRuntimeState,
-			hasAttachmentBlobs: this.detachedBlobStorage.size > 0,
+			hasAttachmentBlobs:
+				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
 			attachmentBlobs: serializeMemoryDetachedBlobStorage(this.detachedBlobStorage),
 		};
 		return JSON.stringify(detachedContainerState);
@@ -1362,7 +1368,7 @@ export class Container
 					const snapshotWithBlobs = await attachP;
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
-						this.detachedBlobStorage.dispose?.();
+						this.detachedBlobStorage?.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
 							fetchOpsFromStorage: false,
 							reason: { text: "createDetached" },
@@ -1811,7 +1817,7 @@ export class Container
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}
 			assert(
-				this.detachedBlobStorage.size > 0,
+				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
