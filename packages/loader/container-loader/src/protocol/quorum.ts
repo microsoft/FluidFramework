@@ -23,7 +23,7 @@ class PendingProposal implements ISequencedProposal {
 	constructor(
 		public readonly sequenceNumber: number,
 		public readonly key: string,
-		public readonly value: any,
+		public readonly value: unknown,
 		public readonly local: boolean,
 	) {}
 }
@@ -64,7 +64,7 @@ export class QuorumClients
 {
 	private readonly members: Map<string, ISequencedClient>;
 	private isDisposed: boolean = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.isDisposed;
 	}
 
@@ -86,7 +86,7 @@ export class QuorumClients
 	 * @returns a snapshot of the clients in the quorum
 	 */
 	public snapshot(): QuorumClientsSnapshot {
-		this.snapshotCache ??= Array.from(this.members);
+		this.snapshotCache ??= [...this.members];
 
 		return this.snapshotCache;
 	}
@@ -94,7 +94,7 @@ export class QuorumClients
 	/**
 	 * Adds a new client to the quorum
 	 */
-	public addMember(clientId: string, details: ISequencedClient) {
+	public addMember(clientId: string, details: ISequencedClient): void {
 		assert(!!clientId, 0x9a0 /* clientId has to be non-empty string */);
 		assert(!this.members.has(clientId), 0x9a1 /* clientId not found */);
 		this.members.set(clientId, details);
@@ -107,7 +107,7 @@ export class QuorumClients
 	/**
 	 * Removes a client from the quorum
 	 */
-	public removeMember(clientId: string) {
+	public removeMember(clientId: string): void {
 		assert(!!clientId, 0x9a2 /* clientId has to be non-empty string */);
 		assert(this.members.has(clientId), 0x9a3 /* clientId not found */);
 		this.members.delete(clientId);
@@ -148,7 +148,7 @@ export class QuorumProposals
 	private readonly proposals: Map<number, PendingProposal>;
 	private readonly values: Map<string, ICommittedProposal>;
 	private isDisposed: boolean = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.isDisposed;
 	}
 
@@ -164,7 +164,7 @@ export class QuorumProposals
 
 	constructor(
 		snapshot: QuorumProposalsSnapshot,
-		private readonly sendProposal: (key: string, value: any) => number,
+		private readonly sendProposal: (key: string, value: unknown) => number,
 	) {
 		super();
 
@@ -191,14 +191,12 @@ export class QuorumProposals
 	 * @returns arrays of proposals and values
 	 */
 	public snapshot(): QuorumProposalsSnapshot {
-		this.proposalsSnapshotCache ??= Array.from(this.proposals).map(
-			([sequenceNumber, proposal]) => [
-				sequenceNumber,
-				{ sequenceNumber, key: proposal.key, value: proposal.value },
-				[], // rejections, which has been removed
-			],
-		);
-		this.valuesSnapshotCache ??= Array.from(this.values);
+		this.proposalsSnapshotCache ??= [...this.proposals].map(([sequenceNumber, proposal]) => [
+			sequenceNumber,
+			{ sequenceNumber, key: proposal.key, value: proposal.value },
+			[], // rejections, which has been removed
+		]);
+		this.valuesSnapshotCache ??= [...this.values];
 
 		return {
 			proposals: this.proposalsSnapshotCache,
@@ -216,7 +214,7 @@ export class QuorumProposals
 	/**
 	 * Returns the consensus value for the given key
 	 */
-	public get(key: string): any {
+	public get(key: string): unknown {
 		return this.values.get(key)?.value;
 	}
 
@@ -233,7 +231,7 @@ export class QuorumProposals
 	 * - Resolve when the proposal is accepted
 	 * - Reject if the proposal fails to send or if the QuorumProposals is disposed
 	 */
-	public async propose(key: string, value: any): Promise<void> {
+	public async propose(key: string, value: unknown): Promise<void> {
 		const clientSequenceNumber = this.sendProposal(key, value);
 		if (clientSequenceNumber < 0) {
 			this.emit("error", { eventName: "ProposalInDisconnectedState", key });
@@ -248,7 +246,10 @@ export class QuorumProposals
 			// A proposal goes through two phases before this promise resolves:
 			// 1. Sequencing - waiting for the proposal to be ack'd by the server.
 			// 2. Approval - waiting for the proposal to be approved by connected clients.
-			const localProposalSequencedHandler = (sequencedCSN: number, sequenceNumber: number) => {
+			const localProposalSequencedHandler = (
+				sequencedCSN: number,
+				sequenceNumber: number,
+			): void => {
 				if (sequencedCSN === clientSequenceNumber) {
 					thisProposalSequenceNumber = sequenceNumber;
 					this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
@@ -256,7 +257,7 @@ export class QuorumProposals
 					this.stateEvents.on("localProposalApproved", localProposalApprovedHandler);
 				}
 			};
-			const localProposalApprovedHandler = (sequenceNumber: number) => {
+			const localProposalApprovedHandler = (sequenceNumber: number): void => {
 				// Proposals can be uniquely identified by the sequenceNumber they were assigned.
 				if (sequenceNumber === thisProposalSequenceNumber) {
 					resolve();
@@ -270,7 +271,7 @@ export class QuorumProposals
 			//    -> The promise can still resolve, once it is approved.
 			// 2. We reconnect and see the proposal was not sequenced in the meantime, so it will never sequence.
 			//    -> The promise rejects.
-			const disconnectedHandler = () => {
+			const disconnectedHandler = (): void => {
 				// If we haven't seen the ack by the time we disconnect, we hope to see it by the time we reconnect.
 				if (thisProposalSequenceNumber === undefined) {
 					this.stateEvents.once("connected", () => {
@@ -284,12 +285,12 @@ export class QuorumProposals
 			};
 			// If the QuorumProposals is disposed of, we assume something catastrophic has happened
 			// All outstanding proposals are considered rejected.
-			const disposedHandler = () => {
+			const disposedHandler = (): void => {
 				reject(new Error("QuorumProposals was disposed"));
 				removeListeners();
 			};
 			// Convenience function to clean up our listeners.
-			const removeListeners = () => {
+			const removeListeners = (): void => {
 				this.stateEvents.off("localProposalSequenced", localProposalSequencedHandler);
 				this.stateEvents.off("localProposalApproved", localProposalApprovedHandler);
 				this.stateEvents.off("disconnected", disconnectedHandler);
@@ -306,11 +307,11 @@ export class QuorumProposals
 	 */
 	public addProposal(
 		key: string,
-		value: any,
+		value: unknown,
 		sequenceNumber: number,
 		local: boolean,
 		clientSequenceNumber: number,
-	) {
+	): void {
 		assert(!this.proposals.has(sequenceNumber), 0x9a4 /* sequenceNumber not found */);
 
 		const proposal = new PendingProposal(sequenceNumber, key, value, local);
@@ -368,13 +369,13 @@ export class QuorumProposals
 			let proposalKeySeen = false;
 			for (const [, p] of this.proposals) {
 				if (p.key === committedProposal.key) {
-					if (!proposalKeySeen) {
-						// set proposalSettled to true if the proposal key match is unique thus far
-						proposalSettled = true;
-					} else {
+					if (proposalKeySeen) {
 						// set proposalSettled to false if matching proposal key is not unique
 						proposalSettled = false;
 						break;
+					} else {
+						// set proposalSettled to true if the proposal key match is unique thus far
+						proposalSettled = true;
 					}
 					proposalKeySeen = true;
 				}
@@ -409,7 +410,7 @@ export class QuorumProposals
 		}
 	}
 
-	public setConnectionState(connected: boolean) {
+	public setConnectionState(connected: boolean): void {
 		if (connected) {
 			this.stateEvents.emit("connected");
 		} else {
@@ -432,7 +433,7 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 	private readonly quorumClients: QuorumClients;
 	private readonly quorumProposals: QuorumProposals;
 	private readonly isDisposed: boolean = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.isDisposed;
 	}
 
@@ -440,7 +441,7 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 		members: QuorumClientsSnapshot,
 		proposals: QuorumProposalsSnapshot["proposals"],
 		values: QuorumProposalsSnapshot["values"],
-		sendProposal: (key: string, value: any) => number,
+		sendProposal: (key: string, value: unknown) => number,
 	) {
 		super();
 
@@ -458,13 +459,18 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 		});
 		this.quorumProposals.on(
 			"approveProposal",
-			(sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => {
+			(
+				sequenceNumber: number,
+				key: string,
+				value: unknown,
+				approvalSequenceNumber: number,
+			) => {
 				this.emit("approveProposal", sequenceNumber, key, value, approvalSequenceNumber);
 			},
 		);
 	}
 
-	public close() {
+	public close(): void {
 		this.removeAllListeners();
 	}
 
@@ -492,7 +498,7 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 	/**
 	 * Returns the consensus value for the given key
 	 */
-	public get(key: string): any {
+	public get(key: string): unknown {
 		return this.quorumProposals.get(key);
 	}
 
@@ -507,14 +513,14 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 	/**
 	 * Adds a new client to the quorum
 	 */
-	public addMember(clientId: string, details: ISequencedClient) {
+	public addMember(clientId: string, details: ISequencedClient): void {
 		this.quorumClients.addMember(clientId, details);
 	}
 
 	/**
 	 * Removes a client from the quorum
 	 */
-	public removeMember(clientId: string) {
+	public removeMember(clientId: string): void {
 		this.quorumClients.removeMember(clientId);
 	}
 
@@ -536,7 +542,7 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 	 * Proposes a new value. Returns a promise that will resolve when the proposal is either accepted, or reject if
 	 * the proposal fails to send.
 	 */
-	public async propose(key: string, value: any): Promise<void> {
+	public async propose(key: string, value: unknown): Promise<void> {
 		return this.quorumProposals.propose(key, value);
 	}
 
@@ -545,11 +551,11 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 	 */
 	public addProposal(
 		key: string,
-		value: any,
+		value: unknown,
 		sequenceNumber: number,
 		local: boolean,
 		clientSequenceNumber: number,
-	) {
+	): void {
 		return this.quorumProposals.addProposal(
 			key,
 			value,
@@ -567,7 +573,7 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 		this.quorumProposals.updateMinimumSequenceNumber(message);
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		this.quorumProposals.setConnectionState(connected);
 	}
 
