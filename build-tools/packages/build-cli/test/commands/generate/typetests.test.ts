@@ -38,12 +38,12 @@ describe("generate:typetests", () => {
 			{ name: "VariableDeclaration_b", import: "b", tags: ["public"] },
 			{ name: "VariableDeclaration_c", import: "c", tags: ["internal"] },
 			{
-				name: "TypeAliasDeclaration_InternalTypes.Inner",
+				name: "TypeAliasDeclaration_InternalTypes_Inner",
 				import: "InternalTypes.Inner",
 				tags: ["public"],
 			},
 			{
-				name: "TypeAliasDeclaration_InternalTypes.InnerInternal",
+				name: "TypeAliasDeclaration_InternalTypes_InnerInternal",
 				import: "InternalTypes.InnerInternal",
 				tags: ["internal"],
 			},
@@ -62,12 +62,12 @@ describe("generate:typetests", () => {
 			{ name: "VariableDeclaration_b", import: "b", tags: ["public"] },
 			{ name: "VariableDeclaration_c", import: "c", tags: ["internal"] },
 			{
-				name: "TypeAliasDeclaration_InternalTypes.Inner",
+				name: "TypeAliasDeclaration_InternalTypes_Inner",
 				import: "InternalTypes.Inner",
 				tags: ["public"],
 			},
 			{
-				name: "TypeAliasDeclaration_InternalTypes.InnerInternal",
+				name: "TypeAliasDeclaration_InternalTypes_InnerInternal",
 				import: "InternalTypes.InnerInternal",
 				tags: ["internal"],
 			},
