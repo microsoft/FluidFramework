@@ -29,6 +29,7 @@ describe("generate:typetests", () => {
 		}));
 	}
 
+	// Test a file which looks like a rollup: a file that reexports content from other files.
 	it("rollup", () => {
 		const currentFile = loadTypesSourceFile("./test/data/exports/exports-rollup.d.ts");
 
@@ -52,6 +53,7 @@ describe("generate:typetests", () => {
 		]);
 	});
 
+	// Test a file which directly includes several kinds of exports to ensure that various export types work correctly.
 	it("direct", () => {
 		const currentFile = loadTypesSourceFile("./test/data/exports/exports.d.ts");
 

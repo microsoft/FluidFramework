@@ -371,6 +371,9 @@ export function typeDataFromFile(
 	return typeData;
 }
 
+/**
+ * Prefix `node`'s name with `namespacePrefix` to produce a qualified name.
+ */
 function addScope(
 	namespacePrefix: string | undefined,
 	node: NameableNodeSpecific | NamedNodeSpecificBase<Node>,
@@ -380,8 +383,11 @@ function addScope(
 	return addStringScope(namespacePrefix, scope);
 }
 
-function addStringScope(namespacePrefix: string | undefined, scope: string): string {
-	const name = namespacePrefix === undefined ? scope : `${namespacePrefix}.${scope}`;
+/**
+ * Prefix `innerName` name with `namespacePrefix` to produce a qualified name.
+ */
+function addStringScope(namespacePrefix: string | undefined, innerName: string): string {
+	const name = namespacePrefix === undefined ? innerName : `${namespacePrefix}.${innerName}`;
 	return name;
 }
 
