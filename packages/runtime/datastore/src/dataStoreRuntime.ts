@@ -355,25 +355,23 @@ export class FluidDataStoreRuntime
 			const parser = RequestParser.create(request);
 			const id = parser.pathParts[0];
 
-			if (id === undefined) {
-				return create404Response(request);
-			}
-
 			if (id === "_channels" || id === "_custom") {
 				return await this.request(parser.createSubRequest(1));
 			}
 
-			// Check for a data type reference first
-			const context = this.contexts.get(id);
-			if (context !== undefined && parser.isLeaf(1)) {
-				try {
-					const channel = await context.getChannel();
+			if (id !== undefined) {
+				// Check for a data type reference first
+				const context = this.contexts.get(id);
+				if (context !== undefined && parser.isLeaf(1)) {
+					try {
+						const channel = await context.getChannel();
 
-					return { mimeType: "fluid/object", status: 200, value: channel };
-				} catch (error) {
-					this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+						return { mimeType: "fluid/object", status: 200, value: channel };
+					} catch (error) {
+						this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
-					return createResponseError(500, `Failed to get Channel: ${error}`, request);
+						return createResponseError(500, `Failed to get Channel: ${error}`, request);
+					}
 				}
 			}
 
