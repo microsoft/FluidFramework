@@ -39,7 +39,6 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizer,
-	createSummarizerFromFactory,
 	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
@@ -1097,11 +1096,6 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 		}
 
 		await provider.attachDetachedContainer(container);
-
-		const summarizer = (await createSummarizerFromFactory(provider, container, defaultFactory))
-			.summarizer;
-		await summarizeNow(summarizer);
-		await provider.ensureSynchronized();
 
 		persistedCache.clearCache();
 
