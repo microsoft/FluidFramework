@@ -327,13 +327,10 @@ export class DocumentService
 	private async refreshDiscoveryCore(): Promise<void> {
 		const fluidResolvedUrl = await this.discoverFluidResolvedUrl();
 		this._resolvedUrl = fluidResolvedUrl;
-		// TODO why are we non null asserting here?
-		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
-		// TODO why are we non null asserting here?
-		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl!;
-		// TODO why are we non null asserting here?
-		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl!;
-		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
+		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
+		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
+		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
 	}
 
 	/**
