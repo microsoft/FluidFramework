@@ -25,7 +25,7 @@ import {
 	type MapTreeNode,
 	tryGetMapTreeNode,
 	typeNameSymbol,
-	isTreeValue,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
@@ -64,7 +64,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			if (maybeUnboxedContent === undefined) {
 				return undefined;
 			}
-			if (isTreeValue(maybeUnboxedContent)) {
+			if (!isFlexTreeNode(maybeUnboxedContent)) {
 				return maybeUnboxedContent;
 			}
 
@@ -77,7 +77,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			if (maybeUnboxedContent === undefined) {
 				return undefined;
 			}
-			if (isTreeValue(maybeUnboxedContent)) {
+			if (!isFlexTreeNode(maybeUnboxedContent)) {
 				return maybeUnboxedContent;
 			}
 
