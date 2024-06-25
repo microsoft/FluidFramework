@@ -787,7 +787,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: async (file: string): Promise<string | undefined> => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -814,8 +814,16 @@ export const handlers: Handler[] = [
 				ret.push(`repository field missing`);
 			} else if (typeof json.repository === "string") {
 				ret.push(`repository should be an object, not a string`);
-			} else if (json.repository?.url !== repository) {
-				ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+			} else {
+				if (json.repository?.url !== repository) {
+					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+				}
+
+				const pkgDir = path.dirname(file);
+				const relativePkgDir = path.relative(root, pkgDir);
+				if( json.repository?.directory !== relativePkgDir) {
+					ret.push(`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`);
+				}
 			}
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
