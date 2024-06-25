@@ -381,8 +381,7 @@ describe("schemaFactory", () => {
 				assert.notDeepEqual(p1, p2);
 			});
 
-			// Walking unhydrated nodes is currently not supported
-			it.skip("unhydrated", () => {
+			it("unhydrated", () => {
 				assert.deepEqual(new Point({ x: 1, y: 2 }), new Point({ x: 1, y: 2 }));
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), new Point({ x: 1, y: 3 }));
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), { x: 1, y: 2 });
@@ -597,7 +596,7 @@ describe("schemaFactory", () => {
 			ComboChildMap,
 		]) {}
 		class ComboRoot extends comboSchemaFactory.object("comboRoot", {
-			root: comboSchemaFactory.optional([ComboParentObject, ComboParentList, ComboParentMap]),
+			root: [ComboParentObject, ComboParentList, ComboParentMap],
 		}) {}
 
 		type ComboParent = ComboParentObject | ComboParentList | ComboParentMap;
@@ -730,9 +729,19 @@ describe("schemaFactory", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"tree",
 			);
+
+			// Check that nodes in the initial tree are hydrated
 			const view = tree.viewWith(config);
-			view.initialize({ root: undefined });
-			const { parent, nodes } = createComboTree({
+			const { parent: initialParent, nodes: initialNodes } = createComboTree({
+				parentType,
+				childType,
+			});
+
+			view.initialize({ root: initialParent });
+			validate(view, initialNodes);
+
+			// Check that nodes inserted later are hydrated
+			const { parent: insertedParent, nodes: insertedNodes } = createComboTree({
 				parentType,
 				childType,
 			});
@@ -741,10 +750,10 @@ describe("schemaFactory", () => {
 			// Note: as of 2024-03-28, we can't easily test 'treeChanged' because it can fire at a time where the changes
 			// to the tree are not visible in the listener. 'nodeChanged' only fires once we confirmed that a
 			// relevant change was actually applied to the tree so the side effects this test validates already happened.
-			Tree.on(view.root, "nodeChanged", () => validate(view, nodes));
-			view.events.on("rootChanged", () => validate(view, nodes));
-			view.root.root = parent;
-			validate(view, nodes);
+			Tree.on(view.root, "nodeChanged", () => validate(view, insertedNodes));
+			view.events.on("rootChanged", () => validate(view, insertedNodes));
+			view.root.root = insertedParent;
+			validate(view, insertedNodes);
 		}
 
 		for (const parentType of objectTypes) {

@@ -4,13 +4,6 @@
 
 ```ts
 
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-import { ScopeType } from '@fluidframework/driver-definitions/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```
