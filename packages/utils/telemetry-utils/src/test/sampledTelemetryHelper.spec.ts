@@ -65,6 +65,7 @@ describe("SampledTelemetryHelper", () => {
 	it("only writes event after correct number of samples", () => {
 		const sampling = 10;
 		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, sampling);
+
 		for (let i = 0; i < sampling - 1; i++) {
 			helper.measure(() => {});
 		}
@@ -153,10 +154,10 @@ describe("SampledTelemetryHelper", () => {
 		);
 
 		for (let i = 0; i < 9; i++) {
-			helper.measure(() => {}, bucket1);
+			helper.measure(() => ({ customData: {} }), bucket1);
 		}
 		for (let i = 0; i < 7; i++) {
-			helper.measure(() => {}, bucket2);
+			helper.measure(() => ({ customData: {} }), bucket2);
 		}
 
 		assert.strictEqual(logger.events.filter((x) => x.prop1 === "value1").length, 3);
@@ -186,7 +187,7 @@ describe("SampledTelemetryHelper", () => {
 			false,
 			bucketProperties,
 		);
-		helper.measure(() => {}, bucket1);
+		helper.measure(() => ({ customData: {} }), bucket1);
 		assert.strictEqual(logger.events.length, 1);
 		const event = logger.events[0];
 		assert.strictEqual(event.count, 1);
@@ -216,8 +217,8 @@ describe("SampledTelemetryHelper", () => {
 
 		// Only measure 4 times when we need 5 samples before writing the telemetry event
 		for (let i = 0; i < 4; i++) {
-			helper.measure(() => {}, bucket1);
-			helper.measure(() => {}, bucket2);
+			helper.measure(() => ({ customData: {} }), bucket1);
+			helper.measure(() => ({ customData: {} }), bucket2);
 		}
 
 		// Nothing should have been logged yet
@@ -233,7 +234,7 @@ describe("SampledTelemetryHelper", () => {
 		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 2);
 
 		// Nothing should have been logged after the first call
-		helper.measure(() => {});
+		helper.measure(() => ({}));
 		assert.strictEqual(logger.events.length, 0);
 
 		// On the second call, we should have 1 event
@@ -281,36 +282,31 @@ describe("SampledTelemetryHelper", () => {
 	});
 
 	it("Correctly returns computed averages and maxes for custom data", () => {
-		const sampling = 3;
-		const initialCustomMetrics = {
-			"propertyOne": 1,
-			"propertyTwo": 2,
-			"propertyThree": 3,
-		};
+		const sampling = 10;
 
 		const helper = new SampledTelemetryHelper<TestTelemetryProperties>(
 			{ eventName: "testEvent" },
 			logger,
 			sampling,
-			undefined,
-			undefined,
-			initialCustomMetrics,
 		);
 
 		for (let i = 0; i < sampling; i++) {
 			helper.measure(() => {
 				return {
-					propertyOne: i + 1,
-					propertyTwo: i + 2,
-					propertyThree: i + 3,
+					customData: {
+						propertyOne: i + 1,
+						propertyTwo: i + 2,
+						propertyThree: i + 3,
+						propertyFour: i + 4,
+					},
 				};
 			});
 		}
 
 		assert.strictEqual(logger.events.length, 1);
-		assert.strictEqual(logger.events[0].avg_propertyOne, 5.6);
-		assert.strictEqual(logger.events[0].avg_propertyTwo, 6.7);
-		assert.strictEqual(logger.events[0].avg_propertyThree, 7.8);
+		assert.strictEqual(logger.events[0].avg_propertyOne, 5.5);
+		assert.strictEqual(logger.events[0].avg_propertyTwo, 6.5);
+		assert.strictEqual(logger.events[0].avg_propertyThree, 7.5);
 		assert.strictEqual(logger.events[0].max_propertyOne, 10);
 		assert.strictEqual(logger.events[0].max_propertyTwo, 11);
 		assert.strictEqual(logger.events[0].max_propertyThree, 12);

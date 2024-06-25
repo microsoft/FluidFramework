@@ -76,7 +76,7 @@ export abstract class SharedObjectCore<
 	}
 
 	private readonly opProcessingHelper: SampledTelemetryHelper<ProcessTelemetryProperties>;
-	private readonly callbacksHelper: SampledTelemetryHelper<ProcessTelemetryProperties>;
+	private readonly callbacksHelper: SampledTelemetryHelper<void>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -179,11 +179,8 @@ export abstract class SharedObjectCore<
 				["local", { localOp: true }],
 				["remote", { localOp: false }],
 			]),
-			{
-				sequenceDifference: 0,
-			},
 		);
-		const callbacksHelper = new SampledTelemetryHelper<ProcessTelemetryProperties>(
+		const callbacksHelper = new SampledTelemetryHelper<void>(
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
@@ -548,11 +545,13 @@ export abstract class SharedObjectCore<
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			(metricsTracker) => {
+			() => {
 				this.processCore(message, local, localOpMetadata);
-				metricsTracker.incrementMetric({
-					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-				});
+				return {
+					customData: {
+						sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+					},
+				};
 			},
 			local ? "local" : "remote",
 		);
@@ -607,7 +606,7 @@ export abstract class SharedObjectCore<
 	 * @returns `true` if the event had listeners, `false` otherwise.
 	 */
 	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
-		return this.callbacksHelper.measure(() => {
+		return this.callbacksHelper.measure<boolean>(() => {
 			return super.emit(event, ...args);
 		});
 	}
