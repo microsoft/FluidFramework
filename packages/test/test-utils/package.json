@@ -165,10 +165,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ITestObjectProvider": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

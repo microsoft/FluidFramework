@@ -208,11 +208,6 @@ export interface ITestObjectProvider {
 	 * Resets and closes all tracked containers and class states.
 	 */
 	reset(): void;
-
-	/**
-	 * Resets the document service factory which can clear any cached state. Warning use this with caution.
-	 */
-	resetDocumentServiceFactory(): void;
 }
 
 /**
@@ -715,13 +710,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
-
-	/**
-	 * {@inheritDoc ITestObjectProvider.resetDocumentServiceFactory}
-	 */
-	public resetDocumentServiceFactory(): void {
-		this._documentServiceFactory = undefined;
-	}
 }
 
 /**
@@ -1102,13 +1090,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
-	}
-
-	/**
-	 * {@inheritDoc ITestObjectProvider.resetDocumentServiceFactory}
-	 */
-	public resetDocumentServiceFactory(): void {
-		this._documentServiceFactory = undefined;
 	}
 }
 

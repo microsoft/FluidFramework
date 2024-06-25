@@ -1119,9 +1119,6 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 		},
 	);
 
-	const createContainer = async (): Promise<IContainer> =>
-		provider.createDetachedContainer(runtimeFactory, { configProvider });
-
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// ODSP specific bug
@@ -1140,7 +1137,9 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 		"Id compressor bug repo when id is `[` which encodes to `%5B`",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
 		async () => {
-			const container = await createContainer();
+			const container = await provider.createDetachedContainer(runtimeFactory, {
+				configProvider,
+			});
 			const dataObject = (await container.getEntryPoint()) as TestDataObject;
 			const containerRuntime = dataObject._context.containerRuntime;
 			for (let i = 0; i < dataStoreCount; i++) {
@@ -1157,15 +1156,16 @@ describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) =
 			childObject._root.set(`key13`, `value13`);
 			await provider.ensureSynchronized();
 
-			provider.resetDocumentServiceFactory();
+			// This reset is required here as clearing the cache will immediately cause the test to end early
+			// when we call provider.ensureSynchronized().
+			(provider as any)._documentServiceFactory = undefined;
 			const container2 = await provider.loadContainer(runtimeFactory, {
 				configProvider,
 			});
 
-			// This is the line that fails as we are getting the op that breaks the id
+			// This causes the containers to sync and thus close.
 			await provider.ensureSynchronized();
 
-			// This check isn't reached
 			assertInvert(
 				!container2.closed,
 				"When the problem is fixed, assert should be swapped for assertInvert",
