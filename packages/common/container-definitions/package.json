@@ -112,6 +112,15 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IGenericError": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IUsageError": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

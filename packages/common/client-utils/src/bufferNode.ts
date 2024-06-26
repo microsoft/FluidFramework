@@ -80,8 +80,7 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @param encoding - Output string's encoding
  * @returns The blob in string format
  *
- * @legacy
- * @alpha
+ * @internal
  */
 export const bufferToString = (
 	blob: ArrayBufferLike,

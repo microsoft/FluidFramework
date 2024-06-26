@@ -130,4 +130,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
+// (No @packageDocumentation comment for this package)
+
 ```

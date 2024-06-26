@@ -123,4 +123,6 @@ export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind<IShared
 // @alpha
 export type SharedMap = ISharedMap;
 
+// (No @packageDocumentation comment for this package)
+
 ```
