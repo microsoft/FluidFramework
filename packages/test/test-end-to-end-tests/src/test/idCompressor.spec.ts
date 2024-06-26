@@ -7,11 +7,17 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
+	type ICriticalContainerError,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -21,7 +27,7 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils/internal";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -30,7 +36,6 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import {
 	DataObjectFactoryType,
@@ -39,6 +44,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizer,
+	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
@@ -789,7 +795,7 @@ describeCompat(
 	},
 );
 
-describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, compatAPIs) => {
 	let provider: ITestObjectProvider;
 	const disableConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: undefined },
@@ -934,13 +940,25 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		);
 	});
 
+	/**
+	 * Function that asserts that the value is not as expected. e have a bug in one of our customer's app where a short
+	 * data store ID created is `[` but in a downloaded snapshot, it is converted to its ASCII equivalent `%5B` in
+	 * certain conditions. So, when an op comes for this data store with id `[`, containers loaded with this snapshot
+	 * cannot find the data store.
+	 *
+	 * While we figure out the fix, we are disabling the ability to create short IDs and this assert validates it.
+	 */
+	function assertInvert(value: boolean, message: string) {
+		assert(!value, message);
+	}
+
 	async function TestCompactIds(enableRuntimeIdCompressor: IdCompressorMode) {
 		const container = await createContainer({
 			runtimeOptions: { enableRuntimeIdCompressor },
 		});
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		// This data store was created in detached container, so it has to be short!
-		assert(
+		assertInvert(
 			defaultDataStore._runtime.id.length <= 2,
 			"short data store ID created in detached container",
 		);
@@ -979,15 +997,14 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		// Check directly that ID compressor is issuing short IDs!
 		// If it does not, the rest of the tests would fail - this helps isolate where the bug is.
 		const idTest = defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
-		assert(typeof idTest === "number", "short IDs should be issued");
-		assert(idTest >= 0, "finalId");
+		assertInvert(typeof idTest === "number" && idTest >= 0, "short IDs should be issued");
 
 		// create another datastore
 		const ds2 = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
 		const entryPoint2 = (await ds2.entryPoint.get()) as ITestDataObject;
 
 		// This data store was created in attached  container, and should have used ID compressor to assign ID!
-		assert(
+		assertInvert(
 			entryPoint2._runtime.id.length <= 2,
 			"short data store ID created in attached container",
 		);
@@ -1005,7 +1022,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			undefined,
 			SharedDirectory.getFactory().type,
 		);
-		assert(channel.id.length <= 2, "DDS ID created in detached data store");
+		assertInvert(channel.id.length <= 2, "DDS ID created in detached data store");
 
 		// attached data store.
 		await ds2.trySetAlias("foo");
@@ -1023,7 +1040,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			undefined,
 			SharedDirectory.getFactory().type,
 		);
-		assert(channel2.id.length <= 2, "DDS ID created in attached data store");
+		assertInvert(channel2.id.length <= 2, "DDS ID created in attached data store");
 	}
 
 	it("Container uses short DataStore & DDS IDs in delayed mode", async () => {
@@ -1033,4 +1050,138 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 	it("Container uses short DataStore & DDS IDs in On mode", async () => {
 		await TestCompactIds("on");
 	});
+
+	it("always uses short data store IDs in detached container", async () => {
+		const loader = provider.makeTestLoader();
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container = await loader.createDetachedContainer(defaultCodeDetails);
+		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		assertInvert(
+			defaultDataStore.context.id.length <= 2,
+			"Default data store's ID should be short",
+		);
+		const dataStore1 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds1 = (await dataStore1.entryPoint.get()) as ITestFluidObject;
+		assertInvert(
+			ds1.context.id.length <= 2,
+			"Data store's ID in detached container should not be short",
+		);
+		const dds1 = compatAPIs.dds.SharedDirectory.create(ds1.runtime);
+		assertInvert(dds1.id.length <= 2, "DDS's ID in detached container should not be short");
+
+		await container.attach(provider.driver.createCreateNewRequest());
+
+		const dataStore2 =
+			await defaultDataStore.context.containerRuntime.createDataStore(TestDataObjectType);
+		const ds2 = (await dataStore2.entryPoint.get()) as ITestFluidObject;
+		assert(
+			ds2.context.id.length > 8,
+			"Data store's ID in attached container should not be short",
+		);
+		const dds2 = compatAPIs.dds.SharedDirectory.create(ds2.runtime);
+		assert(dds2.id.length > 8, "DDS's ID in attached container should not be short");
+	});
 });
+
+describeCompat(
+	"IdCompressor multiple datastores created in detached container with shortIds",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const {
+			dataRuntime: { DataObject, DataObjectFactory },
+			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+		} = apis;
+		class TestDataObject extends DataObject {
+			public get _root() {
+				return this.root;
+			}
+
+			public get _context() {
+				return this.context;
+			}
+		}
+
+		const configProvider = createTestConfigProvider();
+		let provider: ITestObjectProvider;
+		const defaultFactory = new DataObjectFactory("T", TestDataObject, [], []);
+
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory,
+				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			},
+		);
+
+		beforeEach("getTestObjectProvider", async function () {
+			provider = getTestObjectProvider();
+			// ODSP specific bug
+			if (provider.driver.type !== "odsp") {
+				this.skip();
+			}
+			configProvider.set("Fluid.Runtime.UseShortIds", true);
+		});
+
+		function assertInvert(value: boolean, message: string) {
+			assert(!value, message);
+		}
+
+		const dataStoreCount = 13;
+		itExpects(
+			"Id compressor bug repo when id is `[` which encodes to `%5B`",
+			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
+			async () => {
+				const container = await provider.createDetachedContainer(runtimeFactory, {
+					configProvider,
+				});
+				const dataObject = (await container.getEntryPoint()) as TestDataObject;
+				const containerRuntime = dataObject._context.containerRuntime;
+				// The 13 datastore produces a shortId of "[" when we use short codes, so we need to make 13 datastores to repro the bug
+				for (let i = 0; i < dataStoreCount; i++) {
+					const createdObject = await defaultFactory.createInstance(containerRuntime);
+					dataObject._root.set(createdObject.id, createdObject.handle);
+				}
+
+				await provider.attachDetachedContainer(container);
+
+				const handle = dataObject._root.get("[");
+				assert(handle !== undefined, "handle not found");
+				const childObject = await handle.get();
+				assert(childObject.id === "[", "This id is the problematic id");
+				childObject._root.set(`key13`, `value13`);
+				await provider.ensureSynchronized();
+
+				// This reset is required here as clearing the cache will immediately cause the test to end early
+				// when we call provider.ensureSynchronized().
+				(provider as any)._documentServiceFactory = undefined;
+				const container2 = await provider.loadContainer(runtimeFactory, {
+					configProvider,
+				});
+				const closeErrorWait = new Deferred<void>();
+				let closeError: ICriticalContainerError | undefined;
+				container2.on("closed", (error?: ICriticalContainerError) => {
+					closeError = error;
+					closeErrorWait.resolve();
+				});
+
+				// This causes the containers to sync and thus close.
+				await provider.ensureSynchronized();
+
+				// When fixed, the promise and asserts should be removed
+				await closeErrorWait.promise;
+				assert(closeError !== undefined, "Error should be present");
+				assert(closeError.message.includes("No context for op"), "Did not detect an error!");
+
+				// When fixed, the assert should be swapped for assertInvert
+				assertInvert(
+					!container2.closed,
+					"When the problem is fixed, assert should be swapped for assertInvert",
+				);
+			},
+		);
+	},
+);

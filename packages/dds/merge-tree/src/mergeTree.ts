@@ -143,6 +143,7 @@ const LRUSegmentComparer: IComparer<LRUSegment> = {
 };
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeOptions {
@@ -192,6 +193,7 @@ export interface IMergeTreeOptions {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeAttributionOptions {
@@ -218,6 +220,7 @@ export interface IMergeTreeAttributionOptions {
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
  * @sealed
+ * @legacy
  * @alpha
  */
 export interface AttributionPolicy {

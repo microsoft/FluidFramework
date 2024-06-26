@@ -21,6 +21,7 @@ import { createLocalDocumentService } from "./localDocumentService.js";
 
 /**
  * Implementation of document service factory for local use.
+ * @legacy
  * @alpha
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {

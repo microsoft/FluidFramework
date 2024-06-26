@@ -13,6 +13,7 @@ import type {
 /**
  * Casts the public API for delta manager into the internal one,
  * exposing access to APIs needed by the implementation of Fluid Framework but not its users.
+ * @legacy
  * @alpha
  */
 export function toDeltaManagerInternal(

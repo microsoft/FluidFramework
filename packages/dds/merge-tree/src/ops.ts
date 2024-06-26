@@ -5,6 +5,7 @@
 
 /**
  * Flags enum that dictates behavior of a {@link ReferencePosition}
+ * @legacy
  * @alpha
  */
 export enum ReferenceType {
@@ -48,6 +49,7 @@ export enum ReferenceType {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMarkerDef {
@@ -56,6 +58,7 @@ export interface IMarkerDef {
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 /**
+ * @legacy
  * @alpha
  */
 export const MergeTreeDeltaType = {
@@ -70,11 +73,13 @@ export const MergeTreeDeltaType = {
 } as const;
 
 /**
+ * @legacy
  * @alpha
  */
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeDelta {
@@ -86,6 +91,7 @@ export interface IMergeTreeDelta {
 
 /**
  * A position specified relative to a segment.
+ * @legacy
  * @alpha
  */
 export interface IRelativePosition {
@@ -106,6 +112,7 @@ export interface IRelativePosition {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
@@ -118,6 +125,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
@@ -132,6 +140,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
  * @deprecated We no longer intend to support this functionality and it will
  * be removed in a future release. There is no replacement for this
  * functionality.
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
@@ -151,6 +160,7 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
@@ -167,6 +177,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
  * release, as group ops are redundant with the native batching capabilities
  * of the runtime
  *
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
@@ -175,6 +186,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONSegment {
@@ -182,6 +194,7 @@ export interface IJSONSegment {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type IMergeTreeDeltaOp =
@@ -191,6 +204,7 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeObliterateMsg;
 
 /**
+ * @legacy
  * @alpha
  */
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
