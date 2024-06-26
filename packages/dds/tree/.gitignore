@@ -54,3 +54,6 @@ temp_modules/
 # Fuzz test operation files
 **/fuzz/failures/**
 **/fuzz/successes/**
+
+# API report + node10 compat collateral
+internal-api-report.d.ts

@@ -4,6 +4,9 @@ nyc
 src/test
 dist/test
 lib/test
+dist/tree.api-report.legacy.d.ts
+lib/tree.api-report.legacy.d.ts
+internal-api-report.d.ts
 **/_api-extractor-temp/**
 
 # These are large test files that we don't need to distribute.
