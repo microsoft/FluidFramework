@@ -928,7 +928,7 @@ describe("serializedStateManager", () => {
 
 	describe("periodic snapshot refresh", () => {
 		let clock: SinonFakeTimers;
-		const snapshotRefreshTimeout = 10;
+		const snapshotRefreshTimeoutMs = 10;
 
 		before(() => {
 			clock = useFakeTimers();
@@ -995,7 +995,7 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 					() => false,
-					snapshotRefreshTimeout,
+					snapshotRefreshTimeoutMs,
 				);
 				// equivalent to attach
 				serializedStateManager.setInitialSnapshot({
@@ -1015,7 +1015,7 @@ describe("serializedStateManager", () => {
 				// snapshot refresh promise is undefined before timeout
 				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(snapshotRefreshP, undefined);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				// now it's a promise
 				const initialRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(initialRefreshP instanceof Promise, true);
@@ -1040,7 +1040,7 @@ describe("serializedStateManager", () => {
 				assert.strictEqual(secondRefreshP, undefined);
 				snapshotSequenceNumber = 18; // latest snapshot will be among processed ops
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
 
@@ -1064,7 +1064,7 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 					() => false,
-					snapshotRefreshTimeout,
+					snapshotRefreshTimeoutMs,
 				);
 				// equivalent to attach
 				serializedStateManager.setInitialSnapshot({
@@ -1093,7 +1093,7 @@ describe("serializedStateManager", () => {
 
 				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(snapshotRefreshP, undefined);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				// now it's a promise
 				const initialRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(initialRefreshP instanceof Promise, true);
@@ -1109,7 +1109,7 @@ describe("serializedStateManager", () => {
 				assert.strictEqual(secondRefreshP, undefined);
 				snapshotSequenceNumber = 18; // latest snapshot will be among processed ops
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
 
@@ -1133,7 +1133,7 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 					() => false,
-					snapshotRefreshTimeout,
+					snapshotRefreshTimeoutMs,
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined);
@@ -1147,7 +1147,7 @@ describe("serializedStateManager", () => {
 				// snapshot refresh promise is undefined before timeout
 				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(snapshotRefreshP, undefined);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				// now it's a promise
 				const initialRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(initialRefreshP instanceof Promise, true);
@@ -1172,7 +1172,7 @@ describe("serializedStateManager", () => {
 				assert.strictEqual(secondRefreshP, undefined);
 				snapshotSequenceNumber = 18;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				// after a js turn and another timeout, the snapshot is refreshed
 				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
@@ -1197,7 +1197,7 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 					() => false,
-					snapshotRefreshTimeout,
+					snapshotRefreshTimeoutMs,
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined);
@@ -1221,7 +1221,7 @@ describe("serializedStateManager", () => {
 				// snapshot refresh promise is undefined before timeout
 				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(snapshotRefreshP, undefined);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				// now it's a promise
 				const initialRefreshP = serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(initialRefreshP instanceof Promise, true);
@@ -1238,7 +1238,7 @@ describe("serializedStateManager", () => {
 				assert.strictEqual(secondRefreshP, undefined);
 				snapshotSequenceNumber = 18;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				// after a js turn and another timeout, the snapshot is refreshed
 				const thirdRefresh = await serializedStateManager.refreshSnapshotP;
 				assert.strictEqual(thirdRefresh, snapshotSequenceNumber);
@@ -1267,7 +1267,7 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 					() => false,
-					snapshotRefreshTimeout,
+					snapshotRefreshTimeoutMs,
 				);
 				const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1 (11)
 				const lastProcessedOpSequenceNumber = 40;
@@ -1300,7 +1300,7 @@ describe("serializedStateManager", () => {
 				await yieldEventLoop();
 				snapshotSequenceNumber = 16; // uploading a snapshot too old to be the latest
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				await serializedStateManager.refreshSnapshotP;
 				logger.assertMatchAny([
 					{
@@ -1334,7 +1334,7 @@ describe("serializedStateManager", () => {
 					eventEmitter,
 					isDirtyF,
 					() => false,
-					snapshotRefreshTimeout,
+					snapshotRefreshTimeoutMs,
 				);
 				let seq = 1;
 				let lastProcessedOpSequenceNumber = 20;
@@ -1366,7 +1366,7 @@ describe("serializedStateManager", () => {
 				await yieldEventLoop();
 				snapshotSequenceNumber = 35;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				clock.tick(snapshotRefreshTimeout);
+				clock.tick(snapshotRefreshTimeoutMs);
 				await serializedStateManager.refreshSnapshotP;
 				logger.assertMatchAny([
 					{

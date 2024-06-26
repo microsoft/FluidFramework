@@ -170,7 +170,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 				configProvider: configProvider({
 					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Container.enableOfflineSnapshotRefresh": true,
-					"Fluid.Container.snapshotRefreshTimeout": 100,
+					"Fluid.Container.snapshotRefreshTimeoutMs": 100,
 				}),
 			},
 		};

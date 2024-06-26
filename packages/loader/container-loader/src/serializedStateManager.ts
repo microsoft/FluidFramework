@@ -153,7 +153,7 @@ export class SerializedStateManager {
 	private _refreshSnapshotP: Promise<number> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 	private readonly refreshTimer: Timer;
-	private readonly snapshotRefreshTimeout: number = 60 * 60 * 24 * 1000;
+	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -171,15 +171,15 @@ export class SerializedStateManager {
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
-		snapshotRefreshTimeout?: number,
+		snapshotRefreshTimeoutMs?: number,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
 
-		this.snapshotRefreshTimeout = snapshotRefreshTimeout ?? this.snapshotRefreshTimeout;
-		this.refreshTimer = new Timer(this.snapshotRefreshTimeout, () =>
+		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
+		this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
 			this.tryRefreshSnapshot(),
 		);
 		// special case handle. Obtaining the last saved op seq num to avoid

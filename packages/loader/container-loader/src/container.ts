@@ -1005,7 +1005,7 @@ export class Container
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
-			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeout"),
+			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),
 		);
 
 		const isDomAvailable =
