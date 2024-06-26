@@ -39,9 +39,9 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
+import { geometricMean, outputFriendlyObjectFromBenchmark, pad, prettyNumber, Stats } from "./ReporterUtilities";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
-import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
+import { BenchmarkResult, isResultError } from "./runBenchmark";
 
 interface BenchmarkResults {
 	table: Table;
@@ -98,7 +98,7 @@ export class BenchmarkReporter {
 	 *
 	 * Tracking multiple suites at once is required due to nesting of suites.
 	 */
-	private readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<
+	readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<
 		string,
 		BenchmarkResults
 	>();
@@ -288,7 +288,7 @@ export class BenchmarkReporter {
 		for (const [key, bench] of benchmarks.entries()) {
 			if (!isResultError(bench)) {
 				// successful benchmarks: ready them for output to file
-				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, bench));
+				outputFriendlyBenchmarks.push(outputFriendlyObjectFromBenchmark(key, bench));
 			}
 		}
 
@@ -306,41 +306,5 @@ export class BenchmarkReporter {
 		const fullPath: string = path.join(this.outputDirectory, outputFilename);
 		fs.writeFileSync(fullPath, outputContentString);
 		return fullPath;
-	}
-
-	/**
-	 * The Benchmark object contains a lot of data we don't need and also has vague names, so
-	 * this method extracts the necessary data and provides friendlier names.
-	 */
-	private outputFriendlyObjectFromBenchmark(
-		benchmarkName: string,
-		benchmark: BenchmarkData,
-	): Record<string, unknown> {
-		const obj = {
-			iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
-			stats: this.outputFriendlyObjectFromStats(benchmark.stats),
-			iterationCountPerSample: benchmark.iterationsPerBatch,
-			numSamples: benchmark.stats.samples.length,
-			benchmarkName,
-			totalTimeSeconds: benchmark.elapsedSeconds,
-		};
-		return obj;
-	}
-
-	/**
-	 * The Stats object contains a lot of data we don't need,
-	 * so this method extracts the necessary data and provides friendlier names.
-	 */
-	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {
-		const obj = {
-			marginOfError: benchmarkStats.marginOfError,
-			marginOfErrorPercent: benchmarkStats.marginOfErrorPercent,
-			arithmeticMean: benchmarkStats.arithmeticMean,
-			standardErrorOfMean: benchmarkStats.standardErrorOfMean,
-			variance: benchmarkStats.variance,
-			standardDeviation: benchmarkStats.standardDeviation,
-			sample: benchmarkStats.samples,
-		};
-		return obj;
 	}
 }

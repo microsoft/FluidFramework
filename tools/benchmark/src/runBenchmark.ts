@@ -13,6 +13,7 @@ import {
 	BenchmarkTimer,
 } from "./Configuration";
 import { Stats, getArrayStatistics } from "./ReporterUtilities";
+import type { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
 import { Timer, defaultMinimumTime, timer } from "./timer";
 
 /**
@@ -62,7 +63,7 @@ export interface BenchmarkData {
  * Result of trying to run a benchmark.
  * @public
  */
-export type BenchmarkResult = BenchmarkError | BenchmarkData;
+export type BenchmarkResult = BenchmarkError | BenchmarkData | MemoryBenchmarkStats;
 
 /**
  * Use for readonly view of Json compatible data.

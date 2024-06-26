@@ -4,13 +4,16 @@
  */
 
 import chalk from "chalk";
+import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { getName } from "./ReporterUtilities";
+import { getName, isMemoryBenchmarkStats, pad, prettyNumber } from "./ReporterUtilities";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
 // Since it's not moved yet, it needs this lint suppression to do this import:
+// eslint-disable-next-line import/no-internal-modules
+import { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
 // eslint-disable-next-line import/no-internal-modules
 import { getSuiteName } from "./mocha/mochaReporterUtilities";
 import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
@@ -28,9 +31,8 @@ import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class, unicorn/prefer-module
 module.exports = class {
-	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
+	public constructor(runner: Runner, data: Map<Test, BenchmarkResult>, options?: { reporterOptions?: ReporterOptions }) {
 		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportDir);
-		const data: Map<Test, BenchmarkData> = new Map();
 		runner
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
@@ -55,8 +57,8 @@ module.exports = class {
 				}
 
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
-				let benchmark: BenchmarkResult | undefined = data.get(test);
-				if (benchmark === undefined) {
+				let benchmarkResult = data.get(test);
+				if (benchmarkResult === undefined) {
 					// Mocha test complected with out reporting data.
 					// This is an error, so report it as such.
 					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
@@ -69,19 +71,92 @@ module.exports = class {
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
 					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
 					console.error(chalk.red(error));
-					benchmark = { error };
+					benchmarkResult = { error };
+
+					if (isMemoryBenchmarkStats(benchmarkResult)) {
+						(benchmarkResult as unknown as MemoryBenchmarkStats).aborted = true;
+					}
 				}
 
 				if (isChildProcess) {
 					// Write the data to stdout so the parent process can collect it.
-					console.info(JSON.stringify(benchmark));
+					console.info(JSON.stringify(benchmarkResult));
 				} else {
-					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmark);
+					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmarkResult);
 				}
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
 				if (!isChildProcess) {
-					benchmarkReporter.recordSuiteResults(getSuiteName(suite));
+					const suiteName = getSuiteName(suite);
+					console.log(`\n${chalk.bold(suiteName)}`);
+
+					const suiteData = benchmarkReporter.inProgressSuites.get(suiteName);
+					if (suiteData === undefined) {
+						return;
+					} else {
+						const table = new Table();
+						const failedTests = new Array<[string, MemoryBenchmarkStats]>();
+						for (const [testName, testData] of suiteData.benchmarksMap.entries()) {
+							if (isMemoryBenchmarkStats(testData)) {
+								if (testData.aborted) {
+									table.cell("status", `${pad(4)}${chalk.red("×")}`);
+									failedTests.push([testName, testData]);
+								} else {
+									table.cell("status", `${pad(4)}${chalk.green("✔")}`);
+								}
+								table.cell("name", chalk.italic(testName));
+								if (!testData.aborted) {
+									table.cell(
+										"Heap Used Avg",
+										prettyNumber(testData.stats.arithmeticMean, 2),
+										Table.padLeft,
+									);
+									table.cell(
+										"Heap Used StdDev",
+										prettyNumber(testData.stats.standardDeviation, 2),
+										Table.padLeft,
+									);
+									table.cell(
+										"Margin of Error",
+										`±${prettyNumber(testData.stats.marginOfError, 2)}`,
+										Table.padLeft,
+									);
+									table.cell(
+										"Relative Margin of Error",
+										`±${prettyNumber(testData.stats.marginOfErrorPercent, 2)}%`,
+										Table.padLeft,
+									);
+
+									table.cell("Iterations", testData.runs.toString(), Table.padLeft);
+									table.cell(
+										"Samples used",
+										testData.stats.samples.length.toString(),
+										Table.padLeft,
+									);
+									table.cell(
+										"Avg ms/iteration",
+										`${prettyNumber(testData.totalRunTimeMs / testData.runs, 2)}`,
+										Table.padLeft,
+									);
+								}
+								table.newRow();
+								console.log(`${table.toString()}`);
+							}
+						}
+
+
+						if (failedTests.length > 0) {
+							console.log(
+								"------------------------------------------------------",
+								`\n${chalk.red("ERRORS:")}`,
+							);
+							for (const [testName, testData] of failedTests) {
+								console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
+							}
+						}
+						benchmarkReporter.recordSuiteResults(suiteName);
+						benchmarkReporter.inProgressSuites.delete(suiteName);
+					}
 				}
 			})
 			.once(Runner.constants.EVENT_RUN_END, () => {

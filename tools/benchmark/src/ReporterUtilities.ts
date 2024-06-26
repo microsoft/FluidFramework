@@ -11,6 +11,8 @@ import {
 	testTypes,
 	userCategoriesSplitter,
 } from "./Configuration";
+import type { BenchmarkData, BenchmarkResult } from "./runBenchmark";
+import type { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
@@ -197,4 +199,52 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		samples: finalSamples,
 		marginOfErrorPercent: rme,
 	};
+}
+
+/**
+ * Check whether obj is MemoryBenchmarkStats type
+ */
+export function isMemoryBenchmarkStats(obj: BenchmarkResult): obj is MemoryBenchmarkStats {
+    // Check if 'obj' has the required properties of MemoryBenchmarkStats
+    return "runs" in obj
+	&& "samples" in obj
+	&& "stats" in obj
+	&& "aborted" in obj
+	&& "totalRunTimeMs" in obj;
+}
+
+/**
+ * The Benchmark object contains a lot of data we don't need and also has vague names, so
+ * this method extracts the necessary data and provides friendlier names.
+ */
+export function outputFriendlyObjectFromBenchmark(
+	benchmarkName: string,
+	benchmark: BenchmarkData,
+): Record<string, unknown> {
+	const obj = {
+		iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
+		stats: outputFriendlyObjectFromStats(benchmark.stats),
+		iterationCountPerSample: benchmark.iterationsPerBatch,
+		numSamples: benchmark.stats.samples.length,
+		benchmarkName,
+		totalTimeSeconds: benchmark.elapsedSeconds,
+	};
+	return obj;
+}
+
+/**
+ * The Stats object contains a lot of data we don't need,
+ * so this method extracts the necessary data and provides friendlier names.
+ */
+function outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, number | readonly number[]> {
+	const obj = {
+		marginOfError: benchmarkStats.marginOfError,
+		marginOfErrorPercent: benchmarkStats.marginOfErrorPercent,
+		arithmeticMean: benchmarkStats.arithmeticMean,
+		standardErrorOfMean: benchmarkStats.standardErrorOfMean,
+		variance: benchmarkStats.variance,
+		standardDeviation: benchmarkStats.standardDeviation,
+		sample: benchmarkStats.samples,
+	};
+	return obj;
 }
