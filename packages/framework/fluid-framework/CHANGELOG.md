@@ -1,5 +1,178 @@
 # fluid-framework
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   fluid-framework: Type Erase ISharedObjectKind ([#21081](https://github.com/microsoft/FluidFramework/pull/21081)) [78f228e370](https://github.com/microsoft/FluidFramework/commit/78f228e37055bd4d9a8f02b3a1eefebf4da9c59c)
+
+    A new type, `SharedObjectKind` is added as a type erased version of `ISharedObjectKind` and `DataObjectClass`.
+
+    This type fills the role of both `ISharedObjectKind` and `DataObjectClass` in the `@public` "declarative API" exposed in the `fluid-framework` package.
+
+    This allows several types referenced by `ISharedObjectKind` to be made `@alpha` as they should only need to be used by legacy code and users of the unstable/alpha/legacy "encapsulated API".
+
+    Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
+    The full list of such types is:
+
+    -   `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
+    -   `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
+        `ISharedObject`
+    -   `IChannel`
+    -   `IChannelAttributes`
+    -   `IChannelFactory`
+    -   `IExperimentalIncrementalSummaryContext`
+    -   `IGarbageCollectionData`
+    -   `ISummaryStats`
+    -   `ISummaryTreeWithStats`
+    -   `ITelemetryContext`
+    -   `IDeltaManagerErased`
+    -   `IFluidDataStoreRuntimeEvents`
+    -   `IFluidHandleContext`
+    -   `IProvideFluidHandleContext`
+
+    Removed APIs:
+
+    -   `DataObjectClass`: Usages replaced with `SharedObjectKind`.
+    -   `LoadableObjectClass`: Replaced with `SharedObjectKind`.
+    -   `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
+    -
+
+-   tree: Added support for optional schema validation on newly inserted content in SharedTree ([#21011](https://github.com/microsoft/FluidFramework/pull/21011)) [b14e9fa607](https://github.com/microsoft/FluidFramework/commit/b14e9fa607a8281f86d0cfac631e33ef12033e21)
+
+    When defining how to view a SharedTree, an application can now specify that new content inserted into the tree should
+    be subject to schema validation at the time it is inserted, so if it's not valid according to the stored schema in the
+    tree an error is thrown immediately.
+
+    This can be accomplished by passing an `ITreeConfigurationOptions` argument with `enableSchemaValidation` set to `true`
+    when creating a `TreeConfiguration` to use with the SharedTree.
+
+    Since this feature requires additional compute when inserting new content into the tree, it is not enabled by default.
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   fluid-framework: Remove some types from `@public` that are not needed ([#21326](https://github.com/microsoft/FluidFramework/pull/21326)) [b629cb80b0](https://github.com/microsoft/FluidFramework/commit/b629cb80b0e5ecdc750270807f77a0e30fab4559)
+
+    Mark the following APIs `@alpha` instead of `@public`:
+
+    -   IBranchOrigin
+    -   ISequencedDocumentMessage
+    -   ISignalMessage
+    -   ISignalMessageBase
+    -   ITrace
+
+-   tree: A new tree status has been added for SharedTree nodes. ([#21270](https://github.com/microsoft/FluidFramework/pull/21270)) [8760e321b0](https://github.com/microsoft/FluidFramework/commit/8760e321b02177babfb187ae293a17a65723f249)
+
+    `TreeStatus.Created` indicates that a SharedTree node has been constructed but not yet inserted into the tree.
+    Constraints passed to the `runTransaction` API are now marked as `readonly`.
+
+-   fluid-framework: Remove several types from `@public` scope ([#21142](https://github.com/microsoft/FluidFramework/pull/21142)) [983e9f09f7](https://github.com/microsoft/FluidFramework/commit/983e9f09f7b10fef9ffa1e9af86166f0ccda7e14)
+
+    The following types have been moved from `@public` to `@alpha`:
+
+    -   `IFluidSerializer`
+    -   `ISharedObjectEvents`
+    -   `IChannelServices`
+    -   `IChannelStorageService`
+    -   `IDeltaConnection`
+    -   `IDeltaHandler`
+
+    These should not be needed by users of the declarative API, which is what `@public` is targeting.
+
+-   sequence: Stop ISharedString extending SharedObject ([#21067](https://github.com/microsoft/FluidFramework/pull/21067)) [47465f4b12](https://github.com/microsoft/FluidFramework/commit/47465f4b12056810112df30a6dad89282afc7a2d)
+
+    ISharedString no longer extends SharedSegmentSequence and instead extends the new ISharedSegmentSequence, which may be missing some APIs.
+
+    Attempt to migrate off the missing APIs, but if that is not practical, request they be added to ISharedSegmentSequence and cast to SharedSegmentSequence as a workaround temporally.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+-   tree: Move several types into InternalTypes ([#21482](https://github.com/microsoft/FluidFramework/pull/21482)) [64d49dd362](https://github.com/microsoft/FluidFramework/commit/64d49dd3629cefe6260a1d6223e58b10c2ac0cb6)
+
+    The stable public API surface for Tree has been reduced.
+    Several types have been moved into InternalTypes, indicating that they are not fully stable nor intended to be referenced by users of Tree.
+
+    -   NodeBuilderData
+    -   FieldHasDefault
+    -   TreeNodeSchemaNonClass
+    -   TreeArrayNodeBase
+    -   ScopedSchemaName
+    -   DefaultProvider
+    -   typeNameSymbol
+    -   InsertableObjectFromSchemaRecord
+    -   ObjectFromSchemaRecord
+    -   FieldHasDefaultUnsafe
+    -   ObjectFromSchemaRecordUnsafe
+    -   TreeObjectNodeUnsafe
+    -   TreeFieldFromImplicitFieldUnsafe
+    -   TreeNodeFromImplicitAllowedTypesUnsafe
+    -   InsertableTreeNodeFromImplicitAllowedTypesUnsafe
+    -   TreeArrayNodeUnsafe
+    -   TreeMapNodeUnsafe
+    -   InsertableObjectFromSchemaRecordUnsafe
+    -   InsertableTreeFieldFromImplicitFieldUnsafe
+    -   InsertableTypedNodeUnsafe
+    -   NodeBuilderDataUnsafe
+    -   NodeFromSchemaUnsafe
+    -   FlexList
+    -   TreeApi
+
+    Additionally a few more types which could not be moved due to technically limitations have been documented that they should be treated similarly.
+
+    -   TreeNodeApi
+    -   TreeNodeSchemaCore
+    -   All \*Unsafe type (use for construction of recursive schema).
+    -   WithType
+    -   AllowedTypes
+    -   FieldSchemaUnsafe
+
+    Also to reduce confusion `type` was renamed to `typeNameSymbol`, and is now only type exported. `Tree.is` should be used to get type information from `TreeNodes` instead.
+
+-   tree: object node fields with statically known default values are now optional ([#21193](https://github.com/microsoft/FluidFramework/pull/21193)) [21eac41660](https://github.com/microsoft/FluidFramework/commit/21eac41660944208bad42b156d7df05fe6dc6b97)
+
+    Makes object node fields with statically known default values (i.e., `optional` and `identifier` fields) optional when creating trees, where they were previously required.
+
+    Example:
+
+    ```typescript
+    class Foo extends schemaFactory.object("Foo", {
+    	name: schemaFactory.string,
+    	id: schemaFactory.identifier,
+    	nickname: schemaFactory.optional(schemaFactory.string),
+    }) {}
+
+    // Before
+    const foo = new Foo({
+    	name: "Bar",
+    	id: undefined, // Had to explicitly specify `undefined` to opt into default behavior
+    	nickname: undefined, // Had to explicitly specify `undefined` for optional field
+    });
+
+    // After
+    const foo = new Foo({
+    	name: "Bar",
+    	// Can omit `id` and `nickname` fields, as both have statically known defaults!
+    });
+    ```
+
+-   tree: Breaking change: `TreeStatus.Created` is now `TreeStatus.New` ([#21278](https://github.com/microsoft/FluidFramework/pull/21278)) [5a26346a14](https://github.com/microsoft/FluidFramework/commit/5a26346a145ed54d08cd5a9b4f1c9b177711bd7c)
+
+    `TreeStatus.Created` has been renamed to `TreeStatus.New`.
+
+-   core-interfaces, tree: Unify `IDisposable` interfaces ([#21184](https://github.com/microsoft/FluidFramework/pull/21184)) [cfcb827851](https://github.com/microsoft/FluidFramework/commit/cfcb827851ffc81486db6c718380150189fb95c5)
+
+    Public APIs in `@fluidframework/tree` now use `IDisposable` from `@fluidframework/core-interfaces` replacing `disposeSymbol` with "dispose".
+
+    `IDisposable` in `@fluidframework/core-interfaces` is now `@sealed` indicating that third parties should not implement it to reserve the ability for Fluid Framework to extend it to include `Symbol.dispose` as a future non-breaking change.
+
+-   fluid-framework: Cleanup `fluid-framework` legacy exports ([#21153](https://github.com/microsoft/FluidFramework/pull/21153)) [efee21c296](https://github.com/microsoft/FluidFramework/commit/efee21c2965a02288db6e0345fcf9b3713210953)
+
+    Cleanup `fluid-framework` legacy exports to remove no longer required types.
+
 ## 2.0.0-rc.4.0.0
 
 ### Minor Changes

@@ -212,6 +212,20 @@ use_old_ClassDeclaration_SharedObjectCore(
     get_current_ClassDeclaration_SharedObjectCore());
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_SharedObjectKind": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_SharedObjectKind():
+    TypeOnly<current.SharedObjectKind>;
+declare function use_old_InterfaceDeclaration_SharedObjectKind(
+    use: TypeOnly<old.SharedObjectKind>): void;
+use_old_InterfaceDeclaration_SharedObjectKind(
+    get_current_InterfaceDeclaration_SharedObjectKind());
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under

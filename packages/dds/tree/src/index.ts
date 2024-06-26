@@ -136,7 +136,6 @@ export {
 	FlexFieldKind,
 	isNeverField,
 	type FullSchemaPolicy,
-	typeNameSymbol,
 	valueSymbol,
 	type ContextuallyTypedNodeDataObject,
 	type ContextuallyTypedNodeData,
@@ -257,7 +256,6 @@ export {
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
-	type TreeApi,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
 	type RunTransaction,
@@ -269,18 +267,14 @@ export {
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
-	type TreeArrayNodeBase,
 	type ITree,
 	type TreeNodeSchema,
-	TreeConfiguration,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
-	type ScopedSchemaName,
-	type TreeNodeApi,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
@@ -288,53 +282,42 @@ export {
 	type TreeMapNode,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	type,
-	type WithType,
-	type AllowedTypes,
 	FieldKind,
 	FieldSchema,
-	type FieldHasDefault,
-	type FieldHasDefaultUnsafe,
 	type ImplicitAllowedTypes,
-	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
-	InternalSimpleTreeTypes,
-	type NodeBuilderData,
 	NodeKind,
-	type ObjectFromSchemaRecord,
 	type TreeObjectNode,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
-	type TreeNodeSchemaCore,
-	type TreeNodeSchemaNonClass,
 	type SchemaCompatibilityStatus,
-	type DefaultProvider,
 	type FieldProps,
 	type InternalTreeNode,
-
-	// Recursive Schema APIs
-	type ValidateRecursiveSchema,
-	type ObjectFromSchemaRecordUnsafe,
+	// Types not really intended for public use, but used in links.
+	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
+	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
+	type TreeNodeApi,
+	type TreeNodeSchemaCore,
+	// Types not really intended for public use, but used in inferred types exposed in the public API.
+	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
+	// error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
+	type AllowedTypes,
+	type WithType,
 	type TreeObjectNodeUnsafe,
-	type TreeFieldFromImplicitFieldUnsafe,
-	type TreeNodeFromImplicitAllowedTypesUnsafe,
-	type FieldSchemaUnsafe,
 	type InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type TreeArrayNodeUnsafe,
 	type TreeMapNodeUnsafe,
 	type InsertableObjectFromSchemaRecordUnsafe,
 	type InsertableTreeFieldFromImplicitFieldUnsafe,
-	type InsertableTypedNodeUnsafe,
-	type NodeBuilderDataUnsafe,
-	type NodeFromSchemaUnsafe,
-
+	type FieldSchemaUnsafe,
+	// Recursive Schema APIs
+	type ValidateRecursiveSchema,
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
-
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
@@ -363,7 +346,6 @@ export {
 	type BrandedKeyContent,
 	type RestrictiveReadonlyRecord,
 	type MakeNominal,
-	type InternalUtilTypes,
 } from "./util/index.js";
 
 export {
@@ -385,9 +367,6 @@ export {
 	type TypedFields,
 	type UnbrandedName,
 	type EmptyObject,
-	type FlexList,
-	InternalFlexListTypes,
-
 	// These field kind types really only need to show up via FieldKinds.name, and not as top level names in the package.
 	// These names also are collision prone.
 	type Required,
@@ -396,3 +375,12 @@ export {
 	type Forbidden,
 	type Sequence,
 } from "./feature-libraries/index.js";
+
+import * as InternalTypes from "./internalTypes.js";
+export {
+	/**
+	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
+	 */
+	InternalTypes,
+};

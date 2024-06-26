@@ -13,7 +13,9 @@ import {
 	type ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
+	createFluidServiceNetworkError,
 	NetworkError,
+	InternalErrorCode,
 	isNetworkError,
 	validateTokenClaims,
 	validateTokenClaimsExpiration,
@@ -334,7 +336,11 @@ async function checkClusterDraining(
 			...properties,
 			tenantId: message.tenantId,
 		});
-		throw new NetworkError(503, "Cluster is not available. Please retry later.");
+		const error = createFluidServiceNetworkError(503, {
+			message: "Cluster is not available. Please retry later.",
+			internalErrorCode: InternalErrorCode.ClusterDraining,
+		});
+		throw error;
 	}
 }
 
@@ -704,6 +710,12 @@ export async function connectDocument(
 		if (uncaughtError) {
 			if (uncaughtError.code !== undefined) {
 				connectMetric.setProperty(CommonProperties.errorCode, uncaughtError.code);
+			}
+			if (uncaughtError.internalErrorCode !== undefined) {
+				connectMetric.setProperty(
+					CommonProperties.internalErrorCode,
+					uncaughtError.internalErrorCode,
+				);
 			}
 			connectMetric.error(`Connect document failed`, uncaughtError);
 		} else {

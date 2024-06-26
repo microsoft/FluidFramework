@@ -18,7 +18,9 @@ export default {
 	},
 	typeWithNestedProperties: {
 		typeid: "Test:NestedProperties-1.0.0",
-		properties: [{ id: "withNestedProperties", properties: [{ id: "foo", typeid: "String" }] }],
+		properties: [
+			{ id: "withNestedProperties", properties: [{ id: "foo", typeid: "String" }] },
+		],
 	},
 	typeWithBaseProperty: {
 		typeid: "Test:BaseProperty-1.0.0",

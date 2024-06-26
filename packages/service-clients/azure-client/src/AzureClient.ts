@@ -10,18 +10,18 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
-import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { FluidObject, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/driver-definitions";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import {
-	type ContainerSchema,
-	type IFluidContainer,
-	type CompatibilityMode,
+import type {
+	ContainerSchema,
+	IFluidContainer,
+	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
@@ -34,12 +34,12 @@ import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
-import {
-	type AzureClientProps,
-	type AzureConnectionConfig,
-	type AzureContainerServices,
-	type AzureContainerVersion,
-	type AzureGetVersionsOptions,
+import type {
+	AzureClientProps,
+	AzureConnectionConfig,
+	AzureContainerServices,
+	AzureContainerVersion,
+	AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
 
@@ -65,26 +65,12 @@ const azureClientFeatureGates = {
 };
 
 /**
- * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
- */
-const azureClientV1CompatFeatureGates = {
-	// Disable Garbage Collection
-	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
-	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
-};
-
-/**
  * Wrap the config provider to fall back on the appropriate defaults for Azure Client.
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	const defaults = {
-		...azureClientFeatureGates,
-		...azureClientV1CompatFeatureGates,
-	};
-	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+	return wrapConfigProviderWithDefaults(baseConfigProvider, azureClientFeatureGates);
 }
 
 /**
@@ -170,7 +156,10 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),
@@ -206,7 +195,10 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),
@@ -236,7 +228,10 @@ export class AzureClient {
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
 		const url = new URL(this.properties.connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(this.properties.connection.endpoint));
+		url.searchParams.append(
+			"storage",
+			encodeURIComponent(this.properties.connection.endpoint),
+		);
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.properties.connection)),

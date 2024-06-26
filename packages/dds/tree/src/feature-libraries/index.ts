@@ -67,7 +67,11 @@ export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.j
 export type { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
 export { ForestSummarizer } from "./forest-summary/index.js";
-export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
+export {
+	cursorForMapTreeField,
+	cursorForMapTreeNode,
+	mapTreeFromCursor,
+} from "./mapTreeCursor.js";
 export { MemoizedIdRangeAllocator, type IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
 export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
@@ -117,7 +121,6 @@ export {
 	genericFieldKind,
 	type HasFieldChanges,
 	type NodeExistsConstraint,
-	NodeExistenceState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
 	type RelevantRemovedRootsFromChild,
@@ -154,7 +157,8 @@ export {
 	type SchemaCollection,
 	TreeNodeSchemaBase,
 	type LazyItem,
-	InternalFlexListTypes,
+	type FlexListToUnion,
+	type ExtractItemType,
 	isLazy,
 	type NormalizeObjectNodeFields,
 	type NormalizeField as NormalizeFieldSchema,
@@ -256,7 +260,6 @@ export {
 	type FlexTreeUnknownUnboxed,
 	isFlexTreeNode,
 	ContextSlot,
-
 	// Internal
 	type FlexTreeTypedFieldInner,
 	type FlexTreeUnboxFieldInner,
@@ -278,8 +281,6 @@ export {
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
 	getSchemaAndPolicy,
-	onNodeChanged,
-	onTreeChanged,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
@@ -293,7 +294,6 @@ export type {
 	InsertableFlexField,
 	AllowedTypesToFlexInsertableTree,
 	ApplyMultiplicity,
-
 	// Internal
 	CollectOptions,
 	TypedFields,

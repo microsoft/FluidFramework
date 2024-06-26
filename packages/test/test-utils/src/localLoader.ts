@@ -12,7 +12,10 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 
@@ -47,6 +50,7 @@ export function createLoader(
  * @param source - The code details used to create the Container.
  * @param loader - The loader to use to initialize the container.
  * @param attachRequest - The request to create new from.
+ * @legacy
  * @alpha
  */
 

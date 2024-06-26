@@ -5,7 +5,8 @@
 
 /**
  * Represents token response
- * @beta
+ * @legacy
+ * @alpha
  */
 export interface TokenResponse {
 	/** Token value */
@@ -20,6 +21,7 @@ export interface TokenResponse {
 
 /**
  * Represents access token fetch options
+ * @legacy
  * @alpha
  */
 export interface TokenFetchOptions {
@@ -45,6 +47,7 @@ export interface TokenFetchOptions {
 
 /**
  * Represents access token fetch options for ODSP resource
+ * @legacy
  * @alpha
  */
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
@@ -64,6 +67,7 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
  * @returns If successful, TokenResponse object representing token value along with flag indicating
  * whether token came from cache. Legacy implementation may return a string for token value;
  * in this case it should be assumes that fromCache signal is undefined. Null is returned in case of failure.
+ * @legacy
  * @alpha
  */
 export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
@@ -80,8 +84,8 @@ export const tokenFromResponse = (
 	tokenResponse === null || typeof tokenResponse === "string"
 		? tokenResponse
 		: tokenResponse === undefined
-		? null
-		: tokenResponse.token;
+			? null
+			: tokenResponse.token;
 
 /**
  * Helper method which returns flag indicating whether token response comes from local cache
@@ -101,6 +105,7 @@ export const isTokenFromCache = (
  * Identity types supported by ODSP driver.
  * `Consumer` represents user authenticated with Microsoft Account (MSA).
  * `Enterprise` represents user authenticated with M365 tenant account.
+ * @legacy
  * @alpha
  */
 export type IdentityType = "Consumer" | "Enterprise";

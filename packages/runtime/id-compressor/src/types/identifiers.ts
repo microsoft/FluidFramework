@@ -36,4 +36,6 @@ export type StableId = string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b4
  * A StableId which is suitable for use as a session identifier
  * @public
  */
-export type SessionId = StableId & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58" };
+export type SessionId = StableId & {
+	readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};
