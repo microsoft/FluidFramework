@@ -33,6 +33,17 @@ import type {
  *
  * @privateRemarks TODO: When we are ready, this type should be made `internal`, and the deprecation notice should be removed.
  *
+ * @deprecated
+ *
+ * This class is not intended for use outside of the `fluid-framework` repo, and will be removed from
+ * package exports in the near future.
+ *
+ * Please migrate usages by either creating your own mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
+ * implementation, or by copying this code as-is into your own repo.
+ *
+ * @privateRemarks TODO: When we are ready, this type should be made `internal`, and the deprecation notice should be removed.
+ *
+ * @legacy
  * @alpha
  */
 export class MockLogger implements ITelemetryBaseLogger {
