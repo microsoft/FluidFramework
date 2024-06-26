@@ -330,8 +330,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-export { IGenericError }
-
 // @alpha
 export interface IGetPendingLocalStateProps {
     readonly notifyImminentClosure: boolean;
@@ -430,8 +428,6 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 
 export { IThrottlingWarning }
 
-export { IUsageError }
-
 // @alpha
 export enum LoaderHeader {
     // @deprecated (undocumented)
@@ -455,5 +451,7 @@ export type ReadOnlyInfo = {
     readonly storageOnly: boolean;
     readonly storageOnlyReason?: string;
 };
+
+// (No @packageDocumentation comment for this package)
 
 ```

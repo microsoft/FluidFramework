@@ -545,6 +545,7 @@ on<K extends keyof TreeChangeEvents>(
 	): () => void;
 ```
 
+
 `Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
 The `node` can be any node of the tree.
 The `eventName` can be either "treeChanged" or "nodeChanged".
@@ -563,6 +564,7 @@ const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
 
 // Later at some point when the event subscription is not needed anymore
 unsubscribe();
+
 ```
 
 ### Type guard
