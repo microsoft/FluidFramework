@@ -121,11 +121,6 @@ export interface TreeNodeApi {
 	 * The same node's identifier may, for example, be different across multiple sessions for the same client and document, or different across two clients in the same session.
 	 */
 	shortId(node: TreeNode): number | string | undefined;
-
-	/**
-	 * TODO
-	 */
-	storedSchema(node: TreeNode): TreeNodeStoredSchema;
 }
 
 /**
@@ -226,11 +221,6 @@ export const treeNodeApi: TreeNodeApi = {
 		}
 
 		return shortId;
-	},
-	storedSchema(node: TreeNode): TreeNodeStoredSchema {
-		// throw new Error("TODO");
-		const viewSchema = treeNodeApi.schema(node);
-		return getStoredKey(node) === rootFieldKey;
 	},
 };
 
