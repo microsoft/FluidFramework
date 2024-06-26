@@ -51,10 +51,6 @@ parameters:
   type: boolean
   default: true
 
-- name: poolCG
-  type: object
-  default: Small-1ES
-
 - name: poolBuild
   type: object
   default: Small-1ES
