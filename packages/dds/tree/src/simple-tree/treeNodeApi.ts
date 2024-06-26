@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { Multiplicity, rootFieldKey, type TreeNodeStoredSchema } from "../core/index.js";
+import { Multiplicity, rootFieldKey } from "../core/index.js";
 import {
 	FieldKinds,
 	type LazyItem,

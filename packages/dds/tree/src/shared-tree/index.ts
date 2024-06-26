@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+export type {
+	JsonableStoredNodeSchema,
+	JsonableStoredObjectNodeSchema,
+	JsonableStoredArrayNodeSchema,
+	JsonableStoredMapNodeSchema,
+	JsonableStoredLeafNodeSchema,
+	JsonableStoredNodeSchemas,
+	JsonableStoredFieldSchema,
+} from "./jsonableStoredSchema.js";
+
 export {
 	type ISharedTree,
 	SharedTreeFactory,

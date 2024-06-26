@@ -22,14 +22,6 @@ import {
 	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
-	EmptyKey,
-	type ValueSchema,
 } from "../core/index.js";
 import {
 	type HasListeners,
@@ -58,15 +50,13 @@ import {
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import {
-	FieldKind,
-	type ITree,
-	type ImplicitFieldSchema,
-	NodeKind,
+import type {
+	ITree,
+	ImplicitFieldSchema,
 	// eslint-disable-next-line import/no-deprecated
-	type TreeConfiguration,
-	type TreeView,
-	type TreeViewConfiguration,
+	TreeConfiguration,
+	TreeView,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
 import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -77,7 +67,10 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
-import { fail } from "../util/index.js";
+import {
+	toJsonableFieldSchema,
+	type JsonableStoredFieldSchema,
+} from "./jsonableStoredSchema.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -141,7 +134,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 *
 	 * @privateRemarks TODO: promote to `ITree` once we are ready to surface this to customers.
 	 */
-	getStoredSchema(): NiceStoredFieldSchema;
+	getStoredSchema(): JsonableStoredFieldSchema;
 }
 
 /**
@@ -327,8 +320,11 @@ export class SharedTree
 		}
 	}
 
-	public getStoredSchema(): NiceStoredFieldSchema {
-		return getNiceFieldSchema(this.storedSchema.nodeSchema, this.storedSchema.rootFieldSchema);
+	public getStoredSchema(): JsonableStoredFieldSchema {
+		return toJsonableFieldSchema(
+			this.storedSchema.nodeSchema,
+			this.storedSchema.rootFieldSchema,
+		);
 	}
 
 	public schematizeFlexTree<TRoot extends FlexFieldSchema>(
@@ -503,148 +499,4 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		tree.initializeLocal();
 		return tree;
 	}
-}
-
-/**
- * TODO
- * @internal
- */
-export interface NiceStoredNodeSchema {
-	readonly kind: NodeKind;
-	readonly name: string;
-}
-
-/**
- * TODO
- * @internal
- */
-export interface NiceStoredObjectNodeSchema extends NiceStoredNodeSchema {
-	readonly kind: NodeKind.Object;
-	readonly fields: Record<string, NiceStoredFieldSchema>;
-}
-
-/**
- * TODO
- * @internal
- */
-export interface NiceStoredArrayNodeSchema extends NiceStoredNodeSchema {
-	readonly kind: NodeKind.Array;
-	readonly allowedTypes: readonly NiceStoredNodeSchema[];
-}
-
-/**
- * TODO
- * @internal
- */
-export interface NiceStoredMapNodeSchema extends NiceStoredNodeSchema {
-	readonly kind: NodeKind.Map;
-	readonly allowedTypes: readonly NiceStoredNodeSchema[];
-}
-
-/**
- * TODO
- * @internal
- */
-export interface NiceStoredLeafNodeSchema extends NiceStoredNodeSchema {
-	readonly kind: NodeKind.Leaf;
-	readonly type: ValueSchema;
-}
-
-/**
- * TODO
- * @internal
- */
-export type NiceStoredNodeSchemas =
-	| NiceStoredLeafNodeSchema
-	| NiceStoredMapNodeSchema
-	| NiceStoredArrayNodeSchema
-	| NiceStoredObjectNodeSchema;
-
-/**
- * TODO
- * @internal
- */
-export interface NiceStoredFieldSchema {
-	readonly kind: FieldKind;
-	readonly allowedTypes: readonly NiceStoredNodeSchema[];
-}
-
-// TODO: cache entries based on identifiers to prevent infinite recursion
-
-function getNiceFieldSchema(
-	schemaMap: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-	fieldSchema: TreeFieldStoredSchema,
-): NiceStoredFieldSchema {
-	const allowedTypes: NiceStoredNodeSchema[] = [];
-	for (const type of fieldSchema.types ?? []) {
-		allowedTypes.push(getNiceNodeSchema(schemaMap, type));
-	}
-	return {
-		kind: FieldKind.Optional, // TODO: actually get this from the schema
-		allowedTypes,
-	};
-}
-
-function getNiceNodeSchema(
-	schemaMap: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-	type: TreeNodeSchemaIdentifier,
-): NiceStoredNodeSchema {
-	const nodeSchema = schemaMap.get(type);
-	assert(nodeSchema !== undefined, "Encountered a schema type without a definition.");
-	if (nodeSchema instanceof ObjectNodeStoredSchema) {
-		return niceifyObjectNodeSchema(schemaMap, nodeSchema, type);
-	} else if (nodeSchema instanceof MapNodeStoredSchema) {
-		return niceifyMapNodeSchema(schemaMap, nodeSchema, type);
-	} else if (nodeSchema instanceof LeafNodeStoredSchema) {
-		return niceifyLeafNodeSchema(schemaMap, nodeSchema, type);
-	} else {
-		fail("Encountered an unknown node schema type.");
-	}
-}
-
-function niceifyObjectNodeSchema(
-	schemaMap: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-	schema: ObjectNodeStoredSchema,
-	schemaIdentifier: TreeNodeSchemaIdentifier,
-): NiceStoredObjectNodeSchema | NiceStoredArrayNodeSchema {
-	if (schema.objectNodeFields.size === 1 && schema.objectNodeFields.has(EmptyKey)) {
-		// Array case
-		const allowedTypes: NiceStoredNodeSchema[] = [];
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		for (const type of schema.objectNodeFields.get(EmptyKey)!.types ?? []) {
-			allowedTypes.push(getNiceNodeSchema(schemaMap, type));
-		}
-		return {
-			name: schemaIdentifier,
-			kind: NodeKind.Array,
-			allowedTypes,
-		} satisfies NiceStoredArrayNodeSchema;
-	} else {
-		// Object case
-		const fields: Record<string, NiceStoredFieldSchema> = {};
-		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			fields[fieldKey] = getNiceFieldSchema(schemaMap, fieldSchema);
-		}
-		return {
-			name: schemaIdentifier,
-			kind: NodeKind.Object,
-			fields,
-		} satisfies NiceStoredObjectNodeSchema;
-	}
-}
-
-function niceifyMapNodeSchema(
-	schemaMap: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-	nodeSchema: MapNodeStoredSchema,
-	type: TreeNodeSchemaIdentifier,
-): NiceStoredNodeSchema {
-	throw new Error("Function not implemented.");
-}
-
-function niceifyLeafNodeSchema(
-	schemaMap: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-	nodeSchema: LeafNodeStoredSchema,
-	type: TreeNodeSchemaIdentifier,
-): NiceStoredNodeSchema {
-	throw new Error("Function not implemented.");
 }
