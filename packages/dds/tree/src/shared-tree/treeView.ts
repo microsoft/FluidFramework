@@ -44,8 +44,7 @@ export interface FlexTreeViewGeneric extends IDisposable {
  * An editable view of a (version control style) branch of a shared tree.
  * @privateRemarks
  * TODO:
- * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
- * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
+ * If schema aware APIs are removed from flex tree, this can be combined with {@link FlexTreeViewGeneric}.
  * @internal
  */
 export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
