@@ -553,10 +553,6 @@ The `eventName` can be either "treeChanged" or "nodeChanged".
 `treeChanged` fires whenever one or more properties of the specified node or any node in its subtree, change.
 We recommend looking at the documentation of each of the events for more details.
 
-An `event` object is automatically passed to the `listener`. It has one member:
-
--   `event.target`: The node on which the event was triggered.
-
 The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
 
 ```typescript
