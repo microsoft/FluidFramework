@@ -256,9 +256,7 @@ function normalizeEntry(
 						maybeAttributes.path === ".attributes"
 					) {
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-						const parsed: { type?: string } = JSON.parse(
-							maybeAttributes.value.contents,
-						);
+						const parsed: { type?: string } = JSON.parse(maybeAttributes.value.contents);
 						if (parsed.type === "https://graph.microsoft.com/types/sharedmatrix") {
 							return new TreeTreeEntry(
 								entry.path,
