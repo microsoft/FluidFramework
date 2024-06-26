@@ -560,6 +560,9 @@ The `Tree.on()` method returns a function that unsubscribes the handler from the
 
 ```typescript
 const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
 ```
 
 ### Type guard
