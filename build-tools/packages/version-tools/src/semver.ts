@@ -115,15 +115,24 @@ export function detectBumpType(
 		v2PrereleaseId = prereleaseId;
 	}
 
-	if (v1PrereleaseId === "internal" && v2PrereleaseId === "rc") {
+	const v2Scheme = detectVersionScheme(v2Parsed);
+	if (
 		// This is a special case for RC and internal builds. RC builds are always a
 		// major bump compared to an internal build.
+		(v1PrereleaseId === DEFAULT_PRERELEASE_IDENTIFIER &&
+			v2PrereleaseId === RC_PRERELEASE_IDENTIFER) ||
+		// This is a special case for RC and public semver builds. Semver releases with major >= 2
+		// are always major releases compared to RC builds.
+		(v1PrereleaseId === RC_PRERELEASE_IDENTIFER &&
+			v2Scheme === "semver" &&
+			v2Parsed.major >= 2)
+	) {
 		return "major";
 	}
 
 	if (v1PrereleaseId !== v2PrereleaseId) {
 		throw new Error(
-			`v1 prerelease ID: ${v1PrereleaseId} cannot be compared to v2 prerelease ID: ${v2PrereleaseId}`,
+			`v1 prerelease ID: '${v1PrereleaseId}' cannot be compared to v2 prerelease ID: '${v2PrereleaseId}'`,
 		);
 	}
 
