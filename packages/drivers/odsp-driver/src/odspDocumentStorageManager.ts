@@ -42,6 +42,7 @@ import {
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 } from "./contracts.js";
+import { renameEmptyFluidFile } from "./createFile.js";
 import { EpochTracker } from "./epochTracker.js";
 import {
 	ISnapshotRequestAndResponseOptions,
@@ -749,8 +750,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			0x56e /* summary upload manager should have been initialized */,
 		);
 		const id = await this.odspSummaryUploadManager.writeSummaryTree(summary, context);
-
-		if (this.odspResolvedUrl.temporaryFileName !== undefined) {
+		if (this.odspResolvedUrl.pendingRename !== undefined) {
 			// This is a temporary file, so we need to rename it to remove the .tmp extension
 			// This should only happen for the initial summary upload for a new file
 			assert(
@@ -760,28 +760,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				"temporaryFileName should only be set for new file creation in the empty file create flow",
 			);
 
-			// the below is garbage, co-pilot made it up, but it illustrate the approach
-			//
-			// If this is the initial summary for a new file, then rename the file to remove the .tmp extension
-			const renameUrl = `${this.odspResolvedUrl.endpoints.snapshotStorageUrl}/rename`;
-			const storageToken = await this.getStorageToken(undefined, "RenameFile");
-			const { url, headers } = getUrlAndHeadersWithAuth(
-				renameUrl,
-				storageToken,
+			await renameEmptyFluidFile(
+				this.getStorageToken,
+				this.odspResolvedUrl,
+				this.odspResolvedUrl.pendingRename,
+				this.logger,
+				this.epochTracker,
 				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 			);
-			headers["Content-Type"] = "application/json";
-
-			const body = JSON.stringify({
-				fileName: this.odspResolvedUrl.fileName,
-			});
-
-			await this.epochTracker.fetch(url, {
-				body,
-				headers,
-				method: "POST",
-			});
-			this.odspResolvedUrl.temporaryFileName = undefined;
+			this.odspResolvedUrl.pendingRename = undefined;
 		}
 
 		return id;

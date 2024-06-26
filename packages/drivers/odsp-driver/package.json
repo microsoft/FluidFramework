@@ -168,6 +168,10 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_FetchType": {
+				"backCompat": false
+			}
+		}
 	}
 }

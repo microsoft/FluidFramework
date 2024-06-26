@@ -13,13 +13,14 @@ import {
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
+	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICreateFileResponse } from "./contracts.js";
+import { ICreateFileResponse, type IRenameFileResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
@@ -72,7 +73,7 @@ export async function createNewFluidFile(
 	}
 
 	let itemId: string;
-	let temporaryFileName: string | undefined;
+	let pendingRename: string | undefined;
 	let summaryHandle: string = "";
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (createNewSummary === undefined) {
@@ -84,7 +85,7 @@ export async function createNewFluidFile(
 			forceAccessTokenViaAuthorizationHeader,
 		);
 		itemId = content.itemId;
-		temporaryFileName = content.temporaryFileName;
+		pendingRename = newFileInfo.filename;
 	} else {
 		const content = await createNewFluidFileFromSummary(
 			getStorageToken,
@@ -110,7 +111,7 @@ export async function createNewFluidFile(
 	fileEntry.resolvedUrl = odspResolvedUrl;
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
-	odspResolvedUrl.temporaryFileName = temporaryFileName;
+	odspResolvedUrl.pendingRename = pendingRename;
 
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
@@ -172,11 +173,11 @@ export async function createNewEmptyFluidFile(
 	logger: ITelemetryLoggerExt,
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-): Promise<{ itemId: string; temporaryFileName?: string }> {
+): Promise<{ itemId: string; fileName: string }> {
 	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
 	// add .tmp extension to empty file (host is expected to rename)
-	const temporaryFileName = `${newFileInfo.filename}.tmp`;
-	const encodedFilename = encodeURIComponent(temporaryFileName);
+	const fileName = `${newFileInfo.filename}.tmp`;
+	const encodedFilename = encodeURIComponent(fileName);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
 	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
@@ -222,7 +223,69 @@ export async function createNewEmptyFluidFile(
 				event.end({
 					...fetchResponse.propsToLog,
 				});
-				return { itemId: content.id, temporaryFileName };
+				return { itemId: content.id, fileName: content.name };
+			},
+			{ end: true, cancel: "error" },
+		);
+	});
+}
+
+export async function renameEmptyFluidFile(
+	getStorageToken: InstrumentedStorageTokenFetcher,
+	odspParts: IOdspUrlParts,
+	requestedFileName: string,
+	logger: ITelemetryLoggerExt,
+	epochTracker: EpochTracker,
+	forceAccessTokenViaAuthorizationHeader: boolean,
+): Promise<IRenameFileResponse> {
+	const initialUrl = `${getApiRoot(new URL(odspParts.siteUrl))}/drives/${
+		odspParts.driveId
+	}/items/${odspParts.itemId}?@name.conflictBehavior=rename`;
+
+	return getWithRetryForTokenRefresh(async (options) => {
+		const storageToken = await getStorageToken(options, "RenameFile");
+
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "renameFile" },
+			async (event) => {
+				const { url, headers } = getUrlAndHeadersWithAuth(
+					initialUrl,
+					storageToken,
+					forceAccessTokenViaAuthorizationHeader,
+				);
+				headers["Content-Type"] = "application/json";
+
+				const fetchResponse = await runWithRetry(
+					async () =>
+						epochTracker.fetchAndParseAsJSON<IRenameFileResponse>(
+							url,
+							{
+								body: JSON.stringify({
+									name: requestedFileName,
+								}),
+								headers,
+								method: "PATCH",
+							},
+							"renameFile",
+						),
+					"renameFile",
+					logger,
+				);
+
+				const content = fetchResponse.content;
+				if (!content?.id) {
+					throw new NonRetryableError(
+						// pre-0.58 error message: ODSP CreateFile call returned no item ID
+						"ODSP RenameFile call returned no item ID (for empty file)",
+						OdspErrorTypes.incorrectServerResponse,
+						{ driverVersion },
+					);
+				}
+				event.end({
+					...fetchResponse.propsToLog,
+				});
+				return content;
 			},
 			{ end: true, cancel: "error" },
 		);
