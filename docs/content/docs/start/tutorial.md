@@ -36,7 +36,7 @@ The app creates Fluid containers using a schema that defines a set of *initial o
 Lastly, `root` defines the HTML element that the Dice will render on.
 
 ```js
-import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
+import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const client = new TinyliciousClient();
