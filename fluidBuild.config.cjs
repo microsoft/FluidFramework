@@ -177,7 +177,6 @@ module.exports = {
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
-			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
 		],
@@ -185,15 +184,18 @@ module.exports = {
 
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
+		// Entries here are COMPLETELY ignored by the policy checker. Instead of adding entries here, consider adding
+		// entries to the handlerExclusions list below to ignore a particular.
 		exclusions: [
+			// The paths below are for fluidframework.com layouts and code and are not subject to policy.
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
-			"docs/tutorials/.*\\.tsx?",
-			"server/gitrest/package.json",
-			"server/historian/package.json",
+
+			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
+
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",

@@ -26,6 +26,7 @@ This package has important requirements for the code within it.
 1. Code within this package should require some external dependencies. If it does not, then the **core-utils** package
    is a better location.
 1. **All exports must be designated `@internal`.** This code is intended for use within the Fluid Framework only.
+   **Excepting the small set of typed event emitter APIs** that are in use by legacy test support.
 1. This package should **only contain 'implementation' code, not type definitions.** This is the most flexible rule, and
    there are some exceptions. If the type is _only_ necessary when using this package, then it is probably OK. However,
    usually such types would be better placed in core-interfaces or in a package that corresponds to the purpose.
