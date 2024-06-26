@@ -28,6 +28,8 @@ const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */

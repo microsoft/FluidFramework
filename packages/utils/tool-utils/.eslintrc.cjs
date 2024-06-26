@@ -9,10 +9,6 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		// TODO: Documentation should be added and this rule can be enabled
-		"jsdoc/require-description": "off",
-		"jsdoc/require-jsdoc": "off",
-
 		// This package is intended to be used in node.js environments
 		"import/no-nodejs-modules": "off",
 	},

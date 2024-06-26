@@ -38,6 +38,8 @@ export interface IResources {
 
 const getRCFileName = (): string => path.join(os.homedir(), ".fluidtoolrc");
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -57,6 +59,8 @@ export async function loadRC(): Promise<IResources> {
 	return {};
 }
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -66,6 +70,8 @@ export async function saveRC(rc: IResources): Promise<void> {
 	return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
 }
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
