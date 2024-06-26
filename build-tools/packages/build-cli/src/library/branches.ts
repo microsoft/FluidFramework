@@ -150,19 +150,14 @@ export function generateReleaseBranchName(
 	}
 
 	if (isReleaseGroup(releaseGroup)) {
-		if (releaseGroup === "client") {
+		if (releaseGroup === "client" && schemeIsInternal) {
 			// Client versions using the internal version scheme
-			if (schemeIsInternal) {
 				const prereleaseId = fromInternalScheme(version, true)[2];
 				// Checking the prerelease ID is necessary because we used "v2int" instead of "internal" in branch names. This
 				// was a bad decision in retrospect, but we're stuck with it for now.
 				branchPath.push(
 					prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup,
 				);
-			} else if(semver.gte(branchVersion, "2.0.0")) {
-				// Client versions >=2.0.0 not using the internal scheme use "client" in the release branch names
-				branchPath.push(releaseGroup);
-			}
 		} else {
 			branchPath.push(releaseGroup);
 		}
