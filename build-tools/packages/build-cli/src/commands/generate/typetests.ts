@@ -153,7 +153,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 
 		// Sort import statements to respect linting rules.
 		const buildToolsPackageName = "@fluidframework/build-tools";
-		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType } from "${buildToolsPackageName}";`;
+		const buildToolsImport = `import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "${buildToolsPackageName}";`;
 		const previousImport = `import type * as old from "${previousPackageName}${
 			previousPackageLevel === ApiLevel.public ? "" : `/${previousPackageLevel}`
 		}";`;
@@ -177,7 +177,7 @@ ${imports.join("\n")}
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 `,
 		];
 
@@ -240,7 +240,7 @@ function getTypesPathWithFallback(
  * This implementation loosely follows TypeScript's process for finding types as described at
  * {@link https://www.typescriptlang.org/docs/handbook/modules/reference.html#packagejson-main-and-types}. If an export
  * map is found, the `types` and `typings` field are ignored. If an export map is not found, then the `types`/`typings`
- * fields will be used as a fallback _only_ for the public API level (which coresponds to the default export).
+ * fields will be used as a fallback _only_ for the public API level (which corresponds to the default export).
  *
  * Importantly, this code _does not_ implement falling back to the `main` field when `types` and `typings` are missing,
  * nor does it look up types from DefinitelyTyped (i.e. \@types/* packages). This fallback logic is not needed for our
