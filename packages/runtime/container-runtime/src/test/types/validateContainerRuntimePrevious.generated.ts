@@ -83,7 +83,6 @@ declare function get_old_ClassDeclaration_ChannelCollection():
 declare function use_current_ClassDeclaration_ChannelCollection(
     use: TypeOnly<current.ChannelCollection>): void;
 use_current_ClassDeclaration_ChannelCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ChannelCollection());
 
 /*
@@ -98,7 +97,6 @@ declare function get_current_ClassDeclaration_ChannelCollection():
 declare function use_old_ClassDeclaration_ChannelCollection(
     use: TypeOnly<old.ChannelCollection>): void;
 use_old_ClassDeclaration_ChannelCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ChannelCollection());
 
 /*
@@ -225,7 +223,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>): void;
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -240,24 +237,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>): void;
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterfaceDeclaration_ContainerRuntimeMessage": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterfaceDeclaration_ContainerRuntimeMessage": {"backCompat": false}
- */
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -439,7 +419,6 @@ declare function get_old_ClassDeclaration_FluidDataStoreContext():
 declare function use_current_ClassDeclaration_FluidDataStoreContext(
     use: TypeOnly<current.FluidDataStoreContext>): void;
 use_current_ClassDeclaration_FluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_FluidDataStoreContext());
 
 /*
@@ -454,7 +433,6 @@ declare function get_current_ClassDeclaration_FluidDataStoreContext():
 declare function use_old_ClassDeclaration_FluidDataStoreContext(
     use: TypeOnly<old.FluidDataStoreContext>): void;
 use_old_ClassDeclaration_FluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FluidDataStoreContext());
 
 /*
@@ -1281,7 +1259,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextInternal():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextInternal(
     use: TypeOnly<current.IFluidDataStoreContextInternal>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextInternal(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextInternal());
 
 /*
@@ -1296,7 +1273,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextInternal
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextInternal(
     use: TypeOnly<old.IFluidDataStoreContextInternal>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextInternal(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextInternal());
 
 /*
@@ -1311,7 +1287,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextProps():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextProps(
     use: TypeOnly<current.IFluidDataStoreContextProps>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextProps());
 
 /*
@@ -1326,7 +1301,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextProps():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextProps(
     use: TypeOnly<old.IFluidDataStoreContextProps>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextProps());
 
 /*
@@ -1369,7 +1343,6 @@ declare function get_old_InterfaceDeclaration_IGCNodeUpdatedProps():
 declare function use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
     use: TypeOnly<current.IGCNodeUpdatedProps>): void;
 use_current_InterfaceDeclaration_IGCNodeUpdatedProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCNodeUpdatedProps());
 
 /*
@@ -1468,7 +1441,6 @@ declare function get_current_InterfaceDeclaration_IGenerateSummaryTreeResult():
 declare function use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
     use: TypeOnly<old.IGenerateSummaryTreeResult>): void;
 use_old_InterfaceDeclaration_IGenerateSummaryTreeResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenerateSummaryTreeResult());
 
 /*
@@ -1511,7 +1483,6 @@ declare function get_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContex
 declare function use_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
     use: TypeOnly<current.ILocalDetachedFluidDataStoreContextProps>): void;
 use_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps());
 
 /*
@@ -1526,7 +1497,6 @@ declare function get_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreCo
 declare function use_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
     use: TypeOnly<old.ILocalDetachedFluidDataStoreContextProps>): void;
 use_old_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocalDetachedFluidDataStoreContextProps());
 
 /*
@@ -1541,7 +1511,6 @@ declare function get_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps()
 declare function use_current_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
     use: TypeOnly<current.ILocalFluidDataStoreContextProps>): void;
 use_current_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps());
 
 /*
@@ -1556,7 +1525,6 @@ declare function get_current_InterfaceDeclaration_ILocalFluidDataStoreContextPro
 declare function use_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
     use: TypeOnly<old.ILocalFluidDataStoreContextProps>): void;
 use_old_InterfaceDeclaration_ILocalFluidDataStoreContextProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILocalFluidDataStoreContextProps());
 
 /*
@@ -1676,16 +1644,28 @@ use_old_InterfaceDeclaration_IRefreshSummaryAckOptions(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"forwardCompat": false}
+ * "InterfaceDeclaration_IRetriableFailureError": {"forwardCompat": false}
  */
+declare function get_old_InterfaceDeclaration_IRetriableFailureError():
+    TypeOnly<old.IRetriableFailureError>;
+declare function use_current_InterfaceDeclaration_IRetriableFailureError(
+    use: TypeOnly<current.IRetriableFailureError>): void;
+use_current_InterfaceDeclaration_IRetriableFailureError(
+    get_old_InterfaceDeclaration_IRetriableFailureError());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_IRetriableFailureResult": {"backCompat": false}
+ * "InterfaceDeclaration_IRetriableFailureError": {"backCompat": false}
  */
+declare function get_current_InterfaceDeclaration_IRetriableFailureError():
+    TypeOnly<current.IRetriableFailureError>;
+declare function use_old_InterfaceDeclaration_IRetriableFailureError(
+    use: TypeOnly<old.IRetriableFailureError>): void;
+use_old_InterfaceDeclaration_IRetriableFailureError(
+    get_current_InterfaceDeclaration_IRetriableFailureError());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1769,7 +1749,6 @@ declare function get_current_InterfaceDeclaration_ISubmitSummaryOpResult():
 declare function use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
     use: TypeOnly<old.ISubmitSummaryOpResult>): void;
 use_old_InterfaceDeclaration_ISubmitSummaryOpResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISubmitSummaryOpResult());
 
 /*
@@ -1980,7 +1959,6 @@ declare function get_old_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_current_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<current.ISummarizerRuntime>): void;
 use_current_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1995,7 +1973,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>): void;
 use_old_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -2444,7 +2421,6 @@ declare function get_current_InterfaceDeclaration_IUploadSummaryResult():
 declare function use_old_InterfaceDeclaration_IUploadSummaryResult(
     use: TypeOnly<old.IUploadSummaryResult>): void;
 use_old_InterfaceDeclaration_IUploadSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IUploadSummaryResult());
 
 /*
@@ -2515,7 +2491,6 @@ declare function get_old_ClassDeclaration_LocalFluidDataStoreContext():
 declare function use_current_ClassDeclaration_LocalFluidDataStoreContext(
     use: TypeOnly<current.LocalFluidDataStoreContext>): void;
 use_current_ClassDeclaration_LocalFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalFluidDataStoreContext());
 
 /*
@@ -2530,7 +2505,6 @@ declare function get_current_ClassDeclaration_LocalFluidDataStoreContext():
 declare function use_old_ClassDeclaration_LocalFluidDataStoreContext(
     use: TypeOnly<old.LocalFluidDataStoreContext>): void;
 use_old_ClassDeclaration_LocalFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalFluidDataStoreContext());
 
 /*
@@ -2545,7 +2519,6 @@ declare function get_old_ClassDeclaration_LocalFluidDataStoreContextBase():
 declare function use_current_ClassDeclaration_LocalFluidDataStoreContextBase(
     use: TypeOnly<current.LocalFluidDataStoreContextBase>): void;
 use_current_ClassDeclaration_LocalFluidDataStoreContextBase(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalFluidDataStoreContextBase());
 
 /*
@@ -2560,7 +2533,6 @@ declare function get_current_ClassDeclaration_LocalFluidDataStoreContextBase():
 declare function use_old_ClassDeclaration_LocalFluidDataStoreContextBase(
     use: TypeOnly<old.LocalFluidDataStoreContextBase>): void;
 use_old_ClassDeclaration_LocalFluidDataStoreContextBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalFluidDataStoreContextBase());
 
 /*
@@ -2813,7 +2785,6 @@ declare function get_current_TypeAliasDeclaration_SubmitSummaryResult():
 declare function use_old_TypeAliasDeclaration_SubmitSummaryResult(
     use: TypeOnly<old.SubmitSummaryResult>): void;
 use_old_TypeAliasDeclaration_SubmitSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SubmitSummaryResult());
 
 /*

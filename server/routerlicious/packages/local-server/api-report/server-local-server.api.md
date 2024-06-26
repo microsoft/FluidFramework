@@ -61,6 +61,8 @@ export class LocalOrdererManager implements IOrdererManager {
     // (undocumented)
     getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
     hasPendingWork(): Promise<boolean>;
+    // (undocumented)
+    removeOrderer(tenantId: string, documentId: string): Promise<void>;
 }
 
 // @internal (undocumented)
