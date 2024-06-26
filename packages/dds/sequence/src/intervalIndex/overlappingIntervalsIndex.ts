@@ -21,6 +21,7 @@ import { ISharedString } from "../sharedString.js";
 import { IntervalIndex } from "./intervalIndex.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -179,6 +180,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function createOverlappingIntervalsIndex(
