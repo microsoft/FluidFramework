@@ -17,6 +17,7 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
+	type ICriticalContainerError,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -26,7 +27,7 @@ import {
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils/internal";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -53,7 +54,7 @@ function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeCompat.skip(
+describeCompat(
 	"Runtime IdCompressor - Schema changes",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
@@ -732,7 +733,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 
 // No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
 // Even older versions of the runtime also don't have an id compression feature enabled.
-describeCompat.skip(
+describeCompat(
 	"IdCompressor in detached container",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
@@ -1086,90 +1087,101 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 	});
 });
 
-const dataStoreCount = 13;
-describeCompat("IdCompressor basic", "NoCompat", (getTestObjectProvider, apis) => {
-	const {
-		dataRuntime: { DataObject, DataObjectFactory },
-		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
-	} = apis;
-	class TestDataObject extends DataObject {
-		public get _root() {
-			return this.root;
-		}
-
-		public get _context() {
-			return this.context;
-		}
-	}
-
-	const configProvider = createTestConfigProvider();
-	let provider: ITestObjectProvider;
-	const defaultFactory = new DataObjectFactory("T", TestDataObject, [], []);
-
-	const runtimeOptions: IContainerRuntimeOptions = {
-		enableRuntimeIdCompressor: "on",
-	};
-
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			runtimeOptions,
-		},
-	);
-
-	beforeEach("getTestObjectProvider", async function () {
-		provider = getTestObjectProvider();
-		// ODSP specific bug
-		if (provider.driver.type !== "odsp") {
-			this.skip();
-		}
-		configProvider.set("Fluid.ContainerRuntime.IdCompressorEnabled", true);
-		configProvider.set("Fluid.Runtime.UseShortIds", true);
-	});
-
-	function assertInvert(value: boolean, message: string) {
-		assert(!value, message);
-	}
-
-	itExpects(
-		"Id compressor bug repo when id is `[` which encodes to `%5B`",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
-		async () => {
-			const container = await provider.createDetachedContainer(runtimeFactory, {
-				configProvider,
-			});
-			const dataObject = (await container.getEntryPoint()) as TestDataObject;
-			const containerRuntime = dataObject._context.containerRuntime;
-			for (let i = 0; i < dataStoreCount; i++) {
-				const createdObject = await defaultFactory.createInstance(containerRuntime);
-				dataObject._root.set(`${i}`, createdObject.handle);
+describeCompat(
+	"IdCompressor multiple datastores created in detached container with shortIds",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const {
+			dataRuntime: { DataObject, DataObjectFactory },
+			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+		} = apis;
+		class TestDataObject extends DataObject {
+			public get _root() {
+				return this.root;
 			}
 
-			await provider.attachDetachedContainer(container);
+			public get _context() {
+				return this.context;
+			}
+		}
 
-			const handle = dataObject._root.get(`12`);
-			assert(handle !== undefined, "handle not found");
-			const childObject = await handle.get();
-			assert(childObject.id === "[", "This id is the problematic id");
-			childObject._root.set(`key13`, `value13`);
-			await provider.ensureSynchronized();
+		const configProvider = createTestConfigProvider();
+		let provider: ITestObjectProvider;
+		const defaultFactory = new DataObjectFactory("T", TestDataObject, [], []);
 
-			// This reset is required here as clearing the cache will immediately cause the test to end early
-			// when we call provider.ensureSynchronized().
-			(provider as any)._documentServiceFactory = undefined;
-			const container2 = await provider.loadContainer(runtimeFactory, {
-				configProvider,
-			});
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory,
+				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			},
+		);
 
-			// This causes the containers to sync and thus close.
-			await provider.ensureSynchronized();
+		beforeEach("getTestObjectProvider", async function () {
+			provider = getTestObjectProvider();
+			// ODSP specific bug
+			if (provider.driver.type !== "odsp") {
+				this.skip();
+			}
+			configProvider.set("Fluid.Runtime.UseShortIds", true);
+		});
 
-			assertInvert(
-				!container2.closed,
-				"When the problem is fixed, assert should be swapped for assertInvert",
-			);
-		},
-	);
-});
+		function assertInvert(value: boolean, message: string) {
+			assert(!value, message);
+		}
+
+		const dataStoreCount = 13;
+		itExpects(
+			"Id compressor bug repo when id is `[` which encodes to `%5B`",
+			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
+			async () => {
+				const container = await provider.createDetachedContainer(runtimeFactory, {
+					configProvider,
+				});
+				const dataObject = (await container.getEntryPoint()) as TestDataObject;
+				const containerRuntime = dataObject._context.containerRuntime;
+				// The 13 datastore produces a shortId of "[" when we use short codes, so we need to make 13 datastores to repro the bug
+				for (let i = 0; i < dataStoreCount; i++) {
+					const createdObject = await defaultFactory.createInstance(containerRuntime);
+					dataObject._root.set(createdObject.id, createdObject.handle);
+				}
+
+				await provider.attachDetachedContainer(container);
+
+				const handle = dataObject._root.get("[");
+				assert(handle !== undefined, "handle not found");
+				const childObject = await handle.get();
+				assert(childObject.id === "[", "This id is the problematic id");
+				childObject._root.set(`key13`, `value13`);
+				await provider.ensureSynchronized();
+
+				// This reset is required here as clearing the cache will immediately cause the test to end early
+				// when we call provider.ensureSynchronized().
+				(provider as any)._documentServiceFactory = undefined;
+				const container2 = await provider.loadContainer(runtimeFactory, {
+					configProvider,
+				});
+				const closeErrorWait = new Deferred<void>();
+				let closeError: ICriticalContainerError | undefined;
+				container2.on("closed", (error?: ICriticalContainerError) => {
+					closeError = error;
+					closeErrorWait.resolve();
+				});
+
+				// This causes the containers to sync and thus close.
+				await provider.ensureSynchronized();
+
+				// When fixed, the promise and asserts should be removed
+				await closeErrorWait.promise;
+				assert(closeError !== undefined, "Error should be present");
+				assert(closeError.message.includes("No context for op"), "Did not detect an error!");
+
+				// When fixed, the assert should be swapped for assertInvert
+				assertInvert(
+					!container2.closed,
+					"When the problem is fixed, assert should be swapped for assertInvert",
+				);
+			},
+		);
+	},
+);
