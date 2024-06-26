@@ -6,6 +6,7 @@ import * as semver from "semver";
 
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
+	DEFAULT_PRERELEASE_IDENTIFIER,
 	bumpInternalVersion,
 	detectInternalVersionConstraintType,
 	fromInternalScheme,
@@ -119,13 +120,10 @@ export function detectBumpType(
 	if (
 		// This is a special case for RC and internal builds. RC builds are always a
 		// major bump compared to an internal build.
-		(v1PrereleaseId === DEFAULT_PRERELEASE_IDENTIFIER &&
-			v2PrereleaseId === RC_PRERELEASE_IDENTIFER) ||
+		(v1PrereleaseId === DEFAULT_PRERELEASE_IDENTIFIER && v2PrereleaseId === "rc") ||
 		// This is a special case for RC and public semver builds. Semver releases with major >= 2
 		// are always major releases compared to RC builds.
-		(v1PrereleaseId === RC_PRERELEASE_IDENTIFER &&
-			v2Scheme === "semver" &&
-			v2Parsed.major >= 2)
+		(v1PrereleaseId === "rc" && v2Scheme === "semver" && v2Parsed.major >= 2)
 	) {
 		return "major";
 	}
