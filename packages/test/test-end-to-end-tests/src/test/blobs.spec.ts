@@ -19,12 +19,7 @@ import {
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReferenceType } from "@fluidframework/merge-tree/internal";
@@ -33,6 +28,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -45,10 +41,6 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
 
 function makeTestContainerConfig(registry: ChannelFactoryRegistry): ITestContainerConfig {
 	return {
@@ -447,6 +439,9 @@ function serializationTests({
 							loaderProps: {
 								detachedBlobStorage,
 								options: { summarizeProtocolTree },
+								configProvider: createTestConfigProvider({
+									"Fluid.Container.MemoryBlobStorageEnabled": true,
+								}),
 							},
 						});
 						const container = await loader.createDetachedContainer(
@@ -499,7 +494,12 @@ function serializationTests({
 			it("serialize/rehydrate container with blobs", async function () {
 				const loader = provider.makeTestLoader({
 					...testContainerConfig,
-					loaderProps: { detachedBlobStorage },
+					loaderProps: {
+						detachedBlobStorage,
+						configProvider: createTestConfigProvider({
+							"Fluid.Container.MemoryBlobStorageEnabled": true,
+						}),
+					},
 				});
 				const serializeContainer = await loader.createDetachedContainer(
 					provider.defaultCodeDetails,
@@ -548,10 +548,10 @@ function serializationTests({
 					loaderProps: {
 						detachedBlobStorage,
 						documentServiceFactory,
-						configProvider: {
-							getRawConfig: (name) =>
-								name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
-						},
+						configProvider: createTestConfigProvider({
+							"Fluid.Container.MemoryBlobStorageEnabled": true,
+							"Fluid.Container.RetryOnAttachFailure": true,
+						}),
 					},
 				});
 				const serializeContainer = await loader.createDetachedContainer(
@@ -602,13 +602,19 @@ function serializationTests({
 				ContainerCloseUsageError,
 				async function () {
 					// test with and without offline load enabled
-					const offlineCfg = configProvider({
+					const offlineCfg = {
 						"Fluid.Container.enableOfflineLoad": true,
-					});
+					};
 					for (const cfg of [undefined, offlineCfg]) {
 						const loader = provider.makeTestLoader({
 							...testContainerConfig,
-							loaderProps: { detachedBlobStorage, configProvider: cfg },
+							loaderProps: {
+								detachedBlobStorage,
+								configProvider: createTestConfigProvider({
+									"Fluid.Container.MemoryBlobStorageEnabled": true,
+									...offlineCfg,
+								}),
+							},
 						});
 						const detachedContainer = await loader.createDetachedContainer(
 							provider.defaultCodeDetails,
@@ -673,7 +679,12 @@ function serializationTests({
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
-						loaderProps: { detachedBlobStorage },
+						loaderProps: {
+							detachedBlobStorage,
+							configProvider: createTestConfigProvider({
+								"Fluid.Container.MemoryBlobStorageEnabled": true,
+							}),
+						},
 					});
 					const serializeContainer = await loader.createDetachedContainer(
 						provider.defaultCodeDetails,
@@ -722,7 +733,12 @@ function serializationTests({
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
-						loaderProps: { detachedBlobStorage },
+						loaderProps: {
+							detachedBlobStorage,
+							configProvider: createTestConfigProvider({
+								"Fluid.Container.MemoryBlobStorageEnabled": true,
+							}),
+						},
 					});
 					let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 

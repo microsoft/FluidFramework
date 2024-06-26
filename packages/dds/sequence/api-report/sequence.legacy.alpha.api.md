@@ -299,10 +299,6 @@ export { ReferenceType }
 
 export { reservedMarkerIdKey }
 
-export { reservedRangeLabelsKey }
-
-export { reservedTileLabelsKey }
-
 // @alpha
 export function revertSharedStringRevertibles(sharedString: ISharedString, revertibles: SharedStringRevertible[]): void;
 
@@ -492,5 +488,7 @@ export enum Side {
 export { TextSegment }
 
 export { TrackingGroup }
+
+// (No @packageDocumentation comment for this package)
 
 ```

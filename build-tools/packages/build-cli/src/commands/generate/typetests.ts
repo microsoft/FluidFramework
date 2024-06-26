@@ -21,7 +21,16 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { readJson } from "fs-extra/esm";
 import * as resolve from "resolve.exports";
-import { JSDoc, ModuleKind, Node, Project, type SourceFile, SyntaxKind } from "ts-morph";
+import {
+	JSDoc,
+	ModuleKind,
+	type NameableNodeSpecific,
+	type NamedNodeSpecificBase,
+	Node,
+	Project,
+	type SourceFile,
+	SyntaxKind,
+} from "ts-morph";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
 import {
@@ -331,7 +340,7 @@ function getTypeTestFilePath(pkg: Package, outDir: string, outFile: string): str
  * @param log - A logger to use.
  * @returns The mapping between type name and its type data.
  */
-function typeDataFromFile(
+export function typeDataFromFile(
 	file: SourceFile,
 	log: Logger,
 	namespacePrefix?: string,
@@ -339,9 +348,15 @@ function typeDataFromFile(
 	const typeData = new Map<string, TypeData>();
 	const exportedDeclarations = file.getExportedDeclarations();
 
-	for (const declarations of exportedDeclarations.values()) {
+	// Here we capture the exported name, rather than the name of the node.
+	// This ensures exports which alias names (ex: export {foo as bad} ...) report the external facing name not the internal one.
+	for (const [exportedName, declarations] of exportedDeclarations) {
 		for (const declaration of declarations) {
-			for (const typeDefinition of getNodeTypeData(declaration, log, namespacePrefix)) {
+			for (const typeDefinition of getNodeTypeData(
+				declaration,
+				log,
+				addStringScope(namespacePrefix, exportedName),
+			)) {
 				const fullName = getFullTypeName(typeDefinition);
 				if (typeData.has(fullName)) {
 					// This system does not properly handle overloads: instead it only keeps the last signature.
@@ -356,7 +371,27 @@ function typeDataFromFile(
 	return typeData;
 }
 
-function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): TypeData[] {
+/**
+ * Prefix `node`'s name with `namespacePrefix` to produce a qualified name.
+ */
+function addScope(
+	namespacePrefix: string | undefined,
+	node: NameableNodeSpecific | NamedNodeSpecificBase<Node>,
+): string {
+	const scope = node.getName();
+	if (scope === undefined) throw new Error("Missing scope where one was expected");
+	return addStringScope(namespacePrefix, scope);
+}
+
+/**
+ * Prefix `innerName` name with `namespacePrefix` to produce a qualified name.
+ */
+function addStringScope(namespacePrefix: string | undefined, innerName: string): string {
+	const name = namespacePrefix === undefined ? innerName : `${namespacePrefix}.${innerName}`;
+	return name;
+}
+
+function getNodeTypeData(node: Node, log: Logger, exportedName: string): TypeData[] {
 	/*
         handles namespaces e.g.
         export namespace foo{
@@ -371,7 +406,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 		for (const s of node.getStatements()) {
 			// only get type data for nodes that are exported from the namespace
 			if (Node.isExportable(s) && s.isExported()) {
-				typeData.push(...getNodeTypeData(s, log, node.getName()));
+				typeData.push(...getNodeTypeData(s, log, addScope(exportedName, node)));
 			}
 		}
 		return typeData;
@@ -385,7 +420,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 	if (Node.isVariableStatement(node)) {
 		const typeData: TypeData[] = [];
 		for (const dec of node.getDeclarations()) {
-			typeData.push(...getNodeTypeData(dec, log, namespacePrefix));
+			typeData.push(...getNodeTypeData(dec, log, addScope(exportedName, dec)));
 		}
 		return typeData;
 	}
@@ -393,7 +428,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 	if (Node.isIdentifier(node)) {
 		const typeData: TypeData[] = [];
 		for (const definition of node.getDefinitionNodes()) {
-			typeData.push(...getNodeTypeData(definition, log, namespacePrefix));
+			typeData.push(...getNodeTypeData(definition, log, exportedName));
 		}
 		return typeData;
 	}
@@ -406,19 +441,13 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 		Node.isVariableDeclaration(node) ||
 		Node.isFunctionDeclaration(node)
 	) {
-		const name =
-			namespacePrefix === undefined
-				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					node.getName()!
-				: `${namespacePrefix}.${node.getName()}`;
-
 		const docs = Node.isVariableDeclaration(node)
 			? node.getFirstAncestorByKindOrThrow(SyntaxKind.VariableStatement).getJsDocs()
 			: node.getJsDocs();
 
 		const typeData: TypeData[] = [
 			{
-				name,
+				name: exportedName,
 				kind: node.getKindName(),
 				node,
 				tags: getTags(docs),
@@ -428,7 +457,7 @@ function getNodeTypeData(node: Node, log: Logger, namespacePrefix?: string): Typ
 	}
 
 	if (Node.isSourceFile(node)) {
-		return [...typeDataFromFile(node, log, namespacePrefix).values()];
+		return [...typeDataFromFile(node, log, exportedName).values()];
 	}
 
 	throw new Error(`Unknown Export Kind: ${node.getKindName()}`);
