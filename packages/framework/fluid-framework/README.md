@@ -25,7 +25,7 @@ The `fluid-framework` package offers the following data structures:
 
 1. **[SharedTree][]**
 1. **[SharedMap][]**, a map-like data structure for storing key/value pair data
-    - Note: as of version 2.0, `SharedMap` is deprecated. Please use `SharedTree` instead.
+    - Note: as of version 2.0, `SharedMap` is now marked legacy. Please use `SharedTree` for any new development.
 
 ## Tutorial
 
