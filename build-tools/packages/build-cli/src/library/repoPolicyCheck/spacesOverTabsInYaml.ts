@@ -15,10 +15,25 @@ export const handler: Handler = {
 	match: /(^|\/)[^/]+\.ya?ml$/i,
 	handler: async (file: string): Promise<string | undefined> => {
 		const content = readFile(file);
-
-		// /m is multiline mode, so ^ matches the start of any line, not just the start of the full string
-		if (content.search(/^\t/m) !== -1) {
-			return `Tab indentation detected in YAML file. Please use spaces for indentation.`;
-		}
+		return lookForTabs(content);
 	},
 };
+
+/**
+ * Checks for tabs in the indentation of the specified file contents.
+ * @remarks Exported only for testing purposes
+ * @param fileContents - the file contents to check.
+ * @returns an error message if tabs are found; otherwise undefined.
+ */
+export function lookForTabs(fileContents: string): string | undefined {
+	// /m is multiline mode, so ^ matches the start of any line, not just the start of the full string
+	// Fail on tabs right at the start of the line, or after whitespace but before any non-whitespace character.
+	if (fileContents.search(/^\s*\t/m) !== -1) {
+		return errorMessage;
+	}
+}
+
+/**
+ * Exported only for testing purposes.
+ */
+export const errorMessage = `Tab indentation detected in YAML file. Please use spaces for indentation.`;
