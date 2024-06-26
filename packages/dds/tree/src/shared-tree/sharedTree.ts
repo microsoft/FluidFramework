@@ -67,10 +67,7 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
-import {
-	toJsonableFieldSchema,
-	type JsonableStoredFieldSchema,
-} from "./jsonableStoredSchema.js";
+import { toJsonableTreeSchema, type JsonableTreeSchema } from "./jsonableStoredSchema.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -134,7 +131,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 *
 	 * @privateRemarks TODO: promote to `ITree` once we are ready to surface this to customers.
 	 */
-	getStoredSchema(): JsonableStoredFieldSchema;
+	getStoredSchema(): JsonableTreeSchema;
 }
 
 /**
@@ -320,8 +317,8 @@ export class SharedTree
 		}
 	}
 
-	public getStoredSchema(): JsonableStoredFieldSchema {
-		return toJsonableFieldSchema(
+	public getStoredSchema(): JsonableTreeSchema {
+		return toJsonableTreeSchema(
 			this.storedSchema.nodeSchema,
 			this.storedSchema.rootFieldSchema,
 		);

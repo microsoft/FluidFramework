@@ -3,79 +3,74 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import {
 	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	ValueSchema,
 	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
-	type ValueSchema,
 } from "../core/index.js";
-import { FieldKind, NodeKind } from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableTreeSchema {
-	/**
-	 * Maps all registered node schemas based on their unique IDs.
-	 */
-	definitions: Record<TreeNodeSchemaIdentifier, JsonableStoredNodeSchema>;
+export type JsonableNodeKind = "object" | "array" | "map" | "leaf";
 
-	/**
-	 * The field schema for the root of the tree.
-	 */
-	rootSchema: JsonableStoredFieldSchema;
+/**
+ * TODO
+ * @internal
+ */
+export type JsonableFieldKind = "optional" | "required" | "identifier";
+
+/**
+ * TODO
+ * @internal
+ */
+export type JsonableLeafKind = "string" | "number" | "boolean" | "null";
+
+/**
+ * TODO
+ * @internal
+ */
+export interface JsonableStoredNodeSchemaBase<TNodeKind extends JsonableNodeKind> {
+	readonly kind: TNodeKind;
 }
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredNodeSchemaBase {
-	readonly kind: NodeKind; // TODO: string representation
-	readonly id: TreeNodeSchemaIdentifier;
+export interface JsonableStoredObjectNodeSchema
+	extends JsonableStoredNodeSchemaBase<"object"> {
+	readonly fields: Record<string, JsonableStoredFieldSchema>;
 }
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredObjectNodeSchema extends JsonableStoredNodeSchemaBase {
-	readonly kind: NodeKind.Object;
-	readonly fields: Record<TreeNodeSchemaIdentifier, JsonableStoredFieldSchema>;
+export interface JsonableStoredArrayNodeSchema extends JsonableStoredNodeSchemaBase<"array"> {
+	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredArrayNodeSchema extends JsonableStoredNodeSchemaBase {
-	readonly kind: NodeKind.Array;
-	readonly allowedTypes: readonly TreeNodeSchemaIdentifier[];
+export interface JsonableStoredMapNodeSchema extends JsonableStoredNodeSchemaBase<"map"> {
+	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredMapNodeSchema extends JsonableStoredNodeSchemaBase {
-	readonly kind: NodeKind.Map;
-	readonly allowedTypes: readonly TreeNodeSchemaIdentifier[];
-}
-
-/**
- * TODO
- * @internal
- */
-export interface JsonableStoredLeafNodeSchema extends JsonableStoredNodeSchemaBase {
-	readonly kind: NodeKind.Leaf;
-	readonly type: ValueSchema;
+export interface JsonableStoredLeafNodeSchema extends JsonableStoredNodeSchemaBase<"leaf"> {
+	readonly type: JsonableLeafKind;
 }
 
 /**
@@ -93,40 +88,51 @@ export type JsonableStoredNodeSchema =
  * @internal
  */
 export interface JsonableStoredFieldSchema {
-	readonly kind: FieldKind; // TODO: string representation
-	readonly allowedTypes: readonly TreeNodeSchemaIdentifier[];
+	readonly kind: JsonableFieldKind;
+	readonly allowedTypes: readonly string[];
 }
-
-// TODO: cache entries based on identifiers to prevent infinite recursion
 
 /**
  * TODO
+ * @internal
  */
-export function toJsonableFieldSchema(
-	fieldSchema: TreeFieldStoredSchema,
-): JsonableStoredFieldSchema {
-	const allowedTypes: TreeNodeSchemaIdentifier[] = [];
+export interface JsonableTreeSchema {
+	readonly rootFieldSchema: JsonableStoredFieldSchema;
+	readonly definitions: ReadonlyMap<string, JsonableStoredNodeSchema>;
+}
+
+export function toJsonableTreeSchema(
+	schemaMap: ReadonlyMap<string, TreeNodeStoredSchema>,
+	rootFieldSchema: TreeFieldStoredSchema,
+): JsonableTreeSchema {
+	const definitions = new Map<string, JsonableStoredNodeSchema>();
+	for (const [type, schema] of schemaMap) {
+		definitions.set(type, toJsonableNodeSchema(schema));
+	}
+	return {
+		rootFieldSchema: toJsonableFieldSchema(rootFieldSchema),
+		definitions,
+	};
+}
+
+function toJsonableFieldSchema(fieldSchema: TreeFieldStoredSchema): JsonableStoredFieldSchema {
+	const allowedTypes: string[] = [];
 	for (const type of fieldSchema.types ?? []) {
 		allowedTypes.push(type);
 	}
 	return {
-		kind: FieldKind.Optional, // TODO: actually get this from the schema
+		kind: "optional", // TODO: actually get this from the schema
 		allowedTypes,
 	};
 }
 
-function toJsonableNodeSchema(
-	schemaMap: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-	type: TreeNodeSchemaIdentifier,
-): JsonableStoredNodeSchema {
-	const nodeSchema = schemaMap.get(type);
-	assert(nodeSchema !== undefined, "Encountered a schema type without a definition.");
-	if (nodeSchema instanceof ObjectNodeStoredSchema) {
-		return toJsonableObjectNodeSchema(nodeSchema, type);
-	} else if (nodeSchema instanceof MapNodeStoredSchema) {
-		return toJsonableMapNodeSchema(nodeSchema, type);
-	} else if (nodeSchema instanceof LeafNodeStoredSchema) {
-		return toJsonableLeafNodeSchema(nodeSchema, type);
+function toJsonableNodeSchema(schema: TreeNodeStoredSchema): JsonableStoredNodeSchema {
+	if (schema instanceof ObjectNodeStoredSchema) {
+		return toJsonableObjectNodeSchema(schema);
+	} else if (schema instanceof MapNodeStoredSchema) {
+		return toJsonableMapNodeSchema(schema);
+	} else if (schema instanceof LeafNodeStoredSchema) {
+		return toJsonableLeafNodeSchema(schema);
 	} else {
 		fail("Encountered an unknown node schema type.");
 	}
@@ -134,18 +140,16 @@ function toJsonableNodeSchema(
 
 function toJsonableObjectNodeSchema(
 	schema: ObjectNodeStoredSchema,
-	schemaIdentifier: TreeNodeSchemaIdentifier,
 ): JsonableStoredObjectNodeSchema | JsonableStoredArrayNodeSchema {
 	if (schema.objectNodeFields.size === 1 && schema.objectNodeFields.has(EmptyKey)) {
 		// Array case
-		const allowedTypes: TreeNodeSchemaIdentifier[] = [];
+		const allowedTypes = new Set<string>();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		for (const type of schema.objectNodeFields.get(EmptyKey)!.types ?? []) {
-			allowedTypes.push(type);
+			allowedTypes.add(type);
 		}
 		return {
-			id: schemaIdentifier,
-			kind: NodeKind.Array,
+			kind: "array",
 			allowedTypes,
 		} satisfies JsonableStoredArrayNodeSchema;
 	} else {
@@ -155,35 +159,41 @@ function toJsonableObjectNodeSchema(
 			fields[fieldKey] = toJsonableFieldSchema(fieldSchema);
 		}
 		return {
-			id: schemaIdentifier,
-			kind: NodeKind.Object,
+			kind: "object",
 			fields,
 		} satisfies JsonableStoredObjectNodeSchema;
 	}
 }
 
-function toJsonableMapNodeSchema(
-	schema: MapNodeStoredSchema,
-	schemaIdentifier: TreeNodeSchemaIdentifier,
-): JsonableStoredMapNodeSchema {
-	const allowedTypes: TreeNodeSchemaIdentifier[] = [];
+function toJsonableMapNodeSchema(schema: MapNodeStoredSchema): JsonableStoredMapNodeSchema {
+	const allowedTypes = new Set<string>();
 	for (const type of schema.mapFields.types ?? []) {
-		allowedTypes.push(type);
+		allowedTypes.add(type);
 	}
 	return {
-		id: schemaIdentifier,
-		kind: NodeKind.Map,
+		kind: "map",
 		allowedTypes,
 	};
 }
 
-function toJsonableLeafNodeSchema(
-	schema: LeafNodeStoredSchema,
-	schemaIdentifier: TreeNodeSchemaIdentifier,
-): JsonableStoredLeafNodeSchema {
+function toJsonableLeafNodeSchema(schema: LeafNodeStoredSchema): JsonableStoredLeafNodeSchema {
+	function leafKindFromValueSchema(valueSchema: ValueSchema): JsonableLeafKind {
+		switch (valueSchema) {
+			case ValueSchema.Number:
+				return "number";
+			case ValueSchema.String:
+				return "string";
+			case ValueSchema.Boolean:
+				return "boolean";
+			case ValueSchema.Null:
+				return "null";
+			default:
+				fail("Encountered an unknown leaf value schema type.");
+		}
+	}
+
 	return {
-		id: schemaIdentifier,
-		kind: NodeKind.Leaf,
-		type: schema.leafValue,
+		kind: "leaf",
+		type: leafKindFromValueSchema(schema.leafValue),
 	};
 }

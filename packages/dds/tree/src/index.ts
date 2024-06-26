@@ -260,13 +260,17 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
-	type JsonableStoredNodeSchema,
+	type JsonableNodeKind,
+	type JsonableLeafKind,
+	type JsonableFieldKind,
+	type JsonableStoredNodeSchemaBase,
 	type JsonableStoredObjectNodeSchema,
 	type JsonableStoredArrayNodeSchema,
 	type JsonableStoredMapNodeSchema,
 	type JsonableStoredLeafNodeSchema,
-	type JsonableStoredNodeSchemas,
+	type JsonableStoredNodeSchema,
 	type JsonableStoredFieldSchema,
+	type JsonableTreeSchema,
 } from "./shared-tree/index.js";
 
 export {
