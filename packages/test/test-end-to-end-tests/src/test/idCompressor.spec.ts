@@ -37,7 +37,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedDirectory, type ISharedMap } from "@fluidframework/map";
+import { SharedDirectory, ISharedMap } from "@fluidframework/map";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
