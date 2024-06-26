@@ -4,13 +4,16 @@
  */
 
 import { expect } from "chai";
-import { lookForTabs, errorMessage } from "../../../src/library/repoPolicyCheck/spacesOverTabsInYaml.js";
+import {
+	lookForTabs,
+	errorMessage,
+} from "../../../src/library/repoPolicyCheck/spacesOverTabsInYaml.js";
 
 describe("indent-with-spaces-in-yaml", () => {
 	it("does not fail when no tabs are present", () => {
 		const error = lookForTabs(`
 no indentation
-  indented with spaces`)
+  indented with spaces`);
 		expect(error).to.equal(undefined);
 	});
 
