@@ -17,14 +17,12 @@ import { type IDisposable, disposeSymbol } from "../util/index.js";
 import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
- * An editable view of a (version control style) branch of a shared tree.
+ * Portion of {@link FlexTreeView} that does not depend on the schema's type.
  * @privateRemarks
- * TODO:
- * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
- * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
+ * Since {@link FlexTreeView}'s schema is invariant, `FlexTreeView<FlexFieldSchema>` does not cover this use case.
  * @internal
  */
-export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDisposable {
+export interface FlexTreeViewGeneric extends IDisposable {
 	/**
 	 * Context for controlling the FlexTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
@@ -40,7 +38,18 @@ export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDis
 	 * This is a non-owning reference: disposing of this view does not impact the branch.
 	 */
 	readonly checkout: ITreeCheckout;
+}
 
+/**
+ * An editable view of a (version control style) branch of a shared tree.
+ * @privateRemarks
+ * TODO:
+ * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
+ * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
+ * @internal
+ */
+export interface FlexTreeView<in out TRoot extends FlexFieldSchema>
+	extends FlexTreeViewGeneric {
 	/**
 	 * Get a typed view of the tree content using the flex-tree API.
 	 */
@@ -100,6 +109,4 @@ export class CheckoutFlexTreeView<
  * Maps the context of every {@link CheckoutFlexTreeView} to the view.
  * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
  */
-// TODO: use something other than `any`
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const contextToTreeView = new WeakMap<Context, CheckoutFlexTreeView<any>>();
+export const contextToTreeView = new WeakMap<Context, FlexTreeViewGeneric>();
