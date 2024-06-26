@@ -126,6 +126,7 @@ declare function get_current_TypeAliasDeclaration_FetchTypeInternal():
 declare function use_old_TypeAliasDeclaration_FetchTypeInternal(
     use: TypeOnly<old.FetchTypeInternal>): void;
 use_old_TypeAliasDeclaration_FetchTypeInternal(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_FetchTypeInternal());
 
 /*

@@ -171,6 +171,9 @@
 		"broken": {
 			"TypeAliasDeclaration_FetchType": {
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_FetchTypeInternal": {
+				"backCompat": false
 			}
 		}
 	}
