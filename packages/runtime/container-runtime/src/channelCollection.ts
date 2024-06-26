@@ -60,6 +60,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
+import { v4 as uuid } from "uuid";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import {
 	DeletedResponseHeaderKey,
@@ -587,20 +588,28 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * Please note that above mentioned functions have the implementation they have (allowing #2) due to #1.
 	 */
 	protected createDataStoreId(): string {
-		// We use three non-overlapping namespaces:
-		// - detached state: even numbers
-		// - attached state: odd numbers
-		// - uuids
-		// In first two cases we will encode result as strings in more compact form.
-		if (this.parentContext.attachState === AttachState.Detached) {
-			// container is detached, only one client observes content,  no way to hit collisions with other clients.
-			return encodeCompactIdToString(2 * this.contexts.size);
+		/**
+		 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
+		 * in the snapshot.
+		 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+		 */
+		if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+			// We use three non-overlapping namespaces:
+			// - detached state: even numbers
+			// - attached state: odd numbers
+			// - uuids
+			// In first two cases we will encode result as strings in more compact form.
+			if (this.parentContext.attachState === AttachState.Detached) {
+				// container is detached, only one client observes content,  no way to hit collisions with other clients.
+				return encodeCompactIdToString(2 * this.contexts.size);
+			}
+			const id = this.parentContext.containerRuntime.generateDocumentUniqueId();
+			if (typeof id === "number") {
+				return encodeCompactIdToString(2 * id + 1);
+			}
+			return id;
 		}
-		const id = this.parentContext.containerRuntime.generateDocumentUniqueId();
-		if (typeof id === "number") {
-			return encodeCompactIdToString(2 * id + 1);
-		}
-		return id;
+		return uuid();
 	}
 
 	public createDetachedDataStoreCore(
