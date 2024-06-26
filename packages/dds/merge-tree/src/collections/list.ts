@@ -33,7 +33,7 @@ class HeadNode<T> {
 	public get prev(): DataNode<T> | undefined {
 		return this._prev === this.headNode ? undefined : (this._prev as DataNode<T>);
 	}
-	public get list() {
+	public get list(): DoublyLinkedList<T> | undefined {
 		return this.headNode._list;
 	}
 }
@@ -222,10 +222,10 @@ export class DoublyLinkedList<T>
 
 	private _len: number = 0;
 	private readonly headNode: HeadNode<T> | DataNode<T> = new HeadNode(this);
-	public get length() {
+	public get length(): number {
 		return this._len;
 	}
-	public get empty() {
+	public get empty(): boolean {
 		return this._len === 0;
 	}
 	public get first(): ListNode<T> | undefined {
@@ -242,7 +242,7 @@ export function walkList<T>(
 	visitor: (node: ListNode<T>) => boolean | void,
 	start?: ListNode<T>,
 	forward: boolean = true,
-) {
+): boolean {
 	let current: ListNode<T> | undefined;
 	if (start) {
 		if (!list.includes(start)) {

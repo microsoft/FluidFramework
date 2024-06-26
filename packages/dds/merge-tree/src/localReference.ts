@@ -37,7 +37,7 @@ export const SlidingPreference = {
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
-function _validateReferenceType(refType: ReferenceType) {
+function _validateReferenceType(refType: ReferenceType): void {
 	let exclusiveCount = 0;
 	if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
 		++exclusiveCount;
@@ -103,7 +103,7 @@ class LocalReference implements LocalReferencePosition {
 		segment: ISegment | undefined,
 		offset: number,
 		listNode: ListNode<LocalReference> | undefined,
-	) {
+	): void {
 		if (listNode !== this.listNode && this.listNode !== undefined) {
 			this.segment?.localRefs?.removeLocalRef(this);
 		}
@@ -123,33 +123,34 @@ class LocalReference implements LocalReferencePosition {
 		this.offset = offset;
 	}
 
-	public isLeaf() {
+	public isLeaf(): boolean {
 		return false;
 	}
 
-	public addProperties(newProps: PropertySet) {
+	public addProperties(newProps: PropertySet): void {
 		// eslint-disable-next-line import/no-deprecated
 		this.properties = addProperties(this.properties, newProps);
 	}
 
-	public getSegment() {
+	public getSegment(): ISegment | undefined {
 		return this.segment;
 	}
 
-	public getOffset() {
+	public getOffset(): number {
 		return this.offset;
 	}
 
-	public getListNode() {
+	public getListNode(): ListNode<LocalReference> | undefined {
 		return this.listNode;
 	}
 
-	public getProperties() {
+	public getProperties(): PropertySet | undefined {
 		return this.properties;
 	}
 }
 
 /**
+ * Creates a new detached local reference.
  * @internal
  */
 export function createDetachedLocalReferencePosition(
@@ -164,11 +165,12 @@ interface IRefsAtOffset {
 	after?: DoublyLinkedList<LocalReference>;
 }
 
-function assertLocalReferences(lref: any): asserts lref is LocalReference {
+function assertLocalReferences(lref: unknown): asserts lref is LocalReference {
 	assert(lref instanceof LocalReference, 0x2e0 /* "lref not a Local Reference" */);
 }
 
 /**
+ * Determines if the given function is true for any position within the collection.
  * @returns true if `func` returns true for any position within the collection
  */
 export function anyLocalReferencePosition(
@@ -185,6 +187,7 @@ export function anyLocalReferencePosition(
 }
 
 /**
+ * Finds the local reference positions that satisfy the given predicate.
  * @returns only the local reference positions for which the `predicate` returns
  * true
  */
@@ -205,7 +208,7 @@ export function* filterLocalReferencePositions(
  */
 let validateRefCount: ((collection?: LocalReferenceCollection) => void) | undefined;
 
-export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection) => void) {
+export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection) => void): void {
 	validateRefCount = cb;
 }
 
@@ -218,7 +221,7 @@ export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection)
  * @alpha
  */
 export class LocalReferenceCollection {
-	public static append(seg1: ISegment, seg2: ISegment) {
+	public static append(seg1: ISegment, seg2: ISegment): void {
 		if (seg2.localRefs && !seg2.localRefs.empty) {
 			if (!seg1.localRefs) {
 				seg1.localRefs = new LocalReferenceCollection(seg1);
@@ -237,7 +240,7 @@ export class LocalReferenceCollection {
 		validateRefCount?.(seg2.localRefs);
 	}
 
-	public static setOrGet(segment: ISegment) {
+	public static setOrGet(segment: ISegment): LocalReferenceCollection {
 		return (segment.localRefs ??= new LocalReferenceCollection(segment));
 	}
 
@@ -250,7 +253,9 @@ export class LocalReferenceCollection {
 		 * Segment this `LocalReferenceCollection` is associated to.
 		 */
 		private readonly segment: ISegment,
-		initialRefsByfOffset = new Array<IRefsAtOffset | undefined>(segment.cachedLength),
+		initialRefsByfOffset: (IRefsAtOffset | undefined)[] = Array.from({
+			length: segment.cachedLength,
+		}),
 	) {
 		// Since javascript arrays are sparse the above won't populate any of the
 		// indices, but it will ensure the length property of the array matches
@@ -259,6 +264,7 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Returns an iterator.
 	 * @remarks This method should only be called by mergeTree.
 	 */
 	public [Symbol.iterator]() {
@@ -298,14 +304,16 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Determines if the collection has no references in it.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public get empty() {
+	public get empty(): boolean {
 		validateRefCount?.(this);
 		return this.refCount === 0;
 	}
 
 	/**
+	 * Creates a new local reference.
 	 * @remarks This method should only be called by mergeTree.
 	 */
 	public createLocalRef(
@@ -325,9 +333,10 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Adds a local reference to the collection.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public addLocalRef(lref: LocalReferencePosition, offset: number) {
+	public addLocalRef(lref: LocalReferencePosition, offset: number): void {
 		assertLocalReferences(lref);
 		assert(
 			offset < this.segment.cachedLength,
@@ -349,6 +358,7 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Removes a local reference from the collection.
 	 * @remarks This method should only be called by mergeTree.
 	 */
 	public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
@@ -377,7 +387,7 @@ export class LocalReferenceCollection {
 	 *
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public append(other: LocalReferenceCollection) {
+	public append(other: LocalReferenceCollection): void {
 		if (!other || other.empty) {
 			return;
 		}
@@ -440,7 +450,7 @@ export class LocalReferenceCollection {
 	 *
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public split(offset: number, splitSeg: ISegment) {
+	public split(offset: number, splitSeg: ISegment): void {
 		if (this.empty) {
 			// shrink the offset array when empty and splitting
 			this.refsByOffset.length = offset;
@@ -462,9 +472,10 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Insert a reference before tombstoned references.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
+	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void {
 		const beforeRefs = this.refsByOffset[0]?.before ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[0]?.before === undefined) {
@@ -495,9 +506,10 @@ export class LocalReferenceCollection {
 		validateRefCount?.(this);
 	}
 	/**
+	 * Insert a reference after tombstoned references.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
+	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void {
 		const lastOffset = this.segment.cachedLength - 1;
 		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new DoublyLinkedList();
 
@@ -526,9 +538,10 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Determines if a reference is after tombstoned references.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public isAfterTombstone(lref: LocalReferencePosition) {
+	public isAfterTombstone(lref: LocalReferencePosition): boolean {
 		const after = this.refsByOffset[lref.getOffset()]?.after;
 		if (after) {
 			assertLocalReferences(lref);
@@ -538,13 +551,14 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * Walks all of the references in a collection.
 	 * @remarks This method should only be called by mergeTree.
 	 */
 	public walkReferences(
 		visitor: (lref: LocalReferencePosition) => boolean | void | undefined,
 		start?: LocalReferencePosition,
 		forward: boolean = true,
-	) {
+	): boolean {
 		if (start !== undefined) {
 			if (!this.has(start)) {
 				throw new UsageError("start must be in collection");
@@ -576,7 +590,7 @@ export class LocalReferenceCollection {
 			}
 		}
 
-		const listWalker = (pos: DoublyLinkedList<LocalReference>) => {
+		const listWalker = (pos: DoublyLinkedList<LocalReference>): boolean => {
 			return walkList(
 				pos,
 				(node) => visitor(node.data),

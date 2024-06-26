@@ -99,7 +99,7 @@ export function createObliterateRangeOp(start: number, end: number): IMergeTreeO
 
 /**
  * Creates an op for inserting a segment at the specified position.
- * 
+ *
  * @param pos - The position to insert the segment at
  * @param segment - The segment to insert
  *
@@ -110,9 +110,9 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 }
 
 /**
- * Creates the op for inserting a segment from its JSON representation at 
+ * Creates the op for inserting a segment from its JSON representation at
  * the specified position.
- * 
+ *
  * @internal
  */
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
@@ -125,7 +125,7 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
 
 /**
  * Creates a group op from the provided ops.
- * 
+ *
  * @param ops - The ops to group
  *
  * @deprecated The ability to create group ops will be removed in an upcoming

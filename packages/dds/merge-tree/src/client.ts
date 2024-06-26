@@ -155,14 +155,15 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
 		options?: IMergeTreeOptions & PropertySet,
-		private readonly getMinInFlightRefSeq: () => number | undefined = () => undefined,
+		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
+			undefined,
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);
-		this._mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+		this._mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 			this.emit("delta", opArgs, deltaArgs, this);
 		};
-		this._mergeTree.mergeTreeMaintenanceCallback = (args, opArgs) => {
+		this._mergeTree.mergeTreeMaintenanceCallback = (args, opArgs): void => {
 			this.emit("maintenance", args, opArgs, this);
 		};
 
@@ -260,6 +261,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * Create and insert a segment at the specified position.
 	 * @param pos - The position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
@@ -273,6 +275,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
+	 * Create and insert a segment at the specified reference position.
 	 * @param refPos - The reference position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
@@ -330,7 +333,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	): boolean {
 		return walkAllChildSegments(
 			this._mergeTree.root,
-			accum === undefined ? action : (seg) => action(seg, accum),
+			accum === undefined ? action : (seg): boolean => action(seg, accum),
 		);
 	}
 
@@ -423,7 +426,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * Removes a `LocalReferencePosition` from this client.
 	 */
-	public removeLocalReferencePosition(lref: LocalReferencePosition) {
+	public removeLocalReferencePosition(
+		lref: LocalReferencePosition,
+	): LocalReferencePosition | undefined {
 		return this._mergeTree.removeLocalReferencePosition(lref);
 	}
 
@@ -444,7 +449,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * and convert the position to a character position.
 	 * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
 	 */
-	public posFromRelativePos(relativePos: IRelativePosition) {
+	public posFromRelativePos(relativePos: IRelativePosition): number {
 		return this._mergeTree.posFromRelativePos(relativePos);
 	}
 
@@ -455,7 +460,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * Revert an op
 	 */
-	public rollback?(op: any, localOpMetadata: unknown) {
+	public rollback?(op: unknown, localOpMetadata: unknown): void {
 		// eslint-disable-next-line import/no-deprecated
 		this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
 	}
@@ -644,7 +649,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
 			| undefined,
-	) {
+	): {
+		clientId: number;
+		referenceSequenceNumber: number;
+		sequenceNumber: number;
+	} {
 		// If there this no sequenced message, then the op is local
 		// and unacked, so use this clients sequenced args
 		//
@@ -674,7 +683,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.getClientSequenceArgsForMessage(opArgs.sequencedMessage);
 	}
 
-	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs) {
+	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs): void {
 		if (opArgs.op.type === MergeTreeDeltaType.GROUP) {
 			for (const memberOp of opArgs.op.ops) {
 				this._mergeTree.ackPendingSegment({
@@ -688,27 +697,29 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	getOrAddShortClientId(longClientId: string) {
+	getOrAddShortClientId(longClientId: string): number {
 		if (!this.clientNameToIds.get(longClientId)) {
 			this.addLongClientId(longClientId);
 		}
 		return this.getShortClientId(longClientId);
 	}
 
-	protected getShortClientId(longClientId: string) {
+	protected getShortClientId(longClientId: string): number {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
 
-	getLongClientId(shortClientId: number) {
+	getLongClientId(shortClientId: number): string {
 		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
 	}
 
-	addLongClientId(longClientId: string) {
+	addLongClientId(longClientId: string): void {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
 	}
 
-	private getOrAddShortClientIdFromMessage(msg: Pick<ISequencedDocumentMessage, "clientId">) {
+	private getOrAddShortClientIdFromMessage(
+		msg: Pick<ISequencedDocumentMessage, "clientId">,
+	): number {
 		return this.getOrAddShortClientId(msg.clientId ?? "server");
 	}
 
@@ -721,7 +732,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to find the position for
 	 * @param localSeq - The localSeq to find the position of the segment at
 	 */
-	public findReconnectionPosition(segment: ISegment, localSeq: number) {
+	public findReconnectionPosition(segment: ISegment, localSeq: number): number {
 		assert(
 			localSeq <= this._mergeTree.collabWindow.localSeq,
 			0x032 /* "localSeq greater than collab window" */,
@@ -804,11 +815,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					let segInsertOp = segment;
-					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
+					if (typeof resetOp.seg === "object" && resetOp.seg.properties !== undefined) {
 						segInsertOp = segment.clone();
 						// eslint-disable-next-line import/no-deprecated
 						segInsertOp.properties = createMap();
-						segInsertOp.addProperties(resetOp.seg.props);
+						segInsertOp.addProperties(resetOp.seg.properties);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);
@@ -887,7 +898,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return opList;
 	}
 
-	private applyRemoteOp(opArgs: IMergeTreeDeltaRemoteOpArgs) {
+	private applyRemoteOp(opArgs: IMergeTreeDeltaRemoteOpArgs): void {
 		const op = opArgs.op;
 		const msg = opArgs.sequencedMessage;
 		this.getOrAddShortClientIdFromMessage(msg);
@@ -952,7 +963,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
+	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false): void {
 		// Ensure client ID is registered
 		this.getOrAddShortClientIdFromMessage(msg);
 		// Apply if an operation message
@@ -975,7 +986,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this.updateSeqNumbers(min, msg.sequenceNumber);
 	}
 
-	private updateSeqNumbers(min: number, seq: number) {
+	private updateSeqNumbers(min: number, seq: number): void {
 		const collabWindow = this.getCollabWindow();
 		// Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
 		assert(
@@ -1076,7 +1087,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		} else {
 			assert(
-				(resetOp.type as any) !== MergeTreeDeltaType.GROUP,
+				(resetOp.type as unknown) !== MergeTreeDeltaType.GROUP,
 				0x03c /* "Reset op has 'group' delta type!" */,
 			);
 			assert(
@@ -1145,13 +1156,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
-	private getLocalSequenceNumber() {
+	private getLocalSequenceNumber(): number {
 		const segWindow = this.getCollabWindow();
 		return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
 	}
 
 	// eslint-disable-next-line import/no-deprecated
-	localTransaction(groupOp: IMergeTreeGroupMsg) {
+	localTransaction(groupOp: IMergeTreeGroupMsg): void {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {
 				op,
@@ -1181,7 +1192,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	updateMinSeq(minSeq: number) {
+	updateMinSeq(minSeq: number): void {
 		this._mergeTree.setMinSeq(minSeq);
 	}
 
@@ -1189,7 +1200,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		pos: number,
 		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 		localSeq?: number,
-	) {
+	): {
+		segment: T | undefined;
+		offset: number | undefined;
+	} {
 		const { referenceSequenceNumber, clientId } =
 			this.getClientSequenceArgsForMessage(sequenceArgs);
 		return this._mergeTree.getContainingSegment<T>(
@@ -1200,7 +1214,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 	}
 
-	getPropertiesAtPosition(pos: number) {
+	getPropertiesAtPosition(pos: number): PropertySet | undefined {
 		let propertiesAtPosition: PropertySet | undefined;
 		const segoff = this.getContainingSegment(pos);
 		const seg = segoff.segment;
@@ -1210,7 +1224,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return propertiesAtPosition;
 	}
 
-	getRangeExtentsOfPosition(pos: number) {
+	getRangeExtentsOfPosition(pos: number): {
+		posStart: number | undefined;
+		posAfterEnd: number | undefined;
+	} {
 		let posStart: number | undefined;
 		let posAfterEnd: number | undefined;
 
@@ -1223,19 +1240,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return { posStart, posAfterEnd };
 	}
 
-	getCurrentSeq() {
+	getCurrentSeq(): number {
 		return this.getCollabWindow().currentSeq;
 	}
 
-	getClientId() {
+	getClientId(): number {
 		return this.getCollabWindow().clientId;
 	}
 
-	getLength() {
+	getLength(): number {
 		return this._mergeTree.length ?? 0;
 	}
 
-	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0) {
+	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0): void {
 		// we should always have a client id if we are collaborating
 		// if the client id is undefined we are likely bound to a detached
 		// container, so we should keep going in local mode. once
@@ -1269,7 +1286,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param markerLabel - Label of the marker to search for
 	 * @param forwards - Whether the desired marker comes before (false) or after (true) `startPos`
 	 */
-	searchForMarker(startPos: number, markerLabel: string, forwards = true) {
+	searchForMarker(startPos: number, markerLabel: string, forwards = true): Marker | undefined {
 		const clientId = this.getClientId();
 		return this._mergeTree.searchForMarker(startPos, clientId, markerLabel, forwards);
 	}

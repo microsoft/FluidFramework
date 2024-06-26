@@ -378,7 +378,9 @@ export class SnapshotV1 {
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {
-		const chunkObj: VersionedMergeTreeChunk = serializer ? serializer.parse(chunk) : JSON.parse(chunk);
+		const chunkObj: VersionedMergeTreeChunk = serializer
+			? serializer.parse(chunk)
+			: JSON.parse(chunk);
 		return toLatestVersion(path, chunkObj, logger, options);
 	}
 }

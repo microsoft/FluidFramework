@@ -20,6 +20,7 @@ import {
 	SerializedAttributionCollection,
 } from "../attributionCollection.js";
 import { BaseSegment, ISegment } from "../mergeTreeNodes.js";
+import type { PropertySet } from "../properties.js";
 
 const opKey = (seq: number): AttributionKey => ({ type: "op", seq });
 const detachedKey: AttributionKey = { type: "detached", id: 0 };
@@ -483,7 +484,10 @@ describe("AttributionCollection", () => {
 				this.cachedLength = length;
 			}
 
-			public toJSONObject() {
+			public toJSONObject(): {
+				length: number;
+				props: PropertySet | undefined;
+			} {
 				return { length: this.cachedLength, props: this.properties };
 			}
 
@@ -585,7 +589,7 @@ describe("AttributionCollection", () => {
 						// introduce acceptance criteria here for split.
 						createWeightedGenerator<SplitAction | AppendAction, State>([
 							[split, 1],
-							[append, 1, ({ segments }) => segments.length > 1],
+							[append, 1, ({ segments }): boolean => segments.length > 1],
 						]),
 					),
 					{

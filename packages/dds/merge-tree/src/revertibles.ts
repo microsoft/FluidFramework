@@ -189,7 +189,7 @@ function appendLocalAnnotateToRevertibles(
 
 /**
  * Appends a merge tree delta to the list of revertibles.
- * 
+ *
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
@@ -225,7 +225,7 @@ export function appendToMergeTreeDeltaRevertibles(
 
 /**
  * Removes all revertibles from the list of revertibles.
- * 
+ *
  * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void {
@@ -389,7 +389,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 
 /**
  * Reverts all operations in the list of revertibles.
- * 
+ *
  * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(

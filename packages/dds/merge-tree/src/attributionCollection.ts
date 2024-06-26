@@ -297,7 +297,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return copy;
 	}
 
-	public update(name: string | undefined, channel: AttributionCollection) {
+	public update(name: string | undefined, channel: AttributionCollection): void {
 		assert(
 			channel.length === this.length,
 			0x5c0 /* AttributionCollection channel update should have consistent segment length */,
@@ -324,6 +324,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	): void {
 		const { channels } = summary;
 		assert(
+			// eslint-disable-next-line unicorn/consistent-destructuring
 			summary.seqs.length === summary.posBreakpoints.length,
 			0x445 /* Invalid attribution summary blob provided */,
 		);
@@ -331,13 +332,13 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const extractOntoSegments = (
 			{ seqs, posBreakpoints }: SequenceOffsets,
 			assignToSegment: (collection: AttributionCollection, segment: ISegment) => void,
-		) => {
+		): void => {
 			let curIndex = 0;
 			let cumulativeSegPos = 0;
 
 			for (const segment of segments) {
 				const attribution = new AttributionCollection(segment.cachedLength);
-				const pushEntry = (offset: number, seq: AttributionKey | number | null) => {
+				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(
 						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },

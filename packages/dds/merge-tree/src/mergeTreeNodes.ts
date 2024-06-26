@@ -69,7 +69,7 @@ export interface IRemovalInfo {
 
 /**
  * Returns the removal information for a segment.
- * 
+ *
  * @internal
  */
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
@@ -884,14 +884,14 @@ export class CollaborationWindow {
 
 /**
  * Compares two numbers.
- * 
+ *
  * @internal
  */
 export const compareNumbers = (a: number, b: number): number => a - b;
 
 /**
  * Compares two strings.
- * 
+ *
  * @internal
  */
 export const compareStrings = (a: string, b: string): number => a.localeCompare(b);

@@ -93,10 +93,11 @@ export class PropertiesManager {
 				}
 			}
 
-			const previousValue: any = oldProps[key];
+			const previousValue: unknown = oldProps[key];
 			// The delta should be null if undefined, as that's how we encode delete
+			// eslint-disable-next-line unicorn/no-null
 			deltas[key] = previousValue === undefined ? null : previousValue;
-			const newValue = newProps[key];
+			const newValue: unknown = newProps[key];
 			if (newValue === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete oldProps[key];
@@ -115,7 +116,7 @@ export class PropertiesManager {
 	): PropertySet | undefined {
 		if (oldProps) {
 			// eslint-disable-next-line no-param-reassign, import/no-deprecated
-			newProps ??= createMap<any>();
+			newProps ??= createMap<unknown>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}
