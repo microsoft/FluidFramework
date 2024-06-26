@@ -153,7 +153,7 @@ export class SerializedStateManager {
 	private _refreshSnapshotP: Promise<number> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
 	private readonly refreshTimer: Timer;
-	private readonly snapshotExpiryTimeout: number = 60 * 60 * 24 * 1000;
+	private readonly snapshotRefreshTimeout: number = 60 * 60 * 24 * 1000;
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -171,15 +171,17 @@ export class SerializedStateManager {
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
-		snapshotExpiryTimeout?: number,
+		snapshotRefreshTimeout?: number,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
 
-		this.snapshotExpiryTimeout = snapshotExpiryTimeout ?? this.snapshotExpiryTimeout;
-		this.refreshTimer = new Timer(this.snapshotExpiryTimeout, () => this.tryRefreshSnapshot());
+		this.snapshotRefreshTimeout = snapshotRefreshTimeout ?? this.snapshotRefreshTimeout;
+		this.refreshTimer = new Timer(this.snapshotRefreshTimeout, () =>
+			this.tryRefreshSnapshot(),
+		);
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
@@ -278,8 +280,9 @@ export class SerializedStateManager {
 
 	private tryRefreshSnapshot(): void {
 		if (
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true &&
 			this._refreshSnapshotP === undefined &&
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
+			this.latestSnapshot === undefined
 		) {
 			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
@@ -290,8 +293,6 @@ export class SerializedStateManager {
 							eventName: "RefreshLatestSnapshotFailed",
 							error,
 						});
-						this._refreshSnapshotP = undefined;
-						this.tryRefreshSnapshot();
 					},
 				)
 				.finally(() => {
