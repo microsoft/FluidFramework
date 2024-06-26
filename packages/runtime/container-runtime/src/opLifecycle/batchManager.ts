@@ -51,11 +51,11 @@ export class BatchManager {
 	}
 
 	private get referenceSequenceNumber(): number | undefined {
-		const lastPendingBatch = this.pendingBatch[this.pendingBatch.length - 1];
-		if (this.pendingBatch.length === 0 || lastPendingBatch === undefined) {
-			return undefined;
-		}
-		return lastPendingBatch.referenceSequenceNumber;
+		return this.pendingBatch.length === 0
+			? undefined
+			: // Non null aseerting because we are retrieving the last element of the array if its not empty
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
 	}
 
 	private clientSequenceNumber: number | undefined;
@@ -131,15 +131,21 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch): IBatch => {
-	const firstContent = batch.content[0];
-	const lastContent = batch.content[batch.content.length - 1];
-	if (firstContent !== undefined && lastContent !== undefined) {
-		firstContent.metadata = {
-			...firstContent.metadata,
+	if (batch.content.length > 1) {
+		// Non null asserting because we are checking if batch.content.length is greater than 1
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		batch.content[0]!.metadata = {
+			// Non null asserting because we are checking if batch.content.length is greater than 1
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			...batch.content[0]!.metadata,
 			batch: true,
 		};
-		lastContent.metadata = {
-			...lastContent.metadata,
+		// Non null asserting because we are checking if batch.content.length is greater than 1
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		batch.content[batch.content.length - 1]!.metadata = {
+			// Non null asserting because we are checking if batch.content.length is greater than 1
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			...batch.content[batch.content.length - 1]!.metadata,
 			batch: false,
 		};
 	}
