@@ -17,7 +17,7 @@ import { type IDisposable, disposeSymbol } from "../util/index.js";
 import type { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Portion of {@link FlexTreeView} that does not depend on the schema's type.
+ * The portion of {@link FlexTreeView} that does not depend on the schema's type.
  * @privateRemarks
  * Since {@link FlexTreeView}'s schema is invariant, `FlexTreeView<FlexFieldSchema>` does not cover this use case.
  * @internal
