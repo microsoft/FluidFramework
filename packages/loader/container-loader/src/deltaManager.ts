@@ -16,7 +16,10 @@ import {
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning, type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import {
+	IThrottlingWarning,
+	type ISignalEnvelope,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
