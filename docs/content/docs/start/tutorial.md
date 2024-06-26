@@ -10,7 +10,7 @@ In this walkthrough, you'll learn about using the Fluid Framework by examining t
 
 {{< callout note >}}
 
-The demo app uses Fluid Framework 2.
+The demo app uses Fluid Framework 2.X.
 
 {{< /callout >}}
 
