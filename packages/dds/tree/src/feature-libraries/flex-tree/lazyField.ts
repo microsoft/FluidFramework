@@ -603,7 +603,7 @@ export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyFie
 type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
 	// Correct use of these builders requires the builder of the matching type to be used.
-	// Since this has to be done at runtime anyway, trying to use safer typing then `any`  here (such as `never`, which is only slightly safer)
+	// Since this has to be done at runtime anyway, trying to use safer typing than `any` here (such as `never`, which is only slightly safer)
 	// does not seem worth it (ends up requiring type casts that are just as unsafe).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	schema: FlexFieldSchema<any, TTypes>,
