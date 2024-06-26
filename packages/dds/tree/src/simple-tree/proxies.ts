@@ -57,9 +57,9 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
  * */
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
-		flexField:
-			| FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>
-			| FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.optional>>,
+		flexField: FlexTreeTypedField<
+			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
+		>,
 	): TreeNode | TreeValue | undefined {
 		const maybeUnboxedContent = flexField.content;
 		return isFlexTreeNode(maybeUnboxedContent)
