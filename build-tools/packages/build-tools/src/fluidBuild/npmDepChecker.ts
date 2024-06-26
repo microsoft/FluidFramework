@@ -25,8 +25,8 @@ export class NpmDepChecker {
 		"@types/jest-environment-puppeteer",
 	];
 	// hjs is implicitly used
-	private readonly ignored = ["hjs", ...this.foundTypes];
-	// list of packages that should always in the devDependencies
+	private readonly ignored = ["hjs","react-dom", "events_pkg", ...this.foundTypes];
+	// list of packages that should always be in the devDependencies
 	private readonly dev = [
 		"@fluidframework/build-common",
 		"nyc",
