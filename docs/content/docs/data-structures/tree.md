@@ -545,7 +545,12 @@ on<K extends keyof TreeChangeEvents>(
 	): () => void;
 ```
 
-`Tree.on` assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes (values of the fields in the node). `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
+`Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
+The `node` can be any node of the tree.
+The `eventName` can be either "treeChanged" or "nodeChanged".
+`nodeChanged` fires whenever one or more properties of the specified node change.
+`treeChanged` fires whenever one or more properties of the specified node or any node in its subtree, change.
+We recommend looking at the documentation of each of the events for more details.
 
 An `event` object is automatically passed to the `listener`. It has one member:
 
