@@ -5,8 +5,8 @@
 
 import { expect } from "chai";
 import {
-	lookForTabs,
 	errorMessage,
+	lookForTabs,
 } from "../../../src/library/repoPolicyCheck/spacesOverTabsInYaml.js";
 
 describe("indent-with-spaces-in-yaml", () => {
