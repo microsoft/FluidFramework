@@ -36,7 +36,7 @@ describe.only("SettingsView Accessibility Check", () => {
 		render(<SettingsView />);
 
 		const user = userEvent.setup();
-		// Focus on the first interactive element
+		// Focus on the first interactive element (dropdown theme selector)
 		await user.tab();
 		const dropdown = screen.getByRole("combobox", { name: /theme dropdown/i });
 		expect(dropdown).toHaveFocus();
