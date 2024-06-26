@@ -71,7 +71,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	FieldKind,
+	SchemaFactory,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
@@ -1937,6 +1941,123 @@ describe("SharedTree", () => {
 			),
 		);
 	});
+
+	it("getStoredSchema (simple)", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		assert.deepEqual(sharedTree.getStoredSchema(), {
+			allowedTypes: [],
+			kind: FieldKind.Optional,
+		});
+	});
+
+	// it.only("getStoredSchema (complex)", async () => {
+	// 	const provider = new TestTreeProviderLite(1);
+	// 	const [sharedTree] = provider.trees;
+	// 	const schemaFactory = new SchemaFactory("test");
+	// 	class Point extends schemaFactory.object("Point", {
+	// 		x: schemaFactory.number,
+	// 		y: schemaFactory.number,
+	// 		z: schemaFactory.optional(schemaFactory.number),
+	// 	}) {}
+
+	// 	class Circle extends schemaFactory.object("Circle", {
+	// 		center: Point,
+	// 		radius: schemaFactory.number,
+	// 	}) {}
+
+	// 	class Rectangle extends schemaFactory.object("Rectangle", {
+	// 		topLeft: Point,
+	// 		width: schemaFactory.number,
+	// 		height: schemaFactory.number,
+	// 	}) {}
+
+	// 	class Canvas extends schemaFactory.object("Canvas", {
+	// 		shapes: schemaFactory.array([Circle, Rectangle]),
+	// 	}) {}
+
+	// 	const view = sharedTree.viewWith(
+	// 		new TreeViewConfiguration({ schema: Canvas, enableSchemaValidation: true }),
+	// 	);
+	// 	view.initialize({
+	// 		shapes: [
+	// 			{ center: { x: 0, y: 0 }, radius: 1 },
+	// 			{ topLeft: { x: 0, y: 0 }, width: 1, height: 1 },
+	// 		],
+	// 	});
+
+	// 	const expected: JsonableStoredFieldSchema = {
+	// 		kind: FieldKind.Required,
+	// 		allowedTypes: [
+	// 			{
+	// 				kind: NodeKind.Object,
+	// 				name: "test.Canvas",
+	// 				fields: {
+	// 					shapes: {
+	// 						kind: FieldKind.Required,
+	// 						allowedTypes: [
+	// 							{
+	// 								name: "test.Circle",
+	// 								kind: NodeKind.Object,
+	// 								fields: {
+	// 									center: {
+	// 										kind: FieldKind.Required,
+	// 										allowedTypes: [
+	// 											{
+	// 												name: "test.Point",
+	// 												kind: NodeKind.Object,
+	// 												fields: {
+	// 													x: {
+	// 														kind: FieldKind.Required,
+	// 														allowedTypes: [
+	// 															{
+	// 																name: "test.number",
+	// 																kind: NodeKind.Leaf,
+	// 																type: ValueSchema.Number,
+	// 															},
+	// 														],
+	// 													},
+	// 													y: {
+	// 														kind: FieldKind.Required,
+	// 														allowedTypes: [
+	// 															{
+	// 																name: "test.number",
+	// 																kind: NodeKind.Leaf,
+	// 																type: ValueSchema.Number,
+	// 															},
+	// 														],
+	// 													},
+	// 													z: {
+	// 														kind: FieldKind.Optional,
+	// 														allowedTypes: [
+	// 															{
+	// 																name: "test.number",
+	// 																kind: NodeKind.Leaf,
+	// 																type: ValueSchema.Number,
+	// 															},
+	// 														],
+	// 													},
+	// 												},
+	// 											},
+	// 										],
+	// 									},
+	// 									radius: {
+	// 										kind: FieldKind.Required,
+	// 										allowedTypes: [
+	// 											{ name: "test.number", kind: NodeKind.Leaf, type: ValueSchema.Number },
+	// 										],
+	// 									},
+	// 								},
+	// 							},
+	// 						],
+	// 					},
+	// 				},
+	// 			},
+	// 		],
+	// 	};
+	// 	const actual = sharedTree.getStoredSchema();
+	// 	assert.deepEqual(actual, expected);
+	// });
 });
 
 function assertSchema<TRoot extends FlexFieldSchema>(

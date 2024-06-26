@@ -4,12 +4,12 @@
  */
 
 export type {
-	JsonableStoredNodeSchema,
+	JsonableStoredNodeSchemaBase as JsonableStoredNodeSchema,
 	JsonableStoredObjectNodeSchema,
 	JsonableStoredArrayNodeSchema,
 	JsonableStoredMapNodeSchema,
 	JsonableStoredLeafNodeSchema,
-	JsonableStoredNodeSchemas,
+	JsonableStoredNodeSchema as JsonableStoredNodeSchemas,
 	JsonableStoredFieldSchema,
 } from "./jsonableStoredSchema.js";
 
