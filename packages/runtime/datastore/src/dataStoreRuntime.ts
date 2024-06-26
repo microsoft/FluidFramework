@@ -467,7 +467,8 @@ export class FluidDataStoreRuntime
 					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
 					// We can remove the need to leverage uuid() as fall-back in couple releases.
 					const res =
-						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ??
+						uuid();
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
 			} else {

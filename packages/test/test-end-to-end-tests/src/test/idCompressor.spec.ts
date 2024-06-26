@@ -39,7 +39,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
