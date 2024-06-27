@@ -67,6 +67,7 @@ export {
 	SampledTelemetryHelper,
 	type CustomMetrics,
 	type ICustomData,
+	type MeasureReturnType,
 } from "./sampledTelemetryHelper.js";
 export {
 	createSampledLogger,

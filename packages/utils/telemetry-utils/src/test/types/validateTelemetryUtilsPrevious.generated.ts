@@ -727,7 +727,7 @@ use_old_ClassDeclaration_PerformanceEvent(
 declare function get_old_ClassDeclaration_SampledTelemetryHelper():
     TypeOnly<old.SampledTelemetryHelper>;
 declare function use_current_ClassDeclaration_SampledTelemetryHelper(
-    use: TypeOnly<current.SampledTelemetryHelper<any>>): void;
+    use: TypeOnly<current.SampledTelemetryHelper>): void;
 use_current_ClassDeclaration_SampledTelemetryHelper(
     get_old_ClassDeclaration_SampledTelemetryHelper());
 
@@ -739,7 +739,7 @@ use_current_ClassDeclaration_SampledTelemetryHelper(
  * "ClassDeclaration_SampledTelemetryHelper": {"backCompat": false}
  */
 declare function get_current_ClassDeclaration_SampledTelemetryHelper():
-    TypeOnly<current.SampledTelemetryHelper<any>>;
+    TypeOnly<current.SampledTelemetryHelper>;
 declare function use_old_ClassDeclaration_SampledTelemetryHelper(
     use: TypeOnly<old.SampledTelemetryHelper>): void;
 use_old_ClassDeclaration_SampledTelemetryHelper(

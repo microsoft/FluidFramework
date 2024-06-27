@@ -72,7 +72,8 @@ interface LoggerData {
 }
 
 /**
- * The structure of the custom data object that can be passed into the logger.
+ * Helper type for an object whose properties are all numbers
+ *
  * @internal
  */
 export type CustomMetrics<TKey> = {
@@ -80,7 +81,10 @@ export type CustomMetrics<TKey> = {
 };
 
 /**
- * The structure of the return value if given the custom data object when calling the {@link SampledTelemetryHelper.measure} method.
+ * Potentially part of the structure of the return value of the function provided to {@link SampledTelemetryHelper.measure}.
+ *
+ * @see {@link MeasureReturnType} for more details on how this type is used.
+ *
  * @internal
  */
 export interface ICustomData<T> {
@@ -88,18 +92,49 @@ export interface ICustomData<T> {
 }
 
 /**
+ * Encapsulates the type-level logic for {@link SampledTelemetryHelper.measure}, to determine the expected return type
+ * for the function that method receives (and by extension, its own return type). In words: {@link SampledTelemetryHelper}
+ * is optionally provided with two generic types: one for custom metrics, and one for the actual return value of the
+ * code that will be measured.
+ *
+ * - If no generic type is provided for custom metrics, then this type is simply the generic type provided for the actual
+ * return value of the measured code (which could be void!).
+ * - If a generic type is provided for custom metrics, then this type has a `customData` property whose type matches that
+ * generic. Then if the generic type for the actual return value is not void, this type also has a property `returnValue`
+ * whose type matches the generic type for the actual return value; if the generic type for the actual return value is
+ * void, then this type _forbids_ a `returnValue` property (technically, it can exist but must be undefined in that case),
+ * to try to ensure that the caller doesn't accidentally provide a function that actually returns a value.
+ *
+ * @internal
+ */
+export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics extends void
+	? TMeasureReturn
+	: ICustomData<TCustomMetrics> &
+			(TMeasureReturn extends void
+				? { [K in "returnValue"]?: never }
+				: { returnValue: TMeasureReturn });
+
+/**
  * Helper class that executes a specified code block and writes an
  * {@link @fluidframework/core-interfaces#ITelemetryPerformanceEvent} to a specified logger every time a specified
  * number of executions is reached (or when the class is disposed).
  *
- * The `duration` field in the telemetry event is the duration of the latest execution (sample) of the specified
- * function. See the documentation of the `includeAggregateMetrics` parameter for additional details that can be
- * included.
+ * @remarks
+ * The `duration` field in the telemetry event this class generates is the duration of the latest execution (sample)
+ * of the specified code block.
+ * See the documentation of the `includeAggregateMetrics` parameter for additional details that can be included.
+ *
+ * @typeParam TMeasurementReturn - The return type (in a vacuum) of the code block that will be measured, ignoring
+ * any custom metric data that might be required by this class. E.g., the code might just return a boolean.
+ * @typeParam TCustomMetrics - A type that contains the custom properties that will be used by an instance of this class
+ * for custom metrics. Each property in this type should be a number.
  *
  * @internal
  */
-export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustomMetrics>>
-	implements IDisposable
+export class SampledTelemetryHelper<
+	TMeasureReturn = void,
+	TCustomMetrics extends CustomMetrics<TCustomMetrics> = void,
+> implements IDisposable
 {
 	private _disposed: boolean = false;
 
@@ -140,8 +175,12 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 
 	/**
 	 * Executes the specified code and keeps track of execution time statistics.
-	 * If it's been called enough times (the sampleThreshold for the class) then it generates a log message with the necessary information.
-	 * @remarks The user MUST pass in exact same SET of custom data properties and the set must be IMMUABLE during the life cycle of the logger instance.
+	 * When it's been called enough times (the sampleThreshold for the class) then it generates a log message with the
+	 * necessary information.
+	 *
+	 * @remarks It's the responsibility of the caller to ensure that the same same set of custom metric properties is
+	 * provided each time this method is called on a given instance of {@link SampledTelemetryHelper}.
+	 * Otherwise the final measurements in the telemetry event may not be accurate.
 	 *
 	 * @param codeToMeasure - The code to be executed and measured.
 	 * @param bucket - A key to track executions of the code block separately.
@@ -149,7 +188,10 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 	 * If no such distinction needs to be made, do not provide a value.
 	 * @returns Whatever the passed-in code block returns.
 	 */
-	public measure<T>(codeToMeasure: () => T, bucket: string = ""): T {
+	public measure(
+		codeToMeasure: () => MeasureReturnType<TMeasureReturn, TCustomMetrics>,
+		bucket: string = "",
+	): MeasureReturnType<TMeasureReturn, TCustomMetrics> {
 		const start = performance.now();
 		const returnValue = codeToMeasure();
 		const duration = performance.now() - start;

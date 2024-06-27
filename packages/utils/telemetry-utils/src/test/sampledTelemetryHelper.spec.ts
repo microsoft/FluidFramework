@@ -217,8 +217,8 @@ describe("SampledTelemetryHelper", () => {
 
 		// Only measure 4 times when we need 5 samples before writing the telemetry event
 		for (let i = 0; i < 4; i++) {
-			helper.measure(() => ({ customData: {} }), bucket1);
-			helper.measure(() => ({ customData: {} }), bucket2);
+			helper.measure(() => {}, bucket1);
+			helper.measure(() => {}, bucket2);
 		}
 
 		// Nothing should have been logged yet
@@ -284,7 +284,7 @@ describe("SampledTelemetryHelper", () => {
 	it("Correctly returns computed averages and maxes for custom data", () => {
 		const sampling = 10;
 
-		const helper = new SampledTelemetryHelper<TestTelemetryProperties>(
+		const helper = new SampledTelemetryHelper<void, TestTelemetryProperties>(
 			{ eventName: "testEvent" },
 			logger,
 			sampling,
@@ -309,6 +309,141 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(logger.events[0].max_propertyOne, 10);
 		assert.strictEqual(logger.events[0].max_propertyTwo, 11);
 		assert.strictEqual(logger.events[0].max_propertyThree, 12);
+	});
+
+	// This is deliberatly skipped because it contains compile-time tests. We don't want to actually run this code.
+	describe.skip("compile-time tests", () => {
+		it("no return type and no custom data type", () => {
+			const helper = new SampledTelemetryHelper<void, void>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to not return anything.
+			helper.measure(() => {});
+
+			// As far as I know we can't really do much to prevent functions that return _something_ from being passed.
+			// If there's a way to make these compile-time errors, it'd be nice.
+			helper.measure(() => true);
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("no return type and no custom data type", () => {
+			const helper = new SampledTelemetryHelper<void, void>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to not return anything.
+			helper.measure(() => {});
+
+			// As far as I know we can't really do much to prevent functions that return _something_ from being passed.
+			// If there's a way to make these compile-time errors, it'd be nice.
+			helper.measure(() => true);
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("explicit return type and no custom data type", () => {
+			const helper = new SampledTelemetryHelper<boolean>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to return a plain value of the type specified during helper creation.
+			helper.measure(() => true);
+
+			// Measure should not be able to return a plain value of a type that is not the one specified during helper creation.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => "");
+
+			// Measure should not be able to not return anything, because a return type was specified during helper creation.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => {});
+
+			// Measure should not be able to return custom data (even if the return value is of the correct type) because no
+			// custom data type was specified during helper creation.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("no return type and explicit custom data type", () => {
+			const helper = new SampledTelemetryHelper<void, TestTelemetryProperties>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to return custom data and no returnValue, or set it to undefined
+			helper.measure(() => ({
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+			helper.measure(() => ({
+				returnValue: undefined,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+
+			// Measure should not be able to not return anything; custom data is required.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => {});
+
+			// Measure should not be able to return a plain value; custom data is required.
+			// @ts-expect-error -- We want this to be a compile-time error
+			helper.measure(() => "");
+
+			// Measure should not be able to return a plain value even if custom data is required; return value must be
+			// undefined because the helper was told to expect no return value.
+			helper.measure(() => ({
+				// @ts-expect-error -- We want this to be a compile-time error
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+		});
+
+		it("explicit return type and custom data type", () => {
+			const helper = new SampledTelemetryHelper<boolean, TestTelemetryProperties>(
+				{ eventName: "testEvent" },
+				logger,
+				10,
+			);
+
+			// Measure should be able to return a value of the type specified during helper creation and custom data.
+			helper.measure(() => ({
+				returnValue: true,
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+
+			// Measure should not be able to return something of incorrect type, even if the returned custom data is correct.
+			helper.measure(() => ({
+				// @ts-expect-error -- Can't return a value of the incorrect type
+				returnValue: "",
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+			// @ts-expect-error -- Can't try not to include a return value
+			helper.measure(() => ({
+				customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+			}));
+
+			// Measure should not be able to return without custom data, because a custom data type was specified during
+			// helper creation.
+			// @ts-expect-error -- Can't return a value of the correct type without custom data
+			helper.measure(() => true);
+			// @ts-expect-error -- Can't return a value of the incorrect type without custom data
+			helper.measure(() => "");
+			// @ts-expect-error -- Can't try to not return anything without custom data
+			helper.measure(() => {});
+		});
 	});
 });
 
