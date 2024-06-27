@@ -1058,8 +1058,9 @@ export class MergeTree {
 			if (
 				seg !== this.startOfTree &&
 				seg !== this.endOfTree &&
-				!isSegmentPresent(seg, refSeq, clientId, refSeq, localSeq)
+				!isSegmentPresent(seg, { refSeq, localSeq })
 			) {
+				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
 				const slideSeq =
 					seg.movedSeq !== UnassignedSequenceNumber && seg.movedSeq !== undefined
 						? seg.movedSeq
@@ -1067,24 +1068,14 @@ export class MergeTree {
 							? seg.removedSeq
 							: refSeq;
 				const slideLocalSeq = seg.localMovedSeq ?? seg.localRemovedSeq;
-				const perspective = new PerspectiveImpl(
-					this,
-					slideSeq,
-					clientId,
-					slideSeq,
-					slideLocalSeq,
-				);
-				const slidSegment = perspective.nextSegment(
-					seg,
-					refPos.slidingPreference === SlidingPreference.FORWARD,
-				);
+				const perspective = new PerspectiveImpl(this, {
+					refSeq: slideSeq,
+					localSeq: slideLocalSeq,
+				});
+				const slidSegment = perspective.nextSegment(seg, forward);
 				return (
 					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
-					(refPos.slidingPreference === SlidingPreference.FORWARD
-						? 0
-						: slidSegment.cachedLength === 0
-							? 0
-							: slidSegment.cachedLength - 1)
+					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
 				);
 			}
 			return this.getPosition(seg, refSeq, clientId, localSeq) + refPos.getOffset();

@@ -6,37 +6,10 @@
 import { UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { type ISegment } from "./mergeTreeNodes.js";
-
-/**
- * Defines a side relative to an element in a sequence.
- *
- * @public
- */
-export enum Side {
-	Before = 0,
-	After = 1,
-}
-
-/**
- * A place between two elements in a sequence.
- * A `pos` of `undefined` means the extents of the sequence.
- * Before undefined is the end of the sequence, After undefined is the start of the sequence.
- *
- * @public
- */
-export interface Place {
-	/**
-	 * The index of the reference sibling measured from the start of the sequence.
-	 */
-	readonly pos: number | undefined;
-	readonly side: Side;
-}
+import { seqLTE, type ISegment } from "./mergeTreeNodes.js";
 
 /**
  * Provides a view of a MergeTree from the perspective of a specific client at a specific sequence number.
- *
- * @public
  */
 export interface Perspective {
 	nextSegment(segment: ISegment, forward?: boolean): ISegment;
@@ -44,24 +17,25 @@ export interface Perspective {
 }
 
 /**
+ * Represents a point in time inside the collaboration window.
+ */
+export interface SeqTime {
+	refSeq: number;
+	localSeq?: number;
+}
+
+/**
  * Implementation of {@link Perspective}.
  * See {@link Client.createPerspective}.
- *
- * @internal
  */
 export class PerspectiveImpl implements Perspective {
 	/**
 	 * @param _mergeTree - The {@link MergeTree} to view.
-	 * @param _sequenceNumber - The latest sequence number to include in the view.
-	 * @param _clientId - The client ID to view from.
-	 * @param _localSequenceNumber - The latest local sequence number to include in the view.
+	 * @param _seqTime - The latest sequence number and local sequence number to consider.
 	 */
 	public constructor(
 		private readonly _mergeTree: MergeTree,
-		private readonly _sequenceNumber: number,
-		private readonly _clientId: number,
-		private readonly _refSeq: number = _sequenceNumber,
-		private readonly _localSequenceNumber?: number,
+		private readonly _seqTime: SeqTime,
 	) {}
 
 	/**
@@ -76,15 +50,7 @@ export class PerspectiveImpl implements Perspective {
 	public nextSegment(segment: ISegment, forward: boolean = true): ISegment {
 		let next: ISegment | undefined;
 		const action = (seg: ISegment) => {
-			if (
-				isSegmentPresent(
-					seg,
-					this._sequenceNumber,
-					this._clientId,
-					this._refSeq,
-					this._localSequenceNumber,
-				)
-			) {
+			if (isSegmentPresent(seg, this._seqTime)) {
 				next = seg;
 				return LeafAction.Exit;
 			}
@@ -106,19 +72,10 @@ export class PerspectiveImpl implements Perspective {
 /**
  * @param seg - The segment to check.
  * @param seq - The latest sequence number to consider.
- * @param clientId - The ID of the client to consider.
- * @param refSeq - The reference sequence number,
- * aka the latest sequence number to consider for other clients' changes.
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was removed in the given perspective.
  */
-export function wasRemovedBefore(
-	seg: ISegment,
-	seq: number,
-	clientId: number,
-	refSeq: number,
-	localSeq?: number,
-): boolean {
+export function wasRemovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): boolean {
 	if (
 		seg.removedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -126,36 +83,16 @@ export function wasRemovedBefore(
 	) {
 		return seg.localRemovedSeq <= localSeq;
 	}
-	if (seg.removedClientIds !== undefined && seg.removedClientIds.includes(clientId)) {
-		return (
-			seg.removedSeq !== undefined &&
-			seg.removedSeq !== UnassignedSequenceNumber &&
-			seg.removedSeq <= seq
-		);
-	}
-	return (
-		seg.removedSeq !== undefined &&
-		seg.removedSeq !== UnassignedSequenceNumber &&
-		seg.removedSeq <= refSeq
-	);
+	return seg.removedSeq !== undefined && seqLTE(seg.removedSeq, refSeq);
 }
 
 /**
  * @param seg - The segment to check.
- * @param seq - The latest sequence number to consider.
- * @param clientId - The ID of the client to consider.
- * @param refSeq - The reference sequence number,
- * aka the latest sequence number to consider for other clients' changes.
+ * @param refSeq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was moved (aka obliterated) in the given perspective.
  */
-export function wasMovedBefore(
-	seg: ISegment,
-	seq: number,
-	clientId: number,
-	refSeq: number,
-	localSeq?: number,
-): boolean {
+export function wasMovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): boolean {
 	if (
 		seg.movedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -163,64 +100,30 @@ export function wasMovedBefore(
 	) {
 		return seg.localMovedSeq <= localSeq;
 	}
-	if (seg.movedClientIds !== undefined && seg.movedClientIds.includes(clientId)) {
-		return (
-			seg.movedSeq !== undefined &&
-			seg.movedSeq !== UnassignedSequenceNumber &&
-			seg.movedSeq <= seq
-		);
-	}
-	return (
-		seg.movedSeq !== undefined &&
-		seg.movedSeq !== UnassignedSequenceNumber &&
-		seg.movedSeq <= refSeq
-	);
+	return seg.movedSeq !== undefined && seqLTE(seg.movedSeq, refSeq);
 }
 
 /**
  * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
  */
-export function wasRemovedOrMovedBefore(
-	seg: ISegment,
-	seq: number,
-	clientId: number,
-	refSeq: number,
-	localSeq?: number,
-): boolean {
-	return (
-		wasRemovedBefore(seg, seq, clientId, refSeq, localSeq) ||
-		wasMovedBefore(seg, seq, clientId, refSeq, localSeq)
-	);
+export function wasRemovedOrMovedBefore(seg: ISegment, seqTime: SeqTime): boolean {
+	return wasRemovedBefore(seg, seqTime) || wasMovedBefore(seg, seqTime);
 }
 
 /**
  *
  * @param seg - The segment to check.
- * @param seq - The latest sequence number to consider.
- * @param clientId - The ID of the client to consider.
- * @param refSeq - The reference sequence number,
- * aka the latest sequence number to consider for other clients' changes.
- * @param localSeq - The latest local sequence number to consider.
+ * @param seqTime - The latest sequence number and local sequence number to consider.
  * @returns true iff this segment was inserted before the given perspective,
  * and it was not removed or moved in the given perspective.
  */
-export function isSegmentPresent(
-	seg: ISegment,
-	seq: number,
-	clientId: number,
-	refSeq: number,
-	localSeq?: number,
-) {
+export function isSegmentPresent(seg: ISegment, seqTime: SeqTime): boolean {
+	const { refSeq, localSeq } = seqTime;
 	// If seg.seq is undefined, then this segment has existed since minSeq.
 	// It may have been moved or removed since.
 	if (seg.seq !== undefined) {
 		if (seg.seq !== UnassignedSequenceNumber) {
-			if (
-				// Clients can only see insertions made by other clients before refseq.
-				(seg.clientId !== clientId && seg.seq > refSeq) ||
-				// Clients can see their own insertions before seq
-				(seg.clientId === clientId && seg.seq > seq)
-			) {
+			if (!seqLTE(seg.seq, refSeq)) {
 				return false;
 			}
 		} else if (seg.localSeq !== undefined) {
@@ -232,7 +135,7 @@ export function isSegmentPresent(
 			}
 		}
 	}
-	if (wasRemovedOrMovedBefore(seg, seq, clientId, refSeq, localSeq)) {
+	if (wasRemovedOrMovedBefore(seg, seqTime)) {
 		return false;
 	}
 	return true;
