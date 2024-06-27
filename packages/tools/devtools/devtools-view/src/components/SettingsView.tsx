@@ -142,7 +142,7 @@ export function SettingsView(): React.ReactElement {
 					Microsoft Privacy Statement
 				</Link>
 				<Switch
-					aria-label="Usage Telemetry toggle"
+					aria-label="Usage Telemetry Toggle"
 					label="Send usage telemetry to Microsoft"
 					checked={optedIn}
 					onChange={(ev, data): void => setOptedIn(data.checked)}

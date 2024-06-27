@@ -30,5 +30,5 @@ export async function assertNoAccessibilityViolations(container: HTMLElement): P
 		}
 	}
 
-	expect(results.violations.length).toBe(0);
+	expect(results.violations).toStrictEqual([]);
 }

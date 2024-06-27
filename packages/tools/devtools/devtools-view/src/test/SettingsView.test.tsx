@@ -27,15 +27,14 @@ describe("SettingsView Accessibility Check", () => {
 		const user = userEvent.setup();
 		// Focus on the first interactive element (dropdown theme selector)
 		await user.tab();
-		const dropdown = screen.getByRole("combobox", { name: /theme selection dropdown/i });
+		const dropdown = screen.getByRole("combobox", { name: /Theme Selection Dropdown/ });
 		expect(dropdown).toHaveFocus();
 		// The dropdown theme options are divs but get compiled as buttons in the expect function and thus fail any expect calls.
-		await user.keyboard("{Enter}");
 		await user.tab();
-		const privacyLink = screen.getByRole("link", { name: /microsoft privacy statement/i });
+		const privacyLink = screen.getByRole("link", { name: /Microsoft Privacy Statement/ });
 		expect(privacyLink).toHaveFocus();
 
-		const usageToggle = screen.getByRole("switch", { name: /usage telemetry toggle/i });
+		const usageToggle = screen.getByRole("switch", { name: /Usage Telemetry Toggle/ });
 		await user.tab();
 		expect(usageToggle).toHaveFocus();
 		debug();
