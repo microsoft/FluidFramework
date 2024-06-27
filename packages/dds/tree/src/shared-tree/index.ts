@@ -4,17 +4,17 @@
  */
 
 export type {
-	JsonableNodeKind,
-	JsonableLeafKind,
-	JsonableFieldKind,
-	JsonableStoredNodeSchemaBase,
-	JsonableStoredObjectNodeSchema,
-	JsonableStoredArrayNodeSchema,
-	JsonableStoredMapNodeSchema,
-	JsonableStoredLeafNodeSchema,
-	JsonableStoredNodeSchema,
-	JsonableStoredFieldSchema,
-	JsonableTreeSchema,
+	SimpleNodeSchemaKind,
+	SimpleLeafSchemaKind,
+	SimpleFieldSchemaKind,
+	SimpleNodeSchemaBase,
+	SimpleObjectNodeSchema,
+	SimpleArrayNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleLeafNodeSchema,
+	SimpleNodeSchema,
+	SimpleFieldSchema,
+	SimpleTreeSchema,
 } from "./jsonableStoredSchema.js";
 
 export {

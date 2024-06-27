@@ -18,25 +18,25 @@ import { fail } from "../util/index.js";
  * TODO
  * @internal
  */
-export type JsonableNodeKind = "object" | "array" | "map" | "leaf";
+export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 
 /**
  * TODO
  * @internal
  */
-export type JsonableFieldKind = "optional" | "required" | "identifier";
+export type SimpleFieldSchemaKind = "optional" | "required" | "identifier";
 
 /**
  * TODO
  * @internal
  */
-export type JsonableLeafKind = "string" | "number" | "boolean" | "null";
+export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null";
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredNodeSchemaBase<TNodeKind extends JsonableNodeKind> {
+export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
 	readonly kind: TNodeKind;
 }
 
@@ -44,16 +44,15 @@ export interface JsonableStoredNodeSchemaBase<TNodeKind extends JsonableNodeKind
  * TODO
  * @internal
  */
-export interface JsonableStoredObjectNodeSchema
-	extends JsonableStoredNodeSchemaBase<"object"> {
-	readonly fields: Record<string, JsonableStoredFieldSchema>;
+export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
+	readonly fields: Record<string, SimpleFieldSchema>;
 }
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredArrayNodeSchema extends JsonableStoredNodeSchemaBase<"array"> {
+export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
@@ -61,7 +60,7 @@ export interface JsonableStoredArrayNodeSchema extends JsonableStoredNodeSchemaB
  * TODO
  * @internal
  */
-export interface JsonableStoredMapNodeSchema extends JsonableStoredNodeSchemaBase<"map"> {
+export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
 	readonly allowedTypes: ReadonlySet<string>;
 }
 
@@ -69,26 +68,26 @@ export interface JsonableStoredMapNodeSchema extends JsonableStoredNodeSchemaBas
  * TODO
  * @internal
  */
-export interface JsonableStoredLeafNodeSchema extends JsonableStoredNodeSchemaBase<"leaf"> {
-	readonly type: JsonableLeafKind;
+export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
+	readonly type: SimpleLeafSchemaKind;
 }
 
 /**
  * TODO
  * @internal
  */
-export type JsonableStoredNodeSchema =
-	| JsonableStoredLeafNodeSchema
-	| JsonableStoredMapNodeSchema
-	| JsonableStoredArrayNodeSchema
-	| JsonableStoredObjectNodeSchema;
+export type SimpleNodeSchema =
+	| SimpleLeafNodeSchema
+	| SimpleMapNodeSchema
+	| SimpleArrayNodeSchema
+	| SimpleObjectNodeSchema;
 
 /**
  * TODO
  * @internal
  */
-export interface JsonableStoredFieldSchema {
-	readonly kind: JsonableFieldKind;
+export interface SimpleFieldSchema {
+	readonly kind: SimpleFieldSchemaKind;
 	readonly allowedTypes: readonly string[];
 }
 
@@ -96,26 +95,26 @@ export interface JsonableStoredFieldSchema {
  * TODO
  * @internal
  */
-export interface JsonableTreeSchema {
-	readonly rootFieldSchema: JsonableStoredFieldSchema;
-	readonly definitions: ReadonlyMap<string, JsonableStoredNodeSchema>;
+export interface SimpleTreeSchema {
+	readonly rootFieldSchema: SimpleFieldSchema;
+	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
 }
 
-export function toJsonableTreeSchema(
+export function toSimpleTreeSchema(
 	schemaMap: ReadonlyMap<string, TreeNodeStoredSchema>,
 	rootFieldSchema: TreeFieldStoredSchema,
-): JsonableTreeSchema {
-	const definitions = new Map<string, JsonableStoredNodeSchema>();
+): SimpleTreeSchema {
+	const definitions = new Map<string, SimpleNodeSchema>();
 	for (const [type, schema] of schemaMap) {
-		definitions.set(type, toJsonableNodeSchema(schema));
+		definitions.set(type, toSimpleNodeSchema(schema));
 	}
 	return {
-		rootFieldSchema: toJsonableFieldSchema(rootFieldSchema),
+		rootFieldSchema: toSimpleFieldSchema(rootFieldSchema),
 		definitions,
 	};
 }
 
-function toJsonableFieldSchema(fieldSchema: TreeFieldStoredSchema): JsonableStoredFieldSchema {
+function toSimpleFieldSchema(fieldSchema: TreeFieldStoredSchema): SimpleFieldSchema {
 	const allowedTypes: string[] = [];
 	for (const type of fieldSchema.types ?? []) {
 		allowedTypes.push(type);
@@ -126,21 +125,21 @@ function toJsonableFieldSchema(fieldSchema: TreeFieldStoredSchema): JsonableStor
 	};
 }
 
-function toJsonableNodeSchema(schema: TreeNodeStoredSchema): JsonableStoredNodeSchema {
+function toSimpleNodeSchema(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	if (schema instanceof ObjectNodeStoredSchema) {
-		return toJsonableObjectNodeSchema(schema);
+		return toSimpleObjectNodeSchema(schema);
 	} else if (schema instanceof MapNodeStoredSchema) {
-		return toJsonableMapNodeSchema(schema);
+		return toSimpleMapNodeSchema(schema);
 	} else if (schema instanceof LeafNodeStoredSchema) {
-		return toJsonableLeafNodeSchema(schema);
+		return toSimpleLeafNodeSchema(schema);
 	} else {
 		fail("Encountered an unknown node schema type.");
 	}
 }
 
-function toJsonableObjectNodeSchema(
+function toSimpleObjectNodeSchema(
 	schema: ObjectNodeStoredSchema,
-): JsonableStoredObjectNodeSchema | JsonableStoredArrayNodeSchema {
+): SimpleObjectNodeSchema | SimpleArrayNodeSchema {
 	if (schema.objectNodeFields.size === 1 && schema.objectNodeFields.has(EmptyKey)) {
 		// Array case
 		const allowedTypes = new Set<string>();
@@ -151,21 +150,21 @@ function toJsonableObjectNodeSchema(
 		return {
 			kind: "array",
 			allowedTypes,
-		} satisfies JsonableStoredArrayNodeSchema;
+		} satisfies SimpleArrayNodeSchema;
 	} else {
 		// Object case
-		const fields: Record<string, JsonableStoredFieldSchema> = {};
+		const fields: Record<string, SimpleFieldSchema> = {};
 		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			fields[fieldKey] = toJsonableFieldSchema(fieldSchema);
+			fields[fieldKey] = toSimpleFieldSchema(fieldSchema);
 		}
 		return {
 			kind: "object",
 			fields,
-		} satisfies JsonableStoredObjectNodeSchema;
+		} satisfies SimpleObjectNodeSchema;
 	}
 }
 
-function toJsonableMapNodeSchema(schema: MapNodeStoredSchema): JsonableStoredMapNodeSchema {
+function toSimpleMapNodeSchema(schema: MapNodeStoredSchema): SimpleMapNodeSchema {
 	const allowedTypes = new Set<string>();
 	for (const type of schema.mapFields.types ?? []) {
 		allowedTypes.add(type);
@@ -176,8 +175,8 @@ function toJsonableMapNodeSchema(schema: MapNodeStoredSchema): JsonableStoredMap
 	};
 }
 
-function toJsonableLeafNodeSchema(schema: LeafNodeStoredSchema): JsonableStoredLeafNodeSchema {
-	function leafKindFromValueSchema(valueSchema: ValueSchema): JsonableLeafKind {
+function toSimpleLeafNodeSchema(schema: LeafNodeStoredSchema): SimpleLeafNodeSchema {
+	function leafKindFromValueSchema(valueSchema: ValueSchema): SimpleLeafSchemaKind {
 		switch (valueSchema) {
 			case ValueSchema.Number:
 				return "number";

@@ -67,8 +67,8 @@ import {
 	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
-	type JsonableTreeSchema,
-	type JsonableStoredNodeSchema,
+	type SimpleTreeSchema,
+	type SimpleNodeSchema,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
@@ -1959,8 +1959,8 @@ describe("SharedTree", () => {
 			{ name: "Jillian", age: 42, nickname: "Jill" },
 		]);
 
-		const expected: JsonableTreeSchema = {
-			definitions: new Map<string, JsonableStoredNodeSchema>([
+		const expected: SimpleTreeSchema = {
+			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"com.fluidframework.leaf.number",
 					{
