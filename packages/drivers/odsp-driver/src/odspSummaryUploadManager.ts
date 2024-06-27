@@ -179,7 +179,8 @@ export class OdspSummaryUploadManager {
 		let blobs = 0;
 		const keys = Object.keys(tree.tree);
 		for (const key of keys) {
-			const summaryObject = tree.tree[key];
+			// Non null asserting for now, this should be changed to Object.entries
+			const summaryObject = tree.tree[key]!;
 
 			let id: string | undefined;
 			let value: OdspSummaryTreeValue | undefined;

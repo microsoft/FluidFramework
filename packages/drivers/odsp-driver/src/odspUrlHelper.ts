@@ -110,8 +110,10 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 			}
 		}
 
-		const driveId = joinSessionMatch[3] || joinSessionMatch[5];
-		const itemId = joinSessionMatch[4];
+		// Why are we non null asserting here
+		const driveId = joinSessionMatch[3] || joinSessionMatch[5]!;
+		// Why are we non null asserting here
+		const itemId = joinSessionMatch[4]!;
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
@@ -120,8 +122,10 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		if (joinSessionMatch === null) {
 			return undefined;
 		}
-		const driveId = joinSessionMatch[2];
-		const itemId = joinSessionMatch[3];
+		// Why are we non null asserting here
+		const driveId = joinSessionMatch[2]!;
+		// Why are we non null asserting here
+		const itemId = joinSessionMatch[3]!;
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}
