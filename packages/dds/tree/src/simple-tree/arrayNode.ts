@@ -837,10 +837,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode =
-					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
+				const sourceNode = sourceField.boxedAt(i) ?? fail("impossible out of bounds index");
 				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
-					throw new Error("Type in source sequence is not allowed in destination.");
+					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}

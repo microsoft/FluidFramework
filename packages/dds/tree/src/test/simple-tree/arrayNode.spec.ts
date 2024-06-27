@@ -485,6 +485,20 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array], []);
 			});
 
+			it("invalid content type", () => {
+				const schema = schemaFactory.object("parent", {
+					array1: schemaFactory.array([schemaFactory.number, schemaFactory.string]),
+					array2: schemaFactory.array(schemaFactory.number),
+				});
+				const { array1, array2 } = hydrate(schema, { array1: [1, "bad", 2], array2: [] });
+				const expected = validateUsageError(
+					/Type in source sequence is not allowed in destination./,
+				);
+				assert.throws(() => array2.moveRangeToIndex(0, 1, 3, array1), expected);
+				assert.throws(() => array2.moveRangeToIndex(0, 0, 2, array1), expected);
+				assert.throws(() => array2.moveRangeToIndex(0, 0, 3, array1), expected);
+			});
+
 			it("invalid index", () => {
 				const array = hydrate(schemaType, [1, 2, 3]);
 				// Destination index too large
