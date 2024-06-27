@@ -9,8 +9,8 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	SchemaBuilderBase,
+	TreeStatus,
 } from "../../../feature-libraries/index.js";
-import { TreeStatus } from "../../../../dist/index.js";
 import { EmptyKey, type FieldKey, type MapTree } from "../../../core/index.js";
 import { leaf as leafDomain } from "../../../domains/index.js";
 import { brand } from "../../../util/index.js";

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,7 +68,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
