@@ -774,22 +774,26 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
 		const sourceArray = source ?? this;
-		const field = getSequenceField(sourceArray);
-		validateIndex(sourceIndex, field, "moveToStart");
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
 		const sourceArray = source ?? this;
-		const field = getSequenceField(sourceArray);
-		validateIndex(sourceIndex, field, "moveToEnd");
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
+	public moveToIndex(
+		destinationIndex: number,
+		sourceIndex: number,
+		source?: TreeArrayNode,
+	): void {
 		const sourceArray = source ?? this;
-		const field = getSequenceField(sourceArray);
-		validateIndex(index, field, "moveToIndex", true);
-		validateIndex(sourceIndex, field, "moveToIndex");
-		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(destinationIndex, this, "moveToIndex", true);
+		validateIndex(sourceIndex, sourceField, "moveToIndex");
+		this.moveRangeToIndex(destinationIndex, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveRangeToStart(
 		sourceStart: number,
@@ -814,27 +818,27 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
 	public moveRangeToIndex(
-		index: number,
+		destinationIndex: number,
 		sourceStart: number,
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
-		const field = getSequenceField(this);
-		validateIndex(index, field, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
+		const destinationField = getSequenceField(this);
+		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
+		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
 		const sourceField =
 			source !== undefined
-				? field.isSameAs(getSequenceField(source))
-					? field
+				? destinationField.isSameAs(getSequenceField(source))
+					? destinationField
 					: getSequenceField(source)
-				: field;
+				: destinationField;
 
 		// TODO: determine support for move across different sequence types
-		if (field.schema.types !== undefined && sourceField !== field) {
+		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
 				const sourceNode =
 					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
-				if (!field.schema.types.has(sourceNode.schema.name)) {
+				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}
@@ -842,13 +846,13 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const movedCount = sourceEnd - sourceStart;
 		const sourceFieldPath = sourceField.getFieldPath();
 
-		const destinationFieldPath = field.getFieldPath();
-		field.context.checkout.editor.move(
+		const destinationFieldPath = destinationField.getFieldPath();
+		destinationField.context.checkout.editor.move(
 			sourceFieldPath,
 			sourceStart,
 			movedCount,
 			destinationFieldPath,
-			index,
+			destinationIndex,
 		);
 	}
 }
