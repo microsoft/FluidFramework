@@ -28,7 +28,7 @@ interface IJoinSessionBody {
  * @param path - The API path that is relevant to this request
  * @param method - The type of request, such as GET or POST
  * @param logger - A logger to use for this request
- * @param getStorageToken - A function that is able to provide the access token for this request
+ * @param getAuthHeader - A function that is able to provide the access token for this request
  * @param epochTracker - fetch wrapper which incorporates epoch logic around joinSession call
  * @param requestSocketToken - flag indicating whether joinSession is expected to return access token
  * which is used when establishing websocket connection with collab session backend service.
@@ -41,17 +41,18 @@ interface IJoinSessionBody {
 export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
 	path: string,
-	method: string,
+	method: "GET" | "POST",
 	logger: ITelemetryLoggerExt,
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	epochTracker: EpochTracker,
 	requestSocketToken: boolean,
 	options: TokenFetchOptionsEx,
 	disableJoinSessionRefresh: boolean | undefined,
 	isRefreshingJoinSession: boolean,
-	guestDisplayName?: string,
 ): Promise<ISocketStorageDiscovery> {
-	const token = await getStorageToken(options, "JoinSession");
+	const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
+	const url = `${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`;
+	const authHeader = await getAuthHeader({ ...options, request: { url, method } }, "JoinSession");
 
 	const tokenRefreshProps = options.refresh
 		? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
@@ -72,10 +73,9 @@ export async function fetchJoinSession(
 			...tokenRefreshProps,
 		},
 		async (event) => {
-			const apiRoot = getApiRoot(new URL(urlParts.siteUrl));
 			const formBoundary = uuid();
 			let postBody = `--${formBoundary}\r\n`;
-			postBody += `Authorization: Bearer ${token}\r\n`;
+			postBody += `Authorization: ${authHeader}\r\n`;
 			postBody += `X-HTTP-Method-Override: POST\r\n`;
 			postBody += `Content-Type: application/json\r\n`;
 			if (!disableJoinSessionRefresh) {
@@ -100,7 +100,7 @@ export async function fetchJoinSession(
 			const response = await runWithRetry(
 				async () =>
 					epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-						`${apiRoot}/drives/${urlParts.driveId}/items/${urlParts.itemId}/${path}?ump=1`,
+						url,
 						{ method, headers, body: postBody },
 						"joinSession",
 						true,
