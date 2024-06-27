@@ -938,10 +938,10 @@ export class ConnectionManager implements IConnectionManager {
 		let last = -1;
 		if (initialMessages.length > 0) {
 			this._connectionVerboseProps.connectionInitialOpsFrom =
-			// Non null asserting here because of the length check above
+				// Non null asserting here because of the length check above
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				initialMessages[0]!.sequenceNumber;
-				// Non null asserting here because of the length check above
+			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			last = initialMessages[initialMessages.length - 1]!.sequenceNumber;
 			this._connectionVerboseProps.connectionInitialOpsTo = last + 1;
