@@ -111,7 +111,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		}
 
 		// Why are we non null asserting here
-		const driveId = joinSessionMatch[3] || joinSessionMatch[5]!;
+		const driveId = joinSessionMatch[3] ?? joinSessionMatch[5]!;
 		// Why are we non null asserting here
 		const itemId = joinSessionMatch[4]!;
 
