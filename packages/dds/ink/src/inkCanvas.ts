@@ -238,7 +238,8 @@ export class InkCanvas {
 		// Non null asserting, this must exist because its either the first index or operationIndex minus one which is less than the length of stroke.points
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const previous = stroke.points[Math.max(0, operationIndex - 1)]!;
-		const time = operationIndex === 0 ? current.time - startTime : current.time - previous.time;
+		const time =
+			operationIndex === 0 ? current.time - startTime : current.time - previous.time;
 
 		setTimeout(() => {
 			this.drawStrokeSegment(stroke.pen, current, previous);

@@ -51,7 +51,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       ~40% speedup when the position is in the cache (node v12 x64).
 
 		const handle = this.handles[index];
-		if(index < this.handles.length && handle !== undefined) {
+		if (index < this.handles.length && handle !== undefined) {
 			return handle;
 		}
 		return this.cacheMiss(position);
@@ -116,7 +116,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 				this.getHandles(this.start + this.handles.length, _position + 1),
 			);
 			// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return this.handles[this.handles.length - 1]!;
 		}
 	}
