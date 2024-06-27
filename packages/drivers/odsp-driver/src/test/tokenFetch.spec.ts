@@ -8,6 +8,7 @@ import assert from "node:assert";
 import {
 	isTokenFromCache,
 	tokenFromResponse,
+	authHeaderFromTokenResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
 describe("tokenFromResponse", () => {
@@ -26,6 +27,24 @@ describe("tokenFromResponse", () => {
 	it("returns null when token value is passed as null", async () => {
 		const result = tokenFromResponse(null);
 		assert.equal(result, null);
+	});
+});
+
+describe("authHeaderFromTokenResponse", () => {
+	it("returns token prefixed with 'Bearer' when token value is passed as a string", async () => {
+		const token = "fake token";
+		const result = authHeaderFromTokenResponse(token);
+		assert.equal(result, `Bearer ${token}`);
+	});
+	it("returns authorizationHeader value from TokenResponse when token value is passed as object", async () => {
+		const tokenResponse = { token: "fake token", authorizationHeader: "SCHEME token token" };
+		const result = authHeaderFromTokenResponse(tokenResponse);
+		assert.equal(result, tokenResponse.authorizationHeader);
+	});
+	it("returns Bearer authorization header when token is defined and authorizationHeader is not", async () => {
+		const tokenResponse = { token: "fake token" };
+		const result = authHeaderFromTokenResponse(tokenResponse);
+		assert.equal(result, "Bearer fake token");
 	});
 });
 
