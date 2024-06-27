@@ -331,7 +331,7 @@ describe("Outbox", () => {
 		assert.equal(state.opsSubmitted, 2);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[batchedMessage(messages[0]), batchedMessage(messages[0])]],
+			[[batchedMessage(messages[0]), batchedMessage(messages[1])]],
 		);
 		// All three pending
 		assert.deepEqual(
@@ -340,7 +340,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: i === 2 ? undefined : 0, // Third batch got no CSN as it was not submitted
+				batchStartCsn: i === 2 ? undefined : 1, // Third batch got no CSN as it was not submitted
 			})),
 		);
 	});
@@ -436,13 +436,22 @@ describe("Outbox", () => {
 			],
 		);
 
-		const rawMessagesInFlushOrder = [messages[2], messages[0], messages[1], messages[3]];
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (ID Allocation)
+			[messages[2], 1],
+			// Flush 1 (Main)
+			[messages[0], 2],
+			[messages[1], 2],
+			[messages[3], 2],
+		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -488,13 +497,22 @@ describe("Outbox", () => {
 			],
 		);
 
-		const rawMessagesInFlushOrder = [messages[2], messages[0], messages[1], messages[3]];
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (ID Allocation)
+			[messages[2], 1],
+			// Flush 1 (Main)
+			[messages[0], 2],
+			[messages[1], 2],
+			[messages[3], 2],
+		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -571,13 +589,22 @@ describe("Outbox", () => {
 			],
 		);
 
-		const rawMessagesInFlushOrder = [messages[2], messages[0], messages[1], messages[3]];
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (ID Allocation)
+			[messages[2], 1],
+			// Flush 1 (Main)
+			[messages[0], 2],
+			[messages[1], 2],
+			[messages[3], 2],
+		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -659,10 +686,11 @@ describe("Outbox", () => {
 		const rawMessagesInFlushOrder = [messages[0], messages[1]];
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			rawMessagesInFlushOrder.map((message, i) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
 			})),
 		);
 
@@ -831,19 +859,23 @@ describe("Outbox", () => {
 			],
 		);
 
-		const rawMessagesInFlushOrder = [
-			messages[0],
-			messages[2],
-			messages[4],
-			messages[1],
-			messages[3],
-		];
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (Blob Attach)
+			[messages[0], 1],
+			[messages[2], 1],
+			[messages[4], 1],
+			// Flush 1 (Main)
+			[messages[1], 4],
+			[messages[3], 4],
+		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message) => ({
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
+				batchStartCsn: csn,
 			})),
 		);
 	});
