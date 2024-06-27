@@ -273,25 +273,6 @@ export class PendingStateManager implements IDisposable {
 
 		this.pendingMessages.shift();
 
-		// Single-message batches won't have this.pendingBatchBeginMessage set - just use the message's CSN directly
-		const incomingBatchStartCsn =
-			this.pendingBatchBeginMessage?.clientSequenceNumber ?? message.clientSequenceNumber;
-
-		// Client Sequence Number should match per batch
-		// The server sequences messages in the order received, just like the pending message queue
-		if (incomingBatchStartCsn !== pendingMessage.batchStartCsn) {
-			this.logger?.sendErrorEvent({
-				eventName: "PendingClientSequenceNumberMismatch",
-				details: {
-					processingBatch: !!this.pendingBatchBeginMessage,
-					incomingBatchStartCsn,
-					pendingBatchCsn: pendingMessage.batchStartCsn,
-					messageBatchMetadata: (message.metadata as any)?.batch,
-					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
-				},
-			});
-		}
-
 		const messageContent = buildPendingMessageContent(message);
 
 		// Stringified content should match
