@@ -211,43 +211,160 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array2], [1, 3]);
 			});
 
-			it("move within field", () => {
-				const array = hydrate(schemaType, [1, 2, 3]);
-				array.moveToIndex(0, 1);
-				assert.deepEqual([...array], [2, 1, 3]);
-			});
+			for (const specifySource of [false, true]) {
+				describe(`move within field ${
+					specifySource ? "(specified source)" : "(implicit source)"
+				}`, () => {
+					it("moves node to the destination index when valid", () => {
+						const initialState = [0, 1, 2];
+						for (let sourceIndex = 0; sourceIndex < initialState.length; sourceIndex += 1) {
+							const movedValue = initialState[sourceIndex];
+							for (
+								let destinationIndex = 0;
+								destinationIndex < initialState.length;
+								destinationIndex += 1
+							) {
+								const array = hydrate(schemaType, initialState);
+								if (specifySource) {
+									array.moveToIndex(destinationIndex, sourceIndex, array);
+								} else {
+									array.moveToIndex(destinationIndex, sourceIndex);
+								}
+								const actual = [...array];
+								const expected =
+									sourceIndex < destinationIndex
+										? [
+												...initialState.slice(0, sourceIndex),
+												...initialState.slice(sourceIndex + 1, destinationIndex),
+												movedValue,
+												...initialState.slice(destinationIndex),
+											]
+										: [
+												...initialState.slice(0, destinationIndex),
+												movedValue,
+												...initialState.slice(destinationIndex, sourceIndex),
+												...initialState.slice(sourceIndex + 1),
+											];
+								assert.deepEqual(actual, expected);
+							}
+						}
+					});
 
-			it("cross-field move", () => {
-				const schema = schemaFactory.object("parent", {
-					array1: schemaFactory.array(schemaFactory.number),
-					array2: schemaFactory.array(schemaFactory.number),
+					it("throws when the source index is invalid", () => {
+						const array = hydrate(schemaType, [1, 2, 3]);
+						// Destination index too large
+						assert.throws(
+							() => array.moveToIndex(4, 0),
+							validateUsageError(
+								/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+							),
+						);
+						// Source index too large
+						assert.throws(
+							() => array.moveToIndex(0, 4),
+							validateUsageError(
+								/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+							),
+						);
+						// Destination index is negative
+						assert.throws(
+							() => array.moveToIndex(-1, 0),
+							validateUsageError(/Expected non-negative index, got -1./),
+						);
+						// Source index is negative
+						assert.throws(
+							() => array.moveToIndex(0, -1),
+							validateUsageError(/Expected non-negative index, got -1./),
+						);
+					});
 				});
-				const { array1, array2 } = hydrate(schema, { array1: [1, 2], array2: [1, 2] });
-				array1.moveToIndex(1, 0, array2);
-				assert.deepEqual([...array1], [1, 1, 2]);
-			});
+			}
 
-			it("invalid index", () => {
-				const array = hydrate(schemaType, [1, 2, 3]);
-				// Destination index too large
-				assert.throws(
-					() => array.moveToIndex(4, 0),
-					validateUsageError(
-						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
-					),
-				);
-				// Source index too large
-				assert.throws(
-					() => array.moveToIndex(0, 4),
-					validateUsageError(
-						/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
-					),
-				);
-				// Index is negative
-				assert.throws(
-					() => array.moveToIndex(-1, 0),
-					validateUsageError(/Expected non-negative index, got -1./),
-				);
+			describe("move across fields", () => {
+				it("moves node to the destination index when valid", () => {
+					const schema = schemaFactory.object("parent", {
+						source: schemaFactory.array(schemaFactory.number),
+						destination: schemaFactory.array(schemaFactory.number),
+					});
+					for (const [initialSourceState, initialDestinationState] of [
+						[[1, 2, 3], []],
+						[
+							[1, 2, 3],
+							[4, 5],
+						],
+						[
+							[1, 2],
+							[3, 4, 5],
+						],
+					]) {
+						for (
+							let sourceIndex = 0;
+							sourceIndex < initialSourceState.length;
+							sourceIndex += 1
+						) {
+							const movedValue = initialSourceState[sourceIndex];
+							for (
+								let destinationIndex = 0;
+								destinationIndex < initialDestinationState.length;
+								destinationIndex += 1
+							) {
+								const { source, destination } = hydrate(schema, {
+									source: initialSourceState,
+									destination: initialDestinationState,
+								});
+								destination.moveToIndex(destinationIndex, sourceIndex, source);
+								const actualSource = [...source];
+								const actualDestination = [...destination];
+								const expectedSource = [
+									...initialSourceState.slice(0, sourceIndex),
+									...initialSourceState.slice(sourceIndex + 1),
+								];
+								const expectedDestination = [
+									...initialDestinationState.slice(0, destinationIndex),
+									movedValue,
+									...initialDestinationState.slice(destinationIndex),
+								];
+								assert.deepEqual(actualSource, expectedSource);
+								assert.deepEqual(actualDestination, expectedDestination);
+							}
+						}
+					}
+				});
+
+				it("throws when the source index is invalid", () => {
+					const schema = schemaFactory.object("parent", {
+						source: schemaFactory.array(schemaFactory.number),
+						destination: schemaFactory.array(schemaFactory.number),
+					});
+					const { source, destination } = hydrate(schema, {
+						source: [1, 2, 3],
+						destination: [4, 5, 6, 7],
+					});
+					// Destination index too large
+					assert.throws(
+						() => destination.moveToIndex(5, 0, source),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+						),
+					);
+					// Source index too large
+					assert.throws(
+						() => destination.moveToIndex(0, 4, source),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.moveToIndex is out of bounds./,
+						),
+					);
+					// Destination index is negative
+					assert.throws(
+						() => destination.moveToIndex(-1, 0, source),
+						validateUsageError(/Expected non-negative index, got -1./),
+					);
+					// Source index is negative
+					assert.throws(
+						() => destination.moveToIndex(0, -1, source),
+						validateUsageError(/Expected non-negative index, got -1./),
+					);
+				});
 			});
 		});
 
