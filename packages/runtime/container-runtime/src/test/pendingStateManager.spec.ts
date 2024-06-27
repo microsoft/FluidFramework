@@ -12,7 +12,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	MockLogger,
+	MockLogger2,
 	createChildLogger,
 	isILoggingError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -31,7 +31,7 @@ type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessag
 };
 
 describe("Pending State Manager", () => {
-	const mockLogger = new MockLogger();
+	const mockLogger = new MockLogger2();
 	const logger = createChildLogger({ logger: mockLogger });
 
 	afterEach("ThrowOnErrorLogs", () => {

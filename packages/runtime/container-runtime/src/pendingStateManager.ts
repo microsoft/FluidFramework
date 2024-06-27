@@ -30,7 +30,7 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	batchStartCsn: number | undefined;
+	batchStartCsn?: number;
 }
 
 export interface IPendingLocalState {
