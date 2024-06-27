@@ -4,7 +4,7 @@
  */
 
 import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -222,7 +222,11 @@ describe("DataVisualizerGraph unit tests", () => {
 		// Pass in the empty containerData to the visualizer.
 		const emptyRecord: Record<string, IFluidLoadable> = {};
 
-		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers, defaultEditors);
+		const visualizer = new DataVisualizerGraph(
+			emptyRecord,
+			defaultVisualizers,
+			defaultEditors,
+		);
 
 		const childEmptyRecord = await visualizer.renderRootHandles();
 		const expectedChildEmptyRecord = {};

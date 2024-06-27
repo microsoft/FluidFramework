@@ -19,7 +19,6 @@ import {
 	ISummarizeResults,
 	ISummarizer,
 	ISummaryRuntimeOptions,
-	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -172,7 +171,10 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			negResult = undefined;
 			negResult = summarizer.summarizeOnDemand({ reason: "negative test" });
 		} catch (reason) {}
-		assert(negResult === undefined, "Should not have attempted to summarize while summarizing");
+		assert(
+			negResult === undefined,
+			"Should not have attempted to summarize while summarizing",
+		);
 
 		submitResult = await result.summarySubmitted;
 		assert(submitResult.success, "Result should be complete on success");
@@ -282,7 +284,10 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		const channelsTree = summary.tree[channelsTreeName];
-		assert(channelsTree?.type === SummaryType.Tree, "Expected .channels tree in summary root.");
+		assert(
+			channelsTree?.type === SummaryType.Tree,
+			"Expected .channels tree in summary root.",
+		);
 
 		const defaultDataStoreNode = channelsTree.tree[defaultDataStore._context.id];
 		assert(
@@ -363,8 +368,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		// In summarizer, load the data store should fail.
 		await assert.rejects(
 			async () => {
-				const runtime = (createSummarizerResult.summarizer as any)
-					.runtime as ContainerRuntime;
+				const runtime = (createSummarizerResult.summarizer as any).runtime as ContainerRuntime;
 				const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 				await dsEntryPoint?.get();
 			},
@@ -391,11 +395,6 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	it("should not violate incremental summary principles on first summary", async () => {
 		const loader = provider.makeTestLoader(testContainerConfig);
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		const summaryCollection = new SummaryCollection(
-			container.deltaManager,
-			createChildLogger(),
-		);
-
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
@@ -417,10 +416,12 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 
 		await waitForContainerConnection(container);
 
+		const { summarizer } = await createSummarizer(provider, container);
+
 		// Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
-		await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+		await summarizeNow(summarizer);
 	});
 
 	async function getNackPromise(container: IContainer) {
@@ -718,9 +719,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
-					containerRuntime.storage,
-				);
+				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 				const response = await uploadSummaryUploaderFunc(summary, context);
 				// Close summarizer so that it does not submit SummaryOp
 				summarizer2.close();
@@ -859,9 +858,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
-					containerRuntime.storage,
-				);
+				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 				const response = await uploadSummaryUploaderFunc(summary, context);
 				summary2Handle = response;
 				// Close summarizer so that it does not submit SummaryOp

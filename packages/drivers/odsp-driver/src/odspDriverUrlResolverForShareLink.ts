@@ -31,6 +31,7 @@ import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
+ * @legacy
  * @alpha
  */
 export interface ShareLinkFetcherProps {
@@ -52,6 +53,7 @@ const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
+ * @legacy
  * @alpha
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
@@ -171,9 +173,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 	private async getShareLinkPromise(resolvedUrl: IOdspResolvedUrl): Promise<string> {
 		if (this.shareLinkFetcherProps === undefined) {
-			throw new Error(
-				"Failed to get share link because share link fetcher props are missing",
-			);
+			throw new Error("Failed to get share link because share link fetcher props are missing");
 		}
 
 		if (!(resolvedUrl.siteUrl && resolvedUrl.driveId && resolvedUrl.itemId)) {

@@ -6,13 +6,18 @@
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
+import { hasRedirectionLocation } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspUrlParts,
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
@@ -55,7 +60,8 @@ export async function getFileLink(
 			fileLinkCore = await runWithRetry(
 				async () =>
 					runWithRetryForCoherencyAndServiceReadOnlyErrors(
-						async () => getFileLinkCore(getToken, odspUrlParts, logger),
+						async () =>
+							getFileLinkWithLocationRedirectionHandling(getToken, odspUrlParts, logger),
 						"getFileLinkCore",
 						logger,
 					),
@@ -93,6 +99,55 @@ export async function getFileLink(
 	const fileLink = fileLinkGenerator();
 	fileLinkCache.set(cacheKey, fileLink);
 	return fileLink;
+}
+
+/**
+ * Handles location redirection while fulfilling the getFilelink call. We don't want browser to handle
+ * the redirection as the browser will retry with same auth token which will not work as we need app
+ * to regenerate tokens for the new site domain. So when we will make the network calls below we will set
+ * the redirect:manual header to manually handle these redirects.
+ * Refer: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
+ * @param getToken - token fetcher to fetch the token.
+ * @param odspUrlParts - parts of odsp resolved url.
+ * @param logger - logger to send events.
+ * @returns Response from the API call.
+ * @legacy
+ * @alpha
+ */
+async function getFileLinkWithLocationRedirectionHandling(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	odspUrlParts: IOdspUrlParts,
+	logger: ITelemetryLoggerExt,
+): Promise<string> {
+	// We can have chains of location redirection one after the other, so have a for loop
+	// so that we can keep handling the same type of error. Set max number of redirection to 5.
+	let lastError: unknown;
+	for (let count = 1; count <= 5; count++) {
+		try {
+			return await getFileLinkCore(getToken, odspUrlParts, logger);
+		} catch (error: unknown) {
+			lastError = error;
+			if (
+				isFluidError(error) &&
+				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError &&
+				hasRedirectionLocation(error) &&
+				error.redirectLocation !== undefined
+			) {
+				const redirectLocation = error.redirectLocation;
+				logger.sendTelemetryEvent({
+					eventName: "LocationRedirectionErrorForGetOdspFileLink",
+					retryCount: count,
+				});
+				// Generate the new SiteUrl from the redirection location.
+				const newSiteDomain = new URL(redirectLocation).origin;
+				const newSiteUrl = `${newSiteDomain}${new URL(odspUrlParts.siteUrl).pathname}`;
+				odspUrlParts.siteUrl = newSiteUrl;
+				continue;
+			}
+			throw error;
+		}
+	}
+	throw lastError;
 }
 
 async function getFileLinkCore(
@@ -138,6 +193,7 @@ async function getFileLinkCore(
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
 						"Accept": "application/json;odata=verbose",
+						"redirect": "manual",
 						...headers,
 					},
 				};
@@ -219,6 +275,7 @@ async function getFileItemLite(
 					storageToken,
 					forceAccessTokenViaAuthorizationHeader,
 				);
+				headers.redirect = "manual";
 				const requestInit = { method: "GET", headers };
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;

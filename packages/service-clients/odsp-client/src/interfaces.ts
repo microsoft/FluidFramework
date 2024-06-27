@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IConfigProviderBase, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
 import type { IOdspTokenProvider } from "./token.js";
@@ -56,6 +59,7 @@ export interface OdspClientProps {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface OdspContainerAttachProps {
@@ -111,3 +115,20 @@ export interface OdspMember extends IMember {
  * @beta
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+/**
+ * Represents token response
+ * @beta
+ */
+export interface TokenResponse {
+	/**
+	 * Token value
+	 */
+	token: string;
+
+	/**
+	 * Whether or not the token was obtained from local cache.
+	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
+	 */
+	fromCache?: boolean;
+}

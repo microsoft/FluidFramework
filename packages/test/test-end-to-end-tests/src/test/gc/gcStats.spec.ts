@@ -108,7 +108,8 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 
 		// Create a second summarizer for running GC and summarizing so that it doesn't summarize local changes.
 		const summarizerContainer = await provider.loadTestContainer(testContainerConfig);
-		const summarizerDataObject = (await summarizerContainer.getEntryPoint()) as ITestDataObject;
+		const summarizerDataObject =
+			(await summarizerContainer.getEntryPoint()) as ITestDataObject;
 		summarizerRuntime = summarizerDataObject._context.containerRuntime as ContainerRuntime;
 
 		// Ensure the container used to summarize is in write mode. This is necessary because this container may

@@ -47,7 +47,7 @@ export {
 
 export { getTreeContext, type FlexTreeContext, Context, ContextSlot } from "./context.js";
 
-export { type FlexTreeNodeEvents, onNodeChanged, onTreeChanged } from "./treeEvents.js";
+export { type FlexTreeNodeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export type {

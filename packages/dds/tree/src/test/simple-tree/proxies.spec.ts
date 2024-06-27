@@ -11,7 +11,7 @@ import {
 	type NodeFromSchema,
 	SchemaFactory,
 	TreeArrayNode,
-	TreeConfiguration,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
 // eslint-disable-next-line import/no-internal-modules
@@ -177,11 +177,12 @@ describe("SharedTreeObject", () => {
 		});
 		const nodeKeyManager = new MockNodeKeyManager();
 		const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
-		const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-			identifier: id,
-		}));
+		const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
 
-		const root = getView(config, nodeKeyManager).root;
+		const view = getView(config, nodeKeyManager);
+		view.initialize({ identifier: id });
+		const { root } = view;
+
 		type _ = requireAssignableTo<typeof root.identifier, string>;
 		assert.equal(root.identifier, id);
 	});
@@ -483,8 +484,8 @@ describe("ArrayNode Proxy", () => {
 						index <= start
 							? index // If the index is <= start, it is unmodified
 							: index >= end
-							? index - moved.length // If the index is >= end, subtract the number of moved items.
-							: start, // If the index is inside the moved window, slide it left to the starting position.
+								? index - moved.length // If the index is >= end, subtract the number of moved items.
+								: start, // If the index is inside the moved window, slide it left to the starting position.
 						/* deleteCount: */ 0,
 						...moved,
 					);

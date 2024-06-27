@@ -10,14 +10,12 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
 import type { TreeValue } from "../core/index.js";
+import { type NodeKeyManager, type Unenforced, isLazy } from "../feature-libraries/index.js";
 import {
-	type FlexTreeNode,
-	type NodeKeyManager,
-	type Unenforced,
-	isFlexTreeNode,
-	isLazy,
-} from "../feature-libraries/index.js";
-import { type RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+	type RestrictiveReadonlyRecord,
+	getOrCreate,
+	isReadonlyArray,
+} from "../util/index.js";
 
 import {
 	booleanSchema,
@@ -66,7 +64,6 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -113,7 +110,7 @@ export type ScopedSchemaName<
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
  * @remarks
- * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by {@link ScopedSchemaName|combining} the {@link SchemaFactory.scope} with the schema's `Name`.
+ * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
  * Therefor two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
@@ -174,10 +171,9 @@ export class SchemaFactory<
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
-			TScope,
-			Name
-		>;
+		return (
+			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
+		) as ScopedSchemaName<TScope, Name>;
 	}
 
 	/**
@@ -567,11 +563,24 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Make a field of type identifier instead of the default, which is required.
-	 * @remarks Identifiers may be optionally supplied at node construction time.
-	 * If not supplied, they will be generated automatically when the node is inserted into the tree.
-	 * Attempting to read an automatically generated identifier before the node is inserted into the tree will throw an error.
-	 * An automatically generated identifier will not be present when iterating the nodes's fields until after the node is inserted into the tree.
+	 * A special field which holds a unique identifier for an object node.
+	 * @remarks
+	 * The value of this field, a "node identifier", uniquely identifies a node among all other nodes in the tree.
+	 * Node identifiers are strings, and can therefore be used as lookup keys in maps or written to a database.
+	 * When the node is constructed, the identifier field does not need to be populated.
+	 * The SharedTree will provide an identifier for the node automatically.
+	 * An identifier provided automatically by the SharedTree has the following properties:
+	 * - It is a UUID.
+	 * - It is compressed to a space-efficient representation when stored in the document.
+	 * - A compressed form of the identifier can be accessed at runtime via the `Tree.shortId()` API.
+	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into the tree.
+	 *
+	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
+	 * In that case, it is up to the user to ensure that the identifier is unique within the current tree - no other node should have the same identifier at the same time.
+	 * If the identifier is not unique, it may be read, but may cause libraries or features which operate over node identifiers to misbehave.
+	 * User-supplied identifiers may be read immediately, even before insertion into the tree.
+	 *
+	 * A node may have more than one identifier field (though note that this precludes the use of the `Tree.shortId()` API).
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
@@ -626,26 +635,12 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
 	>(name: Name, allowedTypes: T) {
-		class RecursiveArray extends this.namedArray(
+		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-		) {
-			public constructor(
-				data:
-					| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>>
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					// TODO: use something other than `any`
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					super(data as any);
-				} else {
-					super(data);
-				}
-			}
-		}
+		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
@@ -682,33 +677,12 @@ export class SchemaFactory<
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.namedMap(
+		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-		) {
-			public constructor(
-				data:
-					| Iterable<
-							[
-								string,
-								InsertableTreeNodeFromImplicitAllowedTypes<
-									T & ImplicitAllowedTypes
-								>,
-							]
-					  >
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					// TODO: use something other than `any`
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					super(data as any);
-				} else {
-					super(new Map(data));
-				}
-			}
-		}
+		);
 
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,

@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	EmptyKey,
@@ -435,10 +438,7 @@ describe("toMapTree", () => {
 				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>([
 					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[
-						brand("b"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
+					[brand("b"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 					[brand("c"), [{ type: leaf.number.name, value: 37, fields: new Map() }]],
 				]),
 			};
@@ -473,10 +473,7 @@ describe("toMapTree", () => {
 				type: brand("test.map"),
 				fields: new Map<FieldKey, MapTree[]>([
 					[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
-					[
-						brand("b"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
+					[brand("b"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 					[brand("c"), [{ type: brand(leaf.null.name), value: null, fields: new Map() }]],
 					[
 						brand("d"),
@@ -593,10 +590,7 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.object"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[
-						brand("a"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
+					[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 					[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 					[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
 				]),
@@ -629,20 +623,14 @@ describe("toMapTree", () => {
 			const expected: MapTree = {
 				type: brand("test.object"),
 				fields: new Map<FieldKey, MapTree[]>([
-					[
-						brand("a"),
-						[{ type: leaf.string.name, value: "Hello world", fields: new Map() }],
-					],
+					[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 					[
 						brand("b"),
 						[
 							{
 								type: brand("test.child-object"),
 								fields: new Map<FieldKey, MapTree[]>([
-									[
-										brand("foo"),
-										[{ type: leaf.number.name, value: 42, fields: new Map() }],
-									],
+									[brand("foo"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 								]),
 							},
 						],
@@ -1033,10 +1021,7 @@ describe("toMapTree", () => {
 										},
 									],
 								],
-								[
-									brand("baz"),
-									[{ type: leaf.number.name, value: 2, fields: new Map() }],
-								],
+								[brand("baz"), [{ type: leaf.number.name, value: 2, fields: new Map() }]],
 							]),
 						},
 					],
@@ -1270,9 +1255,7 @@ describe("toMapTree", () => {
 							[
 								brand(myObjectSchema.identifier),
 								new ObjectNodeStoredSchema(
-									new Map<FieldKey, TreeFieldStoredSchema>([
-										[brand("foo"), fieldSchema],
-									]),
+									new Map<FieldKey, TreeFieldStoredSchema>([[brand("foo"), fieldSchema]]),
 								),
 							],
 						]),
@@ -1356,9 +1339,7 @@ describe("toMapTree", () => {
 				const fieldSchema = getFieldSchema(FieldKinds.required, [
 					brand(schemaFactory.string.identifier),
 				]);
-				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [
-					schemaFactory.string,
-				]);
+				const myArrayNodeSchema = schemaFactory.array("myArrayNode", [schemaFactory.string]);
 
 				function createSchemaAndPolicyForMapNode(invalid: boolean = false) {
 					return createSchemaAndPolicy(
@@ -1370,10 +1351,7 @@ describe("toMapTree", () => {
 									? new LeafNodeStoredSchema(ValueSchema.Number)
 									: new LeafNodeStoredSchema(ValueSchema.String),
 							],
-							[
-								brand(myArrayNodeSchema.identifier),
-								new MapNodeStoredSchema(fieldSchema),
-							],
+							[brand(myArrayNodeSchema.identifier), new MapNodeStoredSchema(fieldSchema)],
 						]),
 						new Map([[fieldSchema.kind, FieldKinds.required]]),
 					);
@@ -1406,10 +1384,7 @@ describe("toMapTree", () => {
 
 		const schemaValidationPolicyForSuccess = createSchemaAndPolicy(
 			new Map([
-				[
-					brand(schemaFactory.string.identifier),
-					new LeafNodeStoredSchema(ValueSchema.String),
-				],
+				[brand(schemaFactory.string.identifier), new LeafNodeStoredSchema(ValueSchema.String)],
 			]),
 			new Map(),
 		);
@@ -1454,12 +1429,7 @@ describe("toMapTree", () => {
 			it("Success", () => {
 				const content = "Hello world";
 				const fieldSchema = createFieldSchema(FieldKind.Required, [schemaFactory.string]);
-				cursorFromFieldData(
-					content,
-					fieldSchema,
-					undefined,
-					schemaValidationPolicyForSuccess,
-				);
+				cursorFromFieldData(content, fieldSchema, undefined, schemaValidationPolicyForSuccess);
 			});
 
 			it("Failure", () => {

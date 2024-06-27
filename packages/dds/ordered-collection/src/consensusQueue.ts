@@ -32,6 +32,7 @@ class SnapshotableQueue<T> extends SnapshotableArray<T> implements IOrderedColle
  * Implementation of a consensus stack
  *
  * An derived type of ConsensusOrderedCollection with a queue as the backing data and order.
+ * @legacy
  * @alpha
  */
 export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {

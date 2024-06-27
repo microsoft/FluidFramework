@@ -57,6 +57,7 @@ import {
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
+ * @legacy
  * @alpha
  */
 export async function prefetchLatestSnapshot(
@@ -117,7 +118,8 @@ export async function prefetchLatestSnapshot(
 		return cacheP;
 	};
 
-	const removeEntries = async (): Promise<void> => persistedCache.removeEntries(snapshotKey.file);
+	const removeEntries = async (): Promise<void> =>
+		persistedCache.removeEntries(snapshotKey.file);
 	return PerformanceEvent.timedExecAsync(
 		odspLogger,
 		{ eventName: "PrefetchLatestSnapshot" },
@@ -145,10 +147,7 @@ export async function prefetchLatestSnapshot(
 				enableRedeemFallback,
 			)
 				.then(async (value) => {
-					assert(
-						!!snapshotEpoch,
-						0x585 /* prefetched snapshot should have a valid epoch */,
-					);
+					assert(!!snapshotEpoch, 0x585 /* prefetched snapshot should have a valid epoch */);
 					snapshotContentsWithEpochP.resolve({
 						...value,
 						fluidEpoch: snapshotEpoch,

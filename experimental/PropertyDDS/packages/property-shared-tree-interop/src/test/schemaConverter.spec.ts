@@ -70,12 +70,10 @@ describe("schema converter", () => {
 					assert(schemaIsLeaf(innerSchema));
 				}
 				assert(
-					fullSchemaData.nodeSchema.get(brand(`converted.map<${typeName}>`)) !==
-						undefined,
+					fullSchemaData.nodeSchema.get(brand(`converted.map<${typeName}>`)) !== undefined,
 				);
 				assert(
-					fullSchemaData.nodeSchema.get(brand(`converted.array<${typeName}>`)) !==
-						undefined,
+					fullSchemaData.nodeSchema.get(brand(`converted.array<${typeName}>`)) !== undefined,
 				);
 			});
 		});
@@ -94,8 +92,7 @@ describe("schema converter", () => {
 				if (typeName === "converted.NamedProperty") {
 					assert(propertySchema instanceof FlexObjectNodeSchema);
 					const idFieldSchema =
-						propertySchema.objectNodeFields.get(brand("guid")) ??
-						fail("expected field");
+						propertySchema.objectNodeFields.get(brand("guid")) ?? fail("expected field");
 					assert.deepEqual(idFieldSchema.kind, FieldKinds.required);
 					assert.deepEqual(
 						[...(idFieldSchema.types ?? fail("expected types"))],
@@ -113,8 +110,7 @@ describe("schema converter", () => {
 							new Set([nodePropertySchema.name]),
 						);
 						const idFieldSchema =
-							propertySchema.objectNodeFields.get(brand("guid")) ??
-							fail("expected field");
+							propertySchema.objectNodeFields.get(brand("guid")) ?? fail("expected field");
 						assert.deepEqual(idFieldSchema.kind, FieldKinds.required);
 						assert.deepEqual(
 							[...(idFieldSchema.types ?? fail("expected types"))],
@@ -122,8 +118,7 @@ describe("schema converter", () => {
 						);
 						if (typeName === "converted.RelationshipProperty") {
 							const toFieldSchema =
-								propertySchema.objectNodeFields.get(brand("to")) ??
-								fail("expected field");
+								propertySchema.objectNodeFields.get(brand("to")) ?? fail("expected field");
 							assert.deepEqual(toFieldSchema.kind, FieldKinds.required);
 							assert.deepEqual(
 								[...(toFieldSchema.types ?? fail("expected types"))],
@@ -138,8 +133,7 @@ describe("schema converter", () => {
 						? "NodeProperty"
 						: typeName.split(".").slice(1).join(".");
 				assert(
-					fullSchemaData.nodeSchema.get(brand(`converted.map<${originalName}>`)) !==
-						undefined,
+					fullSchemaData.nodeSchema.get(brand(`converted.map<${originalName}>`)) !== undefined,
 				);
 				assert(
 					fullSchemaData.nodeSchema.get(brand(`converted.array<${originalName}>`)) !==
@@ -338,9 +332,7 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
-			const nodeSchema = fullSchemaData.nodeSchema.get(
-				brand("converted.Test:Optional-1.0.0"),
-			);
+			const nodeSchema = fullSchemaData.nodeSchema.get(brand("converted.Test:Optional-1.0.0"));
 			assert(nodeSchema instanceof FlexObjectNodeSchema);
 			const mapField =
 				nodeSchema.objectNodeFields.get(brand("childMap")) ?? fail("expected field schema");
@@ -366,11 +358,7 @@ describe("schema converter", () => {
 
 		it(`can convert property w/o typeid into field of type Any`, () => {
 			const extraTypeName = "Test:IndependentType-1.0.0";
-			const fullSchemaData = convertSchema(
-				FieldKinds.optional,
-				Any,
-				new Set([extraTypeName]),
-			);
+			const fullSchemaData = convertSchema(FieldKinds.optional, Any, new Set([extraTypeName]));
 			const extraTypeSchema = fullSchemaData.nodeSchema.get(
 				brand(`converted.${extraTypeName}`),
 			);
@@ -402,13 +390,8 @@ describe("schema converter", () => {
 			// note: "Test:IndependentType-1.0.0" does not belong to any inheritance chain i.e.
 			// it is not included into the full schema automatically
 			const extraTypeName = "Test:IndependentType-1.0.0";
-			const fullSchemaData = convertSchema(
-				FieldKinds.optional,
-				new Set([extraTypeName, Any]),
-			);
-			assert(
-				fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) !== undefined,
-			);
+			const fullSchemaData = convertSchema(FieldKinds.optional, new Set([extraTypeName, Any]));
+			assert(fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) !== undefined);
 			assert(fullSchemaData.rootFieldSchema.types === undefined);
 		});
 
@@ -420,8 +403,7 @@ describe("schema converter", () => {
 			{
 				const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 				assert(
-					fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) ===
-						undefined,
+					fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) === undefined,
 				);
 			}
 			// with extra types
@@ -432,8 +414,7 @@ describe("schema converter", () => {
 					new Set([extraTypeName]),
 				);
 				assert(
-					fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) !==
-						undefined,
+					fullSchemaData.nodeSchema.get(brand(`converted.${extraTypeName}`)) !== undefined,
 				);
 			}
 		});
