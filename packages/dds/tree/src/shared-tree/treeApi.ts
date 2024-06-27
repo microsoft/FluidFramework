@@ -17,7 +17,7 @@ import {
 import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
 
 /**
@@ -31,7 +31,7 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
  * @privateRemarks
  * This interface exists so that the (generously) overloaded `Tree.runTransaction` function can have the "rollback" property hanging off of it.
  * The rollback property being available on the function itself gives users a convenient option for rolling back a transaction without having to import another symbol.
- * @public
+ * @sealed @public
  */
 export interface RunTransaction {
 	/**
@@ -322,7 +322,11 @@ export interface RunTransaction {
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
- * @public
+ * @remarks
+ * This type should only be used via the public `Tree` export.
+ * @privateRemarks
+ * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
+ * @sealed @public
  */
 export interface TreeApi extends TreeNodeApi {
 	/**
@@ -441,7 +445,7 @@ export function runTransaction<
 }
 
 function runTransactionInCheckout<TResult>(
-	checkout: TreeCheckout,
+	checkout: ITreeCheckout,
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {

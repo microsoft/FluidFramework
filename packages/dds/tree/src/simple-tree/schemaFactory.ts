@@ -10,13 +10,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
 import type { TreeValue } from "../core/index.js";
-import {
-	type FlexTreeNode,
-	type NodeKeyManager,
-	type Unenforced,
-	isFlexTreeNode,
-	isLazy,
-} from "../feature-libraries/index.js";
+import { type NodeKeyManager, type Unenforced, isLazy } from "../feature-libraries/index.js";
 import {
 	type RestrictiveReadonlyRecord,
 	getOrCreate,
@@ -70,7 +64,6 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -117,7 +110,7 @@ export type ScopedSchemaName<
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
  * @remarks
- * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by {@link ScopedSchemaName|combining} the {@link SchemaFactory.scope} with the schema's `Name`.
+ * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
  * Therefor two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
@@ -642,26 +635,12 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
 	>(name: Name, allowedTypes: T) {
-		class RecursiveArray extends this.namedArray(
+		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-		) {
-			public constructor(
-				data:
-					| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>>
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					// TODO: use something other than `any`
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					super(data as any);
-				} else {
-					super(data);
-				}
-			}
-		}
+		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
@@ -698,28 +677,12 @@ export class SchemaFactory<
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.namedMap(
+		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-		) {
-			public constructor(
-				data:
-					| Iterable<
-							[string, InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>]
-					  >
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					// TODO: use something other than `any`
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					super(data as any);
-				} else {
-					super(new Map(data));
-				}
-			}
-		}
+		);
 
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,

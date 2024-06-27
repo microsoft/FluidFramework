@@ -54,6 +54,7 @@ import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Base class from which all shared objects derive.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObjectCore<
@@ -612,6 +613,7 @@ export abstract class SharedObjectCore<
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
+ * @legacy
  * @alpha
  */
 export abstract class SharedObject<
@@ -767,7 +769,7 @@ export abstract class SharedObject<
 			// TelemetryContext needs to implment a get function
 			assert(
 				"get" in telemetryContext && typeof telemetryContext.get === "function",
-				"received context must have a get function",
+				0x97e /* received context must have a get function */,
 			);
 
 			const prevTotal = ((telemetryContext as TelemetryContext).get(
@@ -791,6 +793,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectKind<TSharedObject> {
@@ -838,6 +841,7 @@ export interface ISharedObjectKind<TSharedObject> {
  * Type erased reference to an {@link ISharedObjectKind} or a DataObject class in for use in
  * `fluid-static`'s `IFluidContainer` and `ContainerSchema`.
  * Use {@link createSharedObjectKind} to creating an instance of this type.
+ * @sealed
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

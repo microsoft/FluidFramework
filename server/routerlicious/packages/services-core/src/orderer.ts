@@ -79,4 +79,5 @@ export interface IOrderer {
  */
 export interface IOrdererManager {
 	getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
+	removeOrderer(tenantId: string, documentId: string): void;
 }

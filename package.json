@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -74,7 +74,7 @@
 		"lint:fix": "fluid-build --task lint:fix",
 		"policy-check": "flub check policy",
 		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
-		"policy-check:asserts": "flub generate assertTags --all && pretty-quick",
+		"policy-check:asserts": "flub generate assertTags --all && npm run format",
 		"policy-check:fix": "flub check policy --excludeHandler assert-short-codes --fix",
 		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "fluid-build --task prettier",
@@ -156,9 +156,9 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
 		"@changesets/cli": "^2.26.1",
-		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
+		"@fluid-private/changelog-generator-wrapper": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0",
-		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
+		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
