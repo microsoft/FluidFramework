@@ -178,10 +178,12 @@ export class SerializedStateManager {
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
-		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
+		if (pendingLocalState !== undefined) {
 			const savedOpsSize = pendingLocalState.savedOps.length;
-			this.lastSavedOpSequenceNumber =
-				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
+			const lastSavedOp = pendingLocalState.savedOps[savedOpsSize - 1];
+			if (lastSavedOp !== undefined) {
+				this.lastSavedOpSequenceNumber = lastSavedOp.sequenceNumber;
+			}
 		}
 		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
@@ -325,8 +327,11 @@ export class SerializedStateManager {
 	private updateSnapshotAndProcessedOpsMaybe(): void {
 		if (
 			this.latestSnapshot === undefined ||
-			this.processedOps.length === 0 ||
-			this.processedOps[this.processedOps.length - 1].sequenceNumber <
+			this.processedOps[0] === undefined ||
+			this.processedOps[this.processedOps.length - 1] === undefined ||
+			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.processedOps[this.processedOps.length - 1]!.sequenceNumber <
 				this.lastSavedOpSequenceNumber ||
 			this.containerDirty()
 		) {
@@ -336,8 +341,11 @@ export class SerializedStateManager {
 		}
 		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
+		// Non null asserting here because of the undefined check above
 		const lastProcessedOpSequenceNumber =
-			this.processedOps[this.processedOps.length - 1].sequenceNumber;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.processedOps[this.processedOps.length - 1]!.sequenceNumber;
 
 		if (snapshotSequenceNumber < firstProcessedOpSequenceNumber) {
 			// Snapshot seq number is older than our first processed op, which could mean we're fetching
@@ -384,8 +392,9 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
+			// Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
+			const attributes = JSON.parse(snapshotBlobs[attributesHash!]!);
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				attributes.sequenceNumber === 0,

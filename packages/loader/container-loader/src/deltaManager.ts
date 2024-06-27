@@ -346,7 +346,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public flush(): void {
 		const batch = this.messageBuffer;
-		if (batch.length === 0) {
+		const firstBatch = batch[0];
+		if (firstBatch === undefined) {
 			return;
 		}
 
@@ -357,16 +358,18 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
+				(firstBatch.metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
 			assert(
-				(batch[0].metadata as IBatchMetadata)?.batch === true,
+				(firstBatch.metadata as IBatchMetadata)?.batch === true,
 				0x3ca /* no start batch markup */,
 			);
+			const lastBatch = batch[batch.length - 1];
+			assert(lastBatch !== undefined, "lastBatch is undefined in DeltaManager.flush()");
 			assert(
-				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
+				(lastBatch.metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
@@ -892,8 +895,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
-		const from = messages[0].sequenceNumber;
-		const last = messages[messages.length - 1].sequenceNumber;
+		const firstSeq = messages[0];
+		const lastSeq = messages[messages.length - 1];
+		if (firstSeq === undefined || lastSeq === undefined) {
+			return;
+		}
+		const from = firstSeq.sequenceNumber;
+		const last = lastSeq.sequenceNumber;
 
 		// Report stats about missing and duplicate ops
 		// This helps better understand why we fetch ops from storage, and thus may delay
@@ -960,7 +968,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 		}
 
-		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
+		this.updateLatestKnownOpSeqNumber(lastSeq.sequenceNumber);
 
 		const n = this.previouslyProcessedMessage?.sequenceNumber;
 		assert(

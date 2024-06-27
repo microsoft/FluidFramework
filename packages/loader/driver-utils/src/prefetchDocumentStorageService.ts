@@ -84,19 +84,19 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		for (const blobKey of Object.keys(tree.blobs)) {
 			const blob = tree.blobs[blobKey];
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
-				if (blob !== null) {
+				if (blob !== null && blob !== undefined) {
 					// We don't care if the prefetch succeeds
 					void this.cachedRead(blob);
 				}
 			} else if (!blobKey.startsWith("deltas")) {
-				if (blob !== null) {
+				if (blob !== null && blob !== undefined) {
 					secondary.push(blob);
 				}
 			}
 		}
 
-		for (const subTree of Object.keys(tree.trees)) {
-			this.prefetchTreeCore(tree.trees[subTree], secondary);
+		for (const [_, snapshot] of Object.entries(tree.trees)) {
+			this.prefetchTreeCore(snapshot, secondary);
 		}
 	}
 }
