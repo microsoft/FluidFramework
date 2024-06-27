@@ -25,7 +25,7 @@ const allowedScopes = [
  * Known unscoped packages. Used to enforce package name policies and other places where we need to know the unscoped
  * package names in the repo.
  */
-const unscopedPackages= ["fluid-framework", "fluidframework-docs", "tinylicious"];
+const unscopedPackages = ["fluid-framework", "fluidframework-docs", "tinylicious"];
 
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
@@ -554,13 +554,10 @@ module.exports = {
 		commit: false,
 		fixed: {
 			// This will include all packages in whatever release group is selected in `flub generate changeset-config`.
-			"default": [
-				...allowedScopes,
-				...unscopedPackages,
-			],
-	},
+			"default": [...allowedScopes, ...unscopedPackages],
+		},
 		access: "public",
 		baseBranch: "main",
 		updateInternalDependencies: "patch",
-	}
+	},
 };
