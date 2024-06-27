@@ -36,7 +36,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -797,6 +797,9 @@ describeCompat(
 
 describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, compatAPIs) => {
 	let provider: ITestObjectProvider;
+	const {
+		dds: { SharedDirectory },
+	} = compatAPIs;
 	const disableConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: undefined },
 	};
@@ -1070,7 +1073,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 			ds1.context.id.length <= 2,
 			"Data store's ID in detached container should not be short",
 		);
-		const dds1 = compatAPIs.dds.SharedDirectory.create(ds1.runtime);
+		const dds1 = SharedDirectory.create(ds1.runtime);
 		assertInvert(dds1.id.length <= 2, "DDS's ID in detached container should not be short");
 
 		await container.attach(provider.driver.createCreateNewRequest());
@@ -1082,85 +1085,96 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 			ds2.context.id.length > 8,
 			"Data store's ID in attached container should not be short",
 		);
-		const dds2 = compatAPIs.dds.SharedDirectory.create(ds2.runtime);
+		const dds2 = SharedDirectory.create(ds2.runtime);
 		assert(dds2.id.length > 8, "DDS's ID in attached container should not be short");
 	});
 });
 
+/**
+ * These tests repro a bug where ODSP driver does not correctly decode encoded snapshot tree paths.
+ * Data store / DDS created with special characters are encoded during summary upload but during
+ * download, they are not correctly decoded in certain scenarios.
+ */
 describeCompat(
-	"IdCompressor multiple datastores created in detached container with shortIds",
+	"Short IDs in detached container",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const {
-			dataRuntime: { DataObject, DataObjectFactory },
-			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
-		} = apis;
-		class TestDataObject extends DataObject {
-			public get _root() {
-				return this.root;
-			}
-
-			public get _context() {
-				return this.context;
-			}
-		}
-
 		const configProvider = createTestConfigProvider();
-		let provider: ITestObjectProvider;
-		const defaultFactory = new DataObjectFactory("T", TestDataObject, [], []);
+		const {
+			dataRuntime: { TestFluidObjectFactory },
+			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
+			dds: { SharedDirectory },
+		} = apis;
+		const defaultFactory = new TestFluidObjectFactory([]);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		});
 
-		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-			ContainerRuntimeFactoryWithDefaultDataStore,
-			{
-				defaultFactory,
-				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			},
-		);
+		let provider: ITestObjectProvider;
 
 		beforeEach("getTestObjectProvider", async function () {
 			provider = getTestObjectProvider();
-			// ODSP specific bug
+			// The bug only happens with ODSP driver.
 			if (provider.driver.type !== "odsp") {
 				this.skip();
 			}
 			configProvider.set("Fluid.Runtime.UseShortIds", true);
 		});
 
+		/**
+		 * The following functions validate the invert of the assert. We have a bug in one of our customer's app where a short
+		 * data store ID created is `[` but in a downloaded snapshot, it is converted to its ASCII equivalent `%5B` in
+		 * certain conditions. So, when an op comes for this data store with id `[`, containers loaded with this snapshot
+		 * cannot find the data store.
+		 *
+		 * While we figure out the fix, we are disabling the ability to create short IDs and this assert validates it.
+		 */
 		function assertInvert(value: boolean, message: string) {
 			assert(!value, message);
 		}
 
-		const dataStoreCount = 13;
+		async function assertDoesNotRejectInvert(
+			block: (() => Promise<unknown>) | Promise<unknown>,
+			message?: string | Error,
+		): Promise<void> {
+			await assert.rejects(block, message);
+		}
+
 		itExpects(
-			"Id compressor bug repo when id is `[` which encodes to `%5B`",
+			"data store id with `[` not encoded / decoded correctly in snapshot`",
 			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "No context for op" }],
 			async () => {
 				const container = await provider.createDetachedContainer(runtimeFactory, {
 					configProvider,
 				});
-				const dataObject = (await container.getEntryPoint()) as TestDataObject;
-				const containerRuntime = dataObject._context.containerRuntime;
-				// The 13 datastore produces a shortId of "[" when we use short codes, so we need to make 13 datastores to repro the bug
-				for (let i = 0; i < dataStoreCount; i++) {
-					const createdObject = await defaultFactory.createInstance(containerRuntime);
-					dataObject._root.set(createdObject.id, createdObject.handle);
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const containerRuntime = dataObject.context.containerRuntime;
+
+				// The 13 datastore produces a shortId of "[" which is not decoded properly, so we need to make
+				// 13 datastores to repro the bug.
+				for (let i = 0; i < 13; i++) {
+					const ds = await containerRuntime.createDataStore(defaultFactory.type);
+					const dataObjectNew = (await ds.entryPoint.get()) as ITestFluidObject;
+					dataObject.root.set(dataObjectNew.context.id, dataObjectNew.handle);
+					if (i === 12) {
+						assert.equal(dataObjectNew.context.id, "[", "The 13th data store id should be [");
+					}
 				}
 
 				await provider.attachDetachedContainer(container);
 
-				const handle = dataObject._root.get("[");
-				assert(handle !== undefined, "handle not found");
-				const childObject = await handle.get();
-				assert(childObject.id === "[", "This id is the problematic id");
-				childObject._root.set(`key13`, `value13`);
-				await provider.ensureSynchronized();
+				const dsWithBugHandle = dataObject.root.get<IFluidHandle<ITestFluidObject>>("[");
+				assert(dsWithBugHandle !== undefined, "data store handle not found");
+				const dsWithBug = await dsWithBugHandle.get();
+				dsWithBug.root.set(`key13`, `value13`);
 
-				// This reset is required here as clearing the cache will immediately cause the test to end early
-				// when we call provider.ensureSynchronized().
+				// Reset documentServiceFactory so that a new one is created. Otherwise, the snapshot will be loaded
+				// from cache for the new container which is the same one as uploaded by the first container.
 				(provider as any)._documentServiceFactory = undefined;
-				const container2 = await provider.loadContainer(runtimeFactory, {
-					configProvider,
-				});
+
+				const container2 = await provider.loadContainer(runtimeFactory);
+
 				const closeErrorWait = new Deferred<void>();
 				let closeError: ICriticalContainerError | undefined;
 				container2.on("closed", (error?: ICriticalContainerError) => {
@@ -1183,5 +1197,32 @@ describeCompat(
 				);
 			},
 		);
+
+		it("DDS id containing `[` not encoded / decoded correctly in snapshot`", async () => {
+			const loader = provider.makeTestLoader({ loaderProps: { configProvider } });
+			const defaultCodeDetails: IFluidCodeDetails = {
+				package: "defaultTestPackage",
+				config: {},
+			};
+			const container1 = await loader.createDetachedContainer(defaultCodeDetails);
+			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			const dds1 = SharedDirectory.create(dataStore1.runtime, "idWith[");
+			dataStore1.root.set("dds1", dds1.handle);
+
+			await provider.attachDetachedContainer(container1);
+
+			// Reset documentServiceFactory so that a new one is created. Otherwise, the snapshot will be loaded
+			// from cache for the new container which is the same one as uploaded by the first container.
+			(provider as any)._documentServiceFactory = undefined;
+
+			const container2 = await provider.loadTestContainer();
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const dds2Handle = dataStore2.root.get<IFluidHandle<ISharedDirectory>>("dds1");
+			assert(dds2Handle !== undefined, "DDS handle not found");
+			await assertDoesNotRejectInvert(
+				async () => dds2Handle.get(),
+				"Should be able to get DDS",
+			);
+		});
 	},
 );
