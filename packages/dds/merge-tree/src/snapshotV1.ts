@@ -212,7 +212,11 @@ export class SnapshotV1 {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
-				pushSegRaw(segment.toJSONObject() as JsonSegmentSpecs, segment.cachedLength, segment.attribution);
+				pushSegRaw(
+					segment.toJSONObject() as JsonSegmentSpecs,
+					segment.cachedLength,
+					segment.attribution,
+				);
 			}
 		};
 
@@ -380,8 +384,8 @@ export class SnapshotV1 {
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {
 		const chunkObj: VersionedMergeTreeChunk = serializer
-			? serializer.parse(chunk) as VersionedMergeTreeChunk
-			: JSON.parse(chunk) as VersionedMergeTreeChunk;
+			? (serializer.parse(chunk) as VersionedMergeTreeChunk)
+			: (JSON.parse(chunk) as VersionedMergeTreeChunk);
 		return toLatestVersion(path, chunkObj, logger, options);
 	}
 }

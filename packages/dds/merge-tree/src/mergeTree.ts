@@ -78,7 +78,6 @@ import {
 } from "./referencePositions.js";
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import { zamboniSegments } from "./zamboni.js";
-import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "./attributionPolicy.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -1169,7 +1168,8 @@ export class MergeTree {
 					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
 
 					if (locallyMovedSegments) {
-						locallyMovedSegments.segments.forEach((segment: ISegmentLeaf) => {
+						// locallyMovedSegments.segments.forEach((segment: ISegmentLeaf) => {
+						for (const segment of locallyMovedSegments.segments) {
 							segment.localMovedSeq = undefined;
 
 							if (!nodesToUpdate.includes(segment.parent!)) {
@@ -1179,7 +1179,7 @@ export class MergeTree {
 							if (segment.movedSeq === UnassignedSequenceNumber) {
 								segment.movedSeq = seq;
 							}
-						});
+						}
 
 						this.locallyMovedSegments.delete(localMovedSeq);
 					}
@@ -2170,7 +2170,7 @@ export class MergeTree {
 				);
 
 				for (
-					let updateNode = segment.parent;
+					let updateNode: MergeBlock = segment.parent;
 					updateNode !== undefined;
 					updateNode = updateNode.parent
 				) {

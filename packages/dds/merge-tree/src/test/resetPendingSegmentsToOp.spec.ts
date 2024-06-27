@@ -129,16 +129,19 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
-				refSeq: client.getCurrentSeq(),
-			}, {
-				op: client.regeneratePendingOp(
-					opList.shift()!.op,
-					client.mergeTree.pendingSegments.first!.data,
-				),
-				refSeq: client.getCurrentSeq(),
-			});
+			opList.push(
+				{
+					op: client.removeRangeLocal(0, client.getLength())!,
+					refSeq: client.getCurrentSeq(),
+				},
+				{
+					op: client.regeneratePendingOp(
+						opList.shift()!.op,
+						client.mergeTree.pendingSegments.first!.data,
+					),
+					refSeq: client.getCurrentSeq(),
+				},
+			);
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -182,16 +185,19 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
-				refSeq: client.getCurrentSeq(),
-			}, {
-				op: client.regeneratePendingOp(
-					opList.shift()!.op,
-					client.mergeTree.pendingSegments.first!.data,
-				),
-				refSeq: client.getCurrentSeq(),
-			});
+			opList.push(
+				{
+					op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
+					refSeq: client.getCurrentSeq(),
+				},
+				{
+					op: client.regeneratePendingOp(
+						opList.shift()!.op,
+						client.mergeTree.pendingSegments.first!.data,
+					),
+					refSeq: client.getCurrentSeq(),
+				},
+			);
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did

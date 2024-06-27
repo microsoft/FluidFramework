@@ -267,7 +267,10 @@ export class LocalReferenceCollection {
 	 * Returns an iterator.
 	 * @remarks This method should only be called by mergeTree.
 	 */
-	public [Symbol.iterator]() {
+	public [Symbol.iterator](): {
+		next(): IteratorResult<LocalReferencePosition>;
+		[Symbol.iterator](): IterableIterator<LocalReferencePosition>;
+	} {
 		const subiterators: IterableIterator<ListNode<LocalReferencePosition>>[] = [];
 		for (const refs of this.refsByOffset) {
 			if (refs) {
@@ -296,7 +299,10 @@ export class LocalReferenceCollection {
 
 				return { value: undefined, done: true };
 			},
-			[Symbol.iterator]() {
+			[Symbol.iterator](): {
+				next(): IteratorResult<LocalReferencePosition>;
+				[Symbol.iterator](): IterableIterator<LocalReferencePosition>;
+			} {
 				return this;
 			},
 		};
