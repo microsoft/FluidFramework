@@ -330,6 +330,7 @@ export class SerializedStateManager {
 			this.processedOps[0] === undefined ||
 			this.processedOps[this.processedOps.length - 1] === undefined ||
 			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.processedOps[this.processedOps.length - 1]!.sequenceNumber <
 				this.lastSavedOpSequenceNumber ||
 			this.containerDirty()
@@ -342,6 +343,8 @@ export class SerializedStateManager {
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
 		// Non null asserting here because of the undefined check above
 		const lastProcessedOpSequenceNumber =
+		// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.processedOps[this.processedOps.length - 1]!.sequenceNumber;
 
 		if (snapshotSequenceNumber < firstProcessedOpSequenceNumber) {
@@ -366,7 +369,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0 ? undefined : firstProcessedOp.sequenceNumber,
+					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
 			});
 		}
 	}
