@@ -52,7 +52,6 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",

@@ -59,7 +59,6 @@
 		"assert": "^2.0.0",
 		"async": "^3.2.2",
 		"events": "^3.1.0",
-		"lodash": "^4.17.21",
 		"nconf": "^0.12.0",
 		"serialize-error": "^8.1.0"
 	},
@@ -71,7 +70,6 @@
 		"@fluidframework/server-lambdas-driver-previous": "npm:@fluidframework/server-lambdas-driver@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/async": "^3.2.9",
-		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
 		"c8": "^8.0.1",

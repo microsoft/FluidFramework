@@ -20,11 +20,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "mocha \"src/test/**/*.test.*js\""
 	},
-	"dependencies": {
-		"@microsoft/tsdoc": "^0.14.2",
-		"@typescript-eslint/parser": "^6.21.0",
-		"ts-morph": "^22.0.0"
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",

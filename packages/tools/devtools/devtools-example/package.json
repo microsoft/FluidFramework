@@ -58,19 +58,14 @@
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"re-resizable": "^6.9.9",
 		"react": "^17.0.1",
-		"react-dom": "^17.0.1",
-		"scheduler": "^0.20.0"
+		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
@@ -86,7 +81,6 @@
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
-		"@types/testing-library__jest-dom": "^5.14.5",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",

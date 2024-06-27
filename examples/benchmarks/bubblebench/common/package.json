@@ -39,12 +39,6 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"best-random": "^1.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",

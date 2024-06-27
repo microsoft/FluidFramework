@@ -41,8 +41,7 @@
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

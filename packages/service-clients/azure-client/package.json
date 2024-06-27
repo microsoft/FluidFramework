@@ -113,7 +113,6 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^1.6.2"
 	},

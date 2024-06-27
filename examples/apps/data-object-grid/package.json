@@ -54,13 +54,10 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"prop-types": "^15.8.1",
 		"react": "^17.0.1",
 		"react-collapsible": "^2.7.0",
 		"react-dom": "^17.0.1",
 		"react-grid-layout": "^0.18.3",
-		"scheduler": "^0.20.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -73,7 +70,6 @@
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",
-		"@types/prop-types": "^15",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",

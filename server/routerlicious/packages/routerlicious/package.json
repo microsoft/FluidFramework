@@ -38,22 +38,16 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.1.0",
-		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
 		"@fluidframework/server-routerlicious-base": "workspace:~",
 		"@fluidframework/server-services": "workspace:~",
-		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-shared": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
 		"commander": "^2.17.1",
-		"express": "^4.19.2",
 		"ioredis": "^5.2.3",
 		"nconf": "^0.12.0",
 		"winston": "^3.6.0"

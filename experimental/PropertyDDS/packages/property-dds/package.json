@@ -67,7 +67,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"axios": "^1.6.2",
-		"buffer": "^6.0.3",
 		"lodash": "^4.17.21",
 		"lz4js": "^0.2.0",
 		"msgpackr": "^1.10.1",

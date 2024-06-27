@@ -76,7 +76,6 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"

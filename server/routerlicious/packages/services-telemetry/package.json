@@ -54,7 +54,6 @@
 	"dependencies": {
 		"@fluidframework/common-utils": "^3.1.0",
 		"json-stringify-safe": "^5.0.1",
-		"path-browserify": "^1.0.1",
 		"serialize-error": "^8.1.0",
 		"uuid": "^9.0.0"
 	},
@@ -66,7 +65,6 @@
 		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@5.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
-		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",

@@ -95,7 +95,6 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"uuid": "^9.0.0"
 	},

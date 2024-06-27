@@ -43,8 +43,7 @@
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"express": "^4.19.2",
-		"webpack-dev-server": "~4.15.1"
+		"express": "^4.19.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

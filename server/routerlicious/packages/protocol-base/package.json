@@ -71,7 +71,6 @@
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/protocol-base-previous": "npm:@fluidframework/protocol-base@5.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
-		"@types/assert": "^1.5.1",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
 		"c8": "^8.0.1",

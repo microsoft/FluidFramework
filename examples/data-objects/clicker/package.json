@@ -55,7 +55,6 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
 		"react": "^17.0.1"
 	},

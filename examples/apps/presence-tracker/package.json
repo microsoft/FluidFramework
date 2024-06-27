@@ -46,9 +46,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"fluid-framework": "workspace:~",
-		"process": "^0.11.10"
+		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

@@ -51,12 +51,10 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@biomejs/biome": "^1.7.3",
 		"@fluid-example/bubblebench-common": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"react": "^17.0.1"
 	},

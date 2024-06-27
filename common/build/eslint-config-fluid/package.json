@@ -27,26 +27,7 @@
 		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json",
 		"test": "echo TODO: add tests"
 	},
-	"dependencies": {
-		"@fluid-internal/eslint-plugin-fluid": "^0.1.1",
-		"@microsoft/tsdoc": "^0.14.2",
-		"@rushstack/eslint-patch": "~1.4.0",
-		"@rushstack/eslint-plugin": "~0.13.0",
-		"@rushstack/eslint-plugin-security": "~0.7.0",
-		"@typescript-eslint/eslint-plugin": "~6.7.2",
-		"@typescript-eslint/parser": "~6.7.2",
-		"eslint-config-prettier": "~9.0.0",
-		"eslint-import-resolver-typescript": "~3.6.1",
-		"eslint-plugin-eslint-comments": "~3.2.0",
-		"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.0",
-		"eslint-plugin-jsdoc": "~46.8.1",
-		"eslint-plugin-promise": "~6.1.1",
-		"eslint-plugin-react": "~7.33.2",
-		"eslint-plugin-react-hooks": "~4.6.0",
-		"eslint-plugin-tsdoc": "~0.2.17",
-		"eslint-plugin-unicorn": "~48.0.1",
-		"eslint-plugin-unused-imports": "~3.0.0"
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",

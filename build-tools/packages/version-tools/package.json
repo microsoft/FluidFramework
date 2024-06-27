@@ -77,11 +77,6 @@
 	},
 	"dependencies": {
 		"@oclif/core": "^3.26.5",
-		"@oclif/plugin-autocomplete": "^3.0.16",
-		"@oclif/plugin-commands": "^3.3.1",
-		"@oclif/plugin-help": "^6.0.21",
-		"@oclif/plugin-not-found": "^3.1.7",
-		"chalk": "^2.4.2",
 		"semver": "^7.5.4",
 		"table": "^6.8.1"
 	},

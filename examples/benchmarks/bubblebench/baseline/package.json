@@ -44,10 +44,6 @@
 		"@fluid-example/bubblebench-common": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

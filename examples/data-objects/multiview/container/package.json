@@ -54,8 +54,6 @@
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/request-handler": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

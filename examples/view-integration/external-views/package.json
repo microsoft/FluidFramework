@@ -42,10 +42,7 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
-		"css-loader": "^6.11.0",
-		"style-loader": "^1.0.0"
+		"@fluidframework/container-runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
@@ -70,6 +67,7 @@
 		"process": "^0.11.10",
 		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
+		"style-loader": "^1.0.0",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.4.5",

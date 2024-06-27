@@ -50,12 +50,9 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"css-loader": "^6.11.0",
 		"react": "^17.0.1",
-		"react-dom": "^17.0.1",
-		"style-loader": "^1.0.0"
+		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
@@ -82,6 +79,7 @@
 		"process": "^0.11.10",
 		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
+		"style-loader": "^1.0.0",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.4.5",

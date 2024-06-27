@@ -36,13 +36,10 @@
 	"dependencies": {
 		"@azure/msal-browser": "^2.34.0",
 		"@fluidframework/odsp-client": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"css-loader": "^6.11.0",
 		"fluid-framework": "workspace:~",
 		"react": "^17.0.1",
-		"react-dom": "^17.0.1",
-		"style-loader": "^1.0.0"
+		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
@@ -58,6 +55,7 @@
 		"prettier": "~3.0.3",
 		"process": "^0.11.10",
 		"rimraf": "^4.4.0",
+		"style-loader": "^1.0.0",
 		"tailwindcss": "^3.3.2",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.4.5",

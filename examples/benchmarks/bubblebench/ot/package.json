@@ -45,10 +45,7 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/sharejs-json1": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"ot-json1": "^1.0.1",
 		"react": "^17.0.1"
 	},

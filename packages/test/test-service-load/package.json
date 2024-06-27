@@ -99,11 +99,8 @@
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tool-utils": "workspace:~",
 		"commander": "^5.1.0",
-		"ps-node": "^0.1.6",
-		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0"
+		"ps-node": "^0.1.6"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",

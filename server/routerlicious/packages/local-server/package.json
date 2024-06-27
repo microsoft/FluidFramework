@@ -65,7 +65,6 @@
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-test-utils": "workspace:~",
-		"debug": "^4.3.4",
 		"events_pkg": "npm:events@^3.1.0",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
