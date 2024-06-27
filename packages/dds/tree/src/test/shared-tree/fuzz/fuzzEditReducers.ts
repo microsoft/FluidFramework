@@ -23,6 +23,7 @@ import {
 	intoStoredSchema,
 	type FlexAllowedTypes,
 	type FlexibleNodeContent,
+	type Any,
 } from "../../../feature-libraries/index.js";
 import type { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
@@ -156,9 +157,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 
 function applySequenceFieldEdit(
 	tree: FuzzView,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	field: FlexTreeSequenceField<any>,
+	field: FlexTreeSequenceField<readonly [Any]>,
 	change: Insert | Remove | IntraFieldMove | CrossFieldMove,
 ): void {
 	switch (change.type) {
@@ -194,9 +193,7 @@ function applySequenceFieldEdit(
 
 function applyRequiredFieldEdit(
 	tree: FuzzView,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	field: FlexTreeRequiredField<any>,
+	field: FlexTreeRequiredField<readonly [Any]>,
 	change: SetField,
 ): void {
 	switch (change.type) {
@@ -213,9 +210,7 @@ function applyRequiredFieldEdit(
 
 function applyOptionalFieldEdit(
 	tree: FuzzView,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	field: FlexTreeOptionalField<any>,
+	field: FlexTreeOptionalField<readonly [Any]>,
 	change: SetField | ClearField,
 ): void {
 	switch (change.type) {
