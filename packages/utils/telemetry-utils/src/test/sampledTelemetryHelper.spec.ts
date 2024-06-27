@@ -311,6 +311,41 @@ describe("SampledTelemetryHelper", () => {
 		assert.strictEqual(logger.events[0].max_propertyThree, 12);
 	});
 
+	it("explicit return type and custom data type", () => {
+		const helperTypeNumber = new SampledTelemetryHelper<number, TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			10,
+		);
+
+		// Measure should be able to return a value of the type specified during helper creation and custom data.
+		helperTypeNumber.measure(() => ({
+			returnValue: 64,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+
+		helperTypeNumber.measure(() => ({
+			returnValue: 128,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+
+		const helperTypeBoolean = new SampledTelemetryHelper<boolean, TestTelemetryProperties>(
+			{ eventName: "testEvent" },
+			logger,
+			10,
+		);
+
+		helperTypeBoolean.measure(() => ({
+			returnValue: true,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+
+		helperTypeBoolean.measure(() => ({
+			returnValue: false,
+			customData: { propertyOne: 1, propertyTwo: 2, propertyThree: 3 },
+		}));
+	});
+
 	// This is deliberatly skipped because it contains compile-time tests. We don't want to actually run this code.
 	describe.skip("compile-time tests", () => {
 		it("no return type and no custom data type", () => {
