@@ -791,7 +791,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);
-		validateIndex(destinationIndex, this, "moveToIndex", true);
+		const destinationField = getSequenceField(this);
+		validateIndex(destinationIndex, destinationField, "moveToIndex", true);
 		validateIndex(sourceIndex, sourceField, "moveToIndex");
 		this.moveRangeToIndex(destinationIndex, sourceIndex, sourceIndex + 1, source);
 	}
