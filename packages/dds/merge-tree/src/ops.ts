@@ -178,6 +178,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
  * @alpha
  */
 export interface IJSONSegment {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props?: Record<string, any>;
 }
 

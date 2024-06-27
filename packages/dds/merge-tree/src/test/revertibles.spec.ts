@@ -1,8 +1,10 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { strict as assert } from "node:assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
@@ -46,6 +48,7 @@ export function spyOnMethod(
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
 		spy();
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		return method.call(this, ...args);
 	};
 	prototype[methodName] = methodSpy;

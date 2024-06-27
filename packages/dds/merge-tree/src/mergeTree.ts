@@ -384,6 +384,31 @@ const forwardPred = (ref: LocalReferencePosition): boolean =>
 const backwardPred = (ref: LocalReferencePosition): boolean =>
 	ref.slidingPreference === SlidingPreference.BACKWARD;
 
+const continueFrom = (node: MergeBlock): boolean => {
+	let siblingExists = false;
+	forwardExcursion(node, () => {
+		siblingExists = true;
+		return false;
+	});
+	return siblingExists;
+};
+
+const onLeaf = (
+	segment: ISegment | undefined,
+	_pos: number,
+	context: InsertContext,
+): ISegmentChanges => {
+	const segmentChanges: ISegmentChanges = {};
+	if (segment) {
+		// Insert before segment
+		segmentChanges.replaceCurrent = context.candidateSegment;
+		segmentChanges.next = segment;
+	} else {
+		segmentChanges.next = context.candidateSegment;
+	}
+	return segmentChanges;
+};
+
 /**
  * @internal
  */
@@ -1373,15 +1398,6 @@ export class MergeTree {
 		localSeq: number | undefined,
 		newSegments: T[],
 	): void {
-		const continueFrom = (node: MergeBlock): boolean => {
-			let siblingExists = false;
-			forwardExcursion(node, () => {
-				siblingExists = true;
-				return false;
-			});
-			return siblingExists;
-		};
-
 		// eslint-disable-next-line import/no-deprecated
 		let segmentGroup: SegmentGroup;
 		const saveIfLocal = (locSegment: ISegment): void => {
@@ -1403,21 +1419,6 @@ export class MergeTree {
 					this.addToLRUSet(locSegment, locSegment.seq!);
 				}
 			}
-		};
-		const onLeaf = (
-			segment: ISegment | undefined,
-			_pos: number,
-			context: InsertContext,
-		): ISegmentChanges => {
-			const segmentChanges: ISegmentChanges = {};
-			if (segment) {
-				// Insert before segment
-				segmentChanges.replaceCurrent = context.candidateSegment;
-				segmentChanges.next = segment;
-			} else {
-				segmentChanges.next = context.candidateSegment;
-			}
-			return segmentChanges;
 		};
 
 		// TODO: build tree from segs and insert all at once
@@ -2141,7 +2142,7 @@ export class MergeTree {
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
-			pendingSegmentGroup.segments.forEach((segment: ISegmentLeaf) => {
+			for (const segment of pendingSegmentGroup.segments) {
 				const segmentSegmentGroup = segment.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
@@ -2178,7 +2179,7 @@ export class MergeTree {
 						this.collabWindow.clientId,
 					);
 				}
-			});
+			}
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE

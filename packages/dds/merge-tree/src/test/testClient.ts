@@ -369,7 +369,7 @@ export class TestClient extends Client {
 	public debugDumpTree(tree: MergeTree): void {
 		// want the segment's content and the state of insert/remove
 		const test: string[] = [];
-		walkAllChildSegments(tree.root, (segment) => {
+		walkAllChildSegments(tree.root, (segment: ISegment) => {
 			const prefixes: (string | undefined | number)[] = [];
 			prefixes.push(
 				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,

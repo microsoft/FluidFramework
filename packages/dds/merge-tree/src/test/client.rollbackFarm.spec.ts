@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import assert from "node:assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import {
@@ -71,7 +72,9 @@ describe("MergeTree.Client", () => {
 					const msg = rollbackMsgs.pop();
 					// TODO: The type here is probably MergeTreeDeltaType but
 					// omitting GROUP, given the typing of the rollback method.
-					clients[msg![0].clientId!].rollback?.(
+					const id = msg![0].clientId;
+					assert( id !== null);
+					clients[id].rollback?.(
 						{ type: (msg![0].contents as { type?: unknown }).type },
 						msg![1],
 					);

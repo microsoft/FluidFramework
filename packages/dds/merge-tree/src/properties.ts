@@ -21,6 +21,7 @@ export interface MapLike<T> {
  * functions
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PropertySet = MapLike<any>;
 
 /**

@@ -133,7 +133,7 @@ export function resolveRange(
 	return results;
 }
 
-export function resolveRanges<T extends object>(
+export function resolveRanges<T extends { [key: string]: IConfigRange}>(
 	ranges: T,
 	defaultGrowthFunc: (input: number) => number,
 ): ResolvedRanges<T> {
@@ -327,7 +327,10 @@ export function generateOperationMessagesForClients(
 export function generateClientNames(): string[] {
 	const clientNames: string[] = [];
 	function addClientNames(startChar: string, count: number): void {
-		const startCode = startChar.charCodeAt(0);
+		const startCode = startChar.codePointAt(0);
+		if (startCode === undefined) {
+			throw new Error("startCode must be a single character");
+		}
 		for (let i = 0; i < count; i++) {
 			clientNames.push(String.fromCodePoint(startCode + i));
 		}

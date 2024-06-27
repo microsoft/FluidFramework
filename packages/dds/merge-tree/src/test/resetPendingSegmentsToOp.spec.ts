@@ -130,8 +130,7 @@ describe("resetPendingSegmentsToOp", () => {
 			opList.push({
 				op: client.removeRangeLocal(0, client.getLength())!,
 				refSeq: client.getCurrentSeq(),
-			});
-			opList.push({
+			}, {
 				op: client.regeneratePendingOp(
 					opList.shift()!.op,
 					client.mergeTree.pendingSegments.first!.data,
@@ -184,8 +183,7 @@ describe("resetPendingSegmentsToOp", () => {
 			opList.push({
 				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
-			});
-			opList.push({
+			}, {
 				op: client.regeneratePendingOp(
 					opList.shift()!.op,
 					client.mergeTree.pendingSegments.first!.data,

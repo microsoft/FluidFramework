@@ -29,6 +29,7 @@ import {
 	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
+import type { IJSONSegment } from "./ops.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -211,7 +212,7 @@ export class SnapshotV1 {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
-				pushSegRaw(segment.toJSONObject(), segment.cachedLength, segment.attribution);
+				pushSegRaw(segment.toJSONObject() as JsonSegmentSpecs, segment.cachedLength, segment.attribution);
 			}
 		};
 
@@ -281,7 +282,7 @@ export class SnapshotV1 {
 					segment.propertyManager = undefined;
 				}
 				const raw: IJSONSegmentWithMergeInfo & { removedClient?: string } = {
-					json: segment.toJSONObject(),
+					json: segment.toJSONObject() as IJSONSegment,
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -379,8 +380,8 @@ export class SnapshotV1 {
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {
 		const chunkObj: VersionedMergeTreeChunk = serializer
-			? serializer.parse(chunk)
-			: JSON.parse(chunk);
+			? serializer.parse(chunk) as VersionedMergeTreeChunk
+			: JSON.parse(chunk) as VersionedMergeTreeChunk;
 		return toLatestVersion(path, chunkObj, logger, options);
 	}
 }

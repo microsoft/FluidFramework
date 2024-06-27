@@ -144,7 +144,7 @@ function LinearDictionary<TKey, TData>(
 }
 
 let logLines: string[];
-function log(message: any): void {
+function log(message: string | number): void {
 	if (logLines) {
 		logLines.push(message.toString());
 	}

@@ -176,6 +176,7 @@ export class SnapshotLegacy {
 			// It is benign so it doesn't really need to be deleted here, but doing so permits snapshot tests
 			// to pass with an exact match (and matching the updated definition of ISequencedDocumentMessage).
 			for (const message of catchUpMsgs) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				delete (message as any).term;
 			}
 			builder.addBlob(

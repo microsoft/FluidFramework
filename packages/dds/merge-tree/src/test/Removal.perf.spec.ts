@@ -5,6 +5,7 @@
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
+import type { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { MergeTreeDeltaType } from "../ops.js";
 import { MergeTreeDeltaRevertible, appendToMergeTreeDeltaRevertibles } from "../revertibles.js";
 
@@ -12,7 +13,7 @@ import { TestString, loadSnapshot } from "./snapshot.utils.js";
 import { markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree remove", () => {
-	let summary;
+	let summary: ISummaryTree;
 
 	benchmark({
 		type: BenchmarkType.Measurement,

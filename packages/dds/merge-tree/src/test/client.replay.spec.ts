@@ -22,7 +22,7 @@ describe("MergeTree.Client", () => {
 		it(`Replay ${filePath}`, async () => {
 			const file: ReplayGroup[] = JSON.parse(
 				fs.readFileSync(`${replayResultsPath}/${filePath}`).toString(),
-			);
+			) as ReplayGroup[];
 			const msgClients = new Map<
 				string,
 				{ client: TestClient; msgs: ISequencedDocumentMessage[] }
@@ -61,12 +61,12 @@ describe("MergeTree.Client", () => {
 					msgClient.client.localTransaction(
 						op.type === MergeTreeDeltaType.GROUP ? op : createGroupOp(op),
 					);
-					for (const mc of msgClients) mc.msgs.push(msg);
+					for (const mc of msgClients) mc[1].msgs.push(msg);
 				}
 
 				for (const mc of msgClients) {
-					while (mc.msgs.length > 0) {
-						mc.client.applyMsg(mc.msgs.shift()!);
+					while (mc[1].msgs.length > 0) {
+						mc[1].client.applyMsg(mc[1].msgs.shift()!);
 					}
 				}
 				const result = logger.validate();
