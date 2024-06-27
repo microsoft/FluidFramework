@@ -11,7 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
-	"exportsComments": "The 'trimmedAPI' export condition is set as a workaround for 'flub generate entrypoints', which expects `exports` to contain an entry for all entrypoints. The custom condition effectively hides the public entrypoint unless the 'trimmedAPI' condition is set manually.",
 	"exports": {
 		".": {
 			"trimmedAPI": {
@@ -107,6 +106,7 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
+	"exportsComments": "The 'trimmedAPI' export condition is set as a workaround for 'flub generate entrypoints', which expects `exports` to contain an entry for all entrypoints. The custom condition effectively hides the public entrypoint unless the 'trimmedAPI' condition is set manually.",
 	"typeValidation": {
 		"broken": {}
 	}
