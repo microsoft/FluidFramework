@@ -12,6 +12,7 @@ import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
 	// TODO: All we really want here is a "readonly" indicator - maybe don't need the full IMigratableModel interface.
+	// Would maybe be better to grab that info from the Migrator rather than the MigrationTool anyway.
 	model: IInventoryListAppModel & IMigratableModel;
 }
 

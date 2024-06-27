@@ -90,6 +90,9 @@ class MigrationTool implements IMigrationTool {
 			this.runtime.on("connected", () => {
 				this._events.emit("connected");
 			});
+			this.runtime.on("disconnected", () => {
+				this._events.emit("disconnected");
+			});
 			this.pactMap.on("pending", (key: string) => {
 				if (key === newVersionKey) {
 					// TODO: Here take some action to prevent collaboration - the host might not provide a Migrator,
@@ -102,6 +105,8 @@ class MigrationTool implements IMigrationTool {
 			this.pactMap.on("accepted", (key: string) => {
 				if (key === newVersionKey) {
 					this._events.emit("migrating");
+					// TODO: Here we should stop submitting new summaries since it will complicate loading from the
+					// accepted sequence number
 				}
 			});
 

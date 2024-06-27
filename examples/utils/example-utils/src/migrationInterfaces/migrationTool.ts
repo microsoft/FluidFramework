@@ -36,7 +36,7 @@ export interface IAcceptedMigrationDetails {
  */
 export interface IMigrationToolEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
-	(event: "connected", listener: () => void);
+	(event: "connected" | "disconnected", listener: () => void);
 	(event: "disposed", listener: () => void);
 }
 
