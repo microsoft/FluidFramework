@@ -9,10 +9,7 @@ export function getHeadersWithAuth(
 	// eslint-disable-next-line @rushstack/no-new-null
 	authHeader: string | null,
 ): { [index: string]: string } {
-	assert(authHeader !== null && authHeader.length > 0, 0x936 /* should be token */);
-	if (!authHeader || authHeader.length === 0) {
-		return {};
-	}
+	assert(!!authHeader, 0x936 /* authHeader should not be null or empty */);
 
 	return {
 		Authorization: authHeader,

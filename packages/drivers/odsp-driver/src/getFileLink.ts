@@ -134,10 +134,6 @@ async function getFileLinkCore(
 					{ ...options, request: { url, method } },
 					"GetFileLinkCore",
 				);
-				assert(
-					authHeader !== null,
-					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
-				);
 				const headers = getHeadersWithAuth(authHeader);
 				const requestInit = {
 					method,

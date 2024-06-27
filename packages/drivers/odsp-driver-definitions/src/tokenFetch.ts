@@ -108,11 +108,7 @@ export const tokenFromResponse = (
 export const authHeaderFromTokenResponse = (
 	tokenResponse: string | TokenResponse | null | undefined,
 ): string | null => {
-	if (
-		tokenResponse !== null &&
-		typeof tokenResponse === "object" &&
-		tokenResponse.authorizationHeader !== undefined
-	) {
+	if (typeof tokenResponse === "object" && tokenResponse?.authorizationHeader !== undefined) {
 		return tokenResponse.authorizationHeader;
 	}
 	const token = tokenFromResponse(tokenResponse);
