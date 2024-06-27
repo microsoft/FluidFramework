@@ -11,7 +11,6 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 	describeCompat,
-	itExpects,
 } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -1164,13 +1163,6 @@ describeCompat(
 			(provider as any)._documentServiceFactory = undefined;
 
 			const container2 = await provider.loadContainer(runtimeFactory);
-
-			const closeErrorWait = new Deferred<void>();
-			let closeError: ICriticalContainerError | undefined;
-			container2.on("closed", (error?: ICriticalContainerError) => {
-				closeError = error;
-				closeErrorWait.resolve();
-			});
 
 			await provider.ensureSynchronized();
 
