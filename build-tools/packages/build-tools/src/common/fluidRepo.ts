@@ -99,7 +99,7 @@ export interface ChangesetConfigWritten extends WrittenConfig {
 
 /**
  * A type mapping a string to a package name or scope string. This type is useful for configuration fields that are used
- * for selecting packages. Such fields can be used to select poackages based on scope or name.
+ * for selecting packages. Such fields can be used to select packages based on scope or name.
  */
 export type PackageScopeSelectors = Record<string, PackageNameOrScope[]>;
 
