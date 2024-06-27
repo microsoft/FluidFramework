@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
 	ValueSchema,
+	type SchemaPolicy,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 } from "../core/index.js";
@@ -24,7 +27,7 @@ export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
  * TODO
  * @internal
  */
-export type SimpleFieldSchemaKind = "optional" | "required" | "identifier";
+export type SimpleFieldSchemaKind = "optional" | "required";
 
 /**
  * TODO
@@ -103,31 +106,48 @@ export interface SimpleTreeSchema {
 export function toSimpleTreeSchema(
 	schemaMap: ReadonlyMap<string, TreeNodeStoredSchema>,
 	rootFieldSchema: TreeFieldStoredSchema,
+	schemaPolicy: SchemaPolicy,
 ): SimpleTreeSchema {
 	const definitions = new Map<string, SimpleNodeSchema>();
 	for (const [type, schema] of schemaMap) {
-		definitions.set(type, toSimpleNodeSchema(schema));
+		definitions.set(type, toSimpleNodeSchema(schema, schemaPolicy));
 	}
 	return {
-		rootFieldSchema: toSimpleFieldSchema(rootFieldSchema),
+		rootFieldSchema: toSimpleFieldSchema(rootFieldSchema, schemaPolicy),
 		definitions,
 	};
 }
 
-function toSimpleFieldSchema(fieldSchema: TreeFieldStoredSchema): SimpleFieldSchema {
+function toSimpleFieldSchema(
+	fieldSchema: TreeFieldStoredSchema,
+	schemaPolicy: SchemaPolicy,
+): SimpleFieldSchema {
 	const allowedTypes: string[] = [];
 	for (const type of fieldSchema.types ?? []) {
 		allowedTypes.push(type);
 	}
+
+	const fieldKindData = schemaPolicy.fieldKinds.get(fieldSchema.kind);
+	assert(fieldKindData !== undefined, "Encountered field without kind policy.");
+
+	assert(
+		fieldKindData.multiplicity === Multiplicity.Optional ||
+			fieldKindData.multiplicity === Multiplicity.Single,
+		"Encountered object field with unexpected multiplicity.",
+	);
+
 	return {
-		kind: "optional", // TODO: actually get this from the schema
+		kind: fieldKindData.multiplicity === Multiplicity.Optional ? "optional" : "required",
 		allowedTypes,
 	};
 }
 
-function toSimpleNodeSchema(schema: TreeNodeStoredSchema): SimpleNodeSchema {
+function toSimpleNodeSchema(
+	schema: TreeNodeStoredSchema,
+	schemaPolicy: SchemaPolicy,
+): SimpleNodeSchema {
 	if (schema instanceof ObjectNodeStoredSchema) {
-		return toSimpleObjectNodeSchema(schema);
+		return toSimpleObjectNodeSchema(schema, schemaPolicy);
 	} else if (schema instanceof MapNodeStoredSchema) {
 		return toSimpleMapNodeSchema(schema);
 	} else if (schema instanceof LeafNodeStoredSchema) {
@@ -139,6 +159,7 @@ function toSimpleNodeSchema(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 
 function toSimpleObjectNodeSchema(
 	schema: ObjectNodeStoredSchema,
+	schemaPolicy: SchemaPolicy,
 ): SimpleObjectNodeSchema | SimpleArrayNodeSchema {
 	if (schema.objectNodeFields.size === 1 && schema.objectNodeFields.has(EmptyKey)) {
 		// Array case
@@ -155,7 +176,7 @@ function toSimpleObjectNodeSchema(
 		// Object case
 		const fields: Record<string, SimpleFieldSchema> = {};
 		for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
-			fields[fieldKey] = toSimpleFieldSchema(fieldSchema);
+			fields[fieldKey] = toSimpleFieldSchema(fieldSchema, schemaPolicy);
 		}
 		return {
 			kind: "object",

@@ -318,7 +318,11 @@ export class SharedTree
 	}
 
 	public getStoredSchema(): SimpleTreeSchema {
-		return toSimpleTreeSchema(this.storedSchema.nodeSchema, this.storedSchema.rootFieldSchema);
+		return toSimpleTreeSchema(
+			this.storedSchema.nodeSchema,
+			this.storedSchema.rootFieldSchema,
+			defaultSchemaPolicy,
+		);
 	}
 
 	public schematizeFlexTree<TRoot extends FlexFieldSchema>(
