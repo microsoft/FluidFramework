@@ -78,6 +78,7 @@ import {
 } from "./referencePositions.js";
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import { zamboniSegments } from "./zamboni.js";
+import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "./attributionPolicy.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -2261,7 +2262,7 @@ export class MergeTree {
 		return segmentPosition;
 	}
 
-	public nodeUpdateLengthNewStructure(node: MergeBlock, recur = false) {
+	public nodeUpdateLengthNewStructure(node: MergeBlock, recur = false): void {
 		this.blockUpdate(node);
 		if (this.collabWindow.collaborating) {
 			this.localPartialsComputed = false;
@@ -2412,9 +2413,9 @@ export class MergeTree {
 			}
 			return depths.get(block)!;
 		};
-		newOrder.forEach((element: IMergeNode) => {
+		for (const element of newOrder) {
 			computeDepth(element);
-		});
+		}
 		for (const [node] of [...depths.entries()].sort((a, b) => b[1] - a[1])) {
 			if (!node.isLeaf()) {
 				this.nodeUpdateLengthNewStructure(node);

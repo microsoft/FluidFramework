@@ -257,7 +257,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
 	splitAt(pos: number): ISegment | undefined;
-	toJSONObject(): any;
+	toJSONObject(): unknown;
 	/**
 	 * Acks the current segment against the segment group, op, and merge tree.
 	 *
@@ -497,7 +497,7 @@ export abstract class BaseSegment implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
 		this.propertyManager ??= new PropertiesManager();
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -542,7 +542,7 @@ export abstract class BaseSegment implements ISegment {
 		}
 	}
 
-	public abstract toJSONObject(): any;
+	public abstract toJSONObject(): unknown;
 
 	/***/
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
@@ -748,7 +748,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 
 	static fromJSONObject(spec: IJSONSegment): Marker | undefined {
 		if (spec && typeof spec === "object" && "marker" in spec) {
-			return Marker.make(spec.marker.refType, spec.props as PropertySet);
+			return Marker.make((spec.marker as Marker).refType, spec.props as PropertySet);
 		}
 		return undefined;
 	}

@@ -821,7 +821,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						segInsertOp = segment.clone();
 						// eslint-disable-next-line import/no-deprecated
 						segInsertOp.properties = createMap();
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 						segInsertOp.addProperties(resetOp.seg.properties);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
