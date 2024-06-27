@@ -39,7 +39,7 @@ import * as path from "node:path";
 import chalk from "chalk";
 import Table from "easy-table";
 
-import { geometricMean, outputFriendlyObjectFromBenchmark, pad, prettyNumber, Stats } from "./ReporterUtilities";
+import { geometricMean, isMemoryBenchmarkStats, outputFriendlyObjectFromBenchmark, pad, prettyNumber, Stats } from "./ReporterUtilities";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 import { BenchmarkResult, isResultError } from "./runBenchmark";
 
@@ -194,7 +194,7 @@ export class BenchmarkReporter {
 				countFailure++;
 			} else {
 				benchmarkPeriodsSeconds.push(value.stats.arithmeticMean);
-				sumRuntime += value.elapsedSeconds;
+				sumRuntime += isMemoryBenchmarkStats(value) ? (value.totalRunTimeMs / 1000) : value.elapsedSeconds;
 				countSuccessful++;
 			}
 		}

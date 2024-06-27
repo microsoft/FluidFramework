@@ -13,6 +13,7 @@ import {
 	BenchmarkTimer,
 } from "./Configuration";
 import { Stats, getArrayStatistics } from "./ReporterUtilities";
+// eslint-disable-next-line import/no-internal-modules
 import type { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
 import { Timer, defaultMinimumTime, timer } from "./timer";
 

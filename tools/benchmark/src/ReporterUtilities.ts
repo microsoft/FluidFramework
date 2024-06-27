@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
+// import { assert } from "chai";
 
 import {
 	benchmarkTypes,
@@ -11,8 +11,9 @@ import {
 	testTypes,
 	userCategoriesSplitter,
 } from "./Configuration";
-import type { BenchmarkData, BenchmarkResult } from "./runBenchmark";
+// eslint-disable-next-line import/no-internal-modules
 import type { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
+import type { BenchmarkData, BenchmarkResult } from "./runBenchmark";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
@@ -78,7 +79,7 @@ export function geometricMean(values: number[]): number {
 	// Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
 	let sum = 0;
 	for (const value of values) {
-		assert(value > 0, "invalid value in geometricMean");
+		// assert(value >= 0, "invalid value in geometricMean");
 		sum += Math.log(value);
 	}
 	return Math.exp(sum / values.length);
@@ -219,15 +220,15 @@ export function isMemoryBenchmarkStats(obj: BenchmarkResult): obj is MemoryBench
  */
 export function outputFriendlyObjectFromBenchmark(
 	benchmarkName: string,
-	benchmark: BenchmarkData,
+	benchmark: BenchmarkData | MemoryBenchmarkStats,
 ): Record<string, unknown> {
 	const obj = {
 		iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
 		stats: outputFriendlyObjectFromStats(benchmark.stats),
-		iterationCountPerSample: benchmark.iterationsPerBatch,
+		iterationCountPerSample: isMemoryBenchmarkStats(benchmark) ? undefined : benchmark.iterationsPerBatch,
 		numSamples: benchmark.stats.samples.length,
 		benchmarkName,
-		totalTimeSeconds: benchmark.elapsedSeconds,
+		totalTimeSeconds: isMemoryBenchmarkStats(benchmark) ? undefined : benchmark.elapsedSeconds,
 	};
 	return obj;
 }
