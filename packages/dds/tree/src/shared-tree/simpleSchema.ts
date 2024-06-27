@@ -17,26 +17,36 @@ import {
 } from "../core/index.js";
 import { fail } from "../util/index.js";
 
+// TODOs:
+// - Handle "Any"
+
+// JSON Schema
+// - Map policy
+// - FluidHandle policy
+// - How to represent types (for type disambiguation)
+//    - Allow only annotating types when required for disambiguation.
+//    - Root (type) is maybe special
+
+// Future:
+// - For API where you can get this for a view schema, configuration options for which field names to use (stored or view) and plan for future config options.
+
+
 /**
- * TODO
  * @internal
  */
 export type SimpleNodeSchemaKind = "object" | "array" | "map" | "leaf";
 
 /**
- * TODO
  * @internal
  */
 export type SimpleFieldSchemaKind = "optional" | "required";
 
 /**
- * TODO
  * @internal
  */
 export type SimpleLeafSchemaKind = "string" | "number" | "boolean" | "null";
 
 /**
- * TODO
  * @internal
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
@@ -44,7 +54,6 @@ export interface SimpleNodeSchemaBase<TNodeKind extends SimpleNodeSchemaKind> {
 }
 
 /**
- * TODO
  * @internal
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
@@ -52,7 +61,6 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<"object"> {
 }
 
 /**
- * TODO
  * @internal
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
@@ -60,7 +68,6 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<"array"> {
 }
 
 /**
- * TODO
  * @internal
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
@@ -68,7 +75,6 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<"map"> {
 }
 
 /**
- * TODO
  * @internal
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
@@ -76,7 +82,6 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<"leaf"> {
 }
 
 /**
- * TODO
  * @internal
  */
 export type SimpleNodeSchema =
