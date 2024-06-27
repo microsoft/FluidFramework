@@ -72,8 +72,10 @@ export class EscapedPath {
 	}
 	public static createAndConcat(pathParts: string[]): EscapedPath {
 		let ret = EscapedPath.create(pathParts[0] ?? "");
-		for (const value of pathParts.slice(1)) {
-			ret = ret.concat(EscapedPath.create(value));
+		for (let i = 1; i < pathParts.length; i++) {
+			// Non null asserting here since we are iterating over pathParts
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			ret = ret.concat(EscapedPath.create(pathParts[i]!));
 		}
 		return ret;
 	}

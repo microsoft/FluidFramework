@@ -2144,12 +2144,16 @@ export class ContainerRuntime
 		pathParts: string[],
 		hasIsolatedChannels: boolean,
 	): ISnapshotTree | undefined {
-		let childTree: ISnapshotTree | undefined = snapshotTree;
+		let childTree = snapshotTree;
 		for (const part of pathParts) {
 			if (hasIsolatedChannels) {
-				childTree = childTree?.trees[channelsTreeName];
+				// Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				childTree = childTree.trees[channelsTreeName]!;
 			}
-			childTree = childTree?.trees[part];
+			// Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			childTree = childTree.trees[part]!;
 		}
 		return childTree;
 	}
