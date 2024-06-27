@@ -112,9 +112,13 @@ export function setInRangeMap<T>(
 	}
 
 	const iFirst = iBefore + 1;
-	const firstEntry = map[iFirst];
+	// Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const firstEntry = map[iFirst]!;
 	const iLast = iAfter - 1;
-	const lastEntry = map[iLast];
+	// Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const lastEntry = map[iLast]!;
 	const lengthBeforeFirst = start - firstEntry.start;
 	const lastEntryKey = lastEntry.start + lastEntry.length - 1;
 	const lengthAfterLast = lastEntryKey - end;
@@ -203,7 +207,9 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
-		const entry = map[i];
+		// Non null asserting here because we are iterating over map
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const entry = map[i]!;
 		const entryLastKey = entry.start + entry.length - 1;
 		let isDirty = false;
 

@@ -1933,7 +1933,9 @@ function revisionFromRevInfos(
 	if (revInfos === undefined || revInfos.length !== 1) {
 		return undefined;
 	}
-	return revInfos[0].revision;
+	// Non null asserting here because of the length check above
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return revInfos[0]!.revision;
 }
 
 function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {

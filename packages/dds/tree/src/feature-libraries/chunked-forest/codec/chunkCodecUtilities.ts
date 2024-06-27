@@ -106,7 +106,9 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
 	assertValidIndex(index, data);
-	return data[index];
+	// Non null asserting here because of the assert above
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return data[index]!;
 }
 
 /**

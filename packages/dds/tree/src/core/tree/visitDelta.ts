@@ -444,7 +444,9 @@ function buildTrees(
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = config.detachedFieldIndex.createEntry(offsettedId);
 		const field = config.detachedFieldIndex.toFieldKey(root);
-		visitor.create([trees[i]], field);
+		// Non null asserting here because we are iterating over trees
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		visitor.create([trees[i]!], field);
 	}
 }
 

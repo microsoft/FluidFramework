@@ -229,7 +229,9 @@ export function rebaseBranch<TChange>(
 	let newBaseIndex = targetCommitIndex;
 
 	for (let i = 0; i < targetPath.length; i += 1) {
-		const { revision } = targetPath[i];
+		// Non null asserting here because we are iterating over targetPath
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const { revision } = targetPath[i]!;
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
@@ -249,7 +251,9 @@ export function rebaseBranch<TChange>(
 	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
-		if (sourcePath[0].revision === targetRebasePath[0].revision) {
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (sourcePath[0]!.revision === targetRebasePath[0]!.revision) {
 			sourcePath.shift();
 			targetRebasePath.shift();
 		}
@@ -263,10 +267,13 @@ export function rebaseBranch<TChange>(
 	// base commit.
 	if (targetRebasePath.length === 0) {
 		for (const c of sourcePath) {
-			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
+			// Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1]! ?? newBase, c));
 		}
 		return {
-			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			newSourceHead: sourceCommits[sourceCommits.length - 1]! ?? newBase,
 			sourceChange: undefined,
 			commits: {
 				deletedSourceCommits,
@@ -309,7 +316,9 @@ export function rebaseBranch<TChange>(
 
 	let netChange: TChange | undefined;
 	return {
-		newSourceHead: newHead,
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		newSourceHead: newHead!,
 		get sourceChange(): TChange | undefined {
 			if (netChange === undefined) {
 				netChange = changeRebaser.compose(editsToCompose);

@@ -450,7 +450,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				const transactionRevision = event.newCommits[0].revision;
+				// Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const transactionRevision = event.newCommits[0]!.revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
 				}

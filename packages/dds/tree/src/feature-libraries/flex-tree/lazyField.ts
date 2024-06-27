@@ -527,7 +527,9 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 			: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
-		fieldEditor.set(content[0]);
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		fieldEditor.set(content[0]!);
 	}
 
 	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {

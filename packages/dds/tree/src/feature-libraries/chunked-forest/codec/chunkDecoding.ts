@@ -169,7 +169,9 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 		case 0:
 			return emptyChunk;
 		case 1:
-			return chunks[0];
+			// Non null asserting here because we are switching between chunks.length
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return chunks[0]!;
 		default:
 			return new SequenceChunk(chunks);
 	}
@@ -181,7 +183,9 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const decoder = decoders[this.shape];
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const decoder = decoders[this.shape]!;
 
 		// TODO: uniform chunk fast path
 		const chunks: TreeChunk[] = [];
@@ -215,7 +219,9 @@ export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const length = this.shape.length;
-		const decoder = decoders[this.shape.shape];
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const decoder = decoders[this.shape.shape]!;
 		const chunks: TreeChunk[] = [];
 		for (let index = 0; index < length; index++) {
 			chunks.push(decoder.decode(decoders, stream));
@@ -252,7 +258,9 @@ function fieldDecoder(
 	shape: number,
 ): BasicFieldDecoder {
 	assertValidIndex(shape, cache.shapes);
-	return (decoders, stream) => [key, decoders[shape].decode(decoders, stream)];
+	// Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return (decoders, stream) => [key, decoders[shape]!.decode(decoders, stream)];
 }
 
 /**
@@ -299,7 +307,9 @@ export class TreeDecoder implements ChunkDecoder {
 		}
 
 		if (this.shape.extraFields !== undefined) {
-			const decoder = decoders[this.shape.extraFields];
+			// Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const decoder = decoders[this.shape.extraFields]!;
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
 				const key: FieldKey = readStreamIdentifier(inner, this.cache);

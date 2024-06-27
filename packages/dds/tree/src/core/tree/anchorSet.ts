@@ -516,21 +516,27 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			let index = 0;
 			while (
 				index < sourceChildren.length &&
-				sourceChildren[index].parentIndex < startPath.parentIndex
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				sourceChildren[index]!.parentIndex < startPath.parentIndex
 			) {
 				numberBeforeDecouple++;
 				index++;
 			}
 			while (
 				index < sourceChildren.length &&
-				sourceChildren[index].parentIndex < startPath.parentIndex + count
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				sourceChildren[index]!.parentIndex < startPath.parentIndex + count
 			) {
 				numberToDecouple++;
 				index++;
 			}
 			while (index < sourceChildren.length) {
 				// Fix indexes in source after moved items (subtract count).
-				sourceChildren[index].parentIndex -= count;
+				// Non null asserting here because we are iterating over sourceChildren
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				sourceChildren[index]!.parentIndex -= count;
 				index++;
 			}
 			// Sever the parent -> child connections
@@ -605,12 +611,16 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		count: number,
 	): number {
 		let index = 0;
-		while (index < field.length && field[index].parentIndex < fromParentIndex) {
+		// Non null asserting here because we are iterating over field
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		while (index < field.length && field[index]!.parentIndex < fromParentIndex) {
 			index++;
 		}
 		const numberBeforeIncrease = index;
 		while (index < field.length) {
-			field[index].parentIndex += count;
+			// Non null asserting here because we are iterating over field
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			field[index]!.parentIndex += count;
 			index++;
 		}
 

@@ -41,7 +41,9 @@ export function makeForestSummarizerCodec(
 			const fields = inner.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (let index = 0; index < fields.length; index++) {
-				out.set(data.keys[index], fields[index]);
+				// Non null asserting here because we are iterating over fields and the size of data.keys and fields are the same
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				out.set(data.keys[index]!, fields[index]!);
 			}
 			return out;
 		},

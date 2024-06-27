@@ -347,7 +347,9 @@ function makeModularChangeCodec(
 		});
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
-			return chunkFieldSingle(chunks[index], defaultChunkPolicy);
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return chunkFieldSingle(chunks[index]!, defaultChunkPolicy);
 		};
 
 		const map: ModularChangeset["builds"] = new Map();
@@ -368,8 +370,12 @@ function makeModularChangeCodec(
 		if (context.revision !== undefined) {
 			assert(
 				revisions.length === 1 &&
-					revisions[0].revision === context.revision &&
-					revisions[0].rollbackOf === undefined,
+					// Non null asserting here because of the length check above
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					revisions[0]!.revision === context.revision &&
+					// Non null asserting here because of the length check above
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					revisions[0]!.rollbackOf === undefined,
 				0x964 /* A tagged change should only contain the tagged revision */,
 			);
 

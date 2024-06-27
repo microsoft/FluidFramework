@@ -80,8 +80,12 @@ export function makeDetachedNodeToFieldCodec(
 				if (rootRanges.length === 1) {
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
-						rootRanges[0][0],
-						rootRanges[0][1],
+						// Non null asserting here because of the length check above
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						rootRanges[0]![0],
+						// Non null asserting here because of the length check above
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						rootRanges[0]![1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {
