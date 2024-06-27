@@ -343,7 +343,7 @@ export class SerializedStateManager {
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
 		// Non null asserting here because of the undefined check above
 		const lastProcessedOpSequenceNumber =
-		// Non null asserting here because of the length check above
+			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.processedOps[this.processedOps.length - 1]!.sequenceNumber;
 
