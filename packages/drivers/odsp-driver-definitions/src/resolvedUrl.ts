@@ -122,6 +122,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	tokens: {};
 
 	fileName: string;
+	pendingRename?: string;
 
 	summarizer: boolean;
 
