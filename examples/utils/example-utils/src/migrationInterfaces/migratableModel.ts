@@ -13,6 +13,7 @@ import type { IMigrationTool } from "./migrationTool.js";
 export interface IVersionedModel {
 	/**
 	 * The string version of the model, matching the version of the container code it's paired with.
+	 * TODO: Should this live on the migrationTool?
 	 */
 	readonly version: string;
 }
@@ -52,9 +53,12 @@ export interface IMigratableModelEvents extends IEvent {
 /**
  * @internal
  */
-export interface IMigratableModel extends IVersionedModel, IImportExportModel<unknown, unknown> {
+export interface IMigratableModel
+	extends IVersionedModel,
+		IImportExportModel<unknown, unknown> {
 	/**
 	 * The event provider that will emit when migration status changes.
+	 * TODO: Should this live on the migrationTool?
 	 */
 	readonly migrationEvents: IEventProvider<IMigratableModelEvents>;
 
@@ -65,6 +69,7 @@ export interface IMigratableModel extends IVersionedModel, IImportExportModel<un
 
 	/**
 	 * Returns if the runtime is currently connected.
+	 * TODO: Should this live on the migrationTool?
 	 */
 	connected(): boolean;
 
