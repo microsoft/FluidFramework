@@ -29,6 +29,7 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
+	applyConstraint,
 	applyFieldEdit,
 	applySchemaOp,
 	applySynchronizationOp,
@@ -45,7 +46,10 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
+const fuzzComposedVsIndividualReducer = combineReducersAsync<
+	Operation,
+	BranchedTreeFuzzTestState
+>({
 	treeEdit: async (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
@@ -76,6 +80,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	},
 	schemaChange: async (state, operation) => {
 		applySchemaOp(state, operation);
+	},
+	constraint: async (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 

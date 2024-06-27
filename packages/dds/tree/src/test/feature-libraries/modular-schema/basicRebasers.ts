@@ -6,7 +6,11 @@
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { type DeltaFieldChanges, makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
+import {
+	type DeltaFieldChanges,
+	makeDetachedNodeId,
+	Multiplicity,
+} from "../../../core/index.js";
 import {
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,

@@ -176,14 +176,8 @@ describe('revert', () => {
 					revert(
 						[
 							ChangeInternal.build([testTree.buildLeafInternal()], detachedId),
-							ChangeInternal.insert(
-								detachedId,
-								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
-							),
-							ChangeInternal.insert(
-								detachedId,
-								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
-							),
+							ChangeInternal.insert(detachedId, StablePlaceInternal.atStartOf(testTree.left.traitLocation)),
+							ChangeInternal.insert(detachedId, StablePlaceInternal.atStartOf(testTree.left.traitLocation)),
 						],
 						testTree.view,
 						undefined,

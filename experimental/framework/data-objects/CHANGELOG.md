@@ -1,5 +1,18 @@
 # @fluid-experimental/data-objects
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   data-objects: Fix using Signaler in ContainerSchema ([#21183](https://github.com/microsoft/FluidFramework/pull/21183)) [15de84caca](https://github.com/microsoft/FluidFramework/commit/15de84cacaede86b6f032b4fd19ab163155392dc)
+
+    `Signaler` now implements `SharedObjectKind<ISignaler>`, allowing its use in `ContainerSchema` which was broken when ContainerSchema was made more strict.
+    Additionally fewer encapsulated APIs are exposed on Signaler and the instance type must now be `ISignaler` (instead of `Signaler`), which has been extended to have an "error" event which was previously missing.
+
 ## 2.0.0-rc.4.0.0
 
 Dependency updates only.

@@ -4,12 +4,6 @@
 
 ```ts
 
-import { EventEmitter } from 'events_pkg';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IEventTransformer } from '@fluidframework/core-interfaces';
-import type { TransformedEvent } from '@fluidframework/core-interfaces';
-
 export { EventEmitter }
 
 export { performance_2 as performance }

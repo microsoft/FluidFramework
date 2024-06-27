@@ -20,22 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "RemovedInterfaceDeclaration_IClientConfig": {"forwardCompat": false}
- */
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "RemovedInterfaceDeclaration_IClientConfig": {"backCompat": false}
- */
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "InterfaceDeclaration_IOdspAuthRequestInfo": {"forwardCompat": false}
  */
 declare function get_old_InterfaceDeclaration_IOdspAuthRequestInfo():
@@ -114,6 +98,34 @@ declare function use_old_InterfaceDeclaration_IOdspTokens(
     use: TypeOnly<old.IOdspTokens>): void;
 use_old_InterfaceDeclaration_IOdspTokens(
     get_current_InterfaceDeclaration_IOdspTokens());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IPublicClientConfig": {"forwardCompat": false}
+ */
+declare function get_old_InterfaceDeclaration_IPublicClientConfig():
+    TypeOnly<old.IPublicClientConfig>;
+declare function use_current_InterfaceDeclaration_IPublicClientConfig(
+    use: TypeOnly<current.IPublicClientConfig>): void;
+use_current_InterfaceDeclaration_IPublicClientConfig(
+    get_old_InterfaceDeclaration_IPublicClientConfig());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "InterfaceDeclaration_IPublicClientConfig": {"backCompat": false}
+ */
+declare function get_current_InterfaceDeclaration_IPublicClientConfig():
+    TypeOnly<current.IPublicClientConfig>;
+declare function use_old_InterfaceDeclaration_IPublicClientConfig(
+    use: TypeOnly<old.IPublicClientConfig>): void;
+use_old_InterfaceDeclaration_IPublicClientConfig(
+    get_current_InterfaceDeclaration_IPublicClientConfig());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -898,6 +910,34 @@ declare function use_old_FunctionDeclaration_hasFacetCodes(
     use: TypeOnly<typeof old.hasFacetCodes>): void;
 use_old_FunctionDeclaration_hasFacetCodes(
     get_current_FunctionDeclaration_hasFacetCodes());
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_hasRedirectionLocation": {"forwardCompat": false}
+ */
+declare function get_old_FunctionDeclaration_hasRedirectionLocation():
+    TypeOnly<typeof old.hasRedirectionLocation>;
+declare function use_current_FunctionDeclaration_hasRedirectionLocation(
+    use: TypeOnly<typeof current.hasRedirectionLocation>): void;
+use_current_FunctionDeclaration_hasRedirectionLocation(
+    get_old_FunctionDeclaration_hasRedirectionLocation());
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "FunctionDeclaration_hasRedirectionLocation": {"backCompat": false}
+ */
+declare function get_current_FunctionDeclaration_hasRedirectionLocation():
+    TypeOnly<typeof current.hasRedirectionLocation>;
+declare function use_old_FunctionDeclaration_hasRedirectionLocation(
+    use: TypeOnly<typeof old.hasRedirectionLocation>): void;
+use_old_FunctionDeclaration_hasRedirectionLocation(
+    get_current_FunctionDeclaration_hasRedirectionLocation());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

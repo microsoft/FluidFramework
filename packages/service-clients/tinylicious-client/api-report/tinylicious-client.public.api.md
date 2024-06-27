@@ -4,13 +4,6 @@
 
 ```ts
 
-import { CompatibilityMode } from '@fluidframework/fluid-static';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { IUser } from '@fluidframework/driver-definitions';
+export { CompatibilityMode }
 
 ```

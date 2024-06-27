@@ -39,13 +39,13 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	type,
+	typeNameSymbol,
 	type ImplicitAllowedTypes,
 	FieldKind,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
 import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
-import { type RestrictiveReadonlyRecord, fail, type InternalUtilTypes } from "../util/index.js";
+import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
@@ -104,7 +104,7 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSche
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = InternalUtilTypes.FlattenKeys<
+> = FlattenKeys<
 	{
 		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
 	} & {
@@ -199,6 +199,12 @@ function createProxyHandler(
 
 			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
 			return true;
+		},
+		deleteProperty(target, viewKey): boolean {
+			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
+			throw new UsageError(
+				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
+			);
 		},
 		has: (target, viewKey) => {
 			return (
@@ -392,7 +398,7 @@ export function objectSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 	}

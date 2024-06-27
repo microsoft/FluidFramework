@@ -7,7 +7,11 @@ import { strict as assert } from "assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ITreeCursorSynchronous, type JsonableTree, Multiplicity } from "../core/index.js";
+import {
+	type ITreeCursorSynchronous,
+	type JsonableTree,
+	Multiplicity,
+} from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
 	type AllowedTypesToFlexInsertableTree,
@@ -183,7 +187,10 @@ export const numericMap = builder.map(
 
 type NumericMapData = AllowedTypesToFlexInsertableTree<[typeof numericMap]>;
 
-export const anyMap = builder.map("anyMap", FlexFieldSchema.create(FieldKinds.sequence, [Any]));
+export const anyMap = builder.map(
+	"anyMap",
+	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
+);
 
 export const recursiveType = builder.objectRecursive("recursiveType", {
 	field: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),

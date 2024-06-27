@@ -8,7 +8,12 @@ import {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
-import type { IEventProvider, IEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IEventProvider,
+	IEvent,
+	ITelemetryBaseLogger,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
@@ -26,9 +31,13 @@ import {
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
+	type TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import {
+	ISerializableBlobContents,
+	getBlobContentsFromTree,
+} from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 /**
@@ -59,7 +68,9 @@ export interface SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingContainerState extends SnapshotWithBlobs {
-	/** This container was attached (as opposed to IPendingDetachedContainerState.attached which is false) */
+	/**
+	 * This container was attached (as opposed to IPendingDetachedContainerState.attached which is false)
+	 */
 	attached: true;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
@@ -76,9 +87,13 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
-	/** The Container's URL in the service, needed to hook up the driver during rehydration */
+	/**
+	 * The Container's URL in the service, needed to hook up the driver during rehydration
+	 */
 	url: string;
-	/** If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected. */
+	/**
+	 * If the Container was connected when serialized, its clientId. Used as the initial clientId upon rehydration, until reconnected.
+	 */
 	clientId?: string;
 }
 
@@ -88,11 +103,17 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  * @internal
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
-	/** This container was not attached (as opposed to IPendingContainerState.attached which is true) */
+	/**
+	 * This container was not attached (as opposed to IPendingContainerState.attached which is true)
+	 */
 	attached: false;
-	/** Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage */
+	/**
+	 * Indicates whether we expect the rehydrated container to have non-empty Detached Blob Storage
+	 */
 	hasAttachmentBlobs: boolean;
-	/** Used by the memory blob storage to persisted attachment blobs */
+	/**
+	 * Used by the memory blob storage to persisted attachment blobs
+	 */
 	attachmentBlobs?: string;
 	/**
 	 * Runtime-specific state that will be needed to properly rehydrate
@@ -179,7 +200,7 @@ export class SerializedStateManager {
 	/**
 	 * Called whenever an incoming op is processed by the Container
 	 */
-	public addProcessedOp(message: ISequencedDocumentMessage) {
+	public addProcessedOp(message: ISequencedDocumentMessage): void {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
 			this.updateSnapshotAndProcessedOpsMaybe();
@@ -190,13 +211,16 @@ export class SerializedStateManager {
 	 * This wraps the basic functionality of fetching the snapshot for this container during Container load.
 	 *
 	 * If we have pendingLocalState, we get the snapshot from there.
-	 * Otherwise, fetch it from storage (according to specifiedVersion if provided)
+	 * Otherwise, fetch it from storage (according to specifiedVersion if provided).
 	 *
-	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage
+	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage.
 	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
 	 * @returns The snapshot to boot the container from
 	 */
-	public async fetchSnapshot(specifiedVersion: string | undefined) {
+	public async fetchSnapshot(specifiedVersion: string | undefined): Promise<{
+		baseSnapshot: ISnapshot | ISnapshotTree;
+		version: IVersion | undefined;
+	}> {
 		if (this.pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
@@ -211,10 +235,7 @@ export class SerializedStateManager {
 					baseSnapshotTree,
 					this.storageAdapter,
 				);
-				const attributes = await getDocumentAttributes(
-					this.storageAdapter,
-					baseSnapshotTree,
-				);
+				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 				this.snapshot = {
 					baseSnapshot: baseSnapshotTree,
 					snapshotBlobs,
@@ -237,12 +258,14 @@ export class SerializedStateManager {
 			) {
 				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 				this.refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
-				this.refreshSnapshotP.catch((e) => {
-					this.mc.logger.sendErrorEvent({
-						eventName: "RefreshLatestSnapshotFailed",
-						error: e,
-					});
-				});
+				this.refreshSnapshotP.catch(
+					(error: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>) => {
+						this.mc.logger.sendErrorEvent({
+							eventName: "RefreshLatestSnapshotFailed",
+							error,
+						});
+					},
+				);
 			}
 
 			const blobContents = new Map<string, ArrayBuffer>();
@@ -299,7 +322,7 @@ export class SerializedStateManager {
 	/**
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
-	private updateSnapshotAndProcessedOpsMaybe() {
+	private updateSnapshotAndProcessedOpsMaybe(): void {
 		if (
 			this.latestSnapshot === undefined ||
 			this.processedOps.length === 0 ||
@@ -330,10 +353,7 @@ export class SerializedStateManager {
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
-			this.processedOps.splice(
-				0,
-				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
-			);
+			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -341,9 +361,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0
-						? undefined
-						: this.processedOps[0].sequenceNumber,
+					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
 			});
 		}
 	}
@@ -354,7 +372,7 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
-	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined) {
+	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined): void {
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,
@@ -366,12 +384,18 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
 			assert(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				attributes.sequenceNumber === 0,
 				0x939 /* trying to set a non attachment snapshot */,
 			);
-			this.snapshot = { ...snapshot, snapshotSequenceNumber: attributes.sequenceNumber };
+			this.snapshot = {
+				...snapshot,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				snapshotSequenceNumber: attributes.sequenceNumber as number,
+			};
 		}
 	}
 
@@ -399,9 +423,7 @@ export class SerializedStateManager {
 			},
 			async () => {
 				if (!this.offlineLoadEnabled) {
-					throw new UsageError(
-						"Can't get pending local state unless offline load is enabled",
-					);
+					throw new UsageError("Can't get pending local state unless offline load is enabled");
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
@@ -424,9 +446,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
-					loadedGroupIdSnapshots: hasGroupIdSnapshots
-						? loadedGroupIdSnapshots
-						: undefined,
+					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					clientId,
@@ -525,7 +545,7 @@ export async function fetchISnapshot(
 			: {
 					id: snapshot.snapshotTree.id,
 					treeId: snapshot.snapshotTree.id,
-			  };
+				};
 
 	if (snapshot === undefined && specifiedVersion !== undefined) {
 		mc.logger.sendErrorEvent({
@@ -554,6 +574,8 @@ export async function fetchISnapshotTree(
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshotTree" | "getVersions">,
 	specifiedVersion: string | undefined,
 ): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
+	// API uses null
+	// eslint-disable-next-line unicorn/no-null
 	const versions = await storageAdapter.getVersions(specifiedVersion ?? null, 1);
 	const version = versions[0];
 

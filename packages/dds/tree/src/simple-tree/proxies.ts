@@ -25,6 +25,7 @@ import {
 	type MapTreeNode,
 	tryGetMapTreeNode,
 	typeNameSymbol,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 
@@ -55,31 +56,28 @@ export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrat
  * Retrieve the associated proxy for the given field.
  * */
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
+	function tryToUnboxLeaves(
+		flexField: FlexTreeTypedField<
+			FlexFieldSchema<typeof FieldKinds.required | typeof FieldKinds.optional>
+		>,
+	): TreeNode | TreeValue | undefined {
+		const maybeUnboxedContent = flexField.content;
+		return isFlexTreeNode(maybeUnboxedContent)
+			? getOrCreateNodeProxy(maybeUnboxedContent)
+			: maybeUnboxedContent;
+	}
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as FlexTreeTypedField<
+			const typedField = field as FlexTreeTypedField<
 				FlexFieldSchema<typeof FieldKinds.required>
 			>;
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(asValue.boxedContent);
+			return tryToUnboxLeaves(typedField);
 		}
 		case FieldKinds.optional: {
-			const asValue = field as FlexTreeTypedField<
+			const typedField = field as FlexTreeTypedField<
 				FlexFieldSchema<typeof FieldKinds.optional>
 			>;
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-
-			const maybeContent = asValue.boxedContent;
-
-			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
-			// root field is a special case where the field is always present (even if empty).
-			return maybeContent === undefined ? undefined : getOrCreateNodeProxy(maybeContent);
+			return tryToUnboxLeaves(typedField);
 		}
 		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
@@ -88,9 +86,9 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			fail("'sequence' field is unexpected.");
 		}
 		case FieldKinds.identifier: {
-			const identifier = field.boxedAt(0);
-			assert(identifier !== undefined, 0x91a /* identifier must exist */);
-			return getOrCreateNodeProxy(identifier);
+			// Identifier fields are just value fields that hold strings
+			return (field as FlexTreeTypedField<FlexFieldSchema<typeof FieldKinds.required>>)
+				.content as string;
 		}
 
 		default:

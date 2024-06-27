@@ -5,11 +5,11 @@
 
 import { performance } from "@fluid-internal/client-utils";
 import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	LogLevel,
-	Tagged,
-	TelemetryBaseEventPropertyType,
+	type Tagged,
+	type TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 
 import {
@@ -23,8 +23,8 @@ import {
 	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
-import {
-	type ITelemetryErrorEventExt,
+import type {
+	ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
@@ -53,18 +53,22 @@ export enum TelemetryDataTag {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
+ * @legacy
  * @alpha
  */
-export interface ITelemetryLoggerPropertyBag {
-	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
+export type ITelemetryLoggerPropertyBag = Record<
+	string,
+	TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)
+>;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITelemetryLoggerPropertyBags {
@@ -273,10 +277,9 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		return this.extendProperties(newEvent, includeErrorProps);
 	}
 
-	private extendProperties<T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag>(
-		toExtend: T,
-		includeErrorProps: boolean,
-	): T {
+	private extendProperties<
+		T extends ITelemetryLoggerPropertyBag = ITelemetryLoggerPropertyBag,
+	>(toExtend: T, includeErrorProps: boolean): T {
 		const eventLike: ITelemetryLoggerPropertyBag = toExtend;
 		if (this.properties) {
 			const properties: (undefined | ITelemetryLoggerPropertyBag)[] = [];
@@ -368,6 +371,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
+ * @legacy
  * @alpha
  */
 export function createChildLogger(props?: {
@@ -421,8 +425,8 @@ export class ChildLogger extends TelemetryLogger {
 				baseLogger.namespace === undefined
 					? namespace
 					: namespace === undefined
-					? baseLogger.namespace
-					: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
+						? baseLogger.namespace
+						: `${baseLogger.namespace}${TelemetryLogger.eventNamespaceSeparator}${namespace}`;
 
 			const child = new ChildLogger(
 				baseLogger.baseLogger,
@@ -533,7 +537,7 @@ export class MultiSinkLogger extends TelemetryLogger {
 	 * @param loggers - The list of loggers to use as sinks
 	 * @param tryInheritProperties - Will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
 	 */
-	constructor(
+	public constructor(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 		loggers: ITelemetryBaseLogger[] = [],
@@ -855,7 +859,7 @@ export function convertToBasePropertyType(
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
 				tag: x.tag,
-		  }
+			}
 		: convertToBasePropertyTypeUntagged(x);
 }
 
@@ -920,11 +924,11 @@ export const tagData = <
 				? () => {
 						value: ReturnType<V[P]>;
 						tag: T;
-				  }
+					}
 				: {
 						value: Exclude<V[P], undefined>;
 						tag: T;
-				  })
+					})
 		| (V[P] extends undefined ? undefined : never);
 } =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -982,10 +986,10 @@ export const tagCodeArtifacts = <
 				? () => {
 						value: ReturnType<T[P]>;
 						tag: TelemetryDataTag.CodeArtifact;
-				  }
+					}
 				: {
 						value: Exclude<T[P], undefined>;
 						tag: TelemetryDataTag.CodeArtifact;
-				  })
+					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
