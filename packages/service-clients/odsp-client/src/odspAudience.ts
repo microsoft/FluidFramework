@@ -32,7 +32,6 @@ interface OdspUser {
  * Creates an audience member from an IClient instance.
  *
  * @param audienceMember - the client instance/
- * @returns An {@link OdspMember}.
  */
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as unknown as OdspUser;
