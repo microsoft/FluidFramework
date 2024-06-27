@@ -14,18 +14,10 @@ import React from "react";
 
 import { SettingsView } from "../components/index.js";
 
-const axeConfig = {
-	rules: {
-		"color-contrast": { enabled: true },
-		"label": { enabled: true },
-		"region": { enabled: false },
-	},
-};
-
-describe.only("SettingsView Accessibility Check", () => {
+describe("SettingsView Accessibility Check", () => {
 	it("SettingsView is accessible", async () => {
 		const { container } = render(<SettingsView />);
-		const results = await axe.run(container, axeConfig);
+		const results = await axe.run(container);
 		if (results.violations.length > 0) {
 			console.log("Accessibility violations:", results.violations);
 		}
@@ -38,7 +30,7 @@ describe.only("SettingsView Accessibility Check", () => {
 		const user = userEvent.setup();
 		// Focus on the first interactive element (dropdown theme selector)
 		await user.tab();
-		const dropdown = screen.getByRole("combobox", { name: /theme dropdown/i });
+		const dropdown = screen.getByRole("combobox", { name: /theme selection dropdown/i });
 		expect(dropdown).toHaveFocus();
 		// The dropdown theme options are divs but get compiled as buttons in the expect function and thus fail any expect calls.
 		await user.keyboard("{Enter}");

@@ -114,7 +114,7 @@ export function SettingsView(): React.ReactElement {
 				</h4>
 				<Dropdown
 					title="ThemeDropdown"
-					aria-label="Theme Dropdown"
+					aria-label="Theme Selection Dropdown"
 					value={themeInfo.name}
 					className={styles.dropdown}
 					onOptionSelect={handleThemeChange}
