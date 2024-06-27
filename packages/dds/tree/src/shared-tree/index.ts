@@ -15,7 +15,7 @@ export type {
 	SimpleNodeSchema,
 	SimpleFieldSchema,
 	SimpleTreeSchema,
-} from "./jsonableStoredSchema.js";
+} from "./simpleSchema.js";
 
 export {
 	type ISharedTree,

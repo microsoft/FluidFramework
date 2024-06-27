@@ -67,7 +67,7 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
-import { toSimpleTreeSchema, type SimpleTreeSchema } from "./jsonableStoredSchema.js";
+import { toSimpleTreeSchema, type SimpleTreeSchema } from "./simpleSchema.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
