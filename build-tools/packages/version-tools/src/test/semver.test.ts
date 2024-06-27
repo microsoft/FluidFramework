@@ -129,6 +129,18 @@ describe("semver", () => {
 		it("v1 is rc, v2 is rc", () => {
 			assert.equal(detectBumpType("2.0.0-rc.1.0.0", "2.0.0-rc.1.0.1"), "patch");
 		});
+
+		it("v1 is rc, v2 is semver with major < 1", () => {
+			assert.throws(() => detectBumpType("2.0.0-rc.5.0.0", "1.6.0"));
+		});
+
+		it("v1 is rc, v2 is semver with major === 2", () => {
+			assert.equal(detectBumpType("1.0.0-rc.5.0.0", "2.0.0"), "major");
+		});
+
+		it("v1 is rc, v2 is semver with major > 2", () => {
+			assert.equal(detectBumpType("1.0.0-rc.5.0.0", "3.0.0"), "major");
+		});
 	});
 
 	describe("internal version scheme ranges", () => {

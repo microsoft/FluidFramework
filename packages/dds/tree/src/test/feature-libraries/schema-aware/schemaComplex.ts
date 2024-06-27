@@ -7,13 +7,13 @@
 
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
-	AllowedTypesToFlexInsertableTree,
+	type AllowedTypesToFlexInsertableTree,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	InsertableFlexNode,
+	type FlexTreeNodeSchema,
+	type InsertableFlexNode,
 } from "../../../feature-libraries/index.js";
-import { requireAssignableTo } from "../../../util/index.js";
+import type { requireAssignableTo } from "../../../util/index.js";
 
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 

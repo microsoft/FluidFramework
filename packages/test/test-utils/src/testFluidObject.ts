@@ -93,15 +93,10 @@ export class TestFluidObject implements ITestFluidObject {
 			if (!existing) {
 				this.root = SharedMap.create(this.runtime, "root");
 
-				this.factoryEntriesMap.forEach(
-					(sharedObjectFactory: IChannelFactory, key: string) => {
-						const sharedObject = this.runtime.createChannel(
-							key,
-							sharedObjectFactory.type,
-						);
-						this.root.set(key, sharedObject.handle);
-					},
-				);
+				this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
+					const sharedObject = this.runtime.createChannel(key, sharedObjectFactory.type);
+					this.root.set(key, sharedObject.handle);
+				});
 
 				this.root.bindToContext();
 			}

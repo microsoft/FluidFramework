@@ -6,34 +6,34 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 
 import {
-	Adapters,
+	type Adapters,
 	EmptyKey,
-	FieldKey,
+	type FieldKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	StoredSchemaCollection,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	TreeStoredSchema,
-	TreeTypeSet,
-	ValueSchema,
+	type StoredSchemaCollection,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeTypeSet,
+	type ValueSchema,
 } from "../../core/index.js";
 import {
-	Assume,
-	MakeNominal,
-	Named,
+	type Assume,
+	type MakeNominal,
+	type Named,
 	compareSets,
 	mapIterable,
 	oneFromSet,
-	requireAssignableTo,
+	type requireAssignableTo,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
-import { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
+import type { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
 
-import { LazyItem } from "./flexList.js";
-import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
+import type { LazyItem } from "./flexList.js";
+import { type ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
 /**
  * @internal
@@ -95,7 +95,10 @@ export class FlexMapNodeSchema<
 	}
 
 	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string, const Specification extends FlexMapFieldSchema>(
+	public static create<
+		const Name extends string,
+		const Specification extends FlexMapFieldSchema,
+	>(
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
@@ -555,7 +558,9 @@ export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 /**
  * Converts a {@link SchemaCollection} into a {@link StoredSchemaCollection}.
  */
-export function intoStoredSchemaCollection(treeSchema: SchemaCollection): StoredSchemaCollection {
+export function intoStoredSchemaCollection(
+	treeSchema: SchemaCollection,
+): StoredSchemaCollection {
 	return {
 		nodeSchema: new Map(
 			mapIterable(treeSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -608,6 +613,8 @@ export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFie
  * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexObjectNodeSchema}.
  * @internal
  */
-export function schemaIsObjectNode(schema: FlexTreeNodeSchema): schema is FlexObjectNodeSchema {
+export function schemaIsObjectNode(
+	schema: FlexTreeNodeSchema,
+): schema is FlexObjectNodeSchema {
 	return schema instanceof FlexObjectNodeSchema;
 }

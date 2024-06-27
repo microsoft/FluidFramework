@@ -6,16 +6,25 @@
 import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import { InternalTreeNode, TreeNode, TreeNodeValid } from "../../simple-tree/types.js";
+import {
+	type InternalTreeNode,
+	TreeNode,
+	TreeNodeValid,
+	inPrototypeChain,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/types.js";
 import {
 	NodeKind,
-	TreeNodeSchema,
-	type,
+	type TreeNodeSchema,
+	typeNameSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../simple-tree/index.js";
-import { FlexTreeNode, FlexTreeNodeSchema, MapTreeNode } from "../../feature-libraries/index.js";
+import type {
+	FlexTreeNode,
+	FlexTreeNodeSchema,
+	MapTreeNode,
+} from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -32,13 +41,13 @@ describe("simple-tree types", () => {
 			const n: TreeNode = {};
 			// @ts-expect-error TreeNode should not allow non-node objects.
 			const n2: TreeNode = {
-				[type]: "",
+				[typeNameSymbol]: "",
 			};
 
 			// Declared as a separate implicitly typed variable to avoid "Object literal may only specify known properties" error
 			// (which is good, but not what we are testing for here).
 			const n3 = {
-				[type]: "",
+				[typeNameSymbol]: "",
 				"#brand": undefined,
 			};
 			// @ts-expect-error TreeNode should not allow non-node objects, even if you use "add missing properties" refactor.
@@ -47,7 +56,7 @@ describe("simple-tree types", () => {
 
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -70,6 +79,30 @@ describe("simple-tree types", () => {
 				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
 				const x = {} instanceof TreeNodePublic;
 			});
+		});
+	});
+
+	describe("inPrototypeChain", () => {
+		it("self", () => {
+			const test = {};
+			assert(inPrototypeChain(test, test));
+		});
+
+		it("class inheritance", () => {
+			// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+			class A {}
+			class B extends A {}
+			assert(inPrototypeChain(B.prototype, A.prototype));
+			assert.equal(inPrototypeChain(A.prototype, B.prototype), false);
+
+			// Static inheritance
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert(inPrototypeChain(Reflect.getPrototypeOf(B), Reflect.getPrototypeOf(A)!));
+			assert.equal(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				inPrototypeChain(Reflect.getPrototypeOf(A), Reflect.getPrototypeOf(B)!),
+				false,
+			);
 		});
 	});
 
@@ -101,7 +134,7 @@ describe("simple-tree types", () => {
 					flexNode: FlexTreeNode,
 				): TreeNodeValid<T2> {
 					log.push("prepareInstance");
-					assert(instance instanceof Subclass);
+					assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
 					assert(flexNode instanceof MockFlexNode);
 					assert.equal(this, Subclass);
 					return customThis as TreeNodeValid<T2>;
@@ -113,7 +146,7 @@ describe("simple-tree types", () => {
 					input: T2,
 				): MapTreeNode {
 					assert.equal(this, Subclass);
-					assert(instance instanceof Subclass);
+					assert(inPrototypeChain(Reflect.getPrototypeOf(instance), Subclass.prototype));
 					log.push(`buildRawNode ${input}`);
 					return new MockFlexNode(Subclass);
 				}
@@ -125,7 +158,7 @@ describe("simple-tree types", () => {
 					log.push("oneTimeSetup");
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor(input: number | InternalTreeNode) {
@@ -158,7 +191,7 @@ describe("simple-tree types", () => {
 					super(1);
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 			}
@@ -190,7 +223,7 @@ describe("simple-tree types", () => {
 					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -239,7 +272,7 @@ describe("simple-tree types", () => {
 					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
+import { type ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
-	JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 	brandedNumberType,
 } from "../../util/index.js";

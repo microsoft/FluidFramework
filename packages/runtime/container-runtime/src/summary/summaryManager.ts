@@ -89,7 +89,10 @@ export interface ISummaryManagerConfig {
  * It observes changes in calculated summarizer and reacts to changes by either creating summarizer client or
  * stopping existing summarizer client.
  */
-export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> implements IDisposable {
+export class SummaryManager
+	extends TypedEventEmitter<ISummarizerEvents>
+	implements IDisposable
+{
 	private readonly logger: ITelemetryLoggerExt;
 	private readonly opsToBypassInitialDelay: number;
 	private readonly initialDelayMs: number;
@@ -263,10 +266,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 				// when the electedClient will be replaced with the new summarizer client.
 				// The alternative would be to let connectedState.clientId !== clientElection.electedClientId when
 				// state === Starting || state === Running.
-				assert(
-					this.state === SummaryManagerState.Starting,
-					0x263 /* "Expected: starting" */,
-				);
+				assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
 				this.state = SummaryManagerState.Running;
 
 				const summarizer = await this.createSummarizerFn();
@@ -326,10 +326,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 				// means it also lost connection), and error happened on load (we do not have summarizer).
 				// We could annotate the error raised in Container.load where the container closed during load with no error
 				// and check for that case here, but that does not seem to be necessary.
-				if (
-					this.getShouldSummarizeState().shouldSummarize ||
-					this.summarizer !== undefined
-				) {
+				if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
 					// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.

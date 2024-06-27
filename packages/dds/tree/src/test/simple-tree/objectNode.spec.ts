@@ -10,7 +10,8 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { SchemaFactory } from "../../simple-tree/index.js";
 
 import { hydrate } from "./utils.js";
-import { requireAssignableTo } from "../../util/index.js";
+import type { requireAssignableTo } from "../../util/index.js";
+import { validateUsageError } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -120,5 +121,19 @@ describe("ObjectNode", () => {
 		assert.equal(descriptor.value, 0);
 		const keys = Object.keys(n);
 		assert.deepEqual(keys, ["foo"]);
+	});
+
+	it("delete operator", () => {
+		class Schema extends schemaFactory.object("x", {
+			foo: schemaFactory.optional(schemaFactory.number),
+		}) {}
+		const n = hydrate(Schema, { foo: 0 });
+		assert.throws(
+			() => {
+				// Since we do not have exactOptionalPropertyTypes enabled, this compiles, but should error at runtime:
+				delete n.foo;
+			},
+			validateUsageError(/delete operator/),
+		);
 	});
 });

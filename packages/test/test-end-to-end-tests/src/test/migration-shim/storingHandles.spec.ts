@@ -32,7 +32,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
-import { type ITree, SchemaFactory, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
@@ -59,13 +59,7 @@ class HandleType extends builder.object("handleObj", {
 	handle: builder.optional(builder.handle),
 }) {}
 
-function getNewTreeView(tree: ITree): TreeView<typeof HandleType> {
-	return tree.schematize(
-		new TreeConfiguration(HandleType, () => ({
-			handle: undefined,
-		})),
-	);
-}
+const treeConfig = new TreeViewConfiguration({ schema: HandleType });
 
 describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -184,13 +178,9 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 			// migrate data
 			const handle = getHandle(legacyTree);
-			newTree
-				.schematize(
-					new TreeConfiguration(HandleType, () => ({
-						handle,
-					})),
-				)
-				.dispose();
+			const view = newTree.viewWith(treeConfig);
+			view.initialize({ handle });
+			view.dispose();
 		},
 	);
 
@@ -265,8 +255,8 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
-		const view1 = getNewTreeView(newTree1);
-		const view2 = getNewTreeView(newTree2);
+		const view1 = newTree1.viewWith(treeConfig);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert(node1.handle !== undefined, "expected to migrate handle");
@@ -303,8 +293,8 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
-		const view1 = getNewTreeView(newTree1);
-		const view2 = getNewTreeView(newTree2);
+		const view1 = newTree1.viewWith(treeConfig);
+		const view2 = newTree2.viewWith(treeConfig);
 		const node1 = view1.root;
 		const node2 = view2.root;
 		assert.equal(node1.handle, undefined, "expected no handle to be stored in node1");

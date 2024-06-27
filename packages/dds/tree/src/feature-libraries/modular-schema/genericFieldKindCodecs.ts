@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
-import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
-import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
+import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../codec/index.js";
+import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import {
+	type EncodedGenericChange,
+	EncodedGenericChangeset,
+} from "./genericFieldKindFormat.js";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 

@@ -11,7 +11,7 @@ import {
 	type FieldKey,
 	type MapTree,
 	type TreeValue,
-	ValueSchema,
+	type ValueSchema,
 	type SchemaAndPolicy,
 } from "../core/index.js";
 import {
@@ -21,13 +21,13 @@ import {
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
-	NodeKeyManager,
+	type NodeKeyManager,
 	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, find } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
-import { InsertableContent } from "./proxies.js";
+import type { InsertableContent } from "./proxies.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -40,7 +40,7 @@ import {
 	getStoredKey,
 	extractFieldProvider,
 	isConstant,
-	FieldProvider,
+	type FieldProvider,
 } from "./schemaTypes.js";
 import { SchemaValidationErrors, isNodeInSchema } from "../feature-libraries/index.js";
 import { tryGetFlexNode } from "./proxyBinding.js";
@@ -728,7 +728,7 @@ function addDefaultsToMapTree(
 			}
 			break;
 		default:
-			assert(schema.kind === NodeKind.Leaf, "Unrecognized schema kind");
+			assert(schema.kind === NodeKind.Leaf, 0x989 /* Unrecognized schema kind */);
 			break;
 	}
 }

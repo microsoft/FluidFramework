@@ -1,6 +1,6 @@
 {
 	"name": "@types/jest-environment-puppeteer",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"private": true,
 	"description": "TypeScript `globals` definitions fix-up for jest-environment-puppeteer",
 	"homepage": "https://fluidframework.com",
@@ -13,8 +13,22 @@
 	"author": "Microsoft and contributors",
 	"main": "",
 	"types": "index.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"check:biome": "biome check . --formatter-enabled=true",
+		"check:format": "npm run check:biome",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"clean": "rimraf --glob \"*.tsbuildinfo\" \"*.build.log\"",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore"
+	},
 	"devDependencies": {
-		"jest-environment-puppeteer": "^9.0.2"
+		"@biomejs/biome": "^1.7.3",
+		"@fluidframework/build-tools": "^0.39.0",
+		"jest-environment-puppeteer": "^9.0.2",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {
 		"disabled": true,

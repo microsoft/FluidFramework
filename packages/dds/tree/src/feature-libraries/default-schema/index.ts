@@ -5,23 +5,23 @@
 
 export {
 	FieldKinds,
-	Required,
-	Optional,
-	Sequence,
-	Identifier,
-	Forbidden,
+	type Required,
+	type Optional,
+	type Sequence,
+	type Identifier,
+	type Forbidden,
 	fieldKinds,
 	fieldKindConfigurations,
 } from "./defaultFieldKinds.js";
 
 export {
-	DefaultChangeset,
+	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
-	IDefaultEditBuilder,
-	ValueFieldEditBuilder,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
+	type IDefaultEditBuilder,
+	type ValueFieldEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./defaultEditBuilder.js";

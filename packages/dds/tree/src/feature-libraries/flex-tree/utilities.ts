@@ -4,8 +4,8 @@
  */
 
 import {
-	AnchorNode,
-	DetachedField,
+	type AnchorNode,
+	type DetachedField,
 	anchorSlot,
 	getDetachedFieldContainingPath,
 	rootField,

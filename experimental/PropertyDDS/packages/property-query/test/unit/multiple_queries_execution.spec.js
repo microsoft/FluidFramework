@@ -159,43 +159,43 @@ describe("Multiple query execution", () => {
 		});
 
 		it("should return the union of results", () =>
-			expect(
-				aQV1Execution.execute(someBranchInfo, someCommitGuid, queries),
-			).to.eventually.eql({
-				changeSet: {
-					insert: {
-						"map<mysample:point2d-1.0.0>": {
-							collectionA: {
-								insert: {
-									"mysample:point2d-1.0.0": {
-										pointA: {
-											Float64: {
-												x: -16.0,
-												y: -32.0,
+			expect(aQV1Execution.execute(someBranchInfo, someCommitGuid, queries)).to.eventually.eql(
+				{
+					changeSet: {
+						insert: {
+							"map<mysample:point2d-1.0.0>": {
+								collectionA: {
+									insert: {
+										"mysample:point2d-1.0.0": {
+											pointA: {
+												Float64: {
+													x: -16.0,
+													y: -32.0,
+												},
 											},
-										},
-										pointB: {
-											Float64: {
-												x: -8.0,
-												y: -16.0,
+											pointB: {
+												Float64: {
+													x: -8.0,
+													y: -16.0,
+												},
 											},
 										},
 									},
 								},
-							},
-							collectionB: {
-								insert: {
-									"mysample:point2d-1.0.0": {
-										pointC: {
-											Float64: {
-												x: -16.0,
-												y: -32.0,
+								collectionB: {
+									insert: {
+										"mysample:point2d-1.0.0": {
+											pointC: {
+												Float64: {
+													x: -16.0,
+													y: -32.0,
+												},
 											},
-										},
-										pointD: {
-											Float64: {
-												x: -8.0,
-												y: -16.0,
+											pointD: {
+												Float64: {
+													x: -8.0,
+													y: -16.0,
+												},
 											},
 										},
 									},
@@ -203,13 +203,13 @@ describe("Multiple query execution", () => {
 							},
 						},
 					},
+					queryPaths: [
+						"collectionA[pointA]",
+						"collectionA[pointB]",
+						"collectionB[pointC]",
+						"collectionB[pointD]",
+					],
 				},
-				queryPaths: [
-					"collectionA[pointA]",
-					"collectionA[pointB]",
-					"collectionB[pointC]",
-					"collectionB[pointD]",
-				],
-			}));
+			));
 	});
 });
