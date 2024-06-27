@@ -547,6 +547,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const segments = [this.specToSegment(op.seg)];
 
 		this._mergeTree.insertSegments(
@@ -815,10 +816,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					let segInsertOp = segment;
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					if (typeof resetOp.seg === "object" && resetOp.seg.properties !== undefined) {
 						segInsertOp = segment.clone();
 						// eslint-disable-next-line import/no-deprecated
 						segInsertOp.properties = createMap();
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						segInsertOp.addProperties(resetOp.seg.properties);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {

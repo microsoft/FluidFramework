@@ -339,6 +339,8 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 			for (const segment of segments) {
 				const attribution = new AttributionCollection(segment.cachedLength);
+				// This function is defined here to allow for the creation of a new collection for each segment.
+				// eslint-disable-next-line unicorn/consistent-function-scoping
 				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(

@@ -76,12 +76,14 @@ describe("resetPendingSegmentsToOp", () => {
 				"localPartialsComputed",
 				{
 					get() {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						return this._localPartialsComputed as boolean;
 					},
 					set(newValue) {
 						if (newValue) {
 							localPartialsComputeCount++;
 						}
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 						this._localPartialsComputed = newValue;
 					},
 				},

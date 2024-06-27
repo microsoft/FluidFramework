@@ -38,6 +38,7 @@ class HeadNode<T> {
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const DeadHead = new HeadNode<any>(undefined);
 
 class DataNode<T> extends HeadNode<T> implements ListNode<T> {
@@ -191,6 +192,7 @@ export class DoublyLinkedList<T>
 		if (this._includes(node)) {
 			node._prev._next = node._next;
 			node._next._prev = node._prev;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			node.headNode = node._next = node._prev = DeadHead;
 			this._len--;
 			return node;

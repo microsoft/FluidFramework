@@ -115,6 +115,7 @@ describe("SortedSegmentSet", () => {
 		assert.equal(set.size, client.getLength() * 2);
 		validateSet<LocalReferencePosition>(
 			client,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(set as any).trackedSet,
 			(i) => i.getSegment()?.ordinal,
 		);

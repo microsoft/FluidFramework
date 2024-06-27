@@ -381,6 +381,7 @@ export class TestClient extends Client {
 						: segment.removedSeq,
 				);
 			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);
 		});
 	}

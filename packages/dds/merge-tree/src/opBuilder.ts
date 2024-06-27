@@ -115,7 +115,7 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
  *
  * @internal
  */
-export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
+export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertMsg {
 	return {
 		pos1: pos,
 		seg: segSpec,

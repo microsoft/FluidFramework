@@ -45,6 +45,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 		if (b?.[key] === undefined) {
 			return false;
 		} else if (typeof b[key] === "object") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (!matchProperties(a?.[key], b[key])) {
 				return false;
 			}
@@ -113,6 +114,7 @@ export function addProperties(
 	oldProps: PropertySet | undefined,
 	newProps: PropertySet,
 ): PropertySet {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const _oldProps = oldProps ?? createMap<any>();
 	extend(_oldProps, newProps);
 	return { ..._oldProps };

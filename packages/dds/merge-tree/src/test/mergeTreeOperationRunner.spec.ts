@@ -94,6 +94,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 	});
 
 	describe("doOverRanges", () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const doOverRangesCases: { name: string; ranges: any; expected: any[] }[] = [
 			{
 				name: "with no ranges",
@@ -130,6 +131,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 
 		for (const { name, ranges, expected } of doOverRangesCases) {
 			it(name, () => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const actual: any[] = [];
 				doOverRanges(ranges, (i) => actual.push(i));
 				assert.deepEqual(actual, expected);
@@ -138,6 +140,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 	});
 
 	describe("resolveRanges", () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const resolveRangesCases: { name: string; ranges: any; expected: any }[] = [
 			{
 				name: "with no ranges",

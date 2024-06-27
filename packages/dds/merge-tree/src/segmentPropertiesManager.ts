@@ -121,6 +121,7 @@ export class PropertiesManager {
 				throw new Error("Must provide new PropertyManager");
 			}
 			for (const key of Object.keys(oldProps)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				newProps[key] = oldProps[key];
 			}
 			// eslint-disable-next-line import/no-deprecated

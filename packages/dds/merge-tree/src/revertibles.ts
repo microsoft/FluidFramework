@@ -140,7 +140,7 @@ function appendLocalRemoveToRevertibles(
 
 	for (const t of deltaArgs.deltaSegments) {
 		const props: RemoveSegmentRefProperties = {
-			segSpec: t.segment.toJSONObject(),
+			segSpec: t.segment.toJSONObject() as IJSONSegment,
 			referenceSpace: "mergeTreeDeltaRevertible",
 		};
 		const ref = mergeTreeWithRevert.createLocalReferencePosition(
