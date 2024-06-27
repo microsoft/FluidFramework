@@ -958,7 +958,7 @@ export interface FlexTreeSequenceField<in out TTypes extends FlexAllowedTypes>
 		sourceStart: number,
 		sourceEnd: number,
 		// FlexTreeSequenceField is invariant over its schema so any is required here.
-		// This use of any can ve removed by migrating off this deprecated API and deleting it.
+		// This use of any can be removed by migrating off this deprecated API and deleting it.
 		// If kept, this function should be fixed by making it generic and constraining it to fields which are safe to move content from.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		source: FlexTreeSequenceField<any>,

@@ -161,7 +161,7 @@ describe("End to end chunked encoding", () => {
 		assert(chunk.isShared());
 	});
 
-	// This test (and the one below) ate testing for an optimization in the decoding logic to save a copy of the data array.
+	// This test (and the one below) are testing for an optimization in the decoding logic to save a copy of the data array.
 	// This optimization is not implemented, so these tests fail, and are skipped.
 	it.skip(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
