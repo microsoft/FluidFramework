@@ -76,8 +76,11 @@ export abstract class SharedObjectCore<
 		return this;
 	}
 
-	private readonly opProcessingHelper: SampledTelemetryHelper<ProcessTelemetryProperties>;
-	private readonly callbacksHelper: SampledTelemetryHelper<void>;
+	private readonly opProcessingHelper: SampledTelemetryHelper<
+		void,
+		ProcessTelemetryProperties
+	>;
+	private readonly callbacksHelper: SampledTelemetryHelper<boolean>;
 
 	/**
 	 * The handle referring to this SharedObject
@@ -147,7 +150,9 @@ export abstract class SharedObjectCore<
 		});
 		this.mc = loggerToMonitoringContext(this.logger);
 
-		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
+		this.opProcessingHelper = opProcessingHelper;
+		this.callbacksHelper = callbacksHelper;
 	}
 
 	/**
@@ -163,15 +168,15 @@ export abstract class SharedObjectCore<
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): (
-		| SampledTelemetryHelper<ProcessTelemetryProperties>
-		| SampledTelemetryHelper<void>
-	)[] {
+	private setUpSampledTelemetryHelpers(): {
+		opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>;
+		callbacksHelper: SampledTelemetryHelper<boolean>;
+	} {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
 		);
-		const opProcessingHelper = new SampledTelemetryHelper<ProcessTelemetryProperties>(
+		const opProcessingHelper = new SampledTelemetryHelper<void, ProcessTelemetryProperties>(
 			{
 				eventName: "ddsOpProcessing",
 				category: "performance",
@@ -184,7 +189,7 @@ export abstract class SharedObjectCore<
 				["remote", { localOp: false }],
 			]),
 		);
-		const callbacksHelper = new SampledTelemetryHelper<void>(
+		const callbacksHelper = new SampledTelemetryHelper<boolean>(
 			{
 				eventName: "ddsEventCallbacks",
 				category: "performance",
@@ -199,7 +204,7 @@ export abstract class SharedObjectCore<
 			this.opProcessingHelper.dispose();
 		});
 
-		return [opProcessingHelper, callbacksHelper];
+		return { opProcessingHelper, callbacksHelper };
 	}
 
 	/**
