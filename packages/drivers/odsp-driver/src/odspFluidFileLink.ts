@@ -90,7 +90,7 @@ function decodeOdspFluidDataStoreLocator(
 
 	let siteUrl: URL | undefined;
 	try {
-		siteUrl = new URL(sitePath, siteOriginUrl);
+		siteUrl = new URL(decodeURIComponent(sitePath), siteOriginUrl);
 	} catch {
 		// Ignore failure to parse url as input might be malformed
 	}
@@ -101,13 +101,15 @@ function decodeOdspFluidDataStoreLocator(
 
 	return {
 		siteUrl: siteUrl.href,
-		driveId,
-		itemId,
-		dataStorePath,
-		appName,
-		containerPackageName,
-		fileVersion,
-		context,
+		driveId: decodeURIComponent(driveId),
+		itemId: decodeURIComponent(itemId),
+		dataStorePath: decodeURIComponent(dataStorePath),
+		appName: appName ? decodeURIComponent(appName) : appName,
+		containerPackageName: containerPackageName
+			? decodeURIComponent(containerPackageName)
+			: containerPackageName,
+		fileVersion: fileVersion ? decodeURIComponent(fileVersion) : fileVersion,
+		context: context ? decodeURIComponent(context) : context,
 	};
 }
 
