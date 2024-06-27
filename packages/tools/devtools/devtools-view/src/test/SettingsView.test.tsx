@@ -8,20 +8,17 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import * as axe from "axe-core";
 import { debug } from "jest-preview";
 import React from "react";
 
 import { SettingsView } from "../components/index.js";
 
+import { assertNoAccessibilityViolations } from "./utils/index.js";
+
 describe("SettingsView Accessibility Check", () => {
 	it("SettingsView is accessible", async () => {
 		const { container } = render(<SettingsView />);
-		const results = await axe.run(container);
-		if (results.violations.length > 0) {
-			console.log("Accessibility violations:", results.violations);
-		}
-		expect(results.violations.length).toBe(0);
+		await assertNoAccessibilityViolations(container);
 	});
 
 	it("Can tab/arrow navigate through the SettingsView", async () => {
