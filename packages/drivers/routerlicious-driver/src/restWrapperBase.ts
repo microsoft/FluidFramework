@@ -133,10 +133,10 @@ export abstract class RestWrapper {
  */
 export function getQueryString(queryParams: QueryStringType): string {
 	let queryString = "";
-	for (const [key, value] of Object.entries(queryParams)) {
-		if (value !== undefined) {
+	for (const key of Object.keys(queryParams)) {
+		if (queryParams[key] !== undefined) {
 			const startChar = queryString === "" ? "?" : "&";
-			queryString += `${startChar}${key}=${encodeURIComponent(value)}`;
+			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
 		}
 	}
 
