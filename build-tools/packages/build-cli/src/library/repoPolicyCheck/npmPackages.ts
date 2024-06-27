@@ -787,7 +787,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: async (file: string, root: string): Promise<string | undefined> => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
