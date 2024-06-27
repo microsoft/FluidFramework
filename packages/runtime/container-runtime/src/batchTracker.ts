@@ -92,6 +92,8 @@ export class BatchTracker {
 	//* TODO: Also track clientIds that have lost a race, and ignore future ops from them?
 	//* TODO: There could be some really whacky race conditions with two parallel rehydrations reconnecting, need to think more.
 	private readonly batchIdsAll = new Set<string>();
+
+	//* Oops - doesn't need to be a set, it'll be 1-1
 	private readonly batchIdsBySeqNum = new Map<number, Set<string>>();
 
 	public checkForAlreadySequencedBatchId(message: ISequencedDocumentMessage): boolean {

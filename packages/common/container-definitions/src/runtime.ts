@@ -93,6 +93,7 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
+	 * //* Explain about the maybe-promise semantics of the return value
 	 */
 	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 

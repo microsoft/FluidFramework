@@ -2638,6 +2638,7 @@ export class ContainerRuntime
 			//* HACKY: This is awkward. Find a better place/way to detect sequenced duplicates that should be ignored.
 			this.mc.logger.sendTelemetryEvent({ eventName: "duplicateMessageIgnored" });
 
+			//* UPDATE: Just throw a DataCorruptionError for now
 			this.scheduleManager.afterOpProcessing(undefined, message);
 			return;
 		}

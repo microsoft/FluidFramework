@@ -145,6 +145,7 @@ const addBatchMetadata = (batch: Omit<IBatch, "batchId">, existingBatchId?: stri
 
 	//* Use this placeholder value to make batchId always defined on a batch
 	//* Otherwise it's impossible to distinguish between single op batch and a non-batched message
+	//* NOTE: Do we need to make that distinction...? I don't think there are any non-batched messagse.
 	const batchId = existingBatchId ?? newBatchId(false);
 	// Always need batchId even for single op batch
 	if (batch.content.length === 1) {

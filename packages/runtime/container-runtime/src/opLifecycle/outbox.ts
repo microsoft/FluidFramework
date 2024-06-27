@@ -243,6 +243,8 @@ export class Outbox {
 		existingBatchId?: string,
 	) {
 		if (batchManager.empty) {
+			//* If we are resubmitting a batch and end up here, we still need to submit the empty batch
+			//* A container fork may be waiting for this in their PendingStateManager
 			return;
 		}
 
