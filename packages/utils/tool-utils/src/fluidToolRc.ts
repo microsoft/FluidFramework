@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import os from "os";
-import path from "path";
-import util from "util";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import util from "node:util";
 
-import { IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
+import type { IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
 import { lock } from "proper-lockfile";
 
 /**
@@ -26,17 +26,20 @@ export interface IAsyncCache<TKey, TValue> {
 export interface IResources {
 	tokens?: {
 		version?: number;
-		data: {
-			[key: string]: {
+		data: Record<
+			string,
+			{
 				storage?: IOdspTokens;
 				push?: IOdspTokens;
-			};
-		};
+			}
+		>;
 	};
 }
 
-const getRCFileName = () => path.join(os.homedir(), ".fluidtoolrc");
+const getRCFileName = (): string => path.join(os.homedir(), ".fluidtoolrc");
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
@@ -49,27 +52,30 @@ export async function loadRC(): Promise<IResources> {
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return JSON.parse(buf.toString("utf8"));
-		} catch (e) {
+		} catch {
 			// Nothing
 		}
 	}
 	return {};
 }
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
-export async function saveRC(rc: IResources) {
+export async function saveRC(rc: IResources): Promise<void> {
 	const writeFile = util.promisify(fs.writeFile);
 	const content = JSON.stringify(rc, undefined, 2);
 	return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
 }
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
-export async function lockRC() {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+export async function lockRC(): Promise<() => Promise<void>> {
 	return lock(getRCFileName(), {
 		retries: {
 			forever: true,

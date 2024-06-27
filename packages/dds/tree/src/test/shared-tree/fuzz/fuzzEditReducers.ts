@@ -49,6 +49,7 @@ import type {
 	TransactionBoundary,
 	UndoRedo,
 	CrossFieldMove,
+	Constraint,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
@@ -75,6 +76,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 	},
 	schemaChange: (state, operation) => {
 		applySchemaOp(state, operation);
+	},
+	constraint: (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 export const fuzzReducer: AsyncReducer<
@@ -287,6 +291,25 @@ export function applyUndoRedoEdit(
 		}
 		default:
 			unreachableCase(operation);
+	}
+}
+
+export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
+	const tree = viewFromState(state);
+	switch (constraint.content.type) {
+		case "nodeConstraint": {
+			const constraintNodePath = constraint.content.path;
+			const constraintNode =
+				constraintNodePath !== undefined
+					? navigateToNode(tree, constraintNodePath)
+					: undefined;
+			if (constraintNode !== undefined) {
+				tree.checkout.editor.addNodeExistsConstraint(constraintNode.anchorNode);
+			}
+			break;
+		}
+		default:
+			unreachableCase(constraint.content.type);
 	}
 }
 

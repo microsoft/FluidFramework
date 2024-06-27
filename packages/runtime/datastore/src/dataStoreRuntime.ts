@@ -64,13 +64,13 @@ import {
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
-	encodeCompactIdToString,
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
+	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -96,6 +96,7 @@ import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum DataStoreMessageType {
@@ -105,6 +106,7 @@ export enum DataStoreMessageType {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectRegistry {
@@ -115,6 +117,7 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
+ * @legacy
  * @alpha
  */
 export class FluidDataStoreRuntime
@@ -439,21 +442,30 @@ export class FluidDataStoreRuntime
 			id = idArg;
 			this.validateChannelId(id);
 		} else {
-			// We use three non-overlapping namespaces:
-			// - detached state: even numbers
-			// - attached state: odd numbers
-			// - uuids
-			// In first two cases we will encode result as strings in more compact form, with leading underscore,
-			// to ensure no overlap with user-provided DDS names (see validateChannelId())
-			if (this.visibilityState !== VisibilityState.GloballyVisible) {
-				// container is detached, only one client observes content, no way to hit collisions with other clients.
-				id = encodeCompactIdToString(2 * this.contexts.size, "_");
+			/**
+			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
+			 * in the snapshot.
+			 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+			 */
+			if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+				// We use three non-overlapping namespaces:
+				// - detached state: even numbers
+				// - attached state: odd numbers
+				// - uuids
+				// In first two cases we will encode result as strings in more compact form, with leading underscore,
+				// to ensure no overlap with user-provided DDS names (see validateChannelId())
+				if (this.visibilityState !== VisibilityState.GloballyVisible) {
+					// container is detached, only one client observes content, no way to hit collisions with other clients.
+					id = encodeCompactIdToString(2 * this.contexts.size, "_");
+				} else {
+					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
+					// We can remove the need to leverage uuid() as fall-back in couple releases.
+					const res =
+						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+				}
 			} else {
-				// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-				// We can remove the need to leverage uuid() as fall-back in couple releases.
-				const res =
-					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
-				id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+				id = uuid();
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
@@ -1234,6 +1246,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
+ * @legacy
  * @alpha
  */
 export const mixinRequestHandler = (
@@ -1255,6 +1268,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @legacy
  * @alpha
  */
 export const mixinSummaryHandler = (
