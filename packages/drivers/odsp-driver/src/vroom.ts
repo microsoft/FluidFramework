@@ -93,9 +93,6 @@ export async function fetchJoinSession(
 				const body: IJoinSessionBody = {
 					requestSocketToken: true,
 				};
-				if (guestDisplayName !== undefined) {
-					body.guestDisplayName = guestDisplayName;
-				}
 				postBody += `\r\n${JSON.stringify(body)}\r\n`;
 			}
 			postBody += `\r\n--${formBoundary}--`;
