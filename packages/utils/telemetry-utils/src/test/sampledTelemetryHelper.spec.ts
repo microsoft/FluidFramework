@@ -234,7 +234,7 @@ describe("SampledTelemetryHelper", () => {
 		const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 2);
 
 		// Nothing should have been logged after the first call
-		helper.measure(() => ({}));
+		helper.measure(() => {});
 		assert.strictEqual(logger.events.length, 0);
 
 		// On the second call, we should have 1 event
@@ -297,7 +297,6 @@ describe("SampledTelemetryHelper", () => {
 						propertyOne: i + 1,
 						propertyTwo: i + 2,
 						propertyThree: i + 3,
-						propertyFour: i + 4,
 					},
 				};
 			});

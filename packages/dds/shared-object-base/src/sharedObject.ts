@@ -43,6 +43,7 @@ import {
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
+	type ICustomData,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -162,7 +163,10 @@ export abstract class SharedObjectCore<
 	 * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
 	 * to variables to avoid complaints from TypeScript.
 	 */
-	private setUpSampledTelemetryHelpers(): SampledTelemetryHelper<ProcessTelemetryProperties>[] {
+	private setUpSampledTelemetryHelpers(): (
+		| SampledTelemetryHelper<ProcessTelemetryProperties>
+		| SampledTelemetryHelper<void>
+	)[] {
 		assert(
 			this.mc !== undefined && this.logger !== undefined,
 			0x349 /* this.mc and/or this.logger has not been set */,
@@ -545,12 +549,13 @@ export abstract class SharedObjectCore<
 		this.emitInternal("pre-op", message, local, this);
 
 		this.opProcessingHelper.measure(
-			() => {
+			(): ICustomData<ProcessTelemetryProperties> => {
 				this.processCore(message, local, localOpMetadata);
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
+				};
 				return {
-					customData: {
-						sequenceDifference: message.sequenceNumber - message.referenceSequenceNumber,
-					},
+					customData: telemetryProperties,
 				};
 			},
 			local ? "local" : "remote",
@@ -606,7 +611,7 @@ export abstract class SharedObjectCore<
 	 * @returns `true` if the event had listeners, `false` otherwise.
 	 */
 	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
-		return this.callbacksHelper.measure<boolean>(() => {
+		return this.callbacksHelper.measure(() => {
 			return super.emit(event, ...args);
 		});
 	}

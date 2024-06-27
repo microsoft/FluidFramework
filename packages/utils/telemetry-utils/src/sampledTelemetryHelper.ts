@@ -76,15 +76,15 @@ interface LoggerData {
  * @internal
  */
 export type CustomMetrics<TKey> = {
-	[K in keyof TKey]?: K extends string ? number : never;
+	[K in keyof TKey]: K extends string ? number : never;
 };
 
 /**
- * TODO
+ * The structure of the return value if given the custom data object when calling the {@link SampledTelemetryHelper.measure} method.
  * @internal
  */
 export interface ICustomData<T> {
-	customData?: CustomMetrics<T>;
+	customData: CustomMetrics<T>;
 }
 
 /**
@@ -149,10 +149,7 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 	 * If no such distinction needs to be made, do not provide a value.
 	 * @returns Whatever the passed-in code block returns.
 	 */
-	public measure<T>(
-		codeToMeasure: () => void | (T & ICustomData<TCustomMetrics>),
-		bucket: string = "",
-	): void | (T & ICustomData<TCustomMetrics>) {
+	public measure<T>(codeToMeasure: () => T, bucket: string = ""): T {
 		const start = performance.now();
 		const returnValue = codeToMeasure();
 		const duration = performance.now() - start;
@@ -177,9 +174,8 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 			m.maxDuration = Math.max(m.maxDuration ?? 0, duration);
 		}
 
-		const returnValueToCustomData = returnValue as ICustomData<TCustomMetrics>;
-		if (returnValueToCustomData.customData !== undefined) {
-			loggerData = this.accumulateCustomData(returnValueToCustomData.customData, loggerData);
+		if (this.isCustomData(returnValue)) {
+			loggerData = this.accumulateCustomData(returnValue.customData, loggerData);
 		}
 
 		if (m.count >= this.sampleThreshold) {
@@ -191,6 +187,15 @@ export class SampledTelemetryHelper<TCustomMetrics extends CustomMetrics<TCustom
 		}
 
 		return returnValue;
+	}
+
+	private isCustomData(data: unknown): data is ICustomData<TCustomMetrics> {
+		return (
+			typeof data === "object" &&
+			data !== null &&
+			"customData" in data &&
+			typeof data.customData === "object"
+		);
 	}
 
 	private accumulateCustomData(
