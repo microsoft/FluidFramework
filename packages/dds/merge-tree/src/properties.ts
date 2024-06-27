@@ -64,11 +64,13 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 		for (const key in extension) {
 			const v = extension[key];
 			// TODO Non null asserting, why is this not null?
-			if (v === null || v === undefined) {
+			if (v === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete base[key];
 			} else {
-				base[key] = v;
+				// Non null aseerting here since we are checking if v is not null
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				base[key] = v!;
 			}
 		}
 	}
