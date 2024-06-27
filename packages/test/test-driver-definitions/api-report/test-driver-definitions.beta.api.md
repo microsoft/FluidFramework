@@ -4,12 +4,6 @@
 
 ```ts
 
-import type { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
-import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import type { IUrlResolver } from '@fluidframework/driver-definitions/internal';
-
 // (No @packageDocumentation comment for this package)
 
 ```

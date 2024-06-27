@@ -89,6 +89,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 
 /**
  * Information from a snapshot needed to load BlobManager
+ * @legacy
  * @alpha
  */
 export interface IBlobManagerLoadInfo {

@@ -57,6 +57,7 @@ export interface OdspClientProps {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface OdspContainerAttachProps {

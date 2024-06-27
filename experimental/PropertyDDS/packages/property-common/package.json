@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -62,7 +62,6 @@
 		"async": "^3.2.2",
 		"base64-js": "^1.5.1",
 		"events_pkg": "npm:events@^3.1.0",
-		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"murmurhash3js": "3.0.1",
 		"semver": "^7.5.3",

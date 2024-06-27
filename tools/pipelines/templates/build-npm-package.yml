@@ -51,10 +51,6 @@ parameters:
   type: boolean
   default: true
 
-- name: poolCG
-  type: object
-  default: Small-1ES
-
 - name: poolBuild
   type: object
   default: Small-1ES
@@ -159,9 +155,9 @@ extends:
         # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
         # Currently we want to use different names for internal and public builds for Arrow Service Connection
         ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-          armServiceConnection: ff-internal-arrow-arm-sc
+          serviceConnection: ff-internal-arrow-sc
         ${{ else }}:
-          armServiceConnection: ff-public-arrow-arm-sc
+          serviceConnection: ff-public-arrow-sc
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
@@ -591,25 +587,6 @@ extends:
                     artifactName: release_reports
                     sbomEnabled: false
                     publishLocation: pipeline
-
-          # Job - Component detection
-          - ${{ if eq(parameters.publish, true) }}:
-              - job: CG
-                displayName: Component Detection
-                pool: ${{ parameters.poolCG }}
-                steps:
-                  - checkout: self
-                    clean: true
-                    lfs: false
-                    submodules: false
-                  - ${{ parameters.preCG }}
-                  - task: ComponentGovernanceComponentDetection@0
-                    displayName: Component Detection
-                    inputs:
-                      sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
-                      verbosity: Verbose
-                      scanType: Register
-                      alertWarningLevel: High
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
