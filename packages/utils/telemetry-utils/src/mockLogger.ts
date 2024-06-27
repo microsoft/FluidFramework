@@ -267,6 +267,22 @@ ${JSON.stringify(actualEvents)}`);
 		}
 	}
 
+	/**
+	 * Throws if any errors were logged
+	 */
+	public assertNoErrors(message?: string, clearEventsAfterCheck: boolean = true): void {
+		const actualEvents = this.events;
+		const errors = actualEvents.filter((event) => event.category === "error");
+		if (clearEventsAfterCheck) {
+			this.clear();
+		}
+		if (errors.length > 0) {
+			throw new Error(`${message ?? "Errors found in logs"}
+error logs:
+${JSON.stringify(errors)}`);
+		}
+	}
+
 	private getMatchedEventsCount(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean,

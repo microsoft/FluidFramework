@@ -103,7 +103,7 @@ export class OpGroupingManager {
 		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
 		const contents: IGroupedBatchMessageContents = op.contents;
 
-		let fakeCsn = 1;
+		let fakeCsn = op.clientSequenceNumber; //* Probably ok... The point is to get the right batch start CSN in PSM
 		return contents.contents.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,

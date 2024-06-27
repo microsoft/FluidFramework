@@ -11,7 +11,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	createChildLogger,
+	isILoggingError,
+} from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import type {
@@ -27,6 +31,16 @@ type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessag
 };
 
 describe("Pending State Manager", () => {
+	const mockLogger = new MockLogger();
+	const logger = createChildLogger({ logger: mockLogger });
+
+	afterEach("ThrowOnErrorLogs", () => {
+		// Note: If mockLogger is used within a test,
+		// it may inadvertently clear errors such that they're not noticed here
+		mockLogger.assertNoErrors();
+		mockLogger.clear();
+	});
+
 	describe("Rollback", () => {
 		let rollbackCalled;
 		let rollbackContent;
@@ -132,7 +146,7 @@ describe("Pending State Manager", () => {
 					isAttached: () => true,
 				},
 				undefined /* initialLocalState */,
-				undefined /* logger */,
+				logger,
 			);
 		});
 
@@ -348,7 +362,7 @@ describe("Pending State Manager", () => {
 					isAttached: () => true,
 				},
 				{ pendingStates },
-				undefined /* logger */,
+				logger,
 			) as any;
 		}
 
@@ -385,11 +399,15 @@ describe("Pending State Manager", () => {
 		describe("Future op compat behavior", () => {
 			it("pending op roundtrip", async () => {
 				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
+				const futureRuntimeMessage: Pick<
+					ISequencedDocumentMessage,
+					"type" | "contents" | "clientSequenceNumber"
+				> &
 					RecentlyAddedContainerRuntimeMessageDetails = {
 					type: "FROM_THE_FUTURE",
 					contents: "Hello",
 					compatDetails: { behavior: "FailToProcess" },
+					clientSequenceNumber: 1,
 				};
 
 				pendingStateManager.onFlushBatch(
@@ -399,7 +417,7 @@ describe("Pending State Manager", () => {
 							referenceSequenceNumber: 0,
 						},
 					],
-					0,
+					1,
 				);
 				pendingStateManager.processPendingLocalMessage(
 					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
@@ -432,7 +450,7 @@ describe("Pending State Manager", () => {
 					isAttached: () => true,
 				},
 				{ pendingStates },
-				undefined /* logger */,
+				logger,
 			) as any;
 		}
 
@@ -565,7 +583,7 @@ describe("Pending State Manager", () => {
 					isAttached: () => true,
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
-				undefined /* logger */,
+				logger,
 			) as any;
 		}
 
