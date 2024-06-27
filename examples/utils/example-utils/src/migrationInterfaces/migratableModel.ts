@@ -11,7 +11,6 @@ import type { IMigrationTool } from "./migrationTool.js";
 export interface IVersionedModel {
 	/**
 	 * The string version of the model, matching the version of the container code it's paired with.
-	 * TODO: Should this live on the migrationTool?
 	 */
 	readonly version: string;
 }
