@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IMigratableModel,
-	IMigratableModelEvents,
-	IMigrationTool,
-} from "@fluid-example/example-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IMigratableModel, IMigrationTool } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader";
-import type { IEventProvider } from "@fluidframework/core-interfaces";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
@@ -30,20 +23,11 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 	// To be used by the consumer of the model to pair with an appropriate view.
 	public readonly version = "one";
 
-	private readonly _migrationEvents = new TypedEventEmitter<IMigratableModelEvents>();
-	public get migrationEvents(): IEventProvider<IMigratableModelEvents> {
-		return this._migrationEvents;
-	}
-
 	public constructor(
 		public readonly inventoryList: IInventoryList,
 		public readonly migrationTool: IMigrationTool,
 		private readonly container: IContainer,
-	) {
-		this.container.on("connected", () => {
-			this._migrationEvents.emit("connected");
-		});
-	}
+	) {}
 
 	public readonly supportsDataFormat = (
 		initialData: unknown,
@@ -76,10 +60,6 @@ export class InventoryListAppModel implements IInventoryListAppModel, IMigratabl
 		});
 		return `version:one\n${inventoryItemStrings.join("\n")}`;
 	};
-
-	public connected() {
-		return this.container.connectionState === ConnectionState.Connected;
-	}
 
 	public close() {
 		this.container.close();

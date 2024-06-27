@@ -34,7 +34,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 	}
 
 	public get connected(): boolean {
-		return this._currentModel.connected();
+		return this._currentModel.migrationTool.connected;
 	}
 
 	/**
@@ -85,7 +85,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		} else if (migrationState === "migrated") {
 			this.ensureLoading();
 		} else {
-			this._currentModel.migrationTool.once(
+			this._currentModel.migrationTool.events.once(
 				"migrating",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
@@ -99,7 +99,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 		if (!this.connected) {
 			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
 			// machine, since it's possible another client has already completed the migration by the time we reconnect.
-			this.currentModel.migrationEvents.once(
+			this.currentModel.migrationTool.events.once(
 				"connected",
 				this.takeAppropriateActionForCurrentMigratable,
 			);
