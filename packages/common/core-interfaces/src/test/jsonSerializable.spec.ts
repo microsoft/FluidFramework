@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type { SerializationErrorPerNonPublicProperties } from "../exposedUtilityTypes.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonSerializable } from "../jsonSerializable.js";
-import type { JsonTypeWith } from "../jsonType.js";
+import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 import type { ObjectWithSymbolOrRecursion } from "./testValues.js";
@@ -803,7 +803,7 @@ describe("JsonSerializable", () => {
 				});
 				it("`object` (plain object) still becomes non-null Json object", () => {
 					const { filteredIn } = passThruHandlingBigint(
-						// @ts-expect-error `object` is not supported (expects `JsonTypeWith<bigint>`)
+						// @ts-expect-error `object` is not supported (expects `NonNullJsonObjectWith<bigint>`)
 						object,
 						// object's value is actually supported; so, no runtime error.
 					);

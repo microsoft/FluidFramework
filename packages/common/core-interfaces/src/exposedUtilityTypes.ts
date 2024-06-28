@@ -317,7 +317,7 @@ export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean 
 								>;
 							}
 						: /* not an array => test for exactly `object` */ IsExactlyObject<T> extends true
-							? /* `object` => */ JsonTypeWith<TReplaced>
+							? /* `object` => */ NonNullJsonObjectWith<TReplaced>
 							: /* test for enum like types */ IsEnumLike<T> extends true
 								? /* enum or similar simple type (return as-is) => */ T
 								: /* property bag => */ FlattenIntersection<
