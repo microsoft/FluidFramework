@@ -32,7 +32,8 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions/internal';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreFactory as IFluidDataStoreFactory_2 } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
@@ -57,7 +58,8 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
-import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions/internal';
+import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
+import { ISummarizerNodeWithGC as ISummarizerNodeWithGC_2 } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
@@ -168,7 +170,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 }
 
 // @internal (undocumented)
-export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection> implements IFluidDataStoreFactory {
+export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection> implements IFluidDataStoreFactory_2 {
     constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject_2>, ctor: (...args: ConstructorParameters<typeof ChannelCollection>) => T);
     // (undocumented)
     get IFluidDataStoreFactory(): this;
@@ -504,7 +506,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
-    getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>) => ISummarizerNodeWithGC;
+    getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>) => ISummarizerNodeWithGC_2;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
@@ -573,7 +575,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
     // (undocumented)
-    protected readonly summarizerNode: ISummarizerNodeWithGC;
+    protected readonly summarizerNode: ISummarizerNodeWithGC_2;
     // (undocumented)
     get tombstoned(): boolean;
     updateUsedRoutes(usedRoutes: string[]): void;
