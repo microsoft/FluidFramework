@@ -470,13 +470,13 @@
 			"internalConsoleOptions": "neverOpen",
 		},
 		{
-			"name": "Unused dependency checker",
+			"name": "Unused dependency reporter",
 			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
 			"cwd": "${workspaceFolder}/packages/common/container-definitions",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": [".", "--task", "build:compile", "--depcheck:fix"],
+			"args": [".", "--task", "build:compile", "--depcheck"],
 		},
 	],
 }
