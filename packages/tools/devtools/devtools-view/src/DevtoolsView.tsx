@@ -114,7 +114,7 @@ interface OpLatencyMenuSelection {
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection =
+export type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
