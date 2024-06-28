@@ -171,7 +171,10 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	/*
 	 * Value and query are expected to have a member "_id" which is a string used to search or insert in the database.
 	 */
-	public async findOrCreate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+	public async findOrCreate(
+		query: any,
+		value: any,
+	): Promise<{ value: any; existing: boolean }> {
 		const existing = this.findOneInternal(query);
 		if (existing) {
 			return { value: existing, existing: true };
@@ -239,10 +242,7 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 				if (!value._id) {
 					value._id = uuid();
 				}
-				sessionStorage.setItem(
-					`${this.collectionName}-${value._id}`,
-					JSON.stringify(value),
-				);
+				sessionStorage.setItem(`${this.collectionName}-${value._id}`, JSON.stringify(value));
 			}
 		}
 	}

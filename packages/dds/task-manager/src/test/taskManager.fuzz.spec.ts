@@ -14,7 +14,11 @@ import {
 	makeRandom,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { ITaskManager } from "../interfaces.js";
@@ -122,7 +126,8 @@ function makeOperationGenerator(
 		};
 	}
 
-	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
+	const canVolunteer = ({ client }: OpSelectionState): boolean =>
+		client.channel.canVolunteer();
 	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
 		client.channel.queued(taskId);
 	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
@@ -232,7 +237,7 @@ describe("TaskManager fuzz testing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 
@@ -273,7 +278,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 

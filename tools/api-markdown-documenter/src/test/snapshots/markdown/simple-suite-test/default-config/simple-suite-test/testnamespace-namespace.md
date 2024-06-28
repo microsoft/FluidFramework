@@ -1,5 +1,3 @@
-<!-- Front Matter! -->
-
 # TestNamespace
 
 [Packages](./) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
@@ -34,7 +32,7 @@ const bar = foo
 
 | Interface | Alerts | Description |
 | --- | --- | --- |
-| [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | `ALPHA` | Test interface |
+| [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | `Alpha` | Test interface |
 
 ## Classes
 
@@ -64,7 +62,7 @@ const bar = foo
 
 | Variable | Alerts | Modifiers | Type | Description |
 | --- | --- | --- | --- | --- |
-| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `BETA` | `readonly` |  | Test Constant |
+| [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
 
 ## Namespaces
 
@@ -153,7 +151,7 @@ An Error
 
 ## Variable Details
 
-### TestConst (BETA) {#testconst-variable}
+### TestConst {#testconst-variable}
 
 Test Constant
 

@@ -6,28 +6,31 @@
 import { strict as assert } from "assert";
 
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionTag,
-	TaggedChange,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionTag,
+	type TaggedChange,
 	asChangeAtomId,
 	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
 import {
-	Move,
-	OptionalChangeset,
-	RegisterId,
+	type Move,
+	type OptionalChangeset,
+	type RegisterId,
 	RegisterMap,
+	optionalChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import {
+import type {
 	ChildChange,
 	Replace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { Mutable, brand } from "../../../util/index.js";
-import { NodeId } from "../../../feature-libraries/index.js";
+import { type Mutable, brand } from "../../../util/index.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
@@ -55,8 +58,8 @@ export const Change = {
 	 * @returns A changeset that moves a node from src to dst.
 	 */
 	move: (
-		src: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
+		src: RegisterId | ChangesetLocalId | ChangeAtomId,
+		dst: RegisterId | ChangesetLocalId | ChangeAtomId,
 	): OptionalChangeset | ProtoChange => {
 		if (dst === "self") {
 			return {
@@ -87,11 +90,11 @@ export const Change = {
 					moves: [],
 					childChanges: [],
 					valueReplace: { isEmpty: false, dst: asChangeAtomId(dst) },
-			  }
+				}
 			: {
 					moves: [[asChangeAtomId(target), asChangeAtomId(dst)]],
 					childChanges: [],
-			  },
+				},
 	/**
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
@@ -149,7 +152,7 @@ export const Change = {
 		const changeset: Mutable<OptionalChangeset> = { moves, childChanges };
 		for (const changeLike of changes) {
 			if ("type" in changeLike === false) {
-				const change = changeLike as OptionalChangeset;
+				const change = changeLike;
 				// Note: this will stack overflow if there are too many moves.
 				moves.push(...change.moves);
 				// Note: this will stack overflow if there are too many child changes.
@@ -306,4 +309,22 @@ function registerEqual(a: RegisterId, b: RegisterId): boolean {
 		return a === b;
 	}
 	return a.revision === b.revision && a.localId === b.localId;
+}
+
+export function tagChangeInline(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+	rollbackOf?: RevisionTag,
+): TaggedChange<OptionalChangeset> {
+	const inlined = inlineRevision(change, revision);
+	return rollbackOf !== undefined
+		? tagRollbackInverse(inlined, revision, rollbackOf)
+		: tagChange(inlined, revision);
+}
+
+export function inlineRevision(
+	change: OptionalChangeset,
+	revision: RevisionTag,
+): OptionalChangeset {
+	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
 }

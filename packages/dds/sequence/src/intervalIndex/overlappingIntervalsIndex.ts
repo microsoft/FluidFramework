@@ -16,11 +16,12 @@ import {
 	SequenceInterval,
 	sequenceIntervalHelpers,
 } from "../intervals/index.js";
-import { SharedString } from "../sharedString.js";
+import { ISharedString } from "../sharedString.js";
 
 import { IntervalIndex } from "./intervalIndex.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
@@ -115,10 +116,10 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 					end === undefined
 						? (node: IntervalNode<TInterval>) => {
 								return transientInterval.compareStart(node.key);
-						  }
+							}
 						: (node: IntervalNode<TInterval>) => {
 								return transientInterval.compare(node.key);
-						  };
+							};
 				const continueLeftFn = (cmpResult: number) => cmpResult <= 0;
 				const continueRightFn = (cmpResult: number) => cmpResult >= 0;
 				const actionFn = (node: IntervalNode<TInterval>) => {
@@ -179,10 +180,11 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function createOverlappingIntervalsIndex(
-	sharedString: SharedString,
+	sharedString: ISharedString,
 ): IOverlappingIntervalsIndex<SequenceInterval> {
 	const client = (sharedString as unknown as { client: Client }).client;
 	return new OverlappingIntervalsIndex<SequenceInterval>(client, sequenceIntervalHelpers);

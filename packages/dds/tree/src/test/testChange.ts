@@ -5,21 +5,22 @@
 
 import { strict as assert, fail } from "assert";
 
-import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
+import { type IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
 	AnchorSet,
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyCodec,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	DeltaFieldMap,
-	DeltaRoot,
-	FieldKey,
-	TaggedChange,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyCodec,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaFieldMap,
+	type DeltaRoot,
+	type FieldKey,
+	type RevisionTag,
+	type TaggedChange,
 	emptyDelta,
 } from "../core/index.js";
-import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+import { type JsonCompatibleReadOnly, type RecursiveReadonly, brand } from "../util/index.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
 export interface NonEmptyTestChange {
@@ -54,7 +55,10 @@ function isNonEmptyChange(
 	return "inputContext" in change;
 }
 
-function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
+function mint(
+	inputContext: readonly number[],
+	intention: number | number[],
+): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
 		inputContext: composeIntentions([], inputContext),
@@ -230,6 +234,7 @@ export const TestChange = {
 	codecs: makeCodecFamily([
 		[1, codec],
 		[2, codec],
+		[3, codec],
 	]),
 };
 deepFreeze(TestChange);
@@ -243,17 +248,28 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 		return invert(change.change);
 	}
 
-	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public rebase(change: TaggedChange<TestChange>, over: TaggedChange<TestChange>): TestChange {
 		return (
-			rebase(change, over.change) ?? {
+			rebase(change.change, over.change) ?? {
 				intentions: [],
 			}
 		);
 	}
+
+	public changeRevision(
+		change: TestChange,
+		newRevision: RevisionTag | undefined,
+		rollbackOf?: RevisionTag,
+	): TestChange {
+		return change;
+	}
 }
 
 export class UnrebasableTestChangeRebaser extends TestChangeRebaser {
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		assert.fail("Unexpected call to rebase");
 	}
 }
@@ -263,9 +279,12 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 	public invertedCount = 0;
 	public composedCount = 0;
 
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		this.rebasedCount += 1;
-		return change;
+		return change.change;
 	}
 
 	public override invert(change: TaggedChange<TestChange>): TestChange {
@@ -282,14 +301,17 @@ export class NoOpChangeRebaser extends TestChangeRebaser {
 export class ConstrainedTestChangeRebaser extends TestChangeRebaser {
 	public constructor(
 		private readonly constraint: (
-			change: TestChange,
+			change: TaggedChange<TestChange>,
 			over: TaggedChange<TestChange>,
 		) => boolean,
 	) {
 		super();
 	}
 
-	public override rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
+	public override rebase(
+		change: TaggedChange<TestChange>,
+		over: TaggedChange<TestChange>,
+	): TestChange {
 		assert(this.constraint(change, over));
 		return super.rebase(change, over);
 	}
@@ -315,7 +337,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 		? emptyDelta
 		: {
 				fields: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]),
-		  };
+			};
 }
 
 export function testChangeFamilyFactory(

@@ -4,15 +4,16 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
-	ISequencedDocumentMessage,
 	MessageType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IEventSampler,
 	ITelemetryLoggerExt,
@@ -80,6 +81,11 @@ class OpPerfTelemetry {
 	private connectionStartTime = 0;
 	private gap = 0;
 
+	/** Count of no-ops sent by this client. This variable is reset everytime the OpStats sampled event is logged */
+	private noOpCountForTelemetry = 0;
+	/** Cumulative size of the ops processed by this client. This variable is reset everytime the OpStats sampled event is logged */
+	private processedOpSizeForTelemetry = 0;
+
 	private readonly logger: ITelemetryLoggerExt;
 
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
@@ -87,6 +93,16 @@ class OpPerfTelemetry {
 
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
+
+	private static readonly PROCESSED_OPS_SAMPLE_RATE = 500;
+
+	/**
+	 * A sampled logger to log Ops that have been processed by the current client, the NoOp sent and the
+	 * size of the ops processed within one sampling window of this log event.
+	 * The data from this logger will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+	 * Note: no log events are sent when sampling is disabled, because logging at every op will be too noisy.
+	 */
+	private readonly opsLogger: ISampledTelemetryLogger;
 
 	/**
 	 * Create an instance of OpPerfTelemetry which starts monitoring and generating telemetry related to op performance.
@@ -125,8 +141,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 					}
@@ -142,11 +157,30 @@ class OpPerfTelemetry {
 		// due to complexity of the different asynchronus scenarios of the op message lifecycle.
 		this.opLatencyLogger = createSampledLogger(logger);
 
+		const opsEventSampler: IEventSampler = (() => {
+			let eventCount = 0;
+			return {
+				sample: () => {
+					eventCount++;
+					const shouldSample = eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
+					if (shouldSample) {
+						eventCount = 0;
+						this.noOpCountForTelemetry = 0;
+						this.processedOpSizeForTelemetry = 0;
+					}
+					return shouldSample;
+				},
+			};
+		})();
+		this.opsLogger = createSampledLogger(
+			logger,
+			opsEventSampler,
+			true /* skipLoggingWhenSamplingIsDisabled */,
+		);
+
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
 		this.deltaManager.on("submitOp", (message) => this.beforeOpSubmit(message));
-
 		this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
-
 		this.deltaManager.on("connect", (details, opsBehind) => {
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
@@ -176,10 +210,7 @@ class OpPerfTelemetry {
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
-					assert(
-						latencyStats !== undefined,
-						0x7c2 /* Latency stats for op should exist */,
-					);
+					assert(latencyStats !== undefined, 0x7c2 /* Latency stats for op should exist */);
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,
@@ -225,6 +256,9 @@ class OpPerfTelemetry {
 						latencyStats.opProcessingTimes.outboundPushEventTime;
 					latencyStats.opPerfData.lengthInboundQueue = this.deltaManager.inbound.length;
 				}
+			}
+			if (isRuntimeMessage(message) && typeof message.contents === "string") {
+				this.processedOpSizeForTelemetry += message.contents.length;
 			}
 		});
 
@@ -302,6 +336,12 @@ class OpPerfTelemetry {
 				opPerfData: {},
 			});
 		}
+
+		if (message.type === MessageType.NoOp) {
+			// Count the number of no-ops submitted by this client.
+			// The value is reset when we log the OpStats sampled event.
+			this.noOpCountForTelemetry++;
+		}
 	}
 
 	private afterProcessingOp(message: ISequencedDocumentMessage) {
@@ -376,6 +416,25 @@ class OpPerfTelemetry {
 
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.latencyStatistics.delete(message.clientSequenceNumber);
+		}
+
+		if (isRuntimeMessage(message)) {
+			// Sampled logging of Ops that have been processed by the current client, the NoOp sent and the
+			// size of the ops processed within one sampling window of this log event.
+			// This data will be used to monitor the efficiency of NoOp-heuristics or to get approximate collab window size.
+			this.opsLogger.sendPerformanceEvent({
+				eventName: "OpStats",
+				// Logging as 'details' property to avoid adding new column name to the log tables */
+				details: {
+					// Count of the ops processed by the current client. Note: these counts are after
+					// compression/grouping/chunking (if enabled) of the ops.
+					processedOpCount: OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE,
+					// Cumulative size of all the ops processed by the current client since the last OpStats event log
+					processedOpSize: this.processedOpSizeForTelemetry,
+					// Count of all the NoOp sent by the current client since the last OpStats event log
+					submitedNoOpCount: this.noOpCountForTelemetry,
+				},
+			});
 		}
 	}
 }

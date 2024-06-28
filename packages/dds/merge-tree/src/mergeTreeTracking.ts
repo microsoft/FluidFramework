@@ -9,11 +9,13 @@ import { ISegment } from "./mergeTreeNodes.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type Trackable = ISegment | LocalReferencePosition;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITrackingGroup {
@@ -25,6 +27,7 @@ export interface ITrackingGroup {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class TrackingGroup implements ITrackingGroup {
@@ -104,6 +107,7 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 
 /**
  * A collection of {@link ITrackingGroup}.
+ * @legacy
  * @alpha
  */
 export class TrackingGroupCollection {

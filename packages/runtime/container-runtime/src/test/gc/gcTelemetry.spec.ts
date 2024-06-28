@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,
@@ -74,8 +74,8 @@ describe("GC Telemetry Tracker", () => {
 		const configs: IGarbageCollectorConfigs = {
 			gcEnabled: true,
 			sweepEnabled: false,
-			shouldRunGC: true,
 			shouldRunSweep: "NO",
+			tombstoneAutorecoveryEnabled: false,
 			runFullGC: false,
 			testMode: false,
 			tombstoneMode: false,
@@ -213,11 +213,12 @@ describe("GC Telemetry Tracker", () => {
 				}
 			}
 
-			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
-			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
-			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
-			mockLogger.events = cachedEvents;
+			mockLogger.assertMatch(
+				expectedEvents,
+				message,
+				true /* inlineDetailsProp */,
+				false /* clearEventsAfterCheck */, // Don't clear events so we can run another check.
+			);
 			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
 

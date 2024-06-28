@@ -3,30 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IEventProvider,
 	IFluidHandle,
-	IFluidHandleContext,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
-	type IClientDetails,
-	type IDocumentMessage,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
-import {
-	type FlushMode,
-	type IContainerRuntimeBase,
-	type IContainerRuntimeBaseEvents,
-	type IProvideFluidDataStoreRegistry,
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentStorageService,
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type {
+	FlushMode,
+	IContainerRuntimeBase,
+	IContainerRuntimeBaseEvents,
+	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
@@ -36,6 +38,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
 
 /**
  * Events emitted by {@link IContainerRuntime}.
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
@@ -44,6 +47,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
@@ -51,6 +55,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntime

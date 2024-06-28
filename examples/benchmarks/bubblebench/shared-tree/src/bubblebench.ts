@@ -5,16 +5,15 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISharedTree, SharedTreeFactory, type TreeView, fail } from "@fluidframework/tree/internal";
+import { ITree, type TreeView } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
+
 import { AppState } from "./appState.js";
 import { type App, appTreeConfiguration } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
 
-/**
- * @internal
- */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-simpletree";
 
@@ -22,19 +21,17 @@ export class Bubblebench extends DataObject {
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
-		const tree = this.runtime.createChannel(
-			/* id: */ undefined,
-			new SharedTreeFactory().type,
-		) as ISharedTree;
+		const tree = SharedTree.create(this.runtime);
 
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
+		this.view.initialize({ clients: [] });
 		this.root.set(treeKey, tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
-		this.initializeTree(tree);
+		const tree = await this.root.get<IFluidHandle<ITree>>(treeKey)!.get();
+		this.view = tree.viewWith(appTreeConfiguration);
 	}
 
 	protected async hasInitialized() {
@@ -65,19 +62,12 @@ export class Bubblebench extends DataObject {
 	}
 
 	/**
-	 * Initialize the schema of the shared tree to that of the Bubblebench AppState.
-	 * @param tree - ISharedTree
-	 */
-	initializeTree(tree: ISharedTree) {
-		this.view = tree.schematize(appTreeConfiguration);
-	}
-
-	/**
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has completed.
 	 */
 	private get tree(): TreeView<typeof App> {
-		return this.view ?? fail("not initialized");
+		if (this.view === undefined) throw new Error("not initialized");
+		return this.view;
 	}
 
 	/**
@@ -85,7 +75,8 @@ export class Bubblebench extends DataObject {
 	 * Cannot be accessed until after initialization has completed.
 	 */
 	public get appState(): AppState {
-		return this._appState ?? fail("not initialized");
+		if (this._appState === undefined) throw new Error("not initialized");
+		return this._appState;
 	}
 }
 
@@ -97,6 +88,6 @@ export class Bubblebench extends DataObject {
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,
 	Bubblebench,
-	[new SharedTreeFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
+	[SharedTree.getFactory()], // This is fine for now  but we will have to adjust this API later to allow control of write format
 	{},
 );

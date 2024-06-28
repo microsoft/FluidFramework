@@ -13,6 +13,7 @@ import { IMergeTreeAnnotateMsg } from "./ops.js";
 import { MapLike, PropertySet, createMap } from "./properties.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum PropertiesRollback {
@@ -28,6 +29,7 @@ export enum PropertiesRollback {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class PropertiesManager {
@@ -37,17 +39,19 @@ export class PropertiesManager {
 		this.decrementPendingCounts(annotateOp.props);
 	}
 
-	private decrementPendingCounts(props: PropertySet): void {
-		for (const key of Object.keys(props)) {
-			if (this.pendingKeyUpdateCount?.[key] !== undefined) {
-				assert(
-					this.pendingKeyUpdateCount[key] > 0,
-					0x05c /* "Trying to update more annotate props than do exist!" */,
-				);
-				this.pendingKeyUpdateCount[key]--;
-				if (this.pendingKeyUpdateCount?.[key] === 0) {
-					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-					delete this.pendingKeyUpdateCount[key];
+	private decrementPendingCounts(props: PropertySet) {
+		for (const [key, value] of Object.entries(props)) {
+			if (value !== undefined) {
+				if (this.pendingKeyUpdateCount?.[key] !== undefined) {
+					assert(
+						this.pendingKeyUpdateCount[key] > 0,
+						0x05c /* "Trying to update more annotate props than do exist!" */,
+					);
+					this.pendingKeyUpdateCount[key]--;
+					if (this.pendingKeyUpdateCount?.[key] === 0) {
+						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+						delete this.pendingKeyUpdateCount[key];
+					}
 				}
 			}
 		}
@@ -81,7 +85,11 @@ export class PropertiesManager {
 
 		const deltas: PropertySet = {};
 
-		for (const key of Object.keys(newProps)) {
+		for (const [key, newValue] of Object.entries(newProps)) {
+			if (newValue === undefined) {
+				continue;
+			}
+
 			if (collaborating) {
 				if (seq === UnassignedSequenceNumber) {
 					if (this.pendingKeyUpdateCount?.[key] === undefined) {
@@ -97,7 +105,6 @@ export class PropertiesManager {
 			// The delta should be null if undefined, as that's how we encode delete
 			// eslint-disable-next-line unicorn/no-null
 			deltas[key] = previousValue === undefined ? null : previousValue;
-			const newValue: unknown = newProps[key];
 			if (newValue === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete oldProps[key];
@@ -133,8 +140,16 @@ export class PropertiesManager {
 		return newProps;
 	}
 
-	public hasPendingProperties(): boolean {
-		return Object.keys(this.pendingKeyUpdateCount!).length > 0;
+	/**
+	 * @returns whether all valid (i.e. defined) entries of the property bag are pending
+	 */
+	public hasPendingProperties(props: PropertySet) {
+		for (const [key, value] of Object.entries(props)) {
+			if (value !== undefined && this.pendingKeyUpdateCount?.[key] === undefined) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public hasPendingProperty(key: string): boolean {

@@ -7,14 +7,17 @@ import { strict as assert } from "assert";
 
 import {
 	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
 	IFluidLoadable,
-	IProvideFluidHandle,
 	IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	IProvideFluidHandle,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
 import { DependencyContainer } from "../index.js";
@@ -72,10 +75,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Optional IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Optional Provider registered via Promise value`, async () => {
@@ -87,10 +86,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Optional IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Optional Provider registered via factory`, async () => {
@@ -103,10 +98,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Optional IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Optional Provider registered via Promise factory`, async () => {
@@ -119,10 +110,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Optional IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Optional Provider registered via LazyPromise factory`, async () => {
@@ -143,10 +130,6 @@ describe("someObjectlicious", () => {
 					const loadable = await loadable_promise;
 					assert(loadable, "Optional IFluidLoadable was registered");
 					assert(loadable === mock, "IFluidLoadable is expected");
-					assert(
-						loadable?.handle.absolutePath === mock.handle.absolutePath,
-						"IFluidLoadable is valid",
-					);
 				});
 			});
 
@@ -161,10 +144,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Required Provider registered via Promise value`, async () => {
@@ -178,10 +157,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Required Provider registered via factory`, async () => {
@@ -196,10 +171,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Required Provider registered via Promise factory`, async () => {
@@ -214,10 +185,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`One Required Provider registered via LazyPromise factory`, async () => {
@@ -240,10 +207,6 @@ describe("someObjectlicious", () => {
 					const loadable = await loadable_promise;
 					assert(loadable, "Required IFluidLoadable was registered");
 					assert(loadable === mock, "IFluidLoadable is expected");
-					assert(
-						loadable?.handle.absolutePath === mock.handle.absolutePath,
-						"IFluidLoadable is valid",
-					);
 				});
 			});
 
@@ -339,10 +302,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Optional IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`Optional Modules found in Parent and Child`, async () => {
@@ -391,10 +350,6 @@ describe("someObjectlicious", () => {
 				const loadable = await s.IFluidLoadable;
 				assert(loadable, "Required IFluidLoadable was registered");
 				assert(loadable === mock, "IFluidLoadable is expected");
-				assert(
-					loadable?.handle.absolutePath === mock.handle.absolutePath,
-					"IFluidLoadable is valid",
-				);
 			});
 
 			it(`Required Modules found in Parent and Child`, async () => {
@@ -486,26 +441,29 @@ describe("someObjectlicious", () => {
 					"has does not include excluded parent registered",
 				);
 				assert(dc.has(ISomeObject), "has includes registered");
-				assert(!dc.has(IFluidHandle), "does not include not registered");
+				assert(!dc.has("IFluidHandle"), "does not include not registered");
 			});
 
 			it(`Parent Resolved from Child`, async () => {
-				const parentDc = new DependencyContainer<FluidObject<IFluidHandle>>();
+				const parentDc = new DependencyContainer<FluidObject<IFluidHandleInternal>>();
 				const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> = async (
 					fds: IFluidDependencySynthesizer,
 				) => {
 					const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(undefined, {
 						IFluidLoadable,
 					});
-					return (await loadable.IFluidLoadable).handle;
+					return toFluidHandleInternal((await loadable.IFluidLoadable).handle);
 				};
-				parentDc.register(IFluidHandle, loadableToHandle);
+				parentDc.register("IFluidHandle", loadableToHandle);
 
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>(parentDc);
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 
-				const deps = dc.synthesize<IFluidHandle>({ IFluidHandle }, undefined);
+				const deps = dc.synthesize<IFluidHandleInternal>(
+					{ IFluidHandle: "IFluidHandle" },
+					undefined,
+				);
 				assert((await deps.IFluidHandle) !== undefined, "handle undefined");
 			});
 

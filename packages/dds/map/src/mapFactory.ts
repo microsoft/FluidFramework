@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import type {
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap } from "./interfaces.js";
 import { SharedMap as SharedMapInternal } from "./map.js";
@@ -21,6 +19,7 @@ import { pkgVersion } from "./packageVersion.js";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
  *
  * @sealed
+ * @legacy
  * @alpha
  */
 export class MapFactory implements IChannelFactory<ISharedMap> {
@@ -80,20 +79,14 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
+ * @legacy
  * @alpha
  */
-export const SharedMap: ISharedObjectKind<ISharedMap> = {
-	getFactory(): IChannelFactory<ISharedMap> {
-		return new MapFactory();
-	},
-
-	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap {
-		return runtime.createChannel(id, MapFactory.Type) as ISharedMap;
-	},
-};
+export const SharedMap = createSharedObjectKind<ISharedMap>(MapFactory);
 
 /**
  * Entrypoint for {@link ISharedMap} creation.
+ * @legacy
  * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMap class was exported as public.

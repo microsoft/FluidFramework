@@ -13,8 +13,9 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -218,7 +219,10 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		deletedState = getGCDeletedStateFromSummary(summaryTree);
 		assert(deletedState !== undefined, "Should have sweep state");
 		assert(deletedState.includes(dataStoreHandle.absolutePath), "Data Store should be swept");
-		assert(deletedState.includes(ddsHandle.absolutePath), "DDS should be swept");
+		assert(
+			deletedState.includes(toFluidHandleInternal(ddsHandle).absolutePath),
+			"DDS should be swept",
+		);
 		assert(deletedState.length === 2, "Nothing else should have been swept");
 		// Summary check
 		assert(

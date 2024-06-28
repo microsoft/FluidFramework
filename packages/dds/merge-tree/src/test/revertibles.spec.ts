@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
@@ -60,7 +60,11 @@ export function spyOnMethod(
 
 describe("MergeTree.Revertibles", () => {
 	it("revert insert", () => {
-		const clients = createClientsAtInitialState({ initialState: "123", options: {} }, "A", "B");
+		const clients = createClientsAtInitialState(
+			{ initialState: "123", options: {} },
+			"A",
+			"B",
+		);
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
@@ -162,7 +166,11 @@ describe("MergeTree.Revertibles", () => {
 	});
 
 	it("revert remove", () => {
-		const clients = createClientsAtInitialState({ initialState: "123", options: {} }, "A", "B");
+		const clients = createClientsAtInitialState(
+			{ initialState: "123", options: {} },
+			"A",
+			"B",
+		);
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
@@ -283,7 +291,11 @@ describe("MergeTree.Revertibles", () => {
 	});
 
 	it("revert annotate", () => {
-		const clients = createClientsAtInitialState({ initialState: "123", options: {} }, "A", "B");
+		const clients = createClientsAtInitialState(
+			{ initialState: "123", options: {} },
+			"A",
+			"B",
+		);
 		const logger = new TestClientLogger(clients.all);
 		let seq = 0;
 		const ops: ISequencedDocumentMessage[] = [];
@@ -459,7 +471,9 @@ describe("MergeTree.Revertibles", () => {
 		// revert to the original callback
 		clients.B.off("delta", deltaCallback);
 
-		ops.push(clients.C.makeOpMessage(clients.C.annotateRangeLocal(3, 4, { test: "C" }), ++seq));
+		ops.push(
+			clients.C.makeOpMessage(clients.C.annotateRangeLocal(3, 4, { test: "C" }), ++seq),
+		);
 
 		for (const op of ops.splice(0)) for (const c of clients.all) c.applyMsg(op);
 		logger.validate({ baseText: "134" });

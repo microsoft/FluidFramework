@@ -5,7 +5,8 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
@@ -39,7 +40,12 @@ async function createMatrixForReconnection(
 
 	let matrix: SharedMatrix;
 	if (summary !== undefined) {
-		matrix = await matrixFactory.load(dataStoreRuntime, id, services, matrixFactory.attributes);
+		matrix = await matrixFactory.load(
+			dataStoreRuntime,
+			id,
+			services,
+			matrixFactory.attributes,
+		);
 	} else {
 		matrix = matrixFactory.create(dataStoreRuntime, id);
 		matrix.connect(services);
@@ -94,13 +100,13 @@ describe("Matrix applyStashedOp", () => {
 		const { summary } = await matrix1.summarize();
 		const { matrix: matrix2, containerRuntime: containerRuntime2 } =
 			await createMatrixForReconnection("B", containerRuntimeFactory, summary, {
-				minimumSequenceNumber: dataStoreRuntime1.deltaManager.minimumSequenceNumber,
+				minimumSequenceNumber: dataStoreRuntime1.deltaManagerInternal.minimumSequenceNumber,
 			});
 
 		matrix1.insertRows(0, 2);
 		matrix2.insertCols(0, 2);
 		containerRuntimeFactory.processAllMessages();
-		const minimumSequenceNumber = dataStoreRuntime1.deltaManager.minimumSequenceNumber;
+		const minimumSequenceNumber = dataStoreRuntime1.deltaManagerInternal.minimumSequenceNumber;
 
 		const { submittedContent } = spyOnContainerRuntimeMessages(containerRuntime1);
 		const { processedMessages } = spyOnContainerRuntimeMessages(containerRuntime2);

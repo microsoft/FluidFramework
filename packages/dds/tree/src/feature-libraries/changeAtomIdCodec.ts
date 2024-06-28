@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IJsonCodec } from "../codec/index.js";
-import {
+import type { IJsonCodec } from "../codec/index.js";
+import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
 	EncodedChangeAtomId,
@@ -22,7 +22,7 @@ export function makeChangeAtomIdCodec(
 ): IJsonCodec<ChangeAtomId, EncodedChangeAtomId, EncodedChangeAtomId, ChangeEncodingContext> {
 	return {
 		encode(changeAtomId: ChangeAtomId, context: ChangeEncodingContext): EncodedChangeAtomId {
-			return changeAtomId.revision === undefined
+			return changeAtomId.revision === undefined || changeAtomId.revision === context.revision
 				? changeAtomId.localId
 				: [changeAtomId.localId, revisionTagCodec.encode(changeAtomId.revision, context)];
 		},
@@ -31,8 +31,8 @@ export function makeChangeAtomIdCodec(
 				? {
 						localId: changeAtomId[0],
 						revision: revisionTagCodec.decode(changeAtomId[1], context),
-				  }
-				: { localId: changeAtomId };
+					}
+				: { localId: changeAtomId, revision: context.revision };
 		},
 	};
 }

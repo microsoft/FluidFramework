@@ -7,115 +7,332 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Context, TreeStatus } from "../feature-libraries/index.js";
 import {
-	ImplicitFieldSchema,
-	TreeNode,
-	TreeNodeApi,
-	TreeView,
+	type ImplicitFieldSchema,
+	type TreeNode,
+	type TreeNodeApi,
+	type TreeView,
 	getFlexNode,
 	treeNodeApi,
 } from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
 
 /**
- * Provides various functions for interacting with {@link TreeNode}s.
+ * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
  * @public
+ */
+export const rollback = Symbol("SharedTree Transaction Rollback");
+
+/**
+ * A function which runs a transaction in a SharedTree.
+ * @privateRemarks
+ * This interface exists so that the (generously) overloaded `Tree.runTransaction` function can have the "rollback" property hanging off of it.
+ * The rollback property being available on the function itself gives users a convenient option for rolling back a transaction without having to import another symbol.
+ * @sealed @public
+ */
+export interface RunTransaction {
+	/**
+	 * The {@link rollback} object used to roll back a transaction.
+	 */
+	readonly rollback: typeof rollback;
+
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param node - The node that will be passed to `transaction`.
+	 * This is typically the root node of the subtree that will be modified by the transaction.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the provided `node`.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TNode extends TreeNode, TResult>(
+		node: TNode,
+		transaction: (node: TNode) => TResult,
+	): TResult;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param tree - The tree which will be edited by the transaction
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the root of the tree.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+		tree: TView,
+		transaction: (root: TView["root"]) => TResult,
+	): TResult;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param node - The node that will be passed to `transaction`.
+	 * This is typically the root node of the subtree that will be modified by the transaction.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the provided `node`.
+	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value} (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
+	 */
+	<TNode extends TreeNode, TResult>(
+		node: TNode,
+		transaction: (node: TNode) => TResult | typeof rollback,
+	): TResult | typeof rollback;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param tree - The tree which will be edited by the transaction
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the root of the tree.
+	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value} (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
+	 */
+	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+		tree: TView,
+		transaction: (root: TView["root"]) => TResult | typeof rollback,
+	): TResult | typeof rollback;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param node - The node that will be passed to `transaction`.
+	 * This is typically the root node of the subtree that will be modified by the transaction.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the provided `node`.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void): void;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param tree - The tree which will be edited by the transaction
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the root of the tree.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TView extends TreeView<ImplicitFieldSchema>>(
+		tree: TView,
+		transaction: (root: TView["root"]) => void,
+	): void;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param node - The node that will be passed to `transaction`.
+	 * This is typically the root node of the subtree that will be modified by the transaction.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the provided `node`.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TNode extends TreeNode, TResult>(
+		node: TNode,
+		transaction: (node: TNode) => TResult,
+		preconditions?: readonly TransactionConstraint[],
+	): TResult;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param tree - The tree which will be edited by the transaction
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the root of the tree.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+		tree: TView,
+		transaction: (root: TView["root"]) => TResult,
+		preconditions?: readonly TransactionConstraint[],
+	): TResult;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param node - The node that will be passed to `transaction`.
+	 * This is typically the root node of the subtree that will be modified by the transaction.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the provided `node`.
+	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value} (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
+	 */
+	<TNode extends TreeNode, TResult>(
+		node: TNode,
+		transaction: (node: TNode) => TResult | typeof rollback,
+		preconditions?: readonly TransactionConstraint[],
+	): TResult | typeof rollback;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param tree - The tree which will be edited by the transaction
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the root of the tree.
+	 * At any point during the transaction, the function may return the special {@link RunTransaction.rollback | rollback value} (`Tree.runTransaction.rollback`) to abort the transaction and discard any changes it made so far.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 * @returns The value returned by the inner `transaction` function.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
+	 */
+	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+		tree: TView,
+		transaction: (root: TView["root"]) => TResult | typeof rollback,
+		preconditions?: readonly TransactionConstraint[],
+	): TResult | typeof rollback;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param node - The node that will be passed to `transaction`.
+	 * This is typically the root node of the subtree that will be modified by the transaction.
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the provided `node`.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TNode extends TreeNode>(
+		node: TNode,
+		transaction: (node: TNode) => void,
+		preconditions?: readonly TransactionConstraint[],
+	): void;
+	/**
+	 * Apply one or more edits to the tree as a single atomic unit.
+	 * @param tree - The tree which will be edited by the transaction
+	 * @param transaction - The function to run as the body of the transaction.
+	 * This function is passed the root of the tree.
+	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
+	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 * However, using a transaction has the following additional consequences:
+	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * Local change events will be emitted for each change as the transaction is being applied.
+	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
+	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
+	 */
+	<TView extends TreeView<ImplicitFieldSchema>>(
+		tree: TView,
+		transaction: (root: TView["root"]) => void,
+		preconditions?: readonly TransactionConstraint[],
+	): void;
+}
+
+/**
+ * Provides various functions for interacting with {@link TreeNode}s.
+ * @remarks
+ * This type should only be used via the public `Tree` export.
+ * @privateRemarks
+ * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
+ * @sealed @public
  */
 export interface TreeApi extends TreeNodeApi {
 	/**
-	 * Apply one or more edits to the tree as a single atomic unit.
-	 * @param node - The node that will be passed to `transaction`.
-	 * This is typically the root node of the subtree that will be modified by the transaction.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * This function is passed the provided `node`.
-	 * At any point during the transaction, the function may return the value `"rollback"` to abort the transaction and discard any changes it made so far.
-	 * @remarks
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is cancelled and rolled back, a corresponding change event will also be emitted for the rollback.
+	 * Run a {@link RunTransaction | transaction}.
 	 */
-	runTransaction<TNode extends TreeNode>(
-		node: TNode,
-		transaction: (node: TNode) => void | "rollback",
-	): void;
-	/**
-	 * Apply one or more edits to the tree as a single atomic unit.
-	 * @param node - The node that will be passed to `transaction`.
-	 * This is typically the root node of the subtree that will be modified by the transaction.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * This function is passed the provided `node`.
-	 * At any point during the transaction, the function may return the value `"rollback"` to abort the transaction and discard any changes it made so far.
-	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
-	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
-	 * @remarks
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is cancelled and rolled back, a corresponding change event will also be emitted for the rollback.
-	 */
-	runTransaction<TNode extends TreeNode>(
-		node: TNode,
-		transaction: (node: TNode) => void | "rollback",
-		preconditions?: TransactionConstraint[],
-	): void;
-	/**
-	 * Apply one or more edits to the tree as a single atomic unit.
-	 * @param tree - The tree which will be edited by the transaction
-	 * @param transaction - The function to run as the body of the transaction.
-	 * This function is passed the root of the tree.
-	 * At any point during the transaction, the function may return the value `"rollback"` to abort the transaction and discard any changes it made so far.
-	 * @remarks
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is cancelled and rolled back, a corresponding change event will also be emitted for the rollback.
-	 */
-	runTransaction<TView extends TreeView<ImplicitFieldSchema>>(
-		tree: TView,
-		transaction: (root: TView["root"]) => void | "rollback",
-	): void;
-	/**
-	 * Apply one or more edits to the tree as a single atomic unit.
-	 * @param tree - The tree which will be edited by the transaction
-	 * @param transaction - The function to run as the body of the transaction.
-	 * This function is passed the root of the tree.
-	 * At any point during the transaction, the function may return the value `"rollback"` to abort the transaction and discard any changes it made so far.
-	 * @param preconditions - An optional list of {@link TransactionConstraint | constraints} that are checked just before the transaction begins.
-	 * If any of the constraints are not met when `runTransaction` is called, it will throw an error.
-	 * If any of the constraints are not met when this transaction is sequenced (on this client or other clients), the transaction will not be run.
-	 * @remarks
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is cancelled and rolled back, a corresponding change event will also be emitted for the rollback.
-	 */
-	runTransaction<TView extends TreeView<ImplicitFieldSchema>>(
-		tree: TView,
-		transaction: (root: TView["root"]) => void | "rollback",
-		preconditions?: TransactionConstraint[],
-	): void;
-
+	readonly runTransaction: RunTransaction;
 	/**
 	 * Check if the subtree defined by `node` contains `other`.
 	 *
@@ -140,26 +357,8 @@ export interface TreeApi extends TreeNodeApi {
  */
 export const treeApi: TreeApi = {
 	...treeNodeApi,
-	runTransaction<TNode extends TreeNode, TRoot extends ImplicitFieldSchema>(
-		treeOrNode: TNode | TreeView<TRoot>,
-		transaction: ((node: TNode) => void | "rollback") | ((root: TRoot) => void | "rollback"),
-		preconditions: TransactionConstraint[] = [],
-	) {
-		if (treeOrNode instanceof SchematizingSimpleTreeView) {
-			const t = transaction as (root: TRoot) => void | "rollback";
-			runTransaction(treeOrNode.checkout, () => t(treeOrNode.root as TRoot), preconditions);
-		} else {
-			const node = treeOrNode as TNode;
-			const t = transaction as (node: TNode) => void | "rollback";
-			const context = getFlexNode(node).context;
-			assert(context instanceof Context, 0x901 /* Unsupported context */);
-			const treeView =
-				contextToTreeView.get(context) ??
-				fail("Expected view to be registered for context");
 
-			runTransaction(treeView.checkout, () => t(node), preconditions);
-		}
-	},
+	runTransaction: createRunTransaction(),
 
 	contains(parent: TreeNode, child: TreeNode): boolean {
 		let toCheck: TreeNode | undefined = child;
@@ -191,17 +390,65 @@ export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more 
  * @public
  */
 export interface NodeInDocumentConstraint {
-	type: "nodeInDocument";
-	node: TreeNode;
+	readonly type: "nodeInDocument";
+	readonly node: TreeNode;
 }
 
 // TODO: Add more constraint types here
 
-function runTransaction(
-	checkout: TreeCheckout,
-	transaction: () => void | "rollback",
-	preconditions: TransactionConstraint[],
-): void {
+/** Creates a copy of `runTransaction` with the `rollback` property added so as to satisfy the `RunTransaction` interface. */
+function createRunTransaction(): RunTransaction {
+	/** A type-safe helper to add a "rollback" property (as required by the `RunTransaction` interface) to a given object */
+	function defineRollbackProperty<T extends object>(
+		target: T,
+	): T & { rollback: typeof rollback } {
+		Reflect.defineProperty(target, "rollback", { value: rollback });
+		return target as T & { readonly rollback: typeof rollback };
+	}
+
+	return defineRollbackProperty(runTransaction.bind({}));
+}
+
+/**
+ * Run the given transaction.
+ * @remarks
+ * This API is not publicly exported but is exported outside of this module so that test code may unit test the `Tree.runTransaction` function directly without being restricted to its public API overloads.
+ */
+export function runTransaction<
+	TNode extends TreeNode,
+	TRoot extends ImplicitFieldSchema,
+	TResult,
+>(
+	treeOrNode: TNode | TreeView<TRoot>,
+	transaction:
+		| ((node: TNode) => TResult | typeof rollback)
+		| ((root: TRoot) => TResult | typeof rollback),
+	preconditions: readonly TransactionConstraint[] = [],
+): TResult | typeof rollback {
+	if (treeOrNode instanceof SchematizingSimpleTreeView) {
+		const t = transaction as (root: TRoot) => TResult | typeof rollback;
+		return runTransactionInCheckout(
+			treeOrNode.checkout,
+			() => t(treeOrNode.root as TRoot),
+			preconditions,
+		);
+	} else {
+		const node = treeOrNode as TNode;
+		const t = transaction as (node: TNode) => TResult | typeof rollback;
+		const context = getFlexNode(node).context;
+		assert(context instanceof Context, 0x901 /* Unsupported context */);
+		const treeView =
+			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
+
+		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
+	}
+}
+
+function runTransactionInCheckout<TResult>(
+	checkout: ITreeCheckout,
+	transaction: () => TResult | typeof rollback,
+	preconditions: readonly TransactionConstraint[],
+): TResult | typeof rollback {
 	checkout.transaction.start();
 	for (const constraint of preconditions) {
 		switch (constraint.type) {
@@ -218,7 +465,7 @@ function runTransaction(
 				unreachableCase(constraint.type);
 		}
 	}
-	let result: void | "rollback";
+	let result: ReturnType<typeof transaction>;
 	try {
 		result = transaction();
 	} catch (e) {
@@ -227,9 +474,11 @@ function runTransaction(
 		throw e;
 	}
 
-	if (result === "rollback") {
+	if (result === rollback) {
 		checkout.transaction.abort();
 	} else {
 		checkout.transaction.commit();
 	}
+
+	return result;
 }

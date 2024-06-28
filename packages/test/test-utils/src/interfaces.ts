@@ -4,7 +4,7 @@
  */
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,
@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideTestFluidObject {
@@ -19,6 +20,7 @@ export interface IProvideTestFluidObject {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {

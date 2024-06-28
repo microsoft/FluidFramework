@@ -5,14 +5,14 @@
 
 import { assert } from "chai";
 
-import { MonoRepoKind } from "../../src/library";
+import { MonoRepoKind } from "../../src/library/index.js";
 
 import {
 	generateBumpDepsBranchName,
 	generateBumpVersionBranchName,
 	generateReleaseBranchName,
 	getDefaultBumpTypeForBranch,
-} from "../../src/library/branches";
+} from "../../src/library/branches.js";
 
 describe("generateBumpVersionBranchName", () => {
 	it("semver versions", () => {
@@ -117,9 +117,15 @@ describe("generateReleaseBranchName", () => {
 		assert.equal(actual, expected);
 	});
 
-	it("client using semver", () => {
+	it("client using semver < 2.0.0", () => {
 		const actual = generateReleaseBranchName(MonoRepoKind.Client, "1.2.3");
-		const expected = "release/1.2";
+		const expected = "release/client/1.2";
+		assert.equal(actual, expected);
+	});
+
+	it("client using semver >= 2.0.0", () => {
+		const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0");
+		const expected = "release/client/2.0";
 		assert.equal(actual, expected);
 	});
 

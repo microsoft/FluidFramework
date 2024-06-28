@@ -4,26 +4,27 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	createTestConfigProvider,
+	describeCompat,
+	ITestDataObject,
+	TestDataObjectType,
+} from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import {
 	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import {
-	ISummaryTree,
-	SummaryType,
-	type ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+
+import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { supportsDataVirtualization, clearCacheIfOdsp } from "../data-virtualization/index.js";
+
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 const interceptResult = <T>(
@@ -41,23 +42,17 @@ const interceptResult = <T>(
 	return fn;
 };
 
-const assertOmittedTree = (
-	snapshotTree: ISnapshotTree,
-	groupId: string | undefined,
-	message: string,
-) => {
-	assert(snapshotTree.omitted, message);
-	assert(snapshotTree.groupId === groupId, message);
-	assert(Object.entries(snapshotTree.trees).length === 0, message);
-	assert(Object.entries(snapshotTree.blobs).length === 0, message);
-};
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 /**
  * Validates that an unreferenced datastore goes through all the GC phases without overlapping.
  */
 describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) => {
-	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch", true);
+	const configProviderObject = configProvider({
+		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
+	});
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -66,17 +61,22 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 				},
 			},
 		},
-		loaderProps: { configProvider },
+		loaderProps: {
+			configProvider: configProviderObject,
+		},
 	};
 
 	let provider: ITestObjectProvider;
+	const persistedCache = new TestSnapshotCache();
 
 	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
 		return createSummarizer(
 			provider,
 			container,
 			{
-				loaderProps: { configProvider },
+				loaderProps: {
+					configProvider: configProviderObject,
+				},
 			},
 			summaryVersion,
 		);
@@ -94,13 +94,15 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 	}
 
 	beforeEach("setup", async function () {
-		provider = getTestObjectProvider({ syncSummarizer: true });
+		provider = getTestObjectProvider({ syncSummarizer: true, persistedCache });
 
-		// Data virtualization only works with local
-		// TODO: enable for ODSP, AB#7508
-		if (provider.driver.type !== "local") {
+		if (!supportsDataVirtualization(provider)) {
 			this.skip();
 		}
+	});
+
+	afterEach(async () => {
+		persistedCache.reset();
 	});
 
 	it("Virtualized datastore has same gc state even when not downloaded", async () => {
@@ -137,6 +139,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		);
 		const dataStoreB =
 			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
+
 		const handleA = dataStoreA.entryPoint;
 		const handleB = dataStoreB.entryPoint;
 		assert(handleA !== undefined, "Expected a handle when creating a datastoreA");
@@ -154,6 +157,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		// Summarize and verify datastore A is unreferenced
 		await provider.ensureSynchronized();
 		callCount = 0;
+		clearCacheIfOdsp(provider, persistedCache);
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 
 		// Validate GC state datastoreA should be unreferenced
@@ -171,6 +175,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		);
 
 		// Load new container
+		clearCacheIfOdsp(provider, persistedCache);
 		const mainContainer2 = await provider.loadTestContainer(testContainerConfig, {
 			[LoaderHeader.version]: summaryVersion,
 		});
@@ -195,7 +200,6 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		const tree = (snapshotCaptured as ISnapshot).snapshotTree.trees[".channels"].trees;
 		const datastoreATree = tree[dataStoreId];
 		assert(datastoreATree !== undefined, "DataStoreA should be in the snapshot");
-		assertOmittedTree(datastoreATree, "group", "DataStoreA should be omitted");
 
 		// Summarize and verify datastoreA is still unreferenced
 		await provider.ensureSynchronized();

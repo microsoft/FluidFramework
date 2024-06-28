@@ -5,17 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	type FlexFieldSchema,
-	type FlexTreeNodeSchema,
+import type {
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 
 import {
-	FieldSchema,
+	type FieldSchema,
 	type ImplicitFieldSchema,
-	TreeNodeSchema,
+	type TreeNodeSchema,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 
@@ -38,6 +38,7 @@ const simpleFieldSchemaSymbol: unique symbol = Symbol(`simpleFieldSchema`);
 export function cachedFlexSchemaFromClassSchema(
 	schema: TreeNodeSchema,
 ): TreeNodeSchemaBase | undefined {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return (schema as any)[flexSchemaSymbol] as TreeNodeSchemaBase | undefined;
 }
 
@@ -47,7 +48,9 @@ export function setFlexSchemaFromClassSchema(
 ): void {
 	assert(!(flexSchemaSymbol in simple), 0x91f /* simple schema already marked */);
 	assert(!(simpleNodeSchemaSymbol in flex), 0x920 /* flex schema already marked */);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(simple as any)[flexSchemaSymbol] = flex;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(flex as any)[simpleNodeSchemaSymbol] = simple;
 }
 
@@ -55,7 +58,9 @@ export function setFlexSchemaFromClassSchema(
  * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
  * Returns `undefined` if no cached value is found.
  */
-export function tryGetSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
+export function tryGetSimpleNodeSchema(
+	flexSchema: FlexTreeNodeSchema,
+): TreeNodeSchema | undefined {
 	if (simpleNodeSchemaSymbol in flexSchema) {
 		return flexSchema[simpleNodeSchemaSymbol] as TreeNodeSchema;
 	}
@@ -85,6 +90,7 @@ export function getSimpleFieldSchema(
 	}
 
 	const fieldSchema = normalizeFieldSchema(implicitSimpleSchema);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(flexSchema as any)[simpleFieldSchemaSymbol] = fieldSchema;
 	return fieldSchema;
 }

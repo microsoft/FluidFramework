@@ -28,16 +28,8 @@ describe("MergeTree.ordinals", () => {
 					(count) => {
 						let previous: string = "";
 						for (let i = 0; i < count; i++) {
-							const current = computeHierarchicalOrdinal(
-								max,
-								count,
-								parentOrdinal,
-								previous,
-							);
-							assert(
-								current > previous,
-								"subsequent ordinal should be greater than previous",
-							);
+							const current = computeHierarchicalOrdinal(max, count, parentOrdinal, previous);
+							assert(current > previous, "subsequent ordinal should be greater than previous");
 							assert(
 								current.length > parentOrdinal.length,
 								"child ordinals should be  more than parent",

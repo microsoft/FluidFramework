@@ -3,27 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import {
+	IDocumentStorageService,
 	ICreateBlobResponse,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
+	FluidHandleBase,
 	SummaryTreeBuilder,
 	createResponseError,
 	generateHandleContextPath,
@@ -48,12 +56,8 @@ import { IBlobMetadata } from "./metadata.js";
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
-export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
+export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 	private attached: boolean = false;
-
-	public get IFluidHandle(): IFluidHandle {
-		return this;
-	}
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -64,9 +68,10 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	constructor(
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
-		public get: () => Promise<any>,
+		public get: () => Promise<ArrayBufferLike>,
 		private readonly onAttachGraph?: () => void,
 	) {
+		super();
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
@@ -77,13 +82,14 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 		}
 	}
 
-	public bind(handle: IFluidHandle) {
+	public bind(handle: IFluidHandleInternal) {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
 
 /**
  * Information from a snapshot needed to load BlobManager
+ * @legacy
  * @alpha
  */
 export interface IBlobManagerLoadInfo {
@@ -95,11 +101,12 @@ export interface IBlobManagerLoadInfo {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "logger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
-type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
+type ICreateBlobResponseWithTTL = ICreateBlobResponse &
+	Partial<Record<"minTTLInSeconds", number>>;
 
 interface PendingBlob {
 	blob: ArrayBufferLike;
@@ -165,14 +172,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
 
-	/**
-	 * This stores IDs of tombstoned blobs.
-	 *
-	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
-	 * Tombstoned objects are eventually deleted by GC.
-	 */
-	private readonly tombstonedBlobs: Set<string> = new Set();
-
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
 	private stopAttaching: boolean = false;
 
@@ -232,7 +231,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.closeContainer = closeContainer;
 
 		this.mc = createChildMonitoringContext({
-			logger: this.runtime.logger,
+			logger: this.runtime.baseLogger,
 			namespace: "BlobManager",
 		});
 
@@ -288,15 +287,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (expired) {
 					// we want to avoid submitting ops with broken handles
 					this.closeContainer(
-						new GenericError(
-							"Trying to submit a BlobAttach for expired blob",
-							undefined,
-							{
-								localId,
-								blobId,
-								secondsSinceUpload,
-							},
-						),
+						new GenericError("Trying to submit a BlobAttach for expired blob", undefined, {
+							localId,
+							blobId,
+							secondsSinceUpload,
+						}),
 					);
 				}
 			}
@@ -421,7 +416,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					pending.attached = true;
 					this.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
-			  }
+				}
 			: undefined;
 		return new BlobHandle(
 			`${BlobManager.basePath}/${id}`,
@@ -433,7 +428,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private async createBlobDetached(
 		blob: ArrayBufferLike,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.getStorage().createBlob(blob);
@@ -444,7 +439,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}
@@ -827,36 +822,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * This is called to update blobs whose routes are tombstones.
-	 *
-	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
-	 * Tombstoned objects are eventually deleted by GC.
-	 *
-	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
-	 */
-	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
-		const tombstonedBlobsSet: Set<string> = new Set();
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of tombstonedRoutes) {
-			const blobId = getBlobIdFromGCNodePath(route);
-			tombstonedBlobsSet.add(blobId);
-		}
-
-		// Remove blobs from the tombstone list that were tombstoned but aren't anymore as per the tombstoneRoutes.
-		for (const blobId of this.tombstonedBlobs) {
-			if (!tombstonedBlobsSet.has(blobId)) {
-				this.tombstonedBlobs.delete(blobId);
-			}
-		}
-
-		// Mark blobs that are now tombstoned by adding them to the tombstone list.
-		for (const blobId of tombstonedBlobsSet) {
-			this.tombstonedBlobs.add(blobId);
-		}
-	}
-
-	/**
 	 * Verifies that the blob with given id is not deleted, i.e., it has not been garbage collected. If the blob is GC'd,
 	 * log an error and throw if necessary.
 	 */
@@ -891,10 +856,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
 		for (const [localId, storageId] of table) {
-			assert(
-				this.redirectTable.has(localId),
-				0x254 /* "unrecognized id in redirect table" */,
-			);
+			assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
 			this.setRedirection(localId, storageId);
 			// set identity (id -> id) entry
 			this.setRedirection(storageId, storageId);

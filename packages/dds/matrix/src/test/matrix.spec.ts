@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -19,7 +19,12 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { type ISharedMatrix, MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import {
+	type ISharedMatrix,
+	MatrixItem,
+	SharedMatrix,
+	SharedMatrixFactory,
+} from "../index.js";
 import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 import type { PermutationVector } from "../permutationvector.js";
 
@@ -47,7 +52,7 @@ function createConnectedMatrix(
 
 function createLocalMatrix(id: string) {
 	const factory = new SharedMatrixFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrixClass;
 }
 
 function createMatrixForReconnection(
@@ -276,13 +281,7 @@ describe("Matrix1", () => {
 					it("read/write 256x256", () => {
 						matrix.insertRows(0, 256);
 						matrix.insertCols(0, 256);
-						fill(
-							matrix,
-							/* row: */ 0,
-							/* col: */ 0,
-							/* rowCount: */ 256,
-							/* colCount: */ 256,
-						);
+						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -296,13 +295,7 @@ describe("Matrix1", () => {
 				describe("fragmented", () => {
 					it("read/write 256x256", () => {
 						insertFragmented(matrix, 256, 256);
-						fill(
-							matrix,
-							/* row: */ 0,
-							/* col: */ 0,
-							/* rowCount: */ 256,
-							/* colCount: */ 256,
-						);
+						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -650,11 +643,7 @@ describe("Matrix1", () => {
 						await expect();
 
 						matrix1.removeRows(1, 1);
-						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-							"A",
-							"B",
-							"C",
-						]);
+						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A", "B", "C"]);
 						await expect();
 					});
 
@@ -663,12 +652,7 @@ describe("Matrix1", () => {
 					it("overlapping insert/set vs. remove/insert/set", async () => {
 						matrix1.insertRows(0, 1); // rowCount: 0, colCount: 0
 						matrix1.insertCols(0, 4); // rowCount: 1, colCount: 0
-						matrix1.setCells(
-							/* row: */ 0,
-							/* col: */ 0,
-							/* colCount: */ 4,
-							[0, 1, 2, 3],
-						);
+						matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0, 1, 2, 3]);
 						await expect([[0, 1, 2, 3]]);
 
 						matrix2.insertCols(1, 1); // rowCount: 1, colCount: 5
@@ -875,8 +859,8 @@ describe("Matrix1", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const handle1 = matrix1.getCell(0, 0) as IFluidHandle;
-					const handle2 = matrix2.getCell(0, 0) as IFluidHandle;
+					const handle1 = matrix1.getCell(0, 0) as IFluidHandleInternal;
+					const handle2 = matrix2.getCell(0, 0) as IFluidHandleInternal;
 
 					assert.equal(handle1.absolutePath, handle2.absolutePath);
 
@@ -915,12 +899,7 @@ describe("Matrix1", () => {
 					);
 
 					matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 4,
-						[61, 57, 7, 62],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [61, 57, 7, 62]);
 
 					containerRuntime1.connected = false;
 					containerRuntime1.connected = true;
@@ -1028,8 +1007,7 @@ describe("Matrix1", () => {
 				});
 
 				it("after resubmitted ack", () => {
-					const containerRuntimeFactory =
-						new MockContainerRuntimeFactoryForReconnection();
+					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 					const dataStoreRuntime = new MockFluidDataStoreRuntime();
 					const matrix = matrixFactory.create(dataStoreRuntime, "A");
 					if (isSetCellPolicyFWW) {
@@ -1112,7 +1090,10 @@ describe("Matrix1", () => {
 					public async deleteOutboundRoutes() {
 						// Delete the last handle that was added.
 						const lastAddedCol = this.colCount - 1;
-						const deletedHandle = this.matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+						const deletedHandle = this.matrix1.getCell(
+							0,
+							lastAddedCol,
+						) as IFluidHandleInternal;
 						assert(deletedHandle, "Route must be added before deleting");
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);
@@ -1226,9 +1207,7 @@ describe("Matrix1", () => {
 				consumer: TestConsumer;
 			}> {
 				// Create a summary
-				const objectStorage = MockStorage.createFromSummary(
-					matrix.getAttachSummary().summary,
-				);
+				const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				const containerRuntime =

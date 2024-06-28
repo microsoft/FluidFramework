@@ -18,8 +18,8 @@
  * @packageDocumentation
  */
 
-import { type IContainer } from "@fluidframework/container-definitions/internal";
-import { type IDisposable } from "@fluidframework/core-interfaces";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IDisposable, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type HasContainerKey,
@@ -27,7 +27,7 @@ import {
 	type IDevtoolsLogger,
 	initializeDevtools as initializeDevtoolsBase,
 } from "@fluidframework/devtools-core/internal";
-import { type IFluidContainer } from "@fluidframework/fluid-static";
+import type { IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
  * Properties for configuring {@link IDevtools}.
@@ -186,7 +186,7 @@ function mapContainerProps(
 	return {
 		container: innerContainer,
 		containerKey,
-		containerData: container.initialObjects,
+		containerData: container.initialObjects as Record<string, IFluidLoadable>,
 	};
 }
 

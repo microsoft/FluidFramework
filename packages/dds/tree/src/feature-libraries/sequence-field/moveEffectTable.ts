@@ -5,12 +5,16 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
-import { RangeQueryResult, brand } from "../../util/index.js";
-import { CrossFieldManager, CrossFieldTarget, NodeId } from "../modular-schema/index.js";
+import type { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
+import { type RangeQueryResult, brand } from "../../util/index.js";
+import {
+	type CrossFieldManager,
+	CrossFieldTarget,
+	type NodeId,
+} from "../modular-schema/index.js";
 
-import { MoveMarkEffect } from "./helperTypes.js";
-import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
+import type { MoveMarkEffect } from "./helperTypes.js";
+import type { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
 import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
 
 export type MoveEffectTable = CrossFieldManager<MoveEffect>;
@@ -85,7 +89,7 @@ export function setMoveEffect(
 	count: number,
 	effect: MoveEffect,
 	invalidate: boolean = true,
-) {
+): void {
 	(effect as MoveEffectWithBasis).basis = id;
 	moveEffects.set(target, revision, id, count, effect, invalidate);
 }
@@ -161,33 +165,28 @@ function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): M
 	return adjusted;
 }
 
-export function splitMarkForMoveEffects(
-	mark: Mark,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable,
-): Mark[] {
-	const length = getFirstMoveEffectLength(mark, mark.count, revision, effects);
+export function splitMarkForMoveEffects(mark: Mark, effects: MoveEffectTable): Mark[] {
+	const length = getFirstMoveEffectLength(mark, mark.count, effects);
 	return length < mark.count ? splitMark(mark, length) : [mark];
 }
 
 function getFirstMoveEffectLength(
 	markEffect: MarkEffect,
 	count: number,
-	revision: RevisionTag | undefined,
 	effects: MoveEffectTable,
 ): number {
 	if (isMoveMark(markEffect)) {
 		return getMoveEffect(
 			effects,
 			getCrossFieldTargetFromMove(markEffect),
-			markEffect.revision ?? revision,
+			markEffect.revision,
 			markEffect.id,
 			count,
 		).length;
 	} else if (isAttachAndDetachEffect(markEffect)) {
 		return Math.min(
-			getFirstMoveEffectLength(markEffect.attach, count, revision, effects),
-			getFirstMoveEffectLength(markEffect.detach, count, revision, effects),
+			getFirstMoveEffectLength(markEffect.attach, count, effects),
+			getFirstMoveEffectLength(markEffect.detach, count, effects),
 		);
 	}
 

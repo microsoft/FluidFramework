@@ -4,8 +4,8 @@
  */
 
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
 import type { IntervalCollection } from "./intervalCollection.js";
 import {
@@ -93,6 +93,7 @@ export interface SequenceOptions {
 
 /**
  * A value factory is used to serialize/deserialize value types to a map
+ * @legacy
  * @alpha
  */
 export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
@@ -120,6 +121,7 @@ export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 
 /**
  * Defines an operation that a value type is able to handle.
+ * @legacy
  * @alpha
  */
 export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
@@ -228,6 +230,7 @@ export interface ISerializedIntervalCollection {
  * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
  * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
  * it just describes an operation to be applied to an already-in-memory value.
+ * @legacy
  * @alpha
  */
 export interface IIntervalCollectionTypeOperationValue {

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Brand } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { Brand } from "../../util/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import { DetachedField, keyAsDetachedField } from "./types.js";
+import { type DetachedField, keyAsDetachedField } from "./types.js";
 
 /**
  * Identical to {@link UpPath}, but a duplicate declaration is needed to make
@@ -94,7 +94,9 @@ export interface Range {
  * This object only characterizes the location of the range, it does not own/contain the nodes in the range.
  * @internal
  */
-export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPath<TUpPath>, Range {}
+export interface RangeUpPath<TUpPath extends UpPath = UpPath>
+	extends FieldUpPath<TUpPath>,
+		Range {}
 
 /**
  * A place in a field.

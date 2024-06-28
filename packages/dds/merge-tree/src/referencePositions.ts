@@ -32,7 +32,8 @@ export function refTypeIncludesFlag(
 
 /**
  * Gets the tile labels stored in the given reference position.
- * @internal
+ * @legacy
+ * @alpha
  */
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
 	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
@@ -41,7 +42,8 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 
 /**
  * Determines if a reference position has the given tile label.
- * @internal
+ * @legacy
+ * @alpha
  */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
@@ -60,6 +62,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
  * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
  * by referring to a particular segment and offset within that segment.
  * Thus, this reference's character position changes as the tree is edited.
+ * @legacy
  * @alpha
  */
 export interface ReferencePosition {

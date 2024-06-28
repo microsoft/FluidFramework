@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
@@ -93,14 +93,9 @@ describe("client.applyMsg", () => {
 					}
 
 					case 1:
-					case 4: {
-						assert.equal(
-							seg.seq,
-							msg.sequenceNumber,
-							"inserted segment has unexpected id",
-						);
+					case 4:
+						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
 						break;
-					}
 
 					default:
 				}
@@ -435,7 +430,12 @@ describe("client.applyMsg", () => {
 	});
 
 	it("Conflicting inserts at deleted segment position", () => {
-		const clients = createClientsAtInitialState({ initialState: "a----bcd-ef" }, "A", "B", "C");
+		const clients = createClientsAtInitialState(
+			{ initialState: "a----bcd-ef" },
+			"A",
+			"B",
+			"C",
+		);
 
 		const logger = new TestClientLogger(clients.all);
 

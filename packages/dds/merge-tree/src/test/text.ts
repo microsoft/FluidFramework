@@ -40,9 +40,7 @@ export function loadSegments(
 					pgMarker.addProperties({ header: 2 });
 					segments.push(new TextSegment(paragraph));
 				} else {
-					segments.push(
-						TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
-					);
+					segments.push(TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }));
 				}
 			} else {
 				const emphStrings = paragraph.split("_");
@@ -50,9 +48,7 @@ export function loadSegments(
 					// eslint-disable-next-line no-bitwise
 					if (i & 1) {
 						if (emphStrings[i].length > 0) {
-							segments.push(
-								TextSegment.make(emphStrings[i], { fontStyle: "italic" }),
-							);
+							segments.push(TextSegment.make(emphStrings[i], { fontStyle: "italic" }));
 						}
 					} else {
 						if (emphStrings[i].length > 0) {

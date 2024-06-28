@@ -6,27 +6,31 @@
 import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
+import { type AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import {
-	Anchor,
+	type Anchor,
 	CommitKind,
-	JsonableTree,
-	Revertible,
-	UpPath,
-	Value,
+	type JsonableTree,
+	type Revertible,
+	type UpPath,
+	type Value,
 } from "../../../core/index.js";
-import { SharedTreeTestFactory, toJsonableTree, validateTreeConsistency } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateFuzzTreeConsistency,
+} from "../../utils.js";
 
 import {
-	EditGeneratorOpWeights,
-	FuzzTestState,
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
@@ -38,7 +42,7 @@ import {
 	populatedInitialState,
 	validateAnchors,
 } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 
 interface UndoRedoFuzzTestState extends FuzzTestState {
 	initialTreeState?: JsonableTree[];
@@ -75,7 +79,7 @@ describe("Fuzz - revert", () => {
 			factory: new SharedTreeTestFactory(() => {}),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: UndoRedoFuzzTestState) => {
@@ -89,7 +93,7 @@ describe("Fuzz - revert", () => {
 		emitter.on("testEnd", (state: UndoRedoFuzzTestState) => {
 			// synchronize clients
 			state.containerRuntimeFactory.processAllMessages();
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			const anchors = state.anchors ?? assert.fail("Anchors should be defined");
 			const undoStack = state.undoStack ?? assert.fail("undoStack should be defined");
@@ -105,7 +109,7 @@ describe("Fuzz - revert", () => {
 				undoStack[i].revert();
 				state.containerRuntimeFactory.processAllMessages();
 			}
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 			assert(redoStack.length === undoStack.length, "redoStack should now be full");
 
 			// Validate that undoing all the edits restored the initial state
@@ -123,7 +127,7 @@ describe("Fuzz - revert", () => {
 				redoStack[i].revert();
 				state.containerRuntimeFactory.processAllMessages();
 			}
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			// Validate that redoing all the edits restored the final state
 			const stateAfterRedos = toJsonableTree(tree);
@@ -166,7 +170,7 @@ describe("Fuzz - revert", () => {
 			factory: new SharedTreeTestFactory(() => {}),
 			generatorFactory,
 			reducer: fuzzReducer,
-			validateConsistency: validateTreeConsistency,
+			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", init);
@@ -188,7 +192,7 @@ describe("Fuzz - revert", () => {
 			}
 
 			state.containerRuntimeFactory.processAllMessages();
-			checkTreesAreSynchronized(state.clients.map((client) => client.channel));
+			checkTreesAreSynchronized(state.clients.map((client) => client));
 
 			tearDown(state);
 		});

@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-
-import { EventEmitter, ISubscribable, createEmitter } from "../../events/index.js";
+import { EventEmitter, type Listenable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -99,44 +96,60 @@ describe("EventEmitter", () => {
 		assert(!closed);
 	});
 
-	// TODO: this behavior is questionable due to how it relates to unregister events.
-	// If events registered twice stop firing when unregistered once, that seems odd.
-	// Also if two place (that don't know about each-other) add some callback for the same event,
-	// it seems off that the behavior, and how they have to handle un-registration depends on if the functions they provided
-	// happen to compare equal (ex: two calls to a logger or fail could hit this).
-	it("ignores duplicate events", () => {
+	it("correctly handles multiple registrations for the same event", () => {
 		const emitter = createEmitter<TestEvents>();
-		let count = 0;
+		let count: number;
 		const listener = () => (count += 1);
-		emitter.on("open", listener);
-		emitter.on("open", listener);
+		const off1 = emitter.on("open", listener);
+		const off2 = emitter.on("open", () => listener());
+
+		count = 0;
 		emitter.emit("open");
-		// Count should be 1, not 2, even though `listener` was registered twice
+		assert.strictEqual(count, 2); // Listener should be fired twice
+
+		count = 0;
+		off1();
+		emitter.emit("open");
 		assert.strictEqual(count, 1);
+
+		count = 0;
+		off2();
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
 	});
 
-	it("fails on duplicate deregistrations", () => {
+	// Note: This behavior is not contractually required (see docs for `Listenable.on()`),
+	// but is tested here to check for changes or regressions.
+	it("correctly handles multiple registrations of the same listener", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count: number;
+		const listener = () => (count += 1);
+		const off1 = emitter.on("open", listener);
+		const off2 = emitter.on("open", listener);
+
+		count = 0;
+		emitter.emit("open");
+		assert.strictEqual(count, 2); // Listener should be fired twice
+
+		count = 0;
+		off1();
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+
+		count = 0;
+		off2();
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	it("allows repeat deregistrations", () => {
 		const emitter = createEmitter<TestEvents>();
 		const deregister = emitter.on("open", () => {});
 		const deregisterB = emitter.on("open", () => {});
 		deregister();
-		assert.throws(
-			() => deregister(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Listener does not exist. Event deregistration functions may only be invoked once.",
-				),
-		);
+		deregister();
 		deregisterB();
-		assert.throws(
-			() => deregister(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Event has no listeners. Event deregistration functions may only be invoked once.",
-				),
-		);
+		deregisterB();
 	});
 
 	it("skips events adding during event", () => {
@@ -186,7 +199,7 @@ class MyInheritanceClass extends EventEmitter<MyEvents> {
 	}
 }
 
-class MyCompositionClass implements ISubscribable<MyEvents> {
+class MyCompositionClass implements Listenable<MyEvents> {
 	private readonly events = createEmitter<MyEvents>();
 
 	private load() {

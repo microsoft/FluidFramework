@@ -159,7 +159,11 @@ export const search = (
 	handleUpdate: IInspectorSearchCallback,
 	toTableRowsProps: IToTableRowsProps,
 	toTableRowsOptions: IToTableRowsOptions,
-	searchState: IInspectorSearchState = { foundMatches: [], matchesMap: {}, childToParentMap: {} },
+	searchState: IInspectorSearchState = {
+		foundMatches: [],
+		matchesMap: {},
+		childToParentMap: {},
+	},
 	chunkSize = 1000,
 	recursive = false,
 	entryPoint = true,
@@ -347,5 +351,5 @@ export const search = (
 		: {
 				abortHandler: abortSearch.bind(null, searchState),
 				state: searchState,
-		  };
+			};
 };

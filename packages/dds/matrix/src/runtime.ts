@@ -7,16 +7,17 @@ import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { type ISharedMatrix, SharedMatrix as SharedMatrixClass } from "./matrix.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMatrix}.
+ * @legacy
  * @alpha
  * @deprecated - Use `SharedMatrix.getFactory` instead.
  */
@@ -60,21 +61,15 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 
 /**
  * Entrypoint for {@link ISharedMatrix} creation.
+ * @legacy
  * @alpha
  */
-export const SharedMatrix: ISharedObjectKind<ISharedMatrix> = {
-	getFactory(): IChannelFactory<ISharedMatrix> {
-		return new SharedMatrixFactory();
-	},
-
-	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMatrix {
-		return runtime.createChannel(id, SharedMatrixFactory.Type) as ISharedMatrix & IChannel;
-	},
-};
+export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
 
 /**
  * Convenience alias for {@link ISharedMatrix}. Prefer to use {@link ISharedMatrix} when referring to
  * SharedMatrix as a type.
+ * @legacy
  * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMatrix class was exported as public.

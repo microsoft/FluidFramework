@@ -4,35 +4,37 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IEvent,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	type IEvent,
 } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
+	IDocumentStorageService,
+	type ISnapshot,
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionData,
-	IInboundSignalMessage,
+	BlobTreeEntry,
+	isInstanceOfISnapshot,
+	readAndParse,
+} from "@fluidframework/driver-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import {
+	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
@@ -50,9 +52,12 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	channelsTreeName,
-	gcDataBlobKey,
+	IInboundSignalMessage,
 } from "@fluidframework/runtime-definitions/internal";
-import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import {
+	addBlobToSummary,
+	isSnapshotFetchRequiredForLoadingGroupId,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -65,8 +70,9 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
+import { sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
@@ -88,7 +94,10 @@ function createAttributes(
 		isRootDataStore,
 	};
 }
-export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
+export function createAttributesBlob(
+	pkg: readonly string[],
+	isRootDataStore: boolean,
+): ITreeEntry {
 	const attributes = createAttributes(pkg, isRootDataStore);
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
@@ -108,13 +117,9 @@ export interface ISnapshotDetails {
  * @internal
  */
 export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
-	getAttachData(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	};
+	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+
+	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -155,7 +160,8 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
  * Properties necessary for creating a local FluidDataStoreContext
  * @internal
  */
-export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
+export interface ILocalDetachedFluidDataStoreContextProps
+	extends ILocalFluidDataStoreContextProps {
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
@@ -164,7 +170,7 @@ export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDat
  * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly snapshotTree: ISnapshotTree | undefined;
+	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
 }
 
 // back-compat: To be removed in the future.
@@ -199,8 +205,8 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.clientDetails;
 	}
 
-	public get logger() {
-		return this.parentContext.logger;
+	public get baseLogger() {
+		return this.parentContext.baseLogger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -281,7 +287,7 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
-		if (aliasedDataStores !== undefined && this.baseSnapshot?.omitted === true) {
+		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}
 
@@ -371,7 +377,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		this.mc = createChildMonitoringContext({
-			logger: this.logger,
+			logger: this.baseLogger,
 			namespace: "FluidDataStoreContext",
 			properties: {
 				all: tagCodeArtifacts({
@@ -429,7 +435,9 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	public abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	public abstract setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void;
 
 	private rejectDeferredRealize(
 		reason: string,
@@ -446,7 +454,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
-		assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
+		assert(
+			!this.detachedRuntimeCreation,
+			0x13d /* "Detached runtime creation on realize()" */,
+		);
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
@@ -712,38 +723,15 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
-		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
-			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parentContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
-		}
-	}
-
-	/**
-	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
-	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 *
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parentContext.addedGCOutboundReference?.(
-			{ absolutePath: fromPath },
-			{ absolutePath: toPath },
-		);
+	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
 	/**
@@ -910,18 +898,20 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Get the data required when attaching this context's DataStore.
+	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
-	 *
-	 * @returns the summary, type, and GC Data for this context's DataStore.
 	 */
-	public abstract getAttachData(
-		includeGCData: boolean,
+	public abstract getAttachSummary(
 		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	};
+	): ISummaryTreeWithStats;
+
+	/**
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's
+	 * outbound routes.
+	 */
+	public abstract getAttachGCData(
+		telemetryContext?: ITelemetryContext,
+	): IGarbageCollectionData;
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -1033,7 +1023,10 @@ export abstract class FluidDataStoreContext
 		this.localChangesTelemetryCount--;
 	}
 
-	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+	public getCreateChildSummarizerNodeFn(
+		id: string,
+		createParam: CreateChildSummarizerNodeParam,
+	) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -1054,7 +1047,7 @@ export abstract class FluidDataStoreContext
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
 }
@@ -1062,23 +1055,28 @@ export abstract class FluidDataStoreContext
 /** @internal */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
-	private snapshotFetchRequired: boolean;
+	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
+	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
 
-		this._baseSnapshot = props.snapshotTree;
-		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
 		this.runtime = props.parentContext.containerRuntime;
-		if (props.snapshotTree !== undefined) {
-			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
+		if (isInstanceOfISnapshot(props.snapshot)) {
+			this.blobContents = props.snapshot.blobContents;
+			this._baseSnapshot = props.snapshot.snapshotTree;
+		} else {
+			this._baseSnapshot = props.snapshot;
+		}
+		if (this._baseSnapshot !== undefined) {
+			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
 		}
 	}
 
-	/* 
+	/*
 	This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
 	The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
 	1. data store is being attached in attached container
@@ -1093,6 +1091,24 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
+		// Check whether we need to fetch the snapshot first to load.
+		if (
+			this.snapshotFetchRequired === undefined &&
+			this._baseSnapshot?.groupId !== undefined
+		) {
+			assert(
+				this.blobContents !== undefined,
+				0x97a /* Blob contents should be present to evaluate */,
+			);
+			assert(
+				this._baseSnapshot !== undefined,
+				0x97b /* snapshotTree should be present to evaluate */,
+			);
+			this.snapshotFetchRequired = isSnapshotFetchRequiredForLoadingGroupId(
+				this._baseSnapshot,
+				this.blobContents,
+			);
+		}
 		if (this.snapshotFetchRequired) {
 			assert(
 				this.loadingGroupId !== undefined,
@@ -1111,6 +1127,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
 			// Need to get through snapshot and use that to populate extraBlobs
+			// eslint-disable-next-line import/no-deprecated
 			const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 				this.storage,
 				tree.blobs[dataStoreAttributesBlobName],
@@ -1146,7 +1163,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
-		assert(this.pkg !== undefined, 0x8f6 /* The datastore context package should be defined */);
+		assert(
+			this.pkg !== undefined,
+			0x8f6 /* The datastore context package should be defined */,
+		);
 		return {
 			pkg: this.pkg,
 			isRootDataStore,
@@ -1160,12 +1180,16 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachData
+	 * @see FluidDataStoreContext.getAttachSummary
 	 */
-	public getAttachData(includeGCData: boolean): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	} {
+	public getAttachSummary(): ISummaryTreeWithStats {
+		throw new Error("Cannot attach remote store");
+	}
+
+	/**
+	 * @see FluidDataStoreContext.getAttachGCData
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
 	}
 }
@@ -1241,15 +1265,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachData
+	 * @see FluidDataStoreContext.getAttachSummary
 	 */
-	public getAttachData(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): {
-		attachSummary: ISummaryTreeWithStats;
-		type: string;
-	} {
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
 			0x14f /* "There should be a channel when generating attach message" */,
@@ -1267,26 +1285,29 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
-		if (includeGCData) {
-			const gcData = this.channel.getAttachGCData?.(telemetryContext);
-			if (gcData !== undefined) {
-				addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
-			}
-		}
 
 		// Add loadingGroupId to the summary
 		if (this.loadingGroupId !== undefined) {
 			attachSummary.summary.groupId = this.loadingGroupId;
 		}
 
-		return {
-			attachSummary,
-			type: this.pkg[this.pkg.length - 1],
-		};
+		return attachSummary;
+	}
+
+	/**
+	 * @see FluidDataStoreContext.getAttachGCData
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(
+			this.channel !== undefined,
+			0x9a6 /* There should be a channel when generating attach GC data */,
+		);
+		return this.channel.getAttachGCData(telemetryContext);
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
+		// eslint-disable-next-line import/no-deprecated
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {

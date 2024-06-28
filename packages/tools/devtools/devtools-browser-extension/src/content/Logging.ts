@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type MessageLoggingOptions } from "@fluidframework/devtools-core/internal";
+import type { MessageLoggingOptions } from "@fluidframework/devtools-core/internal";
 
 /**
  * Content Script context label for console logging.

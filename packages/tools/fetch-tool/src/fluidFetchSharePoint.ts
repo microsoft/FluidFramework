@@ -5,9 +5,9 @@
 
 import child_process from "child_process";
 
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	IClientConfig,
+	IPublicClientConfig,
 	IOdspAuthRequestInfo,
 	IOdspDriveItem,
 	getChildrenByDriveItem,
@@ -19,16 +19,27 @@ import {
 	IOdspTokenManagerCacheKey,
 	OdspTokenConfig,
 	OdspTokenManager,
-	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 
 import { getForceTokenReauth } from "./fluidFetchArgs.js";
 
+export const fetchToolClientConfig: IPublicClientConfig = {
+	get clientId(): string {
+		const clientId = process.env.fetch__tool__clientId;
+		if (clientId === undefined) {
+			throw new Error(
+				"Client ID environment variable not set: fetch__tool__clientId. Use the getkeys tool to populate it.",
+			);
+		}
+		return clientId;
+	},
+};
+
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
 	server: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 	forceTokenReauth = false,
 	forToken = false,
 ): Promise<T> {
@@ -72,7 +83,7 @@ export async function resolveWrapper<T>(
 async function resolveDriveItemByServerRelativePath(
 	server: string,
 	serverRelativePath: string,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 ) {
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -86,7 +97,7 @@ async function resolveDriveItemByServerRelativePath(
 async function resolveChildrenByDriveItem(
 	server: string,
 	folderDriveItem: IOdspDriveItem,
-	clientConfig: IClientConfig,
+	clientConfig: IPublicClientConfig,
 ) {
 	return resolveWrapper<IOdspDriveItem[]>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -101,12 +112,10 @@ export async function getSharepointFiles(
 	serverRelativePath: string,
 	recurse: boolean,
 ) {
-	const clientConfig = getMicrosoftConfiguration();
-
 	const fileInfo = await resolveDriveItemByServerRelativePath(
 		server,
 		serverRelativePath,
-		clientConfig,
+		fetchToolClientConfig,
 	);
 	console.log(fileInfo);
 	const pendingFolder: { path: string; folder: IOdspDriveItem }[] = [];
@@ -124,7 +133,7 @@ export async function getSharepointFiles(
 			break;
 		}
 		const { path, folder } = folderInfo;
-		const children = await resolveChildrenByDriveItem(server, folder, clientConfig);
+		const children = await resolveChildrenByDriveItem(server, folder, fetchToolClientConfig);
 		for (const child of children) {
 			const childPath = `${path}/${child.name}`;
 			if (child.isFolder) {
@@ -140,13 +149,11 @@ export async function getSharepointFiles(
 }
 
 export async function getSingleSharePointFile(server: string, drive: string, item: string) {
-	const clientConfig = getMicrosoftConfiguration();
-
 	return resolveWrapper<IOdspDriveItem>(
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		(authRequestInfo) => getDriveItemFromDriveAndItem(server, drive, item, authRequestInfo),
 		server,
-		clientConfig,
+		fetchToolClientConfig,
 	);
 }
 

@@ -10,6 +10,11 @@ import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
 	readonly compressionOptions?: ICompressionRuntimeOptions;
+
+	/**
+	 * If true, the outbox is allowed to rebase the batch during flushing.
+	 */
+	readonly canRebase: boolean;
 }
 
 export interface BatchSequenceNumbers {
@@ -51,6 +56,10 @@ export class BatchManager {
 			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
+	/**
+	 * The last-processed CSN when this batch started.
+	 * This is used to ensure that while the batch is open, no incoming ops are processed.
+	 */
 	private clientSequenceNumber: number | undefined;
 
 	constructor(public readonly options: IBatchManagerOptions) {}

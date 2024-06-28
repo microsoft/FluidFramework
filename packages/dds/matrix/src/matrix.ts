@@ -11,10 +11,11 @@ import {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
-	IChannelStorageService,
 	IFluidDataStoreRuntime,
 	type IChannel,
-} from "@fluidframework/datastore-definitions";
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -23,15 +24,26 @@ import {
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
+import {
+	IFluidSerializer,
+	ISharedObjectEvents,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import {
+	IMatrixConsumer,
+	IMatrixProducer,
+	IMatrixReader,
+	IMatrixWriter,
+} from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
 
 import { Handle, isHandleValid } from "./handletable.js";
@@ -61,6 +73,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
+ * @legacy
  * @alpha
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
@@ -103,7 +116,10 @@ interface CellLastWriteTrackerItem {
 	clientId: string; // clientId of the client which last modified this cell
 }
 
-/** @alpha */
+/**
+ * @legacy
+ * @alpha
+ */
 export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
@@ -196,6 +212,7 @@ export interface ISharedMatrix<T = any>
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
+ * @legacy
  * @alpha
  */
 export class SharedMatrix<T = any>
@@ -455,7 +472,7 @@ export class SharedMatrix<T = any>
 			localSeq,
 			rowsRef,
 			colsRef,
-			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -471,11 +488,20 @@ export class SharedMatrix<T = any>
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
 	private protectAgainstReentrancy(callback: () => void) {
-		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
+		if (this.reentrantCount !== 0) {
+			// Validate that applications don't submit edits in response to matrix change notifications. This is unsupported.
+			throw new UsageError("Reentrancy detected in SharedMatrix.");
+		}
 		this.reentrantCount++;
-		callback();
-		this.reentrantCount--;
-		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
+		try {
+			callback();
+		} finally {
+			this.reentrantCount--;
+		}
+		assert(
+			this.reentrantCount === 0,
+			0x85e /* indicates a problem with the reentrancy tracking code. */,
+		);
 	}
 
 	private submitVectorMessage(
@@ -685,7 +711,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.deltaManager.lastSequenceNumber);
 		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
@@ -783,6 +809,7 @@ export class SharedMatrix<T = any>
 					this.submitColMessage(
 						this.cols.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
@@ -791,6 +818,7 @@ export class SharedMatrix<T = any>
 					this.submitRowMessage(
 						this.rows.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
@@ -851,7 +879,10 @@ export class SharedMatrix<T = any>
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
+		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+			rowHandle,
+			colHandle,
+		);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
 		return (
@@ -907,11 +938,7 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(
-						rowHandle,
-						colHandle,
-						localSeq,
-					);
+					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.

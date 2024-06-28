@@ -7,8 +7,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { IMergeTreeOptions } from "../mergeTree.js";

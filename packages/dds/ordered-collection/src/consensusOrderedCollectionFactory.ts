@@ -5,12 +5,16 @@
 
 import {
 	IChannelAttributes,
-	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { ConsensusQueue } from "./consensusQueue.js";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
+import { ConsensusQueueClass } from "./consensusQueue.js";
+import {
+	IConsensusOrderedCollection,
+	IConsensusOrderedCollectionFactory,
+} from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -44,14 +48,28 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusOrderedCollection> {
-		const collection = new ConsensusQueue(id, runtime, attributes);
+		const collection = new ConsensusQueueClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
-		const collection = new ConsensusQueue(id, document, this.attributes);
+		const collection = new ConsensusQueueClass(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;
 	}
 }
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @legacy
+ * @alpha
+ */
+export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
+
+/**
+ * {@inheritDoc ConsensusQueueClass}
+ * @legacy
+ * @alpha
+ */
+export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;

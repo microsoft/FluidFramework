@@ -4,13 +4,14 @@
  */
 
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Shared summary block interface. A shared summary block is part of the summary but it does not generate any ops.
  * The set on this interface must only be called in response to a remote op. Basically, if we replay same ops,
  * the set of calls on this interface to set data should be the same. This is critical because the object does not
  * generate ops of its own, but relies on the above principle to maintain eventual consistency and to summarize.
+ * @legacy
  * @alpha
  */
 export interface ISharedSummaryBlock extends ISharedObject {

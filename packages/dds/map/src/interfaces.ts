@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import type {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
+ * @legacy
  * @alpha
  */
 export interface IValueChanged {
@@ -34,6 +38,7 @@ export interface IValueChanged {
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
+ * @legacy
  * @alpha
  */
 export interface IDirectory
@@ -118,6 +123,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
+ * @legacy
  * @alpha
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
@@ -191,6 +197,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryEvents extends IEvent {
@@ -272,6 +279,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
+ * @legacy
  * @alpha
  */
 export interface ISharedDirectory
@@ -287,6 +295,7 @@ export interface ISharedDirectory
 
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryValueChanged extends IValueChanged {
@@ -299,6 +308,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
  * @sealed
+ * @legacy
  * @alpha
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
@@ -331,14 +341,19 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
- * and retrieving values that JavaScript developers are accustomed to with the
+ * The SharedMap distributed data structure can be used to store key-value pairs.
+ *
+ * @remarks
+ * SharedMap provides the same API for setting and retrieving values that JavaScript developers are accustomed to with the
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
  * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
+ * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
+ *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
+ * @legacy
  * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).

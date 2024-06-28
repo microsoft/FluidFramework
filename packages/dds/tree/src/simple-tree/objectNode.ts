@@ -3,47 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
+	cursorForMapTreeNode,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexObjectNodeSchema,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeObjectNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	LocalNodeKey,
-	isFlexTreeNode,
+	type FlexAllowedTypes,
+	type FlexObjectNodeSchema,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	getOrCreateMapTreeNode,
+	getSchemaAndPolicy,
+	isMapTreeNode,
+	type MapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
-	prepareContentForInsert,
+	prepareContentForHydration,
 } from "./proxies.js";
-import { getFlexNode, setFlexNode } from "./proxyBinding.js";
+import { getFlexNode } from "./proxyBinding.js";
 import {
 	NodeKind,
-	ImplicitFieldSchema,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
+	type ImplicitFieldSchema,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
 	getStoredKey,
 	getExplicitStoredKey,
-	TreeFieldFromImplicitField,
-	InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type TreeFieldFromImplicitField,
+	type InsertableTreeFieldFromImplicitField,
+	type FieldSchema,
 	normalizeFieldSchema,
+	typeNameSymbol,
+	type ImplicitAllowedTypes,
+	FieldKind,
 } from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeNode } from "./types.js";
-import { RestrictiveReadonlyRecord, fail } from "../util/index.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
+import { type InternalTreeNode, type TreeNode, TreeNodeValid } from "./types.js";
+import { type RestrictiveReadonlyRecord, fail, type FlattenKeys } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, rawError } from "./rawNode.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -72,6 +75,21 @@ export type TreeObjectNode<
 > = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 /**
+ * Type utility for determining whether or not an implicit field schema has a default value.
+ *
+ * @privateRemarks
+ * TODO: Account for field schemas with default value providers.
+ * For now, this only captures field kinds that we know always have defaults - optional fields and identifier fields.
+ *
+ * @public
+ */
+export type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<
+	FieldKind.Optional | FieldKind.Identifier
+>
+	? true
+	: false;
+
+/**
  * Helper used to produce types for:
  *
  * 1. Insertable content which can be used to construct an object node.
@@ -86,9 +104,16 @@ export type TreeObjectNode<
  */
 export type InsertableObjectFromSchemaRecord<
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+> = FlattenKeys<
+	{
+		readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+	} & {
+		// Field does not have a known default, make it required:
+		readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false
+			? Property
+			: never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+	}
+>;
 
 /**
  * Maps from simple field keys ("view" keys) to information about the field.
@@ -98,13 +123,13 @@ export type InsertableObjectFromSchemaRecord<
  * Keys with symbols are currently never used, but allowed to make lookups on non-field things
  * (returning undefined) easier.
  */
-type SimpleKeyMap = Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
+type SimpleKeyMap = ReadonlyMap<string | symbol, { storedKey: FieldKey; schema: FieldSchema }>;
 
 /**
  * Caches the mappings from view keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
 function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
-	const keyMap: SimpleKeyMap = new Map();
+	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(viewKey, fieldSchema);
 		keyMap.set(viewKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
@@ -138,24 +163,48 @@ function createProxyHandler(
 			const fieldInfo = flexKeyMap.get(viewKey);
 
 			if (fieldInfo !== undefined) {
-				const field = getFlexNode(proxy).tryGetField(fieldInfo.storedKey);
-				return field === undefined ? undefined : getProxyForField(field);
+				const flexNode = getFlexNode(proxy);
+				const field = flexNode.tryGetField(fieldInfo.storedKey);
+				if (field !== undefined) {
+					return getProxyForField(field);
+				}
+
+				// Check if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
+				// This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
+				// In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
+				if (fieldInfo.schema.kind === FieldKind.Identifier && isMapTreeNode(flexNode)) {
+					throw new UsageError(
+						"An automatically generated node identifier may not be queried until the node is inserted into the tree",
+					);
+				}
+
+				return undefined;
 			}
 
 			// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 			return Reflect.get(target, viewKey, proxy);
 		},
-		set(target, viewKey, value: InsertableContent, proxy) {
+		set(target, viewKey, value: InsertableContent | undefined, proxy) {
 			const fieldInfo = flexKeyMap.get(viewKey);
 			if (fieldInfo === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, viewKey, value) : false;
 			}
 
 			const flexNode = getFlexNode(proxy);
-			const field = flexNode.getBoxed(fieldInfo.storedKey);
-			setField(field, fieldInfo.schema, value);
+			if (isMapTreeNode(flexNode)) {
+				throw new UsageError(
+					`An object cannot be mutated before being inserted into the tree`,
+				);
+			}
 
+			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
 			return true;
+		},
+		deleteProperty(target, viewKey): boolean {
+			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
+			throw new UsageError(
+				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
+			);
 		},
 		has: (target, viewKey) => {
 			return (
@@ -203,7 +252,7 @@ function createProxyHandler(
 export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
-	value: InsertableContent,
+	value: InsertableContent | undefined,
 ): void {
 	switch (field.schema.kind) {
 		case FieldKinds.required:
@@ -212,9 +261,15 @@ export function setField(
 				| FlexTreeRequiredField<FlexAllowedTypes>
 				| FlexTreeOptionalField<FlexAllowedTypes>;
 
-			const content = prepareContentForInsert(value, field.context.forest);
-			const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
-			typedField.content = cursor;
+			const mapTree = mapTreeFromNodeData(
+				value,
+				simpleFieldSchema.allowedTypes,
+				field.context.nodeKeyManager,
+				getSchemaAndPolicy(field),
+			);
+
+			prepareContentForHydration(mapTree, field.context.checkout.forest);
+			typedField.content = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
 			break;
 		}
 
@@ -223,21 +278,11 @@ export function setField(
 	}
 }
 
-type ObjectNodeSchema<
-	TName extends string = string,
-	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
-		string,
-		ImplicitFieldSchema
-	>,
-	ImplicitlyConstructable extends boolean = boolean,
-> = TreeNodeSchemaClass<
-	TName,
-	NodeKind.Object,
-	TreeNode & WithType<TName>,
-	InsertableObjectFromSchemaRecord<T>,
-	ImplicitlyConstructable,
-	T
->;
+abstract class CustomObjectNodeBase<
+	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+> extends TreeNodeValid<InsertableObjectFromSchemaRecord<T>> {
+	public static readonly kind = NodeKind.Object;
+}
 
 /**
  * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
@@ -249,26 +294,32 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
->(base: ObjectNodeSchema<TName, T, ImplicitlyConstructable>) {
+>(
+	identifier: TName,
+	info: T,
+	implicitlyConstructable: ImplicitlyConstructable,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable> {
 	// Ensure no collisions between final set of view keys, and final set of stored keys (including those
 	// implicitly derived from view keys)
-	assertUniqueKeys(base.identifier, base.info);
+	assertUniqueKeys(identifier, info);
 
 	// Performance optimization: cache view key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(base.info);
-
-	// Used to ensure we only use one most derived schema type.
-	// The type "Function" is used by "Object.constructor" and this matches it.
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	let constructorCached: Function;
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
+	let flexSchema: FlexObjectNodeSchema;
 
-	class CustomObjectNode extends base {
-		public constructor(input: InsertableObjectFromSchemaRecord<T>) {
-			super(input);
+	class CustomObjectNode extends CustomObjectNodeBase<T> {
+		public static readonly fields: ReadonlyMap<string, FieldSchema> = new Map(
+			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
+		);
 
+		public static override prepareInstance<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			flexNode: FlexTreeNode,
+		): TreeNodeValid<T2> {
 			// Differentiate between the following cases:
 			//
 			// Case 1: Direct construction (POJO emulation)
@@ -288,83 +339,77 @@ export function objectSchema<
 			// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
 			// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
 
-			if (constructorCached === undefined) {
-				// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
-				constructorCached = this.constructor;
-				customizable = this.constructor !== CustomObjectNode;
-				handler ??= createProxyHandler(flexKeyMap, customizable);
-
-				// First run, do extra validation.
-				// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
-				// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
-				{
-					let prototype: object = this.constructor.prototype;
-					// There isn't a clear cleaner way to author this loop.
-					while (prototype !== CustomObjectNode.prototype) {
-						for (const [key] of flexKeyMap) {
-							if (
-								// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
-								key !== "constructor" &&
-								Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
-							) {
-								throw new UsageError(
-									`Schema ${
-										base.identifier
-									} defines an inherited property ${key.toString()} which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
-								);
-							}
-						}
-						// Since this stops at CustomObjectNode, it should never see a null prototype, so this case is safe.
-						// Additionally, if the prototype chain is ever messed up such that CustomObjectNode is not in it,
-						// the null that would show up here does at least ensure this code throws instead of hanging.
-						prototype = Reflect.getPrototypeOf(prototype) as object;
-					}
-				}
-			}
-
-			assert(
-				constructorCached === this.constructor,
-				0x918 /* Node instantiated from multiple bases. */,
-			);
-
-			const proxyTarget = customizable ? this : {};
-
-			const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-			assert(flexSchema instanceof FlexObjectNodeSchema, 0x919 /* invalid flex schema */);
-			const flexNode: FlexTreeNode = isFlexTreeNode(input)
-				? input
-				: new RawObjectNode(flexSchema, copyContent(flexSchema.name, input) as object);
-
+			const proxyTarget = customizable ? instance : {};
 			const proxy = new Proxy(proxyTarget, handler) as CustomObjectNode;
 			targetToProxy.set(proxyTarget, proxy);
-			setFlexNode(proxy, flexNode);
 			return proxy;
+		}
+
+		public static override buildRawNode<T2>(
+			this: typeof TreeNodeValid<T2>,
+			instance: TreeNodeValid<T2>,
+			input: T2,
+		): MapTreeNode {
+			return getOrCreateMapTreeNode(
+				flexSchema,
+				mapTreeFromNodeData(
+					copyContent(flexSchema.name, input as object),
+					this as unknown as ImplicitAllowedTypes,
+				),
+			);
+		}
+
+		protected static override constructorCached: typeof TreeNodeValid | undefined = undefined;
+
+		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): void {
+			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
+			customizable = (this as unknown) !== CustomObjectNode;
+			handler = createProxyHandler(flexKeyMap, customizable);
+			flexSchema = getFlexSchema(this as unknown as TreeNodeSchema) as FlexObjectNodeSchema;
+
+			// First run, do extra validation.
+			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
+			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
+			{
+				let prototype: object = this.prototype;
+				// There isn't a clear cleaner way to author this loop.
+				while (prototype !== CustomObjectNode.prototype) {
+					for (const [key] of flexKeyMap) {
+						if (
+							// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
+							key !== "constructor" &&
+							Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
+						) {
+							throw new UsageError(
+								`Schema ${identifier} defines an inherited property "${key.toString()}" which shadows a field. Since fields are exposed as own properties, this shadowing will not work, and is an error.`,
+							);
+						}
+					}
+					// Since this stops at CustomObjectNode, it should never see a null prototype, so this case is safe.
+					// Additionally, if the prototype chain is ever messed up such that CustomObjectNode is not in it,
+					// the null that would show up here does at least ensure this code throws instead of hanging.
+					prototype = Reflect.getPrototypeOf(prototype) as object;
+				}
+			}
+		}
+
+		public static readonly identifier = identifier;
+		public static readonly info = info;
+		public static readonly implicitlyConstructable: ImplicitlyConstructable =
+			implicitlyConstructable;
+
+		public get [typeNameSymbol](): TName {
+			return identifier;
 		}
 	}
 
-	return CustomObjectNode as TreeNodeSchemaClass<
-		TName,
-		NodeKind.Object,
-		TreeObjectNode<T, TName>,
-		object & InsertableObjectFromSchemaRecord<T>,
-		true,
-		T
-	>;
+	return CustomObjectNode as typeof CustomObjectNode &
+		(new (
+			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
+		) => TreeObjectNode<T, TName>);
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
-
-/**
- * The implementation of an object node created by {@link createRawNode}.
- */
-export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
-	extends RawTreeNode<TSchema, TContent>
-	implements FlexTreeObjectNode
-{
-	public get localNodeKey(): LocalNodeKey | undefined {
-		throw rawError("Reading local node keys");
-	}
-}
 
 /**
  * Ensures that the set of view keys in the schema is unique.
@@ -408,4 +453,38 @@ function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, conte
 	const copy = { ...content };
 	markContentType(typeName, copy);
 	return copy;
+}
+
+/**
+ * A schema for {@link TreeObjectNode}s.
+ * @privateRemarks
+ * This is a candidate for being promoted to the public package API.
+ */
+export interface ObjectNodeSchema<
+	TName extends string = string,
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema> = RestrictiveReadonlyRecord<
+		string,
+		ImplicitFieldSchema
+	>,
+	ImplicitlyConstructable extends boolean = boolean,
+> extends TreeNodeSchemaClass<
+		TName,
+		NodeKind.Object,
+		TreeObjectNode<T, TName>,
+		object & InsertableObjectFromSchemaRecord<T>,
+		ImplicitlyConstructable,
+		T
+	> {
+	readonly fields: ReadonlyMap<string, FieldSchema>;
+}
+
+export const ObjectNodeSchema = {
+	// instanceof-based narrowing support for Javascript and TypeScript 5.3 or newer.
+	[Symbol.hasInstance](value: TreeNodeSchema): value is ObjectNodeSchema {
+		return isObjectNodeSchema(value);
+	},
+} as const;
+
+export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchema {
+	return schema.kind === NodeKind.Object;
 }

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
@@ -270,9 +270,9 @@ export class TestClientLogger {
 								properties[pos + i],
 								`${errorPrefix}\n${this.toString()}\nClient ${
 									c.longClientId
-								} does not match client ${
-									this.clients[0].longClientId
-								} properties at pos ${pos + i}`,
+								} does not match client ${this.clients[0].longClientId} properties at pos ${
+									pos + i
+								}`,
 							);
 						}
 					}
@@ -344,11 +344,7 @@ export class TestClientLogger {
 						}
 						parent = node.parent;
 					}
-					const text = TextSegment.is(node)
-						? node.text
-						: Marker.is(node)
-						? "¶"
-						: undefined;
+					const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
 					if (text !== undefined) {
 						const removedNode = toRemovalInfo(node);
 						if (removedNode === undefined) {

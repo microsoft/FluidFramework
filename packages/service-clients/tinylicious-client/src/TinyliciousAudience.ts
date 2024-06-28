@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 
-import { type TinyliciousMember, type TinyliciousUser } from "./interfaces.js";
+import type { TinyliciousMember, TinyliciousUser } from "./interfaces.js";
 
 /**
  * Creates a {@link TinyliciousMember} for the provided client.
@@ -25,8 +25,8 @@ export function createTinyliciousAudienceMember(audienceMember: IClient): Tinyli
 	);
 
 	return {
-		userId: tinyliciousUser.id,
-		userName: tinyliciousUser.name,
+		id: tinyliciousUser.id,
+		name: tinyliciousUser.name,
 		connections: [],
 	};
 }

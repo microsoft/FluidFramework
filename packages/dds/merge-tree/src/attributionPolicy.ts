@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { AttributionCollection } from "./attributionCollection.js";
@@ -134,7 +134,9 @@ const insertOnlyAttributionPolicyCallbacks: AttributionCallbacks = {
 	},
 };
 
-function createPropertyTrackingMergeTreeCallbacks(...propNames: string[]): AttributionCallbacks {
+function createPropertyTrackingMergeTreeCallbacks(
+	...propNames: string[]
+): AttributionCallbacks {
 	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
 	const attributeAnnotateOnSegments = (
 		deltaSegments: IMergeTreeSegmentDelta[],

@@ -5,6 +5,8 @@
 
 import { strict as assert } from "assert";
 
+import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
+
 import { isFluidHandle } from "../handles.js";
 
 describe("Handles", () => {
@@ -25,6 +27,9 @@ describe("Handles", () => {
 			assert(!isFluidHandle({ IFluidHandle: 5 }));
 			assert(!isFluidHandle({ IFluidHandle: {} }));
 			assert(!isFluidHandle({ IFluidHandle: null }));
+
+			// Symbol based:
+			assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
 		});
 	});
 });

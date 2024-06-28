@@ -6,7 +6,13 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AzureClient } from "@fluidframework/azure-client";
 
-import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnerStatus } from "./interface.js";
+import {
+	IRunConfig,
+	IRunner,
+	IRunnerEvents,
+	IRunnerStatus,
+	RunnerStatus,
+} from "./interface.js";
 import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
@@ -22,8 +28,8 @@ export interface ICustomUserDetails {
 }
 
 export interface AzureClientRunnerConfig {
-	userId?: string;
-	userName?: string;
+	id?: string;
+	name?: string;
 }
 export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
@@ -67,8 +73,8 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 				eventMap,
 			));
 		const ac = await createAzureClient({
-			userId: runConfig.userId ?? "testUserId",
-			userName: runConfig.userName ?? "testUserId",
+			id: runConfig.id ?? "testUserId",
+			name: runConfig.name ?? "testUserId",
 			logger,
 		});
 		return ac;

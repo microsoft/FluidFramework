@@ -1,6 +1,6 @@
 {
 	"name": "tinylicious",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Tiny, test implementation of the routerlicious reference service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -65,16 +65,16 @@
 		"lodash": "^4.17.21",
 		"morgan": "^1.8.1",
 		"nconf": "^0.12.0",
-		"socket.io": "^4.6.2",
+		"socket.io": "^4.7.5",
 		"split": "^1.0.0",
 		"uuid": "^9.0.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",
 		"@types/cors": "^2.8.4",
@@ -101,7 +101,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-node": "^8.6.2",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"engines": {
 		"node": ">=14.0.0"

@@ -22,13 +22,20 @@ import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
-const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
+interface ILoaderOptionsExperimental extends ILoaderOptions {
+	enableOfflineSnapshotRefresh?: boolean;
+	snapshotRefreshTimeoutMs?: number;
+}
+
+const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	cache: booleanCases,
 	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
 	enableOfflineLoad: booleanCases,
+	enableOfflineSnapshotRefresh: booleanCases,
+	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
 };
 
 export function applyOverrides<T extends Record<string, any>>(
@@ -57,17 +64,15 @@ export function applyOverrides<T extends Record<string, any>>(
 
 export const generateLoaderOptions = (
 	seed: number,
-	overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined,
-): ILoaderOptions[] => {
-	return generatePairwiseOptions<ILoaderOptions>(
+	overrides: Partial<OptionsMatrix<ILoaderOptionsExperimental>> | undefined,
+): ILoaderOptionsExperimental[] => {
+	return generatePairwiseOptions<ILoaderOptionsExperimental>(
 		applyOverrides(loaderOptionsMatrix, overrides),
 		seed,
 	);
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-	disableGC: booleanCases,
-	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
 	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
 	enableGCSweep: [undefined], // Don't need coverage here, GC sweep is tested separately

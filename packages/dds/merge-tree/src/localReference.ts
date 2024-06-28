@@ -17,6 +17,7 @@ import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js"
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @legacy
  * @alpha
  */
 export const SlidingPreference = {
@@ -33,6 +34,7 @@ export const SlidingPreference = {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @legacy
  * @alpha
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
@@ -56,6 +58,7 @@ function _validateReferenceType(refType: ReferenceType): void {
 }
 /**
  * @sealed
+ * @legacy
  * @alpha
  */
 export interface LocalReferencePosition extends ReferencePosition {
@@ -154,9 +157,10 @@ class LocalReference implements LocalReferencePosition {
  * @internal
  */
 export function createDetachedLocalReferencePosition(
+	slidingPreference: SlidingPreference | undefined,
 	refType?: ReferenceType,
 ): LocalReferencePosition {
-	return new LocalReference(refType, undefined);
+	return new LocalReference(refType, undefined, slidingPreference);
 }
 
 interface IRefsAtOffset {
@@ -218,6 +222,7 @@ export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection)
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
  * @sealed
  *
+ * @legacy
  * @alpha
  */
 export class LocalReferenceCollection {
@@ -401,11 +406,7 @@ export class LocalReferenceCollection {
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
-			lref.link(
-				this.segment,
-				lref.getOffset() + this.refsByOffset.length,
-				lref.getListNode(),
-			);
+			lref.link(this.segment, lref.getOffset() + this.refsByOffset.length, lref.getListNode());
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);

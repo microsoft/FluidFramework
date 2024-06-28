@@ -3,36 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { TreeValue } from "../../core/index.js";
-import { SchemaFactory, TreeNode } from "../../simple-tree/index.js";
+import type { TreeValue } from "../../core/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 import {
-	InsertableTreeFieldFromImplicitField,
-	InsertableTypedNode,
-	NodeBuilderData,
-	NodeFromSchema,
-	TreeFieldFromImplicitField,
-	TreeLeafValue,
-	TreeNodeFromImplicitAllowedTypes,
+	type InsertableTreeFieldFromImplicitField,
+	type InsertableTypedNode,
+	type NodeBuilderData,
+	type NodeFromSchema,
+	type TreeFieldFromImplicitField,
+	type TreeLeafValue,
+	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
+	type TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import type {
+	areSafelyAssignable,
+	requireAssignableTo,
+	requireTrue,
+} from "../../util/index.js";
 
 const schema = new SchemaFactory("com.example");
 
 const factory = new TreeFactory({});
 
 describe("schemaTypes", () => {
-	it("TreeNode", () => {
-		// @ts-expect-error TreeNode should not allow non-node objects.
-		const n: TreeNode = {};
-	});
-
 	describe("insertable", () => {
 		it("Lists", () => {
 			const List = schema.array(schema.number);
@@ -189,9 +189,8 @@ describe("schemaTypes", () => {
 		it("Normalization fails when a referenced schema has not yet been instantiated", () => {
 			const schemaFactory = new SchemaFactory("test");
 
-			let Bar: any;
+			let Bar: TreeNodeSchema;
 			class Foo extends schemaFactory.objectRecursive("Foo", {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				x: () => Bar,
 			}) {}
 

@@ -4,30 +4,29 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
-	RevisionTag,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type GraphCommit,
+	type RevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	mintCommit,
 	rebaseChange,
+	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import {
-	Mutable,
-	RecursiveReadonly,
-	brand,
-	fail,
-	getOrCreate,
-	mapIterable,
-} from "../util/index.js";
+import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
-import { SharedTreeBranch, getChangeReplaceType, onForkTransitive } from "./branch.js";
 import {
+	SharedTreeBranch,
+	type BranchTrimmingEvents,
+	getChangeReplaceType,
+	onForkTransitive,
+} from "./branch.js";
+import type {
 	Commit,
 	SeqNumber,
 	SequenceId,
@@ -41,11 +40,22 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
+import { createEmitter } from "../events/index.js";
+import {
+	TelemetryEventBatcher,
+	measure,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
+
+/**
+ * Max number of telemetry log call that may be aggregated before being sent.
+ */
+const maxRebaseStatsAggregationCount = 1000;
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
@@ -57,6 +67,8 @@ export class EditManager<
 	TChangeset,
 	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
 > {
+	private readonly _events = createEmitter<BranchTrimmingEvents>();
+
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -82,7 +94,6 @@ export class EditManager<
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	// TODO:#4593: Add test to ensure that peer branches are never initialized with a repairDataStoreProvider
 	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
 		new Map();
 
@@ -94,6 +105,9 @@ export class EditManager<
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence id of a commit on
 	 * the trunk, and the value is the set of all branches who have that commit as their common ancestor with the trunk.
+	 *
+	 * @remarks
+	 * This does not include the local branch.
 	 */
 	private readonly trunkBranches = new BTree<
 		SequenceId,
@@ -122,6 +136,10 @@ export class EditManager<
 	 */
 	private readonly localCommits: GraphCommit<TChangeset>[] = [];
 
+	private readonly telemetryEventBatcher:
+		| TelemetryEventBatcher<keyof RebaseStatsWithDuration>
+		| undefined;
+
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
@@ -130,17 +148,38 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
+		logger?: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
 			revision: "root",
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, mintRevisionTag);
+
+		if (logger !== undefined) {
+			this.telemetryEventBatcher = new TelemetryEventBatcher(
+				{
+					eventName: "rebaseProcessing",
+					category: "performance",
+				},
+				logger,
+				maxRebaseStatsAggregationCount,
+			);
+		}
+
+		this.trunk = new SharedTreeBranch(
+			this.trunkBase,
+			changeFamily,
+			mintRevisionTag,
+			this._events,
+			this.telemetryEventBatcher,
+		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
+			this._events,
+			this.telemetryEventBatcher,
 		);
 
 		this.localBranch.on("afterChange", (event) => {
@@ -318,6 +357,11 @@ export class EditManager<
 			const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
 			// The metadata for new trunk base revision needs to be deleted before modifying it.
 			this.trunkMetadata.delete(newTrunkBase.revision);
+			// collect the revisions that will be trimmed to send as part of the branch trimmed event
+			const trimmedRevisions: RevisionTag[] = getPathFromBase(
+				newTrunkBase,
+				this.trunkBase,
+			).map((c) => c.revision);
 			// Copying the revision of the old trunk base into the new trunk base means we don't need to write out the original
 			// revision to summaries. All clients agree that the trunk base always has the same hardcoded revision.
 			newTrunkBase.revision = this.trunkBase.revision;
@@ -356,6 +400,8 @@ export class EditManager<
 				this.trunkMetadata.size === trunkSize,
 				0x745 /* The size of the trunkMetadata must be the same as the trunk */,
 			);
+
+			this._events.emit("ancestryTrimmed", trimmedRevisions);
 		}
 	}
 
@@ -393,20 +439,22 @@ export class EditManager<
 		oldestCommitInCollabWindow =
 			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
 
-		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map((c) => {
-			const metadata =
-				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
-			const commit: SequencedCommit<TChangeset> = {
-				change: c.change,
-				revision: c.revision,
-				sequenceNumber: metadata.sequenceId.sequenceNumber,
-				sessionId: metadata.sessionId,
-			};
-			if (metadata.sequenceId.indexInBatch !== undefined) {
-				commit.indexInBatch = metadata.sequenceId.indexInBatch;
-			}
-			return commit;
-		});
+		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
+			(c) => {
+				const metadata =
+					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
+				const commit: SequencedCommit<TChangeset> = {
+					change: c.change,
+					revision: c.revision,
+					sequenceNumber: metadata.sequenceId.sequenceNumber,
+					sessionId: metadata.sessionId,
+				};
+				if (metadata.sequenceId.indexInBatch !== undefined) {
+					commit.indexInBatch = metadata.sequenceId.indexInBatch;
+				}
+				return commit;
+			},
+		);
 
 		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
@@ -450,11 +498,11 @@ export class EditManager<
 					c.indexInBatch === undefined
 						? {
 								sequenceNumber: c.sequenceNumber,
-						  }
+							}
 						: {
 								sequenceNumber: c.sequenceNumber,
 								indexInBatch: c.indexInBatch,
-						  };
+							};
 				const commit = mintCommit(base, c);
 				this.sequenceMap.set(sequenceId, commit);
 				this.trunkMetadata.set(c.revision, {
@@ -488,11 +536,11 @@ export class EditManager<
 		return this.trunkMetadata.get(commit.revision)?.sequenceId ?? minimumPossibleSequenceId;
 	}
 
-	public getTrunkChanges(): readonly RecursiveReadonly<TChangeset>[] {
+	public getTrunkChanges(): readonly TChangeset[] {
 		return this.getTrunkCommits().map((c) => c.change);
 	}
 
-	public getTrunkCommits(): readonly RecursiveReadonly<GraphCommit<TChangeset>>[] {
+	public getTrunkCommits(): readonly GraphCommit<TChangeset>[] {
 		return getPathFromBase(this.trunk.getHead(), this.trunkBase);
 	}
 
@@ -500,11 +548,11 @@ export class EditManager<
 		return this.trunk.getHead();
 	}
 
-	public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
+	public getLocalChanges(): readonly TChangeset[] {
 		return this.getLocalCommits().map((c) => c.change);
 	}
 
-	public getLocalCommits(): readonly RecursiveReadonly<GraphCommit<TChangeset>>[] {
+	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
 		return this.localCommits;
 	}
 
@@ -542,11 +590,11 @@ export class EditManager<
 			commitsSequenceNumber.length === 0
 				? {
 						sequenceNumber,
-				  }
+					}
 				: {
 						sequenceNumber,
 						indexInBatch: commitsSequenceNumber.length,
-				  };
+					};
 
 		if (newCommit.sessionId === this.localSessionId) {
 			const headTrunkCommit = this.trunk.getHead();
@@ -569,8 +617,7 @@ export class EditManager<
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			newCommit.sessionId,
-			() =>
-				new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 
@@ -580,18 +627,25 @@ export class EditManager<
 			peerLocalBranch.setHead(this.trunk.getHead());
 		} else {
 			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
-			const newChangeFullyRebased = rebaseChange(
-				this.changeFamily.rebaser,
-				newCommit.change,
-				peerLocalBranch.getHead(),
-				this.trunk.getHead(),
-				this.mintRevisionTag,
+			const { duration, output: newChangeFullyRebased } = measure(() =>
+				rebaseChange(
+					this.changeFamily.rebaser,
+					newCommit,
+					peerLocalBranch.getHead(),
+					this.trunk.getHead(),
+					this.mintRevisionTag,
+				),
 			);
+
+			this.telemetryEventBatcher?.accumulateAndLog({
+				duration,
+				...newChangeFullyRebased.telemetryProperties,
+			});
 
 			peerLocalBranch.apply(newCommit.change, newCommit.revision);
 			this.pushCommitToTrunk(sequenceId, {
 				...newCommit,
-				change: newChangeFullyRebased,
+				change: newChangeFullyRebased.change,
 			});
 		}
 
@@ -649,7 +703,7 @@ export class EditManager<
 						// 2) There are more than one commit for the same sequence number, in this case we need to select the last one.
 						sequenceNumber: searchBy,
 						indexInBatch: Number.POSITIVE_INFINITY,
-				  }
+					}
 				: searchBy;
 
 		const commit = this.sequenceMap.getPairOrNextLower(sequenceId);

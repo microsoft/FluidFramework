@@ -9,16 +9,18 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,
 	IClientDetails,
-	IDocumentMessage,
 	IQuorumClients,
-	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions";
+import type {
+	IResolvedUrl,
+	IDocumentMessage,
 	ISequencedProposal,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";
@@ -33,6 +35,7 @@ import type { AttachState } from "./runtime.js";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
+ * @legacy
  * @alpha
  */
 export interface IFluidModuleWithDetails {
@@ -53,6 +56,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
+ * @legacy
  * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
@@ -101,6 +105,7 @@ export interface IFluidCodeResolver {
 
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
+ * @legacy
  * @alpha
  */
 export interface IContainerEvents extends IEvent {
@@ -312,6 +317,7 @@ export type ConnectionState =
 
 /**
  * The Host's view of a Container and its connection to storage
+ * @legacy
  * @alpha
  */
 export interface IContainer extends IEventProvider<IContainerEvents> {
@@ -523,6 +529,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
+ * @legacy
  * @alpha
  */
 export interface ILoader extends Partial<IProvideLoader> {
@@ -540,6 +547,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
+ * @legacy
  * @alpha
  */
 export interface IHostLoader extends ILoader {
@@ -570,6 +578,7 @@ export interface IHostLoader extends ILoader {
 
 /**
  * Options to configure various behaviors of the ILoader.
+ * @legacy
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -612,6 +621,7 @@ export type ILoaderOptions = {
 
 /**
  * Accepted header keys for requests coming to the Loader
+ * @legacy
  * @alpha
  */
 export enum LoaderHeader {
@@ -644,19 +654,15 @@ export enum LoaderHeader {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
 	 * No trailing ops are applied before container is returned.
 	 * Default value.
 	 */
-	| undefined
-		/*
-		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
-		 * Requires `ILoaderHeader["fluid-sequence-number"]` to also be defined.
-		 */
-		| "sequenceNumber"
+		| undefined
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.
@@ -669,6 +675,8 @@ export interface IContainerLoadMode {
 		 * This mode might have significant impact on boot speed (depends on storage perf characteristics)
 		 * Also there might be a lot of trailing ops and applying them might take time, so hosts are
 		 * recommended to have some progress UX / cancellation built into loading flow when using this option.
+		 * WARNING: This is the only option that may result in unbound wait. If machine is offline or hits some other
+		 * errors (like 429s), it may get into inifinite retry loop, with no ability to observe or cancel that process.
 		 */
 		| "all";
 
@@ -676,7 +684,7 @@ export interface IContainerLoadMode {
 	 * Connection to delta stream is made only when Container.connect() call is made. Op processing
 	 * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
 	 */
-	| "none"
+		| "none"
 		/*
 		 * Connection to delta stream is made only when Container.connect() call is made.
 		 * Op fetching from storage is performed and ops are applied as they come in.
@@ -690,11 +698,6 @@ export interface IContainerLoadMode {
 		 * Default value.
 		 */
 		| undefined;
-
-	/**
-	 * If set to true, will indefinitely pause all incoming and outgoing after the container is loaded.
-	 */
-	pauseAfterLoad?: boolean;
 }
 
 /**
@@ -708,16 +711,12 @@ export interface ILoaderHeader {
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
-	/**
-	 * Loads the container to at least the specified sequence number.
-	 * If not defined, behavior will fall back to `IContainerLoadMode.opsBeforeReturn`.
-	 */
-	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.version]: string | undefined;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideLoader {
@@ -729,6 +728,7 @@ export interface IProvideLoader {
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
+ * @legacy
  * @alpha
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {

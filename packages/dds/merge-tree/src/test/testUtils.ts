@@ -242,7 +242,11 @@ export function validatePartialLengths(
 	mergeBlock: MergeBlock = mergeTree.root,
 ): void {
 	mergeTree.computeLocalPartials(0);
-	for (let i = mergeTree.collabWindow.minSeq + 1; i <= mergeTree.collabWindow.currentSeq; i++) {
+	for (
+		let i = mergeTree.collabWindow.minSeq + 1;
+		i <= mergeTree.collabWindow.currentSeq;
+		i++
+	) {
 		const { partialLen, actualLen } = getPartialLengths(
 			clientId,
 			i,
