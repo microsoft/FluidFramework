@@ -9,8 +9,6 @@ export { EventEmitter }
 // @alpha
 export type EventEmitterEventType = string;
 
-export { performance_2 as performance }
-
 // @alpha
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
     constructor();

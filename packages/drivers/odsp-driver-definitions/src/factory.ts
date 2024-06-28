@@ -4,6 +4,7 @@
  */
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISnapshotOptions {
@@ -29,6 +30,7 @@ export interface ISnapshotOptions {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOpsCachingPolicy {
@@ -60,6 +62,7 @@ export interface IOpsCachingPolicy {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICollabSessionOptions {
@@ -82,6 +85,7 @@ export interface ICollabSessionOptions {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface HostStoragePolicy {

@@ -8,6 +8,7 @@ import { DoublyLinkedList, walkList } from "./collections/index.js";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export class SegmentGroupCollection {
