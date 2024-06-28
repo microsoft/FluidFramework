@@ -106,6 +106,7 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
+ * @legacy
  * @alpha
  */
 export interface IClientEvents {
@@ -130,6 +131,7 @@ export interface IClientEvents {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export class Client extends TypedEventEmitter<IClientEvents> {

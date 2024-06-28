@@ -60,7 +60,7 @@ const schema = {
 	],
 };
 const tinyliciousClient = new TinyliciousClient();
-const { container, services } = await tinyliciousClient.createContainer(schema);
+const { container, services } = await tinyliciousClient.createContainer(schema, "2" /* compatibilityMode */);
 
 // Set any default data on the container's `initialObjects` before attaching
 // Returned ID can be used to fetch the container via `getContainer` below
@@ -75,7 +75,7 @@ Using the default `TinyliciousClient` object the developer can create and get Fl
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const tinyliciousClient = new TinyliciousClient(props);
-const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
 ```
 
 ## Using initial objects
@@ -94,7 +94,7 @@ const schema = {
 	},
 };
 const tinyliciousClient = new TinyliciousClient();
-const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
 
 const initialObjects = container.initialObjects;
 const map1 = initialObjects.map1;
@@ -117,7 +117,7 @@ const schema = {
 	dynamicObjectTypes: [SharedString],
 };
 const tinyliciousClient = new TinyliciousClient();
-const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema, "2" /* compatibilityMode */);
 const map1 = container.initialObjects.map1;
 
 const newText = await container.create(SharedString);

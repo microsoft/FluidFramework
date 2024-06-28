@@ -10,13 +10,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle as _dummyImport } from "@fluidframework/core-interfaces";
 
 import type { TreeValue } from "../core/index.js";
-import {
-	type FlexTreeNode,
-	type NodeKeyManager,
-	type Unenforced,
-	isFlexTreeNode,
-	isLazy,
-} from "../feature-libraries/index.js";
+import { type NodeKeyManager, type Unenforced, isLazy } from "../feature-libraries/index.js";
 import {
 	type RestrictiveReadonlyRecord,
 	getOrCreate,
@@ -641,26 +635,12 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends Unenforced<ImplicitAllowedTypes>,
 	>(name: Name, allowedTypes: T) {
-		class RecursiveArray extends this.namedArray(
+		const RecursiveArray = this.namedArray(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-		) {
-			public constructor(
-				data:
-					| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>>
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					// TODO: use something other than `any`
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					super(data as any);
-				} else {
-					super(data);
-				}
-			}
-		}
+		);
 
 		return RecursiveArray as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
@@ -697,28 +677,12 @@ export class SchemaFactory<
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.namedMap(
+		const MapSchema = this.namedMap(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
 			false,
-		) {
-			public constructor(
-				data:
-					| Iterable<
-							[string, InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>]
-					  >
-					| FlexTreeNode,
-			) {
-				if (isFlexTreeNode(data)) {
-					// TODO: use something other than `any`
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					super(data as any);
-				} else {
-					super(new Map(data));
-				}
-			}
-		}
+		);
 
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,

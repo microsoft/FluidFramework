@@ -62,6 +62,7 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Enum to support different types of snapshot formats.
+ * @legacy
  * @alpha
  */
 export enum SnapshotFormatSupportType {

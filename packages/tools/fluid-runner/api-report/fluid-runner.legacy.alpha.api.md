@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 // @alpha (undocumented)
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 

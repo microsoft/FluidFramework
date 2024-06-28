@@ -55,7 +55,7 @@
 		"unsequenced",
 	],
 
-	// Enable prettier as default formatter, and disable rules that disagree with it
+	// Enable biome as default formatter, and disable rules that disagree with it
 	"editor.defaultFormatter": "biomejs.biome",
 	"editor.insertSpaces": false,
 	// Also configure the formatter on a per-language basis for some common languages/file-types, to make sure it is applied
