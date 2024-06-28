@@ -291,6 +291,7 @@ function includeTransform(content, options, config) {
  * Default: `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
  * If specified, assumes the default export paths (`/alpha`, `/beta`, `/legacy`).
+ * If a different exports configuration is used, the `README_IMPORT_INSTRUCTIONS` transform can be leveraged directly.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
  * Default: `TRUE`.
