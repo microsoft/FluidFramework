@@ -14,7 +14,6 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
       --dump:snapshotVersion          : dump a list of snapshot version
       --dump:snapshotTree             : dump the snapshot trees
       --dump:snapshotBlob             : dump the contents of snapshot blobs
-      --forceRefreshToken             : Force refresh token (SPO only)
       --stat:message                  : show a table of message type counts and size
       --stat:snapshot                 : show a table of snapshot path and blob size
       --stat:dataType                 : show a table of data type

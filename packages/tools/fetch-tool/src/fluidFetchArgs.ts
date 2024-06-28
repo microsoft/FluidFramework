@@ -15,15 +15,6 @@ export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 export let paramActualFormatting = false;
 
-let paramForceTokenReauth = false;
-
-// Only return true once, to reauth on first call.
-export function getForceTokenReauth() {
-	const result = paramForceTokenReauth;
-	paramForceTokenReauth = false;
-	return result;
-}
-
 export let paramSaveDir: string | undefined;
 export const messageTypeFilter = new Set<string>();
 
@@ -38,7 +29,6 @@ const optionsArray = [
 	["--dump:rawmessage", "dump all messages"],
 	["--dump:snapshotVersion", "dump a list of snapshot version"],
 	["--dump:snapshotTree", "dump the snapshot trees"],
-	["--forceTokenReauth", "Force reauthorize token (SPO only)"],
 	["--stat:message", "show message type, channel type, data type statistics"],
 	["--stat:snapshot", "show a table of snapshot path and blob size"],
 	["--stat", "Show both messages & snapshot stats"],
@@ -119,9 +109,6 @@ export function parseArguments() {
 				process.exit(0);
 			case "--jwt":
 				paramJWT = parseStrArg(i++, "jwt token");
-				break;
-			case "--forceTokenReauth":
-				paramForceTokenReauth = true;
 				break;
 			case "--snapshotVersionIndex":
 				paramSnapshotVersionIndex = parseIntArg(i++, "version index", true);

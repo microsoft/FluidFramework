@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import child_process from "child_process";
-
+import { InteractiveBrowserCredential, useIdentityPlugin } from "@azure/identity";
+import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,
@@ -13,17 +13,19 @@ import {
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	getOdspRefreshTokenFn,
+	// getOdspRefreshTokenFn,
+	getOdspScope,
+	getAadTenant,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	IOdspTokenManagerCacheKey,
-	OdspTokenConfig,
-	OdspTokenManager,
+	// OdspTokenConfig,
+	// OdspTokenManager,
 	getMicrosoftConfiguration,
-	odspTokensCache,
+	loadRC,
+	saveRC,
 } from "@fluidframework/tool-utils/internal";
 
-import { getForceTokenReauth } from "./fluidFetchArgs.js";
+useIdentityPlugin(cachePersistencePlugin);
 
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,
@@ -33,33 +35,52 @@ export async function resolveWrapper<T>(
 	forToken = false,
 ): Promise<T> {
 	try {
-		const odspTokenManager = new OdspTokenManager(odspTokensCache);
-		const tokenConfig: OdspTokenConfig = {
-			type: "browserLogin",
-			navigator: fluidFetchWebNavigator,
-		};
-		const tokens = await odspTokenManager.getOdspTokens(
-			server,
-			clientConfig,
-			tokenConfig,
-			undefined /* forceRefresh */,
-			forceTokenReauth || getForceTokenReauth(),
-		);
-
-		const result = await callback({
-			accessToken: tokens.accessToken,
-			refreshTokenFn: getOdspRefreshTokenFn(server, clientConfig, tokens),
+		const rc = await loadRC();
+		console.log((rc as any).mruAuthRecord);
+		const credential = new InteractiveBrowserCredential({
+			clientId: process.env.login__microsoft__clientId,
+			tenantId: getAadTenant(server),
+			disableAutomaticAuthentication: true,
+			tokenCachePersistenceOptions: {
+				enabled: true,
+				// TODO: check if we're getting caching in e2e test / stress flows.
+				// Also, now that we're providing a name here we can probably drop the complexity
+				// around authenticationRecord, as generally people will only use a single account.
+				// Should also consider making --loginHint specifiable via CLI...
+				name: "fetch-tool",
+			},
+			authenticationRecord: (rc as any).mruAuthRecord,
 		});
-		// If this is used for getting a token, then refresh the cache with new token.
-		if (forToken) {
-			const key: IOdspTokenManagerCacheKey = { isPush: false, userOrServer: server };
-			await odspTokenManager.updateTokensCache(key, {
-				accessToken: result as any as string,
-				refreshToken: tokens.refreshToken,
-			});
-			return result;
-		}
-		return result;
+
+		const scope = getOdspScope(server);
+		const authRecord = await credential.authenticate(scope);
+
+		await saveRC({ ...rc, mruAuthRecord: authRecord });
+
+		// const odspTokenManager = new OdspTokenManager();
+		// const tokenConfig: OdspTokenConfig = {
+		// 	type: "browserLogin",
+		// 	navigator: fluidFetchWebNavigator,
+		// };
+
+		const { token } = await credential.getToken(scope);
+
+		// const tokens = await odspTokenManager.getOdspTokens(
+		// 	server,
+		// 	clientConfig,
+		// 	tokenConfig,
+		// 	undefined /* forceRefresh */,
+		// 	forceTokenReauth,
+		// );
+
+		return await callback({
+			accessToken: token,
+			refreshTokenFn: async () => {
+				await credential.authenticate(scope);
+				const { token } = await credential.getToken(scope);
+				return token;
+			},
+		});
 	} catch (e: any) {
 		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
@@ -149,13 +170,3 @@ export async function getSingleSharePointFile(server: string, drive: string, ite
 		clientConfig,
 	);
 }
-
-const fluidFetchWebNavigator = (url: string) => {
-	let message = "Please open browser and navigate to this URL:";
-	if (process.platform === "win32") {
-		child_process.exec(`start "fluid-fetch" /B "${url}"`);
-		message =
-			"Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
-	}
-	console.log(`${message}\n  ${url}`);
-};
