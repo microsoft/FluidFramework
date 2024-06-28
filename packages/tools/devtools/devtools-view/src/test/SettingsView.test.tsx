@@ -8,7 +8,6 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { debug } from "jest-preview";
 import React from "react";
 
 import { SettingsView } from "../components/index.js";
@@ -37,6 +36,8 @@ describe("SettingsView Accessibility Check", () => {
 		const usageToggle = screen.getByRole("switch", { name: /Usage Telemetry Toggle/ });
 		await user.tab();
 		expect(usageToggle).toHaveFocus();
-		debug();
+		// The usage toggle is a switch and can be toggled by pressing the space bar
+		await user.keyboard(" ");
+		expect(usageToggle).toBeChecked();
 	});
 });

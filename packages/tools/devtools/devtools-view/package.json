@@ -77,7 +77,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axe-core": "^4.9.1",
-		"jest-preview": "^0.3.1",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"react-split-pane": "^0.1.92",
