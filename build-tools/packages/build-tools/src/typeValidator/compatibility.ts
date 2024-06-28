@@ -11,7 +11,7 @@
  * To use, simply define a type:
  * `type _check = requireAssignableTo<T, Expected>;`
  */
-type requireAssignableTo<_A extends B, B> = true;
+export type requireAssignableTo<_A extends B, B> = true;
 
 /*
  * Type meta-functions which take in a type and remove some of its type information to get structural typing.
