@@ -289,10 +289,10 @@ function includeTransform(content, options, config) {
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
  * Default: `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
- * If specified, assumes the default export paths (`/alpha`, `/beta`, `/legacy`).
- * If a different exports configuration is used, the `README_IMPORT_INSTRUCTIONS` transform can be leveraged directly.
- * Default: `TRUE`.
+ * @param {"FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
+ * Default: Checks at the `package.json` file for an `exports` property.
+ * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
+ * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
@@ -331,15 +331,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 	}
 
 	if (options.importInstructions !== "FALSE") {
-		sections.push(
-			generatePackageImportInstructionsSection(
-				packageName,
-				/* includeHeading: */ true,
-				/* hasAlphaExport: */ true,
-				/* hasBetaExport: */ true,
-				/* hasLegacyExport: */ true,
-			),
-		);
+		sections.push(generatePackageImportInstructionsSection(packageMetadata, true));
 	}
 
 	if (options.apiDocs !== "FALSE") {
@@ -509,7 +501,7 @@ function readmePackageScopeNoticeTransform(content, options, config) {
 	);
 	const packageName = packageMetadata.name;
 
-	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
 	if (scopeKindWithInheritance !== undefined) {
 		return generatePackageScopeNotice(scopeKindWithInheritance);

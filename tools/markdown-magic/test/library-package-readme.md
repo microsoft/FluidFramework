@@ -29,8 +29,6 @@ For more information on the related support guarantees, see [API Support Levels]
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import directly from the root of the package as normal.
 
-To access the `beta` APIs, import via `@test/test-package/beta`.
-
 To access the `alpha` APIs, import via `@test/test-package/alpha`.
 
 To access the `legacy` APIs, import via `@test/test-package/legacy`.
