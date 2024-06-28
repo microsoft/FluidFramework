@@ -208,6 +208,7 @@ export class PendingStateManager implements IDisposable {
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
+		//* OPEN QUESTION
 		//* Ops shouldn't be sent when disconnected, apart when disconnecting races flush
 		//* TODO: Deal with ops sent before first connection, if that's possible...?
 		const clientId = this.stateHandler.clientId();
@@ -293,7 +294,7 @@ export class PendingStateManager implements IDisposable {
 			const incomingEffectiveBatchId =
 				message.metadata.batchId !== "-"
 					? message.metadata.batchId
-					: //* TODO: Is this the correct way to fallback here?
+					: //* TODO: Is this the correct way to fallback here? ...No it's not! Grouped batching will drop the proper CSN
 					  JSON.stringify([message.clientId, message.clientSequenceNumber]);
 
 			return pendingEffectiveBatchId === incomingEffectiveBatchId;
@@ -343,7 +344,7 @@ export class PendingStateManager implements IDisposable {
 
 		const messageContent = buildPendingMessageContent(message);
 
-		//* TODO: Can we switch back to comparing CSN...?
+		//* TODO: Can we switch back to comparing CSN...?  Only once we get the "real" CSN not grouped batching's fake CSN
 		// Stringified content should match
 		if (
 			(!skipBatchIdCheck && pendingEffectiveBatchId !== incomingEffectiveBatchId) || //* If we are awaiting the start of a batch, the batchId should match
@@ -392,7 +393,7 @@ export class PendingStateManager implements IDisposable {
 			this.pendingBatchBeginMessage = message;
 			this.processingBatchId = batchId;
 
-			//* TODO: Is this the correct way to compute this?
+			//* TODO: Is this the correct way to compute this? ...No it's not! Grouped batching will drop the proper CSN
 			this.incomingComputedBatchId = JSON.stringify([
 				message.clientId,
 				message.clientSequenceNumber,
@@ -565,6 +566,7 @@ export class PendingStateManager implements IDisposable {
 				});
 				this.stateHandler.reSubmitBatch(batch, batchId);
 			} else {
+				//* OPEN QUESTION - Is this unreachable code?
 				//* TODO: When is this case hit??  It will be vulnerable to op duplication if the container forks
 				this.stateHandler.reSubmit({
 					content: pendingMessage.content,

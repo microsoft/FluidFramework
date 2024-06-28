@@ -303,7 +303,7 @@ describe("Runtime", () => {
 								}
 							},
 							updateDirtyContainerState: (_dirty: boolean) => {},
-							//* TODO: Replace with submitBatchFn
+							//* FUTURE: Replace with submitBatchFn
 							submitFn: (
 								_type: MessageType,
 								contents: any,
@@ -1692,6 +1692,7 @@ describe("Runtime", () => {
 				);
 			});
 
+			//* OPEN QUESTION
 			//* Need to see why we hit "Local message should have matching refSeq" - I'm guessing it's due to test hackery not a real issue
 			it.skip("summary passes if pending ops are processed during pending op processing timeout", async () => {
 				// Create a container runtime type where the submit method is public. This makes it easier to test

@@ -257,7 +257,7 @@ export class Outbox {
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
 			// and eventual consistency at the DDS level.
 			this.rebase(rawBatch, batchManager);
-			//* TODO: Anything to do for rebase?
+			//* OPEN QUESTION: Anything to do for rebase?
 			return;
 		}
 

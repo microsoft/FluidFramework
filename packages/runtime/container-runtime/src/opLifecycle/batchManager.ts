@@ -143,6 +143,7 @@ function newBatchId(useUuid: boolean) {
 const addBatchMetadata = (batch: Omit<IBatch, "batchId">, existingBatchId?: string): IBatch => {
 	assert(batch.content.length > 0, "Batch must have at least one op");
 
+	//* OPEN QUESTION -- I don't think we need the "-" value because there are no non-batched messages
 	//* Use this placeholder value to make batchId always defined on a batch
 	//* Otherwise it's impossible to distinguish between single op batch and a non-batched message
 	//* NOTE: Do we need to make that distinction...? I don't think there are any non-batched messagse.
