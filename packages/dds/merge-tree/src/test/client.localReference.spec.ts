@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -698,6 +699,8 @@ describe("MergeTree.Client", () => {
 
 				segInfo.segment.localRefs.removeLocalRef(localRef);
 				assert(segInfo.segment.localRefs.empty);
+				// Cast is necessary because LocalReference is not exported, so we can't directly call link
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(localRef as any).link(undefined, 0, undefined);
 				assert(segInfo.segment.localRefs.empty);
 
@@ -739,7 +742,8 @@ describe("MergeTree.Client", () => {
 
 				assert(segInfo.segment.localRefs);
 				assert(!segInfo.segment.localRefs.empty);
-
+				// Cast is necessary because LocalReference is not exported, so we can't directly call link
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(localRef as any).link(undefined, 0, undefined);
 				assert(segInfo.segment.localRefs.empty);
 				segInfo.segment.localRefs.removeLocalRef(localRef);

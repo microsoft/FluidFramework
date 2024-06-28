@@ -4,9 +4,7 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import {
-	AttributionKey,
-} from "@fluidframework/runtime-definitions/internal";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	IAttributionCollection,

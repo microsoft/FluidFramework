@@ -1419,7 +1419,7 @@ export type DocumentNode = string | DocumentTree;
  */
 export class DocumentTree {
 	pos = 0;
-	ids = { box: 0, row: 0 };
+	ids: Record<string, number> = { box: 0, row: 0 };
 	id: string | undefined;
 	static randPack = new RandomPack();
 

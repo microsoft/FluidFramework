@@ -1205,16 +1205,17 @@ export class MergeTree {
 					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
 
 					if (locallyMovedSegments) {
-						// locallyMovedSegments.segments.forEach((segment: ISegmentLeaf) => {
 						for (const segment of locallyMovedSegments.segments) {
-							segment.localMovedSeq = undefined;
+							// Cast is needed since parent was removed from ISegment
+							const segWithParent = segment as ISegmentLeaf;
+							segWithParent.localMovedSeq = undefined;
 
-							if (!nodesToUpdate.includes(segment.parent!)) {
-								nodesToUpdate.push(segment.parent!);
+							if (!nodesToUpdate.includes(segWithParent.parent!)) {
+								nodesToUpdate.push(segWithParent.parent!);
 							}
 
-							if (segment.movedSeq === UnassignedSequenceNumber) {
-								segment.movedSeq = seq;
+							if (segWithParent.movedSeq === UnassignedSequenceNumber) {
+								segWithParent.movedSeq = seq;
 							}
 						}
 
@@ -2166,33 +2167,37 @@ export class MergeTree {
 				throw new Error("Rollback op doesn't match last edit");
 			}
 			for (const segment of pendingSegmentGroup.segments) {
-				const segmentSegmentGroup = segment.segmentGroups?.pop?.();
+				// Cast is needed because parent was removed from ISegment
+				const segWithParent = segment as ISegmentLeaf;
+				const segmentSegmentGroup = segWithParent.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ee /* Unexpected segmentGroup in segment */,
 				);
 
 				assert(
-					segment.removedClientIds !== undefined &&
-						segment.removedClientIds[0] === this.collabWindow.clientId,
+					segWithParent.removedClientIds !== undefined &&
+						segWithParent.removedClientIds[0] === this.collabWindow.clientId,
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
-				segment.removedClientIds = undefined;
-				segment.removedSeq = undefined;
-				segment.localRemovedSeq = undefined;
+				segWithParent.removedClientIds = undefined;
+				segWithParent.removedSeq = undefined;
+				segWithParent.localRemovedSeq = undefined;
 
 				// Note: optional chaining short-circuits:
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
 				this.mergeTreeDeltaCallback?.(
-					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
+					{
+						op: createInsertSegmentOp(this.findRollbackPosition(segWithParent), segWithParent),
+					},
 					{
 						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment }],
+						deltaSegments: [{ segment: segWithParent }],
 					},
 				);
 
 				for (
-					let updateNode: MergeBlock = segment.parent;
+					let updateNode = segWithParent.parent;
 					updateNode !== undefined;
 					updateNode = updateNode.parent
 				) {
@@ -2396,7 +2401,8 @@ export class MergeTree {
 			}
 		}
 
-		const newOrder = affectedSegments.map(({ data }) => data);
+		// eslint-disable-next-line unicorn/no-useless-spread
+		const newOrder = [...affectedSegments.map(({ data }) => data)];
 		for (const seg of newOrder)
 			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref));
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();

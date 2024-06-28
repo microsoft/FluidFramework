@@ -4,7 +4,7 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
@@ -26,7 +26,8 @@ describe("MergeTree snapshots", () => {
 				summary = str.getSummary();
 			},
 			benchmarkFnAsync: async () => {
-				await loadSnapshot(summary);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				await loadSnapshot(summary!);
 			},
 			after: () => {
 				summary = undefined;

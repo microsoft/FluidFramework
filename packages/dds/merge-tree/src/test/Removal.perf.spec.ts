@@ -4,7 +4,7 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
 import { MergeTreeDeltaType } from "../ops.js";
 import {

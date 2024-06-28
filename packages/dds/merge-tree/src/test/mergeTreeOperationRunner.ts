@@ -139,20 +139,18 @@ export function resolveRange(
 	return results;
 }
 
-export function resolveRanges<T extends { [key: string]: IConfigRange }>(
+export function resolveRanges<T extends object>(
 	ranges: T,
 	defaultGrowthFunc: (input: number) => number,
 ): ResolvedRanges<T> {
-	return (
-		Object.entries(ranges)
-			.filter(([_, value]) => isConfigRange(value))
-			.map(([key, value]) => [key, resolveRange(value, defaultGrowthFunc)] as const)
-			// eslint-disable-next-line unicorn/no-array-reduce
-			.reduce((prev, [key, resolvedRange]) => {
-				prev[key] = resolvedRange;
-				return prev;
-			}, {}) as ResolvedRanges<T>
-	);
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const resolvedRanges: ResolvedRanges<T> = {} as ResolvedRanges<T>;
+	for (const [key, value] of Object.entries(ranges)) {
+		if (isConfigRange(value)) {
+			resolvedRanges[key] = resolveRange(value, defaultGrowthFunc);
+		}
+	}
+	return resolvedRanges;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,10 +181,12 @@ export function doOverRanges<T extends ProvidesGrowthFunc>(
 	ranges: T,
 	doAction: (selection: PickFromRanges<T>, description: string) => void,
 ): void {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const rangeEntries: [string, IConfigRange][] = Object.entries(ranges).filter(([_, value]) =>
-		isConfigRange(value),
-	);
+	const rangeEntries: [string, IConfigRange][] = [];
+	for (const [key, value] of Object.entries(ranges)) {
+		if (isConfigRange(value)) {
+			rangeEntries.push([key, value]);
+		}
+	}
 
 	const doOverRangesHelper = (selections: [string, number][]): void => {
 		if (selections.length === rangeEntries.length) {

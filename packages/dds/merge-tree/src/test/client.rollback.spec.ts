@@ -133,6 +133,7 @@ describe("client.rollback", () => {
 			foo: "bar",
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
+		// eslint-disable-next-line unicorn/no-null
 		client.annotateMarker(marker, { foo: null });
 		client.rollback?.(
 			{ type: MergeTreeDeltaType.ANNOTATE },
@@ -167,6 +168,7 @@ describe("client.rollback", () => {
 		client.annotateMarker(marker, {
 			[reservedMarkerIdKey]: "markerId",
 			abc: "def",
+			// eslint-disable-next-line unicorn/no-null
 			foo: null,
 		});
 		client.rollback?.(

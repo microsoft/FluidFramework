@@ -951,9 +951,10 @@ export function debugMarkerToString(marker: Marker): string {
 		pbuf += JSON.stringify(marker.properties, (key, value) => {
 			// Avoid circular reference when stringifying makers containing handles.
 			// (Substitute a debug string instead.)
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const handle = !!value && value.IFluidHandle;
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return handle ? `#Handle(${handle.routeContext.path}/${handle.path})` : value;
 		});
 	}

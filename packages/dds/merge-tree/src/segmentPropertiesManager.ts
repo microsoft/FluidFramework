@@ -39,19 +39,19 @@ export class PropertiesManager {
 		this.decrementPendingCounts(annotateOp.props);
 	}
 
-	private decrementPendingCounts(props: PropertySet) {
+	private decrementPendingCounts(props: PropertySet): void {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] !== undefined) {
-					assert(
-						this.pendingKeyUpdateCount[key] > 0,
-						0x05c /* "Trying to update more annotate props than do exist!" */,
-					);
-					this.pendingKeyUpdateCount[key]--;
-					if (this.pendingKeyUpdateCount?.[key] === 0) {
-						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-						delete this.pendingKeyUpdateCount[key];
-					}
+				assert(
+					this.pendingKeyUpdateCount[key] > 0,
+					0x05c /* "Trying to update more annotate props than do exist!" */,
+				);
+				this.pendingKeyUpdateCount[key]--;
+				if (this.pendingKeyUpdateCount?.[key] === 0) {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete this.pendingKeyUpdateCount[key];
 				}
+			}
 		}
 	}
 
@@ -107,6 +107,7 @@ export class PropertiesManager {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete oldProps[key];
 			} else {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				oldProps[key] = newValue;
 			}
 		}
@@ -139,9 +140,10 @@ export class PropertiesManager {
 	}
 
 	/**
+	 * Determines if all of the properties in a given property set are pending.
 	 * @returns whether all valid (i.e. defined) entries of the property bag are pending
 	 */
-	public hasPendingProperties(props: PropertySet) {
+	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] === undefined) {
 				return false;

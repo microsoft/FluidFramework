@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-useless-spread */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -89,7 +90,7 @@ describe("resetPendingSegmentsToOp", () => {
 				},
 			);
 			const oldops = opList;
-			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -100,7 +101,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment", async () => {
 			const oldops = opList;
-			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -129,19 +130,18 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push(
-				{
-					op: client.removeRangeLocal(0, client.getLength())!,
-					refSeq: client.getCurrentSeq(),
-				},
-				{
-					op: client.regeneratePendingOp(
-						opList.shift()!.op,
-						client.mergeTree.pendingSegments.first!.data,
-					),
-					refSeq: client.getCurrentSeq(),
-				},
-			);
+			opList.push({
+				op: client.removeRangeLocal(0, client.getLength())!,
+				refSeq: client.getCurrentSeq(),
+			});
+			// eslint-disable-next-line unicorn/no-array-push-push
+			opList.push({
+				op: client.regeneratePendingOp(
+					opList.shift()!.op,
+					client.mergeTree.pendingSegments.first!.data,
+				),
+				refSeq: client.getCurrentSeq(),
+			});
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -156,7 +156,7 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
-			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
@@ -185,19 +185,18 @@ describe("resetPendingSegmentsToOp", () => {
 			applyOpList(client);
 			assert(client.mergeTree.pendingSegments?.empty);
 
-			opList.push(
-				{
-					op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
-					refSeq: client.getCurrentSeq(),
-				},
-				{
-					op: client.regeneratePendingOp(
-						opList.shift()!.op,
-						client.mergeTree.pendingSegments.first!.data,
-					),
-					refSeq: client.getCurrentSeq(),
-				},
-			);
+			opList.push({
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
+				refSeq: client.getCurrentSeq(),
+			});
+			// eslint-disable-next-line unicorn/no-array-push-push
+			opList.push({
+				op: client.regeneratePendingOp(
+					opList.shift()!.op,
+					client.mergeTree.pendingSegments.first!.data,
+				),
+				refSeq: client.getCurrentSeq(),
+			});
 			// we expect a nack op per segment since our original ops split segments
 			// we should expect mores nack ops then original ops.
 			// only the first op didn't split a segment, all the others did
@@ -212,7 +211,7 @@ describe("resetPendingSegmentsToOp", () => {
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
-			const pending = client.mergeTree.pendingSegments.map((n) => n.data);
+			const pending = [...client.mergeTree.pendingSegments.map((n) => n.data)];
 			opList = oldops.map((op) => ({
 				op: client.regeneratePendingOp(op.op, pending.shift()!),
 				refSeq: client.getCurrentSeq(),
