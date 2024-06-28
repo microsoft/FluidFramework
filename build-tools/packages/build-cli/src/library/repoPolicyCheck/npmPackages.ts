@@ -821,11 +821,13 @@ export const handlers: Handler[] = [
 
 				// file is already relative to the repo root, so we can use it as-is.
 				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
-				if (
-					json.repository?.directory !== relativePkgDir &&
-					// The directory field should be omitted from the root package, so don't consider this a policy failure.
-					json.repository?.directory !== "."
-				) {
+
+				// The directory field should be omitted from the root package, so consider this a policy failure.
+				if (relativePkgDir === ".") {
+					ret.push(
+						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
+					);
+				} else if (json.repository?.directory !== relativePkgDir) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
 					);
