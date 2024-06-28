@@ -639,11 +639,11 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		describeStress("Combinatorial exhaustive", function ({ isStress }) {
-			const NUM_STEPS = isStress ? 5 : 4;
-			const NUM_PEERS = isStress ? 3 : 2;
-			if (isStress) {
-				this.timeout(60_000);
+		describeStress("Combinatorial exhaustive", function ({ stressLevel }) {
+			const NUM_STEPS = stressLevel > 0 ? 5 : 4;
+			const NUM_PEERS = stressLevel > 0 ? 3 : 2;
+			if (stressLevel > 0) {
+				this.timeout(60_000 * stressLevel);
 			}
 
 			const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
