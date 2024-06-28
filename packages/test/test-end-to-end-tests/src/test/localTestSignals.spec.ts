@@ -18,7 +18,9 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-	timeoutPromise,
+	timeoutPromise as timeoutPromiseUnnamed,
+	TimeoutWithError,
+	TimeoutWithValue,
 } from "@fluidframework/test-utils/internal";
 
 type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & {
@@ -41,10 +43,23 @@ const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 };
 
+async function timeoutPromise<T = void>(
+	executor: (controller: {
+		resolve: (value: T | PromiseLike<T>) => void;
+		reject: (reason?: any) => void;
+	}) => void,
+	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
+): Promise<T> {
+	return timeoutPromiseUnnamed(
+		(resolve, reject) => executor({ resolve, reject }),
+		timeoutOptions,
+	);
+}
+
 async function waitForSignal(...signallers: { once(e: "signal", l: () => void): void }[]) {
 	return Promise.all(
 		signallers.map(async (signaller, index) =>
-			timeoutPromise((resolve) => signaller.once("signal", () => resolve()), {
+			timeoutPromise((controller) => signaller.once("signal", () => controller.resolve()), {
 				durationMs: 2000,
 				errorMsg: `Signaller[${index}] Timeout`,
 			}),
@@ -57,15 +72,18 @@ async function waitForTargetedSignal(
 	otherSignallers: { once(e: "signal", l: () => void): void }[],
 ) {
 	return Promise.all([
-		timeoutPromise((resolve) => targetedSignaller.once("signal", () => resolve()), {
-			durationMs: 2000,
-			errorMsg: `Targeted Signaller Timeout`,
-		}),
+		timeoutPromise(
+			(controller) => targetedSignaller.once("signal", () => controller.resolve()),
+			{
+				durationMs: 2000,
+				errorMsg: `Targeted Signaller Timeout`,
+			},
+		),
 		otherSignallers.map(async (signaller, index) =>
 			timeoutPromise(
-				(reject) =>
+				(controller) =>
 					signaller.once("signal", () =>
-						reject(`Signaller[${index}] should not have recieved a signal`),
+						controller.reject(`Signaller[${index}] should not have recieved a signal`),
 					),
 				{
 					durationMs: 100,
