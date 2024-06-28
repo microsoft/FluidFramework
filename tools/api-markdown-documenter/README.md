@@ -35,7 +35,7 @@ npm i @fluid-tools/api-markdown-documenter -D
 
 ## Importing from this package
 
-This package leverages [package.json exports](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5-beta/#packagejson-exports-imports-and-self-referencing) to separate its APIs by support level.
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-tools/api-markdown-documenter` like normal.
