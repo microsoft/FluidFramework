@@ -74,7 +74,7 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	const testContainerConfig = makeTestContainerConfig([
 		["sharedString", SharedString.getFactory()],

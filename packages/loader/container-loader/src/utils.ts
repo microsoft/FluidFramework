@@ -171,6 +171,9 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				break;
 			}
 			case SummaryType.Handle: {
+				if (summaryObject.handleType === SummaryType.Attachment) {
+					break;
+				}
 				throw new LoggingError(
 					"No handles should be there in summary in detached container!!",
 				);
