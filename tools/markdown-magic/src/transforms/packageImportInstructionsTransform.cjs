@@ -17,9 +17,9 @@ const {
  *
  * @param {string} packageName - Name of the package (fully scoped).
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
- * @param {boolean} hasAlphaExport - Whether or not to include the heading in the generated contents.
- * @param {boolean} hasBetaExport - Whether or not to include the heading in the generated contents.
- * @param {boolean} hasLegacyExport - Whether or not to include the heading in the generated contents.
+ * @param {boolean} hasAlphaExport - Whether or not the package has an `/alpha` export to be denoted.
+ * @param {boolean} hasBetaExport - Whether or not the package has an `/beta` export to be denoted.
+ * @param {boolean} hasLegacyExport - Whether or not the package has an `/legacy` export to be denoted.
  */
 const generatePackageImportInstructionsSection = (
 	packageName,
