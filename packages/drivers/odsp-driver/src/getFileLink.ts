@@ -99,7 +99,7 @@ async function getFileLinkCore(
 	odspUrlParts: IOdspUrlParts,
 	logger: ITelemetryLoggerExt,
 ): Promise<string> {
-	const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, true);
+	const fileItem = await getFileItemLite(getToken, odspUrlParts, logger);
 
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
 	return PerformanceEvent.timedExecAsync(
@@ -135,7 +135,6 @@ async function getFileLinkCore(
 						`'${fileItem.sharepointIds.listItemUniqueId}'`,
 					)}`,
 					storageToken,
-					true,
 				);
 				const requestInit = {
 					method: "POST",
@@ -200,7 +199,6 @@ async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
 	logger: ITelemetryLoggerExt,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -226,7 +224,6 @@ async function getFileItemLite(
 				const { url, headers } = getUrlAndHeadersWithAuth(
 					`${siteUrl}/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds`,
 					storageToken,
-					forceAccessTokenViaAuthorizationHeader,
 				);
 				const requestInit = { method: "GET", headers };
 				const response = await fetchHelper(url, requestInit);

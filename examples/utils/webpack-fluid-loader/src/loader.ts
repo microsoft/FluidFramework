@@ -286,7 +286,7 @@ export async function start(
 				// TokenFetcher type is expressed using null instead of undefined
 				async () => options.odspAccessToken ?? null,
 				odspPersistantCache,
-				false /** forceAccessTokenViaAuthorizationHeader */,
+				true /** forceAccessTokenViaAuthorizationHeader */,
 				createChildLogger(),
 				undefined,
 			);

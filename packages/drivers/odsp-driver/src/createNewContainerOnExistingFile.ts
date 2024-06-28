@@ -44,7 +44,6 @@ export async function createNewContainerOnExistingFile(
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,
 	createNewCaching: boolean,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 ): Promise<IOdspResolvedUrl> {
 	if (createNewSummary === undefined) {
@@ -64,7 +63,6 @@ export async function createNewContainerOnExistingFile(
 		getStorageToken,
 		logger,
 		initialUrl,
-		forceAccessTokenViaAuthorizationHeader,
 		epochTracker,
 		telemetryName: "CreateNewContainerOnExistingFile",
 		fetchType: "uploadSummary",

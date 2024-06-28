@@ -20,36 +20,16 @@ describe("getUrlAndHeadersWithAuth", () => {
 	}
 
 	it("returns original url if token is null", async () => {
-		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, null, false);
+		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, null);
 		assert.strictEqual(url, baseUrl, "Original and returned urls must match");
 		assert.deepStrictEqual(headers, {}, "Returned header must be empty");
 	});
 
 	it("returns original url if token is empty", async () => {
-		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, "", false);
+		const { url, headers } = getUrlAndHeadersWithAuth(baseUrl, "");
 		assert.strictEqual(url, baseUrl, "Original and returned urls must match");
 		assert.deepStrictEqual(headers, {}, "Returned header must be empty");
 	});
-
-	const validateTokenEmbeddedIntoQueryString = (
-		originalUrl: URL,
-		token: string,
-		result: { url: string; headers: { [index: string]: string } },
-	): void => {
-		const returnedUrl = new URL(result.url);
-		assert.strictEqual(
-			returnedUrl.searchParams.get("access_token"),
-			token,
-			"Url must contain token in query string",
-		);
-		assert.deepStrictEqual(result.headers, {}, "Returned header must be empty");
-		returnedUrl.searchParams.delete("access_token");
-		assert.strictEqual(
-			returnedUrl.href,
-			originalUrl.href,
-			"Returned url must match original url",
-		);
-	};
 
 	const validateTokenEmbeddedIntoHeaders = (
 		originalUrl: URL,
@@ -74,65 +54,12 @@ describe("getUrlAndHeadersWithAuth", () => {
 		);
 	};
 
-	it("returns url with token embedded as part of query string when overall query string does not exceed 2048 characters", async () => {
-		validateTokenEmbeddedIntoQueryString(
-			urlWithoutParams,
-			shortToken,
-			getUrlAndHeadersWithAuth(urlWithoutParams.href, shortToken, false),
-		);
-
-		validateTokenEmbeddedIntoQueryString(
-			urlWithSingleParam,
-			shortToken,
-			getUrlAndHeadersWithAuth(urlWithSingleParam.href, shortToken, false),
-		);
-
-		validateTokenEmbeddedIntoQueryString(
-			urlWithMultipleParams,
-			shortToken,
-			getUrlAndHeadersWithAuth(urlWithMultipleParams.href, shortToken, false),
-		);
-
-		const longTokenForUrlWithoutParams = generateToken(maxTokenLength);
-		validateTokenEmbeddedIntoQueryString(
-			urlWithoutParams,
-			longTokenForUrlWithoutParams,
-			getUrlAndHeadersWithAuth(urlWithoutParams.href, longTokenForUrlWithoutParams, false),
-		);
-
-		const longTokenForUrlWithSingleParam = generateToken(
-			maxTokenLength - urlWithSingleParam.search.length,
-		);
-		validateTokenEmbeddedIntoQueryString(
-			urlWithSingleParam,
-			longTokenForUrlWithSingleParam,
-			getUrlAndHeadersWithAuth(
-				urlWithSingleParam.href,
-				longTokenForUrlWithSingleParam,
-				false,
-			),
-		);
-
-		const longTokenForUrlMultipleParams = generateToken(
-			maxTokenLength - urlWithMultipleParams.search.length,
-		);
-		validateTokenEmbeddedIntoQueryString(
-			urlWithMultipleParams,
-			longTokenForUrlMultipleParams,
-			getUrlAndHeadersWithAuth(
-				urlWithMultipleParams.href,
-				longTokenForUrlMultipleParams,
-				false,
-			),
-		);
-	});
-
 	it("returns headers with token embedded in Authorization header when overall query string exceeds 2048 characters", async () => {
 		const longTokenForUrlWithoutParams = generateToken(maxTokenLength + 1);
 		validateTokenEmbeddedIntoHeaders(
 			urlWithoutParams,
 			longTokenForUrlWithoutParams,
-			getUrlAndHeadersWithAuth(urlWithoutParams.href, longTokenForUrlWithoutParams, false),
+			getUrlAndHeadersWithAuth(urlWithoutParams.href, longTokenForUrlWithoutParams),
 		);
 
 		const longTokenForUrlWithSingleParam = generateToken(
@@ -141,11 +68,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		validateTokenEmbeddedIntoHeaders(
 			urlWithSingleParam,
 			longTokenForUrlWithSingleParam,
-			getUrlAndHeadersWithAuth(
-				urlWithSingleParam.href,
-				longTokenForUrlWithSingleParam,
-				false,
-			),
+			getUrlAndHeadersWithAuth(urlWithSingleParam.href, longTokenForUrlWithSingleParam),
 		);
 
 		const longTokenForUrlMultipleParams = generateToken(
@@ -154,11 +77,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		validateTokenEmbeddedIntoHeaders(
 			urlWithMultipleParams,
 			longTokenForUrlMultipleParams,
-			getUrlAndHeadersWithAuth(
-				urlWithMultipleParams.href,
-				longTokenForUrlMultipleParams,
-				false,
-			),
+			getUrlAndHeadersWithAuth(urlWithMultipleParams.href, longTokenForUrlMultipleParams),
 		);
 	});
 
@@ -166,19 +85,19 @@ describe("getUrlAndHeadersWithAuth", () => {
 		validateTokenEmbeddedIntoHeaders(
 			urlWithoutParams,
 			shortToken,
-			getUrlAndHeadersWithAuth(urlWithoutParams.href, shortToken, true),
+			getUrlAndHeadersWithAuth(urlWithoutParams.href, shortToken),
 		);
 
 		validateTokenEmbeddedIntoHeaders(
 			urlWithSingleParam,
 			shortToken,
-			getUrlAndHeadersWithAuth(urlWithSingleParam.href, shortToken, true),
+			getUrlAndHeadersWithAuth(urlWithSingleParam.href, shortToken),
 		);
 
 		validateTokenEmbeddedIntoHeaders(
 			urlWithMultipleParams,
 			shortToken,
-			getUrlAndHeadersWithAuth(urlWithMultipleParams.href, shortToken, true),
+			getUrlAndHeadersWithAuth(urlWithMultipleParams.href, shortToken),
 		);
 	});
 });

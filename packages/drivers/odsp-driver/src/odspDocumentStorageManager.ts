@@ -124,7 +124,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const { url, headers } = getUrlAndHeadersWithAuth(
 				`${this.attachmentPOSTUrl}/content`,
 				storageToken,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 			);
 			headers["Content-Type"] = "application/octet-stream";
 
@@ -165,11 +164,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		const blob = await getWithRetryForTokenRefresh(async (options) => {
 			const storageToken = await this.getStorageToken(options, "GetBlob");
 			const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-			const { url, headers } = getUrlAndHeadersWithAuth(
-				unAuthedUrl,
-				storageToken,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-			);
+			const { url, headers } = getUrlAndHeadersWithAuth(unAuthedUrl, storageToken);
 
 			return PerformanceEvent.timedExecAsync(
 				this.logger,
@@ -482,7 +477,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const { url, headers } = getUrlAndHeadersWithAuth(
 				`${this.snapshotUrl}/versions?top=${count}`,
 				storageToken,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 			);
 
 			// Fetch the latest snapshot versions for the document
@@ -629,7 +623,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.odspResolvedUrl,
 				this.getStorageToken,
 				snapshotOptions,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 				putInCache,
@@ -671,7 +664,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					this.odspResolvedUrl,
 					this.getStorageToken,
 					snapshotOptionsWithoutBlobs,
-					!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 					this.logger,
 					snapshotDownloader,
 					putInCache,
@@ -766,7 +758,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			this.getStorageToken,
 			this.logger,
 			this.epochTracker,
-			!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 			this.relayServiceTenantAndSessionId,
 		);
 		return this.odspSummaryUploadManager;
@@ -826,7 +817,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				storageToken,
 				id,
 				this.fetchFullSnapshot,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 			);

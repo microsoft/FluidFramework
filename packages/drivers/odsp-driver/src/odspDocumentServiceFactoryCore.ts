@@ -197,8 +197,6 @@ export class OdspDocumentServiceFactoryCore
 							cacheAndTracker.epochTracker,
 							fileEntry,
 							this.hostPolicy.cacheCreateNewSummary ?? true,
-							!!this.hostPolicy.sessionOptions
-								?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 					  )
@@ -210,8 +208,6 @@ export class OdspDocumentServiceFactoryCore
 							cacheAndTracker.epochTracker,
 							fileEntry,
 							this.hostPolicy.cacheCreateNewSummary ?? true,
-							!!this.hostPolicy.sessionOptions
-								?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 					  );
 				const docService = this.createDocumentServiceCore(
@@ -250,7 +246,6 @@ export class OdspDocumentServiceFactoryCore
 		// Set enableRedeemFallback by default as true.
 		this.hostPolicy.enableRedeemFallback = this.hostPolicy.enableRedeemFallback ?? true;
 		this.hostPolicy.sessionOptions = {
-			forceAccessTokenViaAuthorizationHeader: true,
 			...this.hostPolicy.sessionOptions,
 		};
 	}
