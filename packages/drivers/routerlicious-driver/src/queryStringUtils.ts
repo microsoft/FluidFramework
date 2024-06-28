@@ -1,21 +1,21 @@
 export type QueryStringType = Record<string, string | number | boolean>;
 
 /**
- * Generates query string from the given query parameters.
- * @param queryParams - Query parameters from which to create a query.
- * @param url - URL to which query params should be appended
+ * Generates URL string from the given URL and query parameters.
+ * @param url - URL to which query params should be appended. Can include base/default query params.
+ * @param queryParams - Query parameters from which to create a query. Will override any query params in url.
  */
-export function buildQueryString(queryParams: QueryStringType, url?: string): string {
-	let queryString = "";
-	for (const key of Object.keys(queryParams)) {
-		if (queryParams[key] !== undefined) {
-			const startChar = queryString === "" ? "?" : "&";
-			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
-		}
+export function buildUrlWithQueryString(
+	url: URL | string,
+	queryParams: QueryStringType,
+): string {
+	// Initialize urlSearchParams with query params from the base URL itself
+	const outputUrl = new URL(url);
+	const updatedSearchParams = outputUrl.searchParams;
+	for (const [key, value] of Object.entries(queryParams)) {
+		// Add/override search params from query params
+		updatedSearchParams.set(key, encodeURIComponent(value));
 	}
-	if (url) {
-		// remove existing query params before appending
-		return `${url.split("?")[0]}${queryString}`;
-	}
-	return queryString;
+	outputUrl.search = updatedSearchParams.toString();
+	return outputUrl.href;
 }

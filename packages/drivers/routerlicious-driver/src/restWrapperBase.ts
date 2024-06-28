@@ -4,7 +4,10 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
-import { buildQueryString, type QueryStringType } from "./queryStringUtils.js";
+import {
+	buildUrlWithQueryString,
+	type QueryStringType,
+} from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
@@ -22,7 +25,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -47,7 +55,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -72,7 +85,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -97,7 +115,12 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+				| "baseURL"
+				| "headers"
+				| "maxBodyLength"
+				| "maxContentLength"
+				| "method"
+				| "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -121,14 +144,17 @@ export abstract class RestWrapper {
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;
 
-	protected generateQueryString(url: string, queryStringValues?: QueryStringType) {
+	protected generateQueryString(
+		url: string,
+		queryStringValues?: QueryStringType,
+	) {
 		if (this.defaultQueryString || queryStringValues) {
 			const queryStringMap = {
 				...this.defaultQueryString,
 				...queryStringValues,
 			};
 
-			return buildQueryString(queryStringMap, url);
+			return buildUrlWithQueryString(url, queryStringMap);
 		}
 
 		return "";
