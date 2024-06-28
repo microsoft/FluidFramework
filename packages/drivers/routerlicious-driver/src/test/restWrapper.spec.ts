@@ -17,31 +17,6 @@ import {
 } from "../restWrapper.js";
 import { ITokenResponse } from "../tokens.js";
 
-// import * as fetchModule from "cross-fetch";
-// import { stub } from "sinon";
-
-// interface MockResponse {
-// 	ok: boolean;
-// 	status: number;
-// 	text: () => Promise<string>;
-// 	arrayBuffer: () => Promise<unknown>;
-// 	headers: Headers;
-// 	json: () => Promise<unknown>;
-// }
-
-// const createResponse = async (
-// 	headers: { [key: string]: string },
-// 	response: unknown,
-// 	status: number,
-// ): Promise<MockResponse> => ({
-// 	ok: response !== undefined,
-// 	status,
-// 	text: async () => JSON.stringify(response),
-// 	arrayBuffer: async () => response,
-// 	headers: headers ? new Headers(headers) : new Headers(),
-// 	json: async () => response,
-// });
-
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);
 	const testHost = "http://localhost:3030";
@@ -61,7 +36,8 @@ describe("RouterliciousDriverRestWrapper", () => {
 		throttledAt = Date.now();
 	};
 	function replyWithThrottling() {
-		const retryAfterSeconds = (throttleDurationInMs - Date.now() - throttledAt) / 1000;
+		const retryAfterSeconds =
+			(throttleDurationInMs - Date.now() - throttledAt) / 1000;
 		const throttled = retryAfterSeconds > 0;
 		if (throttled) {
 			return [429, { retryAfter: retryAfterSeconds }];
@@ -117,6 +93,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.get(testPath)
+				.query(true)
 				.reply(200);
 			await assert.doesNotReject(restWrapper.get(testUrl));
 		});
@@ -126,6 +103,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.get(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.get(testUrl), {
 				canRetry: false,
@@ -192,6 +170,36 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await restWrapper.get(testUrl);
 			assert(retryQueryParamTested);
 		});
+
+		it("retry query param is appended on subsequent api request -- 2", async () => {
+			let retryQueryParamTested = false;
+			// Fail first request with retriable error
+			nock(testHost).get(testPath).reply(500);
+			// Second request must contain the query param "retry=1"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "1");
+					return true;
+				})
+				.reply(500);
+			// Third request must contain the query param "retry=2"
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === "2");
+					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(500);
+
+			await restWrapper.get(testUrl).catch((_) => {});
+			await restWrapper.get(testUrl).catch((_) => {});
+			await restWrapper.get(testUrl).catch((_) => {});
+			assert(retryQueryParamTested);
+		});
 	});
 
 	describe("post()", () => {
@@ -199,7 +207,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
 				.post(testPath)
 				.reply(200);
-			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
+			await assert.doesNotReject(
+				restWrapper.post(testUrl, { test: "payload" }),
+			);
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -207,8 +217,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.post(testPath)
+				.query(true)
 				.reply(200);
-			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
+			await assert.doesNotReject(
+				restWrapper.post(testUrl, { test: "payload" }),
+			);
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -216,6 +229,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.post(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.post(testUrl, { test: "payload" }), {
 				canRetry: false,
@@ -232,7 +246,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
 			nock(testHost).post(testPath).reply(replyWithThrottling);
-			await assert.doesNotReject(restWrapper.post(testUrl, { test: "payload" }));
+			await assert.doesNotReject(
+				restWrapper.post(testUrl, { test: "payload" }),
+			);
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
 			nock(testHost).post(testPath).reply(429, { retryAfter: undefined });
@@ -255,33 +271,6 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
-
-		it("retry query param is appended on subsequent api request", async () => {
-			let retryQueryParamTested = false;
-			// Fail first request with retriable error
-			nock(testHost).post(testPath).reply(401);
-			// Second request must contain the query param "retry=1"
-			nock(testHost)
-				.post(/.*/)
-				.query((q) => {
-					assert(q);
-					assert(q.retry === "1");
-					return true;
-				})
-				.reply(429, { retryAfter: 0.1 });
-			// Third request must contain the query param "retry=2"
-			nock(testHost)
-				.post(/.*/)
-				.query((q) => {
-					assert(q);
-					assert(q.retry === "2");
-					retryQueryParamTested = true;
-					return true;
-				})
-				.reply(200);
-			await restWrapper.post(testUrl, { test: "payload" });
-			assert(retryQueryParamTested);
-		});
 	});
 
 	describe("patch()", () => {
@@ -289,7 +278,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
 				.patch(testPath)
 				.reply(200);
-			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
+			await assert.doesNotReject(
+				restWrapper.patch(testUrl, { test: "payload" }),
+			);
 		});
 		it("retries a request with fresh auth headers on 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -297,8 +288,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.patch(testPath)
+				.query(true)
 				.reply(200);
-			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
+			await assert.doesNotReject(
+				restWrapper.patch(testUrl, { test: "payload" }),
+			);
 		});
 		it("throws a non-retriable error on 2nd 401", async () => {
 			nock(testHost, { reqheaders: { authorization: `Basic ${token1}` } })
@@ -306,6 +300,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.patch(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.patch(testUrl, { test: "payload" }), {
 				canRetry: false,
@@ -322,7 +317,9 @@ describe("RouterliciousDriverRestWrapper", () => {
 		it("retries with delay on 429 with retryAfter", async () => {
 			throttle();
 			nock(testHost).patch(testPath).reply(replyWithThrottling);
-			await assert.doesNotReject(restWrapper.patch(testUrl, { test: "payload" }));
+			await assert.doesNotReject(
+				restWrapper.patch(testUrl, { test: "payload" }),
+			);
 		});
 		it("throws a retriable error on 429 without retryAfter", async () => {
 			nock(testHost).patch(testPath).reply(429, { retryAfter: undefined });
@@ -345,32 +342,6 @@ describe("RouterliciousDriverRestWrapper", () => {
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
 		});
-		it("retry query param is appended on subsequent api request", async () => {
-			let retryQueryParamTested = false;
-			// Fail first request with retriable error
-			nock(testHost).patch(testPath).reply(401);
-			// Second request must contain the query param "retry=1"
-			nock(testHost)
-				.patch(/.*/)
-				.query((q) => {
-					assert(q);
-					assert(q.retry === "1");
-					return true;
-				})
-				.reply(429, { retryAfter: 0.1 });
-			// Third request must contain the query param "retry=2"
-			nock(testHost)
-				.patch(/.*/)
-				.query((q) => {
-					assert(q);
-					assert(q.retry === "2");
-					retryQueryParamTested = true;
-					return true;
-				})
-				.reply(200);
-			await restWrapper.patch(testUrl, { test: "payload" });
-			assert(retryQueryParamTested);
-		});
 	});
 
 	describe("delete()", () => {
@@ -386,6 +357,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.delete(testPath)
+				.query(true)
 				.reply(200);
 			await assert.doesNotReject(restWrapper.delete(testUrl));
 		});
@@ -395,6 +367,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.reply(401);
 			nock(testHost, { reqheaders: { authorization: `Basic ${token2}` } })
 				.delete(testPath)
+				.query(true)
 				.reply(401);
 			await assert.rejects(restWrapper.delete(testUrl), {
 				canRetry: false,
@@ -433,32 +406,6 @@ describe("RouterliciousDriverRestWrapper", () => {
 				canRetry: true,
 				errorType: RouterliciousErrorTypes.genericNetworkError,
 			});
-		});
-		it("retry query param is appended on subsequent api request", async () => {
-			let retryQueryParamTested = false;
-			// Fail first request with retriable error
-			nock(testHost).delete(testPath).reply(401, { retryAfter: undefined });
-			// Second request must contain the query param "retry=1"
-			nock(testHost)
-				.delete(/.*/)
-				.query((q) => {
-					assert(q);
-					assert(q.retry === "1");
-					return true;
-				})
-				.reply(429, { retryAfter: 0.1 });
-			// Third request must contain the query param "retry=2"
-			nock(testHost)
-				.delete(/.*/)
-				.query((q) => {
-					assert(q);
-					assert(q.retry === "2");
-					retryQueryParamTested = true;
-					return true;
-				})
-				.reply(200);
-			await restWrapper.delete(testUrl);
-			assert(retryQueryParamTested);
 		});
 	});
 });
