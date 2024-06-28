@@ -300,11 +300,13 @@ export class OdspDocumentServiceFactoryCore
 			this.getWebsocketToken === undefined
 				? undefined
 				: async (options: TokenFetchOptions): Promise<string | null> =>
+						// websocket expects a plain token
 						toInstrumentedOdspTokenFetcher(
 							extLogger,
 							resolvedUrlData,
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
+							true /* returnPlainToken */,
 						)(options, "GetWebsocketToken");
 
 		return OdspDocumentService.create(
