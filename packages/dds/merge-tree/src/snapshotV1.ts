@@ -23,6 +23,7 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import { ISegment } from "./mergeTreeNodes.js";
+import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import {
 	IJSONSegmentWithMergeInfo,
@@ -34,7 +35,6 @@ import {
 	type VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
-import type { IJSONSegment } from "./ops.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content

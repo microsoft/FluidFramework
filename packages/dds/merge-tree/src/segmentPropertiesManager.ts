@@ -41,8 +41,7 @@ export class PropertiesManager {
 
 	private decrementPendingCounts(props: PropertySet) {
 		for (const [key, value] of Object.entries(props)) {
-			if (value !== undefined) {
-				if (this.pendingKeyUpdateCount?.[key] !== undefined) {
+			if (value !== undefined && this.pendingKeyUpdateCount?.[key] !== undefined) {
 					assert(
 						this.pendingKeyUpdateCount[key] > 0,
 						0x05c /* "Trying to update more annotate props than do exist!" */,
@@ -53,7 +52,6 @@ export class PropertiesManager {
 						delete this.pendingKeyUpdateCount[key];
 					}
 				}
-			}
 		}
 	}
 

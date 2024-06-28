@@ -126,14 +126,12 @@ export function isSegmentPresent(seg: ISegment, seqTime: SeqTime): boolean {
 			if (!seqLTE(seg.seq, refSeq)) {
 				return false;
 			}
-		} else if (seg.localSeq !== undefined) {
-			// seg.seq === UnassignedSequenceNumber
+		} else if (seg.localSeq !== undefined && // seg.seq === UnassignedSequenceNumber
 			// If the current perspective does not include local sequence numbers,
 			// then this segment does not exist yet.
-			if (localSeq === undefined || seg.localSeq > localSeq) {
+			(localSeq === undefined || seg.localSeq > localSeq)) {
 				return false;
 			}
-		}
 	}
 	if (wasRemovedOrMovedBefore(seg, seqTime)) {
 		return false;

@@ -1481,7 +1481,7 @@ export class MergeTree {
 
 				if (newSegment.parent === undefined) {
 					// Indicates an attempt to insert past the end of the merge-tree's content.
-					const errorConstructor = localSeq !== undefined ? UsageError : DataProcessingError;
+					const errorConstructor = localSeq === undefined ? DataProcessingError : UsageError;
 					throw new errorConstructor("MergeTree insert failed", {
 						currentSeq: this.collabWindow.currentSeq,
 						minSeq: this.collabWindow.minSeq,

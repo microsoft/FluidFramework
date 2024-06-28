@@ -6,8 +6,6 @@
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import {
 	AttributionKey,
-	type DetachedAttributionKey,
-	type LocalAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 
 import {

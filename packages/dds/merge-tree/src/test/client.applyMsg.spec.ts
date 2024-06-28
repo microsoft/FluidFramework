@@ -93,9 +93,10 @@ describe("client.applyMsg", () => {
 					}
 
 					case 1:
-					case 4:
+					case 4: {
 						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
 						break;
+					}
 
 					default:
 				}

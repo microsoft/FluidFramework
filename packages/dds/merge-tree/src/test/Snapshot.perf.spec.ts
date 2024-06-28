@@ -4,8 +4,8 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-
 import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 describe("MergeTree snapshots", () => {
