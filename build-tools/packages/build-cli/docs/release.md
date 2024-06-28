@@ -156,8 +156,7 @@ DESCRIPTION
   Runs the following checks:
 
   - Branch has no local changes
-  - Has a microsoft/FluidFramework remote
-  - The local branch is up to date with the remote
+  - The local branch is up to date with the microsoft/FluidFramework remote
   - Dependencies are installed locally
   - Has no pre-release Fluid dependencies
   - No repo policy violations
