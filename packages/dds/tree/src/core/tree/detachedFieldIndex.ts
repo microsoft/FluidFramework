@@ -82,9 +82,10 @@ export class DetachedFieldIndex {
 	 * @remarks
 	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
 	 */
-	private latestRelevantRevisionToFields: Map<
+	private latestRelevantRevisionToFields: NestedMap<
 		RevisionTag | undefined,
-		Map<ForestRootId, Delta.DetachedNodeId>
+		ForestRootId,
+		Delta.DetachedNodeId
 	> = new Map();
 
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
