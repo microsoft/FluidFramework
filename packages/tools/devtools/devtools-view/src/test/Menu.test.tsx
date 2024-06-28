@@ -25,49 +25,39 @@ describe("Menu Accessibility Check", () => {
 		opLatencyTelemetry: true,
 	};
 	const containers = ["Container1", "Container2"];
-
-	const MenuWrapper: React.FC = () => {
-		const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
-
-		return (
-			<Menu
-				currentSelection={menuSelection}
-				setSelection={setMenuSelection}
-				containers={containers}
-				supportedFeatures={supportedFeatures}
-			/>
-		);
-	};
 	const mockMessageRelay = new MockMessageRelay(() => {
 		return {
 			type: DevtoolsFeatures.MessageType,
-			source: "OpLatencyTest",
+			source: "MenuAccessibilityTest",
 			data: {
-				features: {
-					telemetry: true,
-					opLatencyTelemetry: true,
-				},
+				features: supportedFeatures,
 				devtoolsVersion: "1.0.0",
 				unsampledTelemetry: true,
 			},
 		};
 	});
+	const MenuWrapper: React.FC = () => {
+		const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
+
+		return (
+			<MessageRelayContext.Provider value={mockMessageRelay}>
+				<Menu
+					currentSelection={menuSelection}
+					setSelection={setMenuSelection}
+					containers={containers}
+					supportedFeatures={supportedFeatures}
+				/>
+			</MessageRelayContext.Provider>
+		);
+	};
 
 	it("Menu is accessible", async () => {
-		const { container } = render(
-			<MessageRelayContext.Provider value={mockMessageRelay}>
-				<MenuWrapper />
-			</MessageRelayContext.Provider>,
-		);
+		const { container } = render(<MenuWrapper />);
 		await assertNoAccessibilityViolations(container);
 	});
 
 	it("Can tab/arrow navigate through the Menu", async () => {
-		render(
-			<MessageRelayContext.Provider value={mockMessageRelay}>
-				<MenuWrapper />
-			</MessageRelayContext.Provider>,
-		);
+		render(<MenuWrapper />);
 
 		const user = userEvent.setup();
 

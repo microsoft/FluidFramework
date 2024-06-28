@@ -65,7 +65,7 @@ describe("AudienceHistoryTable Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
-	it("Can tab/arrow navigate throught AudienceHistoryTable", async () => {
+	it("Can tab/arrow navigate through AudienceHistoryTable", async () => {
 		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
 		const user = userEvent.setup();
 		await user.tab();
