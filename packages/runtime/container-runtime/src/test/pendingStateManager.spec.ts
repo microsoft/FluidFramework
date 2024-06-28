@@ -165,6 +165,7 @@ describe("Pending State Manager", () => {
 			messages.forEach((message) => {
 				pendingStateManager.processPendingLocalMessage(
 					message as InboundSequencedContainerRuntimeMessage,
+					1 /* batchStartCsn */,
 				);
 			});
 
@@ -421,6 +422,7 @@ describe("Pending State Manager", () => {
 				);
 				pendingStateManager.processPendingLocalMessage(
 					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
+					1 /* batchStartCsn */,
 				);
 			});
 		});

@@ -677,23 +677,27 @@ export const makeLegacySendBatchFn =
 	};
 
 /** Helper type for type constraints passed through several functions.
+ * local - Did this client send the op?
+ * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
+ * clientSequenceNumber - The clientSequenceNumber given on submit and used during transport
+ * (clientSequenceNumber may be overwritten to store index-within-batch by RemoteMessageProcessor)
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
  * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
- * local - Did this client send the op?
  */
-type MessageWithContext =
+type MessageWithContext = {
+	local: boolean;
+	savedOp?: boolean;
+	clientSequenceNumber: number;
+} & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
-			local: boolean;
-			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
-			local: boolean;
-			savedOp?: boolean;
-	  };
+	  }
+);
 
 const summarizerRequestUrl = "_summarizer";
 
@@ -2619,7 +2623,9 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
+		const clientSequenceNumber = messageCopy.clientSequenceNumber;
 		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+			//* RMP needs to return batchStartCSN
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2629,12 +2635,14 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
+						clientSequenceNumber,
 					}
 				: // Unrecognized message will be ignored.
 					{
 						message,
 						local,
 						modernRuntimeMessage,
+						clientSequenceNumber,
 					};
 			msg.savedOp = savedOp;
 
@@ -2682,6 +2690,7 @@ export class ContainerRuntime
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
+					messageWithContext.clientSequenceNumber,
 				);
 			}
 
