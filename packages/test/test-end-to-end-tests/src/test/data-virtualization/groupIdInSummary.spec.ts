@@ -20,6 +20,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -374,7 +375,15 @@ describeCompat(
 			// Essentially, this should not reject
 			// When fixed, this function should be removed.
 			const assertInvertDoesNotReject = async (promise: Promise<unknown>, message: string) => {
-				await assert.rejects(promise, message);
+				await assert.rejects(
+					promise,
+					// Not sure which error interface to use here, but the key is the message
+					(thrown: IFluidErrorBase) => {
+						assert(thrown.message.includes("0x97a"), "Error message should be correct");
+						return true;
+					},
+					message,
+				);
 			};
 
 			await assertInvertDoesNotReject(
