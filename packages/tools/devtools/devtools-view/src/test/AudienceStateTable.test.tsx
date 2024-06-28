@@ -8,7 +8,6 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { debug } from "jest-preview";
 import React from "react";
 
 import { AudienceStateTable } from "../components/index.js";
@@ -38,6 +37,5 @@ describe("AudienceStateTable Accessibility Check", () => {
 		await user.tab();
 		const scopesTooltip = screen.getByRole("button", { name: /scopes/i });
 		expect(scopesTooltip).toHaveFocus();
-		debug();
 	});
 });

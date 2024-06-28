@@ -12,7 +12,6 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { debug } from "jest-preview";
 import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
@@ -72,29 +71,32 @@ describe("Menu Accessibility Check", () => {
 
 		const user = userEvent.setup();
 
-		// Focus on the first interactive element (Home section header)
 		await user.tab();
 		const homeHeader = screen.getByText("Home");
 		expect(homeHeader).toHaveFocus();
-		debug();
+
 		await user.tab();
 		const refreshButton = screen.getByRole("button", { name: /refresh containers list/i });
 		expect(refreshButton).toHaveFocus();
+
 		await user.tab();
 		const container1 = screen.getByText("Container1");
 		expect(container1).toHaveFocus();
+
 		await user.tab();
 		const container2 = screen.getByText("Container2");
 		expect(container2).toHaveFocus();
+
 		await user.tab();
 		const events = screen.getByText("Events");
 		expect(events).toHaveFocus();
+
 		await user.tab();
 		const opLatency = screen.getByText("Op Latency");
 		expect(opLatency).toHaveFocus();
+
 		await user.tab();
 		const settings = screen.getByText("Settings");
 		expect(settings).toHaveFocus();
-		debug();
 	});
 });
