@@ -164,15 +164,15 @@ export const CheckHasNoPrereleaseDependencies: CheckFunction = async (
 		releaseGroupOrPackage,
 	);
 
+	if (isEmpty) {
+		return;
+	}
+
 	const packagesToBump = new Set(packages.keys());
 	for (const releaseGroup of releaseGroups.keys()) {
 		for (const pkg of context.packagesInReleaseGroup(releaseGroup)) {
 			packagesToBump.add(pkg.name);
 		}
-	}
-
-	if (isEmpty) {
-		return;
 	}
 
 	return {
