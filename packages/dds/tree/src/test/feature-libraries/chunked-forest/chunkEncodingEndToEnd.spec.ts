@@ -45,7 +45,11 @@ import {
 	makeModularChangeCodecFamily,
 	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
-import { ForestType, type ISharedTreeEditor } from "../../../shared-tree/index.js";
+import {
+	ForestType,
+	type ISharedTreeEditor,
+	type TreeContent,
+} from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
@@ -53,9 +57,9 @@ import {
 	numberSequenceRootSchema,
 	testIdCompressor,
 } from "../../utils.js";
-import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-tree/index.js";
+import { SchemaFactory } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
+import { cursorFromUnhydratedRoot, toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -81,16 +85,21 @@ const context = {
 };
 
 const schemaFactory = new SchemaFactory("com.example");
-const schemaWithIdentifier = schemaFactory.object("parent", {
+class HasIdentifier extends schemaFactory.object("parent", {
 	identifier: schemaFactory.identifier,
-});
+}) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const config = new TreeConfiguration(schemaWithIdentifier, () => ({
-		identifier: id,
-	}));
-
-	const flexConfig = toFlexConfig(config, new MockNodeKeyManager());
+	const initialTree = cursorFromUnhydratedRoot(
+		HasIdentifier,
+		new HasIdentifier({ identifier: id }),
+		new MockNodeKeyManager(),
+	);
+	const flexSchema = toFlexSchema(HasIdentifier);
+	const flexConfig: TreeContent = {
+		schema: flexSchema,
+		initialTree,
+	};
 	const checkout = checkoutWithContent(flexConfig);
 
 	const encoderContext = {
@@ -98,7 +107,7 @@ function getIdentifierEncodingContext(id: string) {
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
 		schema: {
-			schema: intoStoredSchema(toFlexSchema(schemaWithIdentifier)),
+			schema: intoStoredSchema(flexSchema),
 			policy: defaultSchemaPolicy,
 		},
 	};
