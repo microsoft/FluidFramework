@@ -45,7 +45,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { SinonSandbox, createSandbox } from "sinon";
 
-import { TestSnapshotCache } from "../testSnapshotCache.js";
+import { TestSnapshotCache } from "../../testSnapshotCache.js";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
