@@ -314,7 +314,10 @@ describeCompat(
 			}
 		});
 
-		it("Can create loadingGroupId without feature", async () => {
+		it("Can create loadingGroupId without feature", async function () {
+			if (!supportsDataVirtualization(provider)) {
+				this.skip();
+			}
 			const container = await provider.createContainer(runtimeFactory);
 			const mainObject = (await container.getEntryPoint()) as TestDataObject;
 			const containerRuntime = mainObject.containerRuntime;
