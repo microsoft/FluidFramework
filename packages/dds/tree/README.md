@@ -11,15 +11,12 @@ and some of the implications of those goals for developers working on this packa
 
 Notable consideration that early adopters should be wary of:
 
--   The persisted format is not stable and long term support for persisted format is not yet in effect.
-    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
-    Current estimate for LTS is April 2024.
+-   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
 -   SharedTree currently has unbounded memory growth:
-    -   Removed content is retained forever.
-    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
--   All changes are atomized by the `visitDelta` function.
-    This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes.
-    Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
+    -   Removed content is retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)).
+-   All range changes are atomized.
+    This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
+    This can impact the merge behavior of these edits, as well as the performance of large array edits.
 -   Some documentation (such as this readme and [the roadmap](docs/roadmap.md)) are out of date.
     The [API documentation](https://fluidframework.com/docs/api/v2/tree) which is derived from the documentation comments in the source code should be more up to date.
 
@@ -104,7 +101,7 @@ This package can be developed using any of the [regular workflows for working on
 -   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
     This will recommend a test runner extension, which should be installed.
 -   Build the the tree package as normal (for run example: `pnpm i && pnpm run build` in the `tree` directory).
--   After editing the tree project, run `npm run build` (still in the `tree`) directory.
+-   After editing the tree project, run `pnpm run build` (still in the `tree`) directory.
 -   Run and debug tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
