@@ -40,7 +40,7 @@
 		"test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
 		"test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",
 		"test:realsvc:frs:report": "npm run test:realsvc:frs --",
-		"test:realsvc:local": "npm run test:realsvc:run -- --driver=local --timeout=2s",
+		"test:realsvc:local": "npm run test:realsvc:run -- --driver=local --timeout=2s --parallel",
 		"test:realsvc:local:report": "npm run test:realsvc:local --",
 		"test:realsvc:local:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:local --",
 		"test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
@@ -54,7 +54,7 @@
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
-		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
+		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s --parallel",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"c8": {
