@@ -57,6 +57,10 @@ import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../../simple-
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../../simple-tree/toFlexSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import type { Format } from "../../../feature-libraries/forest-summary/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -157,6 +161,8 @@ describe("End to end chunked encoding", () => {
 		assert(chunk.isShared());
 	});
 
+	// This test (and the one below) are testing for an optimization in the decoding logic to save a copy of the data array.
+	// This optimization is not implemented, so these tests fail, and are skipped.
 	it.skip(`summary values are correct, and shares reference with the original chunk when inserting content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
@@ -179,9 +185,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
-			// TODO: use something other than `any`
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const insertedChunk = decode((content as any).fields, {
+			const insertedChunk = decode((content as Format).fields as EncodedFieldBatch, {
 				idCompressor,
 				originatorId: idCompressor.localSessionId,
 			});
@@ -192,6 +196,7 @@ describe("End to end chunked encoding", () => {
 		forestSummarizer.getAttachSummary(stringifier);
 	});
 
+	// See note on above test.
 	it.skip(`summary values are correct, and shares reference with the original chunk when initializing with content.`, () => {
 		const numberShape = new TreeShape(leaf.number.name, true, []);
 		const chunk = new UniformChunk(numberShape.withTopLevelLength(4), [1, 2, 3, 4]);
@@ -213,9 +218,7 @@ describe("End to end chunked encoding", () => {
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
 		function stringifier(content: unknown) {
-			// TODO: use something other than `any`
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const insertedChunk = decode((content as any).fields, {
+			const insertedChunk = decode((content as Format).fields as EncodedFieldBatch, {
 				idCompressor,
 				originatorId: idCompressor.localSessionId,
 			});

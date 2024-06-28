@@ -659,8 +659,10 @@ export const makeLegacySendBatchFn =
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {
+		// Default to negative one to match Container.submitBatch behavior
+		let clientSequenceNumber: number = -1;
 		for (const message of batch.content) {
-			submitFn(
+			clientSequenceNumber = submitFn(
 				MessageType.Operation,
 				// For back-compat (submitFn only works on deserialized content)
 				message.contents === undefined ? undefined : JSON.parse(message.contents),
@@ -670,6 +672,8 @@ export const makeLegacySendBatchFn =
 		}
 
 		deltaManager.flush();
+
+		return clientSequenceNumber;
 	};
 
 /** Helper type for type constraints passed through several functions.
