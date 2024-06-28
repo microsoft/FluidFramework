@@ -59,7 +59,7 @@ async function timeoutPromise<T = void>(
 async function waitForSignal(...signallers: { once(e: "signal", l: () => void): void }[]) {
 	return Promise.all(
 		signallers.map(async (signaller, index) =>
-			timeoutPromise((controller) => signaller.once("signal", () => controller.resolve()), {
+			timeoutPromise(({ resolve }) => signaller.once("signal", () => resolve()), {
 				durationMs: 2000,
 				errorMsg: `Signaller[${index}] Timeout`,
 			}),
@@ -72,18 +72,15 @@ async function waitForTargetedSignal(
 	otherSignallers: { once(e: "signal", l: () => void): void }[],
 ) {
 	return Promise.all([
-		timeoutPromise(
-			(controller) => targetedSignaller.once("signal", () => controller.resolve()),
-			{
-				durationMs: 2000,
-				errorMsg: `Targeted Signaller Timeout`,
-			},
-		),
+		timeoutPromise(({ resolve }) => targetedSignaller.once("signal", () => resolve()), {
+			durationMs: 2000,
+			errorMsg: `Targeted Signaller Timeout`,
+		}),
 		otherSignallers.map(async (signaller, index) =>
 			timeoutPromise(
-				(controller) =>
+				({ reject }) =>
 					signaller.once("signal", () =>
-						controller.reject(`Signaller[${index}] should not have recieved a signal`),
+						reject(`Signaller[${index}] should not have recieved a signal`),
 					),
 				{
 					durationMs: 100,

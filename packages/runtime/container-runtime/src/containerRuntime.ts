@@ -1252,7 +1252,7 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly closeSummarizerDelayMs: number;
-	private readonly defaultTelemetrySignalSampleCount = 100;
+	private readonly defaultTelemetrySignalSampleCount = 10;
 	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
 		signalSequenceNumber: 0,
