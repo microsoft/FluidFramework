@@ -11,14 +11,9 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import { mapWait } from "./utils.js";
-
-const clientCreds: IOdspLoginCredentials = {
-	username: process.env.odsp__client__login__username as string,
-	password: process.env.odsp__client__login__password as string,
-};
 
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
@@ -28,6 +23,12 @@ describe("Fluid data updates", () => {
 			map1: SharedMap,
 		},
 	} satisfies ContainerSchema;
+
+	const [clientCreds] = getCredentials();
+
+	if (clientCreds === undefined) {
+		throw new Error("Couldn't get login credentials");
+	}
 
 	beforeEach(() => {
 		client = createOdspClient(clientCreds);
