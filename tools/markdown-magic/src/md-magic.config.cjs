@@ -664,7 +664,7 @@ module.exports = {
 		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
 
 		/**
-		 * See {@link packageScriptsSectionTransform}.
+		 * See {@link packageImportInstructionsSectionTransform}.
 		 *
 		 * @example
 		 *
