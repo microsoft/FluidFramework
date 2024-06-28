@@ -26,7 +26,7 @@ npm i @fluidframework/driver-utils
 This package leverages [package.json exports](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5-beta/#packagejson-exports-imports-and-self-referencing) to separate its APIs by support level.
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import directly from the root of the package as normal.
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/driver-utils` like normal.
 
 To access the `legacy` APIs, import via `@fluidframework/driver-utils/legacy`.
 
