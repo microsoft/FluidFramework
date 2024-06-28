@@ -14,12 +14,6 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"trimmedAPI": {
-				"types": {
-					"import": "./lib/public.d.ts",
-					"require": "./dist/public.d.ts"
-				}
-			},
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
@@ -70,10 +64,8 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json",
 		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
-		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
-		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
@@ -148,7 +140,6 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
-	"exportsComments": "The 'trimmedAPI' export condition is set as a workaround for 'flub generate entrypoints', which expects `exports` to contain an entry for all entrypoints. The custom condition effectively hides the public entrypoint unless the 'trimmedAPI' condition is set manually.",
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
