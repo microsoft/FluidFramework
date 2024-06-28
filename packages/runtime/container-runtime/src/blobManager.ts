@@ -23,6 +23,7 @@ import {
 	ICreateBlobResponse,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
+	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
@@ -48,6 +49,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { IBlobMetadata } from "./metadata.js";
+import { blobsTreeName } from "./summary/index.js";
 
 /**
  * This class represents blob (long string)
@@ -727,6 +729,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					),
 				),
 			);
+		}
+		if (this.redirectTable.size > 0) {
+			const redirectTree = new SummaryTreeBuilder(blobsTreeName);
+			let blobLinked = false;
+			for (const [localId, storageId] of this.redirectTable) {
+				if (storageId !== undefined) {
+					blobLinked = true;
+					redirectTree.addHandle(localId, SummaryType.Attachment, storageId);
+				}
+			}
+			if (blobLinked) {
+				const blobTree = redirectTree.getSummaryTree();
+				builder.addWithStats(`${BlobManager.redirectTableBlobName}2`, blobTree);
+			}
 		}
 
 		return builder.getSummaryTree();

@@ -157,6 +157,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		return {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
+			groupId: this.groupId,
 		};
 	}
 
@@ -164,7 +165,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		return { ...this.summaryStats };
 	}
 
-	constructor() {
+	constructor(private readonly groupId?: string) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
 	}

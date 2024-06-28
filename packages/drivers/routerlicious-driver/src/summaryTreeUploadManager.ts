@@ -143,6 +143,13 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					);
 					return tryId;
 				}
+				case SummaryType.Attachment: {
+					assert(
+						path.length === 1,
+						"there should only be a single path part for attachment blobs",
+					);
+					return key;
+				}
 				default:
 					throw Error(`Unexpected handle summary object type: "${handleType}".`);
 			}
