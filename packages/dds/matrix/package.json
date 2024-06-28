@@ -48,8 +48,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
 		"bench:profile": "cd bench && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
 		"build": "fluid-build . --task build",

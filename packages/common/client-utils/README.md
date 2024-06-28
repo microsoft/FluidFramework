@@ -60,6 +60,18 @@ file to dist/package.json to set the module type to commonjs. When resolving int
 packages, module resolution will walk up from the \*.js file and discover this stub package.json. Because
 the stub package.json lacks an export map, internal imports will not be remapped.
 
+## Export Reports and Linting
+
+With the current case of legacy APIs that are present here and the isometric browser and Node.js support,
+generation and checking of APIs is unique within client group. `lib/client-utils.(browser|node).*.d.ts` files
+are generated but not used in production (excluded from npm package).
+
+For local (development) builds browser reports are generated first and Node.js reports are then verified to
+be the same as browser. (Both report sets use the same target files.)
+
+Package scripts `check:exports:esm:indexBrowser:legacy` and `check:exports:esm:indexNode:legacy` are not
+verifying actual exports, but the consistency of tags within the legacy API set.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->

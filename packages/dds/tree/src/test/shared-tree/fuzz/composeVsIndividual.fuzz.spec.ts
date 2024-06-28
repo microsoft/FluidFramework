@@ -29,6 +29,7 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
+	applyConstraint,
 	applyFieldEdit,
 	applySchemaOp,
 	applySynchronizationOp,
@@ -79,6 +80,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 	},
 	schemaChange: async (state, operation) => {
 		applySchemaOp(state, operation);
+	},
+	constraint: async (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 
