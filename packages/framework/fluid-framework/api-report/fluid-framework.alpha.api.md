@@ -5,11 +5,7 @@
 ```ts
 
 import { Client } from '@fluidframework/merge-tree/internal';
-import { FieldSchemaUnsafe as FieldSchemaUnsafe_2 } from './typesUnsafe.js';
-import { Forbidden as Forbidden_2 } from '../default-schema/defaultFieldKinds.js';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
 import { IJSONSegment } from '@fluidframework/merge-tree/internal';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
@@ -20,7 +16,6 @@ import { IRelativePosition } from '@fluidframework/merge-tree/internal';
 import { ISegment } from '@fluidframework/merge-tree/internal';
 import { ISegmentAction } from '@fluidframework/merge-tree/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { LeafNodeSchema as LeafNodeSchema_2 } from '../feature-libraries/index.js';
 import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
 import { Marker } from '@fluidframework/merge-tree/internal';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
@@ -31,17 +26,9 @@ import { PropertiesManager } from '@fluidframework/merge-tree/internal';
 import { PropertySet } from '@fluidframework/merge-tree/internal';
 import { ReferencePosition } from '@fluidframework/merge-tree/internal';
 import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { SchemaLibrary as SchemaLibrary_2 } from '../feature-libraries/schemaBuilderBase.js';
-import type { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
 import { SharedObjectKind as SharedObjectKind_2 } from '@fluidframework/shared-object-base/internal';
 import { SlidingPreference } from '@fluidframework/merge-tree/internal';
-import type { StableId } from '@fluidframework/id-compressor';
-import type { Static } from '@sinclair/typebox';
 import { TextSegment } from '@fluidframework/merge-tree/internal';
-import { TreeNodeSchema as TreeNodeSchema_2 } from './schemaTypes.js';
-import { TreeNodeSchemaClass as TreeNodeSchemaClass_2 } from './schemaTypes.js';
-import { TreeObjectNodeUnsafe as TreeObjectNodeUnsafe_2 } from './typesUnsafe.js';
-import type { TSchema } from '@sinclair/typebox';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
@@ -597,7 +584,7 @@ declare namespace InternalTypes {
         TreeArrayNodeBase,
         ScopedSchemaName,
         DefaultProvider,
-        typeNameSymbol_2 as typeNameSymbol,
+        typeNameSymbol,
         InsertableObjectFromSchemaRecord,
         ObjectFromSchemaRecord,
         FieldHasDefaultUnsafe,
@@ -942,14 +929,10 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord
 // @public
 export type Off = () => void;
 
-export { Range_2 as Range }
-
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
-
-export { Required_2 as Required }
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -1236,7 +1219,7 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> e
 export abstract class TreeNode implements WithType {
     static [Symbol.hasInstance](value: unknown): value is TreeNode;
     static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    abstract get [typeNameSymbol_2](): string;
+    abstract get [typeNameSymbol](): string;
     protected constructor();
 }
 
@@ -1321,7 +1304,7 @@ export interface TreeViewEvents {
 }
 
 // @public
-const typeNameSymbol_2: unique symbol;
+const typeNameSymbol: unique symbol;
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
@@ -1342,7 +1325,7 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
 
 // @public @sealed
 export interface WithType<TName extends string = string> {
-    get [typeNameSymbol_2](): TName;
+    get [typeNameSymbol](): TName;
 }
 
 ```
