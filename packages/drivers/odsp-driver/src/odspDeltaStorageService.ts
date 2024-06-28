@@ -27,7 +27,7 @@ import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 export class OdspDeltaStorageService {
 	constructor(
 		private readonly deltaFeedUrl: string,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
 		private readonly logger: ITelemetryLoggerExt,
 	) {}
@@ -48,9 +48,13 @@ export class OdspDeltaStorageService {
 	): Promise<IDeltasFetchResult> {
 		return getWithRetryForTokenRefresh(async (options) => {
 			// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
-			// Thus it needs to be done before we call getStorageToken() to reduce extra calls
-			const baseUrl = this.buildUrl(from, to);
-			const storageToken = await this.getStorageToken(options, "DeltaStorage");
+			// Thus it needs to be done before we call getAuthHeader() to reduce extra calls
+			const url = this.buildUrl(from, to);
+			const method = "POST";
+			const authHeader = await this.getAuthHeader(
+				{ ...options, request: { url, method } },
+				"DeltaStorage",
+			);
 
 			return PerformanceEvent.timedExecAsync(
 				this.logger,
@@ -65,7 +69,7 @@ export class OdspDeltaStorageService {
 				async (event) => {
 					const formBoundary = uuid();
 					let postBody = `--${formBoundary}\r\n`;
-					postBody += `Authorization: Bearer ${storageToken}\r\n`;
+					postBody += `Authorization: ${authHeader}\r\n`;
 					postBody += `X-HTTP-Method-Override: GET\r\n`;
 
 					postBody += `_post: 1\r\n`;
@@ -84,11 +88,11 @@ export class OdspDeltaStorageService {
 
 					const response =
 						await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
-							baseUrl,
+							url,
 							{
 								headers,
 								body: postBody,
-								method: "POST",
+								method,
 								signal: abort.signal,
 							},
 							"ops",
