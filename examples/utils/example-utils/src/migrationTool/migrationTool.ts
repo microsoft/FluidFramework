@@ -5,6 +5,7 @@
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
@@ -36,11 +37,20 @@ const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
-class MigrationTool extends TypedEventEmitter<IMigrationToolEvents> implements IMigrationTool {
+class MigrationTool implements IMigrationTool {
 	private _disposed = false;
 
 	public get disposed() {
 		return this._disposed;
+	}
+
+	private readonly _events = new TypedEventEmitter<IMigrationToolEvents>();
+	public get events(): IEventProvider<IMigrationToolEvents> {
+		return this._events;
+	}
+
+	public get connected() {
+		return this.runtime.connected;
 	}
 
 	public get handle() {
@@ -73,27 +83,36 @@ class MigrationTool extends TypedEventEmitter<IMigrationToolEvents> implements I
 		private readonly pactMap: IPactMap<string>,
 		private readonly taskManager: ITaskManager,
 	) {
-		super();
-
 		if (this.runtime.disposed) {
 			this.dispose();
 		} else {
 			this.runtime.once("dispose", this.dispose);
+			this.runtime.on("connected", () => {
+				this._events.emit("connected");
+			});
+			this.runtime.on("disconnected", () => {
+				this._events.emit("disconnected");
+			});
 			this.pactMap.on("pending", (key: string) => {
 				if (key === newVersionKey) {
-					this.emit("stopping");
+					// TODO: Here take some action to prevent collaboration - the host might not provide a Migrator,
+					// and we need to ensure we still don't break expectations in that case.  Note that during this
+					// event firing the pactMap has not yet sent its accept op though.
+					this._events.emit("stopping");
 				}
 			});
 
 			this.pactMap.on("accepted", (key: string) => {
 				if (key === newVersionKey) {
-					this.emit("migrating");
+					this._events.emit("migrating");
+					// TODO: Here we should stop submitting new summaries since it will complicate loading from the
+					// accepted sequence number
 				}
 			});
 
 			this.consensusRegisterCollection.on("atomicChanged", (key: string) => {
 				if (key === newContainerIdKey) {
-					this.emit("migrated");
+					this._events.emit("migrated");
 				}
 			});
 		}
@@ -162,7 +181,7 @@ class MigrationTool extends TypedEventEmitter<IMigrationToolEvents> implements I
 	private readonly dispose = (): void => {
 		this._disposed = true;
 		// TODO: Unregister listeners
-		this.emit("disposed");
+		this._events.emit("disposed");
 	};
 }
 
