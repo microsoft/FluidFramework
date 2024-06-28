@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
@@ -15,15 +15,15 @@ import {
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
 	ContainerAttachProps,
-	type ContainerSchema,
+	ContainerSchema,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
+import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
-	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -40,7 +40,7 @@ import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/
 import { v4 as uuid } from "uuid";
 
 import type { TokenResponse } from "./interfaces.js";
-import {
+import type {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
