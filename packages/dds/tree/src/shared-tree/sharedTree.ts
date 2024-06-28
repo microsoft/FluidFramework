@@ -322,7 +322,7 @@ export class SharedTree
 
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): TreeView<TRoot> {
+	): SchematizingSimpleTreeView<TRoot> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
