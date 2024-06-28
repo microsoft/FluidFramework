@@ -1,9 +1,9 @@
-/* eslint-disable unicorn/no-useless-spread */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+/* eslint-disable unicorn/no-useless-spread */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "node:assert";
