@@ -15,6 +15,12 @@
 		"strict": true,
 		"target": "ES2020",
 		"types": [],
+		// The 'trimmedAPI' export condition enables use of preferred import types for root (".") package imports.
+		// This allows FF to validate that only public APIs are used with a default import and gives customers
+		// the ability to opt into using the trimmed API. Ideally the condition would be reversed such that
+		// customers would opt out, but we know that some tooling and configurations are not consistent such
+		// that opting out would be easy and reliable.
+		"customConditions": ["trimmedAPI"],
 		"exactOptionalPropertyTypes": true,
 		"noUncheckedIndexedAccess": true,
 	},

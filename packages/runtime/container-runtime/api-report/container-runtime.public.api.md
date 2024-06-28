@@ -34,7 +34,6 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandleContext as IFluidHandleContext_2 } from '@fluidframework/core-interfaces';
 import { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IFluidParentContext } from '@fluidframework/runtime-definitions/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
