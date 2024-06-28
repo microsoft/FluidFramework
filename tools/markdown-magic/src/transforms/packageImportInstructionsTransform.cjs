@@ -69,11 +69,11 @@ const generatePackageImportInstructionsSection = (
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
  * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.hasAlphaExport - (optional) Whether or not the package includes a `/legacy` export.
+ * @param {"TRUE" | "FALSE" | undefined} options.hasAlphaExport - (optional) Whether or not the package includes a `/alpha` export to be denoted.
  * Default: `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.hasBetaExport - (optional) Whether or not the package includes a `/legacy` export.
+ * @param {"TRUE" | "FALSE" | undefined} options.hasBetaExport - (optional) Whether or not the package includes a `/beta` export to be denoted.
  * Default: `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.hasLegacyExport - (optional) Whether or not the package includes a `/legacy` export.
+ * @param {"TRUE" | "FALSE" | undefined} options.hasLegacyExport - (optional) Whether or not the package includes a `/legacy` export to be denoted.
  * Default: `FALSE`.
  *
  * @param
