@@ -72,7 +72,6 @@ const generatePackageImportInstructionsSection = (packageMetadata, includeHeadin
  * our standard package export paths (`/alpha`, `/beta`, `/legacy`).
  *
  * Note: this function will only generate contents if one of our special export paths is found (`/alpha`, `/beta`, or `/legacy`).
- * Otherwise, returns `undefined`.
  *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
