@@ -16,6 +16,7 @@ import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";
+import type { BatchMessage } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -29,6 +30,7 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
+	batchStartCsn?: number;
 }
 
 export interface IPendingLocalState {
@@ -187,27 +189,30 @@ export class PendingStateManager implements IDisposable {
 	public readonly dispose = () => this.disposeOnce.value;
 
 	/**
-	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
-	 * queue.
-	 * @param type - The container message type.
-	 * @param content - The message content.
-	 * @param localOpMetadata - The local metadata associated with the message.
+	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
+	 * acks are processed, to ensure it is successfully sent.
+	 * @param batch - The batch that was flushed
+	 * @param clientSequenceNumber - The CSN of the first message in the batch,
+	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
-	public onSubmitMessage(
-		content: string,
-		referenceSequenceNumber: number,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) {
-		const pendingMessage: IPendingMessage = {
-			type: "message",
-			referenceSequenceNumber,
-			content,
-			localOpMetadata,
-			opMetadata,
-		};
-
-		this.pendingMessages.push(pendingMessage);
+	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+		for (const message of batch) {
+			const {
+				contents: content = "",
+				referenceSequenceNumber,
+				localOpMetadata,
+				metadata: opMetadata,
+			} = message;
+			const pendingMessage: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber,
+				content,
+				localOpMetadata,
+				opMetadata,
+				batchStartCsn: clientSequenceNumber,
+			};
+			this.pendingMessages.push(pendingMessage);
+		}
 	}
 
 	/**

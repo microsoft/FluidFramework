@@ -874,28 +874,16 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IGenericError": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IGenericError():
-    TypeOnly<old.IGenericError>;
-declare function use_current_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<current.IGenericError>): void;
-use_current_InterfaceDeclaration_IGenericError(
-    get_old_InterfaceDeclaration_IGenericError());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IGenericError": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IGenericError": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IGenericError():
-    TypeOnly<current.IGenericError>;
-declare function use_old_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<old.IGenericError>): void;
-use_old_InterfaceDeclaration_IGenericError(
-    get_current_InterfaceDeclaration_IGenericError());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1322,28 +1310,16 @@ use_old_InterfaceDeclaration_IThrottlingWarning(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IUsageError": {"forwardCompat": false}
+ * "RemovedInterfaceDeclaration_IUsageError": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IUsageError():
-    TypeOnly<old.IUsageError>;
-declare function use_current_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<current.IUsageError>): void;
-use_current_InterfaceDeclaration_IUsageError(
-    get_old_InterfaceDeclaration_IUsageError());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "InterfaceDeclaration_IUsageError": {"backCompat": false}
+ * "RemovedInterfaceDeclaration_IUsageError": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IUsageError():
-    TypeOnly<current.IUsageError>;
-declare function use_old_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<old.IUsageError>): void;
-use_old_InterfaceDeclaration_IUsageError(
-    get_current_InterfaceDeclaration_IUsageError());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
