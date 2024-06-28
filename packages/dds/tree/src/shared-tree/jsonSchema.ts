@@ -5,7 +5,11 @@
 
 import type { SimpleLeafSchemaKind, SimpleNodeSchemaKind } from "./simpleSchema.js";
 
+// TODOs:
+// "ajv" library for at least testing, maybe type defs as well.
+
 /**
+ * TODO: document expected format.
  * @internal
  */
 export type JsonSchemaId = string;
@@ -34,6 +38,9 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 	readonly properties: Record<string, JsonSchemaId>;
 	// json schema
 	readonly required: string[];
+	// json schema
+	// TODO: derive from policy
+	readonly additionalProperties: boolean;
 }
 
 /**
@@ -43,6 +50,8 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
 	// json schema
 	// Always refs to "definitions"
 	readonly items: JsonSchemaId[];
+	// json schema
+	readonly additionalProperties: false;
 }
 
 /**
@@ -53,6 +62,8 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 	// json schema
 	// Always refs to "definitions"
 	readonly properties: Record<string, JsonSchemaId>;
+	// json schema
+	readonly additionalProperties: false;
 }
 
 /**
@@ -60,6 +71,13 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
  */
 export interface LeafNodeJsonSchema extends NodeJsonSchemaBase<"leaf", SimpleLeafSchemaKind> {
 	readonly type: SimpleLeafSchemaKind;
+}
+
+/**
+ * @internal
+ */
+export interface JsonDefinitionRef {
+	$ref: JsonSchemaId;
 }
 
 /**
