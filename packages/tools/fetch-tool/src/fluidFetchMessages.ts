@@ -104,12 +104,13 @@ async function* loadAllSequencedMessages(
 	} catch (error: any) {
 		const statusCode = error.getTelemetryProperties().statusCode;
 		const innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
-		// if there is gap between ops, catch the error and check it is the error we need
 		if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
 			throw error;
 		}
-		// get firstAvailableDelta from the error response, and set current sequence number to that
 
+		// This indicates we tried to fetch ops from storage that have been deleted (because they are past some retention policy).
+		// In that case, the error message should indicate the first sequence number that is available.
+		// We make a best-effort attempt for the original query (fetch all ops) by starting from that sequence number.
 		const props = error.getTelemetryProperties();
 		const { responseMessage } = props;
 		const [_, seq] =
@@ -119,10 +120,13 @@ async function* loadAllSequencedMessages(
 		if (seq !== undefined) {
 			lastSeq = parseInt(seq, 10);
 			firstAvailableDelta = lastSeq + 1;
+			console.log(
+				`Not all ops are available (older ops may have been deleted from storage). Starting from sequenceNumber: ${firstAvailableDelta}.`,
+			);
 		} else {
 			console.log(props);
 			throw new Error(
-				`Unexpected structure for 410 error: ${error.message}. Props were logged above. This indicates a problem with fetch-tool.`,
+				`Unexpected structure for 410 error: ${error.message}. Further error properties were logged above. This indicates a problem with fetch-tool.`,
 			);
 		}
 	}
