@@ -317,7 +317,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	const sections = [];
 
-	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeKind = options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
 	if (scopeKind !== undefined) {
 		sections.push(generatePackageScopeNotice(scopeKind));
