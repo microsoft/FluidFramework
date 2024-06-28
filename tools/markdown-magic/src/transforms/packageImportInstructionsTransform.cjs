@@ -38,7 +38,7 @@ const generatePackageImportInstructionsSection = (
 	if (hasBetaExport) {
 		lines.push("", `To access our \`beta\` APIs, import via \`${packageName}/beta\`.`);
 	}
-	
+
 	if (hasAlphaExport) {
 		lines.push("", `To access our \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
 	}
