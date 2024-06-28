@@ -34,7 +34,7 @@ function getOpString(msg: ISequencedDocumentMessage | undefined): string {
 		op?.["pos1"] === undefined
 			? ""
 			: // eslint-disable-next-line @typescript-eslint/dot-notation
-			  `@${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}`}`;
+				`@${op["pos1"]}${op["pos2"] === undefined ? "" : `,${op["pos2"]}`}`;
 
 	const seq =
 		msg.sequenceNumber < 0 ? "L" : (msg.sequenceNumber - msg.minimumSequenceNumber).toString();
@@ -157,7 +157,7 @@ export class TestClientLogger {
 								deltaArgs.sequencedMessage === undefined
 									? c.makeOpMessage(deltaArgs.op)
 									: { ...deltaArgs.sequencedMessage, contents: deltaArgs.op },
-						  );
+							);
 				const segStrings = TestClientLogger.getSegString(c);
 				this.ackedLine[clientLogIndex + 1] = segStrings.acked;
 				this.localLine[clientLogIndex + 1] = segStrings.local;
@@ -226,7 +226,11 @@ export class TestClientLogger {
 		this.roundLogLines.push(this.ackedLine, this.localLine);
 	}
 
-	public validate(opts?: { clear?: boolean; baseText?: string; errorPrefix?: string }): string {
+	public validate(opts?: {
+		clear?: boolean;
+		baseText?: string;
+		errorPrefix?: string;
+	}): string {
 		const baseText = opts?.baseText ?? this.clients[0].getText();
 		const errorPrefix = opts?.errorPrefix ? `${opts?.errorPrefix}: ` : "";
 		// cache all the properties of client 0 for faster look up

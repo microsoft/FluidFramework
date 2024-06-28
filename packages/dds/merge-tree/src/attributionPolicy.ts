@@ -46,10 +46,7 @@ function createAttributionPolicyFromCallbacks({
 	return {
 		// eslint-disable-next-line import/no-deprecated
 		attach: (client: Client): void => {
-			assert(
-				unsubscribe === undefined,
-				0x557 /* cannot attach to multiple clients at once */,
-			);
+			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
 			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
 				delta(opArgs, deltaArgs, client);

@@ -27,7 +27,11 @@ import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
 
-export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0): MergeTree {
+export function loadTextFromFile(
+	filename: string,
+	mergeTree: MergeTree,
+	segLimit = 0,
+): MergeTree {
 	const content = fs.readFileSync(filename, "utf8");
 	return loadText(content, mergeTree, segLimit);
 }
@@ -62,7 +66,14 @@ export function insertMarker({
 	props,
 	opArgs,
 }: InsertMarkerArgs): void {
-	mergeTree.insertSegments(pos, [Marker.make(behaviors, props)], refSeq, clientId, seq, opArgs);
+	mergeTree.insertSegments(
+		pos,
+		[Marker.make(behaviors, props)],
+		refSeq,
+		clientId,
+		seq,
+		opArgs,
+	);
 }
 
 interface InsertTextArgs {
@@ -86,7 +97,14 @@ export function insertText({
 	props,
 	opArgs,
 }: InsertTextArgs): void {
-	mergeTree.insertSegments(pos, [TextSegment.make(text, props)], refSeq, clientId, seq, opArgs);
+	mergeTree.insertSegments(
+		pos,
+		[TextSegment.make(text, props)],
+		refSeq,
+		clientId,
+		seq,
+		opArgs,
+	);
 }
 
 interface InsertSegmentsArgs {

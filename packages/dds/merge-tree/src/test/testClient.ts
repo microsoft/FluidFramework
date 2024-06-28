@@ -324,7 +324,9 @@ export class TestClient extends Client {
 	}
 
 	public relText(clientId: number, refSeq: number): string {
-		return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${this.textHelper.getText(
+		return `cli: ${this.getLongClientId(
+			clientId,
+		)} refSeq: ${refSeq}: ${this.textHelper.getText(
 			refSeq,
 			clientId,
 		)} refSeq: ${refSeq}: ${this.textHelper.getText(refSeq, clientId)}`;
@@ -359,7 +361,10 @@ export class TestClient extends Client {
 		assert(nodeOrdinalsHaveIntegrity(this.mergeTree.root));
 	}
 
-	public searchFromPos(pos: number, target: RegExp): { text: string; pos: number } | undefined {
+	public searchFromPos(
+		pos: number,
+		target: RegExp,
+	): { text: string; pos: number } | undefined {
 		let start = pos;
 		let chunk = "";
 		while (start < this.getLength()) {

@@ -212,7 +212,9 @@ export function* filterLocalReferencePositions(
  */
 let validateRefCount: ((collection?: LocalReferenceCollection) => void) | undefined;
 
-export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection) => void): void {
+export function setValidateRefCount(
+	cb?: (collection?: LocalReferenceCollection) => void,
+): void {
 	validateRefCount = cb;
 }
 

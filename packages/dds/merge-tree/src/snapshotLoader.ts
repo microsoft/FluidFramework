@@ -94,7 +94,9 @@ export class SnapshotLoader {
 		return [];
 	}
 
-	private readonly specToSegment = (spec: IJSONSegment | IJSONSegmentWithMergeInfo): ISegment => {
+	private readonly specToSegment = (
+		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
+	): ISegment => {
 		let seg: ISegment;
 
 		if (hasMergeInfo(spec)) {

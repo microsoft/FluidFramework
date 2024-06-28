@@ -31,7 +31,10 @@ export type PropertySet = MapLike<any>;
  *
  * @internal
  */
-export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined): boolean {
+export function matchProperties(
+	a: PropertySet | undefined,
+	b: PropertySet | undefined,
+): boolean {
 	if (!a && !b) {
 		return true;
 	}

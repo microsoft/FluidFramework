@@ -1266,7 +1266,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this._mergeTree.length ?? 0;
 	}
 
-	startOrUpdateCollaboration(longClientId: string | undefined, minSeq = 0, currentSeq = 0): void {
+	startOrUpdateCollaboration(
+		longClientId: string | undefined,
+		minSeq = 0,
+		currentSeq = 0,
+	): void {
 		// we should always have a client id if we are collaborating
 		// if the client id is undefined we are likely bound to a detached
 		// container, so we should keep going in local mode. once

@@ -49,10 +49,7 @@ describe("MergeTree.Client", () => {
 				const random = makeRandom(
 					minLen,
 					revertOps,
-					[...ackBeforeRevert].reduce<number>(
-						(pv, cv) => pv + (cv.codePointAt(0) ?? 0),
-						0,
-					),
+					[...ackBeforeRevert].reduce<number>((pv, cv) => pv + (cv.codePointAt(0) ?? 0), 0),
 					concurrentOpsWithRevert,
 				);
 

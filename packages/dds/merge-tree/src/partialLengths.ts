@@ -644,7 +644,8 @@ export class PartialSequenceLengths {
 		removalInfo?: IRemovalInfo,
 		moveInfo?: IMoveInfo,
 	): void {
-		const removalIsLocal = !!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
+		const removalIsLocal =
+			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocal =
 			segment.seq === UnassignedSequenceNumber ||
@@ -1377,7 +1378,10 @@ function combineForOverlapClients(
  *
  * Combination is performed additively on `seglen` on a per-client basis.
  */
-export function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength): void {
+export function combineOverlapClients(
+	a: PartialSequenceLength,
+	b: PartialSequenceLength,
+): void {
 	const overlapRemoveClients = combineForOverlapClients(
 		a.overlapRemoveClients,
 		b.overlapRemoveClients,

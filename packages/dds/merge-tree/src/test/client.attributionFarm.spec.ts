@@ -45,7 +45,9 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 	const clientNames = generateClientNames();
 	const rangeOptions = resolveRanges(defaultOptions, defaultOptions.growthFunc);
 	for (let extraSeed = 0; extraSeed < testCount; extraSeed++) {
-		for (const { initLen, modLen, opsPerRoundRange } of generatePairwiseOptions(rangeOptions)) {
+		for (const { initLen, modLen, opsPerRoundRange } of generatePairwiseOptions(
+			rangeOptions,
+		)) {
 			it(`AttributionFarm_${initLen}_${modLen}_${opsPerRoundRange}`, async () => {
 				const random = makeRandom(0xdeadbeef, initLen, modLen, extraSeed ?? 0);
 
@@ -57,14 +59,11 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 								attribution: {
 									track: true,
 									policyFactory:
-										createPropertyTrackingAndInsertionAttributionPolicyFactory(
-											"trackedProp",
-										),
+										createPropertyTrackingAndInsertionAttributionPolicyFactory("trackedProp"),
 								},
 							}),
 					);
-				for (const [i, c] of clients.entries())
-					c.startOrUpdateCollaboration(clientNames[i]);
+				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 
 				const getAttributionAtPosition = (
 					client: TestClient,

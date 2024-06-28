@@ -233,7 +233,9 @@ export function appendToMergeTreeDeltaRevertibles(
  * @legacy
  * @alpha
  */
-export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void {
+export function discardMergeTreeDeltaRevertible(
+	revertibles: MergeTreeDeltaRevertible[],
+): void {
 	for (const r of revertibles) {
 		for (const t of r.trackingGroup.tracked) {
 			t.trackingCollection.unlink(r.trackingGroup);

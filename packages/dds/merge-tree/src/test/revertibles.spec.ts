@@ -526,14 +526,8 @@ describe("MergeTree.Revertibles", () => {
 					afterUndoBaseText ??= clients.B.getText();
 				}
 				ops.push(
-					clients.B.makeOpMessage(
-						clients.B.insertMarkerLocal(0, ReferenceType.Simple),
-						++seq,
-					),
-					clients.B.makeOpMessage(
-						clients.B.insertMarkerLocal(1, ReferenceType.Simple),
-						++seq,
-					),
+					clients.B.makeOpMessage(clients.B.insertMarkerLocal(0, ReferenceType.Simple), ++seq),
+					clients.B.makeOpMessage(clients.B.insertMarkerLocal(1, ReferenceType.Simple), ++seq),
 				);
 
 				if (options.ackMarkerInsert) {
