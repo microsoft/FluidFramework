@@ -687,7 +687,7 @@ export const makeLegacySendBatchFn =
 type MessageWithContext = {
 	local: boolean;
 	savedOp?: boolean;
-	clientSequenceNumber: number;
+	batchStartCsn: number;
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
@@ -2623,9 +2623,11 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		const clientSequenceNumber = messageCopy.clientSequenceNumber;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-			//* RMP needs to return batchStartCSN
+		const processResult = this.remoteMessageProcessor.process(messageCopy);
+		if (processResult === undefined) {
+			return;
+		}
+		for (const message of processResult.messages) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2635,14 +2637,14 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
-						clientSequenceNumber,
+						batchStartCsn: processResult.batchStartCsn,
 					}
 				: // Unrecognized message will be ignored.
 					{
 						message,
 						local,
 						modernRuntimeMessage,
-						clientSequenceNumber,
+						batchStartCsn: processResult.batchStartCsn,
 					};
 			msg.savedOp = savedOp;
 
@@ -2690,7 +2692,7 @@ export class ContainerRuntime
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
-					messageWithContext.clientSequenceNumber,
+					messageWithContext.batchStartCsn,
 				);
 			}
 

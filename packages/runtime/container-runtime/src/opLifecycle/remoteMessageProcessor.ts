@@ -61,17 +61,24 @@ export class RemoteMessageProcessor {
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
 	 * a singleton array [remoteMessageCopy] is returned
 	 */
-	public process(
-		remoteMessageCopy: ISequencedDocumentMessage,
-	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
+	public process(remoteMessageCopy: ISequencedDocumentMessage):
+		| {
+				messages: InboundSequencedContainerRuntimeMessageOrSystemMessage[];
+				batchStartCsn: number;
+		  }
+		| undefined {
 		let message = remoteMessageCopy;
+
+		// This will be updated if we are part-way through a was-compressed batch
+		let batchStartCsn = message.clientSequenceNumber;
+
 		ensureContentsDeserialized(message);
 
 		if (isChunkedMessage(message)) {
 			const chunkProcessingResult = this.opSplitter.processChunk(message);
 			// Only continue further if current chunk is the final chunk
 			if (!chunkProcessingResult.isFinalChunk) {
-				return [];
+				return;
 			}
 			// This message will always be compressed
 			message = chunkProcessingResult.message;
@@ -82,7 +89,10 @@ export class RemoteMessageProcessor {
 		}
 
 		if (this.opDecompressor.currentlyUnrolling) {
-			message = this.opDecompressor.unroll(message);
+			const nextMessage = this.opDecompressor.unroll(message);
+			message = nextMessage.message;
+			batchStartCsn = nextMessage.batchStartCsn;
+
 			// Need to unpack after unrolling if not a groupedBatch
 			if (!isGroupedBatch(message)) {
 				unpack(message);
@@ -90,12 +100,18 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
-			return this.opGroupingManager.ungroupOp(message).map(unpack);
+			return {
+				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
+				batchStartCsn,
+			};
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
-		return [message as InboundSequencedContainerRuntimeMessageOrSystemMessage];
+		return {
+			messages: [message as InboundSequencedContainerRuntimeMessageOrSystemMessage],
+			batchStartCsn,
+		};
 	}
 }
 
