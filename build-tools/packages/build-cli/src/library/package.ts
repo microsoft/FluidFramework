@@ -260,7 +260,7 @@ export async function getPreReleaseDependencies(
 				? releaseGroup
 				: context.repo.releaseGroups.get(releaseGroup);
 		if (monorepo === undefined) {
-			throw new Error(`Can't find release group in context: ${releaseGroup as ReleaseGroup}`);
+			throw new Error(`Can't find release group in context: ${releaseGroup}`);
 		}
 
 		packagesToCheck.push(...monorepo.packages);

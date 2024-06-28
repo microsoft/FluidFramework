@@ -53,7 +53,7 @@ async function checkDepsInstalled(
 ): Promise<CheckResult> {
 	const packagesToCheck = rgOrPkg instanceof MonoRepo ? rgOrPkg.packages : [rgOrPkg];
 
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises -- The usage appears correct so mayeb a false positive
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises -- The usage appears correct so maybe a false positive
 	const checkDeps: async.AsyncBooleanIterator<Package> = async (
 		pkg: Package,
 	): Promise<boolean> => {
@@ -162,7 +162,7 @@ async function checkPolicy(context: Context): Promise<CheckResult> {
 	// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 	// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 	// like we do in CI.
-	const result = await execa.command(`npm run policy-check`, {
+	const result = await execa(`npm`, [`run `, `policy-check`], {
 		cwd: context.gitRepo.resolvedRoot,
 	});
 
@@ -220,7 +220,7 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 	static readonly summary =
 		`Runs checks on a local branch to verify it is ready to serve as the base for a release branch.`;
 
-	static readonly description = `Runs the following checks:\n\n- ${[...allChecks.keys()].join(
+	static readonly description = `Runs the following checks:\n${["", ...allChecks.keys()].join(
 		"\n- ",
 	)}`;
 
@@ -230,7 +230,7 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 				"The name of a package or a release group. Defaults to the client release group if not specified.",
 			default: "client",
 		}),
-	};
+	} as const;
 
 	async run(): Promise<void> {
 		const context = await this.getContext();
