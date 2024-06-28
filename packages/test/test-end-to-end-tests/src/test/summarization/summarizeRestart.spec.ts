@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 // eslint-disable-next-line import/no-internal-modules
-import { reconnectSummarizerToBeElected } from "./gc/gcTestSummaryUtils.js";
+import { reconnectSummarizerToBeElected } from "../gc/gcTestSummaryUtils.js";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
