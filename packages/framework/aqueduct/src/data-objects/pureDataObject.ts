@@ -100,16 +100,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.context = props.context;
 		this.providers = props.providers;
 		this.initProps = props.initProps;
-
-		/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-		/* eslint-disable @typescript-eslint/no-explicit-any */
-		assert(
-			(this.runtime as any)._dataObject === undefined,
-			0x0bd /* "Object runtime already has DataObject!" */,
-		);
-		(this.runtime as any)._dataObject = this;
-		/* eslint-enable @typescript-eslint/no-explicit-any */
-		/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 	}
 
 	/**
