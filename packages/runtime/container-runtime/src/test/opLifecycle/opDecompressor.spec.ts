@@ -94,27 +94,32 @@ describe("OpDecompressor", () => {
 	});
 
 	it("Processes single compressed op", () => {
-		let message = generateCompressedBatchMessage(1);
-		decompressor.decompressAndStore(message);
+		const compressed = generateCompressedBatchMessage(1);
+		decompressor.decompressAndStore(compressed);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		message = decompressor.unroll(message);
+		const { message, batchStartCsn } = decompressor.unroll(compressed);
 		assert.strictEqual((message.contents as ITestMessageContents).contents, "value0");
 		assert.strictEqual(
 			(message.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
 		);
 		assert.strictEqual(message.compression, undefined);
+		assert.strictEqual(
+			batchStartCsn,
+			compressed.clientSequenceNumber,
+			"batchStartCsn incorrect",
+		);
 	});
 
 	// Back-compat self healing mechanism for ADO:3538
 	it("Processes single compressed op without compression markers", () => {
-		let message: ISequencedDocumentMessage = {
+		const compressed: ISequencedDocumentMessage = {
 			...generateCompressedBatchMessage(1),
 			compression: undefined,
 		};
-		decompressor.decompressAndStore(message);
+		decompressor.decompressAndStore(compressed);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		message = decompressor.unroll(message);
+		const { message, batchStartCsn } = decompressor.unroll(compressed);
 
 		assert.strictEqual((message.contents as ITestMessageContents).contents, "value0");
 		assert.strictEqual(
@@ -122,6 +127,11 @@ describe("OpDecompressor", () => {
 			undefined,
 		);
 		assert.strictEqual(message.compression, undefined);
+		assert.strictEqual(
+			batchStartCsn,
+			compressed.clientSequenceNumber,
+			"batchStartCsn incorrect",
+		);
 
 		mockLogger.assertMatch([
 			{
@@ -144,7 +154,7 @@ describe("OpDecompressor", () => {
 		const rootMessage = generateCompressedBatchMessage(5);
 		decompressor.decompressAndStore(rootMessage);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const firstMessage = decompressor.unroll(rootMessage);
+		const { message: firstMessage, batchStartCsn } = decompressor.unroll(rootMessage);
 
 		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
 		assert.strictEqual(
@@ -152,6 +162,11 @@ describe("OpDecompressor", () => {
 			undefined,
 		);
 		assert.strictEqual(firstMessage.compression, undefined);
+		assert.strictEqual(
+			batchStartCsn,
+			rootMessage.clientSequenceNumber,
+			"batchStartCsn incorrect",
+		);
 
 		for (let i = 1; i < 4; i++) {
 			assert.equal(decompressor.currentlyUnrolling, true);

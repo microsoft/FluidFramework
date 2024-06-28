@@ -169,7 +169,8 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				actual.push(...messageProcessor.process(inboundMessage));
+				const messages = messageProcessor.process(inboundMessage)?.messages ?? [];
+				actual.push(...messages);
 			}
 
 			const expected = option.grouping
@@ -205,7 +206,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -223,7 +224,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
