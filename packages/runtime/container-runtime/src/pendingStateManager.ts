@@ -11,6 +11,7 @@ import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
@@ -277,10 +278,17 @@ export class PendingStateManager implements IDisposable {
 		this.pendingMessages.shift();
 
 		if (pendingMessage.batchStartCsn !== batchStartCsn) {
-			//* TODO: Add props from other branch
-			this.stateHandler.close(
-				DataProcessingError.create("CsnMismatch", "processPendingLocalMessage", message),
-			);
+			this.logger?.sendErrorEvent({
+				eventName: "BatchClientSequenceNumberMismatch",
+				details: {
+					processingBatch: !!this.pendingBatchBeginMessage,
+					pendingBatchCsn: pendingMessage.batchStartCsn,
+					batchStartCsn,
+					messageBatchMetadata: (message.metadata as any)?.batch,
+					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
+				},
+				messageDetails: extractSafePropertiesFromMessage(message),
+			});
 		}
 
 		const messageContent = buildPendingMessageContent(message);
