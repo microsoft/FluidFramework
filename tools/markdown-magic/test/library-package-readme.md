@@ -24,16 +24,16 @@ npm i @test/test-package -D
 
 ## Importing from this package
 
-This package leverages [package.json exports](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5-beta/#packagejson-exports-imports-and-self-referencing) to separate our APIs by support level.
-For more information on our support guarantees, see our [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels) documentation.
+This package leverages [package.json exports](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5-beta/#packagejson-exports-imports-and-self-referencing) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access our `public` ([SemVer](https://semver.org/)) APIs, import directly from the root of the package as normal.
+To access the `public` ([SemVer](https://semver.org/)) APIs, import directly from the root of the package as normal.
 
-To access our `beta` APIs, import via `@test/test-package/beta`.
+To access the `beta` APIs, import via `@test/test-package/beta`.
 
-To access our `alpha` APIs, import via `@test/test-package/alpha`.
+To access the `alpha` APIs, import via `@test/test-package/alpha`.
 
-To access our `legacy` APIs, import via `@test/test-package/legacy`.
+To access the `legacy` APIs, import via `@test/test-package/legacy`.
 
 ## API Documentation
 
