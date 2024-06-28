@@ -280,8 +280,6 @@ export class SnapshotLoader {
 	}
 
 	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
-		this.mergeTree.options ??= {};
-		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {
