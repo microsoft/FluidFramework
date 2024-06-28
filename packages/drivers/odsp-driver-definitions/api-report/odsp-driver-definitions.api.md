@@ -300,7 +300,7 @@ export interface TokenFetchOptions {
     tenantId?: string;
 }
 
-// @internal @deprecated
+// @internal
 export const tokenFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
 // @beta
