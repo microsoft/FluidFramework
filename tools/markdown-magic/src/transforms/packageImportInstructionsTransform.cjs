@@ -35,12 +35,12 @@ const generatePackageImportInstructionsSection = (
 		"To access our `public` ([SemVer](https://semver.org/)) APIs, import directly from the root of the package as normal.",
 	];
 
-	if (hasAlphaExport) {
-		lines.push("", `To access our \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
-	}
-
 	if (hasBetaExport) {
 		lines.push("", `To access our \`beta\` APIs, import via \`${packageName}/beta\`.`);
+	}
+	
+	if (hasAlphaExport) {
+		lines.push("", `To access our \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
 	}
 
 	if (hasLegacyExport) {
