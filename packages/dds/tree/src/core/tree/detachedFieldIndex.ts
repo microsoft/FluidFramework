@@ -303,21 +303,10 @@ export class DetachedFieldIndex {
 		const { root, latestRelevantRevision: previousRevision } = fieldEntry;
 
 		// remove this root from the set of roots for the previous latest revision
-		const previousRevisionRoots = this.latestRelevantRevisionToFields.get(previousRevision);
-		if (previousRevisionRoots !== undefined) {
-			previousRevisionRoots.delete(root);
-			if (previousRevisionRoots?.size === 0) {
-				this.latestRelevantRevisionToFields.delete(previousRevision);
-			}
-		}
+		deleteFromNestedMap(this.latestRelevantRevisionToFields, previousRevision, root);
 
 		// add this root to the set of roots for the new latest revision
-		const latestRevisionRoots = getOrAddInMap(
-			this.latestRelevantRevisionToFields,
-			revision,
-			new Map(),
-		);
-		latestRevisionRoots.set(root, id);
+		setInNestedMap(this.latestRelevantRevisionToFields, revision, root, id);
 		setInNestedMap(this.detachedNodeToField, id.major, id.minor, {
 			root,
 			latestRelevantRevision: revision,
