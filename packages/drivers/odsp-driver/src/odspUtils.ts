@@ -362,7 +362,8 @@ export function toInstrumentedOdspStorageTokenFetcher(
 		logger,
 		resolvedUrlParts,
 		tokenFetcher,
-		true, // throwOnNullToken,
+		true, // throwOnNullToken
+		false, // returnPlainToken
 	);
 	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
 	return res as InstrumentedStorageTokenFetcher;
@@ -372,13 +373,14 @@ export function toInstrumentedOdspStorageTokenFetcher(
  * Returns a function that can be used to fetch storage or websocket token.
  * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
  * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ * @param returnPlainToken: When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
  */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
-	returnPlainToken: boolean = false,
+	returnPlainToken: boolean,
 ): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
