@@ -20,6 +20,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -311,6 +312,95 @@ describeCompat(
 				assert.equal(dataObjectC2.loadingGroupId, loadingGroupId2, "C groupId not set");
 				assert.equal(dataObjectD2.loadingGroupId, loadingGroupId2, "D groupId not set");
 			}
+		});
+
+		it("Loading Snapshot with GroupId using feature gate off should load properly", async function () {
+			if (!supportsDataVirtualization(provider)) {
+				this.skip();
+			}
+			const container = await provider.createContainer(runtimeFactory);
+			const mainObject = (await container.getEntryPoint()) as TestDataObject;
+			const containerRuntime = mainObject.containerRuntime;
+
+			// Testing all apis for creating a data store with a loadingGroupId
+			await createDataObjectsWithGroupIds(mainObject, containerRuntime);
+
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container,
+				dataObjectFactory,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				configProvider({
+					"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": false,
+				}),
+			);
+			await provider.ensureSynchronized();
+			const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
+			const channelsTree = summaryTree.tree[".channels"];
+			assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
+			const dataObjectTreeA = channelsTree.tree[dataObjectA.id];
+			const dataObjectTreeB = channelsTree.tree[dataObjectB.id];
+			assert(dataObjectTreeA !== undefined, "dataObjectTree should exist");
+			assert(dataObjectTreeA.type === SummaryType.Tree, "dataObjectTree should be a tree");
+			assert(
+				dataObjectTreeA.groupId === loadingGroupId,
+				"GroupId missing from A summary tree",
+			);
+			assert(dataObjectTreeB !== undefined, "dataObjectTree should exist");
+			assert(dataObjectTreeB.type === SummaryType.Tree, "dataObjectTree should be a tree");
+			assert(
+				dataObjectTreeB.groupId === loadingGroupId,
+				"GroupId missing from B summary tree",
+			);
+
+			clearCacheIfOdsp(provider, persistedCache);
+			const container2 = await provider.loadContainer(
+				runtimeFactory,
+				{
+					configProvider: configProvider({
+						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": false,
+					}),
+				},
+				{
+					// For ODSP this technically doesn't work, but the cache is cleared so we get the "latest"
+					[LoaderHeader.version]: summaryVersion,
+				},
+			);
+
+			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+			const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+			const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
+			const handleC2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
+
+			// Essentially, this should not reject
+			// When fixed, this function should be removed.
+			const assertInvertDoesNotReject = async (promise: Promise<unknown>, message: string) => {
+				await assert.rejects(
+					promise,
+					// Not sure which error interface to use here, but the key is the message
+					(thrown: IFluidErrorBase) => {
+						assert(thrown.message.includes("0x97a"), "Error message should be correct");
+						return true;
+					},
+					message,
+				);
+			};
+
+			await assertInvertDoesNotReject(
+				mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD"),
+				"D should not be loaded",
+			);
+			assert(handleA2 !== undefined, "handleA2 should not be undefined");
+			assert(handleB2 !== undefined, "handleB2 should not be undefined");
+			assert(handleC2 !== undefined, "handleC2 should not be undefined");
+
+			// When fixed, all these should not fail.
+			await assertInvertDoesNotReject(handleA2.get(), "should be able to retrieve A");
+			await assertInvertDoesNotReject(handleB2.get(), "should be able to retrieve B");
+			await assertInvertDoesNotReject(handleC2.get(), "should be able to retrieve C");
 		});
 
 		it("Can create loadingGroupId via detached flow", async () => {

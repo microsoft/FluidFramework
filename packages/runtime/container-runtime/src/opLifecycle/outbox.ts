@@ -41,7 +41,7 @@ export interface IOutboxParameters {
 	readonly submitBatchFn:
 		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 		| undefined;
-	readonly legacySendBatchFn: (batch: IBatch) => void;
+	readonly legacySendBatchFn: (batch: IBatch) => number;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -126,10 +126,14 @@ export class Outbox {
 	}
 
 	/**
-	 * If we detect that the reference sequence number of the incoming message does not match
-	 * what was already in the batch managers, this means that batching has been interrupted so
+	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
 	 * message as the first message.
+	 *
+	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
+	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
+	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
 	private maybeFlushPartialBatch() {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
@@ -254,6 +258,7 @@ export class Outbox {
 			return;
 		}
 
+		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
@@ -261,10 +266,10 @@ export class Outbox {
 			const processedBatch = this.compressBatch(
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
-			this.sendBatch(processedBatch);
+			clientSequenceNumber = this.sendBatch(processedBatch);
 		}
 
-		this.persistBatch(rawBatch.content);
+		this.params.pendingStateManager.onFlushBatch(rawBatch.content, clientSequenceNumber);
 	}
 
 	/**
@@ -355,11 +360,12 @@ export class Outbox {
 	 * Sends the batch object to the container context to be sent over the wire.
 	 *
 	 * @param batch - batch to be sent
+	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
 	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
 		if (length === 0) {
-			return;
+			return undefined; // Nothing submitted
 		}
 
 		const socketSize = estimateSocketSize(batch);
@@ -372,6 +378,7 @@ export class Outbox {
 			});
 		}
 
+		let clientSequenceNumber: number;
 		if (this.params.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
@@ -380,10 +387,10 @@ export class Outbox {
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
-			this.params.legacySendBatchFn(batch);
+			clientSequenceNumber = this.params.legacySendBatchFn(batch);
 		} else {
 			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
-			this.params.submitBatchFn(
+			clientSequenceNumber = this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
@@ -393,20 +400,11 @@ export class Outbox {
 				batch.referenceSequenceNumber,
 			);
 		}
-	}
 
-	private persistBatch(batch: BatchMessage[]) {
-		// Let the PendingStateManager know that a message was submitted.
-		// In future, need to shift toward keeping batch as a whole!
-		for (const message of batch) {
-			this.params.pendingStateManager.onSubmitMessage(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				message.referenceSequenceNumber,
-				message.localOpMetadata,
-				message.metadata,
-			);
-		}
+		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+		clientSequenceNumber -= length - 1;
+		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+		return clientSequenceNumber;
 	}
 
 	public checkpoint() {

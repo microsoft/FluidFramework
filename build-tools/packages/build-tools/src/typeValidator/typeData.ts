@@ -6,16 +6,25 @@
 import { Node, ts } from "ts-morph";
 
 export interface TypeData {
+	/**
+	 * Includes namespace prefix if needed.
+	 */
 	readonly name: string;
 	readonly kind: string;
 	readonly node: Node;
 	readonly tags: ReadonlySet<string>;
 }
 
+/**
+ * Creates a non-colliding "mangled" identifier for the type.
+ */
 export function getFullTypeName(typeData: TypeData) {
-	return `${typeData.kind}_${typeData.name}`;
+	return `${typeData.kind}_${typeData.name.replace(/\./g, "_")}`;
 }
 
+/**
+ * Generate an expression to include into the generated type tests which evaluates to the type to compare.
+ */
 export function toTypeString(prefix: string, typeData: TypeData, typePreprocessor: string) {
 	const node = typeData.node;
 	let typeParams: string | undefined;

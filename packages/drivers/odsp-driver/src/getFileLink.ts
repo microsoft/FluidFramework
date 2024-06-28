@@ -111,6 +111,7 @@ export async function getFileLink(
  * @param odspUrlParts - parts of odsp resolved url.
  * @param logger - logger to send events.
  * @returns Response from the API call.
+ * @legacy
  * @alpha
  */
 async function getFileLinkWithLocationRedirectionHandling(
