@@ -661,7 +661,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE&hasAlphaExport=TRUE&hasBetaExport=TRUE&hasLegacyImport=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
