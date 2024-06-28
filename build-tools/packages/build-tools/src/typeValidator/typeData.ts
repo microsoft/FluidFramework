@@ -6,85 +6,26 @@
 import { Node, ts } from "ts-morph";
 
 export interface TypeData {
+	/**
+	 * Includes namespace prefix if needed.
+	 */
 	readonly name: string;
 	readonly kind: string;
 	readonly node: Node;
+	readonly tags: ReadonlySet<string>;
 }
 
+/**
+ * Creates a non-colliding "mangled" identifier for the type.
+ */
 export function getFullTypeName(typeData: TypeData) {
-	return `${typeData.kind}_${typeData.name}`;
+	return `${typeData.kind}_${typeData.name.replace(/\./g, "_")}`;
 }
 
-export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[] {
-	/*
-        handles namespaces e.g.
-        export namespace foo{
-            export type first: "first";
-            export type second: "second";
-        }
-        this will prefix foo and generate two type data:
-        foo.first and foo.second
-    */
-	if (Node.isModuleDeclaration(node)) {
-		const typeData: TypeData[] = [];
-		for (const s of node.getStatements()) {
-			// only get type data for nodes that are exported from the namespace
-			if (Node.isExportable(s) && s.isExported()) {
-				typeData.push(...getNodeTypeData(s, node.getName()));
-			}
-		}
-		return typeData;
-	}
-
-	/*
-        handles variable statements: const foo:number=0, bar:number = 0;
-        this just grabs the declarations: foo:number=0 and bar:number
-        which we can make type data from
-    */
-	if (Node.isVariableStatement(node)) {
-		const typeData: TypeData[] = [];
-		for (const dec of node.getDeclarations()) {
-			typeData.push(...getNodeTypeData(dec, namespacePrefix));
-		}
-		return typeData;
-	}
-
-	if (Node.isIdentifier(node)) {
-		const typeData: TypeData[] = [];
-		node
-			.getDefinitionNodes()
-			.forEach((d) => typeData.push(...getNodeTypeData(d, namespacePrefix)));
-		return typeData;
-	}
-
-	if (
-		Node.isClassDeclaration(node) ||
-		Node.isEnumDeclaration(node) ||
-		Node.isInterfaceDeclaration(node) ||
-		Node.isTypeAliasDeclaration(node) ||
-		Node.isVariableDeclaration(node) ||
-		Node.isFunctionDeclaration(node)
-	) {
-		const name =
-			namespacePrefix !== undefined
-				? `${namespacePrefix}.${node.getName()}`
-				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					node.getName()!;
-
-		const typeData: TypeData[] = [
-			{
-				name,
-				kind: node.getKindName(),
-				node,
-			},
-		];
-		return typeData;
-	}
-
-	throw new Error(`Unknown Export Kind: ${node.getKindName()}`);
-}
-
-export function toTypeString(prefix: string, typeData: TypeData) {
+/**
+ * Generate an expression to include into the generated type tests which evaluates to the type to compare.
+ */
+export function toTypeString(prefix: string, typeData: TypeData, typePreprocessor: string) {
 	const node = typeData.node;
 	let typeParams: string | undefined;
 	if (
@@ -114,9 +55,9 @@ export function toTypeString(prefix: string, typeData: TypeData) {
 		case ts.SyntaxKind.FunctionDeclaration:
 		case ts.SyntaxKind.Identifier:
 			// turn variables and functions into types
-			return `TypeOnly<typeof ${typeStringBase}>`;
+			return `${typePreprocessor}<typeof ${typeStringBase}>`;
 
 		default:
-			return `TypeOnly<${typeStringBase}>`;
+			return `${typePreprocessor}<${typeStringBase}>`;
 	}
 }

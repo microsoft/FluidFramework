@@ -29,7 +29,6 @@ import {
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runSessionExpiryKey,
-	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
@@ -121,8 +120,7 @@ export function generateGCConfigs(
 	const sweepEnabled: boolean =
 		!gcEnabled || tombstoneTimeoutMs === undefined
 			? false
-			: mc.config.getBoolean(runSweepKey) ??
-			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
+			: sweepAllowed && createParams.gcOptions.enableGCSweep === true;
 	const disableDatastoreSweep =
 		mc.config.getBoolean(disableDatastoreSweepKey) === true ||
 		createParams.gcOptions[gcDisableDataStoreSweepOptionName] === true;
@@ -131,6 +129,10 @@ export function generateGCConfigs(
 			? "ONLY_BLOBS"
 			: "YES"
 		: "NO";
+
+	// If we aren't running sweep, also disable AutoRecovery which also emits the GC op.
+	// This gives a simple control surface for compability concerns around introducing the new op.
+	const tombstoneAutorecoveryEnabled = shouldRunSweep !== "NO";
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
@@ -172,6 +174,7 @@ export function generateGCConfigs(
 	return {
 		gcEnabled, // For this document
 		sweepEnabled: sweepAllowed, // For this document (based on current GC Generation option)
+		tombstoneAutorecoveryEnabled,
 		shouldRunSweep, // For this session
 		runFullGC,
 		testMode,
@@ -199,7 +202,11 @@ export function generateGCConfigs(
  *
  * If there is no Session Expiry timeout, GC can never guarantee an object won't be revived, so return undefined.
  */
-function computeTombstoneTimeout(sessionExpiryTimeoutMs: number | undefined): number | undefined {
+function computeTombstoneTimeout(
+	sessionExpiryTimeoutMs: number | undefined,
+): number | undefined {
 	const bufferMs = oneDayMs;
-	return sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs;
+	return (
+		sessionExpiryTimeoutMs && sessionExpiryTimeoutMs + maxSnapshotCacheExpiryMs + bufferMs
+	);
 }

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -14,13 +18,13 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
+	IDocumentStorageService,
 	ICreateBlobResponse,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -85,6 +89,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 
 /**
  * Information from a snapshot needed to load BlobManager
+ * @legacy
  * @alpha
  */
 export interface IBlobManagerLoadInfo {
@@ -100,7 +105,8 @@ export type IBlobManagerRuntime = Pick<
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
-type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
+type ICreateBlobResponseWithTTL = ICreateBlobResponse &
+	Partial<Record<"minTTLInSeconds", number>>;
 
 interface PendingBlob {
 	blob: ArrayBufferLike;
@@ -165,14 +171,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * because we know that the server will not delete the blob corresponding to that storage ID.
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
-
-	/**
-	 * This stores IDs of tombstoned blobs.
-	 *
-	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
-	 * Tombstoned objects are eventually deleted by GC.
-	 */
-	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
 	private stopAttaching: boolean = false;
@@ -289,15 +287,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (expired) {
 					// we want to avoid submitting ops with broken handles
 					this.closeContainer(
-						new GenericError(
-							"Trying to submit a BlobAttach for expired blob",
-							undefined,
-							{
-								localId,
-								blobId,
-								secondsSinceUpload,
-							},
-						),
+						new GenericError("Trying to submit a BlobAttach for expired blob", undefined, {
+							localId,
+							blobId,
+							secondsSinceUpload,
+						}),
 					);
 				}
 			}
@@ -422,7 +416,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					pending.attached = true;
 					this.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
-			  }
+				}
 			: undefined;
 		return new BlobHandle(
 			`${BlobManager.basePath}/${id}`,
@@ -828,36 +822,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * This is called to update blobs whose routes are tombstones.
-	 *
-	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
-	 * Tombstoned objects are eventually deleted by GC.
-	 *
-	 * @param tombstonedRoutes - The routes of blob nodes that are tombstones.
-	 */
-	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
-		const tombstonedBlobsSet: Set<string> = new Set();
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of tombstonedRoutes) {
-			const blobId = getBlobIdFromGCNodePath(route);
-			tombstonedBlobsSet.add(blobId);
-		}
-
-		// Remove blobs from the tombstone list that were tombstoned but aren't anymore as per the tombstoneRoutes.
-		for (const blobId of this.tombstonedBlobs) {
-			if (!tombstonedBlobsSet.has(blobId)) {
-				this.tombstonedBlobs.delete(blobId);
-			}
-		}
-
-		// Mark blobs that are now tombstoned by adding them to the tombstone list.
-		for (const blobId of tombstonedBlobsSet) {
-			this.tombstonedBlobs.add(blobId);
-		}
-	}
-
-	/**
 	 * Verifies that the blob with given id is not deleted, i.e., it has not been garbage collected. If the blob is GC'd,
 	 * log an error and throw if necessary.
 	 */
@@ -892,10 +856,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
 		for (const [localId, storageId] of table) {
-			assert(
-				this.redirectTable.has(localId),
-				0x254 /* "unrecognized id in redirect table" */,
-			);
+			assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
 			this.setRedirection(localId, storageId);
 			// set identity (id -> id) entry
 			this.setRedirection(storageId, storageId);

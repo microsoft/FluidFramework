@@ -27,6 +27,7 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
@@ -35,7 +36,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import {
 	manufactureHandle,
@@ -128,7 +128,6 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 		return containerRuntime.summarize({
 			runGC: true,
 			fullTree: true,
-			trackState: false,
 		});
 	}
 
@@ -244,8 +243,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							},
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 							fromId: {
-								value: toFluidHandleInternal(defaultDataStore._root.handle)
-									.absolutePath,
+								value: toFluidHandleInternal(defaultDataStore._root.handle).absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
 							},
 						},
@@ -261,8 +259,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 							},
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 							fromId: {
-								value: toFluidHandleInternal(defaultDataStore._root.handle)
-									.absolutePath,
+								value: toFluidHandleInternal(defaultDataStore._root.handle).absolutePath,
 								tag: TelemetryDataTag.CodeArtifact,
 							},
 						},
@@ -299,9 +296,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				// Get the blob handle in the summarizer client. Don't retrieve the underlying blob yet. We will do that
 				// after the blob node is inactive.
 				const summarizerBlobHandle =
-					summarizerDefaultDataStore._root.get<IFluidHandleInternal<ArrayBufferLike>>(
-						"blob",
-					);
+					summarizerDefaultDataStore._root.get<IFluidHandleInternal<ArrayBufferLike>>("blob");
 				assert(
 					summarizerBlobHandle !== undefined,
 					"Blob handle not sync'd to summarizer client",
@@ -455,15 +450,11 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				],
 				async () => {
 					// Create a summarizer client that will be used to summarize the container.
-					const { summarizer: summarizer1 } = await createSummarizer(
-						provider,
-						mainContainer,
-						{
-							runtimeOptions: {
-								gcOptions: { inactiveTimeoutMs },
-							},
+					const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+						runtimeOptions: {
+							gcOptions: { inactiveTimeoutMs },
 						},
-					);
+					});
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
@@ -501,10 +492,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 					} catch (error: any) {
 						const inactiveError: InactiveLoadError | undefined = error;
 						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
-						assert.equal(
-							inactiveError?.message,
-							`DataStore is inactive: ${dataStoreUrl}`,
-						);
+						assert.equal(inactiveError?.message, `DataStore is inactive: ${dataStoreUrl}`);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
@@ -537,22 +525,15 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				],
 				async () => {
 					// Create a summarizer client that will be used to summarize the container.
-					const { summarizer: summarizer1 } = await createSummarizer(
-						provider,
-						mainContainer,
-						{
-							runtimeOptions: {
-								gcOptions: { inactiveTimeoutMs },
-							},
+					const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+						runtimeOptions: {
+							gcOptions: { inactiveTimeoutMs },
 						},
-					);
+					});
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
-					const dds = dataObject._runtime.createChannel(
-						"dds1",
-						SharedMap.getFactory().type,
-					);
+					const dds = dataObject._runtime.createChannel("dds1", SharedMap.getFactory().type);
 					const ddsUrl = toFluidHandleInternal(dds.handle).absolutePath;
 					defaultDataStore._root.set("dds1", dds.handle);
 					defaultDataStore._root.delete("dds1");
@@ -616,15 +597,11 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				],
 				async () => {
 					// Create a summarizer client that will be used to summarize the container.
-					const { summarizer: summarizer1 } = await createSummarizer(
-						provider,
-						mainContainer,
-						{
-							runtimeOptions: {
-								gcOptions: { inactiveTimeoutMs },
-							},
+					const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+						runtimeOptions: {
+							gcOptions: { inactiveTimeoutMs },
 						},
-					);
+					});
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
@@ -683,15 +660,11 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				],
 				async () => {
 					// Create a summarizer client that will be used to summarize the container.
-					const { summarizer: summarizer1 } = await createSummarizer(
-						provider,
-						mainContainer,
-						{
-							runtimeOptions: {
-								gcOptions: { inactiveTimeoutMs },
-							},
+					const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+						runtimeOptions: {
+							gcOptions: { inactiveTimeoutMs },
 						},
-					);
+					});
 
 					// Create a data store, mark it as referenced and then unreferenced
 					const dataObject = await createNewDataObject();
@@ -757,17 +730,13 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				},
 			],
 			async () => {
-				const { summarizer: summarizer1 } = await createSummarizer(
-					provider,
-					mainContainer,
-					{
-						runtimeOptions: {
-							gcOptions: {
-								inactiveTimeoutMs,
-							},
+				const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer, {
+					runtimeOptions: {
+						gcOptions: {
+							inactiveTimeoutMs,
 						},
 					},
-				);
+				});
 
 				const dataObject = await createNewDataObject();
 
@@ -800,10 +769,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				await provider.ensureSynchronized();
 
 				// Summarize now. This is when the inactive object events will be logged.
-				await assert.doesNotReject(
-					waitForSummary(summarizer2),
-					"Summary wasn't successful",
-				);
+				await assert.doesNotReject(waitForSummary(summarizer2), "Summary wasn't successful");
 			},
 		);
 
@@ -921,8 +887,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						container1,
 						testContainerConfig,
 					);
-					const defaultDataObject1 =
-						(await container1.getEntryPoint()) as ITestDataObject;
+					const defaultDataObject1 = (await container1.getEntryPoint()) as ITestDataObject;
 					await waitForContainerConnection(container1);
 
 					const dataObjectA_1 = await createNewDataObject();
@@ -947,16 +912,14 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						summaryVersion1,
 						mockLogger2,
 					);
-					const defaultDataObject2 =
-						(await container2.getEntryPoint()) as ITestDataObject;
+					const defaultDataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
 					const mockLogger3 = new MockLogger();
 					const container3 = await loadContainer(
 						testContainerConfig,
 						summaryVersion1,
 						mockLogger3,
 					);
-					const defaultDataObject3 =
-						(await container3.getEntryPoint()) as ITestDataObject;
+					const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 
 					// Wait the Inactive Timeout. Timers will fire
 					await waitForInactiveTimeout();
@@ -983,8 +946,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						defaultDataObject3._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
 						idA,
 					);
-					const [newDirectory_3, handleToAttach_3] =
-						await newDirectoryFn(defaultDataObject3);
+					const [newDirectory_3, handleToAttach_3] = await newDirectoryFn(defaultDataObject3);
 					newDirectory_3.set("A", manufacturedHandleA_3);
 					defaultDataObject3._root.set("NewDirectory", handleToAttach_3);
 					await provider.ensureSynchronized();

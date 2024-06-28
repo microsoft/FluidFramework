@@ -25,7 +25,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -639,11 +642,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			await provider.ensureSynchronized();
 
 			const props = await summarizePromiseP;
-			assert.strictEqual(
-				props.result,
-				"success",
-				"Summarization did not succeed as expected",
-			);
+			assert.strictEqual(props.result, "success", "Summarization did not succeed as expected");
 			assert.strictEqual(
 				props.maxAttempts,
 				defaultMaxAttemptsForSubmitFailures,

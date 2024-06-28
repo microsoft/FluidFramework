@@ -7,7 +7,8 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedClient } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -232,7 +233,7 @@ describe("Summarizer Client Election", () => {
 	}
 
 	afterEach(() => {
-		mockLogger.events = [];
+		mockLogger.clear();
 		testQuorum.reset();
 		summaryCollectionEmitter.removeAllListeners();
 		summarizer.removeAllListeners();
@@ -353,12 +354,7 @@ describe("Summarizer Client Election", () => {
 			// Add more clients, no effect
 			addClient("s2", 19, false);
 			addClient("b", 41, true);
-			assertState(
-				"a-summarizer",
-				"a",
-				17,
-				"additional younger clients should have no effect",
-			);
+			assertState("a-summarizer", "a", 17, "additional younger clients should have no effect");
 
 			// Remove elected client, should reelect
 			removeClient("a", 400);

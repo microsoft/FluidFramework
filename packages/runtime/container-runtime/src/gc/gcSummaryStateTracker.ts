@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	ISummaryTreeWithStats,
 	ISummarizeResult,
@@ -18,7 +18,10 @@ import { IRefreshSummaryResult } from "../summary/index.js";
 
 import { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
-import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
+import {
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+} from "./gcSummaryDefinitions.js";
 
 export const gcStateBlobKey = `${gcBlobPrefix}_root`;
 

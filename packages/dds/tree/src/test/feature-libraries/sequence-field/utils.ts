@@ -8,12 +8,12 @@ import { strict } from "assert";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangesetLocalId,
-	DeltaFieldChanges,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
-	TaggedChange,
+	type ChangesetLocalId,
+	type DeltaFieldChanges,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
+	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
@@ -21,16 +21,19 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import type {
+	NodeId,
+	RebaseRevisionMetadata,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
-	CellId,
-	Changeset,
-	HasMarkFields,
+	type CellId,
+	type Changeset,
+	type HasMarkFields,
 	MarkListFactory,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
@@ -47,7 +50,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	IdAllocator,
+	type IdAllocator,
 	brand,
 	fail,
 	fakeIdAllocator,
@@ -64,7 +67,10 @@ import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 
-export function assertWrappedChangesetsEqual(actual: WrappedChange, expected: WrappedChange): void {
+export function assertWrappedChangesetsEqual(
+	actual: WrappedChange,
+	expected: WrappedChange,
+): void {
 	ChangesetWrapper.assertEqual(actual, expected, assertChangesetsEqual);
 }
 
@@ -82,13 +88,7 @@ export function composeDeep(
 		(change1, change2) =>
 			makeAnonChange(
 				ChangesetWrapper.compose(change1, change2, (c1, c2, composeChild) =>
-					composePair(
-						c1.change,
-						c2.change,
-						composeChild,
-						metadata,
-						idAllocatorFromMaxId(),
-					),
+					composePair(c1.change, c2.change, composeChild, metadata, idAllocatorFromMaxId()),
 				),
 			),
 		makeAnonChange(ChangesetWrapper.create([])),
@@ -125,7 +125,10 @@ export function prune(
 	change: SF.Changeset,
 	childPruner?: (child: NodeId) => NodeId | undefined,
 ): SF.Changeset {
-	return SF.sequenceFieldChangeRebaser.prune(change, childPruner ?? ((child: NodeId) => child));
+	return SF.sequenceFieldChangeRebaser.prune(
+		change,
+		childPruner ?? ((child: NodeId) => child),
+	);
 }
 
 export function shallowCompose(
@@ -295,17 +298,15 @@ export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
 	return ChangesetWrapper.invert(change, (c) => invert(c));
 }
 
-export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
+export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
 	deepFreeze(change.change);
 	const table = SF.newCrossFieldTable();
-	const revisionMetadata = defaultRevisionMetadataFromChanges([change]);
 	let inverted = SF.invert(
 		change.change,
-		true,
+		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
-		revisionMetadata,
 	);
 
 	if (table.isInvalidated) {
@@ -314,11 +315,10 @@ export function invert(change: TaggedChange<SF.Changeset>): SF.Changeset {
 		table.dstQueries.clear();
 		inverted = SF.invert(
 			change.change,
-			true,
+			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,
-			revisionMetadata,
 		);
 	}
 
@@ -646,5 +646,9 @@ export function tagChangeInline(
 }
 
 export function inlineRevision(change: Changeset, revision: RevisionTag): Changeset {
-	return SF.sequenceFieldChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return SF.sequenceFieldChangeRebaser.replaceRevisions(
+		change,
+		new Set([undefined]),
+		revision,
+	);
 }

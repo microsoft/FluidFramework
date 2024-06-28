@@ -9,13 +9,16 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { FetchSource, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,
 	IOdspResolvedUrl,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";

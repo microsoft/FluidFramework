@@ -4,24 +4,26 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { type TelemetryEventBatcher, measure } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	BranchRebaseResult,
-	ChangeFamily,
-	ChangeFamilyEditor,
+	type BranchRebaseResult,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
-	CommitMetadata,
-	GraphCommit,
-	RevisionTag,
-	TaggedChange,
+	type CommitMetadata,
+	type GraphCommit,
+	type RevisionTag,
+	type TaggedChange,
 	findAncestor,
 	makeAnonChange,
 	mintCommit,
 	rebaseBranch,
 	tagChange,
 	tagRollbackInverse,
+	type RebaseStatsWithDuration,
 } from "../core/index.js";
-import { EventEmitter, ISubscribable } from "../events/index.js";
+import { EventEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
 
@@ -120,6 +122,27 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired after this branch is disposed
 	 */
 	dispose(): void;
+
+	/**
+	 * Fired after a new transaction is started.
+	 * @param isOuterTransaction - true iff the transaction being started is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionStarted(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is aborted.
+	 * @param isOuterTransaction - true iff the transaction being aborted is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionAborted(isOuterTransaction: boolean): void;
+
+	/**
+	 * Fired after the current transaction is committed.
+	 * @param isOuterTransaction - true iff the transaction being committed is the outermost transaction
+	 * as opposed to a nested transaction.
+	 */
+	transactionCommitted(isOuterTransaction: boolean): void;
 }
 
 /**
@@ -142,9 +165,10 @@ export interface BranchTrimmingEvents {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TEditor, TChange>
-> {
+export class SharedTreeBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+> extends EventEmitter<SharedTreeBranchEvents<TEditor, TChange>> {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	/**
@@ -183,7 +207,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly mintRevisionTag: () => RevisionTag,
-		private readonly branchTrimmer?: ISubscribable<BranchTrimmingEvents>,
+		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
+		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
+			keyof RebaseStatsWithDuration
+		>,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor((change) =>
@@ -267,6 +294,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			onForkUnSubscribe();
 		});
 		this.editor.enterTransaction();
+		this.emit("transactionStarted", this.transactions.size === 1);
 	}
 
 	/**
@@ -283,6 +311,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		this.emit("transactionCommitted", this.transactions.size === 0);
 		if (commits.length === 0) {
 			return undefined;
 		}
@@ -329,6 +358,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
+		this.emit("transactionAborted", this.transactions.size === 0);
 		if (commits.length === 0) {
 			return [undefined, []];
 		}
@@ -379,7 +409,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		const commits: GraphCommit<TChange>[] = [];
-		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
+		const startCommit = findAncestor(
+			[this.head, commits],
+			(c) => c.revision === startRevision,
+		);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
@@ -505,18 +538,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(
-			this.mintRevisionTag,
-			this.changeFamily.rebaser,
-			head,
-			upTo,
-			onto.getHead(),
+		const { duration, output } = measure(() =>
+			rebaseBranch(
+				this.mintRevisionTag,
+				this.changeFamily.rebaser,
+				head,
+				upTo,
+				onto.getHead(),
+			),
 		);
-		if (this.head === rebaseResult.newSourceHead) {
+
+		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });
+
+		if (this.head === output.newSourceHead) {
 			return undefined;
 		}
 
-		return rebaseResult;
+		return output;
 	}
 
 	/**
@@ -555,7 +593,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
  * @returns a function which when called will deregister all registrations (including transitive) created by this function.
  * The deregister function has undefined behavior if called more than once.
  */
-export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void }>>(
+export function onForkTransitive<T extends Listenable<{ fork: (t: T) => void }>>(
 	forkable: T,
 	onFork: (fork: T) => void,
 ): () => void {

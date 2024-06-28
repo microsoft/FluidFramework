@@ -5,9 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
-import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+
 import { treeDataObject } from "../reactSharedTreeView.js";
 
 describe("reactSharedTreeView", () => {
@@ -26,7 +27,8 @@ describe("reactSharedTreeView", () => {
 				// Maybe we can default the shared object's key to be derived from the data objects key by default?
 				tree: treeDataObject(
 					"tree",
-					new TreeConfiguration(Inventory, () => ({ nuts: 5, bolts: 6 })),
+					new TreeViewConfiguration({ schema: Inventory }),
+					() => new Inventory({ nuts: 5, bolts: 6 }),
 				),
 			},
 		} satisfies ContainerSchema;

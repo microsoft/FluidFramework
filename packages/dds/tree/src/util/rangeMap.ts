@@ -84,7 +84,12 @@ export function getFirstEntryFromRangeMap<T>(
 /**
  * Sets the keys from `start` to `start + length - 1` to `value`.
  */
-export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number, value: T): void {
+export function setInRangeMap<T>(
+	map: RangeMap<T>,
+	start: number,
+	length: number,
+	value: T,
+): void {
 	const end = start + length - 1;
 	const newEntry: RangeEntry<T> = { start, length, value };
 

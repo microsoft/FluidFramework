@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-shared-tree-interop",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -33,11 +33,14 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check . --formatter-enabled=true",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -54,9 +57,9 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.39.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
@@ -68,7 +71,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-jest": "^29.1.1",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

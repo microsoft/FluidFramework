@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
@@ -45,7 +48,7 @@ describe("RemoteMessageProcessor", () => {
 					? undefined
 					: {
 							batch: batchMetadata,
-					  },
+						},
 			referenceSequenceNumber: Infinity,
 			contents: JSON.stringify({
 				contents: {
@@ -70,7 +73,7 @@ describe("RemoteMessageProcessor", () => {
 					? undefined
 					: {
 							batch: batchMetadata,
-					  },
+						},
 			compression: undefined,
 			sequenceNumber: seqNum,
 			clientSequenceNumber: clientSeqNum,
@@ -176,14 +179,14 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("c", startSeqNum, 3),
 						getProcessedMessage("d", startSeqNum, 4),
 						getProcessedMessage("e", startSeqNum, 5, false),
-				  ]
+					]
 				: [
 						getProcessedMessage("a", startSeqNum, startSeqNum++, true),
 						getProcessedMessage("b", startSeqNum, startSeqNum++),
 						getProcessedMessage("c", startSeqNum, startSeqNum++),
 						getProcessedMessage("d", startSeqNum, startSeqNum++),
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
-				  ];
+					];
 
 			assert.deepStrictEqual(actual, expected, "unexpected output");
 		});

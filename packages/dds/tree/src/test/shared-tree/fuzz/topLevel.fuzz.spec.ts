@@ -5,19 +5,19 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
+	type DDSFuzzModel,
+	type DDSFuzzSuiteOptions,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedTreeTestFactory, validateFuzzTreeConsistency } from "../../utils.js";
 
-import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -51,10 +51,10 @@ describe("Fuzz - Top-Level", () => {
 		crossFieldMove: 5,
 		start: 1,
 		commit: 1,
-		// TODO: AB#7780 investigate failures when abort is enabled
-		abort: 0,
+		abort: 1,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
 		schema: 1,
+		nodeConstraint: 3,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**

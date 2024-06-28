@@ -74,11 +74,7 @@
             "off"
         ],
         "@typescript-eslint/brace-style": [
-            "error",
-            "1tbs",
-            {
-                "allowSingleLine": true
-            }
+            "off"
         ],
         "@typescript-eslint/class-literal-property-style": [
             "error"
@@ -608,6 +604,7 @@
             {
                 "allow": [
                     "@fluidframework/*/internal",
+                    "@fluid-experimental/**",
                     "*/index.js"
                 ]
             }

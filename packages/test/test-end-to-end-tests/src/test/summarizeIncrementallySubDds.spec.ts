@@ -15,13 +15,12 @@ import {
 	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
+import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
 	MessageType,
-	SummaryObject,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -230,7 +229,12 @@ class TestTreeDDSFactory implements IChannelFactory<TestIncrementalSummaryTreeDD
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): TestIncrementalSummaryTreeDDS {
-		return new TestIncrementalSummaryTreeDDSClass(id, document, this.attributes, "TestTreeDDS");
+		return new TestIncrementalSummaryTreeDDSClass(
+			id,
+			document,
+			this.attributes,
+			"TestTreeDDS",
+		);
 	}
 }
 
@@ -349,7 +353,10 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 		this.root.seqNumber = loadedRoot.seqNumber;
 	}
 
-	private async loadTreeNode(storage: IChannelStorageService, path: string): Promise<ITreeNode> {
+	private async loadTreeNode(
+		storage: IChannelStorageService,
+		path: string,
+	): Promise<ITreeNode> {
 		// Based on the storage API, we have to retrieve the data from a blob instead of using the snapshot tree itself
 		const nodeData = await readAndParse<ISerializableTreeNode>(
 			storage,

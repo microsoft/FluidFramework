@@ -5,8 +5,11 @@
 
 import { strict as assert } from "assert";
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
-import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import {
+	gcDeletedBlobKey,
+	gcTombstoneBlobKey,
+} from "@fluidframework/runtime-definitions/internal";
 
 import {
 	GCSummaryStateTracker,
@@ -17,7 +20,10 @@ import {
 	nextGCVersion,
 } from "../../gc/index.js";
 
-type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
+type GCSummaryStateTrackerWithPrivates = Omit<
+	GCSummaryStateTracker,
+	"latestSummaryGCVersion"
+> & {
 	latestSummaryGCVersion: GCVersion;
 };
 

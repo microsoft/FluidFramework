@@ -61,7 +61,6 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			const { summary } = await summarizerRuntime.summarize({
 				runGC: true,
 				fullTree: true,
-				trackState: false,
 			});
 
 			const gcState = getGCStateFromSummary(summary);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,51 +35,59 @@
 				}
 			}
 		},
-		"./bufferBrowser.js": {
-			"node": {
-				"import": {
-					"types": "./lib/bufferNode.d.ts",
-					"default": "./lib/bufferNode.js"
-				},
-				"require": {
-					"types": "./dist/bufferNode.d.ts",
-					"default": "./dist/bufferNode.js"
-				}
-			},
-			"default": {
-				"import": {
-					"types": "./lib/bufferBrowser.d.ts",
-					"default": "./lib/bufferBrowser.js"
-				},
-				"require": {
-					"types": "./dist/bufferBrowser.d.ts",
-					"default": "./dist/bufferBrowser.js"
+		"./internal-api-report": {
+			"import": {
+				"types": {
+					"browser legacy": "./lib/client-utils.browser.legacy.d.ts",
+					"node legacy": "./lib/client-utils.node.legacy.d.ts"
 				}
 			}
 		}
 	},
-	"main": "lib/indexNode.js",
-	"types": "lib/indexNode.d.ts",
+	"main": "lib/indexBrowser.js",
+	"types": "lib/indexBrowser.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "npm run build:docs:browser && npm run build:docs:node",
+		"build:docs:browser": "npm run build:exports:browser && concurrently \"npm:build:docs:browser:*\"",
+		"build:docs:browser:current": "api-extractor run --local --config api-extractor/api-extractor-browser.json",
+		"build:docs:browser:legacy": "api-extractor run --local --config api-extractor/api-extractor-browser.legacy.json",
+		"build:docs:node": "npm run build:exports:node && concurrently \"npm:build:docs:node:*\"",
+		"build:docs:node:current": "npm run ci:build:docs:node:current",
+		"build:docs:node:legacy": "npm run ci:build:docs:node:legacy",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:exports:browser": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
+		"build:exports:node": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
 		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints internal-api-report",
+		"check:biome": "biome check . --formatter-enabled=true",
+		"check:exports": "concurrently \"npm:check:exports:*\"",
+		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.cjs.json",
+		"check:exports:cjs:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.cjs.json",
+		"check:exports:esm:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.esm.json",
+		"check:exports:esm:indexBrowser:legacy": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.legacy.esm.json",
+		"check:exports:esm:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.esm.json",
+		"check:exports:esm:indexNode:legacy": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.legacy.esm.json",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:docs": "concurrently \"npm:ci:build:docs:*\"",
+		"ci:build:docs:browser:current": "api-extractor run --config api-extractor/api-extractor-browser.json",
+		"ci:build:docs:browser:legacy": "api-extractor run --config api-extractor/api-extractor-browser.legacy.json",
+		"ci:build:docs:node:current": "api-extractor run --config api-extractor/api-extractor-node.json",
+		"ci:build:docs:node:legacy": "api-extractor run --config api-extractor/api-extractor-node.legacy.json",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -89,7 +97,7 @@
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v --level public",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -120,19 +128,18 @@
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
 		"events_pkg": "npm:events@^3.1.0",
-		"lodash": "^4.17.21",
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.4.0.0",
+		"@biomejs/biome": "^1.7.3",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0-rc.5.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@fluidframework/build-tools": "^0.39.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@types/base64-js": "^1.3.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
@@ -162,7 +169,7 @@
 		"sinon": "^17.0.1",
 		"ts-jest": "^29.1.1",
 		"ts-node": "^10.9.1",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -172,6 +179,24 @@
 				"build:test:mocha:esm",
 				"build:test:jest",
 				"build:test:types"
+			],
+			"build:docs:browser:current": [
+				"build:exports:browser"
+			],
+			"build:docs:browser:legacy": [
+				"build:exports:browser"
+			],
+			"build:docs:node:current": [
+				"build:docs:browser:current"
+			],
+			"build:docs:node:legacy": [
+				"build:docs:browser:legacy"
+			],
+			"check:exports:esm:indexBrowser:legacy": [
+				"build:exports:browser"
+			],
+			"check:exports:esm:indexNode:legacy": [
+				"build:exports:node"
 			],
 			"build:test:jest": [
 				"tsc"
@@ -184,6 +209,18 @@
 			],
 			"build:test:types": [
 				"build:esnext"
+			],
+			"ci:build:docs:browser:current": [
+				"build:exports:browser"
+			],
+			"ci:build:docs:browser:legacy": [
+				"build:exports:browser"
+			],
+			"ci:build:docs:node:current": [
+				"build:exports:node"
+			],
+			"ci:build:docs:node:legacy": [
+				"build:exports:node"
 			]
 		}
 	},

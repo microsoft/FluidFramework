@@ -12,14 +12,12 @@ import {
 	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
-	createSummarizer,
 	createTestConfigProvider,
-	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -30,25 +28,6 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-		});
-
-		it("The summarizing client can refresh from an unexpected ack", async () => {
-			const container = await provider.makeTestContainer();
-			const { container: summarizingContainer, summarizer } = await createSummarizer(
-				provider,
-				container,
-			);
-
-			await provider.ensureSynchronized();
-			const { summaryVersion } = await summarizeNow(summarizer);
-			assert(!summarizingContainer.closed, "Refreshing acks should not close the summarizer");
-			assert(!container.closed, "Original container should not be closed");
-
-			await summarizeNow(summarizer);
-			summarizer.stop("summarizerClientDisconnected");
-			summarizer.close();
-			await createSummarizer(provider, container, undefined, summaryVersion);
-			await provider.ensureSynchronized();
 		});
 
 		it("The summarizing client will immediately refresh its own summaries", async () => {

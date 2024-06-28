@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable, IDisposable } from "@fluidframework/core-interfaces";
 
-import { CommitMetadata } from "../core/index.js";
-import { ISubscribable } from "../events/index.js";
-import { RevertibleFactory } from "../shared-tree/index.js";
-import { IDisposable } from "../util/index.js";
+import type { CommitMetadata } from "../core/index.js";
+import type { Listenable } from "../events/index.js";
+import type { RevertibleFactory } from "../shared-tree/index.js";
 
-import {
+import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
@@ -20,28 +19,24 @@ import {
  * Channel for a Fluid Tree DDS.
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @public
+ * @sealed @public
  */
 export interface ITree extends IFluidLoadable {
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
-	 * If the tree's stored schema is compatible, this will provide a schema-aware API for accessing the tree's content.
-	 * If the provided schema is incompatible with the stored data, the view will instead expose an error indicating the incompatibility.
+	 * If the stored schema is compatible with the view schema specified by `config`,
+	 * the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
+	 * If the provided schema is incompatible with the stored schema, the view will instead expose a status indicating the incompatibility.
 	 *
 	 * @remarks
-	 * If the tree is uninitialized (has no schema and no content), the tree is initialized with the `initialTree` and
-	 * view `schema` in the provided `config`.
+	 * If the tree is uninitialized (has no schema and no content), use {@link TreeView.initialize} on the returned view to set the schema and content together.
+	 * Using `viewWith` followed by {@link TreeView.upgradeSchema} to initialize only the schema for a document is technically valid when the schema
+	 * permits trees with no content.
 	 *
-	 * The tree (now known to have been initialized) has its stored schema checked against the provided view schema.
-	 *
-	 * If the schemas are compatible, the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
-	 *
-	 * If the schemas are not compatible, the view will indicate the error.
-	 *
-	 * Note that other clients can modify the document at any time, causing the view to enter or leave this error state: see {@link TreeView.events} for how to handle invalidation in these cases.
+	 * Note that other clients can modify the document at any time, causing the view to change its compatibility status: see {@link TreeView.events} for how to handle invalidation in these cases.
 	 *
 	 * Only one schematized view may exist for a given ITree at a time.
-	 * If creating a second, the first must be disposed before calling `schematize` again.
+	 * If creating a second, the first must be disposed before calling `viewWith` again.
 	 *
 	 * @privateRemarks
 	 * TODO: Provide a way to make a generic view schema for any document.
@@ -59,13 +54,13 @@ export interface ITree extends IFluidLoadable {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter and this initialization is no longer a special case.
 	 */
-	schematize<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
+	viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 }
 
 /**
- * Options when schematizing a tree.
+ * Options when constructing a tree view.
  * @public
  */
 export interface ITreeConfigurationOptions {
@@ -87,76 +82,105 @@ const defaultTreeConfigurationOptions: Required<ITreeConfigurationOptions> = {
 };
 
 /**
- * Configuration for how to {@link ITree.schematize | schematize} a tree.
+ * Property-bag configuration for {@link TreeViewConfiguration} construction.
  * @public
  */
-export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+export interface ITreeViewConfiguration<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> {
 	/**
-	 * Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 * The schema which the application wants to view the tree with.
 	 */
-	public readonly options: Required<ITreeConfigurationOptions>;
+	readonly schema: TSchema;
 
 	/**
-	 * @param schema - The schema which the application wants to view the tree with.
-	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
-	 * (meaning it does not even have any schema set at all).
-	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
-	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
-	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
+	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * and throw an error if the new content doesn't match the expected schema.
+	 *
+	 * @defaultValue `false`.
+	 *
+	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
+	 * bit slower.
 	 */
-	public constructor(
-		public readonly schema: TSchema,
-		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-		options?: ITreeConfigurationOptions,
-	) {
-		this.options = { ...defaultTreeConfigurationOptions, ...options };
+	readonly enableSchemaValidation?: boolean;
+}
+
+/**
+ * Configuration for {@link ITree.viewWith}.
+ * @sealed @public
+ */
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
+	implements Required<ITreeViewConfiguration<TSchema>>
+{
+	/**
+	 * {@inheritDoc ITreeViewConfiguration.schema}
+	 */
+	public readonly schema: TSchema;
+
+	/**
+	 * {@inheritDoc ITreeViewConfiguration.enableSchemaValidation}
+	 */
+	public readonly enableSchemaValidation: boolean;
+
+	/**
+	 * @param props - Property bag of configuration options.
+	 */
+	public constructor(props: ITreeViewConfiguration<TSchema>) {
+		const config = { ...defaultTreeConfigurationOptions, ...props };
+		this.schema = config.schema;
+		this.enableSchemaValidation = config.enableSchemaValidation;
 	}
 }
 
 /**
- * An editable view of a (version control style) branch of a shared tree.
+ * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
- * This view is always in one of two states:
- * 1. In schema: the stored schema is compatible with the provided view schema. There is no error, and root can be used.
- * 2. Out of schema: the stored schema is incompatible with the provided view schema. There is an error, and root cannot be used.
+ * This schema--known as the view schema--may or may not align the stored schema of the document.
+ * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
+ *
+ * Application authors are encouraged to read [schema-evolution.md](../../docs/user-facing/schema-evolution.md) and
+ * choose a schema compatibility policy that aligns with their application's needs.
  *
  * @privateRemarks
- * From an API design perspective, `upgradeSchema` could be merged into `schematize` anb/or `schematize` could return errors explicitly.
+ * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
  * Such approaches would make it discoverable that out of schema handling may need to be done.
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
- * If this does become a problem,
- * it could be mitigated by adding a `rootOrError` member and deprecating `root` to give users a warning if they might be missing the error checking.
- * @public
+ * @sealed @public
  */
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 *
-	 * If in the out of schema state, accessing this will throw.
-	 * To handle this case, check `error` before using.
+	 * If the view schema not sufficiently compatible with the stored schema, accessing this will throw.
+	 * To handle this case, check {@link TreeView.compatibility | compatibility}'s {@link SchemaCompatibilityStatus.canView | canView} before using.
 	 *
-	 * To get notified about changes to this field (including to it being in an `error` state),
+	 * To get notified about changes to this field,
 	 * use {@link TreeViewEvents.rootChanged} via `view.events.on("rootChanged", callback)`.
+	 *
+	 * To get notified about changes to stored schema (which may affect compatibility between this view's schema and
+	 * the stored schema), use {@link TreeViewEvents.schemaChanged} via `view.events.on("schemaChanged", callback)`.
 	 */
 	get root(): TreeFieldFromImplicitField<TSchema>;
 
 	set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
 
 	/**
-	 * Description of the error state, if any.
-	 * When this is undefined, the view schema and stored schema are compatible, and `root` can be used.
+	 * Description of the current compatibility status between the view schema and stored schema.
+	 *
+	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
 	 */
-	readonly error?: SchemaIncompatible;
+	readonly compatibility: SchemaCompatibilityStatus;
 
 	/**
-	 * When there is an `error` and {@link SchemaIncompatible.canUpgrade} is true,
+	 * When the schemas are not an exact match and {@link SchemaCompatibilityStatus.canUpgrade} is true,
 	 * this can be used to modify the stored schema to make it match the view schema.
-	 * This will clear the error state, and allow access to `root`.
+	 * This will update the compatibility state, and allow access to `root`.
+	 * Beware that this may impact other clients' ability to view the document depending on the application's schema compatibility policy!
 	 * @remarks
-	 * It is an error to call this when {@link SchemaIncompatible.canUpgrade} is false, and a no-op when not in an `error` state.
-	 * When this changes the stored schema, any existing or future clients which were compatible with the old stored schema will get an `error` state when trying to schematize the document.
+	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false, and a no-op when the stored and view schema are already an exact match.
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -167,47 +191,120 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
 	upgradeSchema(): void;
 
 	/**
+	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
+	 *
+	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * Applications should typically call this function before attaching a `SharedTree`.
+	 * @param content - The content to initialize the tree with.
+	 */
+	initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
+
+	/**
 	 * Events for the tree.
 	 */
-	readonly events: ISubscribable<TreeViewEvents>;
+	readonly events: Listenable<TreeViewEvents>;
 }
 
 /**
- * Information about how a view schema was incompatible.
- * @public
+ * Information about a view schema's compatibility with the document's stored schema.
+ *
+ * See SharedTree's README for more information about choosing a compatibility policy.
+ * @sealed @public
  */
-export interface SchemaIncompatible {
+export interface SchemaCompatibilityStatus {
 	/**
-	 * True iff the view schema supports all possible documents permitted by the stored schema.
+	 * Whether the view schema allows exactly the same set of documents as the stored schema.
 	 *
 	 * @remarks
-	 * When true, this is still an error because the view schema supports more documents than the stored schema.
-	 * This means that writes to the document using the view schema could make the document violate its stored schema.
-	 * In this case, the stored schema could be updated to match the provided view schema, allowing read write access to the tree.
+	 * Equivalence here is defined in terms of allowed documents because there are some degenerate cases where schemas are not
+	 * exact matches in a strict (schema-based) sense but still allow the same documents, and the document notion is more useful to applications.
 	 *
-	 * Future version of SharedTree may provide readonly access to the document in this case because that would be safe:
+	 * Examples which are expressible where this may occur include:
+	 * - schema repository `A` has extra schema which schema `B` doesn't have, but they are unused (i.e. not reachable from the root schema)
+	 * - field in schema `A` has allowed field members which the corresponding field in schema `B` does not have, but those types are not constructible (ex: an object node type containing a required field with no allowed types)
+	 *
+	 * These cases are typically not interesting to applications.
+	 */
+	readonly isEquivalent: boolean;
+
+	/**
+	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
+	 * If false, {@link TreeView.root} will throw upon access.
+	 *
+	 * Currently, this field is true iff `isEquivalent` is true.
+	 * Do not rely on this:
+	 * there are near-term plans to extend support for viewing documents when the stored schema contains additional optional fields not present in the view schema.
+	 * The other two types of backward-compatible changes (field relaxations and addition of allowed field types) will eventually be supported as well,
+	 * likely through out-of-schema content adapters that the application can provide alongside their view schema.
+	 *
+	 * Be aware that even with these SharedTree limitations fixed, application logic may not correctly tolerate the documents allowable by the stored schema!
+	 * Application authors are encouraged to read docs/user-facing/schema-evolution.md and choose a schema compatibility policy that
+	 * aligns with their application's needs.
+	 *
+	 * @remarks
+	 * When the documents allowed by the view schema is a strict superset of those by the stored schema,
+	 * this is false because writes to the document using the view schema could make the document violate its stored schema.
+	 * In this case, the stored schema could be updated to match the provided view schema, allowing read-write access to the tree.
+	 * See {@link SchemaCompatibilityStatus.canUpgrade}.
+	 *
+	 * Future version of SharedTree may provide readonly access to the document in this case because that would be safe,
 	 * but this is not currently supported.
+	 *
+	 * @privateRemarks
+	 * A necessary condition for this to be true is that the documents allowed by the view schema are a subset of those allowed by the stored schema.
+	 * This is not sufficient: the simple-tree layer's read APIs do not tolerate out-of-schema data.
+	 * For example, if the view schema for a node has a required `Point` field but the stored schema has an optional `Point` field,
+	 * read APIs on the view schema do not work correctly when the document has a node with a missing `Point` field.
+	 * Similar issues happen when the view schema has a field with less allowed types than the stored schema and the document actually leverages those types.
+	 */
+	readonly canView: boolean;
+
+	/**
+	 * True iff the view schema supports all possible documents permitted by the stored schema.
+	 * When true, it is valid to call {@link TreeView.upgradeSchema} (though if the stored schema is already an exact match, this is a no-op).
 	 */
 	readonly canUpgrade: boolean;
+
+	/**
+	 * True iff the document is uninitialized (i.e. it has no schema and no content).
+	 *
+	 * To initialize the document, call {@link TreeView.initialize}.
+	 *
+	 * @remarks
+	 * It's not necessary to check this field before calling {@link TreeView.initialize} in most scenarios; application authors typically know from
+	 * context that they're in a flow which creates a new `SharedTree` and would like to initialize it.
+	 */
+	readonly canInitialize: boolean;
+
+	// TODO: Consider extending this status to include:
+	// - application-defined metadata about the stored schema
+	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
 }
 
 /**
  * Events for {@link TreeView}.
- * @public
+ * @sealed @public
  */
 export interface TreeViewEvents {
 	/**
-	 * A batch of changes has finished processing and the view has been updated.
-	 */
-	afterBatch(): void;
-
-	/**
-	 * {@link TreeView.root} has changed.
-	 * This includes going into or out of an `error` state where the root is unavailable due to stored schema changes.
+	 * Raised whenever {@link TreeView.root} is invalidated.
+	 *
+	 * This includes changes to the document schema.
 	 * It also includes changes to the field containing the root such as setting or clearing an optional root or changing which node is the root.
 	 * This does NOT include changes to the content (fields/children) of the root node: for that case subscribe to events on the root node.
 	 */
 	rootChanged(): void;
+
+	/**
+	 * The stored schema for the document has changed.
+	 * This may affect the compatibility between the view schema and the stored schema, and thus the ability to use the view.
+	 *
+	 * @remarks
+	 * This event implies that the old {@link TreeView.root} is no longer valid, but applications need not handle that separately:
+	 * {@link TreeViewEvents.rootChanged} will be fired after this event.
+	 */
+	schemaChanged(): void;
 
 	/**
 	 * Fired when:

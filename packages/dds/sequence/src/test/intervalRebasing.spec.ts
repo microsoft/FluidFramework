@@ -5,94 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockContainerRuntimeFactoryForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
 import { Side } from "../intervalCollection.js";
 import { IntervalStickiness } from "../intervals/index.js";
-import { SharedString, SharedStringFactory } from "../sequenceFactory.js";
-import { SharedStringClass, type ISharedString } from "../sharedString.js";
 
 import { Client, assertConsistent, assertSequenceIntervals } from "./intervalTestUtils.js";
-
-function constructClient(
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	id: string,
-) {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = {
-		intervalStickinessEnabled: true,
-		mergeTreeEnableObliterate: true,
-	};
-	const sharedString: ISharedString = new SharedStringClass(
-		dataStoreRuntime,
-		id,
-		SharedStringFactory.Attributes,
-	);
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services: IChannelServices = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	};
-
-	sharedString.initializeLocal();
-
-	return {
-		sharedString,
-		containerRuntime,
-		services,
-	};
-}
-
-async function loadClient(
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	source: Client,
-	id: string,
-): Promise<Client> {
-	const { summary } = source.sharedString.getAttachSummary();
-
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = {
-		intervalStickinessEnabled: true,
-		mergeTreeEnableObliterate: true,
-	};
-	const factory = SharedString.getFactory();
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services: IChannelServices = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: MockStorage.createFromSummary(summary),
-	};
-	const sharedString = await factory.load(dataStoreRuntime, id, services, factory.attributes);
-
-	return {
-		sharedString,
-		containerRuntime,
-	};
-}
-
-function constructClients(
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	numClients = 3,
-): [Client, Client, Client] {
-	return Array.from({ length: numClients }, (_, index) => {
-		const { sharedString, containerRuntime, services } = constructClient(
-			containerRuntimeFactory,
-			String.fromCharCode(index + 65),
-		);
-
-		sharedString.connect(services);
-		return { containerRuntime, sharedString };
-	}) as [Client, Client, Client];
-}
+import { constructClient, constructClients, loadClient } from "./multiClientTestUtils.js";
 
 describe("interval rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-	let clients: [Client, Client, Client];
+	let clients: Client[];
 
 	useStrictPartialLengthChecks();
 
@@ -357,7 +281,10 @@ describe("interval rebasing", () => {
 		const B = await loadClient(containerRuntimeFactory, A, "B");
 		B.sharedString.removeRange(0, 1);
 		const collection = A.sharedString.getIntervalCollection("comments");
-		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		collection.add({
+			start: { pos: 1, side: Side.After },
+			end: { pos: 0, side: Side.Before },
+		});
 		A.containerRuntime.connected = false;
 		containerRuntimeFactory.processAllMessages();
 		B.sharedString.insertText(0, "8");

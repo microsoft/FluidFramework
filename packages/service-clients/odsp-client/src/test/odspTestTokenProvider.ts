@@ -4,17 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IPublicClientConfig,
 	TokenRequestCredentials,
-	getFetchTokenUrl,
-	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
+import { getFetchTokenUrl, unauthPostAsync } from "@fluidframework/odsp-doclib-utils/internal";
 
-import { IOdspTokenProvider } from "../token.js";
+import type { TokenResponse } from "../interfaces.js";
+import type { IOdspTokenProvider } from "../token.js";
 
-import { OdspTestCredentials } from "./odspClient.spec.js";
+import type { OdspTestCredentials } from "./odspClient.spec.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
@@ -22,7 +21,7 @@ import { OdspTestCredentials } from "./odspClient.spec.js";
 export class OdspTestTokenProvider implements IOdspTokenProvider {
 	private readonly creds: OdspTestCredentials;
 
-	constructor(credentials: OdspTestCredentials) {
+	public constructor(credentials: OdspTestCredentials) {
 		this.creds = credentials;
 	}
 
@@ -65,13 +64,19 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 			client_id: clientConfig.clientId,
 			...credentials,
 		};
-		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
+		const response = await unauthPostAsync(
+			getFetchTokenUrl(server),
+			new URLSearchParams(body),
+		);
 
 		const parsedResponse = (await response.json()) as Record<string, unknown>;
 
 		const accessToken = parsedResponse.access_token;
 		assert(accessToken !== undefined, 'Response did not include "access_token".');
-		assert(typeof accessToken === "string", '"access_token" was malformed. Expected a string.');
+		assert(
+			typeof accessToken === "string",
+			'"access_token" was malformed. Expected a string.',
+		);
 
 		const refreshToken = parsedResponse.refresh_token;
 		if (refreshToken !== undefined) {

@@ -8,13 +8,13 @@
 import { strict as assert } from "node:assert";
 
 import {
-	FieldAnchor,
-	ITreeSubscriptionCursor,
+	type FieldAnchor,
+	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
-import { Context } from "../../../feature-libraries/flex-tree/context.js";
+import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	unboxedField,
 	unboxedTree,
@@ -23,11 +23,11 @@ import {
 import {
 	Any,
 	FieldKinds,
-	FlexAllowedTypes,
-	FlexFieldKind,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
 	FlexFieldSchema,
 } from "../../../feature-libraries/index.js";
-import { type TreeContent } from "../../../shared-tree/index.js";
+import type { TreeContent } from "../../../shared-tree/index.js";
 
 import { contextWithContentReadonly } from "./utils.js";
 

@@ -5,38 +5,39 @@
 
 import { strict as assert } from "assert";
 
-import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzTestState, type Client } from "@fluid-private/test-dds-utils";
+import { type AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
+import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { Revertible, ValueSchema } from "../../../core/index.js";
+import { type Revertible, ValueSchema } from "../../../core/index.js";
 import {
-	DownPath,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
+	type DownPath,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
 	SchemaBuilderInternal,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	intoStoredSchema,
 	type FlexAllowedTypes,
 	type FlexibleNodeContent,
+	type Any,
 } from "../../../feature-libraries/index.js";
-import { SharedTreeFactory } from "../../../shared-tree/index.js";
+import type { SharedTreeFactory } from "../../../shared-tree/index.js";
 import { brand, fail } from "../../../util/index.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
-	FuzzTestState,
-	FuzzTransactionView,
-	FuzzView,
+	type FuzzTestState,
+	type FuzzTransactionView,
+	type FuzzView,
 	getAllowableNodeTypes,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { createTreeViewSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
-import {
+import type {
 	FieldDownPath,
 	FieldEdit,
 	ClearField,
@@ -49,6 +50,7 @@ import {
 	TransactionBoundary,
 	UndoRedo,
 	CrossFieldMove,
+	Constraint,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
@@ -76,11 +78,14 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 	schemaChange: (state, operation) => {
 		applySchemaOp(state, operation);
 	},
+	constraint: (state, operation) => {
+		applyConstraint(state, operation);
+	},
 });
-export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
-	state,
-	operation,
-) => syncFuzzReducer(state, operation);
+export const fuzzReducer: AsyncReducer<
+	Operation,
+	DDSFuzzTestState<SharedTreeFactory>
+> = async (state, operation) => syncFuzzReducer(state, operation);
 
 export function checkTreesAreSynchronized(trees: readonly Client<SharedTreeFactory>[]) {
 	for (const tree of trees) {
@@ -152,9 +157,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 
 function applySequenceFieldEdit(
 	tree: FuzzView,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	field: FlexTreeSequenceField<any>,
+	field: FlexTreeSequenceField<readonly [Any]>,
 	change: Insert | Remove | IntraFieldMove | CrossFieldMove,
 ): void {
 	switch (change.type) {
@@ -190,9 +193,7 @@ function applySequenceFieldEdit(
 
 function applyRequiredFieldEdit(
 	tree: FuzzView,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	field: FlexTreeRequiredField<any>,
+	field: FlexTreeRequiredField<readonly [Any]>,
 	change: SetField,
 ): void {
 	switch (change.type) {
@@ -209,9 +210,7 @@ function applyRequiredFieldEdit(
 
 function applyOptionalFieldEdit(
 	tree: FuzzView,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	field: FlexTreeOptionalField<any>,
+	field: FlexTreeOptionalField<readonly [Any]>,
 	change: SetField | ClearField,
 ): void {
 	switch (change.type) {
@@ -287,6 +286,25 @@ export function applyUndoRedoEdit(
 		}
 		default:
 			unreachableCase(operation);
+	}
+}
+
+export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
+	const tree = viewFromState(state);
+	switch (constraint.content.type) {
+		case "nodeConstraint": {
+			const constraintNodePath = constraint.content.path;
+			const constraintNode =
+				constraintNodePath !== undefined
+					? navigateToNode(tree, constraintNodePath)
+					: undefined;
+			if (constraintNode !== undefined) {
+				tree.checkout.editor.addNodeExistsConstraint(constraintNode.anchorNode);
+			}
+			break;
+		}
+		default:
+			unreachableCase(constraint.content.type);
 	}
 }
 
