@@ -285,11 +285,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		loaderProps: {
 			configProvider: configProvider({
 				"Fluid.Container.enableOfflineLoad": true,
+				"Fluid.Sequence.intervalStickinessEnabled": true,
 			}),
-			options: {
-				// Smuggle in this option to pass down to DataStoreRuntime and IntervalCollection DDS
-				...({ intervalStickinessEnabled: true } as any),
-			},
 		},
 	};
 
