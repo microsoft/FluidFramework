@@ -28252,7 +28252,7 @@ packages:
     resolution: {integrity: sha512-m7Lllj9n/S6sOkCkRftpM7L24uvmfXQFedlW/4hENcuJH1HHm9u5EgxZb9uVjQSCGrbBWBkOGgcTxNg36r6ywA==}
     dependencies:
       fast-glob: 3.3.2
-      minimatch: 9.0.4
+      minimatch: 9.0.3
       mkdirp: 3.0.1
       path-browserify: 1.0.1
     dev: true
