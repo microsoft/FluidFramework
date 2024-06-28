@@ -314,7 +314,7 @@ describeCompat(
 			}
 		});
 
-		it("Can create loadingGroupId without feature", async function () {
+		it("Loading Snapshot with GroupId using feature gate off should load properly", async function () {
 			if (!supportsDataVirtualization(provider)) {
 				this.skip();
 			}
