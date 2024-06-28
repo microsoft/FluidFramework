@@ -8,25 +8,37 @@ import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
 /**
  * Returns non-symbol keys for optional properties of an object type.
  *
+ * For homomorphic mapping use with `as` to filter. Example:
+ * `[K in keyof T as NonSymbolWithOptionalPropertyOf<T, K>]: ...`
+ *
  * @privateRemarks system
  * @public
  */
-export type NonSymbolWithOptionalPropertyOf<T extends object> = Exclude<
+export type NonSymbolWithOptionalPropertyOf<
+	T extends object,
+	Keys extends keyof T = keyof T,
+> = Exclude<
 	{
-		[K in keyof T]: T extends Record<K, T[K]> ? never : K;
-	}[keyof T],
+		[K in Keys]: T extends Record<K, T[K]> ? never : K;
+	}[Keys],
 	undefined | symbol
 >;
 
 /**
  * Returns non-symbol keys for required properties of an object type.
  *
+ * For homomorphic mapping use with `as` to filter. Example:
+ * `[K in keyof T as NonSymbolWithRequiredPropertyOf<T, K>]: ...`
+ *
  * @beta
  */
-export type NonSymbolWithRequiredPropertyOf<T extends object> = Exclude<
+export type NonSymbolWithRequiredPropertyOf<
+	T extends object,
+	Keys extends keyof T = keyof T,
+> = Exclude<
 	{
-		[K in keyof T]: T extends Record<K, T[K]> ? K : never;
-	}[keyof T],
+		[K in Keys]: T extends Record<K, T[K]> ? K : never;
+	}[Keys],
 	undefined | symbol
 >;
 
@@ -51,17 +63,21 @@ export type IfNotDeserializable<T, TException, TTrue, TFalse> =
  * Returns non-symbol keys for defined, likely serializable properties of an object type.
  * Keys with fully unsupported properties (functions, bigints, and symbols) are excluded.
  *
+ * For homomorphic mapping use with `as` to filter. Example:
+ * `[K in keyof T as NonSymbolWithDefinedNotDeserializablePropertyOf<T, never, K>]: ...`
+ *
  * @beta
  */
 export type NonSymbolWithDefinedNotDeserializablePropertyOf<
 	T extends object,
 	TException,
+	Keys extends keyof T = keyof T,
 > = Exclude<
 	{
-		[K in keyof T]: undefined extends T[K]
+		[K in Keys]: undefined extends T[K]
 			? never
 			: IfNotDeserializable<T[K], TException, K, never>;
-	}[keyof T],
+	}[Keys],
 	undefined | symbol
 >;
 
@@ -69,19 +85,23 @@ export type NonSymbolWithDefinedNotDeserializablePropertyOf<
  * Returns non-symbol keys for undefined, likely supported properties of an object type.
  * Keys with fully unsupported properties (functions, bigints, and symbols) are excluded.
  *
+ * For homomorphic mapping use with `as` to filter. Example:
+ * `[K in keyof T as NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<T, never, K>]: ...`
+ *
  * @beta
  */
 export type NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
 	T extends object,
 	TException,
+	Keys extends keyof T = keyof T,
 > = Exclude<
 	{
-		[K in keyof T]: undefined extends T[K]
+		[K in Keys]: undefined extends T[K]
 			? Exclude<T[K], undefined> extends never
 				? never
 				: IfNotDeserializable<T[K], TException, K, never>
 			: never;
-	}[keyof T],
+	}[Keys],
 	undefined | symbol
 >;
 
@@ -303,15 +323,20 @@ export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean 
 								: /* property bag => */ FlattenIntersection<
 										{
 											/* required properties are recursed and may not have undefined values. */
-											[K in NonSymbolWithRequiredPropertyOf<T>]-?: undefined extends T[K]
-												? { ["error required property may not allow undefined value"]: never }
+											[K in keyof T as NonSymbolWithRequiredPropertyOf<
+												T,
+												K
+											>]-?: undefined extends T[K]
+												? {
+														["error required property may not allow undefined value"]: never;
+													}
 												: JsonSerializableFilter<T[K], TReplaced | T>;
 										} & {
 											/* optional properties are recursed and allowed to preserve undefined value type. */
-											[K in NonSymbolWithOptionalPropertyOf<T>]?: JsonSerializableFilter<
-												T[K],
-												TReplaced | T | undefined
-											>;
+											[K in keyof T as NonSymbolWithOptionalPropertyOf<
+												T,
+												K
+											>]?: JsonSerializableFilter<T[K], TReplaced | T | undefined>;
 										} & {
 											/* symbol properties are rejected */
 											[K in keyof T & symbol]: never;
@@ -428,9 +453,10 @@ export type JsonDeserializedFilter<
 										/* properties with symbol keys or unsupported values are removed */
 										{
 											/* properties with defined values are recursed */
-											[K in NonSymbolWithDefinedNotDeserializablePropertyOf<
+											[K in keyof T as NonSymbolWithDefinedNotDeserializablePropertyOf<
 												T,
-												TReplaced
+												TReplaced,
+												K
 											>]: JsonDeserializedRecursion<
 												T[K],
 												TReplaced,
@@ -439,9 +465,10 @@ export type JsonDeserializedFilter<
 											>;
 										} & {
 											/* properties that may have undefined values are optional */
-											[K in NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
+											[K in keyof T as NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
 												T,
-												TReplaced
+												TReplaced,
+												K
 											>]?: JsonDeserializedRecursion<
 												T[K],
 												TReplaced,

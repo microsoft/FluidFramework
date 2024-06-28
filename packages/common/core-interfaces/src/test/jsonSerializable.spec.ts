@@ -211,7 +211,6 @@ describe("JsonSerializable", () => {
 			});
 			it("object with literals", () => {
 				const result = passThru(objectWithLiterals);
-				// TODO FIX?: `readonly` attribute is lost
 				assertIdenticalTypes(result, objectWithLiterals);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
@@ -316,7 +315,6 @@ describe("JsonSerializable", () => {
 
 			it("object with `readonly`", () => {
 				const result = passThru(objectWithReadonly);
-				// TODO FIX?: `readonly` attribute is lost
 				assertIdenticalTypes(result, objectWithReadonly);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
@@ -325,7 +323,6 @@ describe("JsonSerializable", () => {
 
 			it("object with getter implemented via value", () => {
 				const result = passThru(objectWithGetterViaValue);
-				// TODO FIX?: getter becomes `readonly` value and `readonly` attribute is lost
 				assertIdenticalTypes(result, objectWithGetterViaValue);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
@@ -351,7 +348,7 @@ describe("JsonSerializable", () => {
 					});
 					assertIdenticalTypes(result, classInstanceWithPublicData);
 				});
-				// TO FIX: add option to ignore inaccessible members
+				// TODO FIX: add option to ignore inaccessible members
 				describe("with `ignore-inaccessible-members`", () => {
 					it("with private method ignores method", () => {
 						const result = passThru(classInstanceWithPrivateMethod, {
@@ -424,7 +421,6 @@ describe("JsonSerializable", () => {
 							// @ts-expect-error readonly is missing, but required
 							{},
 						);
-						// TODO FIX: `readonly` attribute is dropped
 						assertIdenticalTypes(result, objectWithReadonlyViaGetter);
 					});
 
@@ -434,7 +430,6 @@ describe("JsonSerializable", () => {
 							// @ts-expect-error getter is missing, but required
 							{},
 						);
-						// TODO FIX: `readonly` attribute is dropped
 						assertIdenticalTypes(result, objectWithGetter);
 					});
 

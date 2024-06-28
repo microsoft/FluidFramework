@@ -209,7 +209,6 @@ describe("JsonDeserialized", () => {
 			});
 			it("object with literals", () => {
 				const resultRead = passThru(objectWithLiterals);
-				// TODO FIX?: `readonly` attribute is lost
 				assertIdenticalTypes(resultRead, objectWithLiterals);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
