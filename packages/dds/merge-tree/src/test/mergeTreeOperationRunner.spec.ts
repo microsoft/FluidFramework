@@ -170,6 +170,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 
 		for (const { name, ranges, expected } of resolveRangesCases) {
 			it(name, () => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				assert.deepEqual(resolveRanges(ranges, ranges.growthFunc), expected);
 			});
 		}

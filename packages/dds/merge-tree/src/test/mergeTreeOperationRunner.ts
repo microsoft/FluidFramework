@@ -183,6 +183,7 @@ export function doOverRanges<T extends ProvidesGrowthFunc>(
 	ranges: T,
 	doAction: (selection: PickFromRanges<T>, description: string) => void,
 ): void {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const rangeEntries: [string, IConfigRange][] = Object.entries(ranges).filter(([_, value]) =>
 		isConfigRange(value),
 	);
