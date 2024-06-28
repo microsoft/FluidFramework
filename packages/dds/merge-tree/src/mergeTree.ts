@@ -76,7 +76,6 @@ import {
 	ReferenceType,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
-import { PerspectiveImpl, isSegmentPresent } from "./perspective.js";
 // eslint-disable-next-line import/no-deprecated
 import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
@@ -1030,55 +1029,27 @@ export class MergeTree {
 		}
 	}
 
-	/**
-	 * Returns the count of elements before the given reference position from the given perspective.
-	 *
-	 * @param refPos - The reference position to resolve.
-	 * @param refSeq - The number of the latest sequenced change to consider.
-	 * Defaults to including all edits which have been applied.
-	 * @param clientId - The ID of the client from whose perspective to resolve this reference. Defaults to the current client.
-	 * @param localSeq - The local sequence number to consider. Defaults to including all local edits.
-	 * @returns the count of elements before the given reference position in the given perspective.
-	 */
 	public referencePositionToLocalPosition(
 		refPos: ReferencePosition,
-		refSeq = Number.MAX_SAFE_INTEGER,
+		refSeq = this.collabWindow.currentSeq,
 		clientId = this.collabWindow.clientId,
-		localSeq: number | undefined = this.collabWindow.localSeq,
 	): number {
 		const seg: ISegmentLeaf | undefined = refPos.getSegment();
 		if (seg?.parent === undefined) {
-			// We have no idea where this reference is, because it refers to a segment which is not in the tree.
 			return DetachedReferencePosition;
 		}
 		if (refPos.isLeaf()) {
-			return this.getPosition(refPos, refSeq, clientId, localSeq);
+			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			if (
-				seg !== this.startOfTree &&
-				seg !== this.endOfTree &&
-				!isSegmentPresent(seg, { refSeq, localSeq })
-			) {
-				const forward = refPos.slidingPreference === SlidingPreference.FORWARD;
-				const slideSeq =
-					seg.movedSeq !== UnassignedSequenceNumber && seg.movedSeq !== undefined
-						? seg.movedSeq
-						: seg.removedSeq !== UnassignedSequenceNumber && seg.removedSeq !== undefined
-							? seg.removedSeq
-							: refSeq;
-				const slideLocalSeq = seg.localMovedSeq ?? seg.localRemovedSeq;
-				const perspective = new PerspectiveImpl(this, {
-					refSeq: slideSeq,
-					localSeq: slideLocalSeq,
-				});
-				const slidSegment = perspective.nextSegment(seg, forward);
-				return (
-					this.getPosition(slidSegment, refSeq, clientId, localSeq) +
-					(forward ? 0 : slidSegment.cachedLength === 0 ? 0 : slidSegment.cachedLength - 1)
-				);
+			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
+			const pos = this.getPosition(seg, refSeq, clientId);
+
+			if (isRemovedOrMoved(seg) && refPos.slidingPreference === SlidingPreference.BACKWARD) {
+				return pos === 0 ? 0 : pos - 1;
 			}
-			return this.getPosition(seg, refSeq, clientId, localSeq) + refPos.getOffset();
+
+			return offset + pos;
 		}
 		return DetachedReferencePosition;
 	}
