@@ -20,7 +20,9 @@ const {
 const {
 	apiDocsLinkSectionTransform,
 	generateApiDocsLinkSection,
+	generatePackageImportInstructionsSection,
 	generatePackageScriptsSection,
+	packageImportInstructionsSectionTransform,
 	packageScriptsSectionTransform,
 } = require("./transforms/index.cjs");
 
@@ -287,6 +289,9 @@ function includeTransform(content, options, config) {
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
  * Default: `FALSE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
+ * If specified, assumes the default export paths (`/alpha`, `/beta`, `/legacy`).
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
@@ -321,6 +326,18 @@ function libraryPackageReadmeTransform(content, options, config) {
 		sections.push(
 			generateDependencyGuidelines(true),
 			generateInstallationSection(packageName, options.devDependency, true),
+		);
+	}
+
+	if (options.importInstructions !== "FALSE") {
+		sections.push(
+			generatePackageImportInstructionsSection(
+				packageName,
+				/* includeHeading: */ true,
+				/* hasAlphaExport: */ true,
+				/* hasBetaExport: */ true,
+				/* hasLegacyExport: */ true,
+			),
 		);
 	}
 
@@ -644,6 +661,18 @@ module.exports = {
 		 * ```
 		 */
 		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
+
+		/**
+		 * See {@link packageScriptsSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE&hasAlphaExport=TRUE&hasBetaExport=TRUE&hasLegacyImport=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
 
 		/**
 		 * See {@link readmeTrademarkSectionTransform}.

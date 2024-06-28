@@ -22,6 +22,19 @@ To get started, install the package by running the following command:
 npm i @test/test-package -D
 ```
 
+## Importing from this package
+
+This package leverages [package.json exports](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5-beta/#packagejson-exports-imports-and-self-referencing) to separate our APIs by support level.
+For more information on our support guarantees, see our [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels) documentation.
+
+To access our `public` ([SemVer](https://semver.org/)) APIs, import directly from the root of the package as normal.
+
+To access our `alpha` APIs, import via `@test/test-package/alpha`.
+
+To access our `beta` APIs, import via `@test/test-package/beta`.
+
+To access our `legacy` APIs, import via `@test/test-package/legacy`.
+
 ## API Documentation
 
 API documentation for **@test/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.

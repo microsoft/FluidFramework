@@ -21,7 +21,13 @@ const {
  * @param {boolean} hasBetaExport - Whether or not to include the heading in the generated contents.
  * @param {boolean} hasLegacyExport - Whether or not to include the heading in the generated contents.
  */
-const generatePackageImportInstructionsSection = (packageName, includeHeading, hasAlphaExport, hasBetaExport, hasLegacyExport) => {
+const generatePackageImportInstructionsSection = (
+	packageName,
+	includeHeading,
+	hasAlphaExport,
+	hasBetaExport,
+	hasLegacyExport,
+) => {
 	const lines = [
 		"This package leverages [package.json exports](https://devblogs.microsoft.com/typescript/announcing-typescript-4-5-beta/#packagejson-exports-imports-and-self-referencing) to separate our APIs by support level.",
 		"For more information on our support guarantees, see our [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels) documentation.",
@@ -30,20 +36,23 @@ const generatePackageImportInstructionsSection = (packageName, includeHeading, h
 	];
 
 	if (hasAlphaExport) {
-		lines.push(`To access our \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
+		lines.push("", `To access our \`alpha\` APIs, import via \`${packageName}/alpha\`.`);
 	}
 
 	if (hasBetaExport) {
-		lines.push(`To access our \`beta\` APIs, import via \`${packageName}/beta\`.`);
+		lines.push("", `To access our \`beta\` APIs, import via \`${packageName}/beta\`.`);
 	}
 
 	if (hasLegacyExport) {
-		lines.push(`To access our \`legacy\` APIs, import via \`${packageName}/legacy\`.`);
+		lines.push("", `To access our \`legacy\` APIs, import via \`${packageName}/legacy\`.`);
 	}
 
 	const sectionBody = lines.join("\n");
 
-	return formattedSectionText(sectionBody, includeHeading ? "Importing from this package" : undefined);
+	return formattedSectionText(
+		sectionBody,
+		includeHeading ? "Importing from this package" : undefined,
+	);
 };
 
 /**
@@ -84,7 +93,15 @@ function packageImportInstructionsSectionTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	return formattedGeneratedContentBody(generatePackageImportInstructionsSection(packageName, includeHeading, hasAlphaExport, hasBetaExport, hasLegacyExport));
+	return formattedGeneratedContentBody(
+		generatePackageImportInstructionsSection(
+			packageName,
+			includeHeading,
+			hasAlphaExport,
+			hasBetaExport,
+			hasLegacyExport,
+		),
+	);
 }
 
 module.exports = {
