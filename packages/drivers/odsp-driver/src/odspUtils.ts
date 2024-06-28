@@ -37,6 +37,7 @@ import {
 	TokenFetcher,
 	isTokenFromCache,
 	snapshotKey,
+	tokenFromResponse,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
@@ -361,7 +362,8 @@ export function toInstrumentedOdspStorageTokenFetcher(
 		logger,
 		resolvedUrlParts,
 		tokenFetcher,
-		true, // throwOnNullToken,
+		true, // throwOnNullToken
+		false, // returnPlainToken
 	);
 	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
 	return res as InstrumentedStorageTokenFetcher;
@@ -371,12 +373,14 @@ export function toInstrumentedOdspStorageTokenFetcher(
  * Returns a function that can be used to fetch storage or websocket token.
  * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
  * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ * @param returnPlainToken - When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
  */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
+	returnPlainToken: boolean,
 ): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
@@ -401,7 +405,9 @@ export function toInstrumentedOdspTokenFetcher(
 					...resolvedUrlParts,
 				}).then(
 					(tokenResponse) => {
-						const authHeader = authHeaderFromTokenResponse(tokenResponse);
+						const returnVal = returnPlainToken
+							? tokenFromResponse(tokenResponse)
+							: authHeaderFromTokenResponse(tokenResponse);
 						// This event alone generates so many events that is materially impacts cost of telemetry
 						// Thus do not report end event when it comes back quickly.
 						// Note that most of the hosts do not report if result is comming from cache or not,
@@ -410,10 +416,10 @@ export function toInstrumentedOdspTokenFetcher(
 						if (alwaysRecordTokenFetchTelemetry || event.duration >= 32) {
 							event.end({
 								fromCache: isTokenFromCache(tokenResponse),
-								isNull: authHeader === null,
+								isNull: returnVal === null,
 							});
 						}
-						if (authHeader === null && throwOnNullToken) {
+						if (returnVal === null && throwOnNullToken) {
 							throw new NonRetryableError(
 								// pre-0.58 error message: Token is null for ${name} call
 								`The Host-provided token fetcher returned null`,
@@ -421,7 +427,7 @@ export function toInstrumentedOdspTokenFetcher(
 								{ method: name, driverVersion },
 							);
 						}
-						return authHeader;
+						return returnVal;
 					},
 					(error) => {
 						// There is an important but unofficial contract here where token providers can set canRetry: true
