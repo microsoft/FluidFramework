@@ -429,6 +429,7 @@ function makeModularChangeCodec(
 				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
+				violations: change.constraintViolationCount,
 			};
 		},
 
@@ -448,6 +449,10 @@ function makeModularChangeCodec(
 			}
 			if (encodedChange.refreshers !== undefined) {
 				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
+			}
+
+			if (encodedChange.violations !== undefined) {
+				decoded.constraintViolationCount = encodedChange.violations;
 			}
 
 			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);
