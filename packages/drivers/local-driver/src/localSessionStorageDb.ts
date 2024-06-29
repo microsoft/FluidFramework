@@ -79,7 +79,9 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		if (sort && Object.keys(sort).length === 1) {
 			// eslint-disable-next-line no-inner-declarations
 			function compare(a, b) {
-				const sortKey = Object.keys(sort)[0];
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const sortKey = Object.keys(sort)[0]!;
 				return sort[sortKey] === 1
 					? getValueByKey(a, sortKey) - getValueByKey(b, sortKey)
 					: getValueByKey(b, sortKey) - getValueByKey(a, sortKey);
