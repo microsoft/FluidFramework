@@ -16,6 +16,7 @@ import {
 	getAadTenant,
 	getOdspScope,
 } from "@fluidframework/odsp-doclib-utils/internal";
+
 import { loginHint } from "./fluidFetchArgs.js";
 
 // Note: the following page may be helpful for debugging auth issues:
@@ -69,8 +70,8 @@ export async function resolveWrapper<T>(
 			accessToken: token,
 			refreshTokenFn: async () => {
 				await credential.authenticate(scope);
-				const { token } = await credential.getToken(scope);
-				return token;
+				const result = await credential.getToken(scope);
+				return result.token;
 			},
 		});
 	} catch (e: any) {
