@@ -252,6 +252,15 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	public processPendingLocalBatch(
+		batch: InboundSequencedContainerRuntimeMessage[],
+	): { message: InboundSequencedContainerRuntimeMessage; lom: unknown }[] {
+		return batch.map((message) => ({
+			message,
+			lom: this.processPendingLocalMessage(message),
+		}));
+	}
+
 	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.

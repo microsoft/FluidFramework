@@ -13,6 +13,9 @@ import { decompress } from "lz4js";
 import { CompressionAlgorithms } from "../containerRuntime.js";
 import { IBatchMetadata } from "../metadata.js";
 
+import { isGroupedBatch } from "./opGroupingManager.js";
+import { unpack } from "./remoteMessageProcessor.js";
+
 /**
  * Compression makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
  */
@@ -119,14 +122,16 @@ export class OpDecompressor {
 		const decompressedMessage = decompress(contents);
 		const intoString = Uint8ArrayToString(decompressedMessage);
 		const asObj = JSON.parse(intoString);
-		this.rootMessageContents = asObj;
+		this.rootMessageContents = asObj; //* Expect an array
 	}
+
+	private readonly mostlyEmpties: ISequencedDocumentMessage[] = [];
 
 	/**
 	 * Unroll the next message from the decompressed content provided to {@link decompressAndStore}
 	 * @returns the unrolled `ISequencedDocumentMessage`
 	 */
-	public unroll(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+	public unroll(message: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		assert(this.currentlyUnrolling, 0x942 /* not currently unrolling */);
 		assert(this.rootMessageContents !== undefined, 0x943 /* missing rootMessageContents */);
 		assert(
@@ -134,28 +139,38 @@ export class OpDecompressor {
 			0x944 /* no more content to unroll */,
 		);
 
+		this.mostlyEmpties.push(message);
+
 		const batchMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
 
 		if (batchMetadata === false || this.isSingleMessageBatch) {
 			// End of compressed batch
-			const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount]);
+			assert(
+				this.mostlyEmpties.length === this.rootMessageContents.length,
+				"Expected 1-1 messages with contents array",
+			);
+
+			const rootMessageContents = this.rootMessageContents;
 
 			this.activeBatch = false;
 			this.isSingleMessageBatch = false;
 			this.rootMessageContents = undefined;
 			this.processedCount = 0;
+			this.mostlyEmpties.length = 0;
 
-			return returnMessage;
-		} else if (batchMetadata === true) {
-			// Start of compressed batch
-			return newMessage(message, this.rootMessageContents[this.processedCount++]);
+			return this.mostlyEmpties.map((msg, i) => newMessage(msg, rootMessageContents[i]));
 		}
 
+		if (batchMetadata === true) {
+			// Start of compressed batch
+			return [];
+		}
+
+		// Continuation of compressed batch
 		assert(batchMetadata === undefined, 0x945 /* invalid batch metadata */);
 		assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
-		// Continuation of compressed batch
-		return newMessage(message, this.rootMessageContents[this.processedCount++]);
+		return [];
 	}
 }
 
@@ -163,14 +178,23 @@ export class OpDecompressor {
 const newMessage = (
 	originalMessage: ISequencedDocumentMessage,
 	contents: any,
-): ISequencedDocumentMessage => ({
-	...originalMessage,
-	contents,
-	compression: undefined,
-	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-	metadata:
-		originalMessage.metadata === undefined
-			? undefined
-			: { ...(originalMessage.metadata as any) },
-});
+): ISequencedDocumentMessage => {
+	const message = {
+		...originalMessage,
+		contents,
+		compression: undefined,
+		// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		metadata:
+			originalMessage.metadata === undefined
+				? undefined
+				: { ...(originalMessage.metadata as any) },
+	};
+
+	//* Need to unpack after unrolling if not a groupedBatch
+	if (!isGroupedBatch(message)) {
+		unpack(message);
+	}
+
+	return message;
+};

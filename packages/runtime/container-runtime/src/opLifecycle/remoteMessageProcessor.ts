@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+//* Nope ^
+
 import {
 	MessageType,
 	ISequencedDocumentMessage,
@@ -57,14 +60,12 @@ export class RemoteMessageProcessor {
 	 * 3. If grouped, ungroup the message
 	 * For more details, see https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/opLifecycle/README.md#inbound
 	 *
-	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
-	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
-	 * a singleton array [remoteMessageCopy] is returned
+	 * @returns the entire batch (for runtime messages) once it's all been seen, or [] if partway through the batch, or a singleton array [remoteMessageCopy] (for system messages)
 	 */
 	public process(
-		remoteMessageCopy: ISequencedDocumentMessage,
-	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
-		let message = remoteMessageCopy;
+		remoteMessageCopy: InboundContainerRuntimeMessage,
+	): InboundContainerRuntimeMessage[] {
+		let message = remoteMessageCopy as ISequencedDocumentMessage; //* update alllll this code to use InboundContainerRuntimeMessage
 		ensureContentsDeserialized(message);
 
 		if (isChunkedMessage(message)) {
@@ -77,25 +78,36 @@ export class RemoteMessageProcessor {
 			message = chunkProcessingResult.message;
 		}
 
+		let batch: InboundSequencedContainerRuntimeMessageOrSystemMessage[] = [];
 		if (this.opDecompressor.isCompressedMessage(message)) {
 			this.opDecompressor.decompressAndStore(message);
+
+			// Will be empty until processing the last empty message for the compressed batch
+			batch = this.opDecompressor.unroll(message) as any; //* any
+		} else {
+			batch = [message as any]; //* any
 		}
 
-		if (this.opDecompressor.currentlyUnrolling) {
-			message = this.opDecompressor.unroll(message);
-			// Need to unpack after unrolling if not a groupedBatch
-			if (!isGroupedBatch(message)) {
-				unpack(message);
-			}
+		// Not done unrolling yet
+		if (batch.length === 0) {
+			return [];
 		}
 
+		// Must have been compressed and not grouped. Return it.
+		//* Could move the unpack to here instead of opDecompressor
+		if (batch.length > 1) {
+			return batch as any; //* any
+		}
+
+		[message] = batch;
 		if (isGroupedBatch(message)) {
 			return this.opGroupingManager.ungroupOp(message).map(unpack);
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
+		//* TEST: What if a single giant op is compressed but not grouped? Then double-unpacked?
 		unpackRuntimeMessage(message);
-		return [message as InboundSequencedContainerRuntimeMessageOrSystemMessage];
+		return [message as any];
 	}
 }
 
@@ -116,7 +128,9 @@ function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): 
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
  * (but there is no runtime validation of the 'type' or 'compatDetails' values).
  */
-function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
+export function unpack(
+	message: ISequencedDocumentMessage,
+): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
 	const contents = message.contents as InboundContainerRuntimeMessage;
 
