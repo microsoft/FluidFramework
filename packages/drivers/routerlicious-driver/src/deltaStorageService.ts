@@ -83,7 +83,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
 				validateMessages("snapshotOps", messages, from, this.logger, false /* strict */);
-				if (messages.length > 0 && messages[0].sequenceNumber === from) {
+				if (messages.length > 0 && messages[0] && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };

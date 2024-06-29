@@ -20,11 +20,13 @@ export const getDiscoveredFluidResolvedUrl = (
 	session: ISession,
 ): IResolvedUrl => {
 	const discoveredOrdererUrl = new URL(session.ordererUrl);
-	const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
+	// TODO why are we non null asserting here?
+	const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl!);
 	deltaStorageUrl.host = discoveredOrdererUrl.host;
 
 	const discoveredStorageUrl = new URL(session.historianUrl);
-	const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
+	// TODO why are we non null asserting here?
+	const storageUrl = new URL(resolvedUrl.endpoints.storageUrl!);
 	storageUrl.host = discoveredStorageUrl.host;
 
 	const parsedUrl = new URL(resolvedUrl.url);
