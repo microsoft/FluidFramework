@@ -40586,7 +40586,7 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
-   /minimatch@9.0.3:
+  /minimatch@9.0.3:
     resolution: {integrity: sha512-RHiac9mvaRw0x3AYRgDC1CxAP7HTcNrrECeA8YYJeWnpo+2Q5CegtZjaotWTWxDG3UeGA1coE05iH1mPjT/2mg==}
     engines: {node: '>=16 || 14 >=14.17'}
     dependencies:
