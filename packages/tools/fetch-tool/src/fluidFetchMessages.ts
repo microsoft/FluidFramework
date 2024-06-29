@@ -96,7 +96,7 @@ async function* loadAllSequencedMessages(
 	let requests = 0;
 	let opsStorage = 0;
 
-	console.log("fetching messages");
+	console.log("fetching cached messages");
 	// reading only 1 op to test if there is mismatch
 	const teststream = deltaStorage.fetchMessages(lastSeq + 1, lastSeq + 2);
 
@@ -119,7 +119,7 @@ async function* loadAllSequencedMessages(
 		lastSeq = firstAvailableDelta - 1;
 	}
 
-	console.log("fetching the rest of the messages");
+	console.log("fetching remaining messages from delta storage");
 
 	// continue reading rest of the ops
 	const stream = deltaStorage.fetchMessages(
@@ -128,7 +128,6 @@ async function* loadAllSequencedMessages(
 	);
 
 	while (true) {
-		console.log("stream read");
 		const result = await stream.read();
 		if (result.done) {
 			break;
