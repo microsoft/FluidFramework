@@ -94,7 +94,9 @@ export function getGenericTreeField<T>(
 
 	// Do not just read field and check for undefined: see warning on FieldMapObject.
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		return children[key];
+		// Non null asserting here because of the check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return children[key]!;
 	}
 	// Handle missing field:
 	if (createIfMissing === false) {
@@ -169,7 +171,9 @@ export function genericTreeDeleteIfEmpty<T>(
 ): void {
 	const children = getGenericTreeFieldMap(node, false);
 	if (Object.prototype.hasOwnProperty.call(children, key)) {
-		if (children[key].length === 0) {
+		// Non null asserting here because of the check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (children[key]!.length === 0) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete children[key];
 			if (removeMapObject) {

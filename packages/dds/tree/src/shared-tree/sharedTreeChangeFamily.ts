@@ -173,8 +173,12 @@ export class SharedTreeChangeFamily
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.change.changes[0];
-		const dataChangeOver = over.change.changes[0];
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const dataChangeIntention = change.change.changes[0]!;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const dataChangeOver = over.change.changes[0]!;
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
 			0x885 /* Data change should be present. */,

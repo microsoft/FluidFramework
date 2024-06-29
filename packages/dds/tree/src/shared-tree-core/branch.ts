@@ -82,7 +82,9 @@ export function getChangeReplaceType(
 	// B' is removed and replaced by B because both have the same revision.
 	if (
 		change.removedCommits.length === 1 &&
-		change.removedCommits[0].revision === change.newCommits[0].revision
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		change.removedCommits[0]!.revision === change.newCommits[0]!.revision
 	) {
 		return "rebase";
 	}
@@ -367,12 +369,18 @@ export class SharedTreeBranch<
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const revision = this.mintRevisionTag();
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				this.changeFamily.rebaser.invert(commits[i], false),
+				// Non null asserting here because we are iterating over commits
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.changeFamily.rebaser.invert(commits[i]!, false),
 				revision,
-				commits[i].revision,
+				// Non null asserting here because we are iterating over commits
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				commits[i]!.revision,
 			);
 
-			inverses.push(tagRollbackInverse(inverse, revision, commits[i].revision));
+			// Non null asserting here because we are iterating over commits
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			inverses.push(tagRollbackInverse(inverse, revision, commits[i]!.revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -464,8 +472,12 @@ export class SharedTreeBranch<
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
-			const src = targetCommits[0].parent?.revision;
-			const dst = targetCommits[targetCommits.length - 1].revision;
+			// Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const src = targetCommits[0]!.parent?.revision;
+			// Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dst = targetCommits[targetCommits.length - 1]!.revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}

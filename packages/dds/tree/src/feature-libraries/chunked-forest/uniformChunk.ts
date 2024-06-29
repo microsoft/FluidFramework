@@ -339,7 +339,9 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField++;
 		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
 		if (this.indexOfField < fields.length) {
-			this.fieldKey = fields[this.indexOfField][0];
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.fieldKey = fields[this.indexOfField]![0];
 			return true;
 		}
 		this.exitField();
@@ -415,7 +417,9 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		if (this.indexOfField >= fields.length) {
 			return false; // Handle empty field (indexed by key into empty field)
 		}
-		const f = shape.fieldsOffsetArray[this.indexOfField];
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const f = shape.fieldsOffsetArray[this.indexOfField]!;
 		if (childIndex >= f.topLevelLength) {
 			return false;
 		}
@@ -497,7 +501,9 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		}
 		this.indexOfField = 0;
 		this.mode = CursorLocationType.Fields;
-		this.fieldKey = fieldsArray[0][0];
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.fieldKey = fieldsArray[0]![0];
 		return true;
 	}
 

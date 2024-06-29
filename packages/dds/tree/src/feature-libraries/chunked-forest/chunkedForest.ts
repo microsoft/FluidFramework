@@ -105,7 +105,9 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
 				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
-				return this.mutableChunkStack[this.mutableChunkStack.length - 1];
+				// Non null asserting here because of the assert above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				return this.mutableChunkStack[this.mutableChunkStack.length - 1]!;
 			},
 			free(): void {
 				this.mutableChunk = undefined;
@@ -204,14 +206,20 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
-				while (indexWithinChunk >= chunks[indexOfChunk].topLevelLength) {
-					indexWithinChunk -= chunks[indexOfChunk].topLevelLength;
+				// Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				while (indexWithinChunk >= chunks[indexOfChunk]!.topLevelLength) {
+					// Why are we non null asserting here
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					indexWithinChunk -= chunks[indexOfChunk]!.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail("missing edited node");
 					}
 				}
-				let found = chunks[indexOfChunk];
+				// Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				let found = chunks[indexOfChunk]!;
 				if (!(found instanceof BasicChunk)) {
 					// TODO:Perf: support in place editing of other chunk formats when possible:
 					// 1. Support updating values in uniform chunks.
@@ -226,7 +234,9 @@ export class ChunkedForest implements IEditableForest {
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
-					found = newChunks[indexWithinChunk];
+					// Why are we non null asserting here
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					found = newChunks[indexWithinChunk]!;
 				}
 				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {

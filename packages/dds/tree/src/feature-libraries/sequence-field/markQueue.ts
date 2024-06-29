@@ -37,7 +37,9 @@ export class MarkQueue {
 
 		const splitMarks = splitMarkForMoveEffects(mark, this.moveEffects);
 		for (let i = splitMarks.length - 1; i > 0; i--) {
-			this.stack.push(splitMarks[i]);
+			// Non null asserting here because we are iterating over splitMarks
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.stack.push(splitMarks[i]!);
 		}
 		return splitMarks[0];
 	}

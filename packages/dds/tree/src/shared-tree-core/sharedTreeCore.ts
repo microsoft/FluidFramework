@@ -197,7 +197,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					change.newCommits.length === 1,
 					0x983 /* Unexpected number of commits when committing transaction */,
 				);
-				this.commitEnricher.prepareCommit(change.newCommits[0], true);
+				// Non null asserting here because of the length assert above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.commitEnricher.prepareCommit(change.newCommits[0]!, true);
 			}
 		});
 		this.editManager.localBranch.on("afterChange", (change) => {
@@ -436,7 +438,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
-					gcNodes[id].push(route);
+					// Why are we non null asserting here
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcNodes[id]!.push(route);
 				}
 			}
 		}

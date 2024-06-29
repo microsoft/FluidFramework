@@ -74,7 +74,9 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			const checkout = this.tip.fork();
 			// Roll back the checkout to the state before the oldest commit
 			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
-				const commit = toResubmit[iCommit];
+				// Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const commit = toResubmit[iCommit]!;
 				const rollback = this.inverter(commit, true);
 				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 				// Either we have to make it possible to do so, or this logic will have to change to work
@@ -87,7 +89,9 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 				iCommit <= this.latestInFlightCommitWithStaleEnrichments;
 				iCommit += 1
 			) {
-				const commit = toResubmit[iCommit];
+				// Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const commit = toResubmit[iCommit]!;
 				const enrichedChange = checkout.updateChangeEnrichments(
 					commit.change,
 					commit.revision,
@@ -114,7 +118,9 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			this.isInResubmitPhase,
 			0x982 /* No available commit to resubmit outside of resubmit phase */,
 		);
-		return this.resubmitQueue[0];
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.resubmitQueue[0]!;
 	}
 
 	public get isInResubmitPhase(): boolean {

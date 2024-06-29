@@ -298,7 +298,9 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	}
 
 	public values(): IterableIterator<Value> {
-		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0]!;
 	}
 
 	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {

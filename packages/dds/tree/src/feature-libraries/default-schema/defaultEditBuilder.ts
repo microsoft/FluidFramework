@@ -289,11 +289,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						parent = {
 							parent,
 							parentIndex: attachAncestorIndex,
-							parentField: attachPath[sharedDepth].parentField,
+							// Why are we non null asserting here
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							parentField: attachPath[sharedDepth]!.parentField,
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
-								...attachPath[i],
+								// Non null asserting here because we are iterating over attachPath
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								...attachPath[i]!,
 								parent,
 							};
 						}
@@ -443,8 +447,12 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {
-		const detachStep = pathA[sharedDepth];
-		const attachStep = pathB[sharedDepth];
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const detachStep = pathA[sharedDepth]!;
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const attachStep = pathB[sharedDepth]!;
 		if (detachStep !== attachStep) {
 			if (
 				detachStep.parentField !== attachStep.parentField ||

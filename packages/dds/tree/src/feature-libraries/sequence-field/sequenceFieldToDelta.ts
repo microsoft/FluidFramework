@@ -171,7 +171,9 @@ export function sequenceFieldToDelta(
 	}
 	// Remove trailing no-op marks
 	while (local.length > 0) {
-		const lastMark = local[local.length - 1];
+		// Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const lastMark = local[local.length - 1]!;
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||
