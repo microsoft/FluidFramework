@@ -13,11 +13,14 @@ import {
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
-	// getOdspRefreshTokenFn,
-	getOdspScope,
 	getAadTenant,
+	getOdspScope,
 } from "@fluidframework/odsp-doclib-utils/internal";
+import { loginHint } from "./fluidFetchArgs.js";
 
+// Note: the following page may be helpful for debugging auth issues:
+// https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/identity/identity/TROUBLESHOOTING.md
+// See e.g. the section on setting 'AZURE_LOG_LEVEL'.
 useIdentityPlugin(cachePersistencePlugin);
 
 export const fetchToolClientConfig: IPublicClientConfig = {
@@ -37,44 +40,30 @@ export async function resolveWrapper<T>(
 	server: string,
 	clientConfig: IPublicClientConfig,
 	forceTokenReauth = false,
-	forToken = false,
 ): Promise<T> {
 	try {
-		// const rc = await loadRC();
-
 		const credential = new InteractiveBrowserCredential({
-			clientId: process.env.login__microsoft__clientId,
+			clientId: fetchToolClientConfig.clientId,
 			tenantId: getAadTenant(server),
-			disableAutomaticAuthentication: true,
-			// TODO: Allow specifying this.
-			// loginHint:
+			// NOTE: fetch-tool flows using multiple sets of user credentials haven't been well-tested.
+			// Some of the @azure/identity docs suggest we may need to manage authentication records and choose
+			// which one to use explicitly here if we have such scenarios.
+			// If we start doing this, it may be worth considering using disableAutomaticAuthentication here so we
+			// have better control over when interactive auth may be triggered.
+			// For now, fetch-tool doesn't work against personal accounts anyway so the only flow that might necessitate this
+			// would be grabbing documents using several identities (e.g. test accounts we use for stress testing).
+			// In that case, a simple workaround is to delete the cache that @azure/identity uses before running the tool.
+			// See docs on `tokenCachePersistenceOptions.name` for information on where this cache is stored.
+			loginHint,
 			tokenCachePersistenceOptions: {
 				enabled: true,
-				// TODO: check if we're getting caching in e2e test / stress flows.
-				// Also, now that we're providing a name here we can probably drop the complexity
-				// around authenticationRecord, as generally people will only use a single account.
-				// Should also consider making --loginHint specifiable via CLI...
 				name: "fetch-tool",
 			},
 		});
 
 		const scope = getOdspScope(server);
-		const authRecord = await credential.authenticate(scope);
-		// const odspTokenManager = new OdspTokenManager();
-		// const tokenConfig: OdspTokenConfig = {
-		// 	type: "browserLogin",
-		// 	navigator: fluidFetchWebNavigator,
-		// };
 
 		const { token } = await credential.getToken(scope);
-
-		// const tokens = await odspTokenManager.getOdspTokens(
-		// 	server,
-		// 	clientConfig,
-		// 	tokenConfig,
-		// 	undefined /* forceRefresh */,
-		// 	forceTokenReauth,
-		// );
 
 		return await callback({
 			accessToken: token,
@@ -87,7 +76,7 @@ export async function resolveWrapper<T>(
 	} catch (e: any) {
 		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
-			return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
+			return resolveWrapper<T>(callback, server, clientConfig, true);
 		}
 		throw e;
 	}

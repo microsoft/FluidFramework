@@ -24,6 +24,7 @@ export let paramJWT: string;
 export let connectToWebSocket = false;
 
 export let localDataOnly = false;
+export let loginHint: string | undefined;
 
 const optionsArray = [
 	["--dump:rawmessage", "dump all messages"],
@@ -43,6 +44,7 @@ const optionsArray = [
 	["--snapshotVersionIndex <number>", "Index of the version to dump"],
 	["--websocket", "Connect to web socket to download initial messages"],
 	["--local", "Do not connect to storage, use earlier downloaded data. Requires --saveDir."],
+	["--loginHint", "login hint for the user with document access."],
 ];
 
 function printUsage() {
@@ -127,6 +129,9 @@ export function parseArguments() {
 				break;
 			case "--local":
 				localDataOnly = true;
+				break;
+			case "--loginHint":
+				loginHint = parseStrArg(i++, "login hint");
 				break;
 			default:
 				try {
