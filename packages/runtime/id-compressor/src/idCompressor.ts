@@ -697,7 +697,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let baseFinalId = 0;
 		for (let i = 0; i < clusterCount; i++) {
 			const sessionIndex = readNumber(index);
-			const session = sessions[sessionIndex + sessionOffset][1];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const session = sessions[sessionIndex + sessionOffset]![1];
 			const capacity = readNumber(index);
 			const count = readNumber(index);
 			const cluster = session.addNewCluster(baseFinalId as FinalCompressedId, capacity, count);

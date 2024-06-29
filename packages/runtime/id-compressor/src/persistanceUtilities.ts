@@ -40,14 +40,20 @@ export interface Index {
 }
 
 export function readNumber(index: Index): number {
-	const value = index.bufferFloat[index.index];
+	// TODO why are we non null asserting here?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const value = index.bufferFloat[index.index]!;
 	index.index += 1;
 	return value;
 }
 
 export function readNumericUuid(index: Index): NumericUuid {
-	const lowerHalf = index.bufferUint[index.index];
-	const upperHalf = index.bufferUint[index.index + 1];
+	// TODO why are we non null asserting here?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const lowerHalf = index.bufferUint[index.index]!;
+	// TODO why are we non null asserting here?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const upperHalf = index.bufferUint[index.index + 1]!;
 	const value = (upperHalf << sixtyFour) | lowerHalf;
 	index.index += 2;
 	return value as NumericUuid;
