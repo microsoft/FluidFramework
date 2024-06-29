@@ -58,6 +58,10 @@ export class OpGroupingManager {
 	 */
 	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
+		assert(
+			batch.content[0] !== undefined,
+			"batch.content[0] undefined in OpGroupingManager.groupBatch",
+		);
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({

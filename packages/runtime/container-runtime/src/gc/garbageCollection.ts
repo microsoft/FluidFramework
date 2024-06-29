@@ -819,7 +819,9 @@ export class GarbageCollector implements IGarbageCollector {
 				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 				} else {
-					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+					// Non null asserting here because we are checking if it is undefined above.
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcDataSuperSet.gcNodes[sourceNodeId]!.push(...outboundRoutes);
 				}
 				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
 			},

@@ -279,6 +279,10 @@ export async function getFluidDataStoreAttributes(
 	storage: IDocumentStorageService,
 	snapshot: ISnapshotTree,
 ): Promise<ReadFluidDataStoreAttributes> {
+	assert(
+		snapshot.blobs[dataStoreAttributesBlobName] !== undefined,
+		"snapshot.blobs[dataStoreAttributesBlobName] undefined in getFluidDataStoreAttributes",
+	);
 	const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
 		storage,
 		snapshot.blobs[dataStoreAttributesBlobName],
