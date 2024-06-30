@@ -4,7 +4,7 @@
 
 The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
 
-See the [package README](./packages/azure-client/README.md) for more information.
+See the [package README](./packages/service-clients/azure-client/README.md) for more information.
 
 ## @fluidframework/azure-local-service
 
