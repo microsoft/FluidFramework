@@ -198,6 +198,24 @@ function passThruHandlingBigintThrows<T>(
 	return { filteredIn: undefined as unknown as JsonSerializable<T, { Replaced: bigint }> };
 }
 
+/**
+ * Similar to {@link passThru} but specifically handles certain function signatures.
+ */
+function passThruHandlingSpecificFunction<T>(
+	v: JsonSerializable<T, { Replaced: (_: string) => number }>,
+): {
+	filteredIn: JsonSerializable<T, { Replaced: (_: string) => number }>;
+	out: JsonDeserialized<T, (_: string) => number>;
+} {
+	return {
+		filteredIn: undefined as unknown as JsonSerializable<
+			T,
+			{ Replaced: (_: string) => number }
+		>,
+		out: undefined as unknown as JsonDeserialized<T, (_: string) => number>,
+	};
+}
+
 describe("JsonSerializable", () => {
 	describe("positive compilation tests", () => {
 		describe("supported primitive types", () => {
@@ -884,6 +902,17 @@ describe("JsonSerializable", () => {
 					const { filteredIn } = passThruHandlingBigint(objectWithOptionalBigint);
 					assertIdenticalTypes(filteredIn, objectWithOptionalBigint);
 				});
+				it("object with specific replaced function", () => {
+					const { filteredIn } = passThruHandlingSpecificFunction({
+						specificFn: (v: string) => v.length,
+					});
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							specificFn: (_: string) => number;
+						}>(),
+					);
+				});
 			});
 
 			describe("continue rejecting unsupported that are not replaced", () => {
@@ -917,6 +946,32 @@ describe("JsonSerializable", () => {
 						// object's value is actually supported; so, no runtime error.
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<NonNullJsonObjectWith<bigint>>());
+				});
+				it("object with non-replaced function", () => {
+					const { filteredIn } = passThruHandlingSpecificFunction({
+						// @ts-expect-error '() => unknown' is not assignable to type 'never'
+						genericFn: () => undefined as unknown,
+					});
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							genericFn: never;
+						}>(),
+					);
+				});
+				it("object with supported or non-supported function union", () => {
+					const { filteredIn } = passThruHandlingSpecificFunction({
+						// @ts-expect-error '((v: string) => number) | ((n: number) => string)' is not assignable to type '(v: string) => number'
+						specificFnOrAnother: ((v: string) => v.length) as
+							| ((v: string) => number)
+							| ((n: number) => string),
+					});
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							specificFnOrAnother: (_: string) => number;
+						}>(),
+					);
 				});
 			});
 		});
