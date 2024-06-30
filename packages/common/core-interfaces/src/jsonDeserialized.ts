@@ -6,38 +6,43 @@
 import type { JsonDeserializedImpl } from "./exposedUtilityTypes.js";
 
 /**
- * Used to constrain a type `T` to types that are deserializable from JSON.
+ * Produces a type that results from a type `T` serialized and deserialized
+ * through JSON.
  *
+ * @remarks
  * When used as a filter to inferred generic `T`, a compile-time error can be
  * produced trying to assign `JsonDeserialized<T>` to `T`.
  *
- * Deserialized JSON never contains `undefined` values, so properties with
- * `undefined` values become optional. If the original property was not already
- * optional, then compilation of assignment will fail.
+ * Deserialized JSON never contains `undefined`, `symbol`, or function values.
+ * Object properties with values of those types are absent. So properties
+ * become optional (when there are other supported types in union) or are
+ * removed (when nothing else in union is supported).
+ * In an array, such values are replaced with `null`.
  *
- * Similarly, function, symbol, and bigint valued properties are removed.
+ * `bigint` valued properties are simply removed as serialization attempts
+ * wll throw.
  *
- * Setter and getter properties become value properties.
+ * Setter and getter properties become value properties after filtering
+ * although no data will be persisted assuming those properties are backed
+ * by functions. If an implementation of getter/setter interface uses a
+ * simple data member (of supported type), that will persist.
  *
- * Recursive types without any transformation are preserved intact. Recursive
- * types that require modification are unrolled a limited number of times and
- * then instances of recursion are replaced with JsonTypeWith<TReplaced>.
+ * Recursive types without any required modification are preserved intact.
+ * Recursive types that require modification are unrolled a limited number of
+ * times and then further instances of recursion are replaced with
+ * JsonTypeWith<TReplaced>.
  *
- * Class instances become simple data objects and lose prototype that allows
- * `instanceof` runtime checks.
+ * Class instances become simple data objects that lose hidden properties and
+ * prototypes that are required for `instanceof` runtime checks.
  *
- * @remarks
- * Class instances are indistinguishable from general objects by type checking
- * unless they have non-public members.
- * Unless option is used to `ignore-inaccessible-members` types with non-public
- * members will result in {@link DeserializationErrorPerNonPublicProperties}.
- * When `ignore-inaccessible-members` is enabled, non-public (non-function)
- * members are preserved, but they are filtered away by the type filters and
- * thus produce an incorrectly narrowed type compared to actual data. Though
- * such a result may be customer desired.
+ * The optional 'TReplaced' parameter may be used to permit additional leaf
+ * types handled by custom serialization/deserialization logic.
  *
- * Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
- * enable better support.
+ * @example Typical usage
+ *
+ * ```typescript
+ * function foo<T>(): JsonDeserialized<T> { ... }
+ * ```
  *
  * @beta
  */
