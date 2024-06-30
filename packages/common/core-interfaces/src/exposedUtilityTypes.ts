@@ -5,6 +5,10 @@
 
 /* eslint-disable @rushstack/no-new-null */
 
+import type {
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "./jsonSerializationErrors.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
 
 /**
@@ -13,8 +17,8 @@ import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
  * For homomorphic mapping use with `as` to filter. Example:
  * `[K in keyof T as NonSymbolWithOptionalPropertyOf<T, K>]: ...`
  *
- * @privateRemarks system
- * @public
+ * @beta
+ * @system
  */
 export type NonSymbolWithOptionalPropertyOf<
 	T extends object,
@@ -33,6 +37,7 @@ export type NonSymbolWithOptionalPropertyOf<
  * `[K in keyof T as NonSymbolWithRequiredPropertyOf<T, K>]: ...`
  *
  * @beta
+ * @system
  */
 export type NonSymbolWithRequiredPropertyOf<
 	T extends object,
@@ -50,6 +55,7 @@ export type NonSymbolWithRequiredPropertyOf<
  * less intersection with TException) produce TFalse.
  *
  * @beta
+ * @system
  */
 export type IfAtLeastSometimesDeserializable<T, TException, TTrue, TFalse> =
 	/* check for only non-serializable value types */ T extends // eslint-disable-next-line @typescript-eslint/ban-types
@@ -73,6 +79,7 @@ export type IfAtLeastSometimesDeserializable<T, TException, TTrue, TFalse> =
  * `[K in keyof T as NonSymbolWithDefinedNotDeserializablePropertyOf<T, never, K>]: ...`
  *
  * @beta
+ * @system
  */
 export type NonSymbolWithDeserializablePropertyOf<
 	T extends object,
@@ -103,6 +110,7 @@ export type NonSymbolWithDeserializablePropertyOf<
  * `[K in keyof T as NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<T, never, K>]: ...`
  *
  * @beta
+ * @system
  */
 export type NonSymbolWithPossiblyDeserializablePropertyOf<
 	T extends object,
@@ -127,26 +135,13 @@ export type NonSymbolWithPossiblyDeserializablePropertyOf<
 >;
 
 /**
- * Type resulting from {@link JsonSerializable} use given a class with
- * non-public properties.
- *
- * @privateRemarks type is used over interface; so inspection of type
- * result can be more informative than just the type name.
- *
- * @beta
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type SerializationErrorPerUndefinedArrayElement = {
-	"array serialization error": "undefined elements are not supported";
-};
-
-/**
  * Filters a type `T` for `undefined` that is not viable in an array (or tuple) that
  * must go through JSON serialization.
  * If `T` is `undefined`, then error type {@link SerializationErrorPerUndefinedArrayElement}
  * is returned with hopes of being informative.
  *
  * @beta
+ * @system
  */
 export type JsonForSerializableArrayItem<T, TReplaced, TBlessed> =
 	// Some initial filtering must be provided before a test for undefined.
@@ -170,6 +165,7 @@ export type JsonForSerializableArrayItem<T, TReplaced, TBlessed> =
  * Filters a type `T` for types that become null through JSON serialization.
  *
  * @beta
+ * @system
  */
 export type JsonForDeserializedArrayItem<T, TReplaced, TBlessed> =
 	// Some initial filtering must be provided before a test for undefined, symbol, or function.
@@ -197,6 +193,7 @@ export type JsonForDeserializedArrayItem<T, TReplaced, TBlessed> =
  * Checks for a type that is simple class of number and string indexed types to numbers and strings.
  *
  * @beta
+ * @system
  */
 export type IsEnumLike<T extends object> = T extends readonly (infer _)[]
 	? /* array => */ false
@@ -221,6 +218,7 @@ export type IsEnumLike<T extends object> = T extends readonly (infer _)[]
  * Implementation derived from https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
  *
  * @beta
+ * @system
  */
 export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X
 	? 1
@@ -234,6 +232,7 @@ export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => 
  * @returns `true` if identical and `false` otherwise.
  *
  * @beta
+ * @system
  */
 export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
 
@@ -241,6 +240,7 @@ export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
  * Checks that type is exactly `object`.
  *
  * @beta
+ * @system
  */
 export type IsExactlyObject<T extends object> = IsSameType<T, object>;
 
@@ -249,6 +249,7 @@ export type IsExactlyObject<T extends object> = IsSameType<T, object>;
  * @privateRemarks `T extends Record` encourages tsc to process intersections within unions.
  *
  * @beta
+ * @system
  */
 export type FlattenIntersection<T> = T extends Record<string | number | symbol, unknown>
 	? {
@@ -257,19 +258,11 @@ export type FlattenIntersection<T> = T extends Record<string | number | symbol, 
 	: T;
 
 /**
- * Recursively/deeply makes all properties of a type readonly.
- *
- * @beta
- */
-export type FullyReadonly<T> = {
-	readonly [K in keyof T]: FullyReadonly<T[K]>;
-};
-
-/**
  * Replaces any instance where a type T recurses into itself or a portion of
  * itself with TReplacement.
  *
  * @beta
+ * @system
  */
 export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<
 	T,
@@ -278,9 +271,10 @@ export type ReplaceRecursionWith<T, TReplacement> = ReplaceRecursionWithImpl<
 >;
 
 /**
- * Implementation for {@link ReplaceRecursionWith}
+ * Implementation for ReplaceRecursionWith.
  *
  * @beta
+ * @system
  */
 export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
 	/* test for recursion */ T extends TAncestorTypes
@@ -300,29 +294,17 @@ export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
  * recursing.
  *
  * @beta
+ * @system
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
-
-/**
- * Type resulting from {@link JsonSerializable} use given a class with
- * non-public properties.
- *
- * @privateRemarks type is used over interface; so inspection of type
- * result can be more informative than just the type name.
- *
- * @beta
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type SerializationErrorPerNonPublicProperties = {
-	"object serialization error": "non-public properties are not supported";
-};
 
 /**
  * Outer implementation of {@link JsonSerializable} handling meta cases
  * like classes (with non-public properties).
  *
  * @beta
+ * @system
  */
 export type JsonSerializableImpl<
 	T,
@@ -349,6 +331,9 @@ export type JsonSerializableImpl<
 
 /**
  * Core implementation of {@link JsonSerializable}.
+ *
+ * @beta
+ * @system
  */
 export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean extends (
 	T extends never
@@ -412,6 +397,7 @@ export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean 
  * Type is expected to be unique, though no lengths is taken to ensure that.
  *
  * @beta
+ * @system
  */
 export interface RecursionMarker {
 	"recursion here": "recursion here";
@@ -422,6 +408,7 @@ export interface RecursionMarker {
  * like recursive types.
  *
  * @beta
+ * @system
  */
 export type JsonDeserializedImpl<T, TReplaced> = /* test for 'any' */ boolean extends (
 	T extends never
@@ -448,9 +435,10 @@ export type JsonDeserializedImpl<T, TReplaced> = /* test for 'any' */ boolean ex
 		: /* unreachable else for infer */ never;
 
 /**
- * Recurses T applying {@link JsonDeserializedFilter} up to RecurseLimit times.
+ * Recurses T applying `JsonDeserializedFilter` up to RecurseLimit times.
  *
  * @beta
+ * @system
  */
 export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit, TAncestorTypes> =
 	T extends TAncestorTypes
@@ -477,6 +465,9 @@ export type JsonDeserializedRecursion<T, TReplaced, RecurseLimit, TAncestorTypes
 
 /**
  * Core implementation of {@link JsonDeserialized}.
+ *
+ * @beta
+ * @system
  */
 export type JsonDeserializedFilter<
 	T,

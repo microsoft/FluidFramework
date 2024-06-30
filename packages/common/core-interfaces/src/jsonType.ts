@@ -27,6 +27,8 @@ export type JsonTypeWith<T> =
 	| JsonTypeWith<T>[];
 
 /**
+ * Portion of {@link JsonTypeWith} that is an object (including array) and not null.
+ *
  * @beta
  */
 export type NonNullJsonObjectWith<T> =

@@ -250,6 +250,33 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
+declare namespace InternalUtilityTypes {
+    export {
+        NonSymbolWithOptionalPropertyOf,
+        NonSymbolWithRequiredPropertyOf,
+        IfAtLeastSometimesDeserializable,
+        NonSymbolWithDeserializablePropertyOf,
+        NonSymbolWithPossiblyDeserializablePropertyOf,
+        JsonForSerializableArrayItem,
+        JsonForDeserializedArrayItem,
+        IsEnumLike,
+        IfSameType,
+        IsSameType,
+        IsExactlyObject,
+        FlattenIntersection,
+        ReplaceRecursionWith,
+        ReplaceRecursionWithImpl,
+        HasNonPublicProperties,
+        JsonSerializableImpl,
+        JsonSerializableFilter,
+        RecursionMarker,
+        JsonDeserializedImpl,
+        JsonDeserializedRecursion,
+        JsonDeserializedFilter
+    }
+}
+export { InternalUtilityTypes }
+
 // @public (undocumented)
 export interface IProvideFluidLoadable {
     // (undocumented)

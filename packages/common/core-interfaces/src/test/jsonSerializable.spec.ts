@@ -7,12 +7,12 @@
 
 import { strict as assert } from "node:assert";
 
+import type { JsonDeserialized } from "../jsonDeserialized.js";
+import type { JsonSerializable } from "../jsonSerializable.js";
 import type {
 	SerializationErrorPerNonPublicProperties,
 	SerializationErrorPerUndefinedArrayElement,
-} from "../exposedUtilityTypes.js";
-import type { JsonDeserialized } from "../jsonDeserialized.js";
-import type { JsonSerializable } from "../jsonSerializable.js";
+} from "../jsonSerializationErrors.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
 
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
