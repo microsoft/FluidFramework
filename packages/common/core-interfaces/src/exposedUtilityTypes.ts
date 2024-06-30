@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @rushstack/no-new-null */
+
 import type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
 
 /**
@@ -106,23 +108,35 @@ export type NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
 >;
 
 /**
- * Filters a type `T` to types for undefined that is not viable in an array (or tuple) that
- * must go through JSON serialization.
- * If `T` is `undefined`, then an error literal string type is returned with hopes of being
- * informative. When result is unioned with `string`, then the error string will be eclipsed
- * by the union. In that case undefined will still not be an option, but source of the error
- * may be harder to discover.
+ * Type resulting from {@link JsonSerializable} use given a class with
+ * non-public properties.
+ *
+ * @privateRemarks type is used over interface; so inspection of type
+ * result can be more informative than just the type name.
  *
  * @beta
  */
-export type JsonForArrayItem<T, TReplaced, TBlessed> =
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type SerializationErrorPerUndefinedArrayElement = {
+	"array serialization error": "undefined elements are not supported";
+};
+
+/**
+ * Filters a type `T` for `undefined` that is not viable in an array (or tuple) that
+ * must go through JSON serialization.
+ * If `T` is `undefined`, then error type {@link SerializationErrorPerUndefinedArrayElement}
+ * is returned with hopes of being informative.
+ *
+ * @beta
+ */
+export type JsonForSerializableArrayItem<T, TReplaced, TBlessed> =
 	// Some initial filtering must be provided before a test for undefined.
-	// These tests are expected to match those in JsonSerializable/JsonDeserialized.
+	// These tests are expected to match those in JsonSerializableImpl.
 	/* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ TBlessed
 		: /* test for 'unknown' */ unknown extends T
 			? /* 'unknown' => */ TBlessed
-			: /* test for Jsonable primitive types */ T extends // eslint-disable-next-line @rushstack/no-new-null
+			: /* test for JSON primitive types */ T extends
 						| null
 						| boolean
 						| number
@@ -130,7 +144,34 @@ export type JsonForArrayItem<T, TReplaced, TBlessed> =
 						| TReplaced
 				? /* primitive types => */ T
 				: /* test for undefined possibility */ undefined extends T
-					? /* undefined | ... => */ "error-array-or-tuple-may-not-allow-undefined-value-consider-null"
+					? /* undefined | ... => */ SerializationErrorPerUndefinedArrayElement
+					: TBlessed;
+
+/**
+ * Filters a type `T` for types that become null through JSON serialization.
+ *
+ * @beta
+ */
+export type JsonForDeserializedArrayItem<T, TReplaced, TBlessed> =
+	// Some initial filtering must be provided before a test for undefined, symbol, or function.
+	// These tests are expected to match those in JsonDeserializedImpl.
+	/* test for 'any' */ boolean extends (T extends never ? true : false)
+		? /* 'any' => */ TBlessed
+		: /* test for 'unknown' */ unknown extends T
+			? /* 'unknown' => */ TBlessed
+			: /* test for JSON primitive types */ T extends
+						| null
+						| boolean
+						| number
+						| string
+						| TReplaced
+				? /* primitive or replaced types => */ T
+				: /* test for known types that become null */ T extends
+							| undefined
+							| symbol
+							// eslint-disable-next-line @typescript-eslint/ban-types
+							| Function
+					? /* => */ null
 					: TBlessed;
 
 /**
@@ -154,16 +195,35 @@ export type IsEnumLike<T extends object> = T extends readonly (infer _)[]
 		: false;
 
 /**
+ * Test for type equality
+ *
+ * @returns IfSame if identical and IfDifferent otherwise.
+ *
+ * Implementation derived from https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
+ *
+ * @beta
+ */
+export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X
+	? 1
+	: 2) extends <T>() => T extends Y ? 1 : 2
+	? IfSame
+	: IfDifferent;
+
+/**
+ * Test for type equality
+ *
+ * @returns `true` if identical and `false` otherwise.
+ *
+ * @beta
+ */
+export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
+
+/**
  * Checks that type is exactly `object`.
  *
  * @beta
  */
-export type IsExactlyObject<T extends object> =
-	/* test for more than type with all optional properties */ object extends Required<T>
-		? /* test for `{}` */ false extends T
-			? /* `{}` => */ false
-			: /* `object` => */ true
-		: /* optional or required properties => */ false;
+export type IsExactlyObject<T extends object> = IsSameType<T, object>;
 
 /**
  * Creates a simple object type from an intersection of multiple.
@@ -216,30 +276,6 @@ export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> =
 			: /* non-object => T as is */ T;
 
 /**
- * Test for type equality
- *
- * @returns IfSame if identical and IfDifferent otherwise.
- *
- * Implementation derived from https://github.com/Microsoft/TypeScript/issues/27024#issuecomment-421529650
- *
- * @beta
- */
-export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X
-	? 1
-	: 2) extends <T>() => T extends Y ? 1 : 2
-	? IfSame
-	: IfDifferent;
-
-/**
- * Test for type equality
- *
- * @returns `true` if identical and `false` otherwise.
- *
- * @beta
- */
-export type IsSameType<X, Y> = IfSameType<X, Y, true, false>;
-
-/**
  * Test for non-public properties (class instance type)
  * Compare original (unprocessed) to filtered case that has `any` where
  * recursing.
@@ -260,7 +296,7 @@ export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ?
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type SerializationErrorPerNonPublicProperties = {
-	"serialization error": "non-public properties are not supported";
+	"object serialization error": "non-public properties are not supported";
 };
 
 /**
@@ -296,7 +332,7 @@ export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean 
 	? /* 'any' => */ JsonTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 		? /* 'unknown' => */ JsonTypeWith<TReplaced>
-		: /* test for JSON Encodable primitive types or given alternate */ T extends // eslint-disable-next-line @rushstack/no-new-null
+		: /* test for JSON Encodable primitive types or given alternate */ T extends
 					| null
 					| boolean
 					| number
@@ -310,7 +346,7 @@ export type JsonSerializableFilter<T, TReplaced> = /* test for 'any' */ boolean 
 						? /* array => */ {
 								/* array items may not not allow undefined */
 								/* use homomorphic mapped type to preserve tuple type */
-								[K in keyof T]: JsonForArrayItem<
+								[K in keyof T]: JsonForSerializableArrayItem<
 									T[K],
 									TReplaced,
 									JsonSerializableFilter<T[K], TReplaced | T>
@@ -425,7 +461,7 @@ export type JsonDeserializedFilter<
 	? /* 'any' => */ JsonTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 		? /* 'unknown' => */ JsonTypeWith<TReplaced>
-		: /* test for deserializable primitive types or given alternate */ T extends // eslint-disable-next-line @rushstack/no-new-null
+		: /* test for deserializable primitive types or given alternate */ T extends
 					| null
 					| boolean
 					| number
@@ -439,7 +475,7 @@ export type JsonDeserializedFilter<
 						? /* array => */ {
 								/* array items may not not allow undefined */
 								/* use homomorphic mapped type to preserve tuple type */
-								[K in keyof T]: JsonForArrayItem<
+								[K in keyof T]: JsonForDeserializedArrayItem<
 									T[K],
 									TReplaced,
 									JsonDeserializedRecursion<T[K], TReplaced, RecurseLimit, TAncestorTypes>

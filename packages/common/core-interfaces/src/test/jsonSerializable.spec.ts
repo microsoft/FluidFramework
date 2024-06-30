@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable unicorn/no-null */
+
 import { strict as assert } from "node:assert";
 
-import type { SerializationErrorPerNonPublicProperties } from "../exposedUtilityTypes.js";
+import type {
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "../exposedUtilityTypes.js";
 import type { JsonDeserialized } from "../jsonDeserialized.js";
 import type { JsonSerializable } from "../jsonSerializable.js";
 import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
@@ -34,6 +39,12 @@ import {
 	unknownValueOfSimpleRecord,
 	unknownValueWithBigint,
 	voidValue,
+	arrayOfNumbers,
+	arrayOfNumbersSparse,
+	arrayOfNumbersOrUndefined,
+	arrayOfSymbols,
+	arrayOfFunctions,
+	arrayOfSymbolsAndObjects,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -204,9 +215,7 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(result, "string");
 			});
 			it("`null`", () => {
-				// eslint-disable-next-line unicorn/no-null
 				const result = passThru(null);
-				// eslint-disable-next-line unicorn/no-null
 				assertIdenticalTypes(result, null);
 			});
 			it("object with literals", () => {
@@ -247,6 +256,13 @@ describe("JsonSerializable", () => {
 			it("specific computed enum value", () => {
 				const result = passThru(ComputedEnum.computed);
 				assertIdenticalTypes(result, ComputedEnum.computed);
+			});
+		});
+
+		describe("supported array types", () => {
+			it("array of `number`s", () => {
+				const result = passThru(arrayOfNumbers);
+				assertIdenticalTypes(result, arrayOfNumbers);
 			});
 		});
 
@@ -476,6 +492,15 @@ describe("JsonSerializable", () => {
 						});
 					});
 				});
+
+				it("sparse array of supported types", () => {
+					const result = passThru(
+						arrayOfNumbersSparse,
+						// @ts-expect-error 'null' is injected but not detectable from type information
+						[0, null, null, 3],
+					);
+					assertIdenticalTypes(result, arrayOfNumbersSparse);
+				});
 			});
 		});
 	});
@@ -542,11 +567,11 @@ describe("JsonSerializable", () => {
 			});
 			it("`object` (plain object)", () => {
 				const result = passThru(
-					// @ts-expect-error `object` is not supported (expects `JsonTypeWith<never>`)
+					// @ts-expect-error `object` is not supported (expects `NonNullJsonObjectWith<never>`)
 					object,
 					// object's value is actually supported; so, no runtime error.
 				);
-				assertIdenticalTypes(result, createInstanceOf<JsonTypeWith<never>>());
+				assertIdenticalTypes(result, createInstanceOf<NonNullJsonObjectWith<never>>());
 			});
 			it("`void`", () => {
 				passThru(
@@ -554,6 +579,44 @@ describe("JsonSerializable", () => {
 					voidValue,
 					// voidValue is actually `null`; so, no runtime error.
 				) satisfies never;
+			});
+
+			describe("array", () => {
+				it("array of `symbol`s", () => {
+					const result = passThru(
+						// @ts-expect-error 'symbol' is not supported (becomes 'never')
+						arrayOfSymbols,
+						[null],
+					);
+					assertIdenticalTypes(result, createInstanceOf<never[]>());
+				});
+				it("array of `function`s", () => {
+					const result = passThru(
+						// @ts-expect-error 'symbol' is not supported (becomes 'never')
+						arrayOfFunctions,
+						[null],
+					);
+					assertIdenticalTypes(result, createInstanceOf<never[]>());
+				});
+				it("array of `number | undefined`s", () => {
+					const result = passThru(
+						// @ts-expect-error 'undefined' is not supported (becomes 'SerializationErrorPerUndefinedArrayElement')
+						arrayOfNumbersOrUndefined,
+						[0, null, 2],
+					);
+					assertIdenticalTypes(
+						result,
+						createInstanceOf<(number | SerializationErrorPerUndefinedArrayElement)[]>(),
+					);
+				});
+				it("array of `symbol` or basic object", () => {
+					const resultRead = passThru(
+						// @ts-expect-error 'symbol' is not supported (becomes 'never')
+						arrayOfSymbolsAndObjects,
+						[null],
+					);
+					assertIdenticalTypes(resultRead, createInstanceOf<{ property: string }[]>());
+				});
 			});
 
 			describe("object", () => {
@@ -813,3 +876,5 @@ describe("JsonSerializable", () => {
 		});
 	});
 });
+
+/* eslint-enable unicorn/no-null */

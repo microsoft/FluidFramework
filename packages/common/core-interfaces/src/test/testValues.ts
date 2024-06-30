@@ -45,6 +45,18 @@ export const constHeterogenousEnumValue = ((): ConstHeterogenousEnum =>
 	ConstHeterogenousEnum.a)();
 export const computedEnumValue = ((): ComputedEnum => ComputedEnum.computed)();
 
+// #region Array types
+
+export const arrayOfNumbers: number[] = [0, 1, 2];
+export const arrayOfNumbersSparse: number[] = [0];
+arrayOfNumbersSparse[3] = 3;
+export const arrayOfNumbersOrUndefined = [0, undefined, 2];
+export const arrayOfSymbols: symbol[] = [Symbol("symbol")];
+export const arrayOfFunctions = [aFunction];
+export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+
+// #endregion
+
 // #region Object (record) types
 
 export const object: object = { key: "value" };

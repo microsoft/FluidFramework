@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable unicorn/no-null */
+
 import { strict as assert } from "node:assert";
 
 import type { JsonDeserialized } from "../jsonDeserialized.js";
@@ -31,6 +33,12 @@ import {
 	unknownValueOfSimpleRecord,
 	unknownValueWithBigint,
 	voidValue,
+	arrayOfNumbers,
+	arrayOfNumbersSparse,
+	arrayOfNumbersOrUndefined,
+	arrayOfSymbols,
+	arrayOfFunctions,
+	arrayOfSymbolsAndObjects,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -202,9 +210,7 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, "string");
 			});
 			it("`null`", () => {
-				// eslint-disable-next-line unicorn/no-null
 				const resultRead = passThru(null);
-				// eslint-disable-next-line unicorn/no-null
 				assertIdenticalTypes(resultRead, null);
 			});
 			it("object with literals", () => {
@@ -245,6 +251,37 @@ describe("JsonDeserialized", () => {
 			it("specific computed enum value", () => {
 				const resultRead = passThru(ComputedEnum.computed as const);
 				assertIdenticalTypes(resultRead, ComputedEnum.computed);
+			});
+		});
+
+		describe("arrays", () => {
+			it("array of supported types (numbers) are preserved", () => {
+				const resultRead = passThru(arrayOfNumbers);
+				assertIdenticalTypes(resultRead, arrayOfNumbers);
+			});
+			it("sparse array is filled in with null", () => {
+				const resultRead = passThru(
+					arrayOfNumbersSparse,
+					// @ts-expect-error 'null' is injected but not detectable from type information
+					[0, null, null, 3],
+				);
+				assertIdenticalTypes(resultRead, arrayOfNumbersSparse);
+			});
+			it("array of partially supported (numbers or undefined) is modified with null", () => {
+				const resultRead = passThru(arrayOfNumbersOrUndefined, [0, null, 2]);
+				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
+			});
+			it("array of partially supported (symbols or basic object) is modified with null", () => {
+				const resultRead = passThru(arrayOfSymbolsAndObjects, [null]);
+				assertIdenticalTypes(resultRead, createInstanceOf<({ property: string } | null)[]>());
+			});
+			it("array of unsupported (symbols) becomes null[]", () => {
+				const resultRead = passThru(arrayOfSymbols, [null]);
+				assertIdenticalTypes(resultRead, createInstanceOf<null[]>());
+			});
+			it("array of unsupported (functions) becomes null[]", () => {
+				const resultRead = passThru(arrayOfFunctions, [null]);
+				assertIdenticalTypes(resultRead, createInstanceOf<null[]>());
 			});
 		});
 
@@ -685,6 +722,11 @@ describe("JsonDeserialized", () => {
 						));
 					});
 				});
+
+				it("array of numbers with holes", () => {
+					const resultRead = passThru(arrayOfNumbersSparse);
+					assertIdenticalTypes(resultRead, arrayOfNumbersSparse);
+				});
 			});
 		});
 	});
@@ -810,3 +852,5 @@ describe("JsonDeserialized", () => {
 		});
 	});
 });
+
+/* eslint-enable unicorn/no-null */
