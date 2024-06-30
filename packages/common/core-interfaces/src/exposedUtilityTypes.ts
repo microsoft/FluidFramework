@@ -45,15 +45,18 @@ export type NonSymbolWithRequiredPropertyOf<
 >;
 
 /**
- * Returns TTrue if T is likely serializable type, otherwise TFalse.
- * Fully not deserializable (functions, bigints, and symbols) produce TFalse
- * unless T extends TException.
+ * Returns TTrue if T is sometimes serializable type, otherwise TFalse.
+ * Fully not deserializable (functions, bigints, symbols, and undefined
+ * less intersection with TException) produce TFalse.
  *
  * @beta
  */
-export type IfNotDeserializable<T, TException, TTrue, TFalse> =
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	/* check for only serializable value types */ T extends Function | bigint | symbol
+export type IfAtLeastSometimesDeserializable<T, TException, TTrue, TFalse> =
+	/* check for only non-serializable value types */ T extends // eslint-disable-next-line @typescript-eslint/ban-types
+		| Function
+		| bigint
+		| symbol
+		| undefined
 		? /* not serializable => check for exception */ T extends TException
 			? /* exception => ensure exception is not `never` */ TException extends never
 				? /* `never` exception => no exception */ TFalse
@@ -62,47 +65,63 @@ export type IfNotDeserializable<T, TException, TTrue, TFalse> =
 		: /* at least partially serializable */ TTrue;
 
 /**
- * Returns non-symbol keys for defined, likely serializable properties of an object type.
- * Keys with fully unsupported properties (functions, bigints, and symbols) are excluded.
+ * Returns non-symbol keys for defined, (likely) serializable properties of an
+ * object type. Keys with fully unsupported properties (functions, bigints, and
+ * symbols) are excluded.
  *
  * For homomorphic mapping use with `as` to filter. Example:
  * `[K in keyof T as NonSymbolWithDefinedNotDeserializablePropertyOf<T, never, K>]: ...`
  *
  * @beta
  */
-export type NonSymbolWithDefinedNotDeserializablePropertyOf<
+export type NonSymbolWithDeserializablePropertyOf<
 	T extends object,
 	TException,
 	Keys extends keyof T = keyof T,
 > = Exclude<
 	{
-		[K in Keys]: undefined extends T[K]
-			? never
-			: IfNotDeserializable<T[K], TException, K, never>;
+		[K in Keys]: Extract<
+			Exclude<T[K], TException>,
+			// eslint-disable-next-line @typescript-eslint/ban-types
+			undefined | symbol | Function | bigint
+		> extends never
+			? /* exclusively supported types or exactly `never` => check for `never` */
+				T[K] extends never
+				? never
+				: K
+			: /* value might not be supported => exclude K */ never;
 	}[Keys],
 	undefined | symbol
 >;
 
 /**
- * Returns non-symbol keys for undefined, likely supported properties of an object type.
- * Keys with fully unsupported properties (functions, bigints, and symbols) are excluded.
+ * Returns non-symbol keys for partially supported properties of an object type.
+ * Keys with fully unsupported properties (functions, bigints, and symbols) are
+ * excluded.
  *
  * For homomorphic mapping use with `as` to filter. Example:
  * `[K in keyof T as NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<T, never, K>]: ...`
  *
  * @beta
  */
-export type NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
+export type NonSymbolWithPossiblyDeserializablePropertyOf<
 	T extends object,
 	TException,
 	Keys extends keyof T = keyof T,
 > = Exclude<
 	{
-		[K in Keys]: undefined extends T[K]
-			? Exclude<T[K], undefined> extends never
-				? never
-				: IfNotDeserializable<T[K], TException, K, never>
-			: never;
+		[K in Keys]: Extract<
+			Exclude<T[K], TException>,
+			// eslint-disable-next-line @typescript-eslint/ban-types
+			undefined | symbol | Function | bigint
+		> extends never
+			? /* exclusively supported types or exactly `never` */ never
+			: /* at least some unsupported type => check for any supported */ IfAtLeastSometimesDeserializable<
+					T[K],
+					TException,
+					K,
+					never
+				>;
 	}[Keys],
 	undefined | symbol
 >;
@@ -486,10 +505,10 @@ export type JsonDeserializedFilter<
 							: /* test for enum like types */ IsEnumLike<T> extends true
 								? /* enum or similar simple type (return as-is) => */ T
 								: /* property bag => */ FlattenIntersection<
-										/* properties with symbol keys or unsupported values are removed */
+										/* properties with symbol keys or wholly unsupported values are removed */
 										{
 											/* properties with defined values are recursed */
-											[K in keyof T as NonSymbolWithDefinedNotDeserializablePropertyOf<
+											[K in keyof T as NonSymbolWithDeserializablePropertyOf<
 												T,
 												TReplaced,
 												K
@@ -501,7 +520,7 @@ export type JsonDeserializedFilter<
 											>;
 										} & {
 											/* properties that may have undefined values are optional */
-											[K in keyof T as NonSymbolWithPossiblyUndefinedNotDeserializablePropertyOf<
+											[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
 												T,
 												TReplaced,
 												K

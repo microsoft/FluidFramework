@@ -159,6 +159,15 @@ function passThruHandlingBigintThrows<T>(
 	return undefined as unknown as JsonDeserialized<T, bigint>;
 }
 
+/**
+ * Similar to {@link passThru} but specifically handles certain function signatures.
+ */
+function passThruHandlingSpecificFunction<T>(
+	_v: T,
+): JsonDeserialized<T, (_: string) => number> {
+	return undefined as unknown as JsonDeserialized<T, (_: string) => number>;
+}
+
 describe("JsonDeserialized", () => {
 	describe("positive compilation tests", () => {
 		describe("supported primitive types are preserved", () => {
@@ -818,6 +827,22 @@ describe("JsonDeserialized", () => {
 					const resultRead = passThruHandlingBigint(objectWithOptionalBigint);
 					assertIdenticalTypes(resultRead, objectWithOptionalBigint);
 				});
+				it("object with specific function", () => {
+					const resultRead = passThruHandlingSpecificFunction({
+						genericFn: () => undefined as unknown,
+						specificFn: (v: string) => v.length,
+						specificFnOrAnother: ((v: string) => v.length) as
+							| ((v: string) => number)
+							| ((n: number) => string),
+					});
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<{
+							specificFn: (_: string) => number;
+							specificFnOrAnother?: (_: string) => number;
+						}>(),
+					);
+				});
 			});
 
 			describe("continue rejecting unsupported that are not replaced", () => {
@@ -852,5 +877,5 @@ describe("JsonDeserialized", () => {
 		});
 	});
 });
-
+// type X = Exclude<(() => any) | ((v: string) => number), (v: string) => number>;
 /* eslint-enable unicorn/no-null */
