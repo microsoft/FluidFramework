@@ -426,7 +426,7 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error `symbol` missing
 					assertIdenticalTypes(resultRead, objectWithSymbol);
 				});
-				it("object with exactly `function`", () => {
+				it("object with exactly function", () => {
 					const resultRead = passThru(objectWithFunction, {});
 					assertIdenticalTypes(resultRead, {});
 					// @ts-expect-error `function` missing
@@ -792,7 +792,7 @@ describe("JsonDeserialized", () => {
 					new TypeError("Do not know how to serialize a BigInt"),
 				) satisfies never;
 			});
-			it("`function` becomes `never`", () => {
+			it("function becomes `never`", () => {
 				passThruThrows(
 					aFunction,
 					new SyntaxError("Unexpected token u in JSON at position 0"),

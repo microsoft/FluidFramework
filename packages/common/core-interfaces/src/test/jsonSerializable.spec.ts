@@ -93,8 +93,8 @@ import {
 
 /**
  * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.
- * Internally value given is round-tripped through JSON serialization to ensure it is
- * unchanged or converted to given optional value.
+ * Internally, value given is round-tripped through JSON serialization to ensure it is
+ * unchanged or converted to given optional expected value.
  *
  * @param v - value to pass through JSON serialization
  * @param expectedDeserialization - alternate value to compare against after round-trip
@@ -600,7 +600,7 @@ describe("JsonSerializable", () => {
 					);
 					assertIdenticalTypes(result, createInstanceOf<never[]>());
 				});
-				it("array of `function`s", () => {
+				it("array of functions", () => {
 					const result = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
 						arrayOfFunctions,
