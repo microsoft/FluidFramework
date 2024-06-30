@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonDeserializedImpl } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 /**
  * Produces a type that results from a type `T` serialized and deserialized
@@ -46,4 +46,7 @@ import type { JsonDeserializedImpl } from "./exposedUtilityTypes.js";
  *
  * @beta
  */
-export type JsonDeserialized<T, TReplaced = never> = JsonDeserializedImpl<T, TReplaced>;
+export type JsonDeserialized<T, TReplaced = never> = InternalUtilityTypes.JsonDeserializedImpl<
+	T,
+	TReplaced
+>;

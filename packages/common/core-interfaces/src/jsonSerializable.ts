@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { JsonSerializableImpl } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 /**
  * Used to constrain a type `T` to types that are serializable as JSON.
@@ -76,4 +76,4 @@ export type JsonSerializable<
 	} = {
 		Replaced: never;
 	},
-> = JsonSerializableImpl<T, Options>;
+> = InternalUtilityTypes.JsonSerializableImpl<T, Options>;

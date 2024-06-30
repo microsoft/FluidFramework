@@ -57,15 +57,5 @@ export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
 
-import type * as InternalUtilityTypes from "./exposedUtilityTypes.js";
-export {
-	/**
-	 * Collection of utility types that are not intended to be used/imported
-	 * directly outside of this package.
-	 *
-	 * @beta
-	 * @system
-	 */
-	// eslint-disable-next-line unicorn/prefer-export-from
-	InternalUtilityTypes,
-};
+// eslint-disable-next-line no-restricted-syntax
+export * from "./exposedUtilityTypes.js";
