@@ -7,6 +7,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	ContainerMessageType,
@@ -27,6 +28,13 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
  * @internal
  */
 export class RemoteMessageProcessor {
+	/**
+	 * Client Sequence Number of the first message in this batch.
+	 * Note: For chunked batches, this is the CSN of the "representative" chunk (the final chunk)
+	 * If undefined, we are expecting the next message to start a new batch.
+	 */
+	private batchStartCsn: number | undefined;
+
 	constructor(
 		private readonly opSplitter: OpSplitter,
 		private readonly opDecompressor: OpDecompressor,
@@ -69,9 +77,6 @@ export class RemoteMessageProcessor {
 		| undefined {
 		let message = remoteMessageCopy;
 
-		// This will be updated if we are part-way through a was-compressed batch
-		let batchStartCsn = message.clientSequenceNumber;
-
 		ensureContentsDeserialized(message);
 
 		if (isChunkedMessage(message)) {
@@ -89,9 +94,9 @@ export class RemoteMessageProcessor {
 		}
 
 		if (this.opDecompressor.currentlyUnrolling) {
+			//* TODO: Undeo changes in OpDecompressor
 			const nextMessage = this.opDecompressor.unroll(message);
 			message = nextMessage.message;
-			batchStartCsn = nextMessage.batchStartCsn;
 
 			// Need to unpack after unrolling if not a groupedBatch
 			if (!isGroupedBatch(message)) {
@@ -100,11 +105,15 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
+			// We should be awaiting a new batch (batchStartCsn undefined)
+			assert(this.batchStartCsn === undefined, "Grouped batch interrupting another batch");
 			return {
 				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
-				batchStartCsn,
+				batchStartCsn: message.clientSequenceNumber,
 			};
 		}
+
+		const batchStartCsn = this.getAndUpdateBatchStartCsn(message);
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
@@ -112,6 +121,36 @@ export class RemoteMessageProcessor {
 			messages: [message as InboundSequencedContainerRuntimeMessageOrSystemMessage],
 			batchStartCsn,
 		};
+	}
+
+	//* TODO: Add comment
+	private getAndUpdateBatchStartCsn(message: ISequencedDocumentMessage): number {
+		const batchMetadataFlag = (message.metadata as { batch: boolean | undefined })?.batch;
+		if (this.batchStartCsn === undefined) {
+			// We are waiting for a new batch
+			assert(batchMetadataFlag !== false, "Unexpected batch end marker");
+
+			// Start of a new multi-message batch
+			if (batchMetadataFlag === true) {
+				this.batchStartCsn = message.clientSequenceNumber;
+				return this.batchStartCsn;
+			}
+
+			// Metadata flag is undefined.  Single-message batch.
+			// IMPORTANT: Leave this.batchStartCsn undefined, we're ready for the next batch now.
+			return message.clientSequenceNumber;
+		}
+
+		// We are in the middle or end of an existing multi-message batch. Return the current batchStartCsn
+		const batchStartCsn = this.batchStartCsn;
+
+		assert(batchMetadataFlag !== true, "Unexpected batch start marker");
+		if (batchMetadataFlag === false) {
+			// Batch end? Then get ready for the next batch to start
+			this.batchStartCsn = undefined;
+		}
+
+		return batchStartCsn;
 	}
 }
 
