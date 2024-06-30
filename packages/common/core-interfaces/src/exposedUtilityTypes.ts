@@ -324,21 +324,28 @@ export type SerializationErrorPerNonPublicProperties = {
  *
  * @beta
  */
-export type JsonSerializableImpl<T, TReplaced> = /* test for 'any' */ boolean extends (
-	T extends never
-		? true
-		: false
-)
-	? /* 'any' => */ JsonTypeWith<TReplaced>
-	: /* test for non-public properties (class instance type) */
-		HasNonPublicProperties<T> extends true
-		? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
-			? /* array => */ {
-					/* use homomorphic mapped type to preserve tuple type */
-					[K in keyof T]: JsonSerializableImpl<T[K], TReplaced | T>;
-				}
-			: /* not array => error */ SerializationErrorPerNonPublicProperties
-		: /* no hidden properties => apply filtering => */ JsonSerializableFilter<T, TReplaced>;
+export type JsonSerializableImpl<
+	T,
+	Options extends {
+		Replaced: unknown;
+		IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
+	},
+> = /* test for 'any' */ boolean extends (T extends never ? true : false)
+	? /* 'any' => */ JsonTypeWith<Options["Replaced"]>
+	: Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members"
+		? JsonSerializableFilter<T, Options["Replaced"]>
+		: /* test for non-public properties (class instance type) */
+			HasNonPublicProperties<T> extends true
+			? /* hidden props => test if it is array properties that are the problem */ T extends readonly (infer _)[]
+				? /* array => */ {
+						/* use homomorphic mapped type to preserve tuple type */
+						[K in keyof T]: JsonSerializableImpl<T[K], { Replaced: Options["Replaced"] | T }>;
+					}
+				: /* not array => error */ SerializationErrorPerNonPublicProperties
+			: /* no hidden properties => apply filtering => */ JsonSerializableFilter<
+					T,
+					Options["Replaced"]
+				>;
 
 /**
  * Core implementation of {@link JsonSerializable}.

@@ -20,9 +20,9 @@ import type { JsonSerializableImpl } from "./exposedUtilityTypes.js";
  *
  * Important: `T extends JsonSerializable<T>` is incorrect (does not even compile).
  *
- * The optional 'TReplaced' parameter may be used to permit additional leaf types
+ * The optional 'Options.Replaced' parameter may be used to permit additional leaf types
  * to support situations where a `replacer` is used to handle special values (e.g.,
- * `JsonSerializable<{ x: IFluidHandle }, IFluidHandle>`).
+ * `JsonSerializable<{ x: IFluidHandle }, { Replaced: IFluidHandle }>`).
  *
  * Note that `JsonSerializable<T>` does not protect against the following pitfalls
  * when serializing with JSON.stringify():
@@ -43,12 +43,12 @@ import type { JsonSerializableImpl } from "./exposedUtilityTypes.js";
  *
  * Class instances are indistinguishable from general objects by type checking
  * unless they have non-public members.
- * Unless option is used to `ignore-inaccessible-members` types with non-public
+ * Unless `Option.IgnoreInaccessibleMembers` is used, types with non-public
  * members will result in {@link SerializationErrorPerNonPublicProperties}.
- * When `ignore-inaccessible-members` is enabled, non-public (non-function)
- * members are preserved, but they are filtered away by the type filters and
- * thus produce an incorrectly narrowed type compared to actual data. Though
- * such a result may be customer desired.
+ * When `Option.IgnoreInaccessibleMembers` is `ignore-inaccessible-members`,
+ * non-public (non-function) members are preserved without error, but they are
+ * filtered away by the type filters and thus produce an incorrectly narrowed
+ * type compared to actual data. Though such a result may be customer desired.
  *
  * Perhaps a https://github.com/microsoft/TypeScript/issues/22677 fix will
  * enable better support.
@@ -68,4 +68,12 @@ import type { JsonSerializableImpl } from "./exposedUtilityTypes.js";
  *
  * @beta
  */
-export type JsonSerializable<T, TReplaced = never> = JsonSerializableImpl<T, TReplaced>;
+export type JsonSerializable<
+	T,
+	Options extends {
+		Replaced: unknown;
+		IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
+	} = {
+		Replaced: never;
+	},
+> = JsonSerializableImpl<T, Options>;

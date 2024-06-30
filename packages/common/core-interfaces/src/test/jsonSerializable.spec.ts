@@ -100,14 +100,18 @@ import {
  * @param expected - alternate value to compare against after round-trip
  * @returns the round-tripped value cast to the filter result type
  */
-function passThru<T>(
-	v: JsonSerializable<T>,
+function passThru<
+	T,
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	Options extends { IgnoreInaccessibleMembers?: "ignore-inaccessible-members" } = {},
+>(
+	v: JsonSerializable<T, { Replaced: never } & Options>,
 	expected?: JsonDeserialized<T>,
-): JsonSerializable<T> {
+): JsonSerializable<T, { Replaced: never } & Options> {
 	const stringified = JSON.stringify(v);
 	const result = JSON.parse(stringified) as JsonDeserialized<T>;
 	assert.deepStrictEqual(result, expected ?? v);
-	return result as JsonSerializable<T>;
+	return result as JsonSerializable<T, { Replaced: never } & Options>;
 }
 
 /**
@@ -125,12 +129,34 @@ function passThruThrows<T>(v: JsonSerializable<T>, expectedThrow: Error): JsonSe
 }
 
 /**
+ * Similar to {@link passThru} but ignores hidden (private/protected) members.
+ */
+function passThruIgnoreInaccessibleMembers<T>(
+	v: JsonSerializable<
+		T,
+		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+	>,
+	expected?: JsonDeserialized<T>,
+): JsonSerializable<
+	T,
+	{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+> {
+	return passThru<T, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>(
+		v,
+		expected,
+	);
+}
+
+/**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
 function passThruHandlingBigint<T>(
-	filteredIn: JsonSerializable<T, bigint>,
+	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
 	expected?: JsonDeserialized<T, bigint>,
-): { filteredIn: JsonSerializable<T, bigint>; out: JsonDeserialized<T, bigint> } {
+): {
+	filteredIn: JsonSerializable<T, { Replaced: bigint }>;
+	out: JsonDeserialized<T, bigint>;
+} {
 	const stringified = JSON.stringify(filteredIn, (_key, value) => {
 		if (typeof value === "bigint") {
 			return `<bigint>${value.toString()}</bigint>`;
@@ -157,11 +183,11 @@ function passThruHandlingBigint<T>(
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
 function passThruHandlingBigintThrows<T>(
-	v: JsonSerializable<T, bigint>,
+	v: JsonSerializable<T, { Replaced: bigint }>,
 	expectedThrow: Error,
-): { filteredIn: JsonSerializable<T, bigint> } {
+): { filteredIn: JsonSerializable<T, { Replaced: bigint }> } {
 	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
-	return { filteredIn: undefined as unknown as JsonSerializable<T, bigint> };
+	return { filteredIn: undefined as unknown as JsonSerializable<T, { Replaced: bigint }> };
 }
 
 describe("JsonSerializable", () => {
@@ -367,7 +393,7 @@ describe("JsonSerializable", () => {
 				// TODO FIX: add option to ignore inaccessible members
 				describe("with `ignore-inaccessible-members`", () => {
 					it("with private method ignores method", () => {
-						const result = passThru(classInstanceWithPrivateMethod, {
+						const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateMethod, {
 							public: "public",
 						});
 						assertIdenticalTypes(result, {
@@ -377,7 +403,7 @@ describe("JsonSerializable", () => {
 						result satisfies typeof classInstanceWithPrivateMethod;
 					});
 					it("with private getter ignores getter", () => {
-						const result = passThru(classInstanceWithPrivateGetter, {
+						const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateGetter, {
 							public: "public",
 						});
 						assertIdenticalTypes(result, {
@@ -387,7 +413,7 @@ describe("JsonSerializable", () => {
 						result satisfies typeof classInstanceWithPrivateGetter;
 					});
 					it("with private setter ignores setter", () => {
-						const result = passThru(classInstanceWithPrivateSetter, {
+						const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateSetter, {
 							public: "public",
 						});
 						assertIdenticalTypes(result, {
@@ -480,8 +506,9 @@ describe("JsonSerializable", () => {
 				describe("class instance", () => {
 					describe("with `ignore-inaccessible-members`", () => {
 						it("with private data ignores private data (that propagates)", () => {
-							const result = passThru(classInstanceWithPrivateData, {
+							const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateData, {
 								public: "public",
+								// @ts-expect-error secret hidden and ignored, but have value that propagates
 								secret: 0,
 							});
 							assertIdenticalTypes(result, {
