@@ -97,20 +97,24 @@ import {
  * unchanged or converted to given optional value.
  *
  * @param v - value to pass through JSON serialization
- * @param expected - alternate value to compare against after round-trip
+ * @param expectedDeserialization - alternate value to compare against after round-trip
  * @returns the round-tripped value cast to the filter result type
  */
 function passThru<
 	T,
+	TExpected = JsonDeserialized<T>,
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	Options extends { IgnoreInaccessibleMembers?: "ignore-inaccessible-members" } = {},
 >(
 	v: JsonSerializable<T, { Replaced: never } & Options>,
-	expected?: JsonDeserialized<T>,
+	expectedDeserialization?: TExpected,
 ): JsonSerializable<T, { Replaced: never } & Options> {
 	const stringified = JSON.stringify(v);
-	const result = JSON.parse(stringified) as JsonDeserialized<T>;
-	assert.deepStrictEqual(result, expected ?? v);
+	const result = JSON.parse(stringified) as JsonDeserialized<TExpected>;
+	// Don't use nullish coalescing here to allow for `null` to be expected.
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+	const expected = expectedDeserialization === undefined ? v : expectedDeserialization;
+	assert.deepStrictEqual(result, expected);
 	return result as JsonSerializable<T, { Replaced: never } & Options>;
 }
 
@@ -131,17 +135,17 @@ function passThruThrows<T>(v: JsonSerializable<T>, expectedThrow: Error): JsonSe
 /**
  * Similar to {@link passThru} but ignores hidden (private/protected) members.
  */
-function passThruIgnoreInaccessibleMembers<T>(
+function passThruIgnoreInaccessibleMembers<T, TExpected = JsonDeserialized<T>>(
 	v: JsonSerializable<
 		T,
 		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 	>,
-	expected?: JsonDeserialized<T>,
+	expected?: TExpected,
 ): JsonSerializable<
 	T,
 	{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 > {
-	return passThru<T, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>(
+	return passThru<T, TExpected, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>(
 		v,
 		expected,
 	);
@@ -150,9 +154,9 @@ function passThruIgnoreInaccessibleMembers<T>(
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
-function passThruHandlingBigint<T>(
+function passThruHandlingBigint<T, TExpected = JsonDeserialized<T, bigint>>(
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
-	expected?: JsonDeserialized<T, bigint>,
+	expectedDeserialization?: TExpected,
 ): {
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>;
 	out: JsonDeserialized<T, bigint>;
@@ -175,7 +179,11 @@ function passThruHandlingBigint<T>(
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
 	}) as JsonDeserialized<T, bigint>;
-	assert.deepStrictEqual(out, expected ?? filteredIn);
+	const expected =
+		// Don't use nullish coalescing here to allow for `null` to be expected.
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+		expectedDeserialization === undefined ? filteredIn : expectedDeserialization;
+	assert.deepStrictEqual(out, expected);
 	return { filteredIn, out };
 }
 
@@ -458,47 +466,27 @@ describe("JsonSerializable", () => {
 			describe("known defect expectations", () => {
 				describe("getters and setters allowed but do not propagate", () => {
 					it("object with `readonly` implemented via getter", () => {
-						const result = passThru(
-							objectWithReadonlyViaGetter,
-							// @ts-expect-error readonly is missing, but required
-							{},
-						);
+						const result = passThru(objectWithReadonlyViaGetter, {});
 						assertIdenticalTypes(result, objectWithReadonlyViaGetter);
 					});
 
 					it("object with getter", () => {
-						const result = passThru(
-							objectWithGetter,
-							// @ts-expect-error getter is missing, but required
-							{},
-						);
+						const result = passThru(objectWithGetter, {});
 						assertIdenticalTypes(result, objectWithGetter);
 					});
 
 					it("object with setter", () => {
-						const result = passThru(
-							objectWithSetter,
-							// @ts-expect-error setter is missing, but required
-							{},
-						);
+						const result = passThru(objectWithSetter, {});
 						assertIdenticalTypes(result, objectWithSetter);
 					});
 
 					it("object with matched getter and setter", () => {
-						const result = passThru(
-							objectWithMatchedGetterAndSetterProperty,
-							// @ts-expect-error property is missing, but required
-							{},
-						);
+						const result = passThru(objectWithMatchedGetterAndSetterProperty, {});
 						assertIdenticalTypes(result, objectWithMatchedGetterAndSetterProperty);
 					});
 
 					it("object with mismatched getter and setter", () => {
-						const result = passThru(
-							objectWithMismatchedGetterAndSetterProperty,
-							// @ts-expect-error property is missing, but required
-							{},
-						);
+						const result = passThru(objectWithMismatchedGetterAndSetterProperty, {});
 						assertIdenticalTypes(result, objectWithMismatchedGetterAndSetterProperty);
 					});
 				});
@@ -508,7 +496,6 @@ describe("JsonSerializable", () => {
 						it("with private data ignores private data (that propagates)", () => {
 							const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateData, {
 								public: "public",
-								// @ts-expect-error secret hidden and ignored, but have value that propagates
 								secret: 0,
 							});
 							assertIdenticalTypes(result, {
@@ -521,11 +508,7 @@ describe("JsonSerializable", () => {
 				});
 
 				it("sparse array of supported types", () => {
-					const result = passThru(
-						arrayOfNumbersSparse,
-						// @ts-expect-error 'null' is injected but not detectable from type information
-						[0, null, null, 3],
-					);
+					const result = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
 					assertIdenticalTypes(result, arrayOfNumbersSparse);
 				});
 			});
@@ -849,6 +832,42 @@ describe("JsonSerializable", () => {
 				new SyntaxError("Unexpected token u in JSON at position 0"),
 			);
 			assertIdenticalTypes(result, createInstanceOf<JsonTypeWith<never>>());
+		});
+
+		describe("`number` edge cases", () => {
+			describe("supported", () => {
+				it("MIN_SAFE_INTEGER", () => {
+					const result = passThru(Number.MIN_SAFE_INTEGER);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+				it("MAX_SAFE_INTEGER", () => {
+					const result = passThru(Number.MAX_SAFE_INTEGER);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+				it("MIN_VALUE", () => {
+					const result = passThru(Number.MIN_VALUE);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+				it("MAX_VALUE", () => {
+					const result = passThru(Number.MAX_VALUE);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+			});
+			describe("resulting in `null`", () => {
+				it("NaN", () => {
+					const result = passThru(Number.NaN, null);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+
+				it("+Infinity", () => {
+					const result = passThru(Number.POSITIVE_INFINITY, null);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+				it("-Infinity", () => {
+					const result = passThru(Number.NEGATIVE_INFINITY, null);
+					assertIdenticalTypes(result, createInstanceOf<number>());
+				});
+			});
 		});
 
 		describe("using replaced types", () => {
