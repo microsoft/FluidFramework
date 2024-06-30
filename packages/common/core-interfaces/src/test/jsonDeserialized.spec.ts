@@ -733,7 +733,11 @@ describe("JsonDeserialized", () => {
 				});
 
 				it("array of numbers with holes", () => {
-					const resultRead = passThru(arrayOfNumbersSparse);
+					const resultRead = passThru(
+						arrayOfNumbersSparse,
+						// @ts-expect-error 'null' is injected for holes but sparse array is not detectable from type information
+						[0, null, null, 3],
+					);
 					assertIdenticalTypes(resultRead, arrayOfNumbersSparse);
 				});
 			});
