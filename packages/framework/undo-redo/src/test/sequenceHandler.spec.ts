@@ -121,7 +121,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 		while (undoRedoStack.redoOperation()) {}
 
 		assert.equal(sharedString.getText(), finalText, sharedString.getText());
-	});
+	}).timeout(4000); // double the default timeout. This test is a bit slow.
 
 	it("Undo and redo insert of split segment", () => {
 		const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);

@@ -114,8 +114,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^1.6.2"
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
@@ -147,6 +146,11 @@
 		"uuid": "^9.0.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_AzureFunctionTokenProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

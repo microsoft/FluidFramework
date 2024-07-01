@@ -53,8 +53,6 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
-	// eslint-disable-next-line import/no-deprecated
-	TreeConfiguration,
 	TreeView,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
@@ -320,22 +318,6 @@ export class SharedTree
 			onDispose,
 			createNodeKeyManager(this.runtime.idCompressor),
 		);
-	}
-
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		// eslint-disable-next-line import/no-deprecated
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		const view = new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
-		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.compatibility.canInitialize === true) {
-			view.initialize(config.initialTree());
-		}
-		return view;
 	}
 
 	public viewWith<TRoot extends ImplicitFieldSchema>(
