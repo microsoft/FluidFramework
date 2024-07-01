@@ -695,14 +695,12 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				const runId = config.runId;
 				virtualDataStoreCreation
 					.then((virtualDataStore) => {
-						console.log("create/attach", runId);
 						dataModel.dataStoresSharedMap.set(
 							`${runId}${opsSentCurrent}`,
 							virtualDataStore.handle,
 						);
 					})
 					.catch((error) => {
-						console.log("error", error);
 						config.logger.sendErrorEvent(
 							{
 								eventName: "VirtualDataStoreCreationFailed",
@@ -724,23 +722,17 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				) as IFluidHandle<VirtualDataStore>[];
 				const handle = config.random.pick(dataStoreHandles);
 				const opsSentCurrent = opsSent;
-				handle
-					.get()
-					.then(() => {
-						console.log("load", config.runId);
-					})
-					.catch((error) => {
-						console.log("load error", error);
-						config.logger.sendErrorEvent(
-							{
-								eventName: "VirtualDataStoreLoadFailed",
-								runId: config.runId,
-								opsSent: opsSentCurrent,
-								virtualLoadRate,
-							},
-							error,
-						);
-					});
+				handle.get().catch((error) => {
+					config.logger.sendErrorEvent(
+						{
+							eventName: "VirtualDataStoreLoadFailed",
+							runId: config.runId,
+							opsSent: opsSentCurrent,
+							virtualLoadRate,
+						},
+						error,
+					);
+				});
 			}
 
 			// This sends an op to the virtual data store if it is loaded
@@ -754,7 +746,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				handle
 					.get()
 					.then((dataStore) => {
-						console.log("sendop");
 						dataStore.counter.increment(1);
 					})
 					.catch((error) => {
