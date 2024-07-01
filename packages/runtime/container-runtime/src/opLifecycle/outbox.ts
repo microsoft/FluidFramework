@@ -14,10 +14,7 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	ICompressionRuntimeOptions,
-	type CompressionAlgorithms,
-} from "../containerRuntime.js";
+import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -89,13 +86,6 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
-
-const select = <T extends { contents?; metadata?; compression?; referenceSequenceNumber }>({
-	contents,
-	metadata,
-	compression,
-	referenceSequenceNumber,
-}: T) => ({ contents, metadata, compression, referenceSequenceNumber });
 
 export class Outbox {
 	private readonly mc: MonitoringContext;
@@ -401,9 +391,12 @@ export class Outbox {
 		} else {
 			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
 			clientSequenceNumber = this.params.submitBatchFn(
-				batch.messages.map<IBatchMessage>(
-					select<{ contents?; metadata?; compression?; referenceSequenceNumber }>,
-				),
+				batch.messages.map<IBatchMessage>((message) => ({
+					contents: message.contents,
+					metadata: message.metadata,
+					compression: message.compression,
+					referenceSequenceNumber: message.referenceSequenceNumber,
+				})),
 				batch.referenceSequenceNumber,
 			);
 		}
