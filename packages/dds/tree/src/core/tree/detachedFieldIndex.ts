@@ -90,7 +90,15 @@ export class DetachedFieldIndex {
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
-	private fullyLoaded = true;
+	/**
+	 * The process for loading `DetachedFieldIndex` data from a summary is split into two steps:
+	 * 1. Call {@link loadData}
+	 * 2. Call {@link setRevisionsForLoadedData}
+	 *
+	 * This flag is only set to `false` after calling `loadData` and is set back to `true` after calling `setRevisionsForLoadedData`.
+	 * This helps ensure that `setRevisionsForLoadedData` is only called after `loadData` and only called once.
+	 */
+	private isFullyLoaded = true;
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -335,7 +343,7 @@ export class DetachedFieldIndex {
 
 		this.detachedNodeToField = new Map();
 		this.latestRelevantRevisionToFields = new Map();
-		this.fullyLoaded = false;
+		this.isFullyLoaded = false;
 		const rootMap = new Map<ForestRootId, Delta.DetachedNodeId>();
 		forEachInNestedMap(detachedFieldIndex.data, (root, major, minor) => {
 			setInNestedMap(this.detachedNodeToField, major, minor, {
@@ -355,7 +363,7 @@ export class DetachedFieldIndex {
 	 */
 	public setRevisionsForLoadedData(latestRevision: RevisionTag): void {
 		assert(
-			!this.fullyLoaded,
+			!this.isFullyLoaded,
 			"revisions should only be set once using this function after loading data from a summary",
 		);
 
@@ -369,6 +377,6 @@ export class DetachedFieldIndex {
 		this.detachedNodeToField = newDetachedNodeToField;
 		this.latestRelevantRevisionToFields.delete(fakeRevisionWhenNotSet);
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
-		this.fullyLoaded = true;
+		this.isFullyLoaded = true;
 	}
 }
