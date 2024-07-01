@@ -61,9 +61,10 @@ describe("EditManager - Bench", () => {
 			.insert(0, singleJsonCursor(1));
 	};
 
-	// TODO: use something other than `any`
+	// Family is invariant over the change type, so using any is required to write generic Family processing code.
+	// Refactors to make this more type safe are possible for some usages (ex: extracting a non generic base interface), but are not practical for the tests here.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const families: Family<any>[] = [
+	const families: readonly Family<any>[] = [
 		{
 			name: "TestChange",
 			changeFamily: testChangeFamilyFactory(new NoOpChangeRebaser()),

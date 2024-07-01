@@ -1449,6 +1449,7 @@ declare function get_old_InterfaceDeclaration_IOrdererManager():
 declare function use_current_InterfaceDeclaration_IOrdererManager(
     use: TypeOnly<current.IOrdererManager>): void;
 use_current_InterfaceDeclaration_IOrdererManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOrdererManager());
 
 /*

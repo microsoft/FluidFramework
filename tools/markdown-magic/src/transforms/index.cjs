@@ -9,6 +9,11 @@ const {
 } = require("./apiDocsLinkSectionTransform.cjs");
 
 const {
+	generatePackageImportInstructionsSection,
+	packageImportInstructionsSectionTransform,
+} = require("./packageImportInstructionsTransform.cjs");
+
+const {
 	generatePackageScriptsSection,
 	packageScriptsSectionTransform,
 } = require("./packageScriptsTransform.cjs");
@@ -16,6 +21,8 @@ const {
 module.exports = {
 	apiDocsLinkSectionTransform,
 	generateApiDocsLinkSection,
+	generatePackageImportInstructionsSection,
 	generatePackageScriptsSection,
+	packageImportInstructionsSectionTransform,
 	packageScriptsSectionTransform,
 };
