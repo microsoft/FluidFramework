@@ -124,8 +124,10 @@ export class DetachedFieldIndex {
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
-		this.latestRelevantRevisionToFields.forEach((set, key) =>
-			clone.latestRelevantRevisionToFields.set(key, new Map(set)),
+		populateNestedMap(
+			this.latestRelevantRevisionToFields,
+			clone.latestRelevantRevisionToFields,
+			true,
 		);
 		return clone;
 	}
@@ -211,35 +213,17 @@ export class DetachedFieldIndex {
 	}
 
 	/**
-	 * Returns all entries last created or used by the given revision.
+	 * Returns the detached root IDs for all the trees that were detached or last modified by the given revision.
 	 */
 	public *getRootsLastTouchedByRevision(revision: RevisionTag): Iterable<ForestRootId> {
 		const roots = this.latestRelevantRevisionToFields.get(revision);
 		if (roots !== undefined) {
-			for (const root of roots.keys()) {
-				yield root;
-			}
+			yield* roots.keys();
 		}
 	}
 
 	/**
-	 * Removes all entries created by the given revision, no matter what their latest
-	 * relevant revision is.
-	 */
-	public deleteRoots(revision: RevisionTag): void {
-		const entries = this.detachedNodeToField.get(revision);
-		if (entries === undefined) {
-			return;
-		}
-
-		for (const [_, { root, latestRelevantRevision }] of entries.entries()) {
-			deleteFromNestedMap(this.latestRelevantRevisionToFields, latestRelevantRevision, root);
-		}
-		this.detachedNodeToField.delete(revision);
-	}
-
-	/**
-	 * Removes all entries last created or used by the given revision.
+	 * Removes the detached roots for all the trees that were detached or last modified by the given revision.
 	 */
 	public deleteRootsLastTouchedByRevision(revision: RevisionTag): void {
 		const entries = this.latestRelevantRevisionToFields.get(revision);
@@ -271,6 +255,11 @@ export class DetachedFieldIndex {
 
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
+	 * @param nodeId - The ID of the detached node.
+	 * @param revision - The revision that last detached the root.
+	 * See {@link DetachedField.latestRelevantRevision} for details.
+	 * @param count - The number of entries to create. These entries will have consecutive minor IDs.
+	 * @returns The atomic ID that the `DetachedFieldIndex` uses to uniquely identify the first root.
 	 */
 	public createEntry(
 		nodeId?: Delta.DetachedNodeId,

@@ -165,7 +165,10 @@ function fixedPointVisitOfRoots(
 
 /**
  * Transfers roots from one detached field to another.
- * This is done when there is a composition of changes that effectively move and remove a node, or restore and move a node, or restore and remove a node.
+ * This occurs in the following circumstances:
+ * - A changeset move then removes a node
+ * - A changeset restores then move a node
+ * - A changeset restores then removes a node
  * TODO#5481: update the DetachedFieldIndex instead of moving the nodes around.
  *
  * @param rootTransfers - The transfers to perform.
