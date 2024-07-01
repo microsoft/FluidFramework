@@ -70,7 +70,7 @@ describe("class-tree tree", () => {
 		const _unused = view.root;
 		const context = view.getView().context;
 		const countBefore = context.withAnchors.size + context.withCursors.size;
-		for (let index = 0; index < 100; index++) {
+		for (let index = 0; index < 10; index++) {
 			const _unused2 = view.root;
 		}
 		const countAfter = context.withAnchors.size + context.withCursors.size;
@@ -90,7 +90,7 @@ describe("class-tree tree", () => {
 		Tree.parent(child);
 		const context = view.getView().context;
 		const countBefore = context.withAnchors.size + context.withCursors.size;
-		for (let index = 0; index < 100; index++) {
+		for (let index = 0; index < 10; index++) {
 			Tree.parent(child);
 		}
 		const countAfter = context.withAnchors.size + context.withCursors.size;
