@@ -337,9 +337,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @alpha
-export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
-
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 

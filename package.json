@@ -5,8 +5,7 @@
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": ""
+		"url": "https://github.com/microsoft/FluidFramework.git"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

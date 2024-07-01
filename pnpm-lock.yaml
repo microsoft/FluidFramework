@@ -16280,6 +16280,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../utils/telemetry-utils
+      axe-core:
+        specifier: ^4.9.1
+        version: 4.9.1
       react:
         specifier: ^17.0.1
         version: 17.0.2
@@ -16292,9 +16295,6 @@ importers:
       recharts:
         specifier: ^2.7.2
         version: 2.10.1(prop-types@15.8.1)(react-dom@17.0.2)(react@17.0.2)
-      scheduler:
-        specifier: ^0.20.0
-        version: 0.20.2
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2
@@ -16360,10 +16360,10 @@ importers:
         specifier: ^18.19.0
         version: 18.19.1
       '@types/react':
-        specifier: ^17.0.44
+        specifier: ^17.0.71
         version: 17.0.71
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: ^17.0.25
         version: 17.0.25
       '@types/recharts':
         specifier: ^1.8.24
@@ -17022,6 +17022,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.1
+      '@types/proper-lockfile':
+        specifier: ^4.1.4
+        version: 4.1.4
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -27397,7 +27400,7 @@ packages:
       util-deprecate: 1.0.2
       watchpack: 2.4.0
       webpack: 4.47.0(webpack-cli@4.10.0)
-      ws: 8.16.0
+      ws: 8.17.1
       x-default-browser: 0.4.0
     transitivePeerDependencies:
       - '@storybook/mdx2-csf'
@@ -28647,6 +28650,12 @@ packages:
 
   /@types/prop-types@15.7.11:
     resolution: {integrity: sha512-ga8y9v9uyeiLdpKddhxYQkxNDrfvuPrlFb0N1qnZZByvcElJaXthF1UhvCh9TLWJBEHeNtdnbysW7Y6Uq8CVng==}
+
+  /@types/proper-lockfile@4.1.4:
+    resolution: {integrity: sha512-uo2ABllncSqg9F1D4nugVl9v93RmjxF6LJzQLMLDdPaXCUIDPeOJ21Gbqi43xNKzBi/WQ0Q0dICqufzQbMjipQ==}
+    dependencies:
+      '@types/retry': 0.12.0
+    dev: true
 
   /@types/prosemirror-model@1.17.0:
     resolution: {integrity: sha512-lG5xEMkE8r8Soa80KdWPTbCLUaSHBHVHpTIEsQiebfONpvmS5061IMGzHUdb1oWjgrwh8EJq0GgMNwXHUx5mVg==}
@@ -30486,6 +30495,11 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /axe-core@4.9.1:
+    resolution: {integrity: sha512-QbUdXJVTpvUTHU7871ppZkdOLBeGUKBQWHkHrvN2V9IQWGMt61zf3B45BtzjxEJzYuj0JBjBZP/hmYS/R9pmAw==}
+    engines: {node: '>=4'}
+    dev: false
 
   /axios@0.28.1:
     resolution: {integrity: sha512-iUcGA5a7p0mVb4Gm/sy+FSECNkPFT4y7wt6OM/CDpO/OnNCvSs3PoMG8ibrC9jRoGYU0gUK5pXVC4NPXq6lHRQ==}
