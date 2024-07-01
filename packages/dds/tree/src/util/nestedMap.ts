@@ -42,23 +42,32 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 /**
  * Copies over all entries from the source map into the destination map.
  *
+ * @param source - The map to copy data from. Not mutated.
+ * @param destination - The map to copy data into. Both the outer and inner map may be mutated.
+ * @param override - When `true` any values in `destination` will be overwritten with values from `destination` for all pairs of keys they have in common.
+ *
+ * @remarks - This function performs deep copying when necessary.
+ * This ensures that mutating `destination` after this call will not result in unexpected mutations to `source`.
  * @internal
  */
 export function populateNestedMap<Key1, Key2, Value>(
-	source: NestedMap<Key1, Key2, Value>,
+	source: ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>,
 	destination: NestedMap<Key1, Key2, Value>,
 	override: boolean,
 ): void {
-	for (const [key1, innerMap] of source) {
-		const newInner = new Map(destination.get(key1));
-
-		for (const [key2, value] of innerMap) {
-			if (override || !newInner.has(key2)) {
-				newInner.set(key2, value);
+	for (const [key1, sourceInner] of source) {
+		let destinationInner = destination.get(key1);
+		if (destinationInner === undefined) {
+			destinationInner = new Map(sourceInner);
+		} else {
+			for (const [key2, value] of sourceInner) {
+				if (override || !destinationInner.has(key2)) {
+					destinationInner.set(key2, value);
+				}
 			}
 		}
 
-		destination.set(key1, newInner);
+		destination.set(key1, destinationInner);
 	}
 }
 
