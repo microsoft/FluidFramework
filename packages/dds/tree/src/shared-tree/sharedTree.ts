@@ -53,7 +53,6 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
-	TreeView,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
