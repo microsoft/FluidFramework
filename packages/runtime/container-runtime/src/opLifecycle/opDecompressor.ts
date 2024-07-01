@@ -29,7 +29,7 @@ interface IPackedContentsContents {
  * 4. An individually compressed op will have undefined batch metadata and compression set to true
  */
 export class OpDecompressor {
-	private batchStartCsn: number | undefined;
+	private activeBatch = false;
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
 	private readonly logger;
@@ -82,7 +82,7 @@ export class OpDecompressor {
 	}
 
 	public get currentlyUnrolling() {
-		return this.batchStartCsn !== undefined;
+		return this.activeBatch;
 	}
 
 	/** Is the decompressed and stored batch only comprised of a single message */
@@ -102,11 +102,8 @@ export class OpDecompressor {
 			0x940 /* provided message should be compressed */,
 		);
 
-		assert(
-			this.batchStartCsn === undefined,
-			0x4b8 /* shouldn't have multiple active batches */,
-		);
-		this.batchStartCsn = message.clientSequenceNumber;
+		assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
+		this.activeBatch = true;
 
 		const batchMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
 		if (batchMetadata === undefined) {
@@ -129,12 +126,8 @@ export class OpDecompressor {
 	 * Unroll the next message from the decompressed content provided to {@link decompressAndStore}
 	 * @returns the unrolled `ISequencedDocumentMessage`
 	 */
-	public unroll(message: ISequencedDocumentMessage): {
-		message: ISequencedDocumentMessage;
-		batchStartCsn: number;
-	} {
-		const batchStartCsn = this.batchStartCsn;
-		assert(batchStartCsn !== undefined, 0x942 /* not currently unrolling */);
+	public unroll(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+		assert(this.currentlyUnrolling, 0x942 /* not currently unrolling */);
 		assert(this.rootMessageContents !== undefined, 0x943 /* missing rootMessageContents */);
 		assert(
 			this.rootMessageContents.length > this.processedCount,
@@ -147,28 +140,22 @@ export class OpDecompressor {
 			// End of compressed batch
 			const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount]);
 
-			this.batchStartCsn = undefined;
+			this.activeBatch = false;
 			this.isSingleMessageBatch = false;
 			this.rootMessageContents = undefined;
 			this.processedCount = 0;
 
-			return { message: returnMessage, batchStartCsn };
+			return returnMessage;
 		} else if (batchMetadata === true) {
 			// Start of compressed batch
-			return {
-				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-				batchStartCsn,
-			};
+			return newMessage(message, this.rootMessageContents[this.processedCount++]);
 		}
 
 		assert(batchMetadata === undefined, 0x945 /* invalid batch metadata */);
 		assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
 		// Continuation of compressed batch
-		return {
-			message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-			batchStartCsn,
-		};
+		return newMessage(message, this.rootMessageContents[this.processedCount++]);
 	}
 }
 

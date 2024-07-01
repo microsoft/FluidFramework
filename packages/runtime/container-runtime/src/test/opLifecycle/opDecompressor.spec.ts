@@ -94,32 +94,27 @@ describe("OpDecompressor", () => {
 	});
 
 	it("Processes single compressed op", () => {
-		const compressed = generateCompressedBatchMessage(1);
-		decompressor.decompressAndStore(compressed);
+		let message = generateCompressedBatchMessage(1);
+		decompressor.decompressAndStore(message);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message, batchStartCsn } = decompressor.unroll(compressed);
+		message = decompressor.unroll(message);
 		assert.strictEqual((message.contents as ITestMessageContents).contents, "value0");
 		assert.strictEqual(
 			(message.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
 		);
 		assert.strictEqual(message.compression, undefined);
-		assert.strictEqual(
-			batchStartCsn,
-			compressed.clientSequenceNumber,
-			"batchStartCsn incorrect",
-		);
 	});
 
 	// Back-compat self healing mechanism for ADO:3538
 	it("Processes single compressed op without compression markers", () => {
-		const compressed: ISequencedDocumentMessage = {
+		let message: ISequencedDocumentMessage = {
 			...generateCompressedBatchMessage(1),
 			compression: undefined,
 		};
-		decompressor.decompressAndStore(compressed);
+		decompressor.decompressAndStore(message);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message, batchStartCsn } = decompressor.unroll(compressed);
+		message = decompressor.unroll(message);
 
 		assert.strictEqual((message.contents as ITestMessageContents).contents, "value0");
 		assert.strictEqual(
@@ -127,11 +122,6 @@ describe("OpDecompressor", () => {
 			undefined,
 		);
 		assert.strictEqual(message.compression, undefined);
-		assert.strictEqual(
-			batchStartCsn,
-			compressed.clientSequenceNumber,
-			"batchStartCsn incorrect",
-		);
 
 		mockLogger.assertMatch([
 			{
@@ -154,8 +144,7 @@ describe("OpDecompressor", () => {
 		const rootMessage = generateCompressedBatchMessage(5);
 		decompressor.decompressAndStore(rootMessage);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: firstMessage, batchStartCsn: firstCsn } =
-			decompressor.unroll(rootMessage);
+		const firstMessage = decompressor.unroll(rootMessage);
 
 		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
 		assert.strictEqual(
@@ -163,41 +152,33 @@ describe("OpDecompressor", () => {
 			undefined,
 		);
 		assert.strictEqual(firstMessage.compression, undefined);
-		assert.strictEqual(firstCsn, rootMessage.clientSequenceNumber, "batchStartCsn incorrect");
 
 		for (let i = 1; i < 4; i++) {
 			assert.equal(decompressor.currentlyUnrolling, true);
-			const { message, batchStartCsn } = decompressor.unroll(emptyMessage);
+			const message = decompressor.unroll(emptyMessage);
 			assert.strictEqual((message.contents as ITestMessageContents).contents, `value${i}`);
 			assert.strictEqual(
 				(message.metadata as { compressed?: unknown } | undefined)?.compressed,
 				undefined,
 			);
 			assert.strictEqual(message.compression, undefined);
-			assert.strictEqual(
-				batchStartCsn,
-				rootMessage.clientSequenceNumber,
-				"batchStartCsn incorrect",
-			);
 		}
 
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: lastMessage, batchStartCsn: lastCsn } =
-			decompressor.unroll(endBatchEmptyMessage);
+		const lastMessage = decompressor.unroll(endBatchEmptyMessage);
 		assert.strictEqual((lastMessage.contents as ITestMessageContents).contents, "value4");
 		assert.strictEqual(
 			(lastMessage.metadata as { compressed?: unknown } | undefined)?.compressed,
 			undefined,
 		);
 		assert.strictEqual(lastMessage.compression, undefined);
-		assert.strictEqual(lastCsn, rootMessage.clientSequenceNumber, "batchStartCsn incorrect");
 	});
 
 	it("Expecting empty messages in the middle of the compressed batch", () => {
 		const rootMessage = generateCompressedBatchMessage(5);
 		decompressor.decompressAndStore(rootMessage);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: firstMessage } = decompressor.unroll(rootMessage);
+		const firstMessage = decompressor.unroll(rootMessage);
 
 		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
 
@@ -209,32 +190,32 @@ describe("OpDecompressor", () => {
 		const rootMessage = generateCompressedBatchMessage(5);
 		decompressor.decompressAndStore(rootMessage);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: firstMessage } = decompressor.unroll(rootMessage);
+		const firstMessage = decompressor.unroll(rootMessage);
 
 		assert.strictEqual((firstMessage.contents as ITestMessageContents).contents, "value0");
 
 		for (let i = 1; i < 4; i++) {
 			assert.equal(decompressor.currentlyUnrolling, true);
-			const { message } = decompressor.unroll(emptyMessage);
+			const message = decompressor.unroll(emptyMessage);
 			assert.strictEqual((message.contents as ITestMessageContents).contents, `value${i}`);
 		}
 
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: lastMessage } = decompressor.unroll(endBatchEmptyMessage);
+		const lastMessage = decompressor.unroll(endBatchEmptyMessage);
 		assert.strictEqual((lastMessage.contents as ITestMessageContents).contents, "value4");
 
 		const nextRootMessage = generateCompressedBatchMessage(3);
 		decompressor.decompressAndStore(nextRootMessage);
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: nextFirstMessage } = decompressor.unroll(nextRootMessage);
+		const nextFirstMessage = decompressor.unroll(nextRootMessage);
 		assert.strictEqual((nextFirstMessage.contents as ITestMessageContents).contents, "value0");
 
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: middleMessage } = decompressor.unroll(emptyMessage);
+		const middleMessage = decompressor.unroll(emptyMessage);
 		assert.strictEqual((middleMessage.contents as ITestMessageContents).contents, "value1");
 
 		assert.equal(decompressor.currentlyUnrolling, true);
-		const { message: endBatchMessage } = decompressor.unroll(endBatchEmptyMessage);
+		const endBatchMessage = decompressor.unroll(endBatchEmptyMessage);
 		assert.strictEqual((endBatchMessage.contents as ITestMessageContents).contents, "value2");
 	});
 

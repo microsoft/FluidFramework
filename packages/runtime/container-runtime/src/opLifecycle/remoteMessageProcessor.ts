@@ -94,10 +94,7 @@ export class RemoteMessageProcessor {
 		}
 
 		if (this.opDecompressor.currentlyUnrolling) {
-			//* TODO: Undeo changes in OpDecompressor
-			const nextMessage = this.opDecompressor.unroll(message);
-			message = nextMessage.message;
-
+			message = this.opDecompressor.unroll(message);
 			// Need to unpack after unrolling if not a groupedBatch
 			if (!isGroupedBatch(message)) {
 				unpack(message);
