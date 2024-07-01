@@ -1083,6 +1083,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1093,8 +1094,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (isInstanceOfISnapshot(props.snapshot)) {
 			this.blobContents = props.snapshot.blobContents;
 			this._baseSnapshot = props.snapshot.snapshotTree;
+			this.isSnapshotInISnapshotFormat = true;
 		} else {
 			this._baseSnapshot = props.snapshot;
+			this.isSnapshotInISnapshotFormat = false;
 		}
 		if (this._baseSnapshot !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
@@ -1116,8 +1119,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
-		// Check whether we need to fetch the snapshot first to load.
-		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
+		// Check whether we need to fetch the snapshot first to load. The snapshot should be in new format to see
+		// whether we want to evaluate to fetch snapshot or not for loadingGroupId. Otherwise, the snapshot
+		// will contain all the blobs.
+		if (
+			this.snapshotFetchRequired === undefined &&
+			this._baseSnapshot?.groupId !== undefined &&
+			this.isSnapshotInISnapshotFormat
+		) {
 			assert(
 				this.blobContents !== undefined,
 				0x97a /* Blob contents should be present to evaluate */,
