@@ -39,6 +39,7 @@ export interface ICacheEntry extends IEntry {
 export interface ICollabSessionOptions {
     // @deprecated (undocumented)
     forceAccessTokenViaAuthorizationHeader?: boolean;
+    // @deprecated (undocumented)
     unauthenticatedUserDisplayName?: string;
 }
 
@@ -266,11 +267,16 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
 export interface TokenFetchOptions {
     claims?: string;
     refresh: boolean;
+    readonly request?: {
+        url: string;
+        method: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
+    };
     tenantId?: string;
 }
 
 // @alpha
 export interface TokenResponse {
+    readonly authorizationHeader?: string;
     fromCache?: boolean;
     token: string;
 }
