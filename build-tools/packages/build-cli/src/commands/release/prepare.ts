@@ -66,23 +66,22 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 
 		this.logHr();
 		for (const [name, check] of allChecks) {
-			// eslint-disable-next-line no-await-in-loop
+			// eslint-disable-next-line no-await-in-loop -- the checks are supposed to run serially
 			const checkResult = await check(context, pkgOrReleaseGroup);
-			this.log(
-				`${
-					checkResult === undefined ? chalk.bgGreen.black(" ✔︎ ") : chalk.bgRed.white(" ✖︎ ")
-				} ${checkResult?.message === undefined ? name : chalk.red(checkResult.message)}`,
-			);
-			if (checkResult !== undefined) {
-				if (checkResult?.fixCommand !== undefined) {
+			const checkPassed = checkResult === undefined;
+			const icon = checkPassed ? chalk.bgGreen.black(" ✔︎ ") : chalk.bgRed.white(" ✖︎ ");
+
+			this.log(`${icon} ${checkPassed ? name : chalk.red(checkResult.message)}`);
+			if (!checkPassed) {
+				if (checkResult.fixCommand !== undefined) {
 					this.logIndent(
 						`${chalk.yellow(`Possible fix command:`)} ${chalk.yellow.bold(
-							checkResult?.fixCommand,
+							checkResult.fixCommand,
 						)}`,
 						6,
 					);
 				}
-				if (checkResult?.fatal === true) {
+				if (checkResult.fatal === true) {
 					this.error("Can't do other checks until the failures are resolved.", { exit: 5 });
 				}
 			}

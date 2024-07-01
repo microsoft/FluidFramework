@@ -249,11 +249,17 @@ export async function getPreReleaseDependencies(
 	const prereleasePackages = new Map<ReleasePackage, string>();
 	const prereleaseGroups = new Map<ReleaseGroup, string>();
 	const packagesToCheck: Package[] = [];
-	const depsToUpdate: ReleasePackage[] = [];
+
+	/**
+	 * Array of package names; dependencies on these packages will be updated.
+	 */
+	const updateDependenciesOnThesePackages: ReleasePackage[] = [];
 
 	if (releaseGroup instanceof Package) {
 		packagesToCheck.push(releaseGroup);
-		depsToUpdate.push(...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name));
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name),
+		);
 	} else if (releaseGroup instanceof MonoRepo || isReleaseGroup(releaseGroup)) {
 		const monorepo =
 			releaseGroup instanceof MonoRepo
@@ -268,7 +274,9 @@ export async function getPreReleaseDependencies(
 		}
 
 		packagesToCheck.push(...monorepo.packages);
-		depsToUpdate.push(...context.packagesNotInReleaseGroup(monorepo.name).map((p) => p.name));
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(monorepo.name).map((p) => p.name),
+		);
 	} else {
 		assert(typeof releaseGroup === "string");
 		const pkg = context.fullPackageMap.get(releaseGroup);
@@ -277,13 +285,15 @@ export async function getPreReleaseDependencies(
 		}
 
 		packagesToCheck.push(pkg);
-		depsToUpdate.push(...context.packagesNotInReleaseGroup(pkg).map((p) => p.name));
+		updateDependenciesOnThesePackages.push(
+			...context.packagesNotInReleaseGroup(pkg).map((p) => p.name),
+		);
 	}
 
 	for (const pkg of packagesToCheck) {
 		for (const { name: depName, version: depVersion } of pkg.combinedDependencies) {
 			// If it's not a dep we're looking to update, skip to the next dep
-			if (!depsToUpdate.includes(depName)) {
+			if (!updateDependenciesOnThesePackages.includes(depName)) {
 				continue;
 			}
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import { every } from "async";
 import execa from "execa";
@@ -38,17 +43,6 @@ export type CheckFunction = (
  */
 export interface CheckResultFailure {
 	/**
-	 * The result of the check. This will be true if the check was passed successfully; false otherwise.
-	 */
-	// passedCheck: false;
-
-	/**
-	 * If true, the failure will stop all further checks. Setting this to `true` should be reserved for cases where
-	 * continuing might result in making unrecoverable changes to the branch or repository state.
-	 */
-	fatal?: true;
-
-	/**
 	 * A message explaining the failure. This value is displayed to the user when the check fails.
 	 */
 	message: string;
@@ -58,6 +52,12 @@ export interface CheckResultFailure {
 	 * fails, with the expectation that running it will resolve the failed check.
 	 */
 	fixCommand?: string;
+
+	/**
+	 * If true, the failure will stop all further checks. Setting this to `true` should be reserved for cases where
+	 * continuing might result in making unrecoverable changes to the branch or repository state.
+	 */
+	fatal?: true;
 }
 
 /**
@@ -103,8 +103,19 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 		return pkg.checkInstall(false);
 	};
 
+	// Works at runtime and does not require a lint disable, but looks weird.
+	const installed: boolean = await every(packagesToCheck, () => checkDeps);
+
+	// Works at runtime but requires a lint disable.
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	// const installed = await every(packagesToCheck, checkDeps);
-	const installed = await every(packagesToCheck, () => checkDeps);
+
+	// Works at runtime but requires a lint disable..
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+	// const installed: boolean = await every(packagesToCheck, async (item, callback) =>
+	// 	checkDeps(item),
+	// );
+
 	if (!installed) {
 		return {
 			message: "Some dependencies aren't installed. Try installing dependencies manually.",
