@@ -4390,9 +4390,6 @@ importers:
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/odsp-doclib-utils
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/drivers/odsp-driver-definitions
       css-loader:
         specifier: ^6.11.0
         version: 6.11.0(webpack@5.89.0)
