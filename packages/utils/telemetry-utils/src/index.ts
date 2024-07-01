@@ -11,6 +11,8 @@ export {
 	type IConfigProvider,
 	loggerToMonitoringContext,
 	wrapConfigProviderWithDefaults,
+	createConfigBasedOptionsProxy,
+	type OptionConfigReaders,
 } from "./config.js";
 export {
 	DataCorruptionError,
