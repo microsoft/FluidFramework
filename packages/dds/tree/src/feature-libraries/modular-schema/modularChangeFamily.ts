@@ -581,6 +581,9 @@ export class ModularChangeFamily
 			deleteFromNestedMap(composedNodes, id2.revision, id2.localId);
 			deleteFromNestedMap(composedNodeToParent, id2.revision, id2.localId);
 			setInChangeAtomIdMap(nodeAliases, id2, id1);
+
+			// We need to delete id1 to avoid forming a cycle in case id1 already had an alias.
+			deleteFromNestedMap(nodeAliases, id1.revision, id1.localId);
 		}
 
 		crossFieldTable.composedNodes.add(composedNodeChangeset);
