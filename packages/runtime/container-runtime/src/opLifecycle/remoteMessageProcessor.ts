@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	ContainerMessageType,
