@@ -124,8 +124,8 @@ function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
  */
 function passThruHandlingBigint<T>(
 	v: T,
-	expected?: JsonDeserialized<T, bigint>,
-): JsonDeserialized<T, bigint> {
+	expected?: JsonDeserialized<T, { Replaced: bigint }>,
+): JsonDeserialized<T, { Replaced: bigint }> {
 	const stringified = JSON.stringify(v, (_key, value) => {
 		if (typeof value === "bigint") {
 			return `<bigint>${value.toString()}</bigint>`;
@@ -143,7 +143,7 @@ function passThruHandlingBigint<T>(
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
-	}) as JsonDeserialized<T, bigint>;
+	}) as JsonDeserialized<T, { Replaced: bigint }>;
 	assert.deepStrictEqual(result, expected ?? v);
 	return result;
 }
@@ -154,9 +154,9 @@ function passThruHandlingBigint<T>(
 function passThruHandlingBigintThrows<T>(
 	v: T,
 	expectedThrow: Error,
-): JsonDeserialized<T, bigint> {
+): JsonDeserialized<T, { Replaced: bigint }> {
 	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
-	return undefined as unknown as JsonDeserialized<T, bigint>;
+	return undefined as unknown as JsonDeserialized<T, { Replaced: bigint }>;
 }
 
 /**
@@ -164,8 +164,8 @@ function passThruHandlingBigintThrows<T>(
  */
 function passThruHandlingSpecificFunction<T>(
 	_v: T,
-): JsonDeserialized<T, (_: string) => number> {
-	return undefined as unknown as JsonDeserialized<T, (_: string) => number>;
+): JsonDeserialized<T, { Replaced: (_: string) => number }> {
+	return undefined as unknown as JsonDeserialized<T, { Replaced: (_: string) => number }>;
 }
 
 describe("JsonDeserialized", () => {

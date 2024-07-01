@@ -35,8 +35,8 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  * Class instances become simple data objects that lose hidden properties and
  * prototypes that are required for `instanceof` runtime checks.
  *
- * The optional 'TReplaced' parameter may be used to permit additional leaf
- * types handled by custom serialization/deserialization logic.
+ * The optional 'Options.Replaced' parameter may be used to permit additional
+ * leaf types handled by custom serialization/deserialization logic.
  *
  * @example Typical usage
  *
@@ -46,7 +46,11 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  *
  * @beta
  */
-export type JsonDeserialized<T, TReplaced = never> = InternalUtilityTypes.JsonDeserializedImpl<
+export type JsonDeserialized<
 	T,
-	TReplaced
->;
+	Options extends {
+		Replaced: unknown;
+	} = {
+		Replaced: never;
+	},
+> = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;

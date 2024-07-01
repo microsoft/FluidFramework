@@ -154,12 +154,12 @@ function passThruIgnoreInaccessibleMembers<T, TExpected = JsonDeserialized<T>>(
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
-function passThruHandlingBigint<T, TExpected = JsonDeserialized<T, bigint>>(
+function passThruHandlingBigint<T, TExpected = JsonDeserialized<T, { Replaced: bigint }>>(
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
 	expectedDeserialization?: TExpected,
 ): {
 	filteredIn: JsonSerializable<T, { Replaced: bigint }>;
-	out: JsonDeserialized<T, bigint>;
+	out: JsonDeserialized<T, { Replaced: bigint }>;
 } {
 	const stringified = JSON.stringify(filteredIn, (_key, value) => {
 		if (typeof value === "bigint") {
@@ -178,7 +178,7 @@ function passThruHandlingBigint<T, TExpected = JsonDeserialized<T, bigint>>(
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
-	}) as JsonDeserialized<T, bigint>;
+	}) as JsonDeserialized<T, { Replaced: bigint }>;
 	const expected =
 		// Don't use nullish coalescing here to allow for `null` to be expected.
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -205,14 +205,14 @@ function passThruHandlingSpecificFunction<T>(
 	v: JsonSerializable<T, { Replaced: (_: string) => number }>,
 ): {
 	filteredIn: JsonSerializable<T, { Replaced: (_: string) => number }>;
-	out: JsonDeserialized<T, (_: string) => number>;
+	out: JsonDeserialized<T, { Replaced: (_: string) => number }>;
 } {
 	return {
 		filteredIn: undefined as unknown as JsonSerializable<
 			T,
 			{ Replaced: (_: string) => number }
 		>,
-		out: undefined as unknown as JsonDeserialized<T, (_: string) => number>,
+		out: undefined as unknown as JsonDeserialized<T, { Replaced: (_: string) => number }>,
 	};
 }
 

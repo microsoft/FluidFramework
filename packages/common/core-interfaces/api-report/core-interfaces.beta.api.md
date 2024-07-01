@@ -374,7 +374,11 @@ export interface ITelemetryBaseProperties {
 }
 
 // @beta
-export type JsonDeserialized<T, TReplaced = never> = InternalUtilityTypes.JsonDeserializedImpl<T, TReplaced>;
+export type JsonDeserialized<T, Options extends {
+    Replaced: unknown;
+} = {
+    Replaced: never;
+}> = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;
 
 // @beta
 export type JsonSerializable<T, Options extends {
