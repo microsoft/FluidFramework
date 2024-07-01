@@ -109,6 +109,8 @@ variables:
 # The relevant team is aware and looking for a solution.
 # In the meantime, we suppress the ADO warnings that are emitted when the tasks are skipped (per the instructions in
 # the warnings themselves).
-${{ if eq(variables['System.TeamProject'], 'public') }}:
-  - name: GDN_SUPPRESS_FORKED_BUILD_WARNING
+- name: GDN_SUPPRESS_FORKED_BUILD_WARNING
+  ${{ if eq(variables['System.TeamProject'], 'public') }}:
     value: true
+  ${{ else }}:
+    value: false
