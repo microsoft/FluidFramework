@@ -304,7 +304,7 @@ async function writeSummaryTreeObject(
 			return writeSummaryBlob(object.content, blobsShaCache, manager);
 		}
 		case SummaryType.Handle: {
-			if (snapshot === undefined  && object.handleType !== SummaryType.Attachment) {
+			if (snapshot === undefined) {
 				throw Error("Parent summary does not exist to reference by handle.");
 			}
 			return getIdFromPath(object.handleType, object.handle, snapshot);
@@ -347,9 +347,6 @@ function getIdFromPathCore(
 			}
 			case SummaryType.Tree: {
 				return snapshot.trees[key]?.id;
-			}
-			case SummaryType.Attachment:{
-				return key;
 			}
 			default:
 				throw Error(`Unexpected handle summary object type: "${handleType}".`);

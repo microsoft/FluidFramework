@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { BlobManager } from "../../blobManager.js";
+import { BlobManager } from "../../blobManager/index.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,

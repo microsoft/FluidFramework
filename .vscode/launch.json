@@ -361,15 +361,11 @@
 			"args": [
 				// "--fgrep",               // Uncomment to filter by test case name
 				// "<test case name>",
-				// "--no-timeouts",
+				"--no-timeouts",
 				"--exit",
 			],
 			"cwd": "${fileDirname}",
-			"skipFiles": [
-				"<node_internals>/**",
-				"**/node_modules/**",
-				"!**/node_modules/**/@fluidframework*/**",
-			],
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
 			"outFiles": [
 				// This config avoids loading dependent packages' test files, while using the same technique
 				// as the "Debug Current Mocha Test (*)" config to load source maps for test files in the current
