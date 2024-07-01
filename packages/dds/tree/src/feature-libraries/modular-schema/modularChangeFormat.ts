@@ -132,6 +132,10 @@ export const EncodedModularChangeset = Type.Object(
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 		builds: Type.Optional(EncodedBuilds),
 		refreshers: Type.Optional(EncodedBuilds),
+		/**
+		 * The number of constraints within this changeset that are violated.
+		 */
+		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
 	},
 	noAdditionalProps,
 );
