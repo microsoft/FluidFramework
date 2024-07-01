@@ -91,7 +91,7 @@ import {
 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
- * Internally value given is round-tripped through JSON serialization to ensure it is
+ * Internally, value given is round-tripped through JSON serialization to ensure it is
  * unchanged or converted to given optional value.
  *
  * @param v - value to pass through JSON serialization
@@ -108,7 +108,7 @@ function passThru<T>(v: T, expected?: JsonDeserialized<T>): JsonDeserialized<T> 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
  *
- * @remarks All uses are expect to trigger a compile-time error that must be ts-ignore'd.
+ * @remarks All uses are expect to trigger a compile-time error.
  *
  * @param v - value to pass through JSON serialization
  * @param error - error expected during serialization round-trip
