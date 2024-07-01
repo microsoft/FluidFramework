@@ -17,6 +17,13 @@ import type { MapGetSet } from "./utils.js";
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
+ * A read-only version of {@link NestedMap}.
+ *
+ * @internal
+ */
+export type ReadonlyNestedMap<Key1, Key2, Value> = ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>;
+
+/**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
  *
  * @internal
@@ -51,7 +58,7 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
  * @internal
  */
 export function populateNestedMap<Key1, Key2, Value>(
-	source: ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>,
+	source: ReadonlyNestedMap<Key1, Key2, Value>,
 	destination: NestedMap<Key1, Key2, Value>,
 	override: boolean,
 ): void {
@@ -187,7 +194,7 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
  * Converts a nested map to a flat list of triplets.
  */
 export function nestedMapToFlatList<Key1, Key2, Value>(
-	map: NestedMap<Key1, Key2, Value>,
+	map: ReadonlyNestedMap<Key1, Key2, Value>,
 ): [Key1, Key2, Value][] {
 	const list: [Key1, Key2, Value][] = [];
 	map.forEach((innerMap, key1) => {
@@ -212,7 +219,7 @@ export function nestedMapFromFlatList<Key1, Key2, Value>(
 }
 
 export function forEachInNestedMap<Key1, Key2, Value>(
-	map: NestedMap<Key1, Key2, Value>,
+	map: ReadonlyNestedMap<Key1, Key2, Value>,
 	delegate: (value: Value, key1: Key1, key2: Key2) => void,
 ): void {
 	map.forEach((innerMap, keyFirst) => {
@@ -220,6 +227,22 @@ export function forEachInNestedMap<Key1, Key2, Value>(
 			delegate(val, keyFirst, keySecond);
 		});
 	});
+}
+
+export function mapNestedMap<Key1, Key2, ValueIn, ValueOut = ValueIn>(
+	input: ReadonlyNestedMap<Key1, Key2, ValueIn>,
+	delegate: (value: ValueIn, key1: Key1, key2: Key2) => ValueOut,
+): NestedMap<Key1, Key2, ValueOut> {
+	const output = new Map<Key1, Map<Key2, ValueOut>>();
+	input.forEach((inputInnerMap, keyFirst) => {
+		const outputInnerMap = new Map<Key2, ValueOut>();
+		inputInnerMap.forEach((val, keySecond) => {
+			const mappedValue = delegate(val, keyFirst, keySecond);
+			outputInnerMap.set(keySecond, mappedValue);
+		});
+		output.set(keyFirst, outputInnerMap);
+	});
+	return output;
 }
 
 /**
