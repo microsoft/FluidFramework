@@ -1505,7 +1505,7 @@ function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 	return chunkTree(cursor, defaultChunkPolicy);
 }
 
-function deepCloneTreeChunk(chunk: TreeChunk): TreeChunk {
+function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
 	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
 	const cursor = cursorForJsonableTreeField(jsonable);
 	const clone = chunkFieldSingle(cursor, defaultChunkPolicy);
@@ -1562,10 +1562,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
 	if (change.builds !== undefined) {
-		normal.builds = mapNestedMap(change.builds, deepCloneTreeChunk);
+		normal.builds = mapNestedMap(change.builds, deepCloneChunkedTree);
 	}
 	if (change.refreshers !== undefined) {
-		normal.refreshers = mapNestedMap(change.refreshers, deepCloneTreeChunk);
+		normal.refreshers = mapNestedMap(change.refreshers, deepCloneChunkedTree);
 	}
 	return normal;
 }
