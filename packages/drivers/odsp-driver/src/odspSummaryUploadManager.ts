@@ -179,6 +179,7 @@ export class OdspSummaryUploadManager {
 		let blobs = 0;
 		const keys = Object.keys(tree.tree);
 		for (const key of keys) {
+			assert(!key.includes("/"), "id should not include slashes");
 			const summaryObject = tree.tree[key];
 
 			let id: string | undefined;
@@ -243,7 +244,7 @@ export class OdspSummaryUploadManager {
 			}
 
 			const baseEntry: IOdspSummaryTreeBaseEntry = {
-				path: encodeURIComponent(key),
+				path: key,
 				type: getGitType(summaryObject),
 			};
 
