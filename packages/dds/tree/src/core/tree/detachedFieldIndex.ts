@@ -14,7 +14,6 @@ import {
 	brand,
 	deleteFromNestedMap,
 	forEachInNestedMap,
-	getOrAddInMap,
 	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
@@ -44,33 +43,48 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export const fakeRevisionWhenNotSet = Number.NaN as SessionSpaceCompressedId;
 
 /**
+ * A field that is detached from the main document tree.
+ */
+export interface DetachedField {
+	/**
+	 * The atomic ID that the `DetachedFieldIndex` uses to uniquely identify the first (and only) root in the field.
+	 * This ID is scoped to the specific `DetachedFieldIndex` from witch this object was retrieved.
+	 *
+	 * The current implementation only supports a single root per field.
+	 * This will be changed in the future for performance reasons.
+	 */
+	readonly root: ForestRootId;
+	/**
+	 * The revision that last detached the root node or modified its contents (including its descendant's contents).
+	 *
+	 * Once this revision is trimmed from the ancestry on which a `TreeCheckout` is moored,
+	 * the contents of the associated subtree (and the very fact of its past existence) can be erased.
+	 *
+	 * @remarks
+	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
+	 */
+	readonly latestRelevantRevision: RevisionTag | undefined;
+}
+
+/**
  * The tree index records detached field IDs and associates them with a change atom ID.
  */
 export class DetachedFieldIndex {
 	/**
-	 * A mapping from detached node ids to forest root ids and the revision that last created or modified the root.
-	 *
-	 * @remarks
-	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
+	 * A mapping from detached node ids to detached fields.
 	 */
-	private detachedNodeToField: NestedMap<
-		Major,
-		Minor,
-		{ readonly root: ForestRootId; readonly latestRelevantRevision: RevisionTag | undefined }
-	> = new Map();
+	private detachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
 	/**
-	 * A map between revisions and all roots for which the revision is the latest relevant revision.
-	 *
-	 * The latest relevant revision for a root is the revision that last created or edited that root.
-	 * This is used to determine when a root can be garbage collected. Once a root's latest relevant revision
-	 * is trimmed from a branch's ancestry, the root is no longer needed for any future edits.
+	 * A map from revisions and all detached fields for which the revision is the latest relevant revision.
+	 * See {@link DetachedField.latestRelevantRevision}.
 	 *
 	 * @remarks
 	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
 	 */
-	private latestRelevantRevisionToFields: Map<
+	private latestRelevantRevisionToFields: NestedMap<
 		RevisionTag | undefined,
-		Map<ForestRootId, Delta.DetachedNodeId>
+		ForestRootId,
+		Delta.DetachedNodeId
 	> = new Map();
 
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
@@ -288,21 +302,10 @@ export class DetachedFieldIndex {
 		const { root, latestRelevantRevision: previousRevision } = fieldEntry;
 
 		// remove this root from the set of roots for the previous latest revision
-		const previousRevisionRoots = this.latestRelevantRevisionToFields.get(previousRevision);
-		if (previousRevisionRoots !== undefined) {
-			previousRevisionRoots.delete(root);
-			if (previousRevisionRoots?.size === 0) {
-				this.latestRelevantRevisionToFields.delete(previousRevision);
-			}
-		}
+		deleteFromNestedMap(this.latestRelevantRevisionToFields, previousRevision, root);
 
 		// add this root to the set of roots for the new latest revision
-		const latestRevisionRoots = getOrAddInMap(
-			this.latestRelevantRevisionToFields,
-			revision,
-			new Map(),
-		);
-		latestRevisionRoots.set(root, id);
+		setInNestedMap(this.latestRelevantRevisionToFields, revision, root, id);
 		setInNestedMap(this.detachedNodeToField, id.major, id.minor, {
 			root,
 			latestRelevantRevision: revision,
