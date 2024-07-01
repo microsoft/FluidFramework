@@ -96,7 +96,7 @@ import {
  * Internally, value given is round-tripped through JSON serialization to ensure it is
  * unchanged or converted to given optional expected value.
  *
- * @param v - value to pass through JSON serialization
+ * @param filteredIn - value to pass through JSON serialization
  * @param expectedDeserialization - alternate value to compare against after round-trip
  * @returns the round-tripped value cast to the filter result type
  */
@@ -106,16 +106,20 @@ function passThru<
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	Options extends { IgnoreInaccessibleMembers?: "ignore-inaccessible-members" } = {},
 >(
-	v: JsonSerializable<T, { Replaced: never } & Options>,
+	filteredIn: JsonSerializable<T, { Replaced: never } & Options>,
 	expectedDeserialization?: TExpected,
-): JsonSerializable<T, { Replaced: never } & Options> {
-	const stringified = JSON.stringify(v);
+): {
+	filteredIn: JsonSerializable<T, { Replaced: never } & Options>;
+	out: JsonDeserialized<T>;
+} {
+	const stringified = JSON.stringify(filteredIn);
 	const result = JSON.parse(stringified) as JsonDeserialized<TExpected>;
 	// Don't use nullish coalescing here to allow for `null` to be expected.
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-	const expected = expectedDeserialization === undefined ? v : expectedDeserialization;
+	const expected =
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+		expectedDeserialization === undefined ? filteredIn : expectedDeserialization;
 	assert.deepStrictEqual(result, expected);
-	return result as JsonSerializable<T, { Replaced: never } & Options>;
+	return { filteredIn, out: result as JsonDeserialized<T> };
 }
 
 /**
@@ -123,30 +127,36 @@ function passThru<
  *
  * @remarks All uses are expect to trigger a compile-time error that must be ts-ignore'd.
  *
- * @param v - value to pass through JSON serialization
+ * @param filteredIn - value to pass through JSON serialization
  * @param error - error expected during serialization round-trip
  * @returns dummy result to allow further type checking
  */
-function passThruThrows<T>(v: JsonSerializable<T>, expectedThrow: Error): JsonSerializable<T> {
-	assert.throws(() => passThru(v), expectedThrow);
-	return undefined as unknown as JsonSerializable<T>;
+function passThruThrows<T>(
+	filteredIn: JsonSerializable<T>,
+	expectedThrow: Error,
+): { filteredIn: JsonSerializable<T> } {
+	assert.throws(() => passThru(filteredIn), expectedThrow);
+	return { filteredIn };
 }
 
 /**
  * Similar to {@link passThru} but ignores hidden (private/protected) members.
  */
 function passThruIgnoreInaccessibleMembers<T, TExpected = JsonDeserialized<T>>(
-	v: JsonSerializable<
+	filteredIn: JsonSerializable<
 		T,
 		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 	>,
 	expected?: TExpected,
-): JsonSerializable<
-	T,
-	{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
-> {
+): {
+	filteredIn: JsonSerializable<
+		T,
+		{ Replaced: never; IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+	>;
+	out: JsonDeserialized<T>;
+} {
 	return passThru<T, TExpected, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>(
-		v,
+		filteredIn,
 		expected,
 	);
 }
@@ -191,27 +201,24 @@ function passThruHandlingBigint<T, TExpected = JsonDeserialized<T, { Replaced: b
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
 function passThruHandlingBigintThrows<T>(
-	v: JsonSerializable<T, { Replaced: bigint }>,
+	filteredIn: JsonSerializable<T, { Replaced: bigint }>,
 	expectedThrow: Error,
 ): { filteredIn: JsonSerializable<T, { Replaced: bigint }> } {
-	assert.throws(() => passThruHandlingBigint(v), expectedThrow);
-	return { filteredIn: undefined as unknown as JsonSerializable<T, { Replaced: bigint }> };
+	assert.throws(() => passThruHandlingBigint(filteredIn), expectedThrow);
+	return { filteredIn };
 }
 
 /**
  * Similar to {@link passThru} but specifically handles certain function signatures.
  */
 function passThruHandlingSpecificFunction<T>(
-	v: JsonSerializable<T, { Replaced: (_: string) => number }>,
+	filteredIn: JsonSerializable<T, { Replaced: (_: string) => number }>,
 ): {
 	filteredIn: JsonSerializable<T, { Replaced: (_: string) => number }>;
 	out: JsonDeserialized<T, { Replaced: (_: string) => number }>;
 } {
 	return {
-		filteredIn: undefined as unknown as JsonSerializable<
-			T,
-			{ Replaced: (_: string) => number }
-		>,
+		filteredIn,
 		out: undefined as unknown as JsonDeserialized<T, { Replaced: (_: string) => number }>,
 	};
 }
@@ -220,249 +227,258 @@ describe("JsonSerializable", () => {
 	describe("positive compilation tests", () => {
 		describe("supported primitive types", () => {
 			it("`boolean`", () => {
-				const result = passThru(boolean);
-				assertIdenticalTypes(result, boolean);
+				const { filteredIn } = passThru(boolean);
+				assertIdenticalTypes(filteredIn, boolean);
 			});
 			it("`number`", () => {
-				const result = passThru(number);
-				assertIdenticalTypes(result, number);
+				const { filteredIn } = passThru(number);
+				assertIdenticalTypes(filteredIn, number);
 			});
 			it("`string`", () => {
-				const result = passThru(string);
-				assertIdenticalTypes(result, string);
+				const { filteredIn } = passThru(string);
+				assertIdenticalTypes(filteredIn, string);
 			});
 			it("numeric enum", () => {
-				const result = passThru(numericEnumValue);
-				assertIdenticalTypes(result, numericEnumValue);
+				const { filteredIn } = passThru(numericEnumValue);
+				assertIdenticalTypes(filteredIn, numericEnumValue);
 			});
 			it("string enum", () => {
-				const result = passThru(stringEnumValue);
-				assertIdenticalTypes(result, stringEnumValue);
+				const { filteredIn } = passThru(stringEnumValue);
+				assertIdenticalTypes(filteredIn, stringEnumValue);
 			});
 			it("const heterogenous enum", () => {
-				const result = passThru(constHeterogenousEnumValue);
-				assertIdenticalTypes(result, constHeterogenousEnumValue);
+				const { filteredIn } = passThru(constHeterogenousEnumValue);
+				assertIdenticalTypes(filteredIn, constHeterogenousEnumValue);
 			});
 			it("computed enum", () => {
-				const result = passThru(computedEnumValue);
-				assertIdenticalTypes(result, computedEnumValue);
+				const { filteredIn } = passThru(computedEnumValue);
+				assertIdenticalTypes(filteredIn, computedEnumValue);
 			});
 		});
 
 		describe("supported literal types", () => {
 			it("`true`", () => {
-				const result = passThru(true);
-				assertIdenticalTypes(result, true);
+				const { filteredIn } = passThru(true);
+				assertIdenticalTypes(filteredIn, true);
 			});
 			it("`false`", () => {
-				const result = passThru(false);
-				assertIdenticalTypes(result, false);
+				const { filteredIn } = passThru(false);
+				assertIdenticalTypes(filteredIn, false);
 			});
 			it("`0`", () => {
-				const result = passThru(0);
-				assertIdenticalTypes(result, 0);
+				const { filteredIn } = passThru(0);
+				assertIdenticalTypes(filteredIn, 0);
 			});
 			it('"string"', () => {
-				const result = passThru("string");
-				assertIdenticalTypes(result, "string");
+				const { filteredIn } = passThru("string");
+				assertIdenticalTypes(filteredIn, "string");
 			});
 			it("`null`", () => {
-				const result = passThru(null);
-				assertIdenticalTypes(result, null);
+				const { filteredIn } = passThru(null);
+				assertIdenticalTypes(filteredIn, null);
 			});
 			it("object with literals", () => {
-				const result = passThru(objectWithLiterals);
-				assertIdenticalTypes(result, objectWithLiterals);
+				const { filteredIn } = passThru(objectWithLiterals);
+				assertIdenticalTypes(filteredIn, objectWithLiterals);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
-				result satisfies typeof objectWithLiterals;
+				filteredIn satisfies typeof objectWithLiterals;
 				assert.ok(
 					objectWithLiterals instanceof Object,
 					"objectWithLiterals is at least a plain Object",
 				);
 				assert.ok(
-					result instanceof objectWithLiterals.constructor,
+					filteredIn instanceof objectWithLiterals.constructor,
 					"objectRead is same type as objectWithLiterals (plain Object)",
 				);
 			});
 			it("array of literals", () => {
-				const result = passThru(arrayOfLiterals);
-				assertIdenticalTypes(result, arrayOfLiterals);
+				const { filteredIn } = passThru(arrayOfLiterals);
+				assertIdenticalTypes(filteredIn, arrayOfLiterals);
 			});
 			it("tuple of literals", () => {
-				const result = passThru(tupleWithLiterals);
-				assertIdenticalTypes(result, tupleWithLiterals);
+				const { filteredIn } = passThru(tupleWithLiterals);
+				assertIdenticalTypes(filteredIn, tupleWithLiterals);
 			});
 			it("specific numeric enum value", () => {
-				const result = passThru(NumericEnum.two);
-				assertIdenticalTypes(result, NumericEnum.two);
+				const { filteredIn } = passThru(NumericEnum.two);
+				assertIdenticalTypes(filteredIn, NumericEnum.two);
 			});
 			it("specific string enum value", () => {
-				const result = passThru(StringEnum.b);
-				assertIdenticalTypes(result, StringEnum.b);
+				const { filteredIn } = passThru(StringEnum.b);
+				assertIdenticalTypes(filteredIn, StringEnum.b);
 			});
 			it("specific const heterogenous enum value", () => {
-				const result = passThru(ConstHeterogenousEnum.zero);
-				assertIdenticalTypes(result, ConstHeterogenousEnum.zero);
+				const { filteredIn } = passThru(ConstHeterogenousEnum.zero);
+				assertIdenticalTypes(filteredIn, ConstHeterogenousEnum.zero);
 			});
 			it("specific computed enum value", () => {
-				const result = passThru(ComputedEnum.computed);
-				assertIdenticalTypes(result, ComputedEnum.computed);
+				const { filteredIn } = passThru(ComputedEnum.computed);
+				assertIdenticalTypes(filteredIn, ComputedEnum.computed);
 			});
 		});
 
 		describe("supported array types", () => {
 			it("array of `number`s", () => {
-				const result = passThru(arrayOfNumbers);
-				assertIdenticalTypes(result, arrayOfNumbers);
+				const { filteredIn } = passThru(arrayOfNumbers);
+				assertIdenticalTypes(filteredIn, arrayOfNumbers);
 			});
 		});
 
 		describe("supported object types", () => {
 			it("empty object", () => {
-				const result = passThru(emptyObject);
-				assertIdenticalTypes(result, emptyObject);
+				const { filteredIn } = passThru(emptyObject);
+				assertIdenticalTypes(filteredIn, emptyObject);
 			});
 
 			it("object with `never`", () => {
-				const result = passThru(objectWithNever);
-				assertIdenticalTypes(result, objectWithNever);
+				const { filteredIn } = passThru(objectWithNever);
+				assertIdenticalTypes(filteredIn, objectWithNever);
 			});
 
 			it("object with `boolean`", () => {
-				const result = passThru(objectWithBoolean);
-				assertIdenticalTypes(result, objectWithBoolean);
+				const { filteredIn } = passThru(objectWithBoolean);
+				assertIdenticalTypes(filteredIn, objectWithBoolean);
 			});
 			it("object with `number`", () => {
-				const result = passThru(objectWithNumber);
-				assertIdenticalTypes(result, objectWithNumber);
+				const { filteredIn } = passThru(objectWithNumber);
+				assertIdenticalTypes(filteredIn, objectWithNumber);
 			});
 			it("object with `string`", () => {
-				const result = passThru(objectWithString);
-				assertIdenticalTypes(result, objectWithString);
+				const { filteredIn } = passThru(objectWithString);
+				assertIdenticalTypes(filteredIn, objectWithString);
 			});
 
 			it("object with optional exact `undefined`", () => {
-				const result = passThru(objectWithOptionalUndefined, {});
-				assertIdenticalTypes(result, objectWithOptionalUndefined);
+				const { filteredIn } = passThru(objectWithOptionalUndefined, {});
+				assertIdenticalTypes(filteredIn, objectWithOptionalUndefined);
 			});
 
 			it("object with possible type recursion through union", () => {
-				const result = passThru(objectWithPossibleRecursion);
-				assertIdenticalTypes(result, objectWithPossibleRecursion);
+				const { filteredIn } = passThru(objectWithPossibleRecursion);
+				assertIdenticalTypes(filteredIn, objectWithPossibleRecursion);
 			});
 			it("object with optional type recursion", () => {
-				const result = passThru(objectWithRecursion);
-				assertIdenticalTypes(result, objectWithRecursion);
+				const { filteredIn } = passThru(objectWithRecursion);
+				assertIdenticalTypes(filteredIn, objectWithRecursion);
 			});
 			it("object with deep type recursion", () => {
-				const result = passThru(objectWithEmbeddedRecursion);
-				assertIdenticalTypes(result, objectWithEmbeddedRecursion);
+				const { filteredIn } = passThru(objectWithEmbeddedRecursion);
+				assertIdenticalTypes(filteredIn, objectWithEmbeddedRecursion);
 			});
 			it("object with alternating type recursion", () => {
-				const result = passThru(objectWithAlternatingRecursion);
-				assertIdenticalTypes(result, objectWithAlternatingRecursion);
+				const { filteredIn } = passThru(objectWithAlternatingRecursion);
+				assertIdenticalTypes(filteredIn, objectWithAlternatingRecursion);
 			});
 
 			it("simple json (JsonTypeWith<never>)", () => {
-				const result = passThru(simpleJson);
-				assertIdenticalTypes(result, simpleJson);
+				const { filteredIn } = passThru(simpleJson);
+				assertIdenticalTypes(filteredIn, simpleJson);
 			});
 
 			it("non-const enums", () => {
 				// Note: typescript doesn't do a great job checking that a filtered type satisfies an enum
 				// type. The numeric indices are not checked. So far most robust inspection is manually
 				// after any change.
-				const resultNumeric = passThru(NumericEnum);
+				const { filteredIn: resultNumeric } = passThru(NumericEnum);
 				assertIdenticalTypes(resultNumeric, NumericEnum);
-				const resultString = passThru(StringEnum);
+				const { filteredIn: resultString } = passThru(StringEnum);
 				assertIdenticalTypes(resultString, StringEnum);
-				const resultComputed = passThru(ComputedEnum);
+				const { filteredIn: resultComputed } = passThru(ComputedEnum);
 				assertIdenticalTypes(resultComputed, ComputedEnum);
 			});
 
 			it("object with `readonly`", () => {
-				const result = passThru(objectWithReadonly);
-				assertIdenticalTypes(result, objectWithReadonly);
+				const { filteredIn } = passThru(objectWithReadonly);
+				assertIdenticalTypes(filteredIn, objectWithReadonly);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
-				result satisfies typeof objectWithReadonly;
+				filteredIn satisfies typeof objectWithReadonly;
 			});
 
 			it("object with getter implemented via value", () => {
-				const result = passThru(objectWithGetterViaValue);
-				assertIdenticalTypes(result, objectWithGetterViaValue);
+				const { filteredIn } = passThru(objectWithGetterViaValue);
+				assertIdenticalTypes(filteredIn, objectWithGetterViaValue);
 				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
 				// we can check assignability.
-				result satisfies typeof objectWithGetterViaValue;
+				filteredIn satisfies typeof objectWithGetterViaValue;
 			});
 			it("object with setter implemented via value", () => {
-				const result = passThru(objectWithSetterViaValue);
-				assertIdenticalTypes(result, objectWithSetterViaValue);
+				const { filteredIn } = passThru(objectWithSetterViaValue);
+				assertIdenticalTypes(filteredIn, objectWithSetterViaValue);
 			});
 			it("object with matched getter and setter implemented via value", () => {
-				const result = passThru(objectWithMatchedGetterAndSetterPropertyViaValue);
-				assertIdenticalTypes(result, objectWithMatchedGetterAndSetterPropertyViaValue);
+				const { filteredIn } = passThru(objectWithMatchedGetterAndSetterPropertyViaValue);
+				assertIdenticalTypes(filteredIn, objectWithMatchedGetterAndSetterPropertyViaValue);
 			});
 			it("object with mismatched getter and setter implemented via value", () => {
-				const result = passThru(objectWithMismatchedGetterAndSetterPropertyViaValue);
-				assertIdenticalTypes(result, objectWithMismatchedGetterAndSetterPropertyViaValue);
+				const { filteredIn } = passThru(objectWithMismatchedGetterAndSetterPropertyViaValue);
+				assertIdenticalTypes(filteredIn, objectWithMismatchedGetterAndSetterPropertyViaValue);
 			});
 
 			describe("class instance", () => {
 				it("with public data (just cares about data)", () => {
-					const result = passThru(classInstanceWithPublicData, {
+					const { filteredIn } = passThru(classInstanceWithPublicData, {
 						public: "public",
 					});
-					assertIdenticalTypes(result, classInstanceWithPublicData);
+					assertIdenticalTypes(filteredIn, classInstanceWithPublicData);
 				});
 				// TODO FIX: add option to ignore inaccessible members
 				describe("with `ignore-inaccessible-members`", () => {
 					it("with private method ignores method", () => {
-						const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateMethod, {
-							public: "public",
-						});
-						assertIdenticalTypes(result, {
+						const { filteredIn } = passThruIgnoreInaccessibleMembers(
+							classInstanceWithPrivateMethod,
+							{
+								public: "public",
+							},
+						);
+						assertIdenticalTypes(filteredIn, {
 							public: "public",
 						});
 						// @ts-expect-error getSecret is missing, but required
-						result satisfies typeof classInstanceWithPrivateMethod;
+						filteredIn satisfies typeof classInstanceWithPrivateMethod;
 					});
 					it("with private getter ignores getter", () => {
-						const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateGetter, {
-							public: "public",
-						});
-						assertIdenticalTypes(result, {
+						const { filteredIn } = passThruIgnoreInaccessibleMembers(
+							classInstanceWithPrivateGetter,
+							{
+								public: "public",
+							},
+						);
+						assertIdenticalTypes(filteredIn, {
 							public: "public",
 						});
 						// @ts-expect-error secret is missing, but required
-						result satisfies typeof classInstanceWithPrivateGetter;
+						filteredIn satisfies typeof classInstanceWithPrivateGetter;
 					});
 					it("with private setter ignores setter", () => {
-						const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateSetter, {
-							public: "public",
-						});
-						assertIdenticalTypes(result, {
+						const { filteredIn } = passThruIgnoreInaccessibleMembers(
+							classInstanceWithPrivateSetter,
+							{
+								public: "public",
+							},
+						);
+						assertIdenticalTypes(filteredIn, {
 							public: "public",
 						});
 						// @ts-expect-error secret is missing, but required
-						result satisfies typeof classInstanceWithPrivateSetter;
+						filteredIn satisfies typeof classInstanceWithPrivateSetter;
 					});
 				});
 			});
 
 			describe("object with optional property", () => {
 				it("without property", () => {
-					const result = passThru(objectWithOptionalNumberNotPresent);
-					assertIdenticalTypes(result, objectWithOptionalNumberNotPresent);
+					const { filteredIn } = passThru(objectWithOptionalNumberNotPresent);
+					assertIdenticalTypes(filteredIn, objectWithOptionalNumberNotPresent);
 				});
 				it("with undefined value", () => {
-					const result = passThru(objectWithOptionalNumberUndefined, {});
-					assertIdenticalTypes(result, objectWithOptionalNumberUndefined);
+					const { filteredIn } = passThru(objectWithOptionalNumberUndefined, {});
+					assertIdenticalTypes(filteredIn, objectWithOptionalNumberUndefined);
 				});
 				it("with defined value", () => {
-					const result = passThru(objectWithOptionalNumberDefined);
-					assertIdenticalTypes(result, objectWithOptionalNumberDefined);
+					const { filteredIn } = passThru(objectWithOptionalNumberDefined);
+					assertIdenticalTypes(filteredIn, objectWithOptionalNumberDefined);
 				});
 			});
 		});
@@ -484,50 +500,53 @@ describe("JsonSerializable", () => {
 			describe("known defect expectations", () => {
 				describe("getters and setters allowed but do not propagate", () => {
 					it("object with `readonly` implemented via getter", () => {
-						const result = passThru(objectWithReadonlyViaGetter, {});
-						assertIdenticalTypes(result, objectWithReadonlyViaGetter);
+						const { filteredIn } = passThru(objectWithReadonlyViaGetter, {});
+						assertIdenticalTypes(filteredIn, objectWithReadonlyViaGetter);
 					});
 
 					it("object with getter", () => {
-						const result = passThru(objectWithGetter, {});
-						assertIdenticalTypes(result, objectWithGetter);
+						const { filteredIn } = passThru(objectWithGetter, {});
+						assertIdenticalTypes(filteredIn, objectWithGetter);
 					});
 
 					it("object with setter", () => {
-						const result = passThru(objectWithSetter, {});
-						assertIdenticalTypes(result, objectWithSetter);
+						const { filteredIn } = passThru(objectWithSetter, {});
+						assertIdenticalTypes(filteredIn, objectWithSetter);
 					});
 
 					it("object with matched getter and setter", () => {
-						const result = passThru(objectWithMatchedGetterAndSetterProperty, {});
-						assertIdenticalTypes(result, objectWithMatchedGetterAndSetterProperty);
+						const { filteredIn } = passThru(objectWithMatchedGetterAndSetterProperty, {});
+						assertIdenticalTypes(filteredIn, objectWithMatchedGetterAndSetterProperty);
 					});
 
 					it("object with mismatched getter and setter", () => {
-						const result = passThru(objectWithMismatchedGetterAndSetterProperty, {});
-						assertIdenticalTypes(result, objectWithMismatchedGetterAndSetterProperty);
+						const { filteredIn } = passThru(objectWithMismatchedGetterAndSetterProperty, {});
+						assertIdenticalTypes(filteredIn, objectWithMismatchedGetterAndSetterProperty);
 					});
 				});
 
 				describe("class instance", () => {
 					describe("with `ignore-inaccessible-members`", () => {
 						it("with private data ignores private data (that propagates)", () => {
-							const result = passThruIgnoreInaccessibleMembers(classInstanceWithPrivateData, {
-								public: "public",
-								secret: 0,
-							});
-							assertIdenticalTypes(result, {
+							const { filteredIn } = passThruIgnoreInaccessibleMembers(
+								classInstanceWithPrivateData,
+								{
+									public: "public",
+									secret: 0,
+								},
+							);
+							assertIdenticalTypes(filteredIn, {
 								public: "public",
 							});
 							// @ts-expect-error secret is missing, but required
-							result satisfies typeof classInstanceWithPrivateData;
+							filteredIn satisfies typeof classInstanceWithPrivateData;
 						});
 					});
 				});
 
 				it("sparse array of supported types", () => {
-					const result = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
-					assertIdenticalTypes(result, arrayOfNumbersSparse);
+					const { filteredIn } = passThru(arrayOfNumbersSparse, [0, null, null, 3]);
+					assertIdenticalTypes(filteredIn, arrayOfNumbersSparse);
 				});
 			});
 		});
@@ -551,160 +570,165 @@ describe("JsonSerializable", () => {
 
 		describe("unsupported types cause compiler error", () => {
 			it("`undefined`", () => {
-				const result = passThruThrows(
+				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `undefined` is not supported (becomes `never`)
 					undefined,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
 				);
-				result satisfies never;
+				filteredIn satisfies never;
 			});
 			it("`unknown`", () => {
-				const result = passThru(
+				const { filteredIn } = passThru(
 					// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never>`)
 					{} as unknown,
 				); // {} value is actually supported; so, no runtime error.
-				assertIdenticalTypes(result, createInstanceOf<JsonTypeWith<never>>());
+				assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>>());
 			});
 			it("`symbol`", () => {
-				passThruThrows(
+				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `symbol` is not supported (becomes `never`)
 					symbol,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				) satisfies never;
+				);
+				filteredIn satisfies never;
 			});
 			it("`unique symbol`", () => {
-				passThruThrows(
+				const { filteredIn } = passThruThrows(
 					// @ts-expect-error [unique] `symbol` is not supported (becomes `never`)
 					uniqueSymbol,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				) satisfies never;
+				);
+				filteredIn satisfies never;
 			});
 			it("`bigint`", () => {
-				passThruThrows(
+				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `bigint` is not supported (becomes `never`)
 					bigint,
 					new TypeError("Do not know how to serialize a BigInt"),
-				) satisfies never;
+				);
+				filteredIn satisfies never;
 			});
 			it("function", () => {
-				passThruThrows(
+				const { filteredIn } = passThruThrows(
 					// @ts-expect-error `Function` is not supported (becomes `never`)
 					aFunction,
 					new SyntaxError("Unexpected token u in JSON at position 0"),
-				) satisfies never;
+				);
+				filteredIn satisfies never;
 			});
 			it("`object` (plain object)", () => {
-				const result = passThru(
+				const { filteredIn } = passThru(
 					// @ts-expect-error `object` is not supported (expects `NonNullJsonObjectWith<never>`)
 					object,
 					// object's value is actually supported; so, no runtime error.
 				);
-				assertIdenticalTypes(result, createInstanceOf<NonNullJsonObjectWith<never>>());
+				assertIdenticalTypes(filteredIn, createInstanceOf<NonNullJsonObjectWith<never>>());
 			});
 			it("`void`", () => {
-				passThru(
+				const { filteredIn } = passThru(
 					// @ts-expect-error `void` is not supported (becomes `never`)
 					voidValue,
 					// voidValue is actually `null`; so, no runtime error.
-				) satisfies never;
+				);
+				filteredIn satisfies never;
 			});
 
 			describe("array", () => {
 				it("array of `symbol`s", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
 						arrayOfSymbols,
 						[null],
 					);
-					assertIdenticalTypes(result, createInstanceOf<never[]>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
 				});
 				it("array of functions", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
 						arrayOfFunctions,
 						[null],
 					);
-					assertIdenticalTypes(result, createInstanceOf<never[]>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<never[]>());
 				});
 				it("array of `number | undefined`s", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error 'undefined' is not supported (becomes 'SerializationErrorPerUndefinedArrayElement')
 						arrayOfNumbersOrUndefined,
 						[0, null, 2],
 					);
 					assertIdenticalTypes(
-						result,
+						filteredIn,
 						createInstanceOf<(number | SerializationErrorPerUndefinedArrayElement)[]>(),
 					);
 				});
 				it("array of `symbol` or basic object", () => {
-					const resultRead = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error 'symbol' is not supported (becomes 'never')
 						arrayOfSymbolsAndObjects,
 						[null],
 					);
-					assertIdenticalTypes(resultRead, createInstanceOf<{ property: string }[]>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ property: string }[]>());
 				});
 			});
 
 			describe("object", () => {
 				it("object with exactly `bigint`", () => {
-					const result = passThruThrows(
+					const { filteredIn } = passThruThrows(
 						// @ts-expect-error `bigint` is not supported (becomes `never`)
 						objectWithBigint,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
-					assertIdenticalTypes(result, createInstanceOf<{ bigint: never }>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigint: never }>());
 				});
 				it("object with exactly `symbol`", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error `symbol` is not supported (becomes `never`)
 						objectWithSymbol,
 						{},
 					);
-					assertIdenticalTypes(result, createInstanceOf<{ symbol: never }>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ symbol: never }>());
 				});
 				it("object with exactly `function`", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error `Function` is not supported (becomes `never`)
 						objectWithFunction,
 						{},
 					);
-					assertIdenticalTypes(result, createInstanceOf<{ function: never }>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ function: never }>());
 				});
 				it("object with exactly `Function | symbol`", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error `symbol | (() => void)` is not supported (becomes `never`)
 						objectWithFunctionOrSymbol,
 						{},
 					);
-					assertIdenticalTypes(result, createInstanceOf<{ functionOrSymbol: never }>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ functionOrSymbol: never }>());
 				});
 				it("object with exactly `string | symbol`", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error `string | symbol` is not assignable to `string`
 						objectWithStringOrSymbol,
 						{},
 					);
-					assertIdenticalTypes(result, createInstanceOf<{ stringOrSymbol: string }>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ stringOrSymbol: string }>());
 				});
 				it("object with exactly `bigint | string`", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error `bigint` | `string` is not assignable to `string`
 						objectWithBigintOrString,
 						// value is a string; so no runtime error.
 					);
-					assertIdenticalTypes(result, createInstanceOf<{ bigintOrString: string }>());
+					assertIdenticalTypes(filteredIn, createInstanceOf<{ bigintOrString: string }>());
 				});
 
 				it("object with recursion and `symbol`", () => {
-					const result = passThru(
+					const { filteredIn } = passThru(
 						// @ts-expect-error 'ObjectWithSymbolOrRecursion' is not assignable to parameter of type '{ recurse: ObjectWithSymbolOrRecursion; }' (`symbol` becomes `never`)
 						objectWithSymbolOrRecursion,
 						{ recurse: {} },
 					);
 					assertIdenticalTypes(
-						result,
+						filteredIn,
 						createInstanceOf<{
 							recurse: ObjectWithSymbolOrRecursion;
 						}>(),
@@ -713,20 +737,20 @@ describe("JsonSerializable", () => {
 
 				describe("object with `undefined`", () => {
 					it("as exact property type", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithUndefined,
 							{},
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<{
 								undef: { "error required property may not allow undefined value": never };
 							}>(),
 						);
 					});
 					it("in union property", () => {
-						const resultUndefined = passThru(
+						const { filteredIn: resultUndefined } = passThru(
 							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithNumberOrUndefinedUndefined,
 							{},
@@ -737,7 +761,7 @@ describe("JsonSerializable", () => {
 								numOrUndef: { "error required property may not allow undefined value": never };
 							}>(),
 						);
-						const resultNumbered = passThru(
+						const { filteredIn: resultNumbered } = passThru(
 							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithNumberOrUndefinedNumbered,
 						);
@@ -749,13 +773,13 @@ describe("JsonSerializable", () => {
 						);
 					});
 					it("under an optional property", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error not assignable to `{ "error required property may not allow undefined value": never; }`
 							objectWithOptionalUndefinedEnclosingRequiredUndefined,
 							{ opt: {} },
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<{
 								opt?: {
 									requiredUndefined: {
@@ -769,7 +793,7 @@ describe("JsonSerializable", () => {
 
 				describe("of class instance", () => {
 					it("with private data", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateData,
 							{
@@ -779,12 +803,12 @@ describe("JsonSerializable", () => {
 							},
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
 						);
 					});
 					it("with private method", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateMethod,
 							{
@@ -792,12 +816,12 @@ describe("JsonSerializable", () => {
 							},
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
 						);
 					});
 					it("with private getter", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateGetter,
 							{
@@ -805,12 +829,12 @@ describe("JsonSerializable", () => {
 							},
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
 						);
 					});
 					it("with private setter", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error SerializationErrorPerNonPublicProperties
 							classInstanceWithPrivateSetter,
 							{
@@ -818,18 +842,18 @@ describe("JsonSerializable", () => {
 							},
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
 						);
 					});
 					it("with public method", () => {
-						const result = passThru(
+						const { filteredIn } = passThru(
 							// @ts-expect-error function not assignable to never
 							classInstanceWithPublicMethod,
 							{ public: "public" },
 						);
 						assertIdenticalTypes(
-							result,
+							filteredIn,
 							createInstanceOf<{
 								public: string;
 								getSecret: never;
@@ -844,46 +868,46 @@ describe("JsonSerializable", () => {
 	describe("special cases", () => {
 		it("explicit `any` generic still limits allowed types", () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const result = passThruThrows<any>(
+			const { filteredIn } = passThruThrows<any>(
 				// @ts-expect-error `any` is not an open door (expects `JsonTypeWith<never>`)
 				undefined,
 				new SyntaxError("Unexpected token u in JSON at position 0"),
 			);
-			assertIdenticalTypes(result, createInstanceOf<JsonTypeWith<never>>());
+			assertIdenticalTypes(filteredIn, createInstanceOf<JsonTypeWith<never>>());
 		});
 
 		describe("`number` edge cases", () => {
 			describe("supported", () => {
 				it("MIN_SAFE_INTEGER", () => {
-					const result = passThru(Number.MIN_SAFE_INTEGER);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.MIN_SAFE_INTEGER);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 				it("MAX_SAFE_INTEGER", () => {
-					const result = passThru(Number.MAX_SAFE_INTEGER);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.MAX_SAFE_INTEGER);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 				it("MIN_VALUE", () => {
-					const result = passThru(Number.MIN_VALUE);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.MIN_VALUE);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 				it("MAX_VALUE", () => {
-					const result = passThru(Number.MAX_VALUE);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.MAX_VALUE);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 			});
 			describe("resulting in `null`", () => {
 				it("NaN", () => {
-					const result = passThru(Number.NaN, null);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.NaN, null);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 
 				it("+Infinity", () => {
-					const result = passThru(Number.POSITIVE_INFINITY, null);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.POSITIVE_INFINITY, null);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 				it("-Infinity", () => {
-					const result = passThru(Number.NEGATIVE_INFINITY, null);
-					assertIdenticalTypes(result, createInstanceOf<number>());
+					const { filteredIn } = passThru(Number.NEGATIVE_INFINITY, null);
+					assertIdenticalTypes(filteredIn, createInstanceOf<number>());
 				});
 			});
 		});
