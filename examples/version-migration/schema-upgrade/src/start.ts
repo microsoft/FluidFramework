@@ -27,7 +27,9 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryListAppModel => {
+const isIInventoryListAppModel = (
+	model: IVersionedModel,
+): model is IInventoryListAppModel & IMigratableModel => {
 	return model.version === "one" || model.version === "two";
 };
 
@@ -62,6 +64,8 @@ async function start(): Promise<void> {
 	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
 	// (unknown) container version.  So the ModelLoader would be replaced by e.g. container.getEntryPoint() or
 	// container.getEntryPoint().model if we knew that was the model.
+	// TODO: This is really loading an IInventoryListAppModel & IMigratableModel (we know this because of what the
+	// DemoCodeLoader supports).  Should we just use that more-specific type in the typing here?
 	const modelLoader = new ModelLoader<IMigratableModel>({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
@@ -97,9 +101,9 @@ async function start(): Promise<void> {
 	);
 	migrator.on("migrated", () => {
 		model.close();
-		render(migrator.currentModel);
-		updateTabForId(migrator.currentModelId);
 		model = migrator.currentModel;
+		render(model);
+		updateTabForId(migrator.currentModelId);
 	});
 	// If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
 	// For example, this might be hit if another client has a newer ModelLoader and proposes a version our

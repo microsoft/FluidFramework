@@ -21,7 +21,7 @@ interface MemoryDetachedBlobStorage extends IDetachedBlobStorage {
 
 function isMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage,
+	detachedStorage: IDetachedBlobStorage | undefined,
 ): detachedStorage is MemoryDetachedBlobStorage {
 	return (
 		isObject(detachedStorage) &&
@@ -33,18 +33,22 @@ function isMemoryDetachedBlobStorage(
 
 export function serializeMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage,
+	detachedStorage: IDetachedBlobStorage | undefined,
 ): string | undefined {
-	if (detachedStorage.size > 0 && isMemoryDetachedBlobStorage(detachedStorage)) {
+	if (
+		detachedStorage !== undefined &&
+		detachedStorage.size > 0 &&
+		isMemoryDetachedBlobStorage(detachedStorage)
+	) {
 		return detachedStorage.serialize();
 	}
 }
 
 export function tryInitializeMemoryDetachedBlobStorage(
 	// eslint-disable-next-line import/no-deprecated
-	detachedStorage: IDetachedBlobStorage,
+	detachedStorage: IDetachedBlobStorage | undefined,
 	attachmentBlobs: string,
-) {
+): void {
 	if (!isMemoryDetachedBlobStorage(detachedStorage)) {
 		throw new Error(
 			"DetachedBlobStorage was not provided to the loader during serialize so cannot be provided during rehydrate.",
@@ -52,9 +56,11 @@ export function tryInitializeMemoryDetachedBlobStorage(
 	}
 
 	assert(detachedStorage.size === 0, 0x99e /* Blob storage already initialized */);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const maybeAttachmentBlobs = JSON.parse(attachmentBlobs);
 	assert(Array.isArray(maybeAttachmentBlobs), 0x99f /* Invalid attachmentBlobs */);
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	detachedStorage.initialize(maybeAttachmentBlobs);
 }
 
@@ -73,9 +79,9 @@ export function createMemoryDetachedBlobStorage(): IDetachedBlobStorage {
 		},
 		getBlobIds: (): string[] => blobs.map((_, i) => `${i}`),
 		dispose: () => blobs.splice(0),
-		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf-8"))),
+		serialize: () => JSON.stringify(blobs.map((b) => bufferToString(b, "utf8"))),
 		initialize: (attachmentBlobs: string[]) =>
-			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf-8"))),
+			blobs.push(...attachmentBlobs.map((maybeBlob) => stringToBuffer(maybeBlob, "utf8"))),
 	};
 	return storage;
 }

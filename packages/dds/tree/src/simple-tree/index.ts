@@ -7,7 +7,6 @@ export {
 	type ITree,
 	type TreeView,
 	type TreeViewEvents,
-	TreeConfiguration,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
@@ -42,7 +41,7 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
-export { toFlexConfig, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
+export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,

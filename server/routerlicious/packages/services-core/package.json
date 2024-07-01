@@ -61,6 +61,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IOrdererManager": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
