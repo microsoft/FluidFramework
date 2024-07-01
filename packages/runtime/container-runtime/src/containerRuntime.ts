@@ -661,7 +661,7 @@ export const makeLegacySendBatchFn =
 	(batch: IBatch) => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
-		for (const message of batch.content) {
+		for (const message of batch.messages) {
 			clientSequenceNumber = submitFn(
 				MessageType.Operation,
 				// For back-compat (submitFn only works on deserialized content)

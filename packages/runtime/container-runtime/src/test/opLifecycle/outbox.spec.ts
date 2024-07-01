@@ -174,7 +174,7 @@ describe("Outbox", () => {
 		return messages;
 	};
 	const toBatch = (messages: BatchMessage[]): IBatch => ({
-		content: addBatchMetadata(messages),
+		messages: addBatchMetadata(messages),
 		contentSizeInBytes: messages
 			.map((message) => message.contents?.length ?? 0)
 			.reduce((a, b) => a + b, 0),
