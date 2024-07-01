@@ -20,7 +20,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  * In an array, such values are replaced with `null`.
  *
  * `bigint` valued properties are simply removed as serialization attempts
- * wll throw.
+ * will throw.
  *
  * Setter and getter properties become value properties after filtering
  * although no data will be persisted assuming those properties are backed
