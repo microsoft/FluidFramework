@@ -2624,6 +2624,8 @@ export class ContainerRuntime
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		const processResult = this.remoteMessageProcessor.process(messageCopy);
 		if (processResult === undefined) {
+			// This means the incoming message is an incomplete part of a message or batch
+			// and we need to process more messages before the rest of the system can understand it.
 			return;
 		}
 		for (const message of processResult.messages) {
