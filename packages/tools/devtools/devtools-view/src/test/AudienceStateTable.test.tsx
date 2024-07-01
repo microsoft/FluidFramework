@@ -24,7 +24,6 @@ describe("AudienceStateTable Accessibility Check", () => {
 		render(<AudienceStateTable audienceStateItems={[]} />);
 
 		const user = userEvent.setup();
-		// Focus on the first interactive element (dropdown theme selector)
 		await user.tab();
 		const clientIDTooltip = screen.getByRole("button", { name: /client id/i });
 		expect(clientIDTooltip).toHaveFocus();
