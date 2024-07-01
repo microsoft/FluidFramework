@@ -20,7 +20,9 @@ const {
 const {
 	apiDocsLinkSectionTransform,
 	generateApiDocsLinkSection,
+	generatePackageImportInstructionsSection,
 	generatePackageScriptsSection,
+	packageImportInstructionsSectionTransform,
 	packageScriptsSectionTransform,
 } = require("./transforms/index.cjs");
 
@@ -287,6 +289,10 @@ function includeTransform(content, options, config) {
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
  * Default: `FALSE`.
+ * @param {"FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
+ * Default: Checks at the `package.json` file for an `exports` property.
+ * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
+ * Can be explicitly disabled by specifying `FALSE`.
  * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
@@ -311,7 +317,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	const sections = [];
 
-	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeKind = options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
 	if (scopeKind !== undefined) {
 		sections.push(generatePackageScopeNotice(scopeKind));
@@ -322,6 +328,10 @@ function libraryPackageReadmeTransform(content, options, config) {
 			generateDependencyGuidelines(true),
 			generateInstallationSection(packageName, options.devDependency, true),
 		);
+	}
+
+	if (options.importInstructions !== "FALSE") {
+		sections.push(generatePackageImportInstructionsSection(packageMetadata, true));
 	}
 
 	if (options.apiDocs !== "FALSE") {
@@ -491,7 +501,7 @@ function readmePackageScopeNoticeTransform(content, options, config) {
 	);
 	const packageName = packageMetadata.name;
 
-	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
 	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
 	if (scopeKindWithInheritance !== undefined) {
 		return generatePackageScopeNotice(scopeKindWithInheritance);
@@ -644,6 +654,18 @@ module.exports = {
 		 * ```
 		 */
 		README_INSTALLATION_SECTION: readmeInstallationSectionTransform,
+
+		/**
+		 * See {@link packageImportInstructionsSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
 
 		/**
 		 * See {@link readmeTrademarkSectionTransform}.

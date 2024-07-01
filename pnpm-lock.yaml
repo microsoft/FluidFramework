@@ -254,6 +254,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../../packages/dds/matrix
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../../packages/dds/sequence
@@ -266,6 +269,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../../packages/test/test-utils
+      axios:
+        specifier: ^1.6.2
+        version: 1.6.2(debug@4.3.4)
       commander:
         specifier: ^5.1.0
         version: 5.1.0
@@ -4390,9 +4396,6 @@ importers:
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/odsp-doclib-utils
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/drivers/odsp-driver-definitions
       css-loader:
         specifier: ^6.11.0
         version: 6.11.0(webpack@5.89.0)
@@ -13478,9 +13481,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      axios:
-        specifier: ^1.6.2
-        version: 1.6.2(debug@4.3.4)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.15.2

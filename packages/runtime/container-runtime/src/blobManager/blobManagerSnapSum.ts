@@ -113,7 +113,7 @@ const summarizeV1 = (
 	return builder.getSummaryTree();
 };
 
-const getStorageIds = (
+export const getStorageIds = (
 	redirectTable: Map<string, string | undefined>,
 	attachState: AttachState,
 ) => {

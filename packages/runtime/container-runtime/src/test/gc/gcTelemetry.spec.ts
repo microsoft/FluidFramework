@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { BlobManager } from "../../blobManager/index.js";
+import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
@@ -60,7 +60,7 @@ describe("GC Telemetry Tracker", () => {
 		// Path with two parts such as "/id1/id2" - sub data stores.
 		// Everything else - other.
 		const getNodeType = (nodePath: string) => {
-			if (nodePath.split("/")[1] === BlobManager.basePath) {
+			if (nodePath.split("/")[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (nodePath.split("/").length === 2) {

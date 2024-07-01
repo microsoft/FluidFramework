@@ -48,6 +48,7 @@ import { v4 as uuid } from "uuid";
 import { IBlobMetadata } from "../metadata.js";
 
 import {
+	getStorageIds,
 	summarizeBlobManagerState,
 	toRedirectTable,
 	type IBlobManagerLoadInfo,
@@ -341,27 +342,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	/**
-	 * Set of actual storage IDs (i.e., IDs that can be requested from storage). This will be empty if the container is
-	 * detached or there are no (non-pending) attachment blobs in the document
-	 */
-	private get storageIds(): Set<string> {
-		const ids = new Set<string | undefined>(this.redirectTable.values());
-
-		// If we are detached, we will not have storage IDs, only undefined
-		const undefinedValueInTable = ids.delete(undefined);
-
-		// For a detached container, entries are inserted into the redirect table with an undefined storage ID.
-		// For an attached container, entries are inserted w/storage ID after the BlobAttach op round-trips.
-		assert(
-			!undefinedValueInTable ||
-				(this.runtime.attachState === AttachState.Detached && ids.size === 0),
-			0x382 /* 'redirectTable' must contain only undefined while detached / defined values while attached */,
-		);
-
-		return ids as Set<string>;
-	}
-
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
@@ -563,7 +543,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		if (!entry.opsent) {
 			this.sendBlobAttachOp(localId, response.id);
 		}
-		if (this.storageIds.has(response.id)) {
+		const storageIds = getStorageIds(this.redirectTable, this.runtime.attachState);
+		if (storageIds.has(response.id)) {
 			// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
 			// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 			// happened before and so, the server won't delete it.
@@ -888,4 +869,4 @@ export const isBlobPath = (path: string): path is `/${typeof blobManagerBasePath
 export const areBlobPathParts = (
 	pathParts: string[],
 ): pathParts is ["", typeof blobManagerBasePath, string] =>
-	pathParts.length === 3 && pathParts[1] !== blobManagerBasePath;
+	pathParts.length === 3 && pathParts[1] === blobManagerBasePath;
