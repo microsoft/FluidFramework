@@ -161,11 +161,11 @@ describe("Pending State Manager", () => {
 			);
 		};
 
-		const process = (messages: Partial<ISequencedDocumentMessage>[]) =>
+		const process = (messages: Partial<ISequencedDocumentMessage>[], batchStartCsn: number) =>
 			messages.forEach((message) => {
 				pendingStateManager.processPendingLocalMessage(
 					message as InboundSequencedContainerRuntimeMessage,
-					1 /* batchStartCsn */,
+					batchStartCsn,
 				);
 			});
 
@@ -194,7 +194,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(messages);
+			process(messages, 0 /* batchStartCsn */);
 			assert(closeError === undefined);
 		});
 
@@ -216,7 +216,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			process(messages);
+			process(messages, 0 /* batchStartCsn */);
 			assert(isILoggingError(closeError));
 			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
@@ -240,6 +240,7 @@ describe("Pending State Manager", () => {
 						...message,
 						type: "otherType",
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert(isILoggingError(closeError));
 				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
@@ -266,6 +267,7 @@ describe("Pending State Manager", () => {
 						...message,
 						contents: undefined,
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
@@ -287,6 +289,7 @@ describe("Pending State Manager", () => {
 						...message,
 						contents: { prop1: true },
 					})),
+					0 /* batchStartCsn */,
 				);
 				assert.strictEqual(closeError?.errorType, ContainerErrorTypes.dataProcessingError);
 			});
@@ -309,6 +312,7 @@ describe("Pending State Manager", () => {
 					...message,
 					contents: { prop1: true },
 				})),
+				0 /* batchStartCsn */,
 			);
 			assert.strictEqual(closeError, undefined, "unexpected close");
 		});
@@ -323,7 +327,7 @@ describe("Pending State Manager", () => {
 					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				process(messages);
+				process(messages, 0 /* batchStartCsn */);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
