@@ -59,7 +59,7 @@ describe("class-tree tree", () => {
 		view.initialize({ stuff: ["a", "b"] });
 	});
 
-	it("root access leak", () => {
+	it("accessing view.root does not leak memory", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
