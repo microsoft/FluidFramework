@@ -29,9 +29,10 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
  */
 export class RemoteMessageProcessor {
 	/**
-	 * Client Sequence Number of the first message in this batch.
-	 * Note: For chunked batches, this is the CSN of the "representative" chunk (the final chunk)
+	 * Client Sequence Number of the first message in the current batch being processed.
 	 * If undefined, we are expecting the next message to start a new batch.
+	 *
+	 * @remarks For chunked batches, this is the CSN of the "representative" chunk (the final chunk)
 	 */
 	private batchStartCsn: number | undefined;
 

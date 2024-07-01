@@ -679,8 +679,7 @@ export const makeLegacySendBatchFn =
 /** Helper type for type constraints passed through several functions.
  * local - Did this client send the op?
  * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
- * clientSequenceNumber - The clientSequenceNumber given on submit and used during transport
- * (clientSequenceNumber may be overwritten to store index-within-batch by RemoteMessageProcessor)
+ * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
  * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
  */

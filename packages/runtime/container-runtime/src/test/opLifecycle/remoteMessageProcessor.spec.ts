@@ -132,6 +132,7 @@ describe("RemoteMessageProcessor", () => {
 				batch = groupingManager.groupBatch(batch);
 			}
 
+			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
 				const compressor = new OpCompressor(mockLogger);
@@ -141,6 +142,7 @@ describe("RemoteMessageProcessor", () => {
 					const splitter = new OpSplitter(
 						[],
 						(messages: IBatchMessage[], refSeqNum?: number) => {
+							++leadingChunkCount;
 							outboundMessages.push(...messages);
 							return 0;
 						},
@@ -157,6 +159,8 @@ describe("RemoteMessageProcessor", () => {
 			const messageProcessor = getMessageProcessor();
 			const actual: ISequencedDocumentMessage[] = [];
 			let seqNum = 1;
+			let actualBatchStartCsn: number | undefined;
+			let emptyProcessResultCount = 0;
 			for (const message of outboundMessages) {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
@@ -169,9 +173,30 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				const messages = messageProcessor.process(inboundMessage)?.messages ?? [];
-				actual.push(...messages);
+				const processResult = messageProcessor.process(inboundMessage);
+
+				// It'll be undefined for the first n-1 chunks if chunking is enabled
+				if (processResult === undefined) {
+					++emptyProcessResultCount;
+					continue;
+				}
+
+				actual.push(...processResult.messages);
+
+				if (actualBatchStartCsn === undefined) {
+					actualBatchStartCsn = processResult.batchStartCsn;
+				} else {
+					assert(
+						actualBatchStartCsn === processResult.batchStartCsn,
+						"batchStartCsn shouldn't change while processing a single batch",
+					);
+				}
 			}
+			assert.equal(
+				emptyProcessResultCount,
+				leadingChunkCount,
+				"expected empty result to be 1-1 with leading chunks",
+			);
 
 			const expected = option.grouping
 				? [
@@ -190,6 +215,7 @@ describe("RemoteMessageProcessor", () => {
 					];
 
 			assert.deepStrictEqual(actual, expected, "unexpected output");
+			assert.equal(actualBatchStartCsn, leadingChunkCount + 1, "unexpected batchStartCsn");
 		});
 	});
 
