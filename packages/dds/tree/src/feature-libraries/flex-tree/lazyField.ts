@@ -7,12 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
-	FieldAnchor,
-	FieldKey,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
+	type FieldAnchor,
+	type FieldKey,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
 	inCursorNode,
 	isCursor,
 	iterateCursorField,
@@ -23,34 +23,36 @@ import {
 	assertValidRangeIndices,
 	disposeSymbol,
 	fail,
+	getOrCreate,
 } from "../../util/index.js";
 // TODO: stop depending on contextuallyTyped
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
 	FieldKinds,
-	OptionalFieldEditBuilder,
-	SequenceFieldEditBuilder,
-	ValueFieldEditBuilder,
+	type OptionalFieldEditBuilder,
+	type SequenceFieldEditBuilder,
+	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
-import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+import type { FlexFieldKind } from "../modular-schema/index.js";
+import type { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeTypedField,
-	FlexTreeTypedNodeUnion,
-	FlexTreeUnboxNodeUnion,
-	FlexibleNodeContent,
-	FlexibleNodeSubSequence,
+	type FlexTreeField,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeSequenceField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNodeUnion,
+	type FlexTreeUnboxNodeUnion,
+	type FlexibleNodeContent,
+	type FlexibleNodeSubSequence,
 	TreeStatus,
 	flexTreeMarker,
+	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
@@ -60,33 +62,30 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
-import { makeTree } from "./lazyNode.js";
+import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
-import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
+import {
+	indexForAt,
+	treeStatusFromAnchorCache,
+	treeStatusFromDetachedField,
+} from "./utilities.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * Indexing for {@link LazyField.at} and {@link LazyField.boxedAt} supports the
- * usage of negative indices, which regular indexing using `[` and `]` does not.
+ * Reuse fields.
+ * Since field currently own cursors and register themselves for disposal when the node hit end of life,
+ * not reusing them results in memory leaks every time the field is accessed.
+ * Since the fields stay alive until the node is end of life reusing them this way is safe.
  *
- * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
- * for additional context on the semantics.
+ * This ins't a perfect solution:
  *
- * @returns A positive index that can be used in regular indexing. Returns
- * undefined if that index would be out-of-bounds.
+ * - This can cause leaks, like map nodes will keep all accessed field objects around. Since other things cause this same leak already, its not too bad.
+ * - This does not cache the root.
+ * - Finding the parent anchor to do the caching on has significant cost.
+ *
+ * Despite these limitations, this cache provides a large performance win in some common cases (over 10x), especially with how simple tree requests far more field objects than necessary currently.
  */
-function indexForAt(index: number, length: number): number | undefined {
-	let finalIndex = Math.trunc(+index);
-	if (isNaN(finalIndex)) {
-		finalIndex = 0;
-	}
-	if (finalIndex < -length || finalIndex >= length) {
-		return undefined;
-	}
-	if (finalIndex < 0) {
-		finalIndex = finalIndex + length;
-	}
-	return finalIndex;
-}
+const fieldCache: WeakMap<LazyTreeNode, Map<FieldKey, FlexTreeField>> = new WeakMap();
 
 export function makeField(
 	context: Context,
@@ -94,21 +93,57 @@ export function makeField(
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
+	let usedAnchor = false;
 
-	const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
-		context,
-		schema,
-		cursor,
-		fieldAnchor,
+	const makeFlexTreeField = (): FlexTreeField => {
+		usedAnchor = true;
+		const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
+			context,
+			schema,
+			cursor,
+			fieldAnchor,
+		);
+		return field;
+	};
+
+	if (fieldAnchor.parent === undefined) {
+		return makeFlexTreeField();
+	}
+
+	// For the common case (all but roots), cache field associated with its node's anchor and field key.
+	const anchorNode =
+		context.checkout.forest.anchors.locate(fieldAnchor.parent) ?? fail("missing anchor");
+
+	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
+	const cacheKey = anchorNode.slots.get(flexTreeSlot);
+
+	// If there is no flex tree parent node, skip caching: this is not expected to be a hot path, but should probably be fixed at some point.
+	if (cacheKey === undefined) {
+		return makeFlexTreeField();
+	}
+
+	const innerCache = getOrCreate(
+		fieldCache,
+		cacheKey,
+		() => new Map<FieldKey, FlexTreeField>(),
 	);
-	return field;
+	const result = getOrCreate(innerCache, fieldAnchor.fieldKey, makeFlexTreeField);
+	if (!usedAnchor) {
+		// The anchor must be disposed to avoid leaking. In the case of a cache hit,
+		// we are not transferring ownership to a new FlexTreeField, so it must be disposed of here to avoid the leak.
+		context.checkout.forest.anchors.forget(fieldAnchor.parent);
+	}
+	return result;
 }
 
 /**
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends FlexAllowedTypes>
+export abstract class LazyField<
+		out TKind extends FlexFieldKind,
+		TTypes extends FlexAllowedTypes,
+	>
 	extends LazyEntity<FlexFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements FlexTreeField
 {
@@ -258,10 +293,9 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): FieldUpPath {
-		assert(
-			this.treeStatus() === TreeStatus.InDocument,
-			0x77f /* Editing only allowed on fields with TreeStatus.InDocument status */,
-		);
+		if (this.treeStatus() !== TreeStatus.InDocument) {
+			throw new UsageError("Editing only allowed on fields with TreeStatus.InDocument status");
+		}
 		return this.getFieldPath();
 	}
 }
@@ -308,7 +342,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 					Array.from(value, (item) =>
 						applyTypesFromContext(this.context, this.schema.allowedTypeSet, item),
 					),
-			  );
+				);
 
 		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
@@ -328,7 +362,10 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 
 	public moveToStart(sourceIndex: number): void;
-	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+	public moveToStart(
+		sourceIndex: number,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void;
 	public moveToStart(
 		sourceIndex: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
@@ -337,7 +374,10 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 	}
 	public moveToEnd(sourceIndex: number): void;
 	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
-	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<FlexAllowedTypes>): void {
+	public moveToEnd(
+		sourceIndex: number,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void {
 		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number): void;
@@ -540,8 +580,8 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 			newContent === undefined
 				? []
 				: isCursor(newContent)
-				? prepareNodeCursorForInsert(newContent)
-				: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
+					? prepareNodeCursorForInsert(newContent)
+					: [cursorFromContextualData(this.context, this.schema.allowedTypeSet, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,
@@ -562,14 +602,14 @@ export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyFie
 
 type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
-	// TODO: use something other than `any`
+	// Correct use of these builders requires the builder of the matching type to be used.
+	// Since this has to be done at runtime anyway, trying to use safer typing than `any` here (such as `never`, which is only slightly safer)
+	// does not seem worth it (ends up requiring type casts that are just as unsafe).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	schema: FlexFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-) => LazyField<any, TTypes>;
+) => LazyField<FlexFieldKind, TTypes>;
 
 const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],

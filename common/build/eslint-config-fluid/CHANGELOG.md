@@ -1,5 +1,28 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.4.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.4.0)
+
+### Disabled rules
+
+The following rules have been disabled in all configs because they conflict with formatter settings:
+
+-   [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
+-   [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
+
+### @typescript-eslint/explicit-function-return-type changes
+
+The [allowExpressions](https://typescript-eslint.io/rules/explicit-function-return-type/#allowexpressions) option for
+the @typescript-eslint/explicit-function-return-type rule has been set to `true`.
+
+### @typescript-eslint/no-explicit-any changes
+
+The [ignoreRestArgs](https://typescript-eslint.io/rules/no-explicit-any#ignorerestargs) option for
+the @typescript-eslint/no-explicit-any rule has been set to `true`.
+
+### import/no-internal-modules changes
+
+All imports from @fluid-experimental packages are now permitted.
+
 ## [5.3.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.3.0)
 
 The import/order rule is enabled with the following settings:

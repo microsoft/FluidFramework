@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions/internal";
@@ -15,14 +15,15 @@ import {
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
 	ContainerAttachProps,
-	type ContainerSchema,
+	ContainerSchema,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
+import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
 import {
-	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -34,15 +35,12 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type {
-	OdspResourceTokenFetchOptions,
-	TokenResponse,
-} from "@fluidframework/odsp-driver-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
+import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type { TokenResponse } from "./interfaces.js";
+import type {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
@@ -82,26 +80,12 @@ const odspClientFeatureGates = {
 };
 
 /**
- * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
- */
-const odspClientV1CompatFeatureGates = {
-	// Disable Garbage Collection
-	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
-	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
-};
-
-/**
  * Wrap the config provider to fall back on the appropriate defaults for ODSP Client.
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	const defaults = {
-		...odspClientFeatureGates,
-		...odspClientV1CompatFeatureGates,
-	};
-	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
 }
 
 /**
@@ -234,7 +218,7 @@ export class OdspClient {
 			}
 
 			/**
-			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * A unique identifier for the file within the provided SharePoint Embedded container ID. When you attach a container,
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */

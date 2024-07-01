@@ -11,16 +11,18 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
-import {
-	type HasContainerKey,
-	type DevtoolsFeatureFlags,
-	type ContainerKey,
-} from "@fluidframework/devtools-core/internal";
-import React from "react";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
+import type {
+	HasContainerKey,
+	DevtoolsFeatureFlags,
+	ContainerKey,
+} from "@fluidframework/devtools-core/internal";
 import { GetContainerList } from "@fluidframework/devtools-core/internal";
+import React from "react";
+
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
+
 import { Waiting } from "./index.js";
 
 /**
@@ -154,7 +156,7 @@ interface OpLatencyMenuSelection {
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection =
+export type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
@@ -283,11 +285,11 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 /**
  * {@link Menu} input props.
  */
-interface MenuProps {
+export interface MenuProps {
 	/**
 	 * The current menu selection (if any).
 	 */
-	currentSelection?: MenuSelection;
+	currentSelection?: MenuSelection | undefined;
 
 	/**
 	 * Sets the menu selection to the specified value.

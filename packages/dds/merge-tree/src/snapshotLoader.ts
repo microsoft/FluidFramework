@@ -12,7 +12,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	ITelemetryLoggerExt,
@@ -26,7 +26,11 @@ import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
-import { IJSONSegmentWithMergeInfo, MergeTreeChunkV1, hasMergeInfo } from "./snapshotChunks.js";
+import {
+	IJSONSegmentWithMergeInfo,
+	MergeTreeChunkV1,
+	hasMergeInfo,
+} from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 
@@ -276,8 +280,6 @@ export class SnapshotLoader {
 	}
 
 	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
-		this.mergeTree.options ??= {};
-		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

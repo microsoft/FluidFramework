@@ -7,11 +7,14 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
@@ -218,10 +221,7 @@ export class SnapshotLegacy {
 					segment.removedSeq > this.seq!)
 			) {
 				originalSegments += 1;
-				if (
-					prev?.canAppend(segment) &&
-					matchProperties(prev.properties, segment.properties)
-				) {
+				if (prev?.canAppend(segment) && matchProperties(prev.properties, segment.properties)) {
 					prev = prev.clone();
 					prev.append(segment.clone());
 				} else {

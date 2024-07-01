@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "QueryService implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -13,10 +13,13 @@
 	"main": "src/index.js",
 	"types": "src/index.d.ts",
 	"scripts": {
+		"check:biome": "biome check . --formatter-enabled=true",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob nyc",
 		"coverage": "npx nyc --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test && npx nyc --no-clean --silent --cwd .. --nycrc-path `pwd`/.nycrc npm run test:changeset && npx nyc --no-clean --cwd .. --nycrc-path `pwd`/.nycrc npm run test:common",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -41,10 +44,10 @@
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.39.0",
 		"@types/sinon": "^17.0.3",
 		"chai": "^4.2.0",
 		"chai-as-promised": "7.1.1",

@@ -16,6 +16,7 @@ export {
 	Package,
 	type PackageJson,
 	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
 export type {
@@ -31,10 +32,15 @@ export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 } from "./common/fluidTaskDefinitions";
-export { getEsLintConfigFilePath } from "./common/taskUtils";
+export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
-export { typeOnly } from "./typeValidator/compatibility";
+export {
+	TypeOnly,
+	MinimalType,
+	FullType,
+	requireAssignableTo,
+} from "./typeValidator/compatibility";
 export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
-export { type TypeData, getFullTypeName, getNodeTypeData } from "./typeValidator/typeData";
+export { type TypeData, getFullTypeName } from "./typeValidator/typeData";
 export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";

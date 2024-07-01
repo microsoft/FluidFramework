@@ -1,11 +1,11 @@
 # fluid-framework
 
-The `fluid-framework` package bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
+The `fluid-framework` package bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluidframework/odsp-client (BETA)`).
 
 This package reexports these APIs from other Fluid client packages reducing the number of direct package dependencies needed.
 There are some packages there are not included as part of this `fluid-framework` package which users may want to use with this package:
 
--   A service client (e.g. `@fluidframework/azure-client`, `@fluid-experimental/osdp-client (BETA)`, or `@fluidframework/tinylicious-client` for local development) to allow connecting to a Fluid service.
+-   A service client (e.g. `@fluidframework/azure-client`, `@fluidframework/odsp-client (BETA)`, or `@fluidframework/tinylicious-client` for local development) to allow connecting to a Fluid service.
 -   Fluid Framework [developer tools](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools).
 -   `@fluidframework/app-insights-logger`: to route Fluid telemetry to Azure App Insights.
 
@@ -25,7 +25,7 @@ The `fluid-framework` package offers the following data structures:
 
 1. **[SharedTree][]**
 1. **[SharedMap][]**, a map-like data structure for storing key/value pair data
-    - Note: as of version 2.0, `SharedMap` is deprecated. Please use `SharedTree` instead.
+    - Note: as of version 2.0, `SharedMap` is now marked legacy. Please use `SharedTree` for any new development.
 
 ## Tutorial
 
@@ -49,6 +49,15 @@ To get started, install the package by running the following command:
 ```bash
 npm i fluid-framework
 ```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `fluid-framework` like normal.
+
+To access the `legacy` APIs, import via `fluid-framework/legacy`.
 
 ## API Documentation
 

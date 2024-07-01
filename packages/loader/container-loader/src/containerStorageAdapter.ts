@@ -7,6 +7,7 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentService,
@@ -20,7 +21,6 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
@@ -46,7 +46,10 @@ export interface ISerializableBlobContents {
  * container attach state.
  */
 export class ContainerStorageAdapter
-	implements ISerializedStateManagerDocumentStorageService, IDocumentStorageService, IDisposable
+	implements
+		ISerializedStateManagerDocumentStorageService,
+		IDocumentStorageService,
+		IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
@@ -54,7 +57,7 @@ export class ContainerStorageAdapter
 	/**
 	 * Whether the adapter will enforce sending combined summary trees.
 	 */
-	public get summarizeProtocolTree() {
+	public get summarizeProtocolTree(): boolean {
 		return this._summarizeProtocolTree === true;
 	}
 
@@ -74,7 +77,7 @@ export class ContainerStorageAdapter
 	 * @param loadingGroupIdSnapshotsFromPendingState - in offline mode, any loading group snapshots we've downloaded from the service that were stored in the pending state
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
+	 * @param enableSummarizeProtocolTree - Enable uploading a protocol summary. Note: preference is given to service policy's "summarizeProtocolTree" before this value.
 	 */
 	public constructor(
 		// eslint-disable-next-line import/no-deprecated
@@ -86,10 +89,9 @@ export class ContainerStorageAdapter
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		forceEnableSummarizeProtocolTree: boolean | undefined,
+		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		this._summarizeProtocolTree = forceEnableSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
@@ -109,24 +111,42 @@ export class ContainerStorageAdapter
 			this.logger,
 		));
 
-		this._summarizeProtocolTree =
-			this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
-		if (this.summarizeProtocolTree) {
-			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
-			this._storageService = new ProtocolTreeStorageService(
-				retriableStorage,
-				this.addProtocolSummaryIfMissing,
-			);
-		}
+		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include
+		// the protocol summary, provided single-commit summary is enabled.
+		this._storageService = new ProtocolTreeStorageService(
+			retriableStorage,
+			(...props) => {
+				this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
+				return this.addProtocolSummaryIfMissing(...props);
+			},
+			// A callback to ensure we fetch the most updated value of service.policies.summarizeProtocolTree, which could be set
+			// based on the response received from the service after connection is established.
+			() => {
+				// Determine whether or not container should upload the protocol summary along with the summary.
+				// This is determined based on what value is set for serve policy's summariProtocolTree value or the enableSummarizeProtocolTree
+				// retrievd from the loader options or monitoring context config.
+				const shouldSummarizeProtocolTree =
+					service.policies?.summarizeProtocolTree ?? this.enableSummarizeProtocolTree ?? false;
+
+				if (this._summarizeProtocolTree !== shouldSummarizeProtocolTree) {
+					this.logger.sendTelemetryEvent({
+						eventName: "isSummarizeProtocolTreeEnabled",
+						details: { value: shouldSummarizeProtocolTree },
+					});
+				}
+				this._summarizeProtocolTree = shouldSummarizeProtocolTree;
+				return this._summarizeProtocolTree;
+			},
+		);
 	}
 
-	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {
+	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents): void {
 		for (const [id, value] of Object.entries(snapshotBlobs)) {
 			this.blobContents[id] = value;
 		}
 	}
 
-	public clearPendingState() {
+	public clearPendingState(): void {
 		this.loadingGroupIdSnapshotsFromPendingState = undefined;
 	}
 
@@ -135,13 +155,17 @@ export class ContainerStorageAdapter
 		// and storage is always present in >=0.41.
 		try {
 			return this._storageService.policies;
-		} catch (e) {}
+		} catch {
+			// No-op
+		}
 		return undefined;
 	}
 
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
+		// API called below uses null
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
@@ -153,9 +177,7 @@ export class ContainerStorageAdapter
 			snapshotFetchOptions?.loadingGroupIds !== undefined
 		) {
 			const localSnapshot =
-				this.loadingGroupIdSnapshotsFromPendingState[
-					snapshotFetchOptions.loadingGroupIds[0]
-				];
+				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
 			const attributes = await getDocumentAttributes(this, localSnapshot.baseSnapshot);
 			snapshot = convertSnapshotInfoToSnapshot(localSnapshot, attributes.sequenceNumber);
@@ -202,6 +224,8 @@ export class ContainerStorageAdapter
 	}
 
 	public async getVersions(
+		// API used below uses null
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string,
@@ -258,6 +282,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	/* eslint-disable @typescript-eslint/unbound-method */
+	// eslint-disable-next-line @rushstack/no-new-null
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
 	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
@@ -271,9 +296,9 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		try {
 			// some browsers may not populate stack unless exception is thrown
 			throw new Error("BlobOnlyStorage not implemented method used");
-		} catch (err) {
-			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, err);
-			throw err;
+		} catch (error) {
+			this.logger.sendTelemetryEvent({ eventName: "BlobOnlyStorageWrongCall" }, error);
+			throw error;
 		}
 	}
 }
@@ -303,8 +328,8 @@ async function getBlobContentsFromTreeCore(
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
-) {
-	const treePs: Promise<any>[] = [];
+): Promise<unknown[]> {
+	const treePs: Promise<unknown>[] = [];
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
 			treePs.push(getBlobManagerTreeFromTree(subTree, blobs, storage));
@@ -325,7 +350,7 @@ async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
-) {
+): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
@@ -347,7 +372,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
 	root = true,
-) {
+): void {
 	for (const [key, subTree] of Object.entries(tree.trees)) {
 		if (root && key === blobsTreeName) {
 			getBlobManagerTreeFromTreeWithBlobContents(subTree, blobs);
@@ -367,7 +392,7 @@ function getBlobContentsFromTreeWithBlobContentsCore(
 function getBlobManagerTreeFromTreeWithBlobContents(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
-) {
+): void {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);

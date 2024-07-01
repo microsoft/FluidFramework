@@ -45,7 +45,7 @@ import {
 } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import {
 	IOdspResponse,
@@ -57,11 +57,13 @@ import {
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Enum to support different types of snapshot formats.
+ * @legacy
  * @alpha
  */
 export enum SnapshotFormatSupportType {
@@ -73,25 +75,19 @@ export enum SnapshotFormatSupportType {
 /**
  * Fetches a snapshot from the server with a given version id.
  * @param snapshotUrl - snapshot url from where the odsp snapshot will be fetched
- * @param token - token used for authorization in the request
- * @param storageFetchWrapper - Implementation of the get/post methods used to fetch the snapshot
  * @param versionId - id of specific snapshot to be fetched
  * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
- * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header
+ * @param forceAccessTokenViaAuthorizationHeader - @deprecated Not used, true value always used instead. Whether to force passing given token via authorization header
+ * @param snapshotDownloader - Implementation of the get/post methods used to fetch the snapshot. snapshotDownloader is responsible for generating the appropriate headers (including Authorization header) as well as handling any token refreshes before retrying.
  * @returns A promise of the snapshot and the status code of the response
  */
 export async function fetchSnapshot(
 	snapshotUrl: string,
-	// eslint-disable-next-line @rushstack/no-new-null
-	token: string,
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	logger: ITelemetryLoggerExt,
-	snapshotDownloader: (
-		url: string,
-		fetchOptions: { [index: string]: RequestInit },
-	) => Promise<IOdspResponse<unknown>>,
+	snapshotDownloader: (url: string) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
@@ -101,17 +97,13 @@ export async function fetchSnapshot(
 	}
 
 	const queryString = getQueryString(queryParams);
-	const { url, headers } = getUrlAndHeadersWithAuth(
-		`${snapshotUrl}${path}${queryString}`,
-		token,
-		forceAccessTokenViaAuthorizationHeader,
-	);
+	const url = `${snapshotUrl}${path}${queryString}`;
 	const response = (await PerformanceEvent.timedExecAsync(
 		logger,
 		{
 			eventName: "fetchSnapshot",
 		},
-		async () => snapshotDownloader(url, { headers }),
+		async () => snapshotDownloader(url),
 	)) as IOdspResponse<IOdspSnapshot>;
 	return convertOdspSnapshotToSnapshotTreeAndBlobs(response.content);
 }
@@ -124,7 +116,8 @@ export async function fetchSnapshotWithRedeem(
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
-		storageToken: string,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -217,7 +210,7 @@ export async function fetchSnapshotWithRedeem(
 
 async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
-	storageTokenFetcher: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<void> {
@@ -239,18 +232,16 @@ async function redeemSharingLink(
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-					const storageToken = await storageTokenFetcher(
-						tokenFetchOptions,
+					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
+					const url = redeemUrl;
+					const method = "GET";
+					const authHeader = await getAuthHeader(
+						{ ...tokenFetchOptions, request: { url, method } },
 						"RedeemShareLink",
 					);
-					redeemUrl = `${baseUrl}/_api/v2.0/shares/${encodedShareUrl}`;
-					const { url, headers } = getUrlAndHeadersWithAuth(
-						redeemUrl,
-						storageToken,
-						forceAccessTokenViaAuthorizationHeader,
-					);
+					const headers = getHeadersWithAuth(authHeader);
 					headers.prefer = "redeemSharingLink";
-					await fetchAndParseAsJSONHelper(url, { headers });
+					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
 			}
 
@@ -271,12 +262,10 @@ async function redeemSharingLink(
 							eventName: "ShareLinkRedeemFailedWithTenantDomain",
 							details: JSON.stringify({
 								length: redeemUrl?.length,
-								shareLinkUrlLength:
-									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem.length,
-								queryParamsLength: new URL(
-									odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
-								).search.length,
-								useHeaders: forceAccessTokenViaAuthorizationHeader,
+								shareLinkUrlLength: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem.length,
+								queryParamsLength: new URL(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem)
+									.search.length,
+								useHeaders: true,
 							}),
 						},
 						error,
@@ -290,12 +279,13 @@ async function redeemSharingLink(
 
 async function fetchLatestSnapshotCore(
 	odspResolvedUrl: IOdspResolvedUrl,
-	storageTokenFetcher: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
-		storageToken: string,
+		getAuthHeader: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -307,7 +297,6 @@ async function fetchLatestSnapshotCore(
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
-		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
 
 		const perfEvent = {
 			eventName,
@@ -336,7 +325,8 @@ async function fetchLatestSnapshotCore(
 			const [response, fetchTime] = await measureP(async () =>
 				snapshotDownloader(
 					odspResolvedUrl,
-					storageToken,
+					getAuthHeader,
+					tokenFetchOptions,
 					loadingGroupIds,
 					snapshotOptions,
 					controller,
@@ -524,10 +514,7 @@ async function fetchLatestSnapshotCore(
 				snapshot.sequenceNumber = undefined;
 			} else if (canCache) {
 				const fluidEpoch = odspResponse.headers.get("x-fluid-epoch");
-				assert(
-					fluidEpoch !== undefined,
-					0x1e6 /* "Epoch  should be present in response" */,
-				);
+				assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
 				const value: ISnapshotCachedEntry2 = {
 					...snapshot,
 					cacheEntryTime: Date.now(),
@@ -602,7 +589,7 @@ export interface ISnapshotRequestAndResponseOptions {
 
 function getFormBodyAndHeaders(
 	odspResolvedUrl: IOdspResolvedUrl,
-	storageToken: string,
+	authHeader: string,
 	headers?: { [index: string]: string },
 ): {
 	body: string;
@@ -614,7 +601,7 @@ function getFormBodyAndHeaders(
 	const formParams: string[] = [];
 	formParams.push(
 		`--${formBoundary}`,
-		`Authorization: Bearer ${storageToken}`,
+		`Authorization: ${authHeader}`,
 		`X-HTTP-Method-Override: GET`,
 	);
 
@@ -698,7 +685,8 @@ function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void 
  */
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
-	storageToken: string,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
+	tokenFetchOptions: TokenFetchOptionsEx,
 	loadingGroupIds: string[] | undefined,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
@@ -732,17 +720,23 @@ export async function downloadSnapshot(
 
 	const queryString = getQueryString(queryParams);
 	const url = `${snapshotUrl}/trees/latest${queryString}`;
+	const method = "POST";
 	// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 	// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 	// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
-	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, header);
+	const authHeader = await getAuthHeader(
+		{ ...tokenFetchOptions, request: { url, method } },
+		"downloadSnapshot",
+	);
+	assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
+	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 	const fetchOptions = {
 		body,
 		headers,
 		signal: controller?.signal,
-		method: "POST",
+		method,
 	};
 	// Decide what snapshot format to fetch as per the feature gate.
 	switch (snapshotFormatFetchType) {

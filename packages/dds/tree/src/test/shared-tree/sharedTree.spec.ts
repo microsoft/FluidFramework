@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -13,14 +13,17 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils/internal";
+import {
+	type ITestFluidObject,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 import {
 	AllowedUpdateType,
 	CommitKind,
-	JsonableTree,
-	Revertible,
-	UpPath,
+	type JsonableTree,
+	type Revertible,
+	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,
 	rootFieldKey,
@@ -38,8 +41,8 @@ import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSchema,
-	FlexTreeTypedField,
+	type FlexTreeSchema,
+	type FlexTreeTypedField,
 	MockNodeKeyManager,
 	SchemaBuilderBase,
 	SchemaBuilderInternal,
@@ -56,25 +59,25 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	CheckoutFlexTreeView,
-	FlexTreeView,
+	type CheckoutFlexTreeView,
+	type FlexTreeView,
 	ForestType,
-	ISharedTree,
-	InitializeAndSchematizeConfiguration,
-	SharedTree,
+	type ISharedTree,
+	type InitializeAndSchematizeConfiguration,
+	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
-import { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import type { EditManager } from "../../shared-tree-core/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
-	ConnectionSetter,
+	type ConnectionSetter,
 	type ITestTreeProvider,
 	SharedTreeTestFactory,
-	SharedTreeWithConnectionStateSetter,
+	type SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -89,9 +92,10 @@ import {
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
+	validateUsageError,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -190,14 +194,15 @@ describe("SharedTree", () => {
 			assert.equal(schematized.flexTree.content, undefined);
 		});
 
-		// TODO: ensure unhydrated initialTree input is correctly hydrated.
-		it.skip("unhydrated tree input", () => {
+		it("unhydrated tree input", () => {
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: Foo }));
 			const unhydratedInitialTree = new Foo({});
-			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			view.initialize(unhydratedInitialTree);
+
 			assert(view.root === unhydratedInitialTree);
 		});
 	});
@@ -431,10 +436,7 @@ describe("SharedTree", () => {
 					libraries: [leaf.library],
 				});
 				const node = b.objectRecursive("test node", {
-					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
-						() => node,
-						leaf.number,
-					]),
+					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 				});
 				const schema = b.intoSchema(node);
 
@@ -454,17 +456,14 @@ describe("SharedTree", () => {
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary(
-							(await tree1.summarize()).summary,
-						),
+						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
 					},
 					factory.attributes,
 				);
 
 				containerRuntimeFactory.processAllMessages();
 				const incrementalSummaryContext = {
-					summarySequenceNumber:
-						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
+					summarySequenceNumber: dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
 					latestSummarySequenceNumber:
 						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
@@ -531,7 +530,7 @@ describe("SharedTree", () => {
 				await provider.ensureSynchronized();
 				await provider.summarize();
 
-				const view1 = assertSchema(tree1, stringSequenceRootSchema);
+				const view1 = assertSchema(tree1, stringSequenceRootSchema, () => {});
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
@@ -1625,7 +1624,9 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
+			tree1.editor
+				.sequenceField({ parent: undefined, field: rootFieldKey })
+				.remove(0, 99),
 		);
 
 		provider.processMessages();
@@ -1897,6 +1898,44 @@ describe("SharedTree", () => {
 			const expectedCompressedTreeData = [0, "A", 0, "B", 0, "C"];
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);
 		});
+	});
+
+	describe("Schema validation", () => {
+		it("can create tree with schema validation enabled", async () => {
+			const provider = new TestTreeProviderLite(1);
+			const [sharedTree] = provider.trees;
+			const sf = new SchemaFactory("test");
+			const schema = sf.string;
+			assert.doesNotThrow(() => {
+				const view = sharedTree.viewWith(
+					new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+				);
+				view.initialize("42");
+			});
+		});
+	});
+
+	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	it("throws when an invalid type is inserted at runtime", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		const sf = new SchemaFactory("test");
+
+		const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+		);
+		view.initialize({ foo: ["42"] });
+		assert.throws(
+			() => {
+				// The cast here is necessary as the API provided by `insertAtEnd` is typesafe with respect
+				// to the schema, so in order to insert invalid content we need to bypass the types.
+				view.root.foo.insertAtEnd(3 as unknown as string);
+			},
+			validateUsageError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
+		);
 	});
 });
 

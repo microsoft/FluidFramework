@@ -9,13 +9,16 @@ import {
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
-	TreeConfiguration,
-	disposeSymbol,
+	TreeViewConfiguration,
 } from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
+import type {
+	IInventoryItem,
+	IInventoryItemEvents,
+	IInventoryList,
+} from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -36,30 +39,16 @@ export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList: InventoryItemList,
 }) {}
 
-export const treeConfiguration = new TreeConfiguration(
-	InventorySchema,
-	() =>
-		new InventorySchema({
-			inventoryItemList: [
-				{
-					id: uuid(),
-					name: "nut",
-					quantity: 0,
-				},
-				{
-					id: uuid(),
-					name: "bolt",
-					quantity: 0,
-				},
-			],
-		}),
-);
+export const treeConfiguration = new TreeViewConfiguration({ schema: InventorySchema });
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
+class NewTreeInventoryItem
+	extends TypedEmitter<IInventoryItemEvents>
+	implements IInventoryItem
+{
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;
@@ -98,13 +87,12 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
 	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
-	public static initializeTree(tree: ITree, initialTree?: any): void {
-		const view = tree.schematize(treeConfiguration);
+	public static initializeTree(tree: ITree, initialTree: InventorySchema): void {
+		const view = tree.viewWith(treeConfiguration);
+		view.initialize(initialTree);
 
-		// This is required because schematizing the tree twice will result in an error
-		if (initialTree !== undefined) {
-			view[disposeSymbol]();
-		}
+		// This is required because only one TreeView can exist at a time.
+		view.dispose();
 	}
 
 	private readonly _inventoryItemList: InventoryItemList;
@@ -112,15 +100,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 
 	public constructor(private readonly _tree: ITree) {
 		super();
-		// Note that although we always pass initialTree, it's only actually used on the first load and
-		// is ignored on subsequent loads.  AB#5974
-		// The schematizeView() call does a few things:
-		// 1. On first load, stamps the schema we defined above on the tree (permanently).
-		// 2. On first load, inserts the initial data we define in the initialTree.
-		// 3. On all loads, gets an (untyped) view of the data (the contents can't be accessed directly from the sharedTree).
-		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
-		// reach in and grab the inventoryItems list.
-		this._inventoryItemList = this._tree.schematize(treeConfiguration).root.inventoryItemList;
+		this._inventoryItemList = this._tree.viewWith(treeConfiguration).root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
 		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems

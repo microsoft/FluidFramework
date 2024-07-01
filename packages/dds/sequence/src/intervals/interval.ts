@@ -6,18 +6,22 @@
 /* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	PropertiesManager,
 	PropertySet,
 	createMap,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
 
-import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
+import {
+	IIntervalHelpers,
+	ISerializableInterval,
+	ISerializedInterval,
+} from "./intervalUtils.js";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
@@ -172,12 +176,7 @@ export class Interval implements ISerializableInterval {
 		seq?: number,
 	): PropertySet | undefined {
 		if (newProps) {
-			return this.propertyManager.addProperties(
-				this.properties,
-				newProps,
-				seq,
-				collaborating,
-			);
+			return this.propertyManager.addProperties(this.properties, newProps, seq, collaborating);
 		}
 	}
 
@@ -215,7 +214,11 @@ export class Interval implements ISerializableInterval {
 	}
 }
 
-export function createInterval(label: string, start: SequencePlace, end: SequencePlace): Interval {
+export function createInterval(
+	label: string,
+	start: SequencePlace,
+	end: SequencePlace,
+): Interval {
 	if (typeof start === "string" || typeof end === "string") {
 		throw new UsageError(
 			"The start and end positions of a plain interval may not be on the special endpoint segments.",

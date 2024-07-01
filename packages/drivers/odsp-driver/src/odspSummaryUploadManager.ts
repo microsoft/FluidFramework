@@ -5,11 +5,13 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import { getGitType } from "@fluidframework/protocol-base";
 import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/driver-definitions";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	getGitType,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	MonitoringContext,
@@ -26,7 +28,7 @@ import {
 	OdspSummaryTreeValue,
 } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**
@@ -40,16 +42,18 @@ export class OdspSummaryUploadManager {
 
 	constructor(
 		private readonly snapshotUrl: string,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		logger: ITelemetryLoggerExt,
 		private readonly epochTracker: EpochTracker,
-		private readonly forceAccessTokenViaAuthorizationHeader: boolean,
 		private readonly relayServiceTenantAndSessionId: () => string | undefined,
 	) {
 		this.mc = loggerToMonitoringContext(logger);
 	}
 
-	public async writeSummaryTree(tree: ISummaryTree, context: ISummaryContext): Promise<string> {
+	public async writeSummaryTree(
+		tree: ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
 		// then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
 		// Don't bother logging if lastSummaryProposalHandle hasn't been set before; only log on a positive mismatch.
@@ -97,13 +101,14 @@ export class OdspSummaryUploadManager {
 		};
 
 		return getWithRetryForTokenRefresh(async (options) => {
-			const storageToken = await this.getStorageToken(options, "WriteSummaryTree");
-
-			const { url, headers } = getUrlAndHeadersWithAuth(
-				`${this.snapshotUrl}/snapshot`,
-				storageToken,
-				this.forceAccessTokenViaAuthorizationHeader,
+			const url = `${this.snapshotUrl}/snapshot`;
+			const method = "POST";
+			const authHeader = await this.getAuthHeader(
+				{ ...options, request: { url, method } },
+				"WriteSummaryTree",
 			);
+
+			const headers = getHeadersWithAuth(authHeader);
 			headers["Content-Type"] = "application/json";
 			const relayServiceTenantAndSessionId = this.relayServiceTenantAndSessionId();
 			// This would be undefined in case of summary is uploaded in detached container with attachment
@@ -129,16 +134,15 @@ export class OdspSummaryUploadManager {
 					type: snapshot.type,
 				},
 				async () => {
-					const response =
-						await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
-							url,
-							{
-								body: postBody,
-								headers,
-								method: "POST",
-							},
-							"uploadSummary",
-						);
+					const response = await this.epochTracker.fetchAndParseAsJSON<IWriteSummaryResponse>(
+						url,
+						{
+							body: postBody,
+							headers,
+							method: "POST",
+						},
+						"uploadSummary",
+					);
 					return response.content;
 				},
 			);
@@ -175,6 +179,7 @@ export class OdspSummaryUploadManager {
 		let blobs = 0;
 		const keys = Object.keys(tree.tree);
 		for (const key of keys) {
+			assert(!key.includes("/"), "id should not include slashes");
 			const summaryObject = tree.tree[key];
 
 			let id: string | undefined;
@@ -205,12 +210,12 @@ export class OdspSummaryUploadManager {
 									type: "blob",
 									content: summaryObject.content,
 									encoding: "utf-8",
-							  }
+								}
 							: {
 									type: "blob",
 									content: Uint8ArrayToString(summaryObject.content, "base64"),
 									encoding: "base64",
-							  };
+								};
 					blobs++;
 					break;
 				}
@@ -239,7 +244,7 @@ export class OdspSummaryUploadManager {
 			}
 
 			const baseEntry: IOdspSummaryTreeBaseEntry = {
-				path: encodeURIComponent(key),
+				path: key,
 				type: getGitType(summaryObject),
 			};
 

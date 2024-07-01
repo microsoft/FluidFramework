@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
@@ -148,7 +148,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("can send and a batch containing a future/unknown op type", async () => {
+	it("[DEPRECATED] can send and a batch containing a future/unknown op type", async () => {
 		await setupContainers({
 			flushMode: FlushMode.TurnBased,
 			compressionOptions: {

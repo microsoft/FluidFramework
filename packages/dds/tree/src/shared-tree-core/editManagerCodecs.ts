@@ -3,31 +3,38 @@
  * Licensed under the MIT License.
  */
 
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type ICodecFamily,
-	ICodecOptions,
-	IJsonCodec,
-	IMultiFormatCodec,
+	type ICodecOptions,
+	type IJsonCodec,
+	type IMultiFormatCodec,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
 import { makeVersionDispatchingCodec } from "../codec/index.js";
-import {
+import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
 import {
-	JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
 	mapIterable,
 } from "../util/index.js";
 
-import { SummaryData } from "./editManager.js";
-import { Commit, EncodedCommit, EncodedEditManager, SequencedCommit } from "./editManagerFormat.js";
+import type { SummaryData } from "./editManager.js";
+import {
+	type Commit,
+	type EncodedCommit,
+	EncodedEditManager,
+	type SequencedCommit,
+} from "./editManagerFormat.js";
 
 export interface EditManagerEncodingContext {
+	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 }
 
@@ -101,6 +108,7 @@ function makeV1CodecWithVersion<TChangeset>(
 		...commit,
 		revision: revisionTagCodec.encode(commit.revision, {
 			originatorId: commit.sessionId,
+			idCompressor: context.idCompressor,
 			revision: undefined,
 		}),
 		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
@@ -113,6 +121,7 @@ function makeV1CodecWithVersion<TChangeset>(
 	) => {
 		const revision = revisionTagCodec.decode(commit.revision, {
 			originatorId: commit.sessionId,
+			idCompressor: context.idCompressor,
 			revision: undefined,
 		});
 
@@ -136,34 +145,37 @@ function makeV1CodecWithVersion<TChangeset>(
 					trunk: data.trunk.map((commit) =>
 						encodeCommit(commit, {
 							originatorId: commit.sessionId,
+							idCompressor: context.idCompressor,
 							schema: context.schema,
 							revision: undefined,
 						}),
 					),
-					branches: Array.from(
-						data.peerLocalBranches.entries(),
-						([sessionId, branch]) => [
-							sessionId,
-							{
-								base: revisionTagCodec.encode(branch.base, {
-									originatorId: sessionId,
+					branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
+						sessionId,
+						{
+							base: revisionTagCodec.encode(branch.base, {
+								originatorId: sessionId,
+								idCompressor: context.idCompressor,
+								revision: undefined,
+							}),
+							commits: branch.commits.map((commit) =>
+								encodeCommit(commit, {
+									originatorId: commit.sessionId,
+									idCompressor: context.idCompressor,
+									schema: context.schema,
 									revision: undefined,
 								}),
-								commits: branch.commits.map((commit) =>
-									encodeCommit(commit, {
-										originatorId: commit.sessionId,
-										schema: context.schema,
-										revision: undefined,
-									}),
-								),
-							},
-						],
-					),
+							),
+						},
+					]),
 					version,
 				};
 				return json;
 			},
-			decode: (json: EncodedEditManager<TChangeset>): SummaryData<TChangeset> => {
+			decode: (
+				json: EncodedEditManager<TChangeset>,
+				context: EditManagerEncodingContext,
+			): SummaryData<TChangeset> => {
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const trunk: readonly any[] = json.trunk;
@@ -174,6 +186,7 @@ function makeV1CodecWithVersion<TChangeset>(
 							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 							decodeCommit(commit, {
 								originatorId: commit.sessionId,
+								idCompressor: context.idCompressor,
 								revision: undefined,
 							}),
 					),
@@ -183,12 +196,14 @@ function makeV1CodecWithVersion<TChangeset>(
 							{
 								base: revisionTagCodec.decode(branch.base, {
 									originatorId: sessionId,
+									idCompressor: context.idCompressor,
 									revision: undefined,
 								}),
 								commits: branch.commits.map((commit) =>
 									// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 									decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
 										originatorId: commit.sessionId,
+										idCompressor: context.idCompressor,
 										revision: undefined,
 									}),
 								),

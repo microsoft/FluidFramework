@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import {
-	FieldChangeEncodingContext,
+	type FieldChangeEncodingContext,
 	SequenceField as SF,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
+import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
-	EncodingTestData,
+	type EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testIdCompressor,
@@ -27,11 +27,15 @@ import { inlineRevision } from "./utils.js";
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
 const tag1 = mintRevisionTag();
-const sessionId = { originatorId: "session1" as SessionId, revision: tag1 };
+const baseContext = {
+	originatorId: "session1" as SessionId,
+	revision: tag1,
+	idCompressor: testIdCompressor,
+};
 const context: FieldChangeEncodingContext = {
-	baseContext: sessionId,
-	encodeNode: (node) => TestNodeId.encode(node, sessionId),
-	decodeNode: (node) => TestNodeId.decode(node, sessionId),
+	baseContext,
+	encodeNode: (node) => TestNodeId.encode(node, baseContext),
+	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 };
 
 const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {

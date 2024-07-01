@@ -15,6 +15,7 @@ import {
 	type IChannel,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
@@ -26,16 +27,23 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
 } from "@fluidframework/merge-tree/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import {
+	IMatrixConsumer,
+	IMatrixProducer,
+	IMatrixReader,
+	IMatrixWriter,
+} from "@tiny-calc/nano";
 import Deque from "double-ended-queue";
 
 import { Handle, isHandleValid } from "./handletable.js";
@@ -65,6 +73,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
+ * @legacy
  * @alpha
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
@@ -107,7 +116,10 @@ interface CellLastWriteTrackerItem {
 	clientId: string; // clientId of the client which last modified this cell
 }
 
-/** @alpha */
+/**
+ * @legacy
+ * @alpha
+ */
 export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
@@ -200,6 +212,7 @@ export interface ISharedMatrix<T = any>
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
+ * @legacy
  * @alpha
  */
 export class SharedMatrix<T = any>
@@ -866,7 +879,10 @@ export class SharedMatrix<T = any>
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
+		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+			rowHandle,
+			colHandle,
+		);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
 		return (
@@ -922,11 +938,7 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(
-						rowHandle,
-						colHandle,
-						localSeq,
-					);
+					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.

@@ -10,18 +10,28 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { RedBlackTree } from "@fluidframework/merge-tree/internal";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { SharedObject, ValueType, parseHandles } from "@fluidframework/shared-object-base/internal";
-import { type ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	SharedObject,
+	ValueType,
+	bindHandles,
+	parseHandles,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	type ITelemetryLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
 import type {
@@ -38,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { LocalValueMaker, makeSerializable } from "./localValues.js";
+import { LocalValueMaker } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -75,6 +85,7 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
+ * @legacy
  * @alpha
  */
 export interface IDirectorySetOperation {
@@ -102,6 +113,7 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryDeleteOperation {
@@ -123,12 +135,14 @@ export interface IDirectoryDeleteOperation {
 
 /**
  * An operation on a specific key within a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryClearOperation {
@@ -145,12 +159,14 @@ export interface IDirectoryClearOperation {
 
 /**
  * An operation on one or more of the keys within a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryCreateSubDirectoryOperation {
@@ -172,6 +188,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
@@ -193,6 +210,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 /**
  * An operation on the subdirectories within a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectorySubDirectoryOperation =
@@ -201,6 +219,7 @@ export type IDirectorySubDirectoryOperation =
 
 /**
  * Any operation on a directory.
+ * @legacy
  * @alpha
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
@@ -210,6 +229,7 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  */
 export interface ICreateInfo {
@@ -234,6 +254,7 @@ export interface ICreateInfo {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  */
 export interface IDirectoryDataObject {
@@ -263,6 +284,7 @@ export interface IDirectoryDataObject {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  */
 export interface IDirectoryNewStorageFormat {
@@ -402,6 +424,7 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
+ * @legacy
  * @alpha
  */
 export class SharedDirectory
@@ -739,9 +762,7 @@ export class SharedDirectory
 						}
 						newSubDir = new SubDirectory(
 							seqData,
-							createInfo === undefined
-								? new Set()
-								: new Set<string>(createInfo.ccIds),
+							createInfo === undefined ? new Set() : new Set<string>(createInfo.ccIds),
 							this,
 							this.runtime,
 							this.serializer,
@@ -1307,11 +1328,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// Create a local value and serialize it.
 		const localValue = this.directory.localValueMaker.fromInMemory(value);
-		const serializableValue = makeSerializable(
-			localValue,
-			this.serializer,
-			this.directory.handle,
-		);
+		bindHandles(localValue, this.serializer, this.directory.handle);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -1325,7 +1342,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: serializableValue,
+			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;
@@ -1477,10 +1494,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (this.index < subdirNames.length) {
 					const subdirName = subdirNames[this.index++];
 					const subdir = this.dirs.get(subdirName);
-					assert(
-						subdir !== undefined,
-						0x8ac /* Could not find expected sub-directory. */,
-					);
+					assert(subdir !== undefined, 0x8ac /* Could not find expected sub-directory. */);
 					return { value: [subdirName, subdir], done: false };
 				}
 				return { value: undefined, done: true };
@@ -1900,15 +1914,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private updatePendingSubDirMessageCount(op: IDirectorySubDirectoryOperation): void {
 		if (op.type === "deleteSubDirectory") {
-			this.incrementPendingSubDirCount(
-				this.pendingDeleteSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.incrementPendingSubDirCount(this.pendingDeleteSubDirectoriesTracker, op.subdirName);
 		} else if (op.type === "createSubDirectory") {
-			this.incrementPendingSubDirCount(
-				this.pendingCreateSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.incrementPendingSubDirCount(this.pendingCreateSubDirectoriesTracker, op.subdirName);
 		}
 	}
 
@@ -1974,16 +1982,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		if (localOpMetadata.type === "createSubDir") {
-			this.decrementPendingSubDirCount(
-				this.pendingCreateSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.decrementPendingSubDirCount(this.pendingCreateSubDirectoriesTracker, op.subdirName);
 			this.submitCreateSubDirectoryMessage(op);
 		} else {
-			this.decrementPendingSubDirCount(
-				this.pendingDeleteSubDirectoriesTracker,
-				op.subdirName,
-			);
+			this.decrementPendingSubDirCount(this.pendingDeleteSubDirectoriesTracker, op.subdirName);
 			this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 		}
 	}
@@ -2089,7 +2091,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			) {
 				throw new Error("Rollback op does match last clear");
 			}
-		} else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
+		} else if (
+			(op.type === "delete" || op.type === "set") &&
+			localOpMetadata.type === "edit"
+		) {
 			const key: unknown = op.key;
 			assert(key !== undefined, 0x8ad /* "key" property is missing from edit operation. */);
 			assert(
@@ -2214,10 +2219,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				assert(
-					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
-					0x331 /* Unexpected pending message received */,
-				);
+				if (pendingKeyMessageIds[0] !== localOpMetadata.pendingMessageId) {
+					// TODO: AB#7742: Hitting this block indicates that the pending message Id received
+					// is not consistent with the "next" local op
+					this.logger.sendTelemetryEvent({
+						eventName: "unexpectedPendingMessage",
+						expectedPendingMessage: pendingKeyMessageIds[0],
+						actualPendingMessage: localOpMetadata.pendingMessageId,
+						expectedPendingMessagesLength: pendingKeyMessageIds.length,
+					});
+				}
 				pendingKeyMessageIds.shift();
 				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
@@ -2493,7 +2504,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param subdirName - The name of the subdirectory being deleted
 	 * @param local - Whether the message originated from the local client
 	 */
-	private deleteSubDirectoryCore(subdirName: string, local: boolean): SubDirectory | undefined {
+	private deleteSubDirectoryCore(
+		subdirName: string,
+		local: boolean,
+	): SubDirectory | undefined {
 		const previousValue = this._subdirectories.get(subdirName);
 		// This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
 		// Might want to consider cleaning out the structure more exhaustively though? But not when rollback.

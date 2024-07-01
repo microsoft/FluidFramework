@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	ILoader,
+	LoaderHeader,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable jsdoc/check-indentation */
 
@@ -42,7 +46,7 @@ export async function loadContainerPaused(
 	request: IRequest,
 	loadToSequenceNumber?: number,
 	signal?: AbortSignal,
-) {
+): Promise<IContainer> {
 	const container = await loader.resolve({
 		url: request.url,
 		headers: {
@@ -58,8 +62,10 @@ export async function loadContainerPaused(
 	const dm = container.deltaManager;
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
-	const pauseContainer = () => {
+	const pauseContainer = (): void => {
+		// eslint-disable-next-line no-void
 		void dm.inbound.pause();
+		// eslint-disable-next-line no-void
 		void dm.outbound.pause();
 	};
 
@@ -86,12 +92,12 @@ export async function loadContainerPaused(
 	let onAbort: () => void;
 	let onClose: (error?: IErrorBase) => void;
 
-	const promise = new Promise<void>((resolve, rejectArg) => {
-		onAbort = () => rejectArg(new GenericError("Canceled due to cancellation request."));
-		onClose = (error?: IErrorBase) => rejectArg(error);
+	const promise = new Promise<void>((resolve, reject) => {
+		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
+		onClose = (error?: IErrorBase): void => reject(error);
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
-		opHandler = () => {
+		opHandler = (): void => {
 			// If there is a specified sequence number, keep processing until we reach it.
 			if (
 				loadToSequenceNumber !== undefined &&
@@ -119,7 +125,9 @@ export async function loadContainerPaused(
 
 	// Wait for the ops to be processed.
 	await promise
-		.catch((error) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		.catch((error: any) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			container.close(error);
 			throw error;
 		})

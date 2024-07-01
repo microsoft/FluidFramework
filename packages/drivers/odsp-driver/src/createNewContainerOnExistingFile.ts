@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
@@ -10,7 +11,6 @@ import {
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./contracts.js";
@@ -38,7 +38,7 @@ import { IExistingFileInfo, createCacheSnapshotKey } from "./odspUtils.js";
  * "alternative file partition" where the main File stub is an ASPX page.
  */
 export async function createNewContainerOnExistingFile(
-	getStorageToken: InstrumentedStorageTokenFetcher,
+	getAuthHeader: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
 	logger: ITelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
@@ -62,7 +62,7 @@ export async function createNewContainerOnExistingFile(
 
 	const { id: summaryHandle } = await createNewFluidContainerCore<IWriteSummaryResponse>({
 		containerSnapshot,
-		getStorageToken,
+		getAuthHeader,
 		logger,
 		initialUrl,
 		forceAccessTokenViaAuthorizationHeader,

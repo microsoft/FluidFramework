@@ -7,11 +7,15 @@ import { performance } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
+	ICreateBlobResponse,
+	IVersion,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
@@ -21,12 +25,6 @@ import {
 	OdspErrorTypes,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ICreateBlobResponse,
-	IVersion,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -53,7 +51,7 @@ import {
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
 import { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
@@ -65,6 +63,7 @@ import {
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -100,7 +99,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
@@ -126,12 +125,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.checkAttachmentPOSTUrl();
 
 		const response = await getWithRetryForTokenRefresh(async (options) => {
-			const storageToken = await this.getStorageToken(options, "CreateBlob");
-			const { url, headers } = getUrlAndHeadersWithAuth(
-				`${this.attachmentPOSTUrl}/content`,
-				storageToken,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+			const url = `${this.attachmentPOSTUrl}/content`;
+			const method = "POST";
+			const authHeader = await this.getAuthHeader(
+				{ ...options, request: { url, method } },
+				"CreateBlob",
 			);
+			const headers = getHeadersWithAuth(authHeader);
 			headers["Content-Type"] = "application/octet-stream";
 
 			return PerformanceEvent.timedExecAsync(
@@ -148,7 +148,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							{
 								body: file,
 								headers,
-								method: "POST",
+								method,
 							},
 							"createBlob",
 						),
@@ -165,17 +165,20 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return response.content;
 	}
 
-	protected async fetchBlobFromStorage(blobId: string, evicted: boolean): Promise<ArrayBuffer> {
+	protected async fetchBlobFromStorage(
+		blobId: string,
+		evicted: boolean,
+	): Promise<ArrayBuffer> {
 		this.checkAttachmentGETUrl();
 
 		const blob = await getWithRetryForTokenRefresh(async (options) => {
-			const storageToken = await this.getStorageToken(options, "GetBlob");
-			const unAuthedUrl = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
-			const { url, headers } = getUrlAndHeadersWithAuth(
-				unAuthedUrl,
-				storageToken,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+			const url = `${this.attachmentGETUrl}/${encodeURIComponent(blobId)}/content`;
+			const method = "GET";
+			const authHeader = await this.getAuthHeader(
+				{ ...options, request: { url, method } },
+				"GetBlob",
 			);
+			const headers = getHeadersWithAuth(authHeader);
 
 			return PerformanceEvent.timedExecAsync(
 				this.logger,
@@ -311,8 +314,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 											snapshotTree: snapshotCachedEntry.snapshotTree,
 											blobContents: snapshotCachedEntry.blobs,
 											ops: snapshotCachedEntry.ops,
-											latestSequenceNumber:
-												snapshotCachedEntry.latestSequenceNumber,
+											latestSequenceNumber: snapshotCachedEntry.latestSequenceNumber,
 											sequenceNumber: snapshotCachedEntry.sequenceNumber,
 											snapshotFormatV: 1,
 										};
@@ -483,12 +485,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		}
 
 		return getWithRetryForTokenRefresh(async (options) => {
-			const storageToken = await this.getStorageToken(options, "GetVersions");
-			const { url, headers } = getUrlAndHeadersWithAuth(
-				`${this.snapshotUrl}/versions?top=${count}`,
-				storageToken,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+			const url = `${this.snapshotUrl}/versions?top=${count}`;
+			const method = "GET";
+			const storageToken = await this.getAuthHeader(
+				{ ...options, request: { url, method } },
+				"GetVersions",
 			);
+			const headers = getHeadersWithAuth(storageToken);
 
 			// Fetch the latest snapshot versions for the document
 			const response = await PerformanceEvent.timedExecAsync(
@@ -604,14 +607,16 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		const snapshotDownloader = async (
 			finalOdspResolvedUrl: IOdspResolvedUrl,
-			storageToken: string,
+			tokenFetcher: InstrumentedStorageTokenFetcher,
+			tokenFetchOptions: TokenFetchOptionsEx,
 			loadingGroupId: string[] | undefined,
 			options: ISnapshotOptions | undefined,
 			controller?: AbortController,
 		): Promise<ISnapshotRequestAndResponseOptions> => {
 			return downloadSnapshot(
 				finalOdspResolvedUrl,
-				storageToken,
+				tokenFetcher,
+				tokenFetchOptions,
 				loadingGroupId,
 				options,
 				this.snapshotFormatFetchType,
@@ -631,7 +636,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		try {
 			const odspSnapshot = await fetchSnapshotWithRedeem(
 				this.odspResolvedUrl,
-				this.getStorageToken,
+				this.getAuthHeader,
 				snapshotOptions,
 				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
@@ -673,7 +678,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				};
 				const odspSnapshot = await fetchSnapshotWithRedeem(
 					this.odspResolvedUrl,
-					this.getStorageToken,
+					this.getAuthHeader,
 					snapshotOptionsWithoutBlobs,
 					!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 					this.logger,
@@ -767,10 +772,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			});
 		this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
 			this.odspResolvedUrl.endpoints.snapshotStorageUrl,
-			this.getStorageToken,
+			this.getAuthHeader,
 			this.logger,
 			this.epochTracker,
-			!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 			this.relayServiceTenantAndSessionId,
 		);
 		return this.odspSummaryUploadManager;
@@ -811,15 +815,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		scenarioName?: string,
 	): Promise<ISnapshotTree | undefined> {
 		return getWithRetryForTokenRefresh(async (options) => {
-			const storageToken = await this.getStorageToken(options, "ReadCommit");
-			const snapshotDownloader = async (
-				url: string,
-				fetchOptions: RequestInit,
-				// eslint-disable-next-line unicorn/consistent-function-scoping
-			): Promise<IOdspResponse<unknown>> => {
+			const snapshotDownloader = async (url: string): Promise<IOdspResponse<unknown>> => {
+				const authHeader = await this.getAuthHeader(
+					{ ...options, request: { url, method: "GET" } },
+					"ReadCommit",
+				);
+				const headers = getHeadersWithAuth(authHeader);
 				return this.epochTracker.fetchAndParseAsJSON(
 					url,
-					fetchOptions,
+					{ headers },
 					"snapshotTree",
 					undefined,
 					scenarioName,
@@ -827,7 +831,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			};
 			const snapshot = await fetchSnapshot(
 				this.snapshotUrl!,
-				storageToken,
 				id,
 				this.fetchFullSnapshot,
 				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,

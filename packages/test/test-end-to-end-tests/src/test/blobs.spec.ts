@@ -13,17 +13,13 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReferenceType } from "@fluidframework/merge-tree/internal";
@@ -32,12 +28,12 @@ import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 import {
@@ -45,10 +41,6 @@ import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
 
 function makeTestContainerConfig(registry: ChannelFactoryRegistry): ITestContainerConfig {
 	return {
@@ -447,6 +439,9 @@ function serializationTests({
 							loaderProps: {
 								detachedBlobStorage,
 								options: { summarizeProtocolTree },
+								configProvider: createTestConfigProvider({
+									"Fluid.Container.MemoryBlobStorageEnabled": true,
+								}),
 							},
 						});
 						const container = await loader.createDetachedContainer(
@@ -499,7 +494,12 @@ function serializationTests({
 			it("serialize/rehydrate container with blobs", async function () {
 				const loader = provider.makeTestLoader({
 					...testContainerConfig,
-					loaderProps: { detachedBlobStorage },
+					loaderProps: {
+						detachedBlobStorage,
+						configProvider: createTestConfigProvider({
+							"Fluid.Container.MemoryBlobStorageEnabled": true,
+						}),
+					},
 				});
 				const serializeContainer = await loader.createDetachedContainer(
 					provider.defaultCodeDetails,
@@ -538,8 +538,7 @@ function serializationTests({
 					{
 						createContainer: {
 							connectToStorage: {
-								uploadSummaryWithContext: () =>
-									assert.fail("fail on real summary upload"),
+								uploadSummaryWithContext: () => assert.fail("fail on real summary upload"),
 							},
 						},
 					},
@@ -549,10 +548,10 @@ function serializationTests({
 					loaderProps: {
 						detachedBlobStorage,
 						documentServiceFactory,
-						configProvider: {
-							getRawConfig: (name) =>
-								name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
-						},
+						configProvider: createTestConfigProvider({
+							"Fluid.Container.MemoryBlobStorageEnabled": true,
+							"Fluid.Container.RetryOnAttachFailure": true,
+						}),
 					},
 				});
 				const serializeContainer = await loader.createDetachedContainer(
@@ -603,13 +602,19 @@ function serializationTests({
 				ContainerCloseUsageError,
 				async function () {
 					// test with and without offline load enabled
-					const offlineCfg = configProvider({
+					const offlineCfg = {
 						"Fluid.Container.enableOfflineLoad": true,
-					});
+					};
 					for (const cfg of [undefined, offlineCfg]) {
 						const loader = provider.makeTestLoader({
 							...testContainerConfig,
-							loaderProps: { detachedBlobStorage, configProvider: cfg },
+							loaderProps: {
+								detachedBlobStorage,
+								configProvider: createTestConfigProvider({
+									"Fluid.Container.MemoryBlobStorageEnabled": true,
+									...offlineCfg,
+								}),
+							},
 						});
 						const detachedContainer = await loader.createDetachedContainer(
 							provider.defaultCodeDetails,
@@ -621,15 +626,11 @@ function serializationTests({
 
 						detachedDataStore._root.set(
 							"my blob",
-							await detachedDataStore._runtime.uploadBlob(
-								stringToBuffer(text, "utf-8"),
-							),
+							await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
 						);
 						detachedDataStore._root.set(
 							"my same blob",
-							await detachedDataStore._runtime.uploadBlob(
-								stringToBuffer(text, "utf-8"),
-							),
+							await detachedDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
 						);
 						detachedDataStore._root.set(
 							"my other blob",
@@ -656,10 +657,7 @@ function serializationTests({
 								"detachedBlobStorage should be disposed after attach",
 							);
 						}
-						const url = await getUrlFromDetachedBlobStorage(
-							detachedContainer,
-							provider,
-						);
+						const url = await getUrlFromDetachedBlobStorage(detachedContainer, provider);
 						const attachedContainer = await provider
 							.makeTestLoader(testContainerConfig)
 							.resolve({ url });
@@ -668,10 +666,7 @@ function serializationTests({
 							(await attachedContainer.getEntryPoint()) as ITestDataObject;
 						await provider.ensureSynchronized();
 						assert.strictEqual(
-							bufferToString(
-								await attachedDataStore._root.get("my blob").get(),
-								"utf-8",
-							),
+							bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
 							text,
 						);
 					}
@@ -684,7 +679,12 @@ function serializationTests({
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
-						loaderProps: { detachedBlobStorage },
+						loaderProps: {
+							detachedBlobStorage,
+							configProvider: createTestConfigProvider({
+								"Fluid.Container.MemoryBlobStorageEnabled": true,
+							}),
+						},
 					});
 					const serializeContainer = await loader.createDetachedContainer(
 						provider.defaultCodeDetails,
@@ -733,11 +733,14 @@ function serializationTests({
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
-						loaderProps: { detachedBlobStorage },
+						loaderProps: {
+							detachedBlobStorage,
+							configProvider: createTestConfigProvider({
+								"Fluid.Container.MemoryBlobStorageEnabled": true,
+							}),
+						},
 					});
-					let container = await loader.createDetachedContainer(
-						provider.defaultCodeDetails,
-					);
+					let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 					const text = "this is some example text";
 					const dataStore = (await container.getEntryPoint()) as ITestDataObject;

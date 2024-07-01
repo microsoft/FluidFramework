@@ -12,18 +12,15 @@ import {
 	IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IContainerPackageInfo,
 	IClientConfiguration,
 	IDocumentMessage,
 	ISignalClient,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	ConnectionMode,
-	IClientDetails,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 export enum ReconnectMode {
 	Never = "Never",
@@ -55,19 +52,29 @@ export interface IConnectionManager {
 
 	readonly clientId: string | undefined;
 
-	/** The queue of outbound delta messages */
+	/**
+	 * The queue of outbound delta messages
+	 */
 	readonly outbound: IDeltaQueue<IDocumentMessage[]>;
 
-	/** Details of client */
+	/**
+	 * Details of client
+	 */
 	readonly clientDetails: IClientDetails;
 
-	/** Protocol version being used to communicate with the service */
+	/**
+	 * Protocol version being used to communicate with the service
+	 */
 	readonly version: string;
 
-	/** Max message size allowed to the delta manager */
+	/**
+	 * Max message size allowed to the delta manager
+	 */
 	readonly maxMessageSize: number;
 
-	/** Service configuration provided by the service. */
+	/**
+	 * Service configuration provided by the service.
+	 */
 	readonly serviceConfiguration: IClientConfiguration | undefined;
 
 	readonly readOnlyInfo: ReadOnlyInfo;
@@ -152,7 +159,7 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager whenever critical error happens and container should be closed.
 	 * Expects dispose() call in response to this call.
 	 */
-	readonly closeHandler: (error?: any) => void;
+	readonly closeHandler: (error?: IErrorBase) => void;
 
 	/**
 	 * Called whenever connection to relay service is lost.
@@ -200,14 +207,15 @@ export interface IConnectionManagerFactoryArgs {
 }
 
 /**
- *
+ * Gets the name of the Fluid package.
  * @param codeDetails- - Data structure used to describe the code to load on the Fluid document
- * @returns The name of the Fluid package
  */
 export const getPackageName = (
 	codeDetails: IFluidCodeDetails | undefined,
 ): IContainerPackageInfo => {
-	let containerPackageName;
+	// TODO: use a real type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let containerPackageName: any;
 	if (codeDetails && "name" in codeDetails) {
 		containerPackageName = codeDetails;
 	} else if (isFluidPackage(codeDetails?.package)) {
@@ -215,5 +223,6 @@ export const getPackageName = (
 	} else {
 		containerPackageName = codeDetails?.package;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	return { name: containerPackageName };
 };

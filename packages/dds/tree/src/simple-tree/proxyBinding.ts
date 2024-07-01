@@ -5,29 +5,30 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { AnchorNode, AnchorSet, UpPath, anchorSlot } from "../core/index.js";
+import { type AnchorNode, type AnchorSet, type UpPath, anchorSlot } from "../core/index.js";
 import {
 	ContextSlot,
-	FlexTreeNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeObjectNode,
+	type FlexTreeNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 	flexTreeSlot,
-	FieldKinds,
-	FlexFieldSchema,
+	type FieldKinds,
+	type FlexFieldSchema,
+	type MapTreeNode,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { RawTreeNode } from "./rawNode.js";
-import { WithType } from "./schemaTypes.js";
-import { TreeArrayNode } from "./arrayNode.js";
-import { TreeNode } from "./types.js";
+import type { WithType } from "./schemaTypes.js";
+import type { TreeArrayNode } from "./arrayNode.js";
+import type { TreeNode } from "./types.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { makeTree } from "../feature-libraries/flex-tree/lazyNode.js";
-import { TreeMapNode } from "./mapNode.js";
+import type { TreeMapNode } from "./mapNode.js";
 
 // This file contains various maps and helpers for supporting proxy binding (a.k.a. proxy hydration).
 // See ./ProxyBinding.md for a high-level overview of the process.
@@ -44,12 +45,11 @@ const proxySlot = anchorSlot<TreeNode>();
 
 /** A reverse mapping of {@link proxySlot} that is updated at the same time. */
 const proxyToAnchorNode = new WeakMap<TreeNode, AnchorNode>();
-/**
- * Maps proxies to their "raw" tree nodes.
- * The raw node exists when the proxy is first created but before it has been associated with a real {@link FlexTreeNode}.
- * For example, after a user calls `const proxy = new Foo({})` but before `proxy` is inserted into the tree and queried.
- */
-const proxyToRawFlexNode = new WeakMap<TreeNode, RawTreeNode<FlexTreeNodeSchema, unknown>>();
+
+// Map unhydrated nodes to and from their underlying flex tree implementation.
+// These maps are populated after a user calls `const proxy = new Foo({})` but before `proxy` is inserted into the tree and queried.
+const proxyToMapTreeNode = new WeakMap<TreeNode, MapTreeNode>();
+const mapTreeNodeToProxy = new WeakMap<MapTreeNode, TreeNode>();
 /** Used by `anchorProxy` as an optimization to ensure that only one anchor is remembered at a time for a given anchor node */
 const anchorForgetters = new WeakMap<TreeNode, () => void>();
 
@@ -58,7 +58,7 @@ const anchorForgetters = new WeakMap<TreeNode, () => void>();
  * @privateRemarks Use `forgetters` to cleanup the anchor allocated by this function once the anchor is no longer needed.
  * In practice, this happens when either the anchor node is destroyed, or another anchor to the same node is created by a new flex node.
  */
-export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): void {
+export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): AnchorNode {
 	assert(!anchorForgetters.has(proxy), 0x91c /* Proxy anchor should not be set twice */);
 	const anchor = anchors.track(path);
 	const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
@@ -72,6 +72,7 @@ export function anchorProxy(anchors: AnchorSet, path: UpPath, proxy: TreeNode): 
 	};
 	anchorForgetters.set(proxy, forget);
 	const off = anchorNode.on("afterDestroy", forget);
+	return anchorNode;
 }
 
 /**
@@ -97,7 +98,7 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 			return flexNode; // If it does have a flex node, return it...
 		} // ...otherwise, the flex node must be created
 		const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
-		const cursor = context.checkout.forest.allocateCursor();
+		const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 		context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 		const newFlexNode = makeTree(context, cursor);
 		cursor.free();
@@ -109,7 +110,7 @@ export function getFlexNode(proxy: TreeNode, allowFreed = false): FlexTreeNode {
 		return newFlexNode;
 	}
 
-	return proxyToRawFlexNode.get(proxy) ?? fail("Expected raw tree node for proxy");
+	return proxyToMapTreeNode.get(proxy) ?? fail("Expected raw tree node for proxy");
 }
 
 /**
@@ -120,7 +121,7 @@ export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
 	// This is in contrast to 'WeakMap.set()', which will throw a TypeError if given a non-object key.
 	return (
 		proxyToAnchorNode.get(target as TreeNode)?.slots.get(flexTreeSlot) ??
-		proxyToRawFlexNode.get(target as TreeNode)
+		proxyToMapTreeNode.get(target as TreeNode)
 	);
 }
 
@@ -128,6 +129,9 @@ export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
  * Retrieves the proxy associated with the given flex node via {@link setFlexNode}, if any.
  */
 export function tryGetProxy(flexNode: FlexTreeNode): TreeNode | undefined {
+	if (isMapTreeNode(flexNode)) {
+		return mapTreeNodeToProxy.get(flexNode);
+	}
 	return flexNode.anchorNode.slots.get(proxySlot);
 }
 
@@ -149,8 +153,9 @@ export function setFlexNode<TProxy extends TreeNode>(
 		existingFlexNode === undefined,
 		0x91d /* Cannot associate a flex node with multiple targets */,
 	);
-	if (flexNode instanceof RawTreeNode) {
-		proxyToRawFlexNode.set(proxy, flexNode);
+	if (isMapTreeNode(flexNode)) {
+		proxyToMapTreeNode.set(proxy, flexNode);
+		mapTreeNodeToProxy.set(flexNode, proxy);
 	} else {
 		assert(
 			tryGetProxy(flexNode) === undefined,
@@ -167,7 +172,11 @@ export function setFlexNode<TProxy extends TreeNode>(
  */
 function bindProxyToAnchorNode(proxy: TreeNode, anchorNode: AnchorNode): void {
 	// If the proxy currently has a raw node, forget it
-	proxyToRawFlexNode.delete(proxy);
+	const mapTreeNode = proxyToMapTreeNode.get(proxy);
+	if (mapTreeNode !== undefined) {
+		proxyToMapTreeNode.delete(proxy);
+		mapTreeNodeToProxy.delete(mapTreeNode);
+	}
 	// Once a proxy has been associated with an anchor node, it should never change to another anchor node
 	assert(
 		!proxyToAnchorNode.has(proxy),

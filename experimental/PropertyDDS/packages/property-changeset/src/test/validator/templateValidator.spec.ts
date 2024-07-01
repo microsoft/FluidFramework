@@ -56,14 +56,12 @@ import {
 						// throw error;
 					})
 			: // A better pattern is simply Promise.resolve(...). However without all callers
-			  // properly specifying they are `async` (lint disabled for file), they may fail.
-			  // In particular see test case
-			  //   "should fail if map with context key type typeid is not constant"
-			  new Promise((resolve) => {
-					resolve(
-						schemaValidator.validate(template, templatePrevious, async, skipSemver),
-					);
-			  });
+				// properly specifying they are `async` (lint disabled for file), they may fail.
+				// In particular see test case
+				//   "should fail if map with context key type typeid is not constant"
+				new Promise((resolve) => {
+					resolve(schemaValidator.validate(template, templatePrevious, async, skipSemver));
+				});
 	};
 
 	// Performs both synchronous and asynchronous validation
@@ -305,9 +303,7 @@ import {
 				});
 
 				it("fail: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(goodReservedTypes.templateSchema),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
 
@@ -468,9 +464,7 @@ import {
 				});
 
 				it("warn: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(goodReservedTypes.templateSchema),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:Example-" + semver.inc("1.0.0", "patch");
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
@@ -614,9 +608,7 @@ import {
 				});
 
 				it("warn: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(goodReservedTypes.templateSchema),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:Example-" + semver.inc("1.0.0", "minor");
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
@@ -758,9 +750,7 @@ import {
 				});
 
 				it("pass: changed 'inherits'", function () {
-					let templatePrevious = JSON.parse(
-						JSON.stringify(goodReservedTypes.templateSchema),
-					);
+					let templatePrevious = JSON.parse(JSON.stringify(goodReservedTypes.templateSchema));
 					let template = JSON.parse(JSON.stringify(templatePrevious));
 					template.typeid = "TeamLeoValidation2:Example-" + semver.inc("1.0.0", "major");
 					template.inherits = "Reference<Adsk.Core:Math.Color-1.0.0>";
@@ -1183,9 +1173,7 @@ import {
 				let expectations = function (result) {
 					expect(result.isValid).to.equal(false);
 					expect(result.errors.length).to.equal(2);
-					expect(result.errors[0].message).to.include(
-						MSG.KEY_MUST_BE_TYPEID + "NotATypeId",
-					);
+					expect(result.errors[0].message).to.include(MSG.KEY_MUST_BE_TYPEID + "NotATypeId");
 					expect(result.errors[1].message).to.include(
 						MSG.KEY_MUST_BE_TYPEID + "AlsoNotATypeId",
 					);

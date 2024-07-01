@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToString,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IDocumentAttributes,
@@ -20,8 +25,11 @@ import {
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	UsageError,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
@@ -43,6 +51,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
  * May not be compatible or relevant for any Url Resolver
+ * @legacy
  * @alpha
  */
 export interface IParsedUrl {
@@ -72,6 +81,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
+ * @legacy
  * @alpha
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
@@ -89,7 +99,7 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 				query,
 				// URLSearchParams returns null if the param is not provided.
 				version: parsed.searchParams.get("version") ?? undefined,
-		  }
+			}
 		: undefined;
 }
 
@@ -146,9 +156,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				blobContents = { ...blobContents, ...innerSnapshot.snapshotBlobs };
 				break;
 			}
-			case SummaryType.Attachment:
+			case SummaryType.Attachment: {
 				treeNode.blobs[key] = summaryObject.id;
 				break;
+			}
 			case SummaryType.Blob: {
 				const blobId = uuid();
 				treeNode.blobs[key] = blobId;
@@ -159,11 +170,13 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 				blobContents[blobId] = contentString;
 				break;
 			}
-			case SummaryType.Handle:
+			case SummaryType.Handle: {
 				throw new LoggingError(
 					"No handles should be there in summary in detached container!!",
 				);
+			}
 			default: {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
 			}
 		}
@@ -180,7 +193,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
-	assert(snapshot.sequenceNumber !== undefined, 0x93a /* Snapshot sequence number is missing */);
+	assert(
+		snapshot.sequenceNumber !== undefined,
+		0x93a /* Snapshot sequence number is missing */,
+	);
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [blobId, arrayBufferLike] of snapshot.blobContents.entries()) {
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
@@ -286,12 +302,13 @@ export const combineSnapshotTreeAndSnapshotBlobs = (
 };
 
 export function isDeltaStreamConnectionForbiddenError(
-	error: any,
+	error: unknown,
 ): error is DeltaStreamConnectionForbiddenError {
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		error?.errorType === DriverErrorTypes.deltaStreamConnectionForbidden
+		(error as Partial<IFluidErrorBase>)?.errorType ===
+			DriverErrorTypes.deltaStreamConnectionForbidden
 	);
 }
 
@@ -322,9 +339,12 @@ export function getDetachedContainerStateFromSerializedContainer(
 	serializedContainer: string,
 ): IPendingDetachedContainerState {
 	const hasBlobsSummaryTree = ".hasAttachmentBlobs";
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const parsedContainerState = JSON.parse(serializedContainer);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
 		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
@@ -347,16 +367,19 @@ export function getDetachedContainerStateFromSerializedContainer(
 export function getAttachedContainerStateFromSerializedContainer(
 	serializedContainer: string | undefined,
 ): IPendingContainerState | undefined {
-	return serializedContainer !== undefined
-		? (JSON.parse(serializedContainer) as IPendingContainerState)
-		: undefined;
+	return serializedContainer === undefined
+		? undefined
+		: (JSON.parse(serializedContainer) as IPendingContainerState);
 }
 
 /**
  * Ensures only a single instance of the provided async function is running.
  * If there are multiple calls they will all get the same promise to wait on.
  */
-export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const runSingle = <A extends any[], R>(
+	func: (...args: A) => Promise<R>,
+): ((...args: A) => Promise<R>) => {
 	let running:
 		| {
 				args: A;
@@ -366,7 +389,7 @@ export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) 
 	// don't mark this function async, so we return the same promise,
 	// rather than one that is wrapped due to async
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	return (...args: A) => {
+	return (...args: A): Promise<R> => {
 		if (running !== undefined) {
 			if (!compareArrays(running.args, args)) {
 				return Promise.reject(

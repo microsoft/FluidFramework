@@ -10,7 +10,7 @@ In this walkthrough, you'll learn about using the Fluid Framework by examining t
 
 {{< callout note >}}
 
-The demo app uses Fluid Framework 2.0, which is in preview.
+The demo app uses Fluid Framework 2.X.
 
 {{< /callout >}}
 
@@ -36,7 +36,7 @@ The app creates Fluid containers using a schema that defines a set of *initial o
 Lastly, `root` defines the HTML element that the Dice will render on.
 
 ```js
-import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
+import { SharedTree, TreeViewConfiguration, SchemaFactory, Tree } from "fluid-framework";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const client = new TinyliciousClient();
@@ -59,7 +59,8 @@ Fluid data is stored within containers, and these containers need to be created 
 
 ### Create a new container
 
-The creation section of the application starts with calling `createContainer` and passing in a schema defining which shared objects will be available on the new `container`. After a new container is created, default data can be set on the shared objects before the container is attached to the Tinylicious service.
+The creation section of the application starts with calling `createContainer` and passing in a schema defining which shared objects will be available on the new `container`. After a new container is created, default data can be set on the shared objects before the container is attached to the Tinylicious service. Note, we are passing the parameter "2" in the createContainer call to indicate the version of Fluid Framework that the data
+is compatible with. For new apps always use "2". Use "1" if you have apps running FluidFramework 1.X until you've migrated all the apps to version 2.X.
 
 The `attach` call publishes the container to the Tinylicious service and returns the `id` of the container, which the app can use to load this container on other clients (or this client in a future session). Once attached, any further changes to the shared objects, made by the rendered app, will be communicated to all collaborators.
 
@@ -67,11 +68,11 @@ The `renderDiceRoller` function is created in a later step. It renders the UI of
 
 ```js
 const createNewDice = async () => {
-	const { container } = await client.createContainer(containerSchema);
-	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
+	const { container } = await client.createContainer(containerSchema, "2");
+	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
+	dice.initialize(new Dice({ value: 1 }));
 	const id = await container.attach();
-	renderDiceRoller(dice, root);
-	return id;
+	renderDiceRoller(dice.root, root);
 }
 ```
 
@@ -81,9 +82,9 @@ Loading a container is more straightforward than creating a new one. When loadin
 
 ```js
 const loadExistingDice = async (id) => {
-	const { container } = await client.getContainer(id, containerSchema);
-	const dice = container.initialObjects.diceTree.schematize(treeConfiguration).root;
-	renderDiceRoller(dice, root);
+	const { container } = await client.getContainer(id, containerSchema, "2");
+	const dice = container.initialObjects.diceTree.viewWith(treeViewConfiguration);
+	renderDiceRoller(dice.root, root);
 }
 ```
 
@@ -221,7 +222,7 @@ The [full code for this application is available](https://github.com/microsoft/F
 [fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
 [@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
 [@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
-[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
+[@fluidframework/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
 [AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
 [TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}

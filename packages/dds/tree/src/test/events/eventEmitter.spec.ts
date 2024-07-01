@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-
-import { EventEmitter, Listenable, createEmitter } from "../../events/index.js";
+import { EventEmitter, type Listenable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -99,7 +96,31 @@ describe("EventEmitter", () => {
 		assert(!closed);
 	});
 
-	it("allows duplicate event listeners", () => {
+	it("correctly handles multiple registrations for the same event", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count: number;
+		const listener = () => (count += 1);
+		const off1 = emitter.on("open", listener);
+		const off2 = emitter.on("open", () => listener());
+
+		count = 0;
+		emitter.emit("open");
+		assert.strictEqual(count, 2); // Listener should be fired twice
+
+		count = 0;
+		off1();
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+
+		count = 0;
+		off2();
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	// Note: This behavior is not contractually required (see docs for `Listenable.on()`),
+	// but is tested here to check for changes or regressions.
+	it("correctly handles multiple registrations of the same listener", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count: number;
 		const listener = () => (count += 1);
@@ -121,28 +142,14 @@ describe("EventEmitter", () => {
 		assert.strictEqual(count, 0);
 	});
 
-	it("fails on duplicate deregistrations", () => {
+	it("allows repeat deregistrations", () => {
 		const emitter = createEmitter<TestEvents>();
 		const deregister = emitter.on("open", () => {});
 		const deregisterB = emitter.on("open", () => {});
 		deregister();
-		assert.throws(
-			() => deregister(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Listener does not exist. Event deregistration functions may only be invoked once.",
-				),
-		);
+		deregister();
 		deregisterB();
-		assert.throws(
-			() => deregister(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Event has no listeners. Event deregistration functions may only be invoked once.",
-				),
-		);
+		deregisterB();
 	});
 
 	it("skips events adding during event", () => {

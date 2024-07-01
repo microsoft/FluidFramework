@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/readme-command",
-	"version": "0.39.0",
+	"version": "0.40.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
@@ -17,7 +17,11 @@
 	"bin": {
 		"fluid-readme": "./bin/run.js"
 	},
-	"files": ["/bin", "/lib", "/oclif.manifest.json"],
+	"files": [
+		"/bin",
+		"/lib",
+		"/oclif.manifest.json"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run build:readme",
@@ -70,8 +74,12 @@
 		"bin": "fluid-readme",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": ["-h"],
-		"additionalVersionFlags": ["-V"],
+		"additionalHelpFlags": [
+			"-h"
+		],
+		"additionalVersionFlags": [
+			"-V"
+		],
 		"plugins": [],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/readme-command/<%- commandPath %>",
 		"topicSeparator": " "

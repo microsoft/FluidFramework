@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
+import type { IBlob, ITree } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
-import { IBlob, ITree } from "@fluidframework/driver-definitions/internal";
 
-import {
-	ISnapshotNormalizerConfig,
-	gcBlobPrefix,
-	getNormalizedSnapshot,
-} from "../snapshotNormalizer.js";
+import type { ISnapshotNormalizerConfig } from "../snapshotNormalizer.js";
+import { gcBlobPrefix, getNormalizedSnapshot } from "../snapshotNormalizer.js";
 
 describe("Snapshot Normalizer", () => {
 	it("can normalize tree entries", () => {

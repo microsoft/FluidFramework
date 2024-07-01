@@ -6,16 +6,16 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	Anchor,
-	AnchorNode,
+	type Anchor,
+	type AnchorNode,
 	CursorLocationType,
 	EmptyKey,
-	FieldKey,
-	ITreeSubscriptionCursor,
-	TreeNavigationResult,
-	TreeNodeSchemaIdentifier,
-	TreeValue,
-	Value,
+	type FieldKey,
+	type ITreeSubscriptionCursor,
+	type TreeNavigationResult,
+	type TreeNodeSchemaIdentifier,
+	type TreeValue,
+	type Value,
 	forEachField,
 	inCursorField,
 	mapCursorFields,
@@ -25,36 +25,36 @@ import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/
 import { FieldKinds } from "../default-schema/index.js";
 import {
 	Any,
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
+	type FlexAllowedTypes,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type LeafNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
 
-import { Context } from "./context.js";
+import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
-	FlexTreeField,
-	FlexTreeFieldNode,
-	FlexTreeLeafNode,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeObjectNodeTyped,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeTypedField,
-	FlexTreeTypedNode,
-	FlexTreeUnboxField,
-	FlexibleFieldContent,
-	FlexibleNodeContent,
-	PropertyNameFromFieldKey,
+	type FlexTreeField,
+	type FlexTreeFieldNode,
+	type FlexTreeLeafNode,
+	type FlexTreeMapNode,
+	type FlexTreeNode,
+	type FlexTreeObjectNodeTyped,
+	type FlexTreeOptionalField,
+	type FlexTreeRequiredField,
+	type FlexTreeTypedField,
+	type FlexTreeTypedNode,
+	type FlexTreeUnboxField,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
+	type PropertyNameFromFieldKey,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -70,7 +70,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents } from "./treeEvents.js";
+import type { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -283,6 +283,12 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				);
 				return unsubscribeFromSubtreeChange;
 			}
+			case "nodeChanged": {
+				return this.anchorNode.on("childrenChangedAfterBatch", listener);
+			}
+			case "treeChanged": {
+				return this.anchorNode.on("subtreeChangedAfterBatch", listener);
+			}
 			default:
 				unreachableCase(eventName);
 		}
@@ -443,7 +449,9 @@ export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new S
 	reservedObjectNodeFieldPropertyNames,
 );
 
-export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+export function propertyNameFromFieldKey<T extends string>(
+	key: T,
+): PropertyNameFromFieldKey<T> {
 	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}

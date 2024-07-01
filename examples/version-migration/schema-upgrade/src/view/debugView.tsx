@@ -9,12 +9,31 @@ import React, { useEffect, useState } from "react";
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
-	model: IInventoryListAppModel;
+	model: IInventoryListAppModel & IMigratableModel;
 	getUrlForContainerId?: (containerId: string) => string;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
 	const { model, getUrlForContainerId } = props;
+
+	const [disableControls, setDisableControls] = useState<boolean>(
+		model.migrationTool.migrationState !== "collaborating",
+	);
+
+	useEffect(() => {
+		const migrationStateChangedHandler = () => {
+			setDisableControls(model.migrationTool.migrationState !== "collaborating");
+		};
+		model.migrationTool.events.on("stopping", migrationStateChangedHandler);
+		model.migrationTool.events.on("migrating", migrationStateChangedHandler);
+		model.migrationTool.events.on("migrated", migrationStateChangedHandler);
+		migrationStateChangedHandler();
+		return () => {
+			model.migrationTool.events.off("stopping", migrationStateChangedHandler);
+			model.migrationTool.events.off("migrating", migrationStateChangedHandler);
+			model.migrationTool.events.off("migrated", migrationStateChangedHandler);
+		};
+	}, [model]);
 
 	return (
 		<div>
@@ -23,6 +42,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			<ControlsView
 				proposeVersion={model.migrationTool.proposeVersion}
 				addItem={model.inventoryList.addItem}
+				disabled={disableControls}
 			/>
 		</div>
 	);
@@ -46,14 +66,14 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 		const migrationStateChangedHandler = () => {
 			setMigrationState(model.migrationTool.migrationState);
 		};
-		model.migrationTool.on("stopping", migrationStateChangedHandler);
-		model.migrationTool.on("migrating", migrationStateChangedHandler);
-		model.migrationTool.on("migrated", migrationStateChangedHandler);
+		model.migrationTool.events.on("stopping", migrationStateChangedHandler);
+		model.migrationTool.events.on("migrating", migrationStateChangedHandler);
+		model.migrationTool.events.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			model.migrationTool.off("stopping", migrationStateChangedHandler);
-			model.migrationTool.off("migrating", migrationStateChangedHandler);
-			model.migrationTool.off("migrated", migrationStateChangedHandler);
+			model.migrationTool.events.off("stopping", migrationStateChangedHandler);
+			model.migrationTool.events.off("migrating", migrationStateChangedHandler);
+			model.migrationTool.events.off("migrated", migrationStateChangedHandler);
 		};
 	}, [model]);
 
@@ -63,9 +83,9 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			: `Proposed version to migrate to: ${model.migrationTool.proposedVersion}`;
 
 	const acceptedVersionStatus =
-		model.migrationTool.acceptedVersion === undefined
+		model.migrationTool.acceptedMigration === undefined
 			? "No accepted version for migration yet"
-			: `Accepted version to migrate to: ${model.migrationTool.acceptedVersion}`;
+			: `Accepted version to migrate to: ${model.migrationTool.acceptedMigration.newVersion} @ sequenceNumber: ${model.migrationTool.acceptedMigration.migrationSequenceNumber}`;
 
 	const migratedContainerStatus = (() => {
 		if (model.migrationTool.newContainerId === undefined) {
@@ -119,10 +139,11 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 interface IControlsViewProps {
 	readonly proposeVersion: (version: string) => void;
 	readonly addItem: (name: string, quantity: number) => void;
+	readonly disabled: boolean;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
-	const { proposeVersion, addItem } = props;
+	const { proposeVersion, addItem, disabled } = props;
 
 	const addSampleItems = () => {
 		addItem("Alpha", 1);
@@ -140,6 +161,7 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 					onClick={() => {
 						proposeVersion("one");
 					}}
+					disabled={disabled}
 				>
 					&quot;one&quot;
 				</button>
@@ -147,12 +169,15 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 					onClick={() => {
 						proposeVersion("two");
 					}}
+					disabled={disabled}
 				>
 					&quot;two&quot;
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>
-				<button onClick={addSampleItems}>Add sample items</button>
+				<button onClick={addSampleItems} disabled={disabled}>
+					Add sample items
+				</button>
 			</div>
 		</div>
 	);

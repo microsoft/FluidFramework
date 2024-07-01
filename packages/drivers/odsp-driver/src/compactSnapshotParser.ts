@@ -4,8 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import {
+	ISnapshot,
+	ISnapshotTree,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "./ReadBufferUtils.js";
@@ -170,10 +173,7 @@ function readTreeSection(node: NodeCore): {
 						const result = readTreeSection(treeNode.getNode(5));
 						trees[treeNode.getString(1)] = result.snapshotTree;
 						slowTreeStructureCount += result.slowTreeStructureCount;
-						assert(
-							treeNode.getBool(3),
-							0x3db /* Unreferenced if present should be true */,
-						);
+						assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
 						snapshotTree.unreferenced = true;
 						continue;
 					}
@@ -279,7 +279,9 @@ export function parseCompactSnapshotResponse(
 		0x2c2 /* "Create Version should be equal to currentReadVersion" */,
 	);
 
-	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
+	const [snapshot, durationSnapshotTree] = measure(() =>
+		readSnapshotSection(records.snapshot),
+	);
 	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
 
 	return {

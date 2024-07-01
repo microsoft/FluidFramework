@@ -16,7 +16,7 @@ import {
 	IChannelStorageService,
 	IDeltaConnection,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
@@ -31,9 +31,12 @@ type Overridable<T> = T extends ((...args: any) => any) | string | number | unde
 	? T
 	: {
 			-readonly [P in keyof T]?: Overridable<T[P]>;
-	  };
+		};
 
-function createOverridableProxy<T extends object>(name: string, ...overrides: Overridable<T>[]) {
+function createOverridableProxy<T extends object>(
+	name: string,
+	...overrides: Overridable<T>[]
+) {
 	return new Proxy<T>({} as any as T, {
 		get: (_, p, r) => {
 			for (const override of overrides) {
@@ -199,15 +202,12 @@ describe("SharedObject attaching binding and connecting", () => {
 				await sharedObject.load(
 					createOverridableProxy<IChannelServices>("services", {
 						objectStorage: createOverridableProxy("objectStorage"),
-						deltaConnection: createOverridableProxy<IDeltaConnection>(
-							"deltaConnection",
-							{
-								attach(handler) {
-									attachCalled = true;
-								},
-								connected,
+						deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
+							attach(handler) {
+								attachCalled = true;
 							},
-						),
+							connected,
+						}),
 					}),
 				);
 
@@ -288,15 +288,12 @@ describe("SharedObject attaching binding and connecting", () => {
 				sharedObject.connect(
 					createOverridableProxy<IChannelServices>("services", {
 						objectStorage: createOverridableProxy("objectStorage"),
-						deltaConnection: createOverridableProxy<IDeltaConnection>(
-							"deltaConnection",
-							{
-								attach(handler) {
-									attachCalled = true;
-								},
-								connected,
+						deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
+							attach(handler) {
+								attachCalled = true;
 							},
-						),
+							connected,
+						}),
 					}),
 				);
 
@@ -376,15 +373,12 @@ describe("SharedObject attaching binding and connecting", () => {
 				await sharedObject.load(
 					createOverridableProxy<IChannelServices>("services", {
 						objectStorage: createOverridableProxy("objectStorage"),
-						deltaConnection: createOverridableProxy<IDeltaConnection>(
-							"deltaConnection",
-							{
-								attach(handler) {
-									attachCalled = true;
-								},
-								connected,
+						deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
+							attach(handler) {
+								attachCalled = true;
 							},
-						),
+							connected,
+						}),
 					}),
 				);
 
@@ -474,15 +468,12 @@ describe("SharedObject attaching binding and connecting", () => {
 						sharedObject.connect(
 							createOverridableProxy<IChannelServices>("services", {
 								objectStorage: createOverridableProxy("objectStorage"),
-								deltaConnection: createOverridableProxy<IDeltaConnection>(
-									"deltaConnection",
-									{
-										attach(handler) {
-											attachCalled = true;
-										},
-										connected: false,
+								deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
+									attach(handler) {
+										attachCalled = true;
 									},
-								),
+									connected: false,
+								}),
 							}),
 						);
 					},

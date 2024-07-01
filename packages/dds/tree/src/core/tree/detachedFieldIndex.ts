@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
+import { type ICodecOptions, type IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
-	Brand,
-	IdAllocator,
-	JsonCompatibleReadOnly,
-	NestedMap,
+	type Brand,
+	type IdAllocator,
+	type JsonCompatibleReadOnly,
+	type NestedMap,
 	brand,
 	deleteFromNestedMap,
 	idAllocatorFromMaxId,
@@ -18,13 +18,14 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { RevisionTagCodec } from "../rebase/index.js";
-import { FieldKey } from "../schema-stored/index.js";
+import type { RevisionTagCodec } from "../rebase/index.js";
+import type { FieldKey } from "../schema-stored/index.js";
 
-import * as Delta from "./delta.js";
+import type * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
-import { Format } from "./detachedFieldIndexFormat.js";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
+import type { Format } from "./detachedFieldIndexFormat.js";
+import type { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -51,10 +52,11 @@ export class DetachedFieldIndex {
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly idCompressor: IIdCompressor,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options);
+		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
 	}
 
 	public clone(): DetachedFieldIndex {
@@ -62,6 +64,7 @@ export class DetachedFieldIndex {
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
 			this.revisionTagCodec,
+			this.idCompressor,
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
@@ -147,11 +150,8 @@ export class DetachedFieldIndex {
 		if (nodeId !== undefined) {
 			for (let i = 0; i < count; i++) {
 				assert(
-					tryGetFromNestedMap(
-						this.detachedNodeToField,
-						nodeId.major,
-						nodeId.minor + i,
-					) === undefined,
+					tryGetFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i) ===
+						undefined,
 					0x7ce /* Detached node ID already exists in index */,
 				);
 				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);

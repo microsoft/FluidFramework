@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ITree, type TreeView } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
+
 import { AppState } from "./appState.js";
 import { type App, appTreeConfiguration } from "./schema.js";
 
@@ -22,14 +23,15 @@ export class Bubblebench extends DataObject {
 	protected async initializingFirstTime() {
 		const tree = SharedTree.create(this.runtime);
 
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
+		this.view.initialize({ clients: [] });
 		this.root.set(treeKey, tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const tree = await this.root.get<IFluidHandle<ITree>>(treeKey)!.get();
-		this.initializeTree(tree);
+		this.view = tree.viewWith(appTreeConfiguration);
 	}
 
 	protected async hasInitialized() {
@@ -57,14 +59,6 @@ export class Bubblebench extends DataObject {
 		} else {
 			this.runtime.once("connected", onConnected);
 		}
-	}
-
-	/**
-	 * Initialize the schema of the shared tree to that of the Bubblebench AppState.
-	 * @param tree - ISharedTree
-	 */
-	initializeTree(tree: ITree) {
-		this.view = tree.schematize(appTreeConfiguration);
 	}
 
 	/**

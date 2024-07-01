@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -21,6 +21,8 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:biome": "biome check . --formatter-enabled=true",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
@@ -28,7 +30,8 @@
 		"debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"full": "node ./dist/nodeStressTest.js --profile full",
 		"lint": "fluid-build . --task lint",
@@ -50,7 +53,7 @@
 		"test:stress:tinylicious:report": "npm run test:stress:tinylicious",
 		"test:stress:tinylicious:run": "npm run test:stress:run",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
 		"usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
 	},
@@ -100,15 +103,15 @@
 		"commander": "^5.1.0",
 		"ps-node": "^0.1.6",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^4.0.1"
+		"tinylicious": "^5.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/build-tools": "^0.39.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
@@ -118,7 +121,7 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.3.3"
+		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,

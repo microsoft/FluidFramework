@@ -7,35 +7,36 @@ import { strict as assert, fail } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	AsyncGenerator,
+	type AsyncGenerator,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
 
 import {
-	EditGeneratorOpWeights,
-	FuzzTestState,
-	FuzzTransactionView,
-	FuzzView,
+	type EditGeneratorOpWeights,
+	type FuzzTestState,
+	type FuzzTransactionView,
+	type FuzzView,
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
+	applyConstraint,
 	applyFieldEdit,
 	applySchemaOp,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
 } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
-import { Operation } from "./operationTypes.js";
+import type { Operation } from "./operationTypes.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -45,7 +46,10 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 	branch?: FuzzTransactionView;
 }
 
-const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
+const fuzzComposedVsIndividualReducer = combineReducersAsync<
+	Operation,
+	BranchedTreeFuzzTestState
+>({
 	treeEdit: async (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
@@ -76,6 +80,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	},
 	schemaChange: async (state, operation) => {
 		applySchemaOp(state, operation);
+	},
+	constraint: async (state, operation) => {
+		applyConstraint(state, operation);
 	},
 });
 

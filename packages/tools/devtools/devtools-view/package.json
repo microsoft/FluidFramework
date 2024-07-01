@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -33,37 +33,33 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
-		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest",
-		"build:test:jest": "concurrently npm:build:test:jest:cjs npm:build:test:jest:esm",
-		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
-		"build:test:jest:esm": "fluid-tsc module --project ./src/test/jest/tsconfig.esm.json",
-		"build:test:mocha": "fluid-tsc module --project ./src/test/screenshot/tsconfig.json",
-		"build:test:utils": "concurrently npm:build:test:utils:cjs npm:build:test:utils:esm",
-		"build:test:utils:cjs": "fluid-tsc commonjs --project ./src/test/utils/tsconfig.cjs.json",
-		"build:test:utils:esm": "fluid-tsc module --project ./src/test/utils/tsconfig.esm.json",
+		"build:test": "concurrently npm:build:test:cjs npm:build:test:esm",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
 		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check . --formatter-enabled=true",
+		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
-		"format": "fluid-build --task format .",
+		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
+		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"rebuild": "npm run clean && npm run build",
-		"test": "concurrently npm:test:jest npm:test:mocha",
+		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
 		"test:jest:cjs": "jest --roots ./dist",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
-		"test:mocha:fail": "mocha lib/test/screenshot/Screenshot.test.js --delay --exit",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:screenshots": "npm run test:mocha",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist && fluid-tsc commonjs --watch --project ./tsconfig.cjs.json"
 	},
@@ -80,24 +76,24 @@
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"axe-core": "^4.9.1",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"react-split-pane": "^0.1.92",
-		"recharts": "^2.7.2",
-		"scheduler": "^0.20.0"
+		"recharts": "^2.7.2"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.6.2",
+		"@biomejs/biome": "^1.7.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.39.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.39.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@microsoft/api-extractor": "^7.43.1",
+		"@microsoft/api-extractor": "^7.45.1",
 		"@previewjs/api": "^13.0.0",
 		"@previewjs/chromeless": "^7.0.3",
 		"@previewjs/core": "^23.0.0",
@@ -110,8 +106,8 @@
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/react": "^17.0.44",
-		"@types/react-dom": "^17.0.18",
+		"@types/react": "^17.0.71",
+		"@types/react-dom": "^17.0.25",
 		"@types/recharts": "^1.8.24",
 		"@types/testing-library__jest-dom": "^5.14.5",
 		"chai": "^4.2.0",
@@ -137,7 +133,7 @@
 		"rimraf": "^4.4.0",
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
-		"typescript": "~5.3.3",
+		"typescript": "~5.4.5",
 		"vite": "^4.5.2"
 	},
 	"fluid": {
@@ -152,31 +148,8 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test:jest:cjs": [
-				"tsc",
-				"build:test:utils:cjs"
-			],
-			"build:test:jest:esm": [
-				"build:esnext",
-				"build:test:utils:esm"
-			],
-			"build:test:mocha": [
-				"build:esnext",
-				"build:test:utils:esm"
-			],
-			"build:test:utils:cjs": [
-				"^tsc"
-			],
-			"build:test:utils:esm": [
-				"^tsc",
-				"^build:esnext"
-			],
-			"eslint": [
-				"tsc",
-				"build:esnext",
-				"build:test:jest:esm",
-				"build:test:mocha",
-				"build:test:utils:esm"
+			"check:exports": [
+				"build:esnext"
 			]
 		}
 	},

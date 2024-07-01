@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Tagged } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -12,7 +13,6 @@ import {
 	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { Tagged } from "@fluidframework/core-interfaces";
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
 
@@ -22,7 +22,6 @@ import {
 	IGarbageCollectorConfigs,
 	UnreferencedState,
 	disableTombstoneKey,
-	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
@@ -63,7 +62,7 @@ interface INodeUsageProps extends ICommonProps {
 	/** The full path (in GC Path format) to the node in question */
 	id: string;
 	/** Latest timestamp received from the server, as a baseline for computing GC state/age */
-	currentReferenceTimestampMs: number | undefined;
+	currentReferenceTimestampMs: number;
 	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
 	packagePath: readonly string[] | undefined;
 	/** In case of Revived - what node added the reference? */
@@ -165,12 +164,6 @@ export class GCTelemetryTracker {
 			...otherNodeUsageProps
 		}: INodeUsageProps,
 	) {
-		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
-		// logging as nothing interesting would have happened worth logging.
-		if (currentReferenceTimestampMs === undefined) {
-			return;
-		}
-
 		// Note: For SubDataStore Load usage, trackedId will be the DataStore's id, not the full path in question.
 		// This is necessary because the SubDataStore path may be unrecognized by GC (if suited for a custom request handler)
 		const nodeStateTracker = this.getNodeStateTracker(trackedId);
@@ -295,9 +288,6 @@ export class GCTelemetryTracker {
 				ThrowOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
 				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
 			},
-			sweepFlags: {
-				EnableSweepFlag: this.mc.config.getBoolean(runSweepKey),
-			},
 		};
 
 		if (
@@ -390,8 +380,7 @@ export class GCTelemetryTracker {
 			 */
 			const nodeStateTracker = this.getNodeStateTracker(detailedProps.trackedId); // Note: This is never SubDataStore path
 			const active =
-				nodeStateTracker === undefined ||
-				nodeStateTracker.state === UnreferencedState.Active;
+				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
 				const pkg = await this.getNodePackagePath(eventProps.id.value);
 				const fromPkg = eventProps.fromId
@@ -437,9 +426,6 @@ export function sendGCUnexpectedUsageEvent(
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
 		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
-	});
-	event.sweepFlags = JSON.stringify({
-		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
 	event.gcVersion = getGCVersionInEffect(mc.config);
 

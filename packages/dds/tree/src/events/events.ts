@@ -4,9 +4,7 @@
  */
 
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-
-import { fail, getOrCreate } from "../util/index.js";
+import { getOrCreate } from "../util/index.js";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
@@ -87,7 +85,7 @@ export type TransformListeners<
  * ```
  * {@link createEmitter} can help implement this interface via delegation.
  *
- * @public
+ * @sealed @public
  */
 export interface Listenable<TListeners extends object> {
 	/**
@@ -95,7 +93,9 @@ export interface Listenable<TListeners extends object> {
 	 * @param eventName - the name of the event
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a {@link Off | function} which will deregister the listener when called.
-	 * This function has undefined behavior if called more than once.
+	 * This deregistration function is idempotent and therefore may be safely called more than once with no effect.
+	 * @remarks Do not register the exact same `listener` object for the same event more than once.
+	 * Doing so will result in undefined behavior, and is not guaranteed to behave the same in future versions of this library.
 	 */
 	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
@@ -214,7 +214,7 @@ export interface HasListeners<TListeners extends Listeners<TListeners>> {
 export class EventEmitter<TListeners extends Listeners<TListeners>>
 	implements Listenable<TListeners>, HasListeners<TListeners>
 {
-	private readonly listeners = new Map<
+	protected readonly listeners = new Map<
 		keyof TListeners,
 		Map<Off, (...args: any[]) => TListeners[keyof TListeners]>
 	>();
@@ -262,28 +262,21 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a function which will deregister the listener when run.
 	 * This function will error if called more than once.
-	 * @privateRemarks
-	 * TODO:
-	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
-	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
-	public on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off {
+	public on<K extends keyof Listeners<TListeners>>(
+		eventName: K,
+		listener: TListeners[K],
+	): Off {
 		const off: Off = () => {
-			const listeners =
-				this.listeners.get(eventName) ??
-				// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
-				fail(
-					"Event has no listeners. Event deregistration functions may only be invoked once.",
-				);
-			assert(
-				listeners.delete(off),
-				0x4c1 /* Listener does not exist. Event deregistration functions may only be invoked once. */,
-			);
-			if (listeners.size === 0) {
-				this.listeners.delete(eventName);
-				this.noListeners?.(eventName);
+			const currentListeners = this.listeners.get(eventName);
+			if (currentListeners?.delete(off) === true) {
+				if (currentListeners.size === 0) {
+					this.listeners.delete(eventName);
+					this.noListeners?.(eventName);
+				}
 			}
 		};
+
 		getOrCreate(this.listeners, eventName, () => new Map()).set(off, listener);
 		return off;
 	}
@@ -296,8 +289,10 @@ export class EventEmitter<TListeners extends Listeners<TListeners>>
 	}
 }
 
-// This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
-class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
+/**
+ * This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
+ */
+export class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
 	extends EventEmitter<TListeners>
 	implements IEmitter<TListeners>
 {

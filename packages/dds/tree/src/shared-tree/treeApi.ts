@@ -7,17 +7,17 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { Context, TreeStatus } from "../feature-libraries/index.js";
 import {
-	ImplicitFieldSchema,
-	TreeNode,
-	TreeNodeApi,
-	TreeView,
+	type ImplicitFieldSchema,
+	type TreeNode,
+	type TreeNodeApi,
+	type TreeView,
 	getFlexNode,
 	treeNodeApi,
 } from "../simple-tree/index.js";
 import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
 
 /**
@@ -31,7 +31,7 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
  * @privateRemarks
  * This interface exists so that the (generously) overloaded `Tree.runTransaction` function can have the "rollback" property hanging off of it.
  * The rollback property being available on the function itself gives users a convenient option for rolling back a transaction without having to import another symbol.
- * @public
+ * @sealed @public
  */
 export interface RunTransaction {
 	/**
@@ -57,7 +57,10 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	<TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult): TResult;
+	<TNode extends TreeNode, TResult>(
+		node: TNode,
+		transaction: (node: TNode) => TResult,
+	): TResult;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
 	 * @param tree - The tree which will be edited by the transaction
@@ -186,7 +189,7 @@ export interface RunTransaction {
 	<TNode extends TreeNode, TResult>(
 		node: TNode,
 		transaction: (node: TNode) => TResult,
-		preconditions?: TransactionConstraint[],
+		preconditions?: readonly TransactionConstraint[],
 	): TResult;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -211,7 +214,7 @@ export interface RunTransaction {
 	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult,
-		preconditions?: TransactionConstraint[],
+		preconditions?: readonly TransactionConstraint[],
 	): TResult;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -238,7 +241,7 @@ export interface RunTransaction {
 	<TNode extends TreeNode, TResult>(
 		node: TNode,
 		transaction: (node: TNode) => TResult | typeof rollback,
-		preconditions?: TransactionConstraint[],
+		preconditions?: readonly TransactionConstraint[],
 	): TResult | typeof rollback;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -264,7 +267,7 @@ export interface RunTransaction {
 	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult | typeof rollback,
-		preconditions?: TransactionConstraint[],
+		preconditions?: readonly TransactionConstraint[],
 	): TResult | typeof rollback;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -289,7 +292,7 @@ export interface RunTransaction {
 	<TNode extends TreeNode>(
 		node: TNode,
 		transaction: (node: TNode) => void,
-		preconditions?: TransactionConstraint[],
+		preconditions?: readonly TransactionConstraint[],
 	): void;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
@@ -313,13 +316,17 @@ export interface RunTransaction {
 	<TView extends TreeView<ImplicitFieldSchema>>(
 		tree: TView,
 		transaction: (root: TView["root"]) => void,
-		preconditions?: TransactionConstraint[],
+		preconditions?: readonly TransactionConstraint[],
 	): void;
 }
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
- * @public
+ * @remarks
+ * This type should only be used via the public `Tree` export.
+ * @privateRemarks
+ * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
+ * @sealed @public
  */
 export interface TreeApi extends TreeNodeApi {
 	/**
@@ -383,8 +390,8 @@ export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more 
  * @public
  */
 export interface NodeInDocumentConstraint {
-	type: "nodeInDocument";
-	node: TreeNode;
+	readonly type: "nodeInDocument";
+	readonly node: TreeNode;
 }
 
 // TODO: Add more constraint types here
@@ -396,7 +403,7 @@ function createRunTransaction(): RunTransaction {
 		target: T,
 	): T & { rollback: typeof rollback } {
 		Reflect.defineProperty(target, "rollback", { value: rollback });
-		return target as T & { rollback: typeof rollback };
+		return target as T & { readonly rollback: typeof rollback };
 	}
 
 	return defineRollbackProperty(runTransaction.bind({}));
@@ -407,12 +414,16 @@ function createRunTransaction(): RunTransaction {
  * @remarks
  * This API is not publicly exported but is exported outside of this module so that test code may unit test the `Tree.runTransaction` function directly without being restricted to its public API overloads.
  */
-export function runTransaction<TNode extends TreeNode, TRoot extends ImplicitFieldSchema, TResult>(
+export function runTransaction<
+	TNode extends TreeNode,
+	TRoot extends ImplicitFieldSchema,
+	TResult,
+>(
 	treeOrNode: TNode | TreeView<TRoot>,
 	transaction:
 		| ((node: TNode) => TResult | typeof rollback)
 		| ((root: TRoot) => TResult | typeof rollback),
-	preconditions: TransactionConstraint[] = [],
+	preconditions: readonly TransactionConstraint[] = [],
 ): TResult | typeof rollback {
 	if (treeOrNode instanceof SchematizingSimpleTreeView) {
 		const t = transaction as (root: TRoot) => TResult | typeof rollback;
@@ -434,9 +445,9 @@ export function runTransaction<TNode extends TreeNode, TRoot extends ImplicitFie
 }
 
 function runTransactionInCheckout<TResult>(
-	checkout: TreeCheckout,
+	checkout: ITreeCheckout,
 	transaction: () => TResult | typeof rollback,
-	preconditions: TransactionConstraint[],
+	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
 	checkout.transaction.start();
 	for (const constraint of preconditions) {
