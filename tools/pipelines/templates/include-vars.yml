@@ -103,3 +103,12 @@ variables:
 - name: testCoverage
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
+
+# Guardian tasks auto-injected by the 1ES pipeline templates can't run successfully for runs that come from forks
+# due to ADO stripping most permissions in that case.
+# The relevant team is aware and looking for a solution.
+# In the meantime, we suppress the ADO warnings that are emitted when the tasks are skipped (per the instructions in
+# the warnings themselves).
+${{ if eq(variables['System.TeamProject'], 'public') }}:
+  - name: GDN_SUPPRESS_FORKED_BUILD_WARNING
+    value: true
