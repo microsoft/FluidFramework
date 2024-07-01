@@ -120,7 +120,11 @@ export class RemoteMessageProcessor {
 		};
 	}
 
-	//* TODO: Add comment
+	/**
+	 * Based on pre-existing batch tracking info and the current message's batch metadata,
+	 * this will return the starting CSN for this message's batch, and will also update
+	 * the batch tracking info (this.batchStartCsn) based on whether we're still mid-batch.
+	 */
 	private getAndUpdateBatchStartCsn(message: ISequencedDocumentMessage): number {
 		const batchMetadataFlag = (message.metadata as { batch: boolean | undefined })?.batch;
 		if (this.batchStartCsn === undefined) {
@@ -133,7 +137,7 @@ export class RemoteMessageProcessor {
 				return this.batchStartCsn;
 			}
 
-			// Metadata flag is undefined.  Single-message batch.
+			// Single-message batch (Since metadata flag is undefined)
 			// IMPORTANT: Leave this.batchStartCsn undefined, we're ready for the next batch now.
 			return message.clientSequenceNumber;
 		}
