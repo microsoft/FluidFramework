@@ -7,7 +7,7 @@ import {
 	IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client";
+import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";
