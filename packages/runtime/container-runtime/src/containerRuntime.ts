@@ -173,7 +173,7 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	IPendingBatchMessage,
+	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
@@ -1553,10 +1553,6 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit(message);
-					this.flush();
-				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -4128,7 +4124,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4137,7 +4133,7 @@ export class ContainerRuntime
 		this.flush();
 	}
 
-	private reSubmit(message: IPendingBatchMessage) {
+	private reSubmit(message: PendingMessageResubmitData) {
 		// Need to parse from string for back-compat
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);

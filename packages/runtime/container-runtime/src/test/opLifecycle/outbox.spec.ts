@@ -35,7 +35,7 @@ import {
 	Outbox,
 } from "../../opLifecycle/index.js";
 import {
-	IPendingBatchMessage,
+	PendingMessageResubmitData,
 	PendingStateManager,
 	type IPendingMessage,
 } from "../../pendingStateManager.js";
@@ -228,7 +228,7 @@ describe("Outbox", () => {
 				mockLogger,
 			),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (message: IPendingBatchMessage) => {
+			reSubmit: (message: PendingMessageResubmitData) => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
