@@ -14,12 +14,18 @@
 	"type": "module",
 	"exports": {
 		".": {
+			"trimmedAPI": {
+				"types": {
+					"import": "./lib/public.d.ts",
+					"require": "./dist/public.d.ts"
+				}
+			},
 			"import": {
-				"types": "./lib/public.d.ts",
+				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/public.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -45,7 +51,7 @@
 		}
 	},
 	"main": "lib/index.js",
-	"types": "lib/public.d.ts",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
@@ -62,6 +68,7 @@
 		"check:biome": "biome check . --formatter-enabled=true",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
 		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
@@ -141,6 +148,7 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
+	"exportsComments": "The 'trimmedAPI' export condition is set as a workaround for 'flub generate entrypoints', which expects `exports` to contain an entry for all entrypoints. The custom condition effectively hides the public entrypoint unless the 'trimmedAPI' condition is set manually.",
 	"typeValidation": {
 		"broken": {}
 	}
