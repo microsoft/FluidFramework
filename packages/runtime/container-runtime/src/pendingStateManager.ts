@@ -11,6 +11,7 @@ import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
@@ -256,9 +257,12 @@ export class PendingStateManager implements IDisposable {
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
+	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
 	public processPendingLocalMessage(
 		message: InboundSequencedContainerRuntimeMessage,
+		batchStartCsn: number,
 	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
@@ -272,6 +276,20 @@ export class PendingStateManager implements IDisposable {
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
+
+		if (pendingMessage.batchStartCsn !== batchStartCsn) {
+			this.logger?.sendErrorEvent({
+				eventName: "BatchClientSequenceNumberMismatch",
+				details: {
+					processingBatch: !!this.pendingBatchBeginMessage,
+					pendingBatchCsn: pendingMessage.batchStartCsn,
+					batchStartCsn,
+					messageBatchMetadata: (message.metadata as any)?.batch,
+					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
+				},
+				messageDetails: extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		const messageContent = buildPendingMessageContent(message);
 
