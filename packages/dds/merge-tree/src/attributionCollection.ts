@@ -243,14 +243,20 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		let index = this.findIndex(startOffset);
 		let attributionKey = this.get(index);
 		if (attributionKey !== undefined) {
-			result.push({ offset: this.offsets[index], key: attributionKey });
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			result.push({ offset: this.offsets[index]!, key: attributionKey });
 		}
 		index++;
 		const endOffsetVal = endOffset ?? Number.MAX_SAFE_INTEGER;
-		while (index < this.offsets.length && endOffsetVal >= this.offsets[index]) {
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		while (index < this.offsets.length && endOffsetVal >= this.offsets[index]!) {
 			attributionKey = this.get(index);
 			if (attributionKey !== undefined) {
-				result.push({ offset: this.offsets[index], key: attributionKey });
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				result.push({ offset: this.offsets[index]!, key: attributionKey });
 			}
 			index++;
 		}
@@ -262,7 +268,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		// for attribution collections with under ~64 entries, and even at maximum size (which would require a maximum
 		// length segment with every offset having different attribution), getAtOffset is on the order of 100ns.
 		let i = 0;
-		while (i < this.offsets.length && offset > this.offsets[i]) {
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		while (i < this.offsets.length && offset > this.offsets[i]!) {
 			i++;
 		}
 		return this.offsets[i] === offset ? i : i - 1;
@@ -284,8 +292,12 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const splitIndex = this.findIndex(pos);
 		const splitCollection = new AttributionCollection(this.length - pos);
 		for (let i = splitIndex; i < this.keys.length; i++) {
-			splitCollection.offsets.push(Math.max(this.offsets[i] - pos, 0));
-			splitCollection.keys.push(this.keys[i]);
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			splitCollection.offsets.push(Math.max(this.offsets[i]! - pos, 0));
+			// Non null asserting, this.keys[i] will always exist since we are looping though the length of it?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			splitCollection.keys.push(this.keys[i]!);
 		}
 
 		if (this.channels) {
@@ -306,8 +318,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const lastEntry = this.keys[this.keys.length - 1];
 		for (let i = 0; i < other.keys.length; i++) {
 			if (i !== 0 || !areEqualAttributionKeys(lastEntry, other.keys[i])) {
-				this.offsets.push(other.offsets[i] + this.length);
-				this.keys.push(other.keys[i]);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.offsets.push(other.offsets[i]! + this.length);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.keys.push(other.keys[i]!);
 			}
 		}
 
@@ -334,7 +348,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const root: ExtractGeneric<IAttributionCollectionSpec<AttributionKey>["root"]>[] =
 			new Array(this.keys.length);
 		for (let i = 0; i < this.keys.length; i++) {
-			root[i] = { offset: this.offsets[i], key: this.keys[i] };
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			root[i] = { offset: this.offsets[i]!, key: this.keys[i]! };
 		}
 		const result: IAttributionCollectionSpec<AttributionKey> = {
 			root,
@@ -374,7 +390,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		} else {
 			this.channels ??= {};
 			if (this.channels[name] !== undefined) {
-				this.channels[name].update(undefined, channel);
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.channels[name]!.update(undefined, channel);
 			} else {
 				this.channels[name] = channel;
 			}
@@ -409,18 +427,28 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
 					);
 				};
-				if (posBreakpoints[curIndex] > cumulativeSegPos) {
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				if (posBreakpoints[curIndex]! > cumulativeSegPos) {
 					curIndex--;
 				}
 
-				while (posBreakpoints[curIndex] < cumulativeSegPos + segment.cachedLength) {
-					const nextOffset = Math.max(posBreakpoints[curIndex] - cumulativeSegPos, 0);
-					pushEntry(nextOffset, seqs[curIndex]);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				while (posBreakpoints[curIndex]! < cumulativeSegPos + segment.cachedLength) {
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const nextOffset = Math.max(posBreakpoints[curIndex]! - cumulativeSegPos, 0);
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pushEntry(nextOffset, seqs[curIndex]!);
 					curIndex++;
 				}
 
 				if (attribution.offsets.length === 0) {
-					pushEntry(0, seqs[curIndex - 1]);
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pushEntry(0, seqs[curIndex - 1]!);
 				}
 
 				assignToSegment(attribution, segment);
