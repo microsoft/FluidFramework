@@ -24,12 +24,12 @@ export namespace InternalUtilityTypes {
 	 * Returns non-symbol keys for optional properties of an object type.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
-	 * `[K in keyof T as NonSymbolWithOptionalPropertyOf<T, K>]: ...`
+	 * `[K in keyof T as OptionalNonSymbolKeysOf<T, K>]: ...`
 	 *
 	 * @beta
 	 * @system
 	 */
-	export type NonSymbolWithOptionalPropertyOf<
+	export type OptionalNonSymbolKeysOf<
 		T extends object,
 		Keys extends keyof T = keyof T,
 	> = Exclude<
@@ -43,12 +43,12 @@ export namespace InternalUtilityTypes {
 	 * Returns non-symbol keys for required properties of an object type.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
-	 * `[K in keyof T as NonSymbolWithRequiredPropertyOf<T, K>]: ...`
+	 * `[K in keyof T as RequiredNonSymbolKeysOf<T, K>]: ...`
 	 *
 	 * @beta
 	 * @system
 	 */
-	export type NonSymbolWithRequiredPropertyOf<
+	export type RequiredNonSymbolKeysOf<
 		T extends object,
 		Keys extends keyof T = keyof T,
 	> = Exclude<
@@ -59,25 +59,42 @@ export namespace InternalUtilityTypes {
 	>;
 
 	/**
-	 * Returns TTrue if T is sometimes serializable type, otherwise TFalse.
+	 * Returns Result.WhenSomethingDeserializable if T is sometimes at least
+	 * a partially deserializable type, otherwise Result.WhenNeverDeserializable.
 	 * Fully not deserializable (functions, bigints, symbols, and undefined
-	 * less intersection with TException) produce TFalse.
+	 * less intersection with TException) produce Result.WhenNeverDeserializable.
+	 * An object would have a defined result even if parts of its content are
+	 * not deserializable.
+	 *
+	 * @param Result - Result type with two properties. One property must always
+	 * be `never` as `T` maybe a union of never deserializable and at least
+	 * partially deserializable types and the result is a union of Result.*.
+	 *
+	 * @privateRemarks
+	 * If `Result.WhenSomethingDeserializable` was `true` and
+	 * `Result.WhenNeverDeserializable` was `false`, then the return type
+	 * for type `T` would be `boolean` for a sometimes deserializable type.
 	 *
 	 * @beta
 	 * @system
 	 */
-	export type IfAtLeastSometimesDeserializable<T, TException, TTrue, TFalse> =
-		/* check for only non-serializable value types */ T extends // eslint-disable-next-line @typescript-eslint/ban-types
-			| Function
-			| bigint
-			| symbol
-			| undefined
-			? /* not serializable => check for exception */ T extends TException
-				? /* exception => ensure exception is not `never` */ TException extends never
-					? /* `never` exception => no exception */ TFalse
-					: /* proper exception => */ TTrue
-				: /* no exception => */ TFalse
-			: /* at least partially serializable */ TTrue;
+	export type TestDeserializabilityOf<
+		T,
+		TException,
+		Result extends
+			| { WhenSomethingDeserializable: unknown; WhenNeverDeserializable: never }
+			| { WhenSomethingDeserializable: never; WhenNeverDeserializable: unknown },
+	> = /* check for only non-serializable value types */ T extends // eslint-disable-next-line @typescript-eslint/ban-types
+		| Function
+		| bigint
+		| symbol
+		| undefined
+		? /* not serializable => check for exception */ T extends TException
+			? /* exception => ensure exception is not `never` */ TException extends never
+				? /* `never` exception => no exception */ Result["WhenNeverDeserializable"]
+				: /* proper exception => */ Result["WhenSomethingDeserializable"]
+			: /* no exception => */ Result["WhenNeverDeserializable"]
+		: /* at least partially serializable */ Result["WhenSomethingDeserializable"];
 
 	/**
 	 * Returns non-symbol keys for defined, (likely) serializable properties of an
@@ -133,11 +150,10 @@ export namespace InternalUtilityTypes {
 				undefined | symbol | Function | bigint
 			> extends never
 				? /* exclusively supported types or exactly `never` */ never
-				: /* at least some unsupported type => check for any supported */ IfAtLeastSometimesDeserializable<
+				: /* at least some unsupported type => check for any supported */ TestDeserializabilityOf<
 						T[K],
 						TException,
-						K,
-						never
+						{ WhenSomethingDeserializable: K; WhenNeverDeserializable: never }
 					>;
 		}[Keys],
 		undefined | symbol
@@ -384,7 +400,7 @@ export namespace InternalUtilityTypes {
 									: /* property bag => */ FlattenIntersection<
 											{
 												/* required properties are recursed and may not have undefined values. */
-												[K in keyof T as NonSymbolWithRequiredPropertyOf<
+												[K in keyof T as RequiredNonSymbolKeysOf<
 													T,
 													K
 												>]-?: undefined extends T[K]
@@ -394,7 +410,7 @@ export namespace InternalUtilityTypes {
 													: JsonSerializableFilter<T[K], TReplaced | T>;
 											} & {
 												/* optional properties are recursed and allowed to preserve undefined value type. */
-												[K in keyof T as NonSymbolWithOptionalPropertyOf<
+												[K in keyof T as OptionalNonSymbolKeysOf<
 													T,
 													K
 												>]?: JsonSerializableFilter<T[K], TReplaced | T | undefined>;

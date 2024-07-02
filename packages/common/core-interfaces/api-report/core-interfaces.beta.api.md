@@ -256,7 +256,6 @@ export namespace InternalUtilityTypes {
         [K in keyof T]: T[K];
     } : T;
     export type HasNonPublicProperties<T> = ReplaceRecursionWith<T, any> extends T ? false : true;
-    export type IfAtLeastSometimesDeserializable<T, TException, TTrue, TFalse> = T extends Function | bigint | symbol | undefined ? T extends TException ? TException extends never ? TFalse : TTrue : TFalse : TTrue;
     export type IfSameType<X, Y, IfSame = unknown, IfDifferent = never> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? IfSame : IfDifferent;
     export type IsEnumLike<T extends object> = T extends readonly (infer _)[] ? false : T extends {
         readonly [i: number]: string;
@@ -280,11 +279,11 @@ export namespace InternalUtilityTypes {
     export type JsonSerializableFilter<T, TReplaced> = boolean extends (T extends never ? true : false) ? JsonTypeWith<TReplaced> : unknown extends T ? JsonTypeWith<TReplaced> : T extends null | boolean | number | string | TReplaced ? T : Extract<T, Function> extends never ? T extends object ? T extends readonly (infer _)[] ? {
         [K in keyof T]: JsonForSerializableArrayItem<T[K], TReplaced, JsonSerializableFilter<T[K], TReplaced | T>>;
     } : IsExactlyObject<T> extends true ? NonNullJsonObjectWith<TReplaced> : IsEnumLike<T> extends true ? T : FlattenIntersection<{
-        [K in keyof T as NonSymbolWithRequiredPropertyOf<T, K>]-?: undefined extends T[K] ? {
+        [K in keyof T as RequiredNonSymbolKeysOf<T, K>]-?: undefined extends T[K] ? {
             ["error required property may not allow undefined value"]: never;
         } : JsonSerializableFilter<T[K], TReplaced | T>;
     } & {
-        [K in keyof T as NonSymbolWithOptionalPropertyOf<T, K>]?: JsonSerializableFilter<T[K], TReplaced | T | undefined>;
+        [K in keyof T as OptionalNonSymbolKeysOf<T, K>]?: JsonSerializableFilter<T[K], TReplaced | T | undefined>;
     } & {
         [K in keyof T & symbol]: never;
     }> : never : never;
@@ -299,14 +298,14 @@ export namespace InternalUtilityTypes {
     export type NonSymbolWithDeserializablePropertyOf<T extends object, TException, Keys extends keyof T = keyof T> = Exclude<{
         [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? T[K] extends never ? never : K : never;
     }[Keys], undefined | symbol>;
-    export type NonSymbolWithOptionalPropertyOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: T extends Record<K, T[K]> ? never : K;
-    }[Keys], undefined | symbol>;
     export type NonSymbolWithPossiblyDeserializablePropertyOf<T extends object, TException, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? never : IfAtLeastSometimesDeserializable<T[K], TException, K, never>;
+        [K in Keys]: Extract<Exclude<T[K], TException>, undefined | symbol | Function | bigint> extends never ? never : TestDeserializabilityOf<T[K], TException, {
+            WhenSomethingDeserializable: K;
+            WhenNeverDeserializable: never;
+        }>;
     }[Keys], undefined | symbol>;
-    export type NonSymbolWithRequiredPropertyOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
-        [K in Keys]: T extends Record<K, T[K]> ? K : never;
+    export type OptionalNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: T extends Record<K, T[K]> ? never : K;
     }[Keys], undefined | symbol>;
     export interface RecursionMarker {
         // (undocumented)
@@ -316,6 +315,16 @@ export namespace InternalUtilityTypes {
     export type ReplaceRecursionWithImpl<T, TReplacement, TAncestorTypes> = T extends TAncestorTypes ? TReplacement : T extends object ? T extends Function ? T : {
         [K in keyof T]: ReplaceRecursionWithImpl<T[K], TReplacement, TAncestorTypes | T>;
     } : T;
+    export type RequiredNonSymbolKeysOf<T extends object, Keys extends keyof T = keyof T> = Exclude<{
+        [K in Keys]: T extends Record<K, T[K]> ? K : never;
+    }[Keys], undefined | symbol>;
+    export type TestDeserializabilityOf<T, TException, Result extends {
+        WhenSomethingDeserializable: unknown;
+        WhenNeverDeserializable: never;
+    } | {
+        WhenSomethingDeserializable: never;
+        WhenNeverDeserializable: unknown;
+    }> = T extends Function | bigint | symbol | undefined ? T extends TException ? TException extends never ? Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"] : Result["WhenNeverDeserializable"] : Result["WhenSomethingDeserializable"];
 }
 
 // @public (undocumented)
