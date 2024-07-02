@@ -75,12 +75,12 @@
 		},
 		"./internal/test/blobManager": {
 			"import": {
-				"types": "./lib/blobManager.d.ts",
-				"default": "./lib/blobManager.js"
+				"types": "./lib/blobManager/index.d.ts",
+				"default": "./lib/blobManager/index.js"
 			},
 			"require": {
-				"types": "./dist/blobManager.d.ts",
-				"default": "./dist/blobManager.js"
+				"types": "./dist/blobManager/index.d.ts",
+				"default": "./dist/blobManager/index.js"
 			}
 		},
 		"./internal/test/summary": {
