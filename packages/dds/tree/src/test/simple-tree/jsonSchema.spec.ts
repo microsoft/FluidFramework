@@ -117,8 +117,8 @@ describe.only("JsonSchema", () => {
 					"test.map": {
 						type: "object",
 						kind: "map",
-						additionalProperties: {
-							type: [{ $ref: "#/definitions/test.string" }],
+						patternProperties: {
+							"^(.*)+$": { anyOf: [{ $ref: "#/definitions/test.string" }] },
 						},
 					},
 					"test.string": {

@@ -74,8 +74,8 @@ export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 	// json schema
 	// Used to control the types of properties that can appear in the "object" representation of the map
 	// Always refs to "definitions"
-	readonly additionalProperties: {
-		type: JsonDefinitionRef[];
+	readonly patternProperties: {
+		"^(.*)+$": FieldJsonSchema;
 	};
 }
 
@@ -217,8 +217,10 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
 	return {
 		type: "object",
 		kind: "map",
-		additionalProperties: {
-			type: allowedTypes,
+		patternProperties: {
+			"^(.*)+$": {
+				anyOf: allowedTypes,
+			},
 		},
 	};
 }
