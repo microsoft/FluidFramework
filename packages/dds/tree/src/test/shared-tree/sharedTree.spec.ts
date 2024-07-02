@@ -98,6 +98,11 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	simpleTreeSchemaToJsonSchema,
+	type TreeJsonSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../shared-tree/jsonSchema.js";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -1998,6 +2003,65 @@ describe("SharedTree", () => {
 		};
 
 		const actual = sharedTree.getStoredSchema();
+		assert.deepEqual(actual, expected);
+	});
+
+	// TODO: this belongs somewhere else
+	// TODO: map test case
+	it("toJsonSchema (simple)", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		const schemaFactory = new SchemaFactory("test");
+		class Person extends schemaFactory.object("Person", {
+			name: schemaFactory.string,
+			nickname: schemaFactory.optional(schemaFactory.string),
+			age: schemaFactory.number,
+		}) {}
+
+		class Contacts extends schemaFactory.array("Contacts", Person) {}
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({ schema: Contacts, enableSchemaValidation: true }),
+		);
+		view.initialize([
+			{ name: "Jack", age: 37 },
+			{ name: "Jillian", age: 42, nickname: "Jill" },
+		]);
+
+		const simpleSchema = sharedTree.getStoredSchema();
+		const actual = simpleTreeSchemaToJsonSchema(simpleSchema);
+
+		const expected: TreeJsonSchema = {
+			definitions: {
+				"test.Person": {
+					type: "object",
+					kind: "object",
+					properties: {
+						name: { anyOf: [{ "$ref": "#/definitions/com.fluidframework.leaf.string" }] },
+						age: { anyOf: [{ "$ref": "#/definitions/com.fluidframework.leaf.number" }] },
+						nickname: { anyOf: [{ "$ref": "#/definitions/com.fluidframework.leaf.string" }] },
+					},
+					additionalProperties: false,
+					required: ["name", "age"],
+				},
+				"test.Contacts": {
+					type: "array",
+					kind: "array",
+					items: {
+						type: [{ "$ref": "#/definitions/test.Person" }],
+					},
+				},
+				"com.fluidframework.leaf.number": {
+					type: "number",
+					kind: "leaf",
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [{ $ref: "#/definitions/test.Contacts" }],
+		};
+
 		assert.deepEqual(actual, expected);
 	});
 });
