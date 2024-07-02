@@ -229,6 +229,13 @@ export function forEachInNestedMap<Key1, Key2, Value>(
 	});
 }
 
+/**
+ * Maps the `input` map values using the provided `delegate`.
+ *
+ * @param input - The `NestedMap` whose contents are being mapped.
+ * @param delegate - The delegate to use for mapping values,
+ * @returns A new `NestedMap` with the same keys as `input`, but with the values produced by `delegate`.
+ */
 export function mapNestedMap<Key1, Key2, ValueIn, ValueOut = ValueIn>(
 	input: ReadonlyNestedMap<Key1, Key2, ValueIn>,
 	delegate: (value: ValueIn, key1: Key1, key2: Key2) => ValueOut,
