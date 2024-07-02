@@ -98,6 +98,7 @@
 		"tasks": {
 			"tsc": [
 				"...",
+				"@fluid-experimental/property-common#build:esnext",
 				"@fluid-experimental/property-changeset#build:esnext"
 			]
 		}
