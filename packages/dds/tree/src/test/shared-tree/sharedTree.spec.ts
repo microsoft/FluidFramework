@@ -1087,69 +1087,6 @@ describe("SharedTree", () => {
 				const root1 = tree1.flexTree;
 				const root2 = tree2.flexTree;
 
-				// get an anchor on the peer to the node we're removing
-				const cursor = tree2.checkout.forest.allocateCursor();
-				moveToDetachedField(tree2.checkout.forest, cursor);
-				cursor.firstNode();
-				assert.equal(cursor.value, "A");
-				const anchor = cursor.buildAnchor();
-				cursor.free();
-
-				// remove in first tree
-				root1.removeAt(0);
-
-				provider.processMessages();
-				const removeSequenceNumber = provider.sequenceNumber;
-				assert.deepEqual([...root1], ["B", "C", "D"]);
-				assert.deepEqual([...root2], ["B", "C", "D"]);
-				assert.equal(tree2.checkout.getRemovedRoots().length, 1);
-
-				// check the detached field on the peer
-				const repairCursor1 = tree2.checkout.forest.allocateCursor();
-				const result1 = tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1);
-				assert.equal(result1, TreeNavigationResult.Ok);
-				assert.equal(repairCursor1.value, "A");
-				repairCursor1.free();
-
-				// send edits to move the collab window up
-				root1.insertAt(0, ["y"]);
-				provider.processMessages();
-				root1.removeAt(0);
-				provider.processMessages();
-
-				assert.deepEqual([...root1], ["B", "C", "D"]);
-				assert.deepEqual([...root2], ["B", "C", "D"]);
-
-				// ensure the remove is out of the collab window
-				assert(removeSequenceNumber < provider.minimumSequenceNumber);
-
-				// check that the repair data on the peer is destroyed
-				const repairCursor2 = tree2.checkout.forest.allocateCursor();
-				const result2 = tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2);
-				assert.equal(result2, TreeNavigationResult.NotFound);
-				repairCursor2.free();
-
-				unsubscribe();
-			});
-
-			it("the collab window progresses far enough - multiple nodes", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema: stringSequenceRootSchema,
-					allowedSchemaModifications: AllowedUpdateType.Initialize,
-					initialTree: ["A", "B", "C", "D"],
-				} satisfies InitializeAndSchematizeConfiguration;
-				const tree1 = schematizeFlexTree(provider.trees[0], content);
-
-				// make sure that revertibles are created
-				const { unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
-
-				provider.processMessages();
-				const tree2 = schematizeFlexTree(provider.trees[1], content);
-
-				const root1 = tree1.flexTree;
-				const root2 = tree2.flexTree;
-
 				// get anchors on the peer to the nodes we're removing
 				const cursor = tree2.checkout.forest.allocateCursor();
 				moveToDetachedField(tree2.checkout.forest, cursor);
@@ -1245,7 +1182,7 @@ describe("SharedTree", () => {
 				root2.removeAt(2);
 				assert.deepEqual([...root2], ["A", "B", "D"]);
 
-				// Syncing will cause both trees to rebase their local changes
+				// Syncing will cause tree2 to rebase its local changes
 				provider.processMessages();
 
 				const removeSequenceNumber = provider.sequenceNumber;
@@ -1291,70 +1228,6 @@ describe("SharedTree", () => {
 			});
 
 			it("the corresponding revertible is disposed", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema: stringSequenceRootSchema,
-					allowedSchemaModifications: AllowedUpdateType.Initialize,
-					initialTree: ["A", "B", "C", "D"],
-				} satisfies InitializeAndSchematizeConfiguration;
-				const tree1 = schematizeFlexTree(provider.trees[0], content);
-
-				// make sure that revertibles are created
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
-
-				provider.processMessages();
-				const tree2 = schematizeFlexTree(provider.trees[1], content);
-
-				const root1 = tree1.flexTree;
-				const root2 = tree2.flexTree;
-
-				// get an anchor the node we're removing
-				const cursor = tree1.checkout.forest.allocateCursor();
-				moveToDetachedField(tree1.checkout.forest, cursor);
-				cursor.firstNode();
-				assert.equal(cursor.value, "A");
-				const anchor = cursor.buildAnchor();
-				cursor.free();
-
-				// remove in first tree
-				root1.removeAt(0);
-
-				provider.processMessages();
-				assert.deepEqual([...root1], ["B", "C", "D"]);
-				assert.deepEqual([...root2], ["B", "C", "D"]);
-
-				// check the detached field on the first tree
-				const repairCursor1 = tree1.checkout.forest.allocateCursor();
-				assert.equal(
-					tree1.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1),
-					TreeNavigationResult.Ok,
-				);
-				assert.equal(repairCursor1.value, "A");
-				repairCursor1.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
-
-				// dispose the revertible
-				undoStack[0].dispose();
-
-				// send edits to move the collab window up
-				root1.insertAt(0, ["y"]);
-				provider.processMessages();
-				root1.removeAt(0);
-				provider.processMessages();
-
-				// check that the repair data on the first tree is destroyed
-				const repairCursor2 = tree1.checkout.forest.allocateCursor();
-				assert.equal(
-					tree1.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2),
-					TreeNavigationResult.NotFound,
-				);
-				repairCursor2.free();
-				assert.equal(tree1.checkout.getRemovedRoots().length, 1);
-
-				unsubscribe();
-			});
-
-			it("the corresponding revertible is disposed - multiple nodes", () => {
 				const provider = new TestTreeProviderLite(2);
 				const content = {
 					schema: stringSequenceRootSchema,
