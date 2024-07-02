@@ -556,11 +556,6 @@ function createArrayNodeProxy(
 			}
 
 			const maybeUnboxedContent = field.at(maybeIndex);
-
-			if (maybeUnboxedContent === undefined) {
-				return undefined;
-			}
-
 			return isFlexTreeNode(maybeUnboxedContent)
 				? getOrCreateNodeProxy(maybeUnboxedContent)
 				: maybeUnboxedContent;
