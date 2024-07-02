@@ -4,26 +4,25 @@
  */
 
 /*
- * Copies local _api-extractor-temp/doc-models to docs/dpc-models/local
+ * Copies local _api-extractor-temp/doc-models to docs/doc-models/local
  * This is for running local doc builds to see api changes immediately in the docs.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs-extra';
+import path from 'path';
 
 const sourceDir = '../_api-extractor-temp/doc-models';
-const destinationDir = './_doc-models/local';
+const destinationDir = './_doc-models/v2';
 
-// Get the list of files in the source directory
-fs.readdir(sourceDir, (err, files) => {
-	if (err) {
-		console.error('Error reading source directory:', err);
-		return;
-	}
-
+async function copyDocModels(files) {
 	// Create the destination directory if it doesn't exist
 	if (!fs.existsSync(destinationDir)) {
+		console.log("here2")
 		fs.mkdirSync(destinationDir, { recursive: true });
+	} else {
+		// Delete existing documentation output
+		await fs.ensureDir(destinationDir);
+		await fs.emptyDir(destinationDir);
 	}
 
 	// Copy each file from the source directory to the destination directory
@@ -39,4 +38,16 @@ fs.readdir(sourceDir, (err, files) => {
 			}
 		});
 	});
+}
+
+// Get the list of files in the source directory
+fs.readdir(sourceDir, (err, files) => {
+	if (err) {
+		console.error('Error reading source directory:', err);
+		return;
+	} else {
+		copyDocModels(files);
+	}
+
+
 });

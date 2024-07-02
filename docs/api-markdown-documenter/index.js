@@ -8,7 +8,7 @@
  * in data/versions.json.
  *
  * This script accepts a boolean parameter which is saved to the isLocal constant. Passing in true
- * will configure the script to render docs for local api content instead of the docs versions
+ * will configure the script to override v1 content with local api content
  * specified in versions.json.
  */
 
@@ -26,7 +26,7 @@ const {
 	params: { currentVersion, previousVersions },
 } = await fs.readJSON(path.resolve(dirname, "..", "data", "versions.json"));
 
-const docVersions = isLocal ? ["local"] : previousVersions.concat(currentVersion);
+const docVersions = previousVersions.concat(currentVersion);
 
 try {
 	await Promise.all(

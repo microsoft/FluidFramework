@@ -364,6 +364,10 @@ The following npm scripts are supported in this directory:
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
+| `build:local` | `concurrently npm:build:local:api npm:build:md-magic && npm run hugo` |
+| `build:local:api` | `npm run download:api && npm run build:local:rollup && npm run build:local:api-documentation && npm run build:redirects` |
+| `build:local:api-documentation` | `node ./api-markdown-documenter/index.js true` |
+| `build:local:rollup` | `node ./local-api-rollup.js` |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
 | `build:redirects` | Copies the versions file from Hugo's data directory, so the redirection azure function has access to it. |
