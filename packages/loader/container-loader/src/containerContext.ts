@@ -112,6 +112,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 		public readonly snapshotWithContents?: ISnapshot,
+		public readonly offlineLoadEnabled?: boolean,
 	) {}
 
 	public getLoadedFromVersion(): IVersion | undefined {

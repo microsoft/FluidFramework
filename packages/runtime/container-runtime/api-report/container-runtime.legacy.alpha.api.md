@@ -29,6 +29,8 @@ export enum ContainerMessageType {
     GC = "GC",
     IdAllocation = "idAllocation",
     // (undocumented)
+    NoOp = "noop",
+    // (undocumented)
     Rejoin = "rejoin"
 }
 
@@ -129,6 +131,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     makeLocallyVisible(): void;
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
+    // (undocumented)
+    offlineLoadEnabled: any;
     // (undocumented)
     onSchemaChange(schema: IDocumentSchemaCurrent): void;
     // (undocumented)
