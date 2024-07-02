@@ -2054,7 +2054,7 @@ describe("SharedTree", () => {
 					type: "array",
 					kind: "array",
 					items: {
-						type: [{ "$ref": "#/definitions/test.Person" }],
+						anyOf: [{ "$ref": "#/definitions/test.Person" }],
 					},
 				},
 				"com.fluidframework.leaf.number": {

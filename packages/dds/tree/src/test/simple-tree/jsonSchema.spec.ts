@@ -80,7 +80,7 @@ describe.only("JsonSchema", () => {
 						type: "array",
 						kind: "array",
 						items: {
-							type: [{ $ref: "#/definitions/test.string" }],
+							anyOf: [{ $ref: "#/definitions/test.string" }],
 						},
 					},
 					"test.string": {

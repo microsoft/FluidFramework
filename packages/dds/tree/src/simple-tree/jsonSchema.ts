@@ -62,7 +62,7 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
 	// json schema
 	// Always refs to "definitions"
 	readonly items: {
-		type: JsonDefinitionRef[];
+		anyOf: JsonDefinitionRef[];
 	};
 }
 
@@ -172,7 +172,7 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 		type: "array",
 		kind: "array",
 		items: {
-			type: allowedTypes,
+			anyOf: allowedTypes,
 		},
 	};
 }
