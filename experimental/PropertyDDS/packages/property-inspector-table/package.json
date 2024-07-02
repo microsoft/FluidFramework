@@ -69,7 +69,7 @@
 	},
 	"devDependencies": {
 		"@babel/core": "^7.24.4",
-		"@biomejs/biome": "~1.8.1",
+		"@biomejs/biome": "~1.8.3",
 		"@fluid-experimental/property-binder": "workspace:~",
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-dds": "workspace:~",
