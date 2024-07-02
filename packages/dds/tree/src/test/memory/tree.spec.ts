@@ -9,14 +9,8 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 import { SchemaFactory, SharedTree, TreeViewConfiguration, type InsertableTreeFieldFromImplicitField, type TreeView } from "../../index.js";
 
 
-/**
- * TODO
- */
 const builder = new SchemaFactory("shared-tree-test");
 
-/**
- * TODO
- */
 class RootNodeSchema extends builder.object("root-item", {
 	propertyOne: builder.optional(builder.number),
 	propertyTwo: builder.object("propertyTwo-item", {
@@ -26,10 +20,6 @@ class RootNodeSchema extends builder.object("root-item", {
 
 class EmptyRootNodeSchema extends builder.object("empty-root-item", {}) {}
 
-
-/**
- * TODO
- */
 function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
     const sharedTree = SharedTree.create(
         new MockFluidDataStoreRuntime({ registry: [SharedTree.getFactory()] }),
@@ -42,7 +32,7 @@ function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
         new RootNodeSchema({
             propertyOne: 128,
             propertyTwo: {
-                itemOne: "", // Deliberately left empty.
+                itemOne: "",
             }
         }),
     );
