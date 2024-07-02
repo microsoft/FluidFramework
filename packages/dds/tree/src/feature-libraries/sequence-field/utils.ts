@@ -960,22 +960,31 @@ export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
 	for (const mark of change) {
-		switch (mark.type) {
-			case "Insert":
-				// An insert behaves like a move where the source and destination are at the same location.
-				// An insert can become a move when after rebasing.
-				keys.push([CrossFieldTarget.Source, mark.revision, mark.id, mark.count]);
-				keys.push([CrossFieldTarget.Destination, mark.revision, mark.id, mark.count]);
-			case "MoveOut":
-				keys.push([CrossFieldTarget.Source, mark.revision, mark.id, mark.count]);
-				break;
-			case "MoveIn":
-				keys.push([CrossFieldTarget.Destination, mark.revision, mark.id, mark.count]);
-				break;
-			default:
-				break;
-		}
+		keys.push(...getCrossFieldKeysForMarkEffect(mark, mark.count));
 	}
 
 	return keys;
+}
+
+function getCrossFieldKeysForMarkEffect(effect: MarkEffect, count: number): CrossFieldKeyRange[] {
+	switch (effect.type) {
+		case "Insert":
+			// An insert behaves like a move where the source and destination are at the same location.
+			// An insert can become a move when after rebasing.
+			return [
+				[CrossFieldTarget.Source, effect.revision, effect.id, count],
+				[CrossFieldTarget.Destination, effect.revision, effect.id, count],
+			];
+		case "MoveOut":
+			return [[CrossFieldTarget.Source, effect.revision, effect.id, count]];
+		case "MoveIn":
+			return [[CrossFieldTarget.Destination, effect.revision, effect.id, count]];
+		case "AttachAndDetach":
+			return [
+				...getCrossFieldKeysForMarkEffect(effect.attach, count),
+				...getCrossFieldKeysForMarkEffect(effect.detach, count),
+			];
+		default:
+			return [];
+	}
 }
