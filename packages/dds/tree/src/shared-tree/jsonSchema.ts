@@ -2,7 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { SimpleArrayNodeSchema, SimpleFieldSchema, SimpleLeafNodeSchema, SimpleLeafSchemaKind, SimpleMapNodeSchema, SimpleNodeSchema, SimpleNodeSchemaKind, SimpleObjectNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type {
+	SimpleArrayNodeSchema,
+	SimpleFieldSchema,
+	SimpleLeafNodeSchema,
+	SimpleLeafSchemaKind,
+	SimpleMapNodeSchema,
+	SimpleNodeSchema,
+	SimpleNodeSchemaKind,
+	SimpleObjectNodeSchema,
+	SimpleTreeSchema,
+} from "./simpleSchema.js";
 
 // TODOs:
 // "ajv" library for at least testing, maybe type defs as well.
@@ -21,7 +31,10 @@ export type JsonSchemaType = "object" | "array" | SimpleLeafSchemaKind;
 /**
  * @internal
  */
-export interface NodeJsonSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJsonSchemaType extends JsonSchemaType> {
+export interface NodeJsonSchemaBase<
+	TNodeKind extends SimpleNodeSchemaKind,
+	TJsonSchemaType extends JsonSchemaType,
+> {
 	// TODO: represent this differently to ensure no conflict with actual JSON schema
 	readonly kind: TNodeKind;
 	// json schema
@@ -49,7 +62,7 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
 	// json schema
 	// Always refs to "definitions"
 	readonly items: {
-		type: JsonDefinitionRef[]
+		type: JsonDefinitionRef[];
 	};
 	// json schema
 	readonly additionalProperties: false;
@@ -92,7 +105,6 @@ export type NodeJsonSchema =
 	| ArrayNodeJsonSchema
 	| ObjectNodeJsonSchema;
 
-
 /**
  * TODO
  * @internal
@@ -120,10 +132,12 @@ export function simpleTreeSchemaToJsonSchema(schema: SimpleTreeSchema): TreeJson
 	return {
 		definitions,
 		anyOf: allowedTypes,
-	}
+	};
 }
 
-function convertDefinitions(definitions: ReadonlyMap<string, SimpleNodeSchema>): Record<string, NodeJsonSchema> {
+function convertDefinitions(
+	definitions: ReadonlyMap<string, SimpleNodeSchema>,
+): Record<string, NodeJsonSchema> {
 	const result: Record<string, NodeJsonSchema> = {};
 	for (const [key, value] of definitions) {
 		result[key] = convertNodeSchema(value);
@@ -148,24 +162,24 @@ function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {
 	const itemTypes: JsonDefinitionRef[] = [];
-	schema.allowedTypes.forEach(type => {
-		itemTypes.push(createRefNode(type))
+	schema.allowedTypes.forEach((type) => {
+		itemTypes.push(createRefNode(type));
 	});
 	return {
 		type: "array",
 		kind: "array",
-        items: {
-          type: itemTypes
-        },
+		items: {
+			type: itemTypes,
+		},
 		additionalProperties: false,
-	}
+	};
 }
 
 function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema {
 	return {
 		type: schema.type,
 		kind: "leaf",
-	}
+	};
 }
 
 function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJsonSchema {
@@ -185,24 +199,22 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 		properties,
 		required,
 		additionalProperties: false, // TODO: get from schema policy
-	}
+	};
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
-
 	return {
 		type: "object",
 		kind: "map",
 		properties,
 		additionalProperties: false,
-
-	}
+	};
 }
 
 function createRefNode(schemaId: string): JsonDefinitionRef {
 	return {
 		"$ref": createRefString(schemaId),
-	}
+	};
 }
 
 function createRefString(schemaId: string): JsonSchemaId {

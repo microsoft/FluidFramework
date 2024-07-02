@@ -30,7 +30,6 @@ import { fail } from "../util/index.js";
 // Future:
 // - For API where you can get this for a view schema, configuration options for which field names to use (stored or view) and plan for future config options.
 
-
 /**
  * @internal
  */
