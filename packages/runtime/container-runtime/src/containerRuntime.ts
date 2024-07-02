@@ -126,7 +126,15 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
-import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
+import {
+	BlobManager,
+	IPendingBlobs,
+	blobManagerBasePath,
+	blobsTreeName,
+	isBlobPath,
+	loadBlobManagerLoadInfo,
+	type IBlobManagerLoadInfo,
+} from "./blobManager/index.js";
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
@@ -211,7 +219,6 @@ import {
 	SummaryCollection,
 	SummaryManager,
 	aliasBlobName,
-	blobsTreeName,
 	chunksBlobName,
 	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
@@ -677,23 +684,26 @@ export const makeLegacySendBatchFn =
 	};
 
 /** Helper type for type constraints passed through several functions.
+ * local - Did this client send the op?
+ * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
+ * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
  * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
- * local - Did this client send the op?
  */
-type MessageWithContext =
+type MessageWithContext = {
+	local: boolean;
+	savedOp?: boolean;
+	batchStartCsn: number;
+} & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
-			local: boolean;
-			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
-			local: boolean;
-			savedOp?: boolean;
-	  };
+	  }
+);
 
 const summarizerRequestUrl = "_summarizer";
 
@@ -857,18 +867,7 @@ export class ContainerRuntime
 			]);
 
 		// read snapshot blobs needed for BlobManager to load
-		const blobManagerSnapshot = await BlobManager.load(
-			context.baseSnapshot?.trees[blobsTreeName],
-			async (id) => {
-				// IContainerContext storage api return type still has undefined in 0.39 package version.
-				// So once we release 0.40 container-defn package we can remove this check.
-				assert(
-					context.storage !== undefined,
-					0x256 /* "storage undefined in attached container" */,
-				);
-				return readAndParse(context.storage, id);
-			},
-		);
+		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
 
 		const messageAtLastSummary = lastMessageFromMetadata(metadata);
 
@@ -2221,7 +2220,7 @@ export class ContainerRuntime
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
-			if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
+			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
 				return blob
 					? {
@@ -2619,7 +2618,13 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+		const processResult = this.remoteMessageProcessor.process(messageCopy);
+		if (processResult === undefined) {
+			// This means the incoming message is an incomplete part of a message or batch
+			// and we need to process more messages before the rest of the system can understand it.
+			return;
+		}
+		for (const message of processResult.messages) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2629,12 +2634,14 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					}
 				: // Unrecognized message will be ignored.
 					{
 						message,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					};
 			msg.savedOp = savedOp;
 
@@ -2682,6 +2689,7 @@ export class ContainerRuntime
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
+					messageWithContext.batchStartCsn,
 				);
 			}
 
@@ -3360,7 +3368,7 @@ export class ContainerRuntime
 	 * blob manager.
 	 */
 	public getNodeType(nodePath: string): GCNodeType {
-		if (this.isBlobPath(nodePath)) {
+		if (isBlobPath(nodePath)) {
 			return GCNodeType.Blob;
 		}
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
@@ -3379,24 +3387,13 @@ export class ContainerRuntime
 
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
-				return [BlobManager.basePath];
+				return [blobManagerBasePath];
 			case GCNodeType.DataStore:
 			case GCNodeType.SubDataStore:
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			default:
 				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
 		}
-	}
-
-	/**
-	 * Returns whether a given path is for attachment blobs that are in the format - "/BlobManager.basePath/...".
-	 */
-	private isBlobPath(path: string): boolean {
-		const pathParts = path.split("/");
-		if (pathParts.length < 2 || pathParts[1] !== BlobManager.basePath) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -3409,7 +3406,7 @@ export class ContainerRuntime
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
-			if (this.isBlobPath(route)) {
+			if (isBlobPath(route)) {
 				blobManagerRoutes.push(route);
 			} else {
 				dataStoreRoutes.push(route);

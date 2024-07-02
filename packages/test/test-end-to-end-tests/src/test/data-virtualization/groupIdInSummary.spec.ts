@@ -20,7 +20,6 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
@@ -375,21 +374,7 @@ describeCompat(
 			const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 			const handleC2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectC");
 
-			// Essentially, this should not reject
-			// When fixed, this function should be removed.
-			const assertInvertDoesNotReject = async (promise: Promise<unknown>, message: string) => {
-				await assert.rejects(
-					promise,
-					// Not sure which error interface to use here, but the key is the message
-					(thrown: IFluidErrorBase) => {
-						assert(thrown.message.includes("0x97a"), "Error message should be correct");
-						return true;
-					},
-					message,
-				);
-			};
-
-			await assertInvertDoesNotReject(
+			await assert.doesNotReject(
 				mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD"),
 				"D should not be loaded",
 			);
@@ -398,9 +383,9 @@ describeCompat(
 			assert(handleC2 !== undefined, "handleC2 should not be undefined");
 
 			// When fixed, all these should not fail.
-			await assertInvertDoesNotReject(handleA2.get(), "should be able to retrieve A");
-			await assertInvertDoesNotReject(handleB2.get(), "should be able to retrieve B");
-			await assertInvertDoesNotReject(handleC2.get(), "should be able to retrieve C");
+			await assert.doesNotReject(handleA2.get(), "should be able to retrieve A");
+			await assert.doesNotReject(handleB2.get(), "should be able to retrieve B");
+			await assert.doesNotReject(handleC2.get(), "should be able to retrieve C");
 		});
 
 		it("Can create loadingGroupId via detached flow", async () => {
