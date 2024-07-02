@@ -22,6 +22,10 @@ parameters:
   type: object
   default: Small
 
+- name: stressLevel
+  type: number
+  default: 1
+
 # Id of the run of the 'Build - client packages' pipeline which contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
 # incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
@@ -80,4 +84,4 @@ stages:
             testFileTarName: ${{ package.testFileTarName }}
             testCommand: ${{ package.testCommand }}
             env:
-              FUZZ_STRESS_RUN: true
+              FUZZ_STRESS_RUN: ${{ parameters.stressLevel }}

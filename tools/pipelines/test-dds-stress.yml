@@ -58,6 +58,9 @@ parameters:
     - packages/dds/merge-tree
     testFileTarName: matrix
     testCommand: test:stress
+- name: stressLevel
+  type: number
+  default: 1
 
 
 stages:
@@ -66,6 +69,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages: ${{ parameters.packages }}
       testWorkspace: ${{ variables.testWorkspace }}
+      stressLevel: ${{ parameters.stressLevel }}
 
   # Capture telemetry about pipeline stages
   - stage: upload_run_telemetry

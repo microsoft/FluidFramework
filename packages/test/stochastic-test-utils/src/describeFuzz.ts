@@ -10,10 +10,10 @@ function createSuite<TArgs extends StressSuiteArguments>(
 	args: TArgs,
 ) {
 	return function (this: Mocha.Suite) {
-		if (args.isStress) {
+		if (args.stressLevel > 0) {
 			// Stress runs may have tests which are expected to take longer amounts of time.
 			// Don't override the timeout if it's already set to a higher value, though.
-			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000 * args.stressLevel, this.timeout()));
 		}
 		tests.bind(this)(args);
 	};
@@ -24,12 +24,12 @@ function createSuite<TArgs extends StressSuiteArguments>(
  */
 export interface StressSuiteArguments {
 	/**
-	 * Whether the current run is a stress run, which generally runs longer or more programatically generated tests.
-	 *
-	 * Packages which use this should generally have a `test:stress` script in their package.json for conveniently running
-	 * the equivalent checks locally.
+	 * It indicates the "stress level" of tests. A value of 0 means the test is not run in stress mode, while
+	 * higher values indicate increasingly stressful testing. This value also acts as a multiplier for the
+	 * test count and timeout threshold. A stress run generally takes longer time or more programatically generated
+	 * tests.
 	 */
-	isStress: boolean;
+	stressLevel: number;
 }
 
 /**
@@ -94,12 +94,16 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 		process.env?.FUZZ_TEST_COUNT !== undefined
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
-	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress =
-		process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
-	const args = { testCount, isStress };
+	let testCount = testCountFromEnv ?? options.defaultTestCount;
+	const stressLevel = Number(process.env?.FUZZ_TEST_RUN) || 0;
+	// Adjust the testCount based on whether stressLevel is defined.
+	if (stressLevel > 0) {
+		testCount = Math.round(testCount * stressLevel);
+	}
+
+	const args = { testCount, stressLevel };
 	const d: DescribeFuzz = (name, tests) =>
-		(isStress ? describe.only : describe)(name, createSuite(tests, args));
+		(stressLevel > 0 ? describe.only : describe)(name, createSuite(tests, args));
 	d.skip = (name, tests) => describe.skip(name, createSuite(tests, args));
 	d.only = (name, tests) => describe.only(name, createSuite(tests, args));
 	return d;
