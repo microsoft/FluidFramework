@@ -126,7 +126,15 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
-import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
+import {
+	BlobManager,
+	IPendingBlobs,
+	blobManagerBasePath,
+	blobsTreeName,
+	isBlobPath,
+	loadBlobManagerLoadInfo,
+	type IBlobManagerLoadInfo,
+} from "./blobManager/index.js";
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
@@ -173,7 +181,7 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	IPendingBatchMessage,
+	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
@@ -211,7 +219,6 @@ import {
 	SummaryCollection,
 	SummaryManager,
 	aliasBlobName,
-	blobsTreeName,
 	chunksBlobName,
 	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
@@ -661,7 +668,7 @@ export const makeLegacySendBatchFn =
 	(batch: IBatch) => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
-		for (const message of batch.content) {
+		for (const message of batch.messages) {
 			clientSequenceNumber = submitFn(
 				MessageType.Operation,
 				// For back-compat (submitFn only works on deserialized content)
@@ -677,23 +684,26 @@ export const makeLegacySendBatchFn =
 	};
 
 /** Helper type for type constraints passed through several functions.
+ * local - Did this client send the op?
+ * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
+ * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
  * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
- * local - Did this client send the op?
  */
-type MessageWithContext =
+type MessageWithContext = {
+	local: boolean;
+	savedOp?: boolean;
+	batchStartCsn: number;
+} & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
-			local: boolean;
-			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
-			local: boolean;
-			savedOp?: boolean;
-	  };
+	  }
+);
 
 const summarizerRequestUrl = "_summarizer";
 
@@ -857,18 +867,7 @@ export class ContainerRuntime
 			]);
 
 		// read snapshot blobs needed for BlobManager to load
-		const blobManagerSnapshot = await BlobManager.load(
-			context.baseSnapshot?.trees[blobsTreeName],
-			async (id) => {
-				// IContainerContext storage api return type still has undefined in 0.39 package version.
-				// So once we release 0.40 container-defn package we can remove this check.
-				assert(
-					context.storage !== undefined,
-					0x256 /* "storage undefined in attached container" */,
-				);
-				return readAndParse(context.storage, id);
-			},
-		);
+		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
 
 		const messageAtLastSummary = lastMessageFromMetadata(metadata);
 
@@ -1550,10 +1549,6 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit(message);
-					this.flush();
-				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -2221,7 +2216,7 @@ export class ContainerRuntime
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
-			if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
+			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
 				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
 				return blob
 					? {
@@ -2619,7 +2614,13 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+		const processResult = this.remoteMessageProcessor.process(messageCopy);
+		if (processResult === undefined) {
+			// This means the incoming message is an incomplete part of a message or batch
+			// and we need to process more messages before the rest of the system can understand it.
+			return;
+		}
+		for (const message of processResult.messages) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2629,12 +2630,14 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					}
 				: // Unrecognized message will be ignored.
 					{
 						message,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					};
 			msg.savedOp = savedOp;
 
@@ -2682,6 +2685,7 @@ export class ContainerRuntime
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
+					messageWithContext.batchStartCsn,
 				);
 			}
 
@@ -2901,7 +2905,7 @@ export class ContainerRuntime
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
-			checkpoint = this.outbox.checkpoint().mainBatch;
+			checkpoint = this.outbox.getBatchCheckpoints().mainBatch;
 		}
 		try {
 			this._orderSequentiallyCalls++;
@@ -3044,7 +3048,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Are we in the middle of batching ops together?
+	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
 	private currentlyBatching() {
 		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
@@ -3360,7 +3364,7 @@ export class ContainerRuntime
 	 * blob manager.
 	 */
 	public getNodeType(nodePath: string): GCNodeType {
-		if (this.isBlobPath(nodePath)) {
+		if (isBlobPath(nodePath)) {
 			return GCNodeType.Blob;
 		}
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
@@ -3379,24 +3383,13 @@ export class ContainerRuntime
 
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
-				return [BlobManager.basePath];
+				return [blobManagerBasePath];
 			case GCNodeType.DataStore:
 			case GCNodeType.SubDataStore:
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			default:
 				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
 		}
-	}
-
-	/**
-	 * Returns whether a given path is for attachment blobs that are in the format - "/BlobManager.basePath/...".
-	 */
-	private isBlobPath(path: string): boolean {
-		const pathParts = path.split("/");
-		if (pathParts.length < 2 || pathParts[1] !== BlobManager.basePath) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -3409,7 +3402,7 @@ export class ContainerRuntime
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
-			if (this.isBlobPath(route)) {
+			if (isBlobPath(route)) {
 				blobManagerRoutes.push(route);
 			} else {
 				dataStoreRoutes.push(route);
@@ -4035,7 +4028,9 @@ export class ContainerRuntime
 				this.outbox.submit(message);
 			}
 
-			if (!this.currentlyBatching()) {
+			// Note: Technically, the system "always" batches - if this case is true we'll just have a single-message batch.
+			const flushImmediatelyOnSubmit = !this.currentlyBatching();
+			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
 				this.scheduleFlush();
@@ -4116,7 +4111,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4125,7 +4120,7 @@ export class ContainerRuntime
 		this.flush();
 	}
 
-	private reSubmit(message: IPendingBatchMessage) {
+	private reSubmit(message: PendingMessageResubmitData) {
 		// Need to parse from string for back-compat
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);

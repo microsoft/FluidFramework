@@ -42,11 +42,6 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 	let dataStoreA: ITestDataObject;
 
 	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
-	configProvider.set(
-		"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
-		false,
-	);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },
@@ -73,6 +68,13 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+
+		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+		configProvider.set(
+			"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			false,
+		);
+
 		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		containerRuntime = defaultDataStore._context.containerRuntime as IContainerRuntime;
@@ -88,6 +90,10 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 		await provider.ensureSynchronized();
 		await waitForContainerConnection(mainContainer);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	itExpects(
