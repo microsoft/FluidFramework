@@ -10,7 +10,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
-import { OdspClient } from "@fluidframework/odsp-client";
+import { OdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
