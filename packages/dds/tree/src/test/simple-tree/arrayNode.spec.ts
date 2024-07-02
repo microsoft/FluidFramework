@@ -590,4 +590,28 @@ describe("ArrayNode", () => {
 			);
 		});
 	});
+
+	describe("Iteration", () => {
+		it("Concurrently iterating and editing should throw an error.", () => {
+			assert.throws(
+				// False positive
+				() => {
+					const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+					for (const nodeChild of array[Symbol.iterator]()) {
+						array.removeRange(1, 3);
+					}
+				},
+				(error: Error) =>
+					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
+			);
+		});
+		it("Iterates through the values of the array", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const result = [];
+			for (const nodeChild of array[Symbol.iterator]()) {
+				result.push(nodeChild);
+			}
+			assert.deepEqual(result, [1, 2, 3]);
+		});
+	});
 });

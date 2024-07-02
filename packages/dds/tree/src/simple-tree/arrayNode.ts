@@ -215,6 +215,8 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 		sourceEnd: number,
 		source: TMoveFrom,
 	): void;
+
+	values(): Generator<T>;
 }
 
 /**
@@ -315,7 +317,6 @@ const arrayPrototypeKeys = [
 	"some",
 	"toLocaleString",
 	"toString",
-	"values",
 
 	// "copyWithin",
 	// "fill",
@@ -489,7 +490,6 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	): boolean;
 	toLocaleString(): string;
 	toString(): string;
-	values(): IterableIterator<T>;
 }
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
@@ -672,6 +672,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	protected abstract get simpleSchema(): T;
 
+	#generationNumber: number = 0;
+	#updateGenerationNumber = getFlexNode(this).on("nodeChanged", () => {
+		this.#generationNumber += 1;
+	});
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		if (isMapTreeNode(getFlexNode(this))) {
 			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
@@ -850,6 +854,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			destinationFieldPath,
 			index,
 		);
+		this.#generationNumber += 1;
+	}
+
+	public *values(): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+		const initialLastUpdatedStamp = this.#generationNumber;
+		let index = 0;
+		while (true) {
+			if (initialLastUpdatedStamp < this.#generationNumber) {
+				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+			}
+			const value = this.at(index);
+			if (index >= this.length || value === undefined) {
+				break;
+			}
+			index += 1;
+			yield value;
+		}
 	}
 }
 
