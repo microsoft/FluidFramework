@@ -125,6 +125,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.info(`Remote is: ${this.remote}`);
 
 		if (flags.checkPr) {
+			assert(owner !== undefined, "owner is undefined in MergeBranch.run()");
+			assert(repo !== undefined, "repo is undefined in MergeBranch.run()");
 			// Check if a branch integration PR exists already, based on its **name**.
 			const prData = await pullRequestExists(flags.pat, prTitle, owner, repo, this.logger);
 
@@ -229,16 +231,31 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				// If it's the first item in the list that conflicted, then we want to open a single PR with the HEAD at that
 				// commit. The PR is expected to conflict with the target branch, so we set `prWillConflict` to true. The PR owner will need to merge the branch
 				// manually with next and push back to the PR, and then merge once CI passes.
-				prHeadCommit = unmergedCommitList[0];
+				const unmergedCommitList0 = unmergedCommitList[0];
+				assert(
+					unmergedCommitList0 !== undefined,
+					"unmergedCommitList0 is undefined in MergeBranch.run()",
+				);
+				prHeadCommit = unmergedCommitList0;
 				prWillConflict = true;
 			} else {
 				// Otherwise, we want to open a PR with the HEAD at the commit BEFORE the first conflicting commit.
-				prHeadCommit = unmergedCommitList[conflictingCommitIndex - 1];
+				const unmergedCommitListMinusOne = unmergedCommitList[conflictingCommitIndex - 1];
+				assert(
+					unmergedCommitListMinusOne !== undefined,
+					"unmergedCommitListMinusOne is undefined in MergeBranch.run()",
+				);
+				prHeadCommit = unmergedCommitListMinusOne;
 				prWillConflict = false;
 			}
 		} else {
 			// No conflicting commits, so set the commit to merge to the last commit in the list.
-			prHeadCommit = unmergedCommitList[conflictingCommitIndex];
+			const unmergedCommitListConflictIndex = unmergedCommitList[conflictingCommitIndex - 1];
+			assert(
+				unmergedCommitListConflictIndex !== undefined,
+				"unmergedCommitListConflictIndex is undefined in MergeBranch.run()",
+			);
+			prHeadCommit = unmergedCommitListConflictIndex;
 			prWillConflict = false;
 		}
 		// Create a new local branch to serve as the merge HEAD, at the prHeadCommit found earlier.
@@ -301,6 +318,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			? ["merge-conflict", "main-next-integrate"]
 			: ["merge-ok", "main-next-integrate"];
 
+		assert(owner !== undefined, "owner is undefined in MergeBranch.run()");
+		assert(repo !== undefined, "repo is undefined in MergeBranch.run()");
 		// To determine who to assign the PR to, we look up the commit details on GitHub.
 		// TODO: Can't we get the author info from the local commit?
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

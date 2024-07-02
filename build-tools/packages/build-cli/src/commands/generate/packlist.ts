@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Package } from "@fluidframework/build-tools";
@@ -70,7 +71,9 @@ export default class GeneratePackListCommand extends PackageCommand<
 
 		// The npm pack JSON is an array, so treat it as such and extract the first item.
 		const raw = JSON.parse(packOutput.stdout.trim()) as NpmPackJson[];
-		const files = raw[0].files.map((entry) => entry.path);
+		const raw0 = raw[0];
+		assert(raw0 !== undefined, "raw0 is undefined in processPackage");
+		const files = raw0.files.map((entry) => entry.path);
 
 		// Sort root files first, then sort nested paths.
 		files.sort((a, b) => {

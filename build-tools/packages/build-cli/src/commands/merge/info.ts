@@ -6,8 +6,8 @@
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
+import assert from "node:assert/strict";
 import { BaseCommand, Repository } from "../../library/index.js";
-
 /**
  * An object containing merge status between two branches.
  */
@@ -65,8 +65,20 @@ export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoComman
 		if (branchFlags === undefined || branchFlags.length === 0) {
 			[branch1, branch2] = ["main", "next"];
 		} else if (branchFlags.length === 1) {
+			assert(
+				branchFlags[0] !== undefined,
+				"branchFlags[0] is undefined in MergeInfoCommand.run()",
+			);
 			[branch1, branch2] = [branchFlags[0], "next"];
 		} else {
+			assert(
+				branchFlags[0] !== undefined,
+				"branchFlags[0] is undefined in MergeInfoCommand.run()",
+			);
+			assert(
+				branchFlags[1] !== undefined,
+				"branchFlags[1] is undefined in MergeInfoCommand.run()",
+			);
 			[branch1, branch2] = branchFlags;
 		}
 
