@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-// This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable unicorn/prefer-module */
 
 import * as fs from "node:fs";
@@ -14,26 +12,34 @@ import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 
 import { isChildProcess } from "./Configuration";
-import { pad, prettyNumber, getName } from "./ReporterUtilities";
-// TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
-// Since it's not moved yet, it needs this lint suppression to do this import:
+import { pad, getName } from "./ReporterUtilities";
 // eslint-disable-next-line import/no-internal-modules
-import { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
+import type { CustomBenchmarkResults } from "./mocha/customOutputRunner";
 // eslint-disable-next-line import/no-internal-modules
 import { getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
- * Custom mocha reporter for memory tests. It can be used by passing the JavaScript version of this file to
- * mocha's --reporter option.
+ * Custom mocha reporter for benchmarks that provide their own measurements.
+ *
+ * @remarks
+ * It can be used by passing the JavaScript version of this file to mocha's --reporter option. {@link https://www.npmjs.com/package/mocha-junit-reporter}
  *
  * This reporter takes output from mocha events and prints a user-friendly version of the results, in addition
- * to writing them to a file. The path of the output file can be controlled with --reporterOptions reportDir=<path>.
- * This logic is coupled to MemoryTestRunner, and depends on how it emits the actual benchmark data.
+ * to writing them to a file.
+ * The path of the output file can be controlled with `--reporterOptions reportDir=<path>`.
  *
- * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
+ * This reporter is coupled to {@link @fluid-tools/benchmark#benchmarkCustom}, and depends on how it emits the actual benchmark data.
+ *
+ * @see {@link https://mochajs.org/api/tutorial-custom-reporter.html} for more information about custom mocha reporters.
  */
-class MochaMemoryTestReporter {
-	private readonly inProgressSuites: Map<string, [string, MemoryBenchmarkStats][]> = new Map();
+class MochaCustomBenchmarkReporter {
+	/**
+	 * Map to store suit data.
+	 */
+	private readonly inProgressSuites: Map<string, [string, CustomBenchmarkResults][]> = new Map();
+	/**
+	 * The Output dir.
+	 */
 	private readonly outputDirectory: string;
 
 	public constructor(runner: Runner, options?: { reporterOptions?: { reportDir?: string } }) {
@@ -45,18 +51,18 @@ class MochaMemoryTestReporter {
 
 		fs.mkdirSync(this.outputDirectory, { recursive: true });
 
-		const data: Map<Test, MemoryBenchmarkStats> = new Map();
+		const data: Map<Test, CustomBenchmarkResults> = new Map();
 
 		runner
 			.on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
 				// Forward results from `benchmark end` to BenchmarkReporter.
-				test.on("benchmark end", (memoryTestStats: MemoryBenchmarkStats) => {
+				test.on("benchmark end", (benchmarkResults: CustomBenchmarkResults) => {
 					// There are (at least) two ways a benchmark can fail:
 					// The actual benchmark part of the test aborts for some reason OR
 					// the mocha test fails (ex: validation after the benchmark reports an issue).
 					// So instead of reporting the data now, wait until the mocha test ends so we can confirm the
 					// test passed.
-					data.set(test, memoryTestStats);
+					data.set(test, benchmarkResults);
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
@@ -71,9 +77,9 @@ class MochaMemoryTestReporter {
 				}
 
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
-				const memoryTestStats = data.get(test);
-				if (memoryTestStats === undefined) {
-					// Mocha test complected with out reporting data. This is an error, so report it as such.
+				const benchmarkResults = data.get(test);
+				if (benchmarkResults === undefined) {
+					// Mocha test completed without reporting data. This is an error, so report it as such.
 					console.error(
 						chalk.red(
 							`Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
@@ -89,19 +95,19 @@ class MochaMemoryTestReporter {
 							`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
 						),
 					);
-					memoryTestStats.aborted = true;
+					benchmarkResults.aborted = true;
 				}
 
 				if (isChildProcess) {
 					// Write the data to stdout so the parent process can collect it.
-					console.info(JSON.stringify(memoryTestStats));
+					console.info(JSON.stringify(benchmarkResults));
 				} else {
 					let suiteData = this.inProgressSuites.get(suite);
 					if (suiteData === undefined) {
 						suiteData = [];
 						this.inProgressSuites.set(suite, suiteData);
 					}
-					suiteData.push([getName(test.title), memoryTestStats]);
+					suiteData.push([getName(test.title), benchmarkResults]);
 				}
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
@@ -114,52 +120,24 @@ class MochaMemoryTestReporter {
 					console.log(`\n${chalk.bold(suiteName)}`);
 
 					const table = new Table();
-					const failedTests = new Array<[string, MemoryBenchmarkStats]>();
-					if (suiteData !== undefined) {
-						for (const [testName, testData] of suiteData) {
-							if (testData.aborted) {
-								table.cell("status", `${pad(4)}${chalk.red("×")}`);
-								failedTests.push([testName, testData]);
-							} else {
-								table.cell("status", `${pad(4)}${chalk.green("✔")}`);
-							}
-							table.cell("name", chalk.italic(testName));
-							if (!testData.aborted) {
-								table.cell(
-									"Heap Used Avg",
-									prettyNumber(testData.stats.arithmeticMean, 2),
-									Table.padLeft,
-								);
-								table.cell(
-									"Heap Used StdDev",
-									prettyNumber(testData.stats.standardDeviation, 2),
-									Table.padLeft,
-								);
-								table.cell(
-									"Margin of Error",
-									`±${prettyNumber(testData.stats.marginOfError, 2)}`,
-									Table.padLeft,
-								);
-								table.cell(
-									"Relative Margin of Error",
-									`±${prettyNumber(testData.stats.marginOfErrorPercent, 2)}%`,
-									Table.padLeft,
-								);
+					const failedTests = new Array<[string, CustomBenchmarkResults]>();
 
-								table.cell("Iterations", testData.runs.toString(), Table.padLeft);
-								table.cell(
-									"Samples used",
-									testData.stats.samples.length.toString(),
-									Table.padLeft,
-								);
-								table.cell(
-									"Avg ms/iteration",
-									`${prettyNumber(testData.totalRunTimeMs / testData.runs, 2)}`,
-									Table.padLeft,
-								);
-							}
-							table.newRow();
+					for (const [testName, testData] of suiteData) {
+						if (testData.aborted) {
+							table.cell("status", `${pad(4)}${chalk.red("×")}`);
+							failedTests.push([testName, testData]);
+						} else {
+							table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 						}
+						table.cell("name", chalk.italic(testName));
+						if (!testData.aborted) {
+							for (const [key, value] of Object.entries(
+								testData.customMeasurements,
+							)) {
+								table.cell(key, value.toString(), Table.padLeft);
+							}
+						}
+						table.newRow();
 					}
 
 					console.log(`${table.toString()}`);
@@ -172,6 +150,7 @@ class MochaMemoryTestReporter {
 							console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
 						}
 					}
+
 					this.writeCompletedBenchmarks(suiteName);
 					this.inProgressSuites.delete(suiteName);
 				}
@@ -204,11 +183,11 @@ class MochaMemoryTestReporter {
 
 		// If changing this or the result file logic in general,
 		// be sure to update the glob used to look for output files in the perf pipeline.
-		const outputFilename = `${suiteNameEscaped}_memoryresult.json`;
+		const outputFilename = `${suiteNameEscaped}_CustomBenchmarkResult.json`;
 		const fullPath: string = path.join(this.outputDirectory, outputFilename);
 		fs.writeFileSync(fullPath, outputContentString);
 		return fullPath;
 	}
 }
 
-module.exports = MochaMemoryTestReporter;
+module.exports = MochaCustomBenchmarkReporter;
