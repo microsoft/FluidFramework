@@ -59,6 +59,7 @@ export function populateNestedMap<Key1, Key2, Value>(
 		let destinationInner = destination.get(key1);
 		if (destinationInner === undefined) {
 			destinationInner = new Map(sourceInner);
+			destination.set(key1, destinationInner);
 		} else {
 			for (const [key2, value] of sourceInner) {
 				if (override || !destinationInner.has(key2)) {
@@ -66,8 +67,6 @@ export function populateNestedMap<Key1, Key2, Value>(
 				}
 			}
 		}
-
-		destination.set(key1, destinationInner);
 	}
 }
 
