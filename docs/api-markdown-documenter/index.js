@@ -8,7 +8,7 @@
  * in data/versions.json.
  *
  * This script accepts a boolean parameter which is saved to the isLocal constant. Passing in true
- * will configure the script to override v1 content with local api content
+ * will configure the script to override v2 content with local api content
  * specified in versions.json.
  */
 
