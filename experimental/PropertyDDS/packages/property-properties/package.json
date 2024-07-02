@@ -94,16 +94,16 @@
 		"sinon": "^17.0.1",
 		"typescript": "~5.4.5"
 	},
-	"typeValidation": {
-		"disabled": true,
-		"broken": {}
-	},
 	"fluidBuild": {
 		"tasks": {
 			"tsc": [
 				"...",
-				"^build:esnext"
+				"@fluid-experimental/property-changeset#build:esnext"
 			]
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }
