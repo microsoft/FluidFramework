@@ -99,7 +99,7 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import {
 	type SimpleNodeSchema,
 	type SimpleTreeSchema,
-	simpleTreeSchemaToJsonSchema,
+	toJsonSchema,
 	type TreeJsonSchema,
 } from "../../simple-tree/index.js";
 
@@ -2027,7 +2027,7 @@ describe("SharedTree", () => {
 		]);
 
 		const simpleSchema = sharedTree.getStoredSchema();
-		const actual = simpleTreeSchemaToJsonSchema(simpleSchema);
+		const actual = toJsonSchema(simpleSchema);
 
 		const expected: TreeJsonSchema = {
 			definitions: {

@@ -122,5 +122,5 @@ export {
 	type NodeJsonSchema,
 	type TreeJsonSchema,
 	type FieldJsonSchema,
-	simpleTreeSchemaToJsonSchema,
+	toJsonSchema,
 } from "./jsonSchema.js";

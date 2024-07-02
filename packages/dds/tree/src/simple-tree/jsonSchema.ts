@@ -123,7 +123,11 @@ export interface FieldJsonSchema {
 	readonly anyOf: JsonDefinitionRef[];
 }
 
-export function simpleTreeSchemaToJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
+/**
+ * Generates a JSON schema representation from a simple tree schema.
+ * @internal
+ */
+export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
 	const definitions = convertDefinitions(schema.definitions);
 	const allowedTypes = schema.allowedTypes.map(createRefNode);
 	return {
