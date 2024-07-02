@@ -137,10 +137,10 @@ export function configureWebSocketServices(
 		maxNumberOfClientsPerDocument,
 		numberOfMessagesPerTrace,
 	};
-	webSocketServer.on("connection", (socket: core.IWebSocket) => {
+	webSocketServer.on("connection", (socket: core.IWebSocket, req) => {
 		// Timer to check token expiry for this socket connection
 		const expirationTimer = new ExpirationTimer(() => socket.disconnect(true));
-
+        Lumberjack.info(`nexus headers`, req.headers);
 		/**
 		 * Maps and sets to track various information related to client connections.
 		 * Note: These maps/sets are expected to have only one client id entry.
