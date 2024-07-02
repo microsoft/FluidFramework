@@ -2049,6 +2049,7 @@ describe("SharedTree", () => {
 						nickname: { anyOf: [{ "$ref": "#/definitions/com.fluidframework.leaf.string" }] },
 					},
 					required: ["name", "age"],
+					additionalProperties: false,
 				},
 				"test.Contacts": {
 					type: "array",

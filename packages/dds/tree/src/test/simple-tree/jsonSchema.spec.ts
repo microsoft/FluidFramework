@@ -25,10 +25,10 @@ const Ajv =
 describe.only("JsonSchema", () => {
 	function getValidator(schema: TreeJsonSchema) {
 		const ajv = new Ajv({
-			strict: true,
+			strict: false,
 			allErrors: true,
 		});
-		return ajv.addSchema(schema);
+		return ajv.compile(schema);
 	}
 
 	describe("toJsonSchema", () => {
@@ -60,6 +60,11 @@ describe.only("JsonSchema", () => {
 
 			// Verify that the generated schema is valid.
 			const validator = getValidator(actual);
+
+			// Verify expected data validation behavior.
+			assert(validator("Hello world") === true);
+			assert(validator({}) === false);
+			assert(validator([]) === false);
 		});
 
 		it("Array schema", () => {
@@ -98,6 +103,14 @@ describe.only("JsonSchema", () => {
 
 			// Verify that the generated schema is valid.
 			const validator = getValidator(actual);
+
+			// Verify expected data validation behavior.
+			assert(validator("Hello world") === false);
+			assert(validator({}) === false);
+			assert(validator([]) === true);
+			assert(validator([42]) === false);
+			assert(validator(["Hello", "world"]) === true);
+			assert(validator(["Hello", 42, "world"]) === false);
 		});
 
 		it("Map schema", () => {
@@ -136,6 +149,24 @@ describe.only("JsonSchema", () => {
 
 			// Verify that the generated schema is valid.
 			const validator = getValidator(actual);
+
+			// Verify expected data validation behavior.
+			assert(validator("Hello world") === false);
+			assert(validator([]) === false);
+			assert(validator({}) === true);
+			assert(
+				validator({
+					foo: "Hello",
+					bar: "World",
+				}) === true,
+			);
+			assert(
+				validator({
+					foo: "Hello",
+					bar: "World",
+					baz: 42,
+				}) === false,
+			);
 		});
 
 		it("Object schema", () => {
@@ -174,6 +205,7 @@ describe.only("JsonSchema", () => {
 							},
 						},
 						required: ["bar"],
+						additionalProperties: false,
 					},
 					"test.number": {
 						type: "number",
@@ -194,6 +226,34 @@ describe.only("JsonSchema", () => {
 
 			// Verify that the generated schema is valid.
 			const validator = getValidator(actual);
+
+			// Verify expected data validation behavior.
+			assert(validator("Hello world") === false);
+			assert(validator([]) === false);
+			assert(validator({}) === false);
+			assert(
+				validator({
+					foo: 42,
+				}) === false,
+			);
+			assert(
+				validator({
+					bar: "Hello World",
+				}) === true,
+			);
+			assert(
+				validator({
+					foo: 42,
+					bar: "Hello World",
+				}) === true,
+			);
+			assert(
+				validator({
+					foo: 42,
+					bar: "Hello World",
+					baz: true,
+				}) === false,
+			);
 		});
 	});
 });

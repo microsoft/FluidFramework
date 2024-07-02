@@ -205,7 +205,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 		kind: "object",
 		properties,
 		required,
-		// TODO: get `additionalProperties` allowance from schema policy
+		additionalProperties: false, // TODO: get allowance from schema policy
 	};
 }
 
