@@ -222,6 +222,33 @@ describeCompat(
 				summaryAckHandle,
 				"Should not use summary ack handle",
 			);
+
+			const fetchEventDetailsString = mockLogger.events.find((event) =>
+				event.eventName.includes("RefreshLatestSummaryAckFetch_end"),
+			)?.details;
+			assert(
+				fetchEventDetailsString !== undefined,
+				"Did not find RefreshLatestSummaryAckFetch_end event",
+			);
+			const fetchEventDetails = JSON.parse(fetchEventDetailsString as string);
+			assert(
+				fetchEventDetails !== undefined,
+				"RefreshLatestSummaryAckFetch_end doesn't have details",
+			);
+			assert(
+				fetchEventDetails.newerSnapshotPresent === false,
+				"It should not fetch newer snapshot",
+			);
+			assert.strictEqual(
+				fetchEventDetails.targetAckHandle,
+				summaryAckHandle,
+				"The target handle should be the fake summary ack handle",
+			);
+			assert.notStrictEqual(
+				fetchEventDetails.snapshotVersion,
+				summaryAckHandle,
+				"The fetched snapshot handle should not be the fake summary ack handle",
+			);
 		});
 	},
 );

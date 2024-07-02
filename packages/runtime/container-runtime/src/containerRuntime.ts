@@ -92,7 +92,6 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
-	ReadAndParseBlob,
 	RequestParser,
 	TelemetryContext,
 	addBlobToSummary,
@@ -4245,7 +4244,6 @@ export class ContainerRuntime
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
@@ -4264,16 +4262,7 @@ export class ContainerRuntime
 		 */
 		if (!result.isSummaryTracked) {
 			if (result.isSummaryNewer) {
-				await this.fetchLatestSnapshotAndMaybeClose(
-					summaryRefSeq,
-					summaryLogger,
-					{
-						eventName: "RefreshLatestSummaryAckFetch",
-						ackHandle,
-						targetSequenceNumber: summaryRefSeq,
-					},
-					readAndParseBlob,
-				);
+				await this.fetchLatestSnapshotAndMaybeClose(summaryRefSeq, ackHandle, summaryLogger);
 			}
 			return;
 		}
@@ -4298,13 +4287,12 @@ export class ContainerRuntime
 	 */
 	private async fetchLatestSnapshotAndMaybeClose(
 		targetRefSeq: number,
+		targetAckHandle: string,
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEventExt,
-		readAndParseBlob: ReadAndParseBlob,
 	) {
 		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
-			event,
+			{ eventName: "RefreshLatestSummaryAckFetch" },
 			async (perfEvent: {
 				end: (arg0: {
 					details: {
@@ -4313,6 +4301,8 @@ export class ContainerRuntime
 						snapshotRefSeq?: number | undefined;
 						snapshotVersion?: string | undefined;
 						newerSnapshotPresent?: boolean | undefined;
+						targetRefSeq?: number | undefined;
+						targetAckHandle?: string | undefined;
 					};
 				}) => void;
 			}) => {
@@ -4322,7 +4312,9 @@ export class ContainerRuntime
 					snapshotRefSeq?: number;
 					snapshotVersion?: string;
 					newerSnapshotPresent?: boolean | undefined;
-				} = {};
+					targetRefSeq?: number | undefined;
+					targetAckHandle?: string | undefined;
+				} = { targetRefSeq, targetAckHandle };
 				const trace = Trace.start();
 
 				let snapshotTree: ISnapshotTree | null;
@@ -4361,6 +4353,7 @@ export class ContainerRuntime
 				}
 
 				props.getSnapshotDuration = trace.trace().duration;
+				const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 				props.snapshotRefSeq = snapshotRefSeq;
 				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
