@@ -75,6 +75,15 @@
 			"args": ["generate", "bundleStats", "-v"],
 		},
 		{
+			"name": "flub generate changeset-config",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "changeset-config", "-g", "client", "-v"],
+		},
+		{
 			"name": "flub generate packlist",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",

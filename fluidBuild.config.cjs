@@ -10,6 +10,24 @@
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
+ * Known allowed npm scopes. Used to enforce package name policies.
+ */
+const allowedScopes = [
+	"@fluidframework",
+	"@fluid-example",
+	"@fluid-experimental",
+	"@fluid-internal",
+	"@fluid-private",
+	"@fluid-tools",
+];
+
+/**
+ * Known unscoped packages. Used to enforce package name policies and other places where we need to know the unscoped
+ * package names in the repo.
+ */
+const unscopedPackages = ["fluid-framework", "fluidframework-docs", "tinylicious"];
+
+/**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
  *
@@ -393,16 +411,9 @@ module.exports = {
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
-			allowedScopes: [
-				"@fluidframework",
-				"@fluid-example",
-				"@fluid-experimental",
-				"@fluid-internal",
-				"@fluid-private",
-				"@fluid-tools",
-			],
+			allowedScopes,
 			// These packages are known unscoped packages.
-			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
+			unscopedPackages,
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
@@ -528,5 +539,25 @@ module.exports = {
 		"lts": "minor",
 		"release/**": "patch",
 		"next": "major",
+	},
+
+	// The configuration used by the `flub generate changeset-config` command.
+	changesetConfig: {
+		changelog: [
+			"@fluid-private/changelog-generator-wrapper",
+			{
+				repoBaseUrl: "https://github.com/microsoft/FluidFramework",
+				issueTemplate: " ([#$issue]($repoBaseUrl/pull/$issue))",
+				commitTemplate: " [$abbrevHash]($repoBaseUrl/commit/$hash)",
+			},
+		],
+		commit: false,
+		fixed: {
+			// This will include all packages in whatever release group is selected in `flub generate changeset-config`.
+			"default": [...allowedScopes, ...unscopedPackages],
+		},
+		access: "public",
+		baseBranch: "main",
+		updateInternalDependencies: "patch",
 	},
 };

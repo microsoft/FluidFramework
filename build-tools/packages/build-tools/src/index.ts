@@ -20,13 +20,19 @@ export {
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
 export type {
+	ChangesetConfig,
+	ChangesetConfigWritten,
 	IFluidBuildConfig,
+	PackageName,
+	PackageNameOrScope,
 	PackageNamePolicyConfig,
+	PackageScope,
+	PackageScopeSelectors,
 	PolicyConfig,
 	PreviousVersionStyle,
 	ScriptRequirement,
 } from "./common/fluidRepo";
-
+export { isPackageScope } from "./common/fluidRepo";
 // For repo policy check
 export {
 	normalizeGlobalTaskDefinitions,
