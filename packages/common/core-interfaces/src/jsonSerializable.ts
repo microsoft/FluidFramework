@@ -20,7 +20,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  *
  * Important: `T extends JsonSerializable<T>` is incorrect (does not even compile).
  *
- * The optional 'Options.Replaced' parameter may be used to permit additional leaf types
+ * The optional `Options.Replaced` parameter may be used to permit additional leaf types
  * to support situations where a `replacer` is used to handle special values (e.g.,
  * `JsonSerializable<{ x: IFluidHandle }, { Replaced: IFluidHandle }>`).
  *

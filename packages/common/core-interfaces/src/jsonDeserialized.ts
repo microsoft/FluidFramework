@@ -30,10 +30,11 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  * Recursive types without any required modification are preserved intact.
  * Recursive types that require modification are unrolled a limited number of
  * times and then further instances of recursion are replaced with
- * JsonTypeWith<TReplaced>.
+ * {@link JsonTypeWith|JsonTypeWith<Options.Replaced>}.
  *
- * Class instances become simple data objects that lose hidden properties and
- * prototypes that are required for `instanceof` runtime checks.
+ * Under basic serialization, class instances become simple data objects that
+ * lose hidden properties and prototypes that are required for `instanceof`
+ * runtime checks.
  *
  * The optional 'Options.Replaced' parameter may be used to permit additional
  * leaf types handled by custom serialization/deserialization logic.
