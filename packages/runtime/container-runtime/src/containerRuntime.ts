@@ -2623,13 +2623,28 @@ export class ContainerRuntime
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 
 		if (modernRuntimeMessage) {
+			//* SOME OF THIS IS WRONG (about CSN / batchStartCsn)
+
+			// Grab this "wire" CSN before processing the message.
+			// If it's a grouped batch, the resulting batch will have
+			// fake CSNs that are of no use for batch ID.
+			const batchStartCsn = messageCopy.clientSequenceNumber;
+
 			//* Now we know it's never some random op that we just need to pass through
 			const batch = this.remoteMessageProcessor.process(
 				messageCopy as InboundContainerRuntimeMessage, //* Update if check to be a typeguard? Maybe unpacking makes it weird though
 			);
-			const messages = local
-				? this.pendingStateManager.processPendingLocalBatch(batch as any) //* any
-				: batch.map((message) => ({ message, lom: undefined }));
+			let messages: {
+				message: InboundSequencedContainerRuntimeMessage;
+				lom: unknown;
+			}[];
+			//* Future: Also pass batchStartCsn to these functions (or compute batchId altogether here)
+			if (local) {
+				messages = this.pendingStateManager.processPendingLocalBatch(batch as any); //* any
+			} else {
+				messages = batch.map((message) => ({ message, lom: undefined })) as any; //* any
+				(this.pendingStateManager as any).checkForMatchingBatchId(batchStartCsn); //* (Future)
+			}
 			messages.forEach(({ message, lom }) => {
 				const msg: MessageWithContext = {
 					message,
