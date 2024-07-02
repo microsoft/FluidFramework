@@ -16,6 +16,7 @@ import {
 import { TreeFactory } from "../../treeFactory.js";
 import { getView } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { Tree } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -56,6 +57,45 @@ describe("class-tree tree", () => {
 		);
 		const view: TreeView<typeof Canvas> = tree.viewWith(config);
 		view.initialize({ stuff: ["a", "b"] });
+	});
+
+	it("accessing view.root does not leak LazyEntities", () => {
+		const config = new TreeViewConfiguration({ schema: Canvas });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize({ stuff: [] });
+		const _unused = view.root;
+		const context = view.getView().context;
+		const countBefore = context.withAnchors.size;
+		for (let index = 0; index < 10; index++) {
+			const _unused2 = view.root;
+		}
+		const countAfter = context.withAnchors.size;
+
+		assert.equal(countBefore, countAfter);
+	});
+
+	it("accessing root via Tree.parent does not leak LazyEntities", () => {
+		const config = new TreeViewConfiguration({ schema: Canvas });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize({ stuff: [] });
+		const child = view.root.stuff;
+		Tree.parent(child);
+		const context = view.getView().context;
+		const countBefore = context.withAnchors.size;
+		for (let index = 0; index < 10; index++) {
+			Tree.parent(child);
+		}
+		const countAfter = context.withAnchors.size;
+
+		assert.equal(countBefore, countAfter);
 	});
 
 	it("ObjectRoot - unhydrated", () => {
