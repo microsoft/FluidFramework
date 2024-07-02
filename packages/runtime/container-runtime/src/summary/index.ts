@@ -83,7 +83,6 @@ export {
 } from "./summaryCollection.js";
 export {
 	aliasBlobName,
-	blobsTreeName,
 	chunksBlobName,
 	dataStoreAttributesBlobName,
 	electedSummarizerBlobName,

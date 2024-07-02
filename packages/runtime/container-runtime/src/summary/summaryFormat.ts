@@ -20,6 +20,7 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 
+import { blobsTreeName } from "../blobManager/index.js";
 import { IGCMetadata } from "../gc/index.js";
 
 import { IDocumentSchema } from "./documentSchema.js";
@@ -208,7 +209,6 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
-export const blobsTreeName = ".blobs";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
 
