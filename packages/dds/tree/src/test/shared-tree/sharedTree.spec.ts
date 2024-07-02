@@ -23,7 +23,6 @@ import {
 	CommitKind,
 	type JsonableTree,
 	type Revertible,
-	TreeNavigationResult,
 	type UpPath,
 	compareUpPaths,
 	moveToDetachedField,
@@ -97,6 +96,7 @@ import {
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { TestAnchor } from "../testAnchor.js";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
@@ -1023,13 +1023,8 @@ describe("SharedTree", () => {
 			const root1 = tree1.flexTree;
 			const root2 = tree2.flexTree;
 
-			// get anchors to the nodes we're removing
-			const cursor = tree2.checkout.forest.allocateCursor();
-			moveToDetachedField(tree2.checkout.forest, cursor);
-			cursor.firstNode();
-			assert.equal(cursor.value, "A");
-			const anchor = cursor.buildAnchor();
-			cursor.free();
+			// get an anchor to the node we're removing
+			const anchorAOnTree2 = TestAnchor.fromValue(tree2.checkout.forest, "A");
 
 			// remove in first tree
 			root1.removeAt(0);
@@ -1040,13 +1035,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...root2], ["B", "C", "D"]);
 
 			// check the detached field on the peer
-			const repairCursor1 = tree2.checkout.forest.allocateCursor();
-			assert.equal(
-				tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1),
-				TreeNavigationResult.Ok,
-			);
-			assert.equal(repairCursor1.value, "A");
-			repairCursor1.free();
+			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Removed);
 
 			// send edits to move the collab window up
 			root2.insertAt(3, ["y"]);
@@ -1064,12 +1053,8 @@ describe("SharedTree", () => {
 			// ensure the remove is out of the collab window
 			assert(removeSequenceNumber < provider.minimumSequenceNumber);
 			// check that the repair data on the peer is destroyed
-			const repairCursor2 = tree2.checkout.forest.allocateCursor();
-			assert.equal(
-				tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor2),
-				TreeNavigationResult.NotFound,
-			);
-			repairCursor2.free();
+			assert.equal(anchorAOnTree2.treeStatus, TreeStatus.Deleted);
+
 			undoStack[0]?.revert();
 
 			provider.processMessages();
