@@ -61,11 +61,14 @@ import {
 import type {
 	FieldChangeMap,
 	FieldChangeset,
+	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import type { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
+import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { newCrossFieldKeyTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -228,33 +231,10 @@ function makeModularChangeCodec(
 
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
+		parentId: NodeId | undefined,
+		decoded: ModularChangeset,
 		context: ChangeEncodingContext,
 		idAllocator: IdAllocator,
-	): [FieldChangeMap, ChangeAtomIdMap<NodeChangeset>] {
-		const decodedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		const fieldContext: FieldChangeEncodingContext = {
-			baseContext: context,
-
-			encodeNode: () => fail("Should not encode nodes during field decoding"),
-
-			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
-				const node = decodeNodeChangesetFromJson(encodedNode, fieldContext);
-				const nodeId: NodeId = {
-					revision: context.revision,
-					localId: brand(idAllocator.allocate()),
-				};
-				setInNestedMap(decodedNodes, nodeId.revision, nodeId.localId, node);
-				return nodeId;
-			},
-		};
-
-		const decodedFields = decodeFieldChangesFromJsonI(encodedChange, fieldContext);
-		return [decodedFields, decodedNodes];
-	}
-
-	function decodeFieldChangesFromJsonI(
-		encodedChange: EncodedFieldChangeMap,
-		context: FieldChangeEncodingContext,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -262,7 +242,46 @@ function makeModularChangeCodec(
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
 				fail("Encoded change didn't pass schema validation.");
 			}
-			const fieldChangeset = codec.json.decode(field.change, context);
+
+			const fieldId: FieldId = {
+				nodeId: parentId,
+				field: field.fieldKey,
+			};
+
+			const fieldContext: FieldChangeEncodingContext = {
+				baseContext: context,
+
+				encodeNode: () => fail("Should not encode nodes during field decoding"),
+
+				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
+					const nodeId: NodeId = {
+						revision: context.revision,
+						localId: brand(idAllocator.allocate()),
+					};
+
+					const node = decodeNodeChangesetFromJson(
+						encodedNode,
+						nodeId,
+						decoded,
+						context,
+						idAllocator,
+					);
+
+					setInNestedMap(decoded.nodeChanges, nodeId.revision, nodeId.localId, node);
+					setInNestedMap(decoded.nodeToParent, nodeId.revision, nodeId.localId, fieldId);
+					return nodeId;
+				},
+			};
+
+			const fieldChangeset = codec.json.decode(field.change, fieldContext);
+
+			const crossFieldKeys = getChangeHandler(fieldKinds, field.fieldKind).getCrossFieldKeys(
+				fieldChangeset,
+			);
+
+			for (const crossFieldKey of crossFieldKeys) {
+				decoded.crossFieldKeys.set(crossFieldKey, fieldId);
+			}
 
 			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
 
@@ -277,13 +296,22 @@ function makeModularChangeCodec(
 
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
-		context: FieldChangeEncodingContext,
+		id: NodeId,
+		decoded: ModularChangeset,
+		context: ChangeEncodingContext,
+		idAllocator: IdAllocator,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJsonI(fieldChanges, context);
+			decodedChange.fieldChanges = decodeFieldChangesFromJson(
+				fieldChanges,
+				id,
+				decoded,
+				context,
+				idAllocator,
+			);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -329,7 +357,7 @@ function makeModularChangeCodec(
 						originatorId: context.originatorId,
 						idCompressor: context.idCompressor,
 					}),
-				};
+			  };
 	}
 
 	function decodeDetachedNodes(
@@ -354,7 +382,9 @@ function makeModularChangeCodec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
+				build[1] === undefined
+					? context.revision
+					: revisionTagCodec.decode(build[1], context);
 			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
 		});
 
@@ -426,7 +456,11 @@ function makeModularChangeCodec(
 					change.revisions === undefined
 						? undefined
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
+				changes: encodeFieldChangesForJson(
+					change.fieldChanges,
+					context,
+					change.nodeChanges,
+				),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
 				violations: change.constraintViolationCount,
@@ -434,15 +468,21 @@ function makeModularChangeCodec(
 		},
 
 		decode: (encodedChange: EncodedModularChangeset, context) => {
-			const [fieldChanges, nodeChanges] = decodeFieldChangesFromJson(
+			const decoded: Mutable<ModularChangeset> = {
+				fieldChanges: new Map(),
+				nodeChanges: new Map(),
+				nodeToParent: new Map(),
+				nodeAliases: new Map(),
+				crossFieldKeys: newCrossFieldKeyTable(),
+			};
+
+			decoded.fieldChanges = decodeFieldChangesFromJson(
 				encodedChange.changes,
+				undefined,
+				decoded,
 				context,
 				idAllocatorFromMaxId(encodedChange.maxId),
 			);
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges,
-				nodeChanges,
-			};
 
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
@@ -467,4 +507,17 @@ function makeModularChangeCodec(
 	};
 
 	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
+}
+
+function getChangeHandler(
+	fieldKinds: FieldKindConfiguration,
+	fieldKind: FieldKindIdentifier,
+): FieldChangeHandler<unknown> {
+	if (fieldKind === genericFieldKind.identifier) {
+		return genericFieldKind.changeHandler;
+	}
+
+	const handler = fieldKinds.get(fieldKind)?.kind.changeHandler;
+	assert(handler !== undefined, "Unknown field kind");
+	return handler;
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	ChangeAtomId,
 	ChangeAtomIdMap,
@@ -10,9 +11,11 @@ import type {
 	FieldKey,
 	FieldKindIdentifier,
 	RevisionInfo,
+	RevisionTag,
 } from "../../core/index.js";
 import type { Brand } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
+import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
 /**
  * @internal
@@ -31,10 +34,30 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly revisions?: readonly RevisionInfo[];
 	readonly fieldChanges: FieldChangeMap;
 	readonly nodeChanges: ChangeAtomIdMap<NodeChangeset>;
+
+	// TODO: Should this be merged with `nodeChanges`?
+	readonly nodeToParent: ChangeAtomIdMap<FieldId>;
+	readonly nodeAliases: ChangeAtomIdMap<NodeId>;
+	readonly crossFieldKeys: CrossFieldKeyTable;
 	readonly constraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
 	readonly destroys?: ChangeAtomIdMap<number>;
 	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
+}
+
+export type CrossFieldKeyTable = BTree<CrossFieldKeyRange, FieldId>;
+export type CrossFieldKeyRange = [
+	CrossFieldTarget,
+	RevisionTag | undefined,
+	ChangesetLocalId,
+	number,
+];
+
+export type CrossFieldKey = [CrossFieldTarget, RevisionTag | undefined, ChangesetLocalId];
+
+export interface FieldId {
+	nodeId: NodeId | undefined;
+	field: FieldKey;
 }
 
 /**
