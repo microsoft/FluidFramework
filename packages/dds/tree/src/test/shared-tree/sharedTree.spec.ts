@@ -1994,10 +1994,7 @@ describe("SharedTree", () => {
 					},
 				],
 			]),
-			rootFieldSchema: {
-				kind: "required",
-				allowedTypes: ["test.Contacts"],
-			},
+			allowedTypes: ["test.Contacts"],
 		};
 
 		const actual = sharedTree.getStoredSchema();
