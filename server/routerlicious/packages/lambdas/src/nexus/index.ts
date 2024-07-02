@@ -182,9 +182,7 @@ export function configureWebSocketServices(
 		let connectDocumentP: Promise<void> | undefined;
 		let disconnectDocumentP: Promise<void> | undefined;
 
-		const disposers: ((() => void) | undefined)[] = [
-			socket.dispose?.bind(socket),
-		];
+		const disposers: ((() => void) | undefined)[] = [socket.dispose?.bind(socket)];
 
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises

@@ -518,10 +518,7 @@ function setUpSignalListenerForRoomBroadcasting(
 		// No-op if the room (collab session) that signal came in from is different
 		// than the current room. We reuse websockets so there could be multiple rooms
 		// that we are sending the signal to, and we don't want to do that.
-		if (
-			signalRoom.documentId === room.documentId &&
-			signalRoom.tenantId === room.tenantId
-		) {
+		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
 			try {
 				const runtimeMessage = createRuntimeMessage(signalContent);
 
@@ -547,15 +544,9 @@ function setUpSignalListenerForRoomBroadcasting(
 			}
 		}
 	};
-	collaborationSessionEventEmitter?.on(
-		"broadcastSignal",
-		broadCastSignalListener,
-	);
+	collaborationSessionEventEmitter?.on("broadcastSignal", broadCastSignalListener);
 	const disposeBroadcastSignalListener = (): void => {
-		collaborationSessionEventEmitter?.off(
-			"broadcastSignal",
-			broadCastSignalListener,
-		);
+		collaborationSessionEventEmitter?.off("broadcastSignal", broadCastSignalListener);
 	};
 	return disposeBroadcastSignalListener;
 }
@@ -714,7 +705,7 @@ export async function connectDocument(
 			details: messageClient as IClient,
 			dispose: (): void => {
 				disposeSignalListenerForRoomBroadcasting();
-			}
+			},
 		};
 	} catch (error) {
 		uncaughtError = error;
