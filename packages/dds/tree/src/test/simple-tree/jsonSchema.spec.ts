@@ -11,7 +11,7 @@ import {
 	type TreeJsonSchema,
 } from "../../simple-tree/index.js";
 
-describe("JsonSchema", () => {
+describe.only("JsonSchema", () => {
 	describe("toJsonSchema", () => {
 		it("Leaf schema", () => {
 			const input: SimpleTreeSchema = {
@@ -34,6 +34,41 @@ describe("JsonSchema", () => {
 				anyOf: [
 					{
 						$ref: "#/definitions/test.string",
+					},
+				],
+			};
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Array schema", () => {
+			const input: SimpleTreeSchema = {
+				definitions: new Map<string, SimpleNodeSchema>([
+					["test.array", { kind: "array", allowedTypes: new Set<string>(["test.string"]) }],
+					["test.string", { type: "string", kind: "leaf" }],
+				]),
+				allowedTypes: ["test.array"],
+			};
+
+			const actual = toJsonSchema(input);
+
+			const expected: TreeJsonSchema = {
+				// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
+				definitions: {
+					"test.array": {
+						type: "array",
+						kind: "array",
+						items: {
+							type: [{ $ref: "#/definitions/test.string" }],
+						},
+					},
+					"test.string": {
+						type: "string",
+						kind: "leaf",
+					},
+				},
+				anyOf: [
+					{
+						$ref: "#/definitions/test.array",
 					},
 				],
 			};
