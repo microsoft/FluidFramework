@@ -2909,7 +2909,7 @@ export class ContainerRuntime
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
-			checkpoint = this.outbox.checkpoint().mainBatch;
+			checkpoint = this.outbox.getBatchCheckpoints().mainBatch;
 		}
 		try {
 			this._orderSequentiallyCalls++;
@@ -3052,7 +3052,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Are we in the middle of batching ops together?
+	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
 	private currentlyBatching() {
 		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
@@ -4043,7 +4043,9 @@ export class ContainerRuntime
 				this.outbox.submit(message);
 			}
 
-			if (!this.currentlyBatching()) {
+			// Note: Technically, the system "always" batches - if this case is true we'll just have a single-message batch.
+			const flushImmediatelyOnSubmit = !this.currentlyBatching();
+			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
 				this.scheduleFlush();

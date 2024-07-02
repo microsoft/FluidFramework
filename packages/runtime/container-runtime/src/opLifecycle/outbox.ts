@@ -87,6 +87,13 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 	}
 }
 
+/**
+ * The Outbox collects messages submitted by the ContainerRuntime into a batch,
+ * and then flushes the batch when requested.
+ *
+ * @remarks There are actually multiple independent batches (some are for a specific message type),
+ * to support slight variation in semantics for each batch (e.g. support for rebasing or grouping).
+ */
 export class Outbox {
 	private readonly mc: MonitoringContext;
 	private readonly mainBatch: BatchManager;
@@ -407,7 +414,10 @@ export class Outbox {
 		return clientSequenceNumber;
 	}
 
-	public checkpoint() {
+	/**
+	 * @returns A checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
+	 */
+	public getBatchCheckpoints() {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
