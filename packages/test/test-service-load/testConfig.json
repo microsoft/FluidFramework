@@ -53,9 +53,10 @@
 				"numClients": 12
 			},
 			"virtualization": {
-				"createRate": 10000,
-				"loadRate": 10000,
-				"opRate": 10000
+				"createRate": 2000,
+				"loadRate": 2000,
+				"opRate": 2000,
+				"numClients": 2
 			}
 		},
 		"ci_frs": {
@@ -117,7 +118,8 @@
 			"virtualization": {
 				"createRate": 60,
 				"loadRate": 60,
-				"opRate": 60
+				"opRate": 60,
+				"numClients": 2
 			}
 		},
 		"debug": {
