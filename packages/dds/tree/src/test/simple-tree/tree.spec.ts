@@ -247,8 +247,7 @@ describe("object allocation tests", () => {
 		assert.equal(countAfter, countBefore + 1);
 	});
 
-	// TODO: AB#8575 re-enable this test once leaf access on arrays does not allocate flex nodes
-	it.skip("accessing leaf on array node does not allocate flex nodes", () => {
+	it("accessing leaf on array node does not allocate flex nodes", () => {
 		class TreeWithLeaves extends schema.array("ArrayOfLeaves", schema.number) {}
 		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 		const tree = factory.create(
