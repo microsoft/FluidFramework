@@ -74,5 +74,40 @@ describe.only("JsonSchema", () => {
 			};
 			assert.deepEqual(actual, expected);
 		});
+
+		it("Map schema", () => {
+			const input: SimpleTreeSchema = {
+				definitions: new Map<string, SimpleNodeSchema>([
+					["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
+					["test.string", { type: "string", kind: "leaf" }],
+				]),
+				allowedTypes: ["test.map"],
+			};
+
+			const actual = toJsonSchema(input);
+
+			const expected: TreeJsonSchema = {
+				// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
+				definitions: {
+					"test.map": {
+						type: "object",
+						kind: "map",
+						additionalProperties: {
+							type: [{ $ref: "#/definitions/test.string" }],
+						},
+					},
+					"test.string": {
+						type: "string",
+						kind: "leaf",
+					},
+				},
+				anyOf: [
+					{
+						$ref: "#/definitions/test.map",
+					},
+				],
+			};
+			assert.deepEqual(actual, expected);
+		});
 	});
 });
