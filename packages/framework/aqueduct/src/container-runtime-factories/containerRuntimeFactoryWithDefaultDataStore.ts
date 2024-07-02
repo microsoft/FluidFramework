@@ -32,6 +32,7 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 
 /**
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
+ * @legacy
  * @alpha
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
@@ -66,6 +67,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
  * the container with an empty URL.
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
+ * @legacy
  * @alpha
  */
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {

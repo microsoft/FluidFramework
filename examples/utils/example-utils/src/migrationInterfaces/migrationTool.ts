@@ -36,13 +36,17 @@ export interface IAcceptedMigrationDetails {
  */
 export interface IMigrationToolEvents extends IEvent {
 	(event: "stopping" | "migrating" | "migrated", listener: () => void);
+	(event: "connected" | "disconnected", listener: () => void);
 	(event: "disposed", listener: () => void);
 }
 
 /**
  * @internal
  */
-export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
+export interface IMigrationTool {
+	readonly events: IEventProvider<IMigrationToolEvents>;
+
+	readonly connected: boolean;
 	/**
 	 * The current state of migration.
 	 */

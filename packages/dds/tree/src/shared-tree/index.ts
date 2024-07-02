@@ -47,7 +47,12 @@ export {
 	buildTreeConfiguration,
 } from "./schematizeTree.js";
 
-export { type FlexTreeView, CheckoutFlexTreeView, type ITreeViewFork } from "./treeView.js";
+export {
+	type FlexTreeView,
+	CheckoutFlexTreeView,
+	type ITreeViewFork,
+	type FlexTreeViewGeneric,
+} from "./treeView.js";
 
 export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.js";
 

@@ -56,6 +56,10 @@ export class BatchManager {
 			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
+	/**
+	 * The last-processed CSN when this batch started.
+	 * This is used to ensure that while the batch is open, no incoming ops are processed.
+	 */
 	private clientSequenceNumber: number | undefined;
 
 	constructor(public readonly options: IBatchManagerOptions) {}

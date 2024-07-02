@@ -248,6 +248,7 @@ export {
 	ForestType,
 	type SharedTreeContentSnapshot,
 	type FlexTreeView,
+	type FlexTreeViewGeneric,
 	type ITreeViewFork,
 	buildTreeConfiguration,
 	type ISharedTreeEditor,
