@@ -659,8 +659,10 @@ export const makeLegacySendBatchFn =
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {
+		// Default to negative one to match Container.submitBatch behavior
+		let clientSequenceNumber: number = -1;
 		for (const message of batch.content) {
-			submitFn(
+			clientSequenceNumber = submitFn(
 				MessageType.Operation,
 				// For back-compat (submitFn only works on deserialized content)
 				message.contents === undefined ? undefined : JSON.parse(message.contents),
@@ -670,26 +672,31 @@ export const makeLegacySendBatchFn =
 		}
 
 		deltaManager.flush();
+
+		return clientSequenceNumber;
 	};
 
 /** Helper type for type constraints passed through several functions.
+ * local - Did this client send the op?
+ * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
+ * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
  * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
- * local - Did this client send the op?
  */
-type MessageWithContext =
+type MessageWithContext = {
+	local: boolean;
+	savedOp?: boolean;
+	batchStartCsn: number;
+} & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
-			local: boolean;
-			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
-			local: boolean;
-			savedOp?: boolean;
-	  };
+	  }
+);
 
 const summarizerRequestUrl = "_summarizer";
 
@@ -2615,7 +2622,13 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+		const processResult = this.remoteMessageProcessor.process(messageCopy);
+		if (processResult === undefined) {
+			// This means the incoming message is an incomplete part of a message or batch
+			// and we need to process more messages before the rest of the system can understand it.
+			return;
+		}
+		for (const message of processResult.messages) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2625,12 +2638,14 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					}
 				: // Unrecognized message will be ignored.
 					{
 						message,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					};
 			msg.savedOp = savedOp;
 
@@ -2678,6 +2693,7 @@ export class ContainerRuntime
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
+					messageWithContext.batchStartCsn,
 				);
 			}
 

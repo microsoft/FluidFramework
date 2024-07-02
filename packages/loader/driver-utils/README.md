@@ -21,6 +21,15 @@ To get started, install the package by running the following command:
 npm i @fluidframework/driver-utils
 ```
 
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/driver-utils` like normal.
+
+To access the `legacy` APIs, import via `@fluidframework/driver-utils/legacy`.
+
 ## API Documentation
 
 API documentation for **@fluidframework/driver-utils** is available at <https://fluidframework.com/docs/apis/driver-utils>.
@@ -45,11 +54,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out our [GitHub
-Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an
-issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
 

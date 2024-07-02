@@ -11,11 +11,13 @@ import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";
+import type { BatchMessage } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -29,6 +31,7 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
+	batchStartCsn?: number;
 }
 
 export interface IPendingLocalState {
@@ -187,27 +190,30 @@ export class PendingStateManager implements IDisposable {
 	public readonly dispose = () => this.disposeOnce.value;
 
 	/**
-	 * Called when a message is submitted locally. Adds the message and the associated details to the pending state
-	 * queue.
-	 * @param type - The container message type.
-	 * @param content - The message content.
-	 * @param localOpMetadata - The local metadata associated with the message.
+	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
+	 * acks are processed, to ensure it is successfully sent.
+	 * @param batch - The batch that was flushed
+	 * @param clientSequenceNumber - The CSN of the first message in the batch,
+	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
-	public onSubmitMessage(
-		content: string,
-		referenceSequenceNumber: number,
-		localOpMetadata: unknown,
-		opMetadata: Record<string, unknown> | undefined,
-	) {
-		const pendingMessage: IPendingMessage = {
-			type: "message",
-			referenceSequenceNumber,
-			content,
-			localOpMetadata,
-			opMetadata,
-		};
-
-		this.pendingMessages.push(pendingMessage);
+	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+		for (const message of batch) {
+			const {
+				contents: content = "",
+				referenceSequenceNumber,
+				localOpMetadata,
+				metadata: opMetadata,
+			} = message;
+			const pendingMessage: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber,
+				content,
+				localOpMetadata,
+				opMetadata,
+				batchStartCsn: clientSequenceNumber,
+			};
+			this.pendingMessages.push(pendingMessage);
+		}
 	}
 
 	/**
@@ -251,9 +257,12 @@ export class PendingStateManager implements IDisposable {
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
+	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
 	public processPendingLocalMessage(
 		message: InboundSequencedContainerRuntimeMessage,
+		batchStartCsn: number,
 	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
@@ -267,6 +276,20 @@ export class PendingStateManager implements IDisposable {
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
+
+		if (pendingMessage.batchStartCsn !== batchStartCsn) {
+			this.logger?.sendErrorEvent({
+				eventName: "BatchClientSequenceNumberMismatch",
+				details: {
+					processingBatch: !!this.pendingBatchBeginMessage,
+					pendingBatchCsn: pendingMessage.batchStartCsn,
+					batchStartCsn,
+					messageBatchMetadata: (message.metadata as any)?.batch,
+					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
+				},
+				messageDetails: extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		const messageContent = buildPendingMessageContent(message);
 

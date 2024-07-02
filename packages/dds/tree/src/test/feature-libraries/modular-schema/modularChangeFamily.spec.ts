@@ -1418,6 +1418,11 @@ describe("ModularChangeFamily", () => {
 			successes: [
 				["without constraint", inlineRevision(rootChange1a, tag1), context],
 				["with constraint", inlineRevision(rootChange3, tag1), context],
+				[
+					"with violated constraint",
+					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
+					context,
+				],
 				["with node existence constraint", inlineRevision(rootChange4, tag1), context],
 				[
 					"without node field changes",

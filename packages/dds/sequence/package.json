@@ -201,6 +201,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_SequenceOptions": {
+				"backCompat": false
+			}
+		}
 	}
 }
