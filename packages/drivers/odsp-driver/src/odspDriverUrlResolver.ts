@@ -231,7 +231,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	}
 }
 
-function decodeOdspUrl(url: string): {
+export function decodeOdspUrl(url: string): {
 	siteUrl: string;
 	driveId: string;
 	itemId: string;
