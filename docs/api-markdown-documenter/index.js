@@ -6,6 +6,7 @@
 /*
  * This index script runs `render-api-documentation.js` using the version configurations described
  * in data/versions.json.
+ *
  */
 
 import path from "node:path";
