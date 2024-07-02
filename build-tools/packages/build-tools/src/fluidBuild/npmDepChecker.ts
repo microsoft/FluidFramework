@@ -23,10 +23,17 @@ export class NpmDepChecker {
 		"@types/node",
 		"@types/expect-puppeteer",
 		"@types/jest-environment-puppeteer",
+		"@types/react-dom",
+		"@types/events_pkg",
+		"@types/react",
+		"@types/jest",
+		"@types/puppeteer",
+		"@types/sinon-chrome",
+		"@types/chrome",
 	];
 	// hjs is implicitly used
 	private readonly ignored = ["hjs", ...this.foundTypes];
-	// list of packages that should always in the devDependencies
+	// list of packages that should always be in the devDependencies
 	private readonly dev = [
 		"@fluidframework/build-common",
 		"nyc",
@@ -36,6 +43,7 @@ export class NpmDepChecker {
 		"mocha",
 		"url-loader",
 		"style-loader",
+		"chai",
 	];
 	private readonly records: DepCheckRecord[] = [];
 	private readonly altTyping = new Map<string, string>([["ws", "isomorphic-ws"]]);
