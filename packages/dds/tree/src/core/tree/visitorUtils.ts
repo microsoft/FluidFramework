@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ICodecOptions } from "../../codec/index.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
-import type { RevisionTagCodec } from "../rebase/index.js";
+import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ProtoNodes, Root } from "./delta.js";
@@ -33,21 +33,23 @@ export function makeDetachedFieldIndex(
 
 export function applyDelta(
 	delta: Root,
+	latestRevision: RevisionTag | undefined,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, visitor, detachedFieldIndex);
+	visitDelta(delta, visitor, detachedFieldIndex, latestRevision);
 	visitor.free();
 }
 
 export function announceDelta(
 	delta: Root,
+	latestRevision: RevisionTag | undefined,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
 	const visitor = deltaProcessor.acquireVisitor();
-	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex);
+	visitDelta(delta, combineVisitors([visitor], [visitor]), detachedFieldIndex, latestRevision);
 	visitor.free();
 }
 

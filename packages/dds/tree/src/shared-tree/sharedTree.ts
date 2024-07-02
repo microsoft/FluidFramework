@@ -332,6 +332,7 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
+		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
 		this._events.emit("afterBatch");
 	}
 }
