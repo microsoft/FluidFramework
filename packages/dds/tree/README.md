@@ -142,21 +142,20 @@ When nothing in that container references the DDS anymore, it may get garbage co
 The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree-core/README.md) is composed of a collection of indexes (just like a database) which contribute data which get persisted as part of the summary in the container.
 `shared-tree-core` owns these databases, and is responsible for populating them from summaries and updating them when summarizing.
 
-See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
+See [indexes and branches](./docs/main/indexes-and-branches.md) for details on how this works with branches.
 
-When applications want access to the `tree`'s data, they do so through an [`ISharedTreeView`](./src/shared-tree/sharedTreeView.ts) which abstracts the indexes into nice application facing APIs.
+When applications want access to the `tree`'s data, they do so through an [`TreeView`](./src/simple-tree/tree.ts) which abstracts the indexes into nice application facing APIs based on the [`view-schema`](./src/core/schema-view/README.md).
 Views may also have state from the application, including:
 
 -   [`view-schema`](./src/core/schema-view/README.md)
--   adapters for out-of-schema data
--   request or hints for what subsets of the tree to keep in memory
+-   adapters for out-of-schema data (TODO)
+-   request or hints for what subsets of the tree to keep in memory (TODO)
 -   pending transactions
--   registrations for application callbacks / events.
+-   registrations for application callbacks / events
 
-[`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
-Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones is required to avoid leaks.
+Since views subscribe to events from `shared-tree`, explicitly disposing any created ones is required to avoid leaks.
 
-[transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
+Transactions are created by `Tree.runTransaction` and are currently synchronous.
 Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
 could be added in the future.
 
@@ -329,7 +328,7 @@ Some of the principles used to guide this are:
     Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
     This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
     `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
-    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
+    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/core/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
     Dependency injection is one example of a useful pattern for reducing transitive dependencies.
     In addition to simplifying reasoning about the system (less total to think about for a given scenario) and simplifying testing,
     this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
@@ -395,10 +394,6 @@ Smaller scoped issues which will not impact the overall architecture should be d
 
 ## How should specialized sub-tree handling compose?
 
-Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
-Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
+Applications should have a domain model that can mix tree nodes with custom implementations as needed.
+Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
 This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
-This might also be the layer at which we hook up schematize.
-Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
-
-How all this relates to [dependency-tracking](./src/core/dependency-tracking/README.md) is to be determined.

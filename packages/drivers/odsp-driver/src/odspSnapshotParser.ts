@@ -38,10 +38,10 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): ISnapshotTree {
 				unreferenced: entry.unreferenced,
 				groupId: entry.groupId,
 			};
-			node.trees[decodeURIComponent(entryPathBase)] = newTree;
+			node.trees[entryPathBase] = newTree;
 			lookup[entry.path] = newTree;
 		} else if (entry.type === "blob") {
-			node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+			node.blobs[entryPathBase] = entry.id;
 		}
 	}
 

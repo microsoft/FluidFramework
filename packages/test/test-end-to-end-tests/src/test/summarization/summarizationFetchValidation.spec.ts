@@ -64,12 +64,16 @@ describeCompat(
 
 		beforeEach("setup", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 			mainContainer = await provider.makeTestContainer(testContainerConfig);
 
 			mainDataStore = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 			mainDataStore.root.set("test", "value");
 			await waitForContainerConnection(mainContainer);
+		});
+
+		afterEach(() => {
+			configProvider.clear();
 		});
 
 		interface GetVersionWrap {
