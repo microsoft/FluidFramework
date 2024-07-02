@@ -8,9 +8,11 @@ import { getOrCreate } from "../util/index.js";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred, giving the intersection.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never) extends (
+export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
 	k: infer U,
 ) => unknown
 	? U
