@@ -6,8 +6,13 @@
 import { type IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, SharedTree, TreeViewConfiguration, type InsertableTreeFieldFromImplicitField, type TreeView } from "../../index.js";
-
+import {
+	SchemaFactory,
+	SharedTree,
+	TreeViewConfiguration,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeView,
+} from "../../index.js";
 
 const builder = new SchemaFactory("shared-tree-test");
 
@@ -21,23 +26,23 @@ class RootNodeSchema extends builder.object("root-item", {
 class EmptyRootNodeSchema extends builder.object("empty-root-item", {}) {}
 
 function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
-    const sharedTree = SharedTree.create(
-        new MockFluidDataStoreRuntime({ registry: [SharedTree.getFactory()] }),
-        id
-    );
+	const sharedTree = SharedTree.create(
+		new MockFluidDataStoreRuntime({ registry: [SharedTree.getFactory()] }),
+		id,
+	);
 
-    const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
+	const view = sharedTree.viewWith(new TreeViewConfiguration({ schema: RootNodeSchema }));
 
-    view.initialize(
-        new RootNodeSchema({
-            propertyOne: 128,
-            propertyTwo: {
-                itemOne: "",
-            }
-        }),
-    );
+	view.initialize(
+		new RootNodeSchema({
+			propertyOne: 128,
+			propertyTwo: {
+				itemOne: "",
+			},
+		}),
+	);
 
-    return view;
+	return view;
 }
 
 describe("SharedTree memory usage", () => {
@@ -64,7 +69,8 @@ describe("SharedTree memory usage", () => {
 			public readonly title = "Create empty SharedTree";
 			public readonly minSampleCount = 500;
 
-			private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+			private sharedTree: TreeView<typeof RootNodeSchema> =
+				createLocalSharedTree("testSharedTree");
 
 			public async run(): Promise<void> {
 				this.sharedTree = createLocalSharedTree("testSharedTree");
@@ -78,7 +84,8 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+				private sharedTree: TreeView<typeof RootNodeSchema> =
+					createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
@@ -95,7 +102,8 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local SharedTree`;
-				private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+				private sharedTree: TreeView<typeof RootNodeSchema> =
+					createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
@@ -112,15 +120,17 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local SharedTree, clear it`;
-				private readonly sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+				private readonly sharedTree: TreeView<typeof RootNodeSchema> =
+					createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.propertyOne = x;
 						this.sharedTree.root.propertyTwo.itemOne = i.toString().padStart(6, "0");
 					}
-					this.sharedTree.root = new EmptyRootNodeSchema({}) as unknown as InsertableTreeFieldFromImplicitField<typeof RootNodeSchema>;
-
+					this.sharedTree.root = new EmptyRootNodeSchema(
+						{},
+					) as unknown as InsertableTreeFieldFromImplicitField<typeof RootNodeSchema>;
 				}
 
 				public beforeIteration(): void {
@@ -128,6 +138,5 @@ describe("SharedTree memory usage", () => {
 				}
 			})(),
 		);
-
 	}
 });
