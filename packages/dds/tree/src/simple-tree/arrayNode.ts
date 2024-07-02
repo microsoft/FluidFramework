@@ -19,6 +19,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -554,16 +555,15 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const value = field.boxedAt(maybeIndex);
+			const maybeUnboxedContent = field.at(maybeIndex);
 
-			if (value === undefined) {
+			if (maybeUnboxedContent === undefined) {
 				return undefined;
 			}
 
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(value);
+			return isFlexTreeNode(maybeUnboxedContent)
+				? getOrCreateNodeProxy(maybeUnboxedContent)
+				: maybeUnboxedContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
