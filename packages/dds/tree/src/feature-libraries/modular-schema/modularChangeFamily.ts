@@ -793,7 +793,7 @@ export class ModularChangeFamily
 			newChange: change,
 			baseChange: over.change,
 			baseFieldToContext: new Map(),
-			baseNodeToRebasedNode: new Map(),
+			baseToRebasedNodeId: new Map(),
 			rebasedFields: new Set(),
 			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
 			nodeIdPairs: [],
@@ -932,13 +932,9 @@ export class ModularChangeFamily
 		// This loop processes all fields which have both base and new changes.
 		// Note that the call to `rebaseNodeChanges` can add entries to `crossFieldTable.nodeIdPairs`.
 		for (const [newId, baseId, _attachState] of crossFieldTable.nodeIdPairs) {
-			const newNodeChange = nodeChangeFromId(change.nodeChanges, newId);
-			const baseNodeChange = nodeChangeFromId(baseChange.nodeChanges, baseId);
-
 			const rebasedNode = this.rebaseNodeChange(
 				newId,
-				newNodeChange,
-				baseNodeChange,
+				baseId,
 				genId,
 				crossFieldTable,
 				metadata,
@@ -1027,7 +1023,7 @@ export class ModularChangeFamily
 	): void {
 		const baseChange = crossFieldTable.baseChange;
 		for (const [revision, localId, fieldKey] of crossFieldTable.affectedBaseFields.keys()) {
-			const nodeId =
+			const baseNodeId =
 				localId !== undefined
 					? normalizeNodeId({ revision, localId }, baseChange.nodeAliases)
 					: undefined;
@@ -1035,7 +1031,7 @@ export class ModularChangeFamily
 			const baseFieldChange = fieldMapFromNodeId(
 				baseChange.fieldChanges,
 				baseChange.nodeChanges,
-				nodeId,
+				baseNodeId,
 			).get(fieldKey);
 
 			assert(baseFieldChange !== undefined, "Cross field key registered for empty field");
@@ -1061,7 +1057,15 @@ export class ModularChangeFamily
 				change: brand(handler.createEmpty()),
 			};
 
-			const fieldId: FieldId = { nodeId, field: fieldKey };
+			let rebasedNodeId;
+			if (baseNodeId === undefined) {
+				rebasedNodeId = undefined;
+			} else {
+				const existingId = rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId);
+				rebasedNodeId = existingId ?? baseNodeId;
+			}
+
+			const fieldId: FieldId = { nodeId: rebasedNodeId, field: fieldKey };
 			const rebasedField: unknown = handler.rebaser.rebase(
 				fieldChange.change,
 				baseFieldChange.change,
@@ -1091,7 +1095,7 @@ export class ModularChangeFamily
 				rebasedNodes,
 				crossFieldTable,
 				rebasedFieldChange,
-				{ nodeId, field: fieldKey },
+				fieldId,
 				genId,
 				metadata,
 			);
@@ -1103,16 +1107,17 @@ export class ModularChangeFamily
 		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
 		table: RebaseTable,
 		rebasedField: FieldChange,
-		{ nodeId, field: fieldKey }: FieldId,
+		{ nodeId: baseNodeId, field: fieldKey }: FieldId,
 		idAllocator: IdAllocator,
 		metadata: RebaseRevisionMetadata,
 	): void {
-		if (nodeId === undefined) {
+		if (baseNodeId === undefined) {
 			rebasedFields.set(fieldKey, rebasedField);
 			return;
 		}
 
-		const rebasedNode = tryGetRebasedNodeFromBaseId(table, nodeId);
+		const rebasedId = rebasedNodeIdFromBaseNodeId(table, baseNodeId);
+		const rebasedNode = getFromChangeAtomIdMap(rebasedNodes, rebasedId);
 		if (rebasedNode !== undefined) {
 			if (rebasedNode.fieldChanges === undefined) {
 				rebasedNode.fieldChanges = new Map([[fieldKey, rebasedField]]);
@@ -1128,19 +1133,18 @@ export class ModularChangeFamily
 			fieldChanges: new Map([[fieldKey, rebasedField]]),
 		};
 
-		setInChangeAtomIdMap(rebasedNodes, nodeId, newNode);
-		table.baseNodeToRebasedNode.set(
-			nodeChangeFromId(table.baseChange.nodeChanges, nodeId),
-			newNode,
-		);
+		setInChangeAtomIdMap(rebasedNodes, baseNodeId, newNode);
 
-		const parentFieldId = getParentFieldId(table.baseChange, nodeId);
+		assert(areEqualChangeAtomIds(baseNodeId, rebasedId), "Unknown rebased node ID");
+		setInChangeAtomIdMap(table.baseToRebasedNodeId, baseNodeId, baseNodeId);
+
+		const parentFieldId = getParentFieldId(table.baseChange, baseNodeId);
 
 		this.attachRebasedNode(
 			rebasedFields,
 			rebasedNodes,
 			table,
-			nodeId,
+			baseNodeId,
 			parentFieldId,
 			idAllocator,
 			metadata,
@@ -1279,14 +1283,16 @@ export class ModularChangeFamily
 	}
 
 	private rebaseNodeChange(
-		id: NodeId,
-		change: NodeChangeset,
-		over: NodeChangeset,
+		newId: NodeId,
+		baseId: NodeId,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
 		constraintState: ConstraintState,
 	): NodeChangeset {
+		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
+		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
+
 		const baseMap: FieldChangeMap = over?.fieldChanges ?? new Map();
 
 		const fieldChanges =
@@ -1294,7 +1300,7 @@ export class ModularChangeFamily
 				? this.rebaseFieldMap(
 						change?.fieldChanges ?? new Map(),
 						baseMap,
-						id,
+						newId,
 						genId,
 						crossFieldTable,
 						revisionMetadata,
@@ -1311,7 +1317,7 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
-		crossFieldTable.baseNodeToRebasedNode.set(over, rebasedChange);
+		setInChangeAtomIdMap(crossFieldTable.baseToRebasedNodeId, baseId, newId);
 		return rebasedChange;
 	}
 
@@ -2041,7 +2047,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 * to the context for the field.
 	 */
 	readonly baseFieldToContext: Map<FieldChange, RebaseFieldContext>;
-	readonly baseNodeToRebasedNode: Map<NodeChangeset, NodeChangeset>;
+	readonly baseToRebasedNodeId: ChangeAtomIdMap<NodeId>;
 	readonly rebasedFields: Set<FieldChange>;
 	readonly rebasedCrossFieldKeys: CrossFieldKeyTable;
 
@@ -2759,12 +2765,8 @@ function fieldMapFromNodeId(
 	return node.fieldChanges;
 }
 
-function tryGetRebasedNodeFromBaseId(
-	table: RebaseTable,
-	baseId: NodeId,
-): NodeChangeset | undefined {
-	const baseNode = nodeChangeFromId(table.baseChange.nodeChanges, baseId);
-	return table.baseNodeToRebasedNode.get(baseNode);
+function rebasedNodeIdFromBaseNodeId(table: RebaseTable, baseId: NodeId): NodeId {
+	return getFromChangeAtomIdMap(table.baseToRebasedNodeId, baseId) ?? baseId;
 }
 
 function nodeChangeFromId(nodes: ChangeAtomIdMap<NodeChangeset>, id: NodeId): NodeChangeset {
