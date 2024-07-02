@@ -6,7 +6,7 @@
 import { type IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactory, SharedTree, TreeViewConfiguration, type TreeView } from "../../index.js";
+import { SchemaFactory, SharedTree, TreeViewConfiguration, type InsertableTreeFieldFromImplicitField, type TreeView } from "../../index.js";
 
 
 /**
@@ -20,9 +20,12 @@ const builder = new SchemaFactory("shared-tree-test");
 class RootNodeSchema extends builder.object("root-item", {
 	propertyOne: builder.optional(builder.number),
 	propertyTwo: builder.object("propertyTwo-item", {
-		itemOne: builder.boolean,
+		itemOne: builder.string,
 	}),
 }) {}
+
+class EmptyRootNodeSchema extends builder.object("empty-root-item", {}) {}
+
 
 /**
  * TODO
@@ -39,25 +42,12 @@ function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
         new RootNodeSchema({
             propertyOne: 128,
             propertyTwo: {
-                itemOne: true,
+                itemOne: "", // Deliberately left empty.
             }
         }),
     );
 
     return view;
-}
-
-function updateSharedTree(sharedTree: TreeView<typeof RootNodeSchema>, x: number): TreeView<typeof RootNodeSchema> {
-	sharedTree.initialize(
-        new RootNodeSchema({
-            propertyOne: x,
-            propertyTwo: {
-                itemOne: true,
-            }
-        }),
-    );
-
-    return sharedTree;
 }
 
 describe("SharedTree memory usage", () => {
@@ -102,7 +92,24 @@ describe("SharedTree memory usage", () => {
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
-						this.sharedTree = updateSharedTree(this.sharedTree, i);
+						this.sharedTree.root.propertyOne = x;
+					}
+				}
+
+				public beforeIteration(): void {
+					this.sharedTree = createLocalSharedTree("testSharedTree");
+				}
+			})(),
+		);
+
+		benchmarkMemory(
+			new (class implements IMemoryTestObject {
+				public readonly title = `Add ${x} integers to a local SharedTree`;
+				private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+
+				public async run(): Promise<void> {
+					for (let i = 0; i < x; i++) {
+						this.sharedTree.root.propertyTwo.itemOne = i.toString().padStart(6, "0");
 					}
 				}
 
@@ -115,13 +122,15 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local SharedTree, clear it`;
+				private readonly sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
-					const localSharedTree = createLocalSharedTree("testSharedTree");
 					for (let i = 0; i < x; i++) {
-						updateSharedTree(localSharedTree, i);
+						this.sharedTree.root.propertyOne = x;
+						this.sharedTree.root.propertyTwo.itemOne = i.toString().padStart(6, "0");
 					}
-					// clear ST content here.
+					this.sharedTree.root = new EmptyRootNodeSchema({}) as unknown as InsertableTreeFieldFromImplicitField<typeof RootNodeSchema>;
+
 				}
 
 				public beforeIteration(): void {
