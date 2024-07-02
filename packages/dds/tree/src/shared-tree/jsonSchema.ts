@@ -4,7 +4,6 @@
  */
 import type {
 	SimpleArrayNodeSchema,
-	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
 	SimpleLeafSchemaKind,
 	SimpleMapNodeSchema,
@@ -52,7 +51,11 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 	readonly required: string[];
 	// json schema
 	// TODO: derive from policy
-	readonly additionalProperties: boolean;
+	readonly additionalProperties:
+		| boolean
+		| {
+				type: JsonDefinitionRef[];
+		  };
 }
 
 /**
@@ -74,12 +77,11 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
  */
 export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 	// json schema
+	// Used to control the types of properties that can appear in the "object" representation of the map
 	// Always refs to "definitions"
-	// TODO: this doesn't work; we don't know the keys.
-	// We need something that matches on all valid keys, but requires specific types.
-	readonly properties: Record<string, JsonDefinitionRef>;
-	// json schema
-	readonly additionalProperties: false;
+	readonly additionalProperties: {
+		type: JsonDefinitionRef[];
+	};
 }
 
 /**
@@ -161,15 +163,15 @@ function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
 }
 
 function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {
-	const itemTypes: JsonDefinitionRef[] = [];
+	const allowedTypes: JsonDefinitionRef[] = [];
 	schema.allowedTypes.forEach((type) => {
-		itemTypes.push(createRefNode(type));
+		allowedTypes.push(createRefNode(type));
 	});
 	return {
 		type: "array",
 		kind: "array",
 		items: {
-			type: itemTypes,
+			type: allowedTypes,
 		},
 		additionalProperties: false,
 	};
@@ -203,11 +205,16 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 }
 
 function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
+	const allowedTypes: JsonDefinitionRef[] = [];
+	schema.allowedTypes.forEach((type) => {
+		allowedTypes.push(createRefNode(type));
+	});
 	return {
 		type: "object",
 		kind: "map",
-		properties,
-		additionalProperties: false,
+		additionalProperties: {
+			type: allowedTypes,
+		},
 	};
 }
 
