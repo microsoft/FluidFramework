@@ -6,18 +6,30 @@
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { SharedCell, type ISharedCell } from "@fluidframework/cell/internal";
+import {
+	SharedCell,
+	type ISharedCell,
+	// type ISharedCell
+} from "@fluidframework/cell/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import React from "react";
+import React, { useState } from "react";
 
 import {
 	ContainerInfo,
 	createFluidContainer,
 	loadExistingFluidContainer,
 } from "./ClientUtilities.js";
-import { useAppSerializer } from "./useAppSerializer.js";
+// import { useAppSerializer } from "./useAppSerializer.js";
+// import { CounterTracker } from "./AppSerializerV2.js";
+import {
+	AppSerializer,
+	// APPSDepTrackerV1,
+	MultiDepTracker,
+	type Dependency
+}
+	from "./ConditionalStringProducer.js";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -65,24 +77,32 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	sharedText.insertText(0, "Enter text here.");
 	rootMap.set(sharedTextKey, sharedText.handle);
 
+
+
 	// Set up SharedCounter for counter widget
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
-	// Also set a couple of primitives for testing the debug view
-	// rootMap.set("numeric-value", 42);
-	// rootMap.set("string-value", "Hello world!");
-	// rootMap.set("record-value", {
-	// 	aNumber: 37,
-	// 	aString: "Here is some text content.",
-	// 	anObject: {
-	// 		a: "a",
-	// 		b: "b",
-	// 	},
-	// });
 
 	// Set up SharedText for text form
 	const sharedCell = await container.create(SharedCell);
 	rootMap.set(sharedCellKey, sharedCell.handle);
+
+
+	// ------ Collab Form Setup --------
+	const field1String = await container.create(SharedString);
+	field1String.insertText(0, "");
+	rootMap.set('field1String', field1String.handle);
+
+	const field2String = await container.create(SharedString);
+	field2String.insertText(0, "");
+	rootMap.set('field2String', field2String.handle);
+
+	const field3String = await container.create(SharedString);
+	field3String.insertText(0, "");
+	rootMap.set('field3String', sharedText.handle);
+
+	const counter1 = await container.create(SharedCounter);
+	rootMap.set("counterField1", counter1.handle);
 }
 
 /**
@@ -142,7 +162,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
-	const { container, containerId } = containerInfo;
+	const { container } = containerInfo;
 
 	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
@@ -159,93 +179,182 @@ function AppView(props: AppViewProps): React.ReactElement {
 		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
 
-	const sharedCellHandle = rootMap.get(sharedCellKey) as IFluidHandle<ISharedCell>;
-
-	const serializeApp = async (): Promise<string> => {
-		// console.log(sharedTextHandle)
-		// console.log(sharedCounterHandle)
-		// console.log(sharedCellHandle)
-
-		const sharedText = await sharedTextHandle.get();
-		const sharedCounter = await sharedCounterHandle.get();
-		// const sharedCell = await sharedCellHandle.get();
-
-		const appRepresentationMarkdown =
-			`# Employee Signals \n` +
-			`- Number of Happy Employees: ${sharedCounter.value} \n\n` +
-			`- How employees are feeling: "${sharedText.getText()}"`;
-
-		return appRepresentationMarkdown;
-	};
-
-	useAppSerializer({ serializer: serializeApp, frequencyMs: 5000, sharedCellHandle });
-
 	return (
-		<div style={{ padding: "10px" }}>
-			<div style={{ padding: "10px" }}>
-				<h4>{`Container Id: ${containerId}`}</h4>
-			</div>
 
-			<div style={{ padding: "10px", display: "flex", flexDirection: "row" }}>
-				<h4>Number of happy employees</h4>
-				<CounterView sharedCounterHandle={sharedCounterHandle} />
-			</div>
-			<div style={{ padding: "10px" }}>
-				<TextView sharedTextHandle={sharedTextHandle} />
-			</div>
-		</div>
+		<CollabForm
+			containerInfo={containerInfo}
+			field1FluidHandle={rootMap.get("field1String")!}
+			field2FluidHandle={rootMap.get("field2String")!}
+			field3FluidHandle={rootMap.get("field3String")!}
+			counter1FluidHandle={rootMap.get("counterField1")!}
+		/>
 	);
 }
 
-interface TextViewProps {
-	sharedTextHandle: IFluidHandle<SharedString>;
+
+
+interface CollabFormProps {
+	containerInfo: ContainerInfo;
+	field1FluidHandle: IFluidHandle<SharedString>;
+	field2FluidHandle: IFluidHandle<SharedString>;
+	field3FluidHandle: IFluidHandle<SharedString>;
+	counter1FluidHandle: IFluidHandle<SharedCounter>;
 }
 
-function TextView(props: TextViewProps): React.ReactElement {
-	const { sharedTextHandle } = props;
+function CollabForm(props: CollabFormProps) {
 
-	const [sharedText, setSharedText] = React.useState<SharedString | undefined>();
+	const [field1Input, setField1Input] = React.useState<SharedString | undefined>();
+	const [field2Input, setField2Input] = React.useState<SharedString | undefined>();
+	const [field3Input, setField3Input] = React.useState<SharedString | undefined>();
+	const [counter1, setCounter1] = React.useState<SharedCounter | undefined>();
 
 	React.useEffect(() => {
-		sharedTextHandle.get().then(setSharedText, (error) => {
-			console.error(`Error encountered loading SharedString: "${error}".`);
-			throw error;
-		});
-	}, [sharedTextHandle, setSharedText]);
+		const getAndSetFluidDDS = async (handle: IFluidHandle<unknown>, setterFn: (SharedString) => void) => {
+			handle.get().then(
+				(value) => {
+					console.log("handle value updated", value);
+					setterFn(value);
+				},
+				(error) => {
+					console.error(`Error encountered loading dds from handle: "${error}".`);
+					throw error;
+				},
+			);
+		}
 
-	return sharedText === undefined ? (
-		<h4> Loading...</h4>
-	) : (
-		<div>
-			<h2>How Employees are feeling: </h2>
-			<div data-testid="collaborative-text-area-widget">
-				<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
-			</div>
-		</div>
-	);
-}
+		getAndSetFluidDDS(props.field1FluidHandle, setField1Input);
+		getAndSetFluidDDS(props.field2FluidHandle, setField2Input);
+		getAndSetFluidDDS(props.field3FluidHandle, setField3Input);
+		getAndSetFluidDDS(props.counter1FluidHandle, setCounter1);
 
-interface CounterViewProps {
-	sharedCounterHandle: IFluidHandle<SharedCounter>;
-}
+	}, [props.field1FluidHandle, props.field2FluidHandle, props.field3FluidHandle, props.counter1FluidHandle]);
 
-function CounterView(props: CounterViewProps): React.ReactElement {
-	const { sharedCounterHandle } = props;
-
-	const [sharedCounter, setSharedCounter] = React.useState<SharedCounter | undefined>();
+	const [appSerializer, setAppSerializer] = useState<AppSerializer>();
 
 	React.useEffect(() => {
-		sharedCounterHandle.get().then(setSharedCounter, (error) => {
-			console.error(`Error encountered loading SharedCounter: "${error}".`);
-			throw error;
-		});
-	}, [sharedCounterHandle, setSharedCounter]);
 
-	return sharedCounter === undefined ? (
-		<h4> Loading...</h4>
-	) : (
-		<CounterWidget counter={sharedCounter} />
-	);
+		const segments: MultiDepTracker<string>[] = [];
+		// Author field
+		if (field1Input !== undefined) {
+			const field1Dependency: Dependency<string> = {
+				getValue: () => field1Input.getText(),
+				qualifier: (prev, next) => prev !== next,
+			};
+
+			const multiDep1 = new MultiDepTracker([field1Dependency], () => {
+				const val = `# Application Security Report\n\n- Author: ${field1Input?.getText()} \n\n`;
+				// console.log(val);
+				return val;
+			});
+
+			new SharedStringHelper(field1Input).on('textChanged', () => {
+				multiDep1.trigger(); //TODO: Debounce this
+			});
+
+			segments.push(multiDep1);
+		}
+
+
+		if (field2Input !== undefined && field3Input !== undefined) {
+			const field2Dependency: Dependency<string> = {
+				getValue: () => field2Input.getText(),
+				qualifier: (prev, next) => prev !== next,
+			};
+
+			const field3Dependency: Dependency<string> = {
+				getValue: () => field3Input.getText(),
+				qualifier: (prev, next) => prev !== next,
+			};
+
+			const multiDep2 = new MultiDepTracker([field2Dependency, field3Dependency], () => {
+				const val = `## The description of the application\n\n "${field2Input?.getText()}" \n\n`;
+				const val2 = `## The way the applications front end communicates with back end services\n\n ${field3Input?.getText()} \n\n`
+				// console.log(val + val2);
+				return val + val2;
+			});
+
+			// Triggers
+			new SharedStringHelper(field2Input).on('textChanged', () => {
+				multiDep2.trigger(); //TODO: Debounce this
+			});
+
+			new SharedStringHelper(field3Input).on('textChanged', () => {
+				multiDep2.trigger(); //TODO: Debounce this
+			});
+
+			segments.push(multiDep2);
+		}
+
+		if (counter1 !== undefined) {
+			const counter1Dependency: Dependency<number> = {
+				getValue: () => counter1.value,
+				qualifier: (prev, next) => prev !== next,
+			};
+
+			const multiDep3 = new MultiDepTracker([counter1Dependency], () => {
+				const val = `## The number of customer facing API endpoints: ${counter1?.value}`;
+				// console.log(val);
+				return val;
+			});
+
+			// Triggers
+			counter1.on('incremented', () => {
+				multiDep3.trigger();
+			});
+
+			segments.push(multiDep3);
+		}
+
+
+		if (segments.length === 3 && appSerializer === undefined) {
+			const initializeAppSerializer = async () => {
+				const rootMap = props.containerInfo.container.initialObjects.rootMap as ISharedMap;
+				const sharedCellHandle = rootMap.get(sharedCellKey) as IFluidHandle<ISharedCell>;
+				const sharedCell = await sharedCellHandle.get();
+				setAppSerializer(new AppSerializer(segments, 5000, sharedCell));
+
+			}
+			initializeAppSerializer();
+		}
+
+	}, [field1Input, field2Input, field3Input, counter1]);
+
+	return <div style={{ display: 'flex', width: '100%', border: '0px solid blue', flexDirection: 'column', alignItems: 'center', fontFamily: 'sans-serif' }}>
+		<div style={{ display: 'flex', width: '400px', padding: '50px', border: '2px solid blue', alignItems: 'center', flexDirection: 'column', gap: '25px' }}>
+			{field1Input !== undefined &&
+				<div>
+					<h1 style={{ fontSize: '15px' }}>Author</h1>
+					<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(field1Input)}
+						style={{ height: '30px' }}
+					/>
+				</div>
+			}
+			{field2Input !== undefined &&
+				<div>
+					<h1 style={{ fontSize: '15px' }}>Describe your application architecture</h1>
+					<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(field2Input)}
+						style={{ height: '100px' }}
+					/>
+				</div>
+			}
+			{field3Input !== undefined &&
+				<div>
+					<h1 style={{ fontSize: '15px' }}>Does your front-end communicate with backend services directly or through an api?</h1>
+					<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(field3Input)}
+						style={{ height: '100px' }}
+					/>
+				</div>
+			}
+			{counter1 !== undefined &&
+				<div>
+					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+						<h1 style={{ fontSize: '15px', maxWidth: '300px' }}>How many customer facing API endpoints does your application have? </h1>
+						<CounterWidget counter={counter1} />
+					</div>
+				</div>
+			}
+		</div>
+	</div>
 }
 
 /**
@@ -274,14 +383,15 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 	return (
 		<div
 			data-testid="shared-counter-widget"
-			style={{ display: "flex", flexDirection: "row", gap: "10px" }}
+			style={{ display: "flex", flexDirection: "row", gap: "5px" }}
 		>
 			<button
 				onClick={(): void => counter.increment(-1)}
 				disabled={counterValue === 0}
 				aria-describedby={"decrement-counter-button"}
+				style={{ width: '20px', height: '20px' }}
 			>
-				Decrement
+				-
 			</button>
 
 			<div>{counterValue}</div>
@@ -289,8 +399,9 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			<button
 				onClick={(): void => counter.increment(1)}
 				aria-describedby={"increment-counter-button"}
+				style={{ width: '20px', height: '20px' }}
 			>
-				Increment
+				+
 			</button>
 		</div>
 	);
