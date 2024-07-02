@@ -2837,6 +2837,7 @@ export class ContainerRuntime
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
+			targetClientId: message.targetClientId,
 		};
 
 		// Only collect signal telemetry for messages sent by the current client.
@@ -3109,18 +3110,22 @@ export class ContainerRuntime
 		address: string | undefined,
 		type: string,
 		content: any,
+		targetClientId?: string,
 	): ISignalEnvelope {
 		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
 		const newEnvelope: ISignalEnvelope = {
 			address,
 			clientSignalSequenceNumber: newSequenceNumber,
 			contents: { type, content },
+			targetClientId,
 		};
 
 		// We should not track any signals in case we already have a tracking number.
+		// We should also only track signals that we expect to return to the current client.
 		if (
 			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._perfSignalData.trackingSignalSequenceNumber === undefined
+			this._perfSignalData.trackingSignalSequenceNumber === undefined &&
+			(targetClientId === undefined || targetClientId === this.clientId)
 		) {
 			this._perfSignalData.signalTimestamp = Date.now();
 			this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
