@@ -8,16 +8,15 @@
  * This is for running local doc builds to see api changes immediately in the docs.
  */
 
-import fs from 'fs-extra';
-import path from 'path';
+import fs from "fs-extra";
+import path from "path";
 
-const sourceDir = '../_api-extractor-temp/doc-models';
-const destinationDir = './_doc-models/v2';
+const sourceDir = "../_api-extractor-temp/doc-models";
+const destinationDir = "./_doc-models/v2";
 
 async function copyDocModels(files) {
 	// Create the destination directory if it doesn't exist
 	if (!fs.existsSync(destinationDir)) {
-		console.log("here2")
 		fs.mkdirSync(destinationDir, { recursive: true });
 	} else {
 		// Delete existing documentation output
@@ -43,11 +42,9 @@ async function copyDocModels(files) {
 // Get the list of files in the source directory
 fs.readdir(sourceDir, (err, files) => {
 	if (err) {
-		console.error('Error reading source directory:', err);
+		console.error("Error reading source directory:", err);
 		return;
 	} else {
 		copyDocModels(files);
 	}
-
-
 });

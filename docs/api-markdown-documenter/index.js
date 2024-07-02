@@ -7,15 +7,11 @@
  * This index script runs `render-api-documentation.js` using the version configurations described
  * in data/versions.json.
  *
- * This script accepts a boolean parameter which is saved to the isLocal constant. Passing in true
- * will configure the script to override v2 content with local api content
- * specified in versions.json.
  */
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const isLocal = process.argv[2];
 import chalk from "chalk";
 import fs from "fs-extra";
 import { renderApiDocumentation } from "./render-api-documentation.js";
