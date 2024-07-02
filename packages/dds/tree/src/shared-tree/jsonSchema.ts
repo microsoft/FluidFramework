@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { SimpleArrayNodeSchema, SimpleLeafNodeSchema, SimpleLeafSchemaKind, SimpleMapNodeSchema, SimpleNodeSchema, SimpleNodeSchemaKind, SimpleObjectNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleArrayNodeSchema, SimpleFieldSchema, SimpleLeafNodeSchema, SimpleLeafSchemaKind, SimpleMapNodeSchema, SimpleNodeSchema, SimpleNodeSchemaKind, SimpleObjectNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 
 // TODOs:
 // "ajv" library for at least testing, maybe type defs as well.
@@ -34,7 +34,7 @@ export interface NodeJsonSchemaBase<TNodeKind extends SimpleNodeSchemaKind, TJso
 export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "object"> {
 	// json schema
 	// Always refs to "definitions"
-	readonly properties: Record<string, JsonDefinitionRef>;
+	readonly properties: Record<string, FieldJsonSchema>;
 	// json schema
 	readonly required: string[];
 	// json schema
@@ -48,7 +48,9 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"> {
 	// json schema
 	// Always refs to "definitions"
-	readonly items: JsonDefinitionRef[];
+	readonly items: {
+		type: JsonDefinitionRef[]
+	};
 	// json schema
 	readonly additionalProperties: false;
 }
@@ -60,6 +62,8 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
 export interface MapNodeJsonSchema extends NodeJsonSchemaBase<"map", "object"> {
 	// json schema
 	// Always refs to "definitions"
+	// TODO: this doesn't work; we don't know the keys.
+	// We need something that matches on all valid keys, but requires specific types.
 	readonly properties: Record<string, JsonDefinitionRef>;
 	// json schema
 	readonly additionalProperties: false;
@@ -93,30 +97,41 @@ export type NodeJsonSchema =
  * TODO
  * @internal
  */
-export type TreeJsonSchema = ObjectNodeJsonSchema & {
+export interface TreeJsonSchema {
+	// json schema
+	readonly anyOf: JsonDefinitionRef[];
+	// json schema
 	readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
 }
 
-export function simpleTreeSchemaToJsonSchema(tree: SimpleTreeSchema): TreeJsonSchema {
-	const definitions = convertDefinitions(tree.definitions);
-	const allowedTypes: JsonDefinitionRef[] = tree.rootFieldSchema.allowedTypes.map(type => ({ $ref: `#/definitions/${type}`}));
+// TODO: dedupe with treejsonschema
+/**
+ * TODO
+ * @internal
+ */
+export interface FieldJsonSchema {
+	// json schema
+	readonly anyOf: JsonDefinitionRef[];
+}
+
+export function simpleTreeSchemaToJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
+	const definitions = convertDefinitions(schema.definitions);
+	const allowedTypes = schema.allowedTypes.map(createRefNode);
 	return {
 		definitions,
-		properties: {
-
-		}
+		anyOf: allowedTypes,
 	}
 }
 
-function convertDefinitions(definitions: ReadonlyMap<string, SimpleNodeSchema>): Record<string, JSONSchemaType<unknown>> {
-	const result: Record<string, JSONSchemaType<unknown>> = {};
+function convertDefinitions(definitions: ReadonlyMap<string, SimpleNodeSchema>): Record<string, NodeJsonSchema> {
+	const result: Record<string, NodeJsonSchema> = {};
 	for (const [key, value] of definitions) {
 		result[key] = convertNodeSchema(value);
 	}
 	return result;
 }
 
-function convertNodeSchema(schema: SimpleNodeSchema): JSONSchemaType<unknown> {
+function convertNodeSchema(schema: SimpleNodeSchema): NodeJsonSchema {
 	switch (schema.kind) {
 		case "array":
 			return convertArrayNodeSchema(schema);
@@ -131,24 +146,65 @@ function convertNodeSchema(schema: SimpleNodeSchema): JSONSchemaType<unknown> {
 	}
 }
 
-function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): JSONSchemaType<any> {
-	const itemTypes = schema.allowedTypes.map(type => `#/definitions/${type}`);
+function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSchema {
+	const itemTypes: JsonDefinitionRef[] = [];
+	schema.allowedTypes.forEach(type => {
+		itemTypes.push(createRefNode(type))
+	});
 	return {
-		type: ["array"],
+		type: "array",
+		kind: "array",
         items: {
           type: itemTypes
         },
+		additionalProperties: false,
 	}
 }
 
-function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): JSONSchemaType<unknown> {
-
+function convertLeafNodeSchema(schema: SimpleLeafNodeSchema): LeafNodeJsonSchema {
+	return {
+		type: schema.type,
+		kind: "leaf",
+	}
 }
 
-function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JSONSchemaType<unknown> {
-
+function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJsonSchema {
+	const properties: Record<string, FieldJsonSchema> = {};
+	const required: string[] = [];
+	for (const [key, value] of Object.entries(schema.fields)) {
+		properties[key] = {
+			anyOf: value.allowedTypes.map(createRefNode),
+		};
+		if (value.kind === "required") {
+			required.push(key);
+		}
+	}
+	return {
+		type: "object",
+		kind: "object",
+		properties,
+		required,
+		additionalProperties: false, // TODO: get from schema policy
+	}
 }
 
-function convertMapNodeSchema(schema: SimpleMapNodeSchema): JSONSchemaType<unknown> {
+function convertMapNodeSchema(schema: SimpleMapNodeSchema): MapNodeJsonSchema {
 
+	return {
+		type: "object",
+		kind: "map",
+		properties,
+		additionalProperties: false,
+
+	}
+}
+
+function createRefNode(schemaId: string): JsonDefinitionRef {
+	return {
+		"$ref": createRefString(schemaId),
+	}
+}
+
+function createRefString(schemaId: string): JsonSchemaId {
+	return `#/definitions/${schemaId}`;
 }

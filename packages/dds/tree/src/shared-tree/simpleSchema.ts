@@ -101,11 +101,12 @@ export interface SimpleFieldSchema {
 
 /**
  * TODO
+ * @privateRemarks Currently assumes root field is required. TODO: verify this is true in simple tree world.
  * @internal
  */
 export interface SimpleTreeSchema {
-	readonly rootFieldSchema: SimpleFieldSchema;
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
+	readonly allowedTypes: readonly string[];
 }
 
 export function toSimpleTreeSchema(
@@ -117,8 +118,14 @@ export function toSimpleTreeSchema(
 	for (const [type, schema] of schemaMap) {
 		definitions.set(type, toSimpleNodeSchema(schema, schemaPolicy));
 	}
+
+	const transformedRootFieldSchema = toSimpleFieldSchema(rootFieldSchema, schemaPolicy);
+
+	// TODO: verify this.
+	assert(transformedRootFieldSchema.kind === "required", "Root field must be required.");
+
 	return {
-		rootFieldSchema: toSimpleFieldSchema(rootFieldSchema, schemaPolicy),
+		allowedTypes: transformedRootFieldSchema.allowedTypes,
 		definitions,
 	};
 }
