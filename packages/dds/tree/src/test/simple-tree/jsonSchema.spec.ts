@@ -11,9 +11,28 @@ import {
 	type TreeJsonSchema,
 } from "../../simple-tree/index.js";
 
+// Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
+// In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
+import ajvModuleOrClass from "ajv";
+
+// The first case here covers the esm mode, and the second the cjs one.
+// Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
+const Ajv =
+	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(ajvModuleOrClass as any);
+
 describe.only("JsonSchema", () => {
+	function getValidator(schema: TreeJsonSchema) {
+		const ajv = new Ajv({
+			strict: true,
+			allErrors: true,
+		});
+		return ajv.addSchema(schema);
+	}
+
 	describe("toJsonSchema", () => {
-		it("Leaf schema", () => {
+		it("Leaf schema", async () => {
 			const input: SimpleTreeSchema = {
 				definitions: new Map<string, SimpleNodeSchema>([
 					["test.string", { type: "string", kind: "leaf" }],
@@ -38,6 +57,9 @@ describe.only("JsonSchema", () => {
 				],
 			};
 			assert.deepEqual(actual, expected);
+
+			// Verify that the generated schema is valid.
+			const validator = getValidator(actual);
 		});
 
 		it("Array schema", () => {
@@ -73,6 +95,9 @@ describe.only("JsonSchema", () => {
 				],
 			};
 			assert.deepEqual(actual, expected);
+
+			// Verify that the generated schema is valid.
+			const validator = getValidator(actual);
 		});
 
 		it("Map schema", () => {
@@ -108,6 +133,9 @@ describe.only("JsonSchema", () => {
 				],
 			};
 			assert.deepEqual(actual, expected);
+
+			// Verify that the generated schema is valid.
+			const validator = getValidator(actual);
 		});
 
 		it("Object schema", () => {
@@ -163,6 +191,9 @@ describe.only("JsonSchema", () => {
 				],
 			};
 			assert.deepEqual(actual, expected);
+
+			// Verify that the generated schema is valid.
+			const validator = getValidator(actual);
 		});
 	});
 });
