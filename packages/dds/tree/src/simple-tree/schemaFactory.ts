@@ -167,7 +167,7 @@ export class SchemaFactory<
 	 * Construct a SchemaFactory with a given scope.
 	 * @remarks
 	 * There are no restrictions on mixing schema from different schema factories:
-	 * this is encouraged when a single schema is references schema from different libraries.
+	 * this is encouraged when a single schema references schema from different libraries.
 	 * If each library exporting schema picks its own globally unique scope for its SchemaFactory,
 	 * then all schema an application might depend on, directly or transitively,
 	 * will end up with a unique fully qualified name which is required to refer to it in persisted data and errors.
