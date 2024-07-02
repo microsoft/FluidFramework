@@ -106,21 +106,18 @@ export type NodeJsonSchema =
  * TODO
  * @internal
  */
-export interface TreeJsonSchema {
+export interface FieldJsonSchema {
 	// json schema
 	readonly anyOf: JsonDefinitionRef[];
-	// json schema
-	readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
 }
 
-// TODO: dedupe with treejsonschema
 /**
  * TODO
  * @internal
  */
-export interface FieldJsonSchema {
+export interface TreeJsonSchema extends FieldJsonSchema {
 	// json schema
-	readonly anyOf: JsonDefinitionRef[];
+	readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
 }
 
 /**
