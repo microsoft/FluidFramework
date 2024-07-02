@@ -15,6 +15,7 @@ import {
 import { generateToken } from "./auth.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
@@ -30,6 +31,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
+ * @legacy
  * @alpha
  */
 export class LocalResolver implements IUrlResolver {

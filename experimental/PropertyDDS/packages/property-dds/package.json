@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,7 +68,6 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"axios": "^1.6.2",
 		"buffer": "^6.0.3",
-		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"lz4js": "^0.2.0",
 		"msgpackr": "^1.10.1",

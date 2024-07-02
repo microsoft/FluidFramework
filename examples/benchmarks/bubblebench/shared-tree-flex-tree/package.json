@@ -1,13 +1,13 @@
 {
 	"name": "@fluid-example/bubblebench-shared-tree-flex-tree",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/benchmarks/bubblebench/hared-tree-flex-tree"
+		"directory": "examples/benchmarks/bubblebench/shared-tree-flex-tree"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

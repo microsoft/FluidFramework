@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.13.0
-        version: 0.13.0
+        specifier: ^0.14.0
+        version: 0.14.0
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
-        version: file:../tools/markdown-magic(@tylerbu/markdown-magic@2.4.0-tylerbu-1)
+        version: file:../tools/markdown-magic(markdown-magic@2.6.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -53,18 +53,15 @@ importers:
       linkcheck-bin:
         specifier: 3.0.0-1
         version: 3.0.0-1
-      markdown-magic:
-        specifier: npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1
-        version: /@tylerbu/markdown-magic@2.4.0-tylerbu-1
       markdown-magic-package-json:
         specifier: ^2.0.2
         version: 2.0.2
       markdown-magic-package-scripts:
         specifier: ^1.2.2
-        version: 1.2.2(@tylerbu/markdown-magic@2.4.0-tylerbu-1)
+        version: 1.2.2(markdown-magic@2.6.1)
       markdown-magic-template:
         specifier: ^1.0.1
-        version: 1.0.1(@tylerbu/markdown-magic@2.4.0-tylerbu-1)
+        version: 1.0.1(markdown-magic@2.6.1)
       markdownlint-cli2:
         specifier: ^0.12.1
         version: 0.12.1
@@ -146,8 +143,8 @@ packages:
       regenerator-runtime: 0.13.11
     dev: false
 
-  /@fluid-tools/api-markdown-documenter@0.13.0:
-    resolution: {integrity: sha512-cMUUjgaEWKF2xMmlE9pQ1NjHYZC+BCNiFSkerEnBqanSfGMznOSMmgCdXvwqrO0ennGAkK2bNJd6NWISUvZoLw==}
+  /@fluid-tools/api-markdown-documenter@0.14.0:
+    resolution: {integrity: sha512-KraqtlzpA/LyCRKD1fs7DWb1rQVsdxCYv2GFr8AALumU56vRv99o6FXX+NcyJUW9qrtmGBiQlwvfoMI66n06eA==}
     dependencies:
       '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
@@ -329,6 +326,17 @@ packages:
       emoji-regex: 10.3.0
     dev: false
 
+  /@technote-space/doctoc@2.4.7:
+    resolution: {integrity: sha512-F4oyUpf2e29p3tNH0oTW0a3eOgd3wek2vz1urNalSKCFY8U0hzkFqwU+89rmXGLzzz8WMcLtEXb90CCgqnDQqQ==}
+    dependencies:
+      '@technote-space/anchor-markdown-header': 1.1.42
+      '@textlint/markdown-to-ast': 12.6.1
+      htmlparser2: 6.1.0
+      update-section: 0.3.3
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@technote-space/doctoc@2.6.4:
     resolution: {integrity: sha512-gm6It+7hCuVSFMl9kP9NYX5TTqc6GRcb9HXm0/YhKnou1E0pyocG+6IR/1GNOu/yCkRnD9bRlp5BYw8puvf2kA==}
     dependencies:
@@ -340,8 +348,28 @@ packages:
       - supports-color
     dev: false
 
+  /@textlint/ast-node-types@12.6.1:
+    resolution: {integrity: sha512-uzlJ+ZsCAyJm+lBi7j0UeBbj+Oy6w/VWoGJ3iHRHE5eZ8Z4iK66mq+PG/spupmbllLtz77OJbY89BYqgFyjXmA==}
+    dev: false
+
   /@textlint/ast-node-types@13.4.1:
     resolution: {integrity: sha512-qrZyhCh8Ekk6nwArx3BROybm9BnX6vF7VcZbijetV/OM3yfS4rTYhoMWISmhVEP2H2re0CtWEyMl/XF+WdvVLQ==}
+    dev: false
+
+  /@textlint/markdown-to-ast@12.6.1:
+    resolution: {integrity: sha512-T0HO+VrU9VbLRiEx/kH4+gwGMHNMIGkp0Pok+p0I33saOOLyhfGvwOKQgvt2qkxzQEV2L5MtGB8EnW4r5d3CqQ==}
+    dependencies:
+      '@textlint/ast-node-types': 12.6.1
+      debug: 4.3.4
+      mdast-util-gfm-autolink-literal: 0.1.3
+      remark-footnotes: 3.0.0
+      remark-frontmatter: 3.0.0
+      remark-gfm: 1.0.0
+      remark-parse: 9.0.0
+      traverse: 0.6.8
+      unified: 9.2.2
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /@textlint/markdown-to-ast@13.4.1:
@@ -1035,6 +1063,14 @@ packages:
       path-type: 4.0.0
     dev: false
 
+  /dom-serializer@1.4.1:
+    resolution: {integrity: sha512-VHwB3KfrcOOkelEG2ZOfxqLZdfkil8PtJi4P8N2MMXucZq2yLp75ClViUlOVwyoHEDjYU433Aq+5zWP61+RGag==}
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 4.3.1
+      entities: 2.2.0
+    dev: false
+
   /dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
     dependencies:
@@ -1047,11 +1083,26 @@ packages:
     resolution: {integrity: sha512-OLETBj6w0OsagBwdXnPdN0cnMfF9opN69co+7ZrbfPGrdpPVNBUj02spi6B1N7wChLQiPn4CSH/zJvXw56gmHw==}
     dev: false
 
+  /domhandler@4.3.1:
+    resolution: {integrity: sha512-GrwoxYN+uWlzO8uhUXRl0P+kHE4GtVPfYzVLcUxPL7KNdHKj66vvlhiweIHqYYXWlw+T8iLMp42Lm67ghw4WMQ==}
+    engines: {node: '>= 4'}
+    dependencies:
+      domelementtype: 2.3.0
+    dev: false
+
   /domhandler@5.0.3:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
     dependencies:
       domelementtype: 2.3.0
+    dev: false
+
+  /domutils@2.8.0:
+    resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
+    dependencies:
+      dom-serializer: 1.4.1
+      domelementtype: 2.3.0
+      domhandler: 4.3.1
     dev: false
 
   /domutils@3.1.0:
@@ -1107,6 +1158,10 @@ packages:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
     dependencies:
       once: 1.4.0
+    dev: false
+
+  /entities@2.2.0:
+    resolution: {integrity: sha512-p92if5Nz619I0w+akJrLZH0MX0Pb5DX39XOwQTtXSdQQOaYH03S1uIQp4mhOZtAXrxq4ViO67YTiLBo2638o9A==}
     dev: false
 
   /entities@4.5.0:
@@ -1710,6 +1765,15 @@ packages:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
     dev: false
 
+  /htmlparser2@6.1.0:
+    resolution: {integrity: sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A==}
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 4.3.1
+      domutils: 2.8.0
+      entities: 2.2.0
+    dev: false
+
   /htmlparser2@8.0.2:
     resolution: {integrity: sha512-GYdjWKDkbRLkZ5geuHs5NY1puJ+PXwP7+fHPRz06Eirsb9ugf6d8kkXav6ADhcODhFFPMIXyxkxSuMf3D6NCFA==}
     dependencies:
@@ -2006,6 +2070,10 @@ packages:
       argparse: 2.0.1
     dev: false
 
+  /json-alexander@0.1.10:
+    resolution: {integrity: sha512-+qykmkSBGK11ndn36sES0XM0vEJozenAbiI5Gk07FpRpwbSQQViIHa7Hm+9Bju92nfp44+i0V+Rz43XcARPImA==}
+    dev: false
+
   /json-buffer@3.0.0:
     resolution: {integrity: sha512-CuUqjv0FUZIdXkHPI8MezCnFCdaTAacej1TZYulLoAg1h/PhwkdXFN4V/gzY4g+fMBCOV2xF+rp7t2XD2ns/NQ==}
     dev: false
@@ -2212,23 +2280,40 @@ packages:
       findup: 0.1.5
     dev: false
 
-  /markdown-magic-package-scripts@1.2.2(@tylerbu/markdown-magic@2.4.0-tylerbu-1):
+  /markdown-magic-package-scripts@1.2.2(markdown-magic@2.6.1):
     resolution: {integrity: sha512-dlCojsiJLV9BcL8ar03qycI0H5quM47Ei+mh14It0dTYhLAoH8B/91J0/pLDX3Wba9wTkPCbEKzNVvV8ea0WlQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
     dependencies:
       findup: 0.1.5
-      markdown-magic: /@tylerbu/markdown-magic@2.4.0-tylerbu-1
+      markdown-magic: 2.6.1
       sort-scripts: 1.0.1
     dev: false
 
-  /markdown-magic-template@1.0.1(@tylerbu/markdown-magic@2.4.0-tylerbu-1):
+  /markdown-magic-template@1.0.1(markdown-magic@2.6.1):
     resolution: {integrity: sha512-eoYa+jZHd7TIijM0xuBJWC7rEF75OgFnN0/cwNDbLsmeYCAprR5x0EvZFaHVl2deJN+ziBN3rQ9/m/TD7n4bAQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
     dependencies:
       lodash.template: 4.5.0
-      markdown-magic: /@tylerbu/markdown-magic@2.4.0-tylerbu-1
+      markdown-magic: 2.6.1
+    dev: false
+
+  /markdown-magic@2.6.1:
+    resolution: {integrity: sha512-i+wPC9bAGzFVftF1P5ItooOCvX+TTD3v504WpupsJz+3B0wRZMuPxeFAE7uZXEZYjsiQYskoMgpypoJTWerpVA==}
+    hasBin: true
+    dependencies:
+      '@technote-space/doctoc': 2.4.7
+      commander: 7.2.0
+      deepmerge: 4.3.1
+      find-up: 5.0.0
+      globby: 10.0.2
+      is-local-path: 0.1.6
+      json-alexander: 0.1.10
+      mkdirp: 1.0.4
+      sync-request: 6.1.0
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /markdown-table@2.0.0:
@@ -3861,7 +3946,7 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: false
 
-  file:../tools/markdown-magic(@tylerbu/markdown-magic@2.4.0-tylerbu-1):
+  file:../tools/markdown-magic(markdown-magic@2.6.1):
     resolution: {directory: ../tools/markdown-magic, type: directory}
     id: file:../tools/markdown-magic
     name: '@fluid-tools/markdown-magic'
@@ -3871,8 +3956,8 @@ packages:
       '@rushstack/node-core-library': 3.66.1
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 4.1.2
-      markdown-magic-package-scripts: 1.2.2(@tylerbu/markdown-magic@2.4.0-tylerbu-1)
-      markdown-magic-template: 1.0.1(@tylerbu/markdown-magic@2.4.0-tylerbu-1)
+      markdown-magic-package-scripts: 1.2.2(markdown-magic@2.6.1)
+      markdown-magic-template: 1.0.1(markdown-magic@2.6.1)
       yargs: 17.7.2
     transitivePeerDependencies:
       - '@types/node'

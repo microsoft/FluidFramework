@@ -1,7 +1,7 @@
 # @fluid-tools/fetch-tool
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
-In order to connect to ODSP, the clientID must be set as the environment variable `login__microsoft__clientId`. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
+In order to connect to ODSP, the clientID must be set as the environment variable `fetch__tool__clientId`. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 Beware that to use fetch-tool on documents in the Microsoft tenant, you will need to follow the fetch tool usage instructions on the "Debugging Tools" page of the internal Fluid wiki.
 
 ## Usage
@@ -14,7 +14,6 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
       --dump:snapshotVersion          : dump a list of snapshot version
       --dump:snapshotTree             : dump the snapshot trees
       --dump:snapshotBlob             : dump the contents of snapshot blobs
-      --forceRefreshToken             : Force refresh token (SPO only)
       --stat:message                  : show a table of message type counts and size
       --stat:snapshot                 : show a table of snapshot path and blob size
       --stat:dataType                 : show a table of data type
@@ -24,6 +23,7 @@ Beware that to use fetch-tool on documents in the Microsoft tenant, you will nee
       --numSnapshotVersions <number>  : Number of versions to load (default:10)
       --snapshotVersionIndex <number> : Index of the version to dump
       --saveDir <outdir>              : Save data of the snapshots and messages
+      --loginHint <user>              : Username to prefill for interactive authentication against ODSP
 
 ### Tips
 

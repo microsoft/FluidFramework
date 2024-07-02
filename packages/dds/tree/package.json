@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,8 +48,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
@@ -93,7 +93,7 @@
 		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {

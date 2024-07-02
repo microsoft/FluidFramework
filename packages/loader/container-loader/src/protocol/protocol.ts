@@ -4,8 +4,8 @@
  */
 
 import { ISequencedClient } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
+	ISequencedDocumentMessage,
 	IDocumentAttributes,
 	IClientJoin,
 	ICommittedProposal,
@@ -20,6 +20,7 @@ import {
 import { IQuorumSnapshot, Quorum } from "./quorum.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IScribeProtocolState {
@@ -31,6 +32,7 @@ export interface IScribeProtocolState {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProtocolHandler {
@@ -61,7 +63,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		members: [string, ISequencedClient][],
 		proposals: [number, ISequencedProposal, string[]][],
 		values: [string, ICommittedProposal][],
-		sendProposal: (key: string, value: any) => number,
+		sendProposal: (key: string, value: unknown) => number,
 	) {
 		this._quorum = new Quorum(members, proposals, values, sendProposal);
 	}
@@ -73,7 +75,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		};
 	}
 
-	setConnectionState(connected: boolean, clientId: string | undefined) {
+	setConnectionState(connected: boolean, clientId: string | undefined): void {
 		this._quorum.setConnectionState(connected, clientId);
 	}
 
@@ -81,7 +83,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		return this._quorum.snapshot();
 	}
 
-	public close() {
+	public close(): void {
 		this._quorum.close();
 	}
 
@@ -103,10 +105,8 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
 		let immediateNoOp = false;
 
-		/* eslint-disable no-case-declarations */
-
 		switch (message.type) {
-			case MessageType.ClientJoin:
+			case MessageType.ClientJoin: {
 				const systemJoinMessage = message as ISequencedDocumentSystemMessage;
 				const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
 				const member: ISequencedClient = {
@@ -115,14 +115,16 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				};
 				this._quorum.addMember(join.clientId, member);
 				break;
+			}
 
-			case MessageType.ClientLeave:
+			case MessageType.ClientLeave: {
 				const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
 				const clientId = JSON.parse(systemLeaveMessage.data) as string;
 				this._quorum.removeMember(clientId);
 				break;
+			}
 
-			case MessageType.Propose:
+			case MessageType.Propose: {
 				// back-compat: ADO #1385: This should become unconditional eventually.
 				// Can be done only after Container.processRemoteMessage() stops parsing content!
 				if (typeof message.contents === "string") {
@@ -140,11 +142,10 @@ export class ProtocolOpHandler implements IProtocolHandler {
 				// On a quorum proposal, immediately send a response to expedite the approval.
 				immediateNoOp = true;
 				break;
+			}
 
 			default:
 		}
-
-		/* eslint-enable no-case-declarations */
 
 		// Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
 		// want to move that logic to this class.

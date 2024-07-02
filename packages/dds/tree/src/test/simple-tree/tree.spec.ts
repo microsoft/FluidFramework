@@ -16,6 +16,7 @@ import {
 import { TreeFactory } from "../../treeFactory.js";
 import { getView } from "../utils.js";
 import { MockNodeKeyManager } from "../../feature-libraries/index.js";
+import { Tree } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -56,6 +57,45 @@ describe("class-tree tree", () => {
 		);
 		const view: TreeView<typeof Canvas> = tree.viewWith(config);
 		view.initialize({ stuff: ["a", "b"] });
+	});
+
+	it("accessing view.root does not leak LazyEntities", () => {
+		const config = new TreeViewConfiguration({ schema: Canvas });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize({ stuff: [] });
+		const _unused = view.root;
+		const context = view.getView().context;
+		const countBefore = context.withAnchors.size;
+		for (let index = 0; index < 10; index++) {
+			const _unused2 = view.root;
+		}
+		const countAfter = context.withAnchors.size;
+
+		assert.equal(countBefore, countAfter);
+	});
+
+	it("accessing root via Tree.parent does not leak LazyEntities", () => {
+		const config = new TreeViewConfiguration({ schema: Canvas });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize({ stuff: [] });
+		const child = view.root.stuff;
+		Tree.parent(child);
+		const context = view.getView().context;
+		const countBefore = context.withAnchors.size;
+		for (let index = 0; index < 10; index++) {
+			Tree.parent(child);
+		}
+		const countAfter = context.withAnchors.size;
+
+		assert.equal(countBefore, countAfter);
 	});
 
 	it("ObjectRoot - unhydrated", () => {
@@ -153,5 +193,83 @@ describe("class-tree tree", () => {
 			view.initialize({ testOptionalField: undefined });
 			assert.equal(view.root.testOptionalField, undefined);
 		});
+	});
+});
+
+describe("object allocation tests", () => {
+	it("accessing leaf on object node does not allocate flex nodes", () => {
+		class TreeWithLeaves extends schema.object("TreeWithLeaves", { leaf: schema.number }) {}
+		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize({ leaf: 1 });
+		const context = view.getView().context;
+		// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
+		// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
+		// from any intermediate getters when accessing the leaf.
+		const root = view.root;
+		const countBefore = context.withAnchors.size;
+		const _accessLeaf = root.leaf;
+		const countAfter = context.withAnchors.size;
+
+		// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+		// than the before count.
+		// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+		// the two counts match, plus its title updated accordingly.
+		assert.equal(countAfter, countBefore + 1);
+	});
+
+	it("accessing leaf on map node does not allocate flex nodes", () => {
+		class TreeWithLeaves extends schema.map("MapOfLeaves", schema.number) {}
+		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize(new Map([["1", 1]]));
+		const context = view.getView().context;
+		// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
+		// count any object allocations that result from accessing the root/map as part of the allocations from the leaf
+		// access. Also, store it to avoid additional computation from any intermediate getters when accessing the leaf.
+		const root = view.root;
+		const countBefore = context.withAnchors.size;
+		const _accessLeaf = root.get("1");
+		const countAfter = context.withAnchors.size;
+
+		// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+		// than the before count.
+		// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+		// the two counts match, plus its title updated accordingly.
+		assert.equal(countAfter, countBefore + 1);
+	});
+
+	// TODO: AB#8575 re-enable this test once leaf access on arrays does not allocate flex nodes
+	it.skip("accessing leaf on array node does not allocate flex nodes", () => {
+		class TreeWithLeaves extends schema.array("ArrayOfLeaves", schema.number) {}
+		const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(config);
+		view.initialize([1]);
+		const context = view.getView().context;
+		// Note: access the array that contains leaves before trying to access just the leaf at one of its indices, to not
+		// count any object allocations that result from accessing the root/array as part of the allocations from the leaf
+		// access. Also, store it to avoid additional computation from any intermediat getters when accessing the leaf.
+		const root = view.root;
+		const countBefore = context.withAnchors.size;
+		const _accessLeaf = root[0];
+		const countAfter = context.withAnchors.size;
+
+		// As of 2024-07-01 we still allocate flex fields when accessing leaves, so the after-count is expected to be one higher
+		// than the before count.
+		// TODO: if/when we stop allocating flex fields when accessing leaves, this test will fail and should be updated so
+		// the two counts match, plus its title updated accordingly.
+		assert.equal(countAfter, countBefore + 1);
 	});
 });

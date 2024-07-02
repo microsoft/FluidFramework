@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/aqueduct",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "A set of implementations for Fluid Framework interfaces.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,12 +48,14 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "concurrently \"npm:build:docs:*\"",
+		"build:docs:current": "api-extractor run --local",
+		"build:docs:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -68,7 +70,9 @@
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"ci:build:docs": "api-extractor run",
+		"ci:build:docs": "concurrently \"npm:ci:build:docs:*\"",
+		"ci:build:docs:current": "api-extractor run",
+		"ci:build:docs:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -84,7 +88,7 @@
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -128,7 +132,7 @@
 		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.39.0",
-		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-rc.4.0.0",
+		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-rc.5.0.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.39.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
@@ -149,11 +153,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IDataObjectProps": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

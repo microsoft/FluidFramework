@@ -220,7 +220,7 @@ export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents>
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
 	 */
-	// TODO: use something other than `any`
+	// See note on BrandedKey
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 
@@ -328,7 +328,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 	 * @privateRemarks
 	 * This forwards to the slots of the special above root anchor which locate can't access.
 	 */
-	// TODO: use something other than `any`
+	// See note on BrandedKey.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
 		return this.root.slots;
@@ -1142,7 +1142,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	 */
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
 
-	// TODO: use something other than `any`
+	// See note on BrandedKey.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
 
