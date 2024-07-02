@@ -97,5 +97,13 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"tsc": [
+				"...",
+				"^build:esnext"
+			]
+		}
 	}
 }
