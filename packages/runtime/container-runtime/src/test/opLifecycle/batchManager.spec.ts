@@ -56,9 +56,9 @@ describe("BatchManager", () => {
 		);
 
 		const batch = batchManager.popBatch();
-		assert.equal(batch.content[0].metadata?.batch, true);
-		assert.equal(batch.content[1].metadata?.batch, undefined);
-		assert.equal(batch.content[2].metadata?.batch, false);
+		assert.equal(batch.messages[0].metadata?.batch, true);
+		assert.equal(batch.messages[1].metadata?.batch, undefined);
+		assert.equal(batch.messages[2].metadata?.batch, false);
 
 		assert.equal(
 			batchManager.push(
@@ -68,7 +68,7 @@ describe("BatchManager", () => {
 			true,
 		);
 		const singleOpBatch = batchManager.popBatch();
-		assert.equal(singleOpBatch.content[0].metadata?.batch, undefined);
+		assert.equal(singleOpBatch.messages[0].metadata?.batch, undefined);
 	});
 
 	it("Batch content size is tracked correctly", () => {

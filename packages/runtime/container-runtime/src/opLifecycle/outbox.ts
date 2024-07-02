@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
+import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
@@ -48,7 +48,7 @@ export interface IOutboxParameters {
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: IPendingBatchMessage) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -269,7 +269,7 @@ export class Outbox {
 			clientSequenceNumber = this.sendBatch(processedBatch);
 		}
 
-		this.params.pendingStateManager.onFlushBatch(rawBatch.content, clientSequenceNumber);
+		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);
 	}
 
 	/**
@@ -283,7 +283,7 @@ export class Outbox {
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
-		for (const message of rawBatch.content) {
+		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				content: message.contents!,
@@ -296,7 +296,7 @@ export class Outbox {
 			this.mc.logger.sendTelemetryEvent(
 				{
 					eventName: "BatchRebase",
-					length: rawBatch.content.length,
+					length: rawBatch.messages.length,
 					referenceSequenceNumber: rawBatch.referenceSequenceNumber,
 				},
 				new UsageError("BatchRebase"),
@@ -323,7 +323,7 @@ export class Outbox {
 	 */
 	private compressBatch(batch: IBatch): IBatch {
 		if (
-			batch.content.length === 0 ||
+			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
@@ -345,7 +345,7 @@ export class Outbox {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
 				batchSize: batch.contentSizeInBytes,
 				compressedBatchSize: compressedBatch.contentSizeInBytes,
-				count: compressedBatch.content.length,
+				count: compressedBatch.messages.length,
 				limit: this.params.config.maxBatchSizeInBytes,
 				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
 				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
@@ -363,7 +363,7 @@ export class Outbox {
 	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
 	private sendBatch(batch: IBatch) {
-		const length = batch.content.length;
+		const length = batch.messages.length;
 		if (length === 0) {
 			return undefined; // Nothing submitted
 		}
@@ -372,7 +372,7 @@ export class Outbox {
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
 			this.mc.logger.sendPerformanceEvent({
 				eventName: "LargeBatch",
-				length: batch.content.length,
+				length: batch.messages.length,
 				sizeInBytes: batch.contentSizeInBytes,
 				socketSize,
 			});
@@ -383,7 +383,7 @@ export class Outbox {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
-				batch.content[0].compression === undefined,
+				batch.messages[0].compression === undefined,
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
@@ -391,7 +391,7 @@ export class Outbox {
 		} else {
 			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
 			clientSequenceNumber = this.params.submitBatchFn(
-				batch.content.map((message) => ({
+				batch.messages.map<IBatchMessage>((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
 					compression: message.compression,

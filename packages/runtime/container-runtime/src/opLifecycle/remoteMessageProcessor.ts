@@ -16,6 +16,7 @@ import {
 	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
+import { asBatchMetadata } from "../metadata.js";
 
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
@@ -127,7 +128,7 @@ export class RemoteMessageProcessor {
 	 * the batch tracking info (this.batchStartCsn) based on whether we're still mid-batch.
 	 */
 	private getAndUpdateBatchStartCsn(message: ISequencedDocumentMessage): number {
-		const batchMetadataFlag = (message.metadata as { batch: boolean | undefined })?.batch;
+		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (this.batchStartCsn === undefined) {
 			// We are waiting for a new batch
 			assert(batchMetadataFlag !== false, "Unexpected batch end marker");
