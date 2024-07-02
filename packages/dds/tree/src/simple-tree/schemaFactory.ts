@@ -164,6 +164,14 @@ export class SchemaFactory<
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
+	 * Construct a SchemaFactory with a given scope.
+	 * @remarks
+	 * There are no restrictions on mixing schema from different schema factories:
+	 * this is encouraged when a single schema is references schema from different libraries.
+	 * If each library exporting schema picks its own globally unique scope for its SchemaFactory,
+	 * then all schema an application might depend on, directly or transitively,
+	 * will end up with a unique fully qualified name which is required to refer to it in persisted data and errors.
+	 *
 	 * @param scope - Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
 	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
 	 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
