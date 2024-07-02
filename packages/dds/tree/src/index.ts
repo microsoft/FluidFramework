@@ -261,17 +261,6 @@ export {
 	type NodeInDocumentConstraint,
 	type RunTransaction,
 	rollback,
-	type SimpleNodeSchemaKind,
-	type SimpleLeafSchemaKind,
-	type SimpleFieldSchemaKind,
-	type SimpleNodeSchemaBase,
-	type SimpleObjectNodeSchema,
-	type SimpleArrayNodeSchema,
-	type SimpleMapNodeSchema,
-	type SimpleLeafNodeSchema,
-	type SimpleNodeSchema,
-	type SimpleFieldSchema,
-	type SimpleTreeSchema,
 } from "./shared-tree/index.js";
 
 export {
@@ -334,6 +323,17 @@ export {
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
+	type SimpleNodeSchemaKind,
+	type SimpleLeafSchemaKind,
+	type SimpleFieldSchemaKind,
+	type SimpleNodeSchemaBase,
+	type SimpleObjectNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleTreeSchema,
 } from "./simple-tree/index.js";
 export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 

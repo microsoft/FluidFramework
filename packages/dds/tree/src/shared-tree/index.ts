@@ -3,20 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export type {
-	SimpleNodeSchemaKind,
-	SimpleLeafSchemaKind,
-	SimpleFieldSchemaKind,
-	SimpleNodeSchemaBase,
-	SimpleObjectNodeSchema,
-	SimpleArrayNodeSchema,
-	SimpleMapNodeSchema,
-	SimpleLeafNodeSchema,
-	SimpleNodeSchema,
-	SimpleFieldSchema,
-	SimpleTreeSchema,
-} from "./simpleSchema.js";
-
 export {
 	type ISharedTree,
 	SharedTreeFactory,

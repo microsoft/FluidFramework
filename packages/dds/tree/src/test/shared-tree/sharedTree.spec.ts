@@ -67,8 +67,6 @@ import {
 	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
-	type SimpleTreeSchema,
-	type SimpleNodeSchema,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
@@ -99,10 +97,11 @@ import {
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
+	type SimpleNodeSchema,
+	type SimpleTreeSchema,
 	simpleTreeSchemaToJsonSchema,
 	type TreeJsonSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../shared-tree/jsonSchema.js";
+} from "../../simple-tree/index.js";
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
