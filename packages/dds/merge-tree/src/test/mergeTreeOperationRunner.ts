@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
-import * as fs from "fs";
+import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -107,7 +107,7 @@ export function doOverRange(
 	range: IConfigRange,
 	defaultGrowthFunc: (input: number) => number,
 	doAction: (current: number) => void,
-) {
+): void {
 	let lastCurrent = Number.NaN;
 	for (
 		let current = range.min;
@@ -143,16 +143,19 @@ export function resolveRanges<T extends object>(
 	ranges: T,
 	defaultGrowthFunc: (input: number) => number,
 ): ResolvedRanges<T> {
-	return Object.entries(ranges)
-		.filter(([_, value]) => isConfigRange(value))
-		.map(([key, value]) => [key, resolveRange(value, defaultGrowthFunc)] as const)
-		.reduce((prev, [key, resolvedRange]) => {
-			prev[key] = resolvedRange;
-			return prev;
-		}, {}) as ResolvedRanges<T>;
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const resolvedRanges: ResolvedRanges<T> = {} as ResolvedRanges<T>;
+	for (const [key, value] of Object.entries(ranges)) {
+		if (isConfigRange(value)) {
+			resolvedRanges[key] = resolveRange(value, defaultGrowthFunc);
+		}
+	}
+	return resolvedRanges;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isConfigRange(t: any): t is IConfigRange {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return typeof t === "object" && typeof t.min === "number" && typeof t.max === "number";
 }
 
@@ -177,12 +180,15 @@ interface ProvidesGrowthFunc {
 export function doOverRanges<T extends ProvidesGrowthFunc>(
 	ranges: T,
 	doAction: (selection: PickFromRanges<T>, description: string) => void,
-) {
-	const rangeEntries: [string, IConfigRange][] = Object.entries(ranges).filter(([_, value]) =>
-		isConfigRange(value),
-	);
+): void {
+	const rangeEntries: [string, IConfigRange][] = [];
+	for (const [key, value] of Object.entries(ranges)) {
+		if (isConfigRange(value)) {
+			rangeEntries.push([key, value]);
+		}
+	}
 
-	const doOverRangesHelper = (selections: [string, number][]) => {
+	const doOverRangesHelper = (selections: [string, number][]): void => {
 		if (selections.length === rangeEntries.length) {
 			const selectionsObj = {};
 			for (const [key, value] of selections) {
@@ -228,7 +234,7 @@ export function runMergeTreeOperationRunner(
 	minLength: number,
 	config: IMergeTreeOperationRunnerConfig,
 	apply: ApplyMessagesFn = applyMessages,
-) {
+): number {
 	let seq = startingSeq;
 	const results: ReplayGroup[] = [];
 
@@ -282,7 +288,7 @@ export function generateOperationMessagesForClients(
 	opsPerRound: number,
 	minLength: number,
 	operations: readonly TestOperation[],
-) {
+): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
 	let tempSeq = startingSeq * -1;
 	const messages: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
@@ -332,10 +338,13 @@ export function generateOperationMessagesForClients(
 
 export function generateClientNames(): string[] {
 	const clientNames: string[] = [];
-	function addClientNames(startChar: string, count: number) {
-		const startCode = startChar.charCodeAt(0);
+	function addClientNames(startChar: string, count: number): void {
+		const startCode = startChar.codePointAt(0);
+		if (startCode === undefined) {
+			throw new Error("startCode must be a single character");
+		}
 		for (let i = 0; i < count; i++) {
-			clientNames.push(String.fromCharCode(startCode + i));
+			clientNames.push(String.fromCodePoint(startCode + i));
 		}
 	}
 
@@ -359,7 +368,7 @@ export function applyMessages(
 	messageData: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
 	clients: readonly TestClient[],
 	logger: TestClientLogger,
-) {
+): number {
 	let seq = startingSeq;
 	try {
 		// log and apply all the ops created in the round
@@ -367,10 +376,10 @@ export function applyMessages(
 		for (let i = 0; i < messageData.length; i++) {
 			const [message] = messageData[i];
 			message.sequenceNumber = ++seq;
-			clients.forEach((c) => c.applyMsg(message));
+			for (const c of clients) c.applyMsg(message);
 		}
-	} catch (e) {
-		throw logger.addLogsToError(e);
+	} catch (error) {
+		throw logger.addLogsToError(error);
 	}
 	return seq;
 }

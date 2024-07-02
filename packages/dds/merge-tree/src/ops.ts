@@ -121,6 +121,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	seg?: any;
 }
 
@@ -169,6 +170,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props: Record<string, any>;
 }
 
@@ -190,6 +192,7 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
  * @alpha
  */
 export interface IJSONSegment {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props?: Record<string, any>;
 }
 

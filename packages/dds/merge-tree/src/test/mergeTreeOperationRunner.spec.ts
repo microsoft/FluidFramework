@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	IConfigRange,
@@ -14,10 +14,10 @@ import {
 } from "./mergeTreeOperationRunner.js";
 
 describe("MergeTreeOperationRunner combinatorial utils", () => {
-	const constant = (i: number) => i;
-	const plusOne = (i: number) => i + 1;
-	const plusTwo = (i: number) => i + 2;
-	const timesTwo = (i: number) => i * 2;
+	const constant = (i: number): number => i;
+	const plusOne = (i: number): number => i + 1;
+	const plusTwo = (i: number): number => i + 2;
+	const timesTwo = (i: number): number => i * 2;
 
 	const oneRangeTestCases: {
 		name: string;
@@ -94,6 +94,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 	});
 
 	describe("doOverRanges", () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const doOverRangesCases: { name: string; ranges: any; expected: any[] }[] = [
 			{
 				name: "with no ranges",
@@ -130,6 +131,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 
 		for (const { name, ranges, expected } of doOverRangesCases) {
 			it(name, () => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const actual: any[] = [];
 				doOverRanges(ranges, (i) => actual.push(i));
 				assert.deepEqual(actual, expected);
@@ -138,6 +140,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 	});
 
 	describe("resolveRanges", () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const resolveRangesCases: { name: string; ranges: any; expected: any }[] = [
 			{
 				name: "with no ranges",
@@ -167,6 +170,7 @@ describe("MergeTreeOperationRunner combinatorial utils", () => {
 
 		for (const { name, ranges, expected } of resolveRangesCases) {
 			it(name, () => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				assert.deepEqual(resolveRanges(ranges, ranges.growthFunc), expected);
 			});
 		}

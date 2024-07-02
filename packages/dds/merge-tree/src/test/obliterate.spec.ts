@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MergeTreeDeltaType } from "../ops.js";
 
@@ -47,7 +47,7 @@ describe("obliterate", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			insertText({
 				mergeTree: client.mergeTree,
@@ -79,7 +79,7 @@ describe("obliterate", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 2,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			assert.equal(client.getText(), "");
 		});
@@ -101,7 +101,7 @@ describe("obliterate", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 2,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			assert.equal(client.getText(), "h");
 		});
@@ -116,7 +116,7 @@ describe("obliterate", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			insertText({
 				mergeTree: client.mergeTree,
@@ -138,7 +138,7 @@ describe("obliterate", () => {
 				clientId: remoteClientId,
 				seq: refSeq + 1,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 			insertText({
 				mergeTree: client.mergeTree,

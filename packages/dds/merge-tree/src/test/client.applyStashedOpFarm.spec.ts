@@ -27,7 +27,7 @@ function applyMessagesWithReconnect(
 	messageDatas: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][],
 	clients: readonly TestClient[],
 	stashClients: readonly TestClient[],
-) {
+): number {
 	let seq = startingSeq;
 	const reconnectClientMsgs: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
 	let minSeq = 0;
@@ -67,7 +67,7 @@ function applyMessagesWithReconnect(
 			reconnectClientMsgs.push([message.contents as IMergeTreeOp, sg]);
 		} else {
 			message.sequenceNumber = ++seq;
-			clients.forEach((c) => c.applyMsg(message));
+			for (const c of clients) c.applyMsg(message);
 			minSeq = message.minimumSequenceNumber;
 		}
 	}
@@ -81,7 +81,7 @@ function applyMessagesWithReconnect(
 	let stashedOpSeq = startingSeq;
 	for (const msg of regeneratedStashedOps) {
 		msg.sequenceNumber = ++stashedOpSeq;
-		stashClients.forEach((c) => c.applyMsg(msg));
+		for (const c of stashClients) c.applyMsg(msg);
 	}
 	// all stash and normal clients should now be in the same state,
 	// except #1 (normal) which still has local changes
@@ -89,13 +89,13 @@ function applyMessagesWithReconnect(
 
 	// regenerate ops for client #1
 	const reconnectMsgs: ISequencedDocumentMessage[] = [];
-	reconnectClientMsgs.forEach((opData) => {
+	for (const opData of reconnectClientMsgs) {
 		const newMsg = clients[1].makeOpMessage(
 			clients[1].regeneratePendingOp(opData[0], opData[1]),
 		);
 		newMsg.minimumSequenceNumber = minSeq;
 		reconnectMsgs.push(newMsg);
-	});
+	}
 
 	// apply regenerated ops as stashed ops for client #1
 	const stashedRegeneratedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] =
@@ -116,7 +116,7 @@ function applyMessagesWithReconnect(
 	// apply the regenerated ops from client #1
 	for (const message of reconnectMsgs) {
 		message.sequenceNumber = ++seq;
-		clients.forEach((c) => c.applyMsg(message));
+		for (const c of clients) c.applyMsg(message);
 	}
 
 	// resubmit regenerated stashed ops
@@ -128,7 +128,7 @@ function applyMessagesWithReconnect(
 
 	for (const reRegeneratedStashedOp of reRegeneratedStashedMessages) {
 		reRegeneratedStashedOp.sequenceNumber = ++stashedOpSeq;
-		stashClients.forEach((c) => c.applyMsg(reRegeneratedStashedOp));
+		for (const c of stashClients) c.applyMsg(reRegeneratedStashedOp);
 	}
 
 	// all clients should now be the same
@@ -174,13 +174,14 @@ function runApplyStashedOpFarmTests(
 			// at the same state as the "normal" set of clients
 			let stashClients: TestClient[] = [];
 
-			clients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+			for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);
 			stashClients = [new TestClient()];
-			stashClients.forEach((c, i) => c.startOrUpdateCollaboration(clientNames[i]));
+			for (const [i, c] of stashClients.entries())
+				c.startOrUpdateCollaboration(clientNames[i]);
 
 			let seq = 0;
-			clients.forEach((c) => c.updateMinSeq(seq));
-			stashClients.forEach((c) => c.updateMinSeq(seq));
+			for (const c of clients) c.updateMinSeq(seq);
+			for (const c of stashClients) c.updateMinSeq(seq);
 
 			// Add double the number of clients each iteration
 			const targetClients = Math.max(opts.clients.min, clientCount);

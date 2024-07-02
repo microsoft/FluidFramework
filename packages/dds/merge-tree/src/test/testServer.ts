@@ -36,7 +36,7 @@ export class TestServer extends TestClient {
 		super(options);
 	}
 
-	addClients(clients: TestClient[]) {
+	addClients(clients: TestClient[]): void {
 		this.clientSeqNumbers = new Heap<ClientSeq>(clientSeqComparer);
 		this.clients = clients;
 		for (const client of clients) {
@@ -47,7 +47,7 @@ export class TestServer extends TestClient {
 		}
 	}
 
-	applyMsg(msg: ISequencedDocumentMessage) {
+	applyMsg(msg: ISequencedDocumentMessage): boolean {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
 			const clid = this.getShortClientId(msg.clientId as string);
@@ -59,7 +59,7 @@ export class TestServer extends TestClient {
 
 	// TODO: remove mappings when no longer needed using min seq
 	// in upstream message
-	transformUpstreamMessage(msg: ISequencedDocumentMessage) {
+	transformUpstreamMessage(msg: ISequencedDocumentMessage): void {
 		if (msg.referenceSequenceNumber > 0) {
 			msg.referenceSequenceNumber =
 				this.upstreamMap.get(msg.referenceSequenceNumber)?.data ?? 0;
@@ -73,7 +73,7 @@ export class TestServer extends TestClient {
 		msg.sequenceNumber = -1;
 	}
 
-	copyMsg(msg: ISequencedDocumentMessage) {
+	copyMsg(msg: ISequencedDocumentMessage): ISequencedDocumentMessage {
 		return {
 			clientId: msg.clientId,
 			clientSequenceNumber: msg.clientSequenceNumber,
@@ -82,12 +82,12 @@ export class TestServer extends TestClient {
 			referenceSequenceNumber: msg.referenceSequenceNumber,
 			sequenceNumber: msg.sequenceNumber,
 			type: msg.type,
-		} as any as ISequencedDocumentMessage;
+		} as unknown as ISequencedDocumentMessage;
 	}
 
 	private minSeq = 0;
 
-	applyMessages(msgCount: number) {
+	applyMessages(msgCount: number): boolean {
 		let _msgCount = msgCount;
 		while (_msgCount > 0) {
 			const msg = this.dequeueMsg();
@@ -139,7 +139,7 @@ export function checkTextMatchRelative(
 	clientId: number,
 	server: TestServer,
 	msg: ISequencedDocumentMessage,
-) {
+): boolean {
 	const client = server.clients[clientId];
 	const serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
 	const cliText = client.checkQ.shift()?.data;

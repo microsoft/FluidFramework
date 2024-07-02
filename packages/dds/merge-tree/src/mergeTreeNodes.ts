@@ -78,6 +78,8 @@ export interface IRemovalInfo {
 }
 
 /**
+ * Returns the removal information for a segment.
+ *
  * @internal
  */
 export function toRemovalInfo(
@@ -269,7 +271,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
 	splitAt(pos: number): ISegment | undefined;
-	toJSONObject(): any;
+	toJSONObject(): unknown;
 	/**
 	 * Acks the current segment against the segment group, op, and merge tree.
 	 *
@@ -442,14 +444,14 @@ export class MergeBlock implements IMergeNodeCommon {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		this.children = new Array<IMergeNode>(MaxNodesInBlock);
+		this.children = Array.from({ length: MaxNodesInBlock });
 		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
 		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<Marker>();
 	}
 
-	public setOrdinal(child: IMergeNode, index: number) {
+	public setOrdinal(child: IMergeNode, index: number): void {
 		const childCount = this.childCount;
 		assert(
 			childCount >= 1 && childCount <= MaxNodesInBlock,
@@ -463,7 +465,7 @@ export class MergeBlock implements IMergeNodeCommon {
 		);
 	}
 
-	public assignChild(child: IMergeNode, index: number, updateOrdinal = true) {
+	public assignChild(child: IMergeNode, index: number, updateOrdinal = true): void {
 		child.parent = this;
 		child.index = index;
 		if (updateOrdinal) {
@@ -473,7 +475,7 @@ export class MergeBlock implements IMergeNodeCommon {
 	}
 }
 
-export function seqLTE(seq: number, minOrRefSeq: number) {
+export function seqLTE(seq: number, minOrRefSeq: number): boolean {
 	return seq !== UnassignedSequenceNumber && seq <= minOrRefSeq;
 }
 
@@ -513,9 +515,9 @@ export abstract class BaseSegment implements ISegment {
 		seq?: number,
 		collaborating?: boolean,
 		rollback: PropertiesRollback = PropertiesRollback.None,
-	) {
+	): PropertySet {
 		this.propertyManager ??= new PropertiesManager();
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -534,7 +536,7 @@ export abstract class BaseSegment implements ISegment {
 		return true;
 	}
 
-	protected cloneInto(b: ISegment) {
+	protected cloneInto(b: ISegment): void {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
 		// eslint-disable-next-line import/no-deprecated
@@ -554,13 +556,13 @@ export abstract class BaseSegment implements ISegment {
 		return false;
 	}
 
-	protected addSerializedProps(jseg: IJSONSegment) {
+	protected addSerializedProps(jseg: IJSONSegment): void {
 		if (this.properties) {
 			jseg.props = { ...this.properties };
 		}
 	}
 
-	public abstract toJSONObject(): any;
+	public abstract toJSONObject(): unknown;
 
 	/***/
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
@@ -570,15 +572,16 @@ export abstract class BaseSegment implements ISegment {
 			0x043 /* "On ack, unexpected segmentGroup!" */,
 		);
 		switch (opArgs.op.type) {
-			case MergeTreeDeltaType.ANNOTATE:
+			case MergeTreeDeltaType.ANNOTATE: {
 				assert(
 					!!this.propertyManager,
 					0x044 /* "On annotate ack, missing segment property manager!" */,
 				);
 				this.propertyManager.ackPendingProperties(opArgs.op);
 				return true;
+			}
 
-			case MergeTreeDeltaType.INSERT:
+			case MergeTreeDeltaType.INSERT: {
 				assert(
 					this.seq === UnassignedSequenceNumber,
 					0x045 /* "On insert, seq number already assigned!" */,
@@ -586,8 +589,9 @@ export abstract class BaseSegment implements ISegment {
 				this.seq = opArgs.sequencedMessage!.sequenceNumber;
 				this.localSeq = undefined;
 				return true;
+			}
 
-			case MergeTreeDeltaType.REMOVE:
+			case MergeTreeDeltaType.REMOVE: {
 				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
 				assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
 				this.localRemovedSeq = undefined;
@@ -596,8 +600,9 @@ export abstract class BaseSegment implements ISegment {
 					return true;
 				}
 				return false;
+			}
 
-			case MergeTreeDeltaType.OBLITERATE:
+			case MergeTreeDeltaType.OBLITERATE: {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, 0x86e /* On obliterate ack, missing move info! */);
 				this.localMovedSeq = undefined;
@@ -611,9 +616,11 @@ export abstract class BaseSegment implements ISegment {
 				}
 
 				return false;
+			}
 
-			default:
+			default: {
 				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
+			}
 		}
 	}
 
@@ -629,14 +636,14 @@ export abstract class BaseSegment implements ISegment {
 		}
 
 		this.copyPropertiesTo(leafSegment);
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 		const thisAsMergeSegment: ISegmentLeaf = this;
 		leafSegment.parent = thisAsMergeSegment.parent;
 
 		// Give the leaf a temporary yet valid ordinal.
 		// when this segment is put in the tree, it will get its real ordinal,
 		// but this ordinal meets all the necessary invariants for now.
-		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+		leafSegment.ordinal = this.ordinal + String.fromCodePoint(0);
 
 		leafSegment.removedClientIds = this.removedClientIds?.slice();
 		leafSegment.removedSeq = this.removedSeq;
@@ -661,16 +668,14 @@ export abstract class BaseSegment implements ISegment {
 		return leafSegment;
 	}
 
-	private copyPropertiesTo(other: ISegment) {
-		if (this.propertyManager) {
-			if (this.properties) {
-				other.propertyManager = new PropertiesManager();
-				other.properties = this.propertyManager.copyTo(
-					this.properties,
-					other.properties,
-					other.propertyManager,
-				);
-			}
+	private copyPropertiesTo(other: ISegment): void {
+		if (this.propertyManager && this.properties) {
+			other.propertyManager = new PropertiesManager();
+			other.properties = this.propertyManager.copyTo(
+				this.properties,
+				other.properties,
+				other.propertyManager,
+			);
 		}
 	}
 
@@ -742,7 +747,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	}
 	public readonly type = Marker.type;
 
-	public static make(refType: ReferenceType, props?: PropertySet) {
+	public static make(refType: ReferenceType, props?: PropertySet): Marker {
 		const marker = new Marker(refType);
 		if (props) {
 			marker.addProperties(props);
@@ -755,34 +760,34 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 		this.cachedLength = 1;
 	}
 
-	toJSONObject() {
+	toJSONObject(): IJSONMarkerSegment {
 		const obj: IJSONMarkerSegment = { marker: { refType: this.refType } };
 		super.addSerializedProps(obj);
 		return obj;
 	}
 
-	static fromJSONObject(spec: any) {
+	static fromJSONObject(spec: IJSONSegment): Marker | undefined {
 		if (spec && typeof spec === "object" && "marker" in spec) {
-			return Marker.make(spec.marker.refType, spec.props as PropertySet);
+			return Marker.make((spec.marker as Marker).refType, spec.props as PropertySet);
 		}
 		return undefined;
 	}
 
-	clone() {
+	clone(): Marker {
 		const b = Marker.make(this.refType, this.properties);
 		this.cloneInto(b);
 		return b;
 	}
 
-	getSegment() {
+	getSegment(): Marker {
 		return this;
 	}
 
-	getOffset() {
+	getOffset(): number {
 		return 0;
 	}
 
-	getProperties() {
+	getProperties(): PropertySet | undefined {
 		return this.properties;
 	}
 
@@ -790,11 +795,11 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 		return this.properties?.[reservedMarkerIdKey] as string;
 	}
 
-	toString() {
+	toString(): string {
 		return `M${this.getId()}`;
 	}
 
-	protected createSplitSegmentAt(pos: number) {
+	protected createSplitSegmentAt(pos: number): undefined {
 		return undefined;
 	}
 
@@ -802,7 +807,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 		return false;
 	}
 
-	append() {
+	append(): void {
 		throw new Error("Can not append to marker");
 	}
 }
@@ -890,7 +895,7 @@ export class CollaborationWindow {
 	 */
 	localSeq = 0;
 
-	loadFrom(a: CollaborationWindow) {
+	loadFrom(a: CollaborationWindow): void {
 		this.clientId = a.clientId;
 		this.collaborating = a.collaborating;
 		this.minSeq = a.minSeq;
@@ -899,14 +904,18 @@ export class CollaborationWindow {
 }
 
 /**
+ * Compares two numbers.
+ *
  * @internal
  */
-export const compareNumbers = (a: number, b: number) => a - b;
+export const compareNumbers = (a: number, b: number): number => a - b;
 
 /**
+ * Compares two strings.
+ *
  * @internal
  */
-export const compareStrings = (a: string, b: string) => a.localeCompare(b);
+export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
 
 /**
  * Get a human-readable string for a given {@link Marker}.
@@ -942,9 +951,10 @@ export function debugMarkerToString(marker: Marker): string {
 		pbuf += JSON.stringify(marker.properties, (key, value) => {
 			// Avoid circular reference when stringifying makers containing handles.
 			// (Substitute a debug string instead.)
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const handle = !!value && value.IFluidHandle;
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
 			return handle ? `#Handle(${handle.routeContext.path}/${handle.path})` : value;
 		});
 	}

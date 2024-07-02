@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	LocalClientId,
@@ -54,7 +54,7 @@ describe("MergeTree", () => {
 				currentSequenceNumber,
 				localClientId,
 				UnassignedSequenceNumber,
-				undefined as any,
+				undefined as never,
 			);
 
 			assert.deepStrictEqual(count, {
@@ -74,7 +74,7 @@ describe("MergeTree", () => {
 				currentSequenceNumber,
 				localClientId,
 				++currentSequenceNumber,
-				undefined as any,
+				undefined as never,
 			);
 
 			assert.deepStrictEqual(count, {
@@ -105,7 +105,7 @@ describe("MergeTree", () => {
 				currentSequenceNumber,
 				localClientId,
 				UnassignedSequenceNumber,
-				undefined as any,
+				undefined as never,
 			);
 
 			assert.deepStrictEqual(count, {
@@ -140,7 +140,7 @@ describe("MergeTree", () => {
 				currentSequenceNumber,
 				localClientId,
 				UnassignedSequenceNumber,
-				undefined as any,
+				undefined as never,
 			);
 
 			assert.deepStrictEqual(count, {
@@ -161,7 +161,7 @@ describe("MergeTree", () => {
 				clientId: remoteClientId,
 				seq: ++remoteSequenceNumber,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			const count = countOperations(mergeTree);
@@ -175,7 +175,7 @@ describe("MergeTree", () => {
 				currentSequenceNumber,
 				localClientId,
 				UnassignedSequenceNumber,
-				undefined as any,
+				undefined as never,
 			);
 
 			assert.deepStrictEqual(count, {
@@ -196,7 +196,7 @@ describe("MergeTree", () => {
 				clientId: localClientId,
 				seq: UnassignedSequenceNumber,
 				overwrite: false,
-				opArgs: undefined as any,
+				opArgs: undefined as never,
 			});
 
 			const count = countOperations(mergeTree);
@@ -210,7 +210,7 @@ describe("MergeTree", () => {
 				remoteSequenceNumber,
 				remoteClientId,
 				++remoteSequenceNumber,
-				undefined as any,
+				undefined as never,
 			);
 
 			assert.deepStrictEqual(count, {

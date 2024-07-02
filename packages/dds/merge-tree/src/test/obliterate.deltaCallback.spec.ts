@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
@@ -19,7 +19,7 @@ describe("obliterate delta callback", () => {
 
 	beforeEach(() => {
 		length = 0;
-		cb = (opArgs, deltaArgs) => {
+		cb = (opArgs, deltaArgs): void => {
 			switch (opArgs.op.type) {
 				case MergeTreeDeltaType.INSERT: {
 					for (const { segment } of deltaArgs.deltaSegments) {
@@ -34,8 +34,7 @@ describe("obliterate delta callback", () => {
 					}
 					break;
 				}
-				default: {
-				}
+				default:
 			}
 		};
 	});
