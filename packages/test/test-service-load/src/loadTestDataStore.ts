@@ -710,7 +710,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						config.logger.sendTelemetryEvent({
 							eventName: "VirtualDataStoreCreation",
 							runId: config.runId,
-							opsSent: opsSentCurrent,
+							localOpCount: opsSentCurrent,
 							virtualCreateJitter,
 							virtualCreateRate,
 						});
@@ -720,7 +720,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 							{
 								eventName: "VirtualDataStoreCreationFailed",
 								runId: config.runId,
-								opsSent: opsSentCurrent,
+								localOpCount: opsSentCurrent,
 								virtualCreateJitter,
 								virtualCreateRate,
 							},
@@ -750,7 +750,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						config.logger.sendTelemetryEvent({
 							eventName: "VirtualDataStoreLoaded",
 							runId: config.runId,
-							opsSent: opsSentCurrent,
+							localOpCount: opsSentCurrent,
 							virtualCreateJitter,
 							virtualCreateRate,
 						});
@@ -760,7 +760,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 							{
 								eventName: "VirtualDataStoreLoadFailed",
 								runId: config.runId,
-								opsSent: opsSentCurrent,
+								localOpCount: opsSentCurrent,
 								virtualLoadRate,
 							},
 							error,
@@ -790,7 +790,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 						config.logger.sendTelemetryEvent({
 							eventName: "VirtualDataStoreOpSent",
 							runId: config.runId,
-							opsSent: opsSentCurrent,
+							localOpCount: opsSentCurrent,
 							virtualCreateJitter,
 							virtualCreateRate,
 						});
@@ -800,7 +800,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 							{
 								eventName: "VirtualDataStoreOpFailed",
 								runId: config.runId,
-								opsSent: opsSentCurrent,
+								localOpCount: opsSentCurrent,
 								virtualOpRate,
 							},
 							error,
