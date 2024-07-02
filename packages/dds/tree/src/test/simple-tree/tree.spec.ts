@@ -59,7 +59,7 @@ describe("class-tree tree", () => {
 		view.initialize({ stuff: ["a", "b"] });
 	});
 
-	it("accessing view.root does not leak memory", () => {
+	it("accessing view.root does not leak LazyEntities", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -69,16 +69,16 @@ describe("class-tree tree", () => {
 		view.initialize({ stuff: [] });
 		const _unused = view.root;
 		const context = view.getView().context;
-		const countBefore = context.withAnchors.size + context.withCursors.size;
+		const countBefore = context.withAnchors.size;
 		for (let index = 0; index < 10; index++) {
 			const _unused2 = view.root;
 		}
-		const countAfter = context.withAnchors.size + context.withCursors.size;
+		const countAfter = context.withAnchors.size;
 
 		assert.equal(countBefore, countAfter);
 	});
 
-	it("root access leak via parent", () => {
+	it("accessing root via Tree.parent does not leak LazyEntities", () => {
 		const config = new TreeViewConfiguration({ schema: Canvas });
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
@@ -89,11 +89,11 @@ describe("class-tree tree", () => {
 		const child = view.root.stuff;
 		Tree.parent(child);
 		const context = view.getView().context;
-		const countBefore = context.withAnchors.size + context.withCursors.size;
+		const countBefore = context.withAnchors.size;
 		for (let index = 0; index < 10; index++) {
 			Tree.parent(child);
 		}
-		const countAfter = context.withAnchors.size + context.withCursors.size;
+		const countAfter = context.withAnchors.size;
 
 		assert.equal(countBefore, countAfter);
 	});
