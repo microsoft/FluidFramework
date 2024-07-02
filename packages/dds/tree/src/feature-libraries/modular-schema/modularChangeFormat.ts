@@ -130,6 +130,8 @@ export const EncodedModularChangeset = Type.Object(
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
+		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
 		builds: Type.Optional(EncodedBuilds),
 		refreshers: Type.Optional(EncodedBuilds),
 		/**
