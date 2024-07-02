@@ -8,12 +8,15 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { SchemaFactory, SharedTree, TreeViewConfiguration, type TreeView } from "../../index.js";
 
+
 /**
- * TODO: Creating `builder` and `RootNodeSchema` in the global scope is a problem for memory-profiling tests.
- * It is preferable to create them in the `createLocalSharedTree` function itself, so that they are out of scope when the test.
+ * TODO
  */
 const builder = new SchemaFactory("shared-tree-test");
 
+/**
+ * TODO
+ */
 class RootNodeSchema extends builder.object("root-item", {
 	propertyOne: builder.optional(builder.number),
 	propertyTwo: builder.object("propertyTwo-item", {
@@ -81,7 +84,7 @@ describe("SharedTree memory usage", () => {
 			public readonly title = "Create empty SharedTree";
 			public readonly minSampleCount = 500;
 
-			private sharedTree: TreeView<typeof RootNodeSchema> | undefined = createLocalSharedTree("testSharedTree");
+			private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
 
 			public async run(): Promise<void> {
 				this.sharedTree = createLocalSharedTree("testSharedTree");
@@ -100,7 +103,6 @@ describe("SharedTree memory usage", () => {
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
 						this.sharedTree = updateSharedTree(this.sharedTree, i);
-						console.log(this.sharedTree.root.propertyOne)
 					}
 				}
 
@@ -119,7 +121,7 @@ describe("SharedTree memory usage", () => {
 					for (let i = 0; i < x; i++) {
 						updateSharedTree(localSharedTree, i);
 					}
-					// localSharedTree = undefined;
+					// clear ST content here.
 				}
 
 				public beforeIteration(): void {
