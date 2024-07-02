@@ -126,10 +126,15 @@ export interface TreeJsonSchema extends FieldJsonSchema {
  */
 export function toJsonSchema(schema: SimpleTreeSchema): TreeJsonSchema {
 	const definitions = convertDefinitions(schema.definitions);
-	const allowedTypes = schema.allowedTypes.map(createRefNode);
+
+	const anyOf: JsonDefinitionRef[] = [];
+	for (const allowedType of schema.allowedTypes) {
+		anyOf.push(createRefNode(allowedType));
+	}
+
 	return {
 		definitions,
-		anyOf: allowedTypes,
+		anyOf,
 	};
 }
 
@@ -183,8 +188,13 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 	const properties: Record<string, FieldJsonSchema> = {};
 	const required: string[] = [];
 	for (const [key, value] of Object.entries(schema.fields)) {
+		const anyOf: JsonDefinitionRef[] = [];
+		for (const allowedType of value.allowedTypes) {
+			anyOf.push(createRefNode(allowedType));
+		}
+
 		properties[key] = {
-			anyOf: value.allowedTypes.map(createRefNode),
+			anyOf,
 		};
 		if (value.kind === "required") {
 			required.push(key);
@@ -195,7 +205,7 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): ObjectNodeJson
 		kind: "object",
 		properties,
 		required,
-		additionalProperties: false, // TODO: get from schema policy
+		// TODO: get `additionalProperties` allowance from schema policy
 	};
 }
 

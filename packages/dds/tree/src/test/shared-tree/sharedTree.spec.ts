@@ -1991,14 +1991,23 @@ describe("SharedTree", () => {
 					{
 						kind: "object",
 						fields: {
-							name: { kind: "required", allowedTypes: ["com.fluidframework.leaf.string"] },
-							nickname: { kind: "optional", allowedTypes: ["com.fluidframework.leaf.string"] },
-							age: { kind: "required", allowedTypes: ["com.fluidframework.leaf.number"] },
+							name: {
+								kind: "required",
+								allowedTypes: new Set<string>(["com.fluidframework.leaf.string"]),
+							},
+							nickname: {
+								kind: "optional",
+								allowedTypes: new Set<string>(["com.fluidframework.leaf.string"]),
+							},
+							age: {
+								kind: "required",
+								allowedTypes: new Set<string>(["com.fluidframework.leaf.number"]),
+							},
 						},
 					},
 				],
 			]),
-			allowedTypes: ["test.Contacts"],
+			allowedTypes: new Set<string>(["test.Contacts"]),
 		};
 
 		const actual = sharedTree.getStoredSchema();
@@ -2039,7 +2048,6 @@ describe("SharedTree", () => {
 						age: { anyOf: [{ "$ref": "#/definitions/com.fluidframework.leaf.number" }] },
 						nickname: { anyOf: [{ "$ref": "#/definitions/com.fluidframework.leaf.string" }] },
 					},
-					additionalProperties: false,
 					required: ["name", "age"],
 				},
 				"test.Contacts": {

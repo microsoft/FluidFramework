@@ -95,7 +95,7 @@ export type SimpleNodeSchema =
  */
 export interface SimpleFieldSchema {
 	readonly kind: SimpleFieldSchemaKind;
-	readonly allowedTypes: readonly string[];
+	readonly allowedTypes: ReadonlySet<string>;
 }
 
 /**
@@ -105,7 +105,7 @@ export interface SimpleFieldSchema {
  */
 export interface SimpleTreeSchema {
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
-	readonly allowedTypes: readonly string[];
+	readonly allowedTypes: ReadonlySet<string>;
 }
 
 export function toSimpleTreeSchema(
@@ -133,9 +133,9 @@ function toSimpleFieldSchema(
 	fieldSchema: TreeFieldStoredSchema,
 	schemaPolicy: SchemaPolicy,
 ): SimpleFieldSchema {
-	const allowedTypes: string[] = [];
+	const allowedTypes = new Set<string>();
 	for (const type of fieldSchema.types ?? []) {
-		allowedTypes.push(type);
+		allowedTypes.add(type);
 	}
 
 	const fieldKindData = schemaPolicy.fieldKinds.get(fieldSchema.kind);

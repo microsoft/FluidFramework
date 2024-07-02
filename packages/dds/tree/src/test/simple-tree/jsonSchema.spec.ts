@@ -18,7 +18,7 @@ describe.only("JsonSchema", () => {
 				definitions: new Map<string, SimpleNodeSchema>([
 					["test.string", { type: "string", kind: "leaf" }],
 				]),
-				allowedTypes: ["test.string"],
+				allowedTypes: new Set<string>(["test.string"]),
 			};
 
 			const actual = toJsonSchema(input);
@@ -46,7 +46,7 @@ describe.only("JsonSchema", () => {
 					["test.array", { kind: "array", allowedTypes: new Set<string>(["test.string"]) }],
 					["test.string", { type: "string", kind: "leaf" }],
 				]),
-				allowedTypes: ["test.array"],
+				allowedTypes: new Set<string>(["test.array"]),
 			};
 
 			const actual = toJsonSchema(input);
@@ -81,7 +81,7 @@ describe.only("JsonSchema", () => {
 					["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
 					["test.string", { type: "string", kind: "leaf" }],
 				]),
-				allowedTypes: ["test.map"],
+				allowedTypes: new Set<string>(["test.map"]),
 			};
 
 			const actual = toJsonSchema(input);
@@ -104,6 +104,61 @@ describe.only("JsonSchema", () => {
 				anyOf: [
 					{
 						$ref: "#/definitions/test.map",
+					},
+				],
+			};
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Object schema", () => {
+			const input: SimpleTreeSchema = {
+				definitions: new Map<string, SimpleNodeSchema>([
+					[
+						"test.object",
+						{
+							kind: "object",
+							fields: {
+								"foo": { kind: "optional", allowedTypes: new Set<string>(["test.number"]) },
+								"bar": { kind: "required", allowedTypes: new Set<string>(["test.string"]) },
+							},
+						},
+					],
+					["test.string", { type: "string", kind: "leaf" }],
+					["test.number", { type: "number", kind: "leaf" }],
+				]),
+				allowedTypes: new Set<string>(["test.object"]),
+			};
+
+			const actual = toJsonSchema(input);
+
+			const expected: TreeJsonSchema = {
+				// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
+				definitions: {
+					"test.object": {
+						type: "object",
+						kind: "object",
+						properties: {
+							foo: {
+								anyOf: [{ $ref: "#/definitions/test.number" }],
+							},
+							bar: {
+								anyOf: [{ $ref: "#/definitions/test.string" }],
+							},
+						},
+						required: ["bar"],
+					},
+					"test.number": {
+						type: "number",
+						kind: "leaf",
+					},
+					"test.string": {
+						type: "string",
+						kind: "leaf",
+					},
+				},
+				anyOf: [
+					{
+						$ref: "#/definitions/test.object",
 					},
 				],
 			};
