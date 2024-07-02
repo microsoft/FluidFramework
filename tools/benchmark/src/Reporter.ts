@@ -40,6 +40,8 @@ import chalk from "chalk";
 import Table from "easy-table";
 
 import { geometricMean, isMemoryBenchmarkStats, outputFriendlyObjectFromBenchmark, pad, prettyNumber, Stats } from "./ReporterUtilities";
+// eslint-disable-next-line import/no-internal-modules
+import type { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
 import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 import { BenchmarkResult, isResultError } from "./runBenchmark";
 
@@ -98,10 +100,8 @@ export class BenchmarkReporter {
 	 *
 	 * Tracking multiple suites at once is required due to nesting of suites.
 	 */
-	readonly inProgressSuites: Map<string, BenchmarkResults> = new Map<
-		string,
-		BenchmarkResults
-	>();
+	readonly inProgressSuites: Map<string, BenchmarkResults | [string, MemoryBenchmarkStats][]> =
+		new Map<string, BenchmarkResults | [string, MemoryBenchmarkStats][]>();
 
 	private readonly allBenchmarkPeriodsSeconds: number[] = [];
 	private totalSumRuntimeSeconds = 0;
@@ -136,6 +136,9 @@ export class BenchmarkReporter {
 			this.inProgressSuites.set(suiteName, results);
 		}
 
+		if (Array.isArray(results)) {
+			return;
+		}
 		const { table, benchmarksMap } = results;
 
 		benchmarksMap.set(testName, result);
@@ -163,7 +166,7 @@ export class BenchmarkReporter {
 	 */
 	public recordSuiteResults(suiteName: string): void {
 		const results = this.inProgressSuites.get(suiteName);
-		if (results === undefined) {
+		if (results === undefined || Array.isArray(results)) {
 			// Omit tables for empty suites.
 			// Empty Suites are common due to nesting of suites (a suite that contains only suites
 			// is considered empty here),

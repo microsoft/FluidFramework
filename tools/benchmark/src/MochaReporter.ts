@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "node:path";
+
 import chalk from "chalk";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { getName, isMemoryBenchmarkStats, pad, prettyNumber } from "./ReporterUtilities";
+import { getName, isMemoryBenchmarkStats, pad, prettyNumber, writeCompletedBenchmarks } from "./ReporterUtilities";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
 // Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import/no-internal-modules
@@ -82,22 +84,35 @@ module.exports = class {
 					// Write the data to stdout so the parent process can collect it.
 					console.info(JSON.stringify(benchmarkResult));
 				} else {
-					benchmarkReporter.recordTestResult(suite, getName(test.title), benchmarkResult);
+					if (isMemoryBenchmarkStats(benchmarkResult)) {
+						let suiteData = benchmarkReporter.inProgressSuites.get(suite) as [string, MemoryBenchmarkStats][];
+						if (suiteData === undefined) {
+							suiteData = [];
+							benchmarkReporter.inProgressSuites.set(suite, suiteData);
+						}
+						suiteData.push([getName(test.title), benchmarkResult]);
+					} else {
+						benchmarkReporter.recordTestResult(suite, getName(test.title), benchmarkResult);
+					}
 				}
 			})
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
 				if (!isChildProcess) {
 					const suiteName = getSuiteName(suite);
-					console.log(`\n${chalk.bold(suiteName)}`);
-
 					const suiteData = benchmarkReporter.inProgressSuites.get(suiteName);
-					if (suiteData === undefined) {
-						return;
-					} else {
+					// Memory test output only
+					if (Array.isArray(suiteData)) {
+						const reportDir = options?.reporterOptions?.reportDir ?? "";
+						const outputDirectory = reportDir === "" ? path.join(__dirname, ".output") : path.resolve(reportDir);
+						if (suiteData === undefined) {
+							return;
+						}
+						console.log(`\n${chalk.bold(suiteName)}`);
+
 						const table = new Table();
 						const failedTests = new Array<[string, MemoryBenchmarkStats]>();
-						for (const [testName, testData] of suiteData.benchmarksMap.entries()) {
-							if (isMemoryBenchmarkStats(testData)) {
+						if (suiteData !== undefined) {
+							for (const [testName, testData] of suiteData) {
 								if (testData.aborted) {
 									table.cell("status", `${pad(4)}${chalk.red("×")}`);
 									failedTests.push([testName, testData]);
@@ -140,11 +155,10 @@ module.exports = class {
 									);
 								}
 								table.newRow();
-								console.log(`${table.toString()}`);
 							}
 						}
 
-
+						console.log(`${table.toString()}`);
 						if (failedTests.length > 0) {
 							console.log(
 								"------------------------------------------------------",
@@ -154,8 +168,10 @@ module.exports = class {
 								console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
 							}
 						}
-						benchmarkReporter.recordSuiteResults(suiteName);
+						writeCompletedBenchmarks(suiteName, outputDirectory, suiteData);
 						benchmarkReporter.inProgressSuites.delete(suiteName);
+					} else {
+							benchmarkReporter.recordSuiteResults(suiteName);
 					}
 				}
 			})

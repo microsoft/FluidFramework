@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// import { assert } from "chai";
+/* eslint-disable import/no-nodejs-modules */
+
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+import { assert } from "chai";
 
 import {
 	benchmarkTypes,
@@ -79,7 +84,7 @@ export function geometricMean(values: number[]): number {
 	// Compute the geometric mean of values, but do it using log and exp to reduce overflow/underflow.
 	let sum = 0;
 	for (const value of values) {
-		// assert(value >= 0, "invalid value in geometricMean");
+		assert(value >= 0, "invalid value in geometricMean");
 		sum += Math.log(value);
 	}
 	return Math.exp(sum / values.length);
@@ -212,6 +217,36 @@ export function isMemoryBenchmarkStats(obj: BenchmarkResult): obj is MemoryBench
 	&& "stats" in obj
 	&& "aborted" in obj
 	&& "totalRunTimeMs" in obj;
+}
+
+export function writeCompletedBenchmarks(suiteName: string, outputDirectory: string, suiteData:[string, MemoryBenchmarkStats][]): string {
+	const outputFriendlyBenchmarks: unknown[] = [];
+	if (suiteData !== undefined) {
+		for (const [testName, testData] of suiteData) {
+			if (testData.aborted) {
+				break;
+			}
+			outputFriendlyBenchmarks.push({
+				testName,
+				testData,
+			});
+		}
+	}
+
+	// Use the suite name as a filename, but first replace non-alphanumerics with underscores
+	const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
+	const outputContentString: string = JSON.stringify(
+		{ suiteName, tests: outputFriendlyBenchmarks },
+		undefined,
+		4,
+	);
+
+	// If changing this or the result file logic in general,
+	// be sure to update the glob used to look for output files in the perf pipeline.
+	const outputFilename = `${suiteNameEscaped}_memoryresult.json`;
+	const fullPath: string = path.join(outputDirectory, outputFilename);
+	fs.writeFileSync(fullPath, outputContentString);
+	return fullPath;
 }
 
 /**
