@@ -1,0 +1,23 @@
+{
+	"extends": "../../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"noImplicitAny": true,
+		"noUnusedLocals": false,
+		"noImplicitOverride": true,
+		"rootDir": "./",
+		"outDir": "../../../../lib/test/export-testing/exporter",
+		"types": ["node", "mocha"],
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
+
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../../../../tsconfig.json",
+		},
+	],
+}

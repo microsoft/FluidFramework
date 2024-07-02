@@ -57,6 +57,7 @@ export type {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	ReadonlyMapInlined,
 } from "./typesUnsafe.js";
 export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export {

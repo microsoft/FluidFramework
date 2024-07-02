@@ -63,7 +63,10 @@ module.exports = {
 		{
 			files: ["src/test/**/*"],
 			parserOptions: {
-				project: ["./src/test/tsconfig.json"],
+				project: [
+					"./src/test/tsconfig.json",
+					"./src/test/export-testing/exporter/tsconfig.json",
+				],
 			},
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
