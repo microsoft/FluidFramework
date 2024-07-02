@@ -15,7 +15,7 @@ import { SchemaFactory, SharedTree, TreeViewConfiguration, type TreeView } from 
 const builder = new SchemaFactory("shared-tree-test");
 
 class RootNodeSchema extends builder.object("root-item", {
-	propertyOne: [builder.number, builder.string, builder.boolean],
+	propertyOne: builder.optional(builder.number),
 	propertyTwo: builder.object("propertyTwo-item", {
 		itemOne: builder.boolean,
 	}),
@@ -44,10 +44,18 @@ function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
     return view;
 }
 
-/**
- * TODO
- */
-function updateSharedTree(): TreeView<typeof RootNodeSchema> {}
+function updateSharedTree(sharedTree: TreeView<typeof RootNodeSchema>, x: number): TreeView<typeof RootNodeSchema> {
+	sharedTree.initialize(
+        new RootNodeSchema({
+            propertyOne: x,
+            propertyTwo: {
+                itemOne: true,
+            }
+        }),
+    );
+
+    return sharedTree;
+}
 
 describe("SharedTree memory usage", () => {
 	// IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
@@ -73,7 +81,7 @@ describe("SharedTree memory usage", () => {
 			public readonly title = "Create empty SharedTree";
 			public readonly minSampleCount = 500;
 
-			private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
+			private sharedTree: TreeView<typeof RootNodeSchema> | undefined = createLocalSharedTree("testSharedTree");
 
 			public async run(): Promise<void> {
 				this.sharedTree = createLocalSharedTree("testSharedTree");
@@ -91,7 +99,8 @@ describe("SharedTree memory usage", () => {
 
 				public async run(): Promise<void> {
 					for (let i = 0; i < x; i++) {
-						this.sharedTree.set(i.toString().padStart(6, "0"), i);
+						this.sharedTree = updateSharedTree(this.sharedTree, i);
+						console.log(this.sharedTree.root.propertyOne)
 					}
 				}
 
@@ -104,19 +113,20 @@ describe("SharedTree memory usage", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
 				public readonly title = `Add ${x} integers to a local SharedTree, clear it`;
-				private sharedTree: TreeView<typeof RootNodeSchema> = createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
+					const localSharedTree = createLocalSharedTree("testSharedTree");
 					for (let i = 0; i < x; i++) {
-						this.sharedTree.set(i.toString().padStart(6, "0"), i);
+						updateSharedTree(localSharedTree, i);
 					}
-					this.sharedTree.clear();
+					// localSharedTree = undefined;
 				}
 
 				public beforeIteration(): void {
-					this.sharedTree = createLocalSharedTree("testSharedTree");
+					// Ensuring each iteration starts with a fresh tree
 				}
 			})(),
 		);
+
 	}
 });
