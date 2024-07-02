@@ -163,25 +163,55 @@ export class DetachedFieldIndex {
 	}
 
 	public updateMajor(current: Major, updated: Major): void {
-		const innerCurrent = this.detachedNodeToField.get(current);
-		if (innerCurrent !== undefined) {
-			this.detachedNodeToField.delete(current);
-			const innerUpdated = this.detachedNodeToField.get(updated);
-			if (innerUpdated === undefined) {
-				this.detachedNodeToField.set(updated, innerCurrent);
-			}
-
-			for (const [minor, entry] of innerCurrent) {
-				if (innerUpdated !== undefined) {
-					assert(
-						innerUpdated.get(minor) === undefined,
-						0x7a9 /* Collision during index update */,
+		// Update latestRelevantRevision information corresponding to `current`
+		{
+			const inner = this.latestRelevantRevisionToFields.get(current);
+			if (inner !== undefined) {
+				for (const nodeId of inner.values()) {
+					const entry = tryGetFromNestedMap(
+						this.detachedNodeToField,
+						nodeId.major,
+						nodeId.minor,
 					);
-					innerUpdated.set(minor, entry);
+					assert(entry !== undefined, "Inconsistent data: missing detached node entry");
+					setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, {
+						...entry,
+						latestRelevantRevision: updated,
+					});
 				}
-				this.latestRelevantRevisionToFields
-					.get(entry.latestRelevantRevision)
-					?.set(entry.root, { major: updated, minor });
+				this.latestRelevantRevisionToFields.delete(current);
+				this.latestRelevantRevisionToFields.set(updated, inner);
+			}
+		}
+
+		// Update the major keys corresponding to `current`
+		{
+			const innerCurrent = this.detachedNodeToField.get(current);
+			if (innerCurrent !== undefined) {
+				this.detachedNodeToField.delete(current);
+				const innerUpdated = this.detachedNodeToField.get(updated);
+				if (innerUpdated === undefined) {
+					this.detachedNodeToField.set(updated, innerCurrent);
+				} else {
+					for (const [minor, entry] of innerCurrent) {
+						assert(
+							innerUpdated.get(minor) === undefined,
+							0x7a9 /* Collision during index update */,
+						);
+						innerUpdated.set(minor, entry);
+					}
+				}
+
+				for (const [minor, entry] of innerCurrent) {
+					const entryInLatest = this.latestRelevantRevisionToFields.get(
+						entry.latestRelevantRevision,
+					);
+					assert(
+						entryInLatest !== undefined,
+						"Inconsistent data: missing node entry in latestRelevantRevision",
+					);
+					entryInLatest.set(entry.root, { major: updated, minor });
+				}
 			}
 		}
 	}
