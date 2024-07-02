@@ -48,14 +48,11 @@ export interface ObjectNodeJsonSchema extends NodeJsonSchemaBase<"object", "obje
 	// Always refs to "definitions"
 	readonly properties: Record<string, FieldJsonSchema>;
 	// json schema
-	readonly required: string[];
+	// Default: all are optional
+	readonly required?: string[];
 	// json schema
-	// TODO: derive from policy
-	readonly additionalProperties:
-		| boolean
-		| {
-				type: JsonDefinitionRef[];
-		  };
+	// default: false?
+	readonly additionalProperties?: boolean;
 }
 
 /**
@@ -67,8 +64,6 @@ export interface ArrayNodeJsonSchema extends NodeJsonSchemaBase<"array", "array"
 	readonly items: {
 		type: JsonDefinitionRef[];
 	};
-	// json schema
-	readonly additionalProperties: false;
 }
 
 /**
@@ -173,7 +168,6 @@ function convertArrayNodeSchema(schema: SimpleArrayNodeSchema): ArrayNodeJsonSch
 		items: {
 			type: allowedTypes,
 		},
-		additionalProperties: false,
 	};
 }
 
