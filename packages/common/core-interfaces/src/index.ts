@@ -35,6 +35,14 @@ export type {
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
+export type { JsonDeserialized } from "./jsonDeserialized.js";
+export type { JsonSerializable } from "./jsonSerializable.js";
+export type {
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "./jsonSerializationErrors.js";
+export type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
+
 export type {
 	ILoggingError,
 	ITelemetryBaseEvent,
@@ -48,3 +56,6 @@ export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./pr
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
+
+// eslint-disable-next-line no-restricted-syntax
+export * from "./exposedUtilityTypes.js";
