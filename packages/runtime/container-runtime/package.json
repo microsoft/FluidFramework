@@ -228,6 +228,13 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"EnumDeclaration_ContainerMessageType": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

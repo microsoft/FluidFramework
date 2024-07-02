@@ -489,6 +489,7 @@ export class Container
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
+	private readonly offlineLoadEnabled: boolean;
 
 	private readonly mc: MonitoringContext;
 
@@ -999,7 +1000,7 @@ export class Container
 			enableSummarizeProtocolTree,
 		);
 
-		const offlineLoadEnabled =
+		this.offlineLoadEnabled =
 			(this.isInteractiveClient &&
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
 			options.enableOfflineLoad === true;
@@ -1007,7 +1008,7 @@ export class Container
 			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
-			offlineLoadEnabled,
+			this.offlineLoadEnabled,
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
@@ -2438,6 +2439,7 @@ export class Container
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
+			this.offlineLoadEnabled,
 		);
 
 		this._runtime = await PerformanceEvent.timedExecAsync(

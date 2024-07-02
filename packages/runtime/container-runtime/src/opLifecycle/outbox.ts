@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
 
 import {
@@ -225,19 +226,37 @@ export class Outbox {
 		}
 	}
 
-	public flush() {
+	public flush(resubmitFlush?: boolean, offlineLoadEnabled?: boolean) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll();
+		this.flushAll(resubmitFlush, offlineLoadEnabled);
 	}
 
-	private flushAll() {
+	private flushAll(resubmitFlush?: boolean, offlineLoadEnabled?: boolean) {
 		this.flushInternal(this.idAllocationBatch);
 		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
+		this.flushInternalMainBatch(resubmitFlush, offlineLoadEnabled);
+	}
+
+	private flushInternalMainBatch(resubmitFlush?: boolean, offlineLoadEnabled?) {
+		// add message to empty batch for future recognition
+		if (resubmitFlush && this.mainBatch.empty && offlineLoadEnabled) {
+			const referenceSequenceNumber =
+				this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
+			assert(
+				referenceSequenceNumber !== undefined,
+				"reference sequence number should be defined",
+			);
+			const contents = JSON.stringify({
+				type: ContainerMessageType.NoOp,
+				contents: { clientId: "clientId" },
+			});
+			this.addMessageToBatchManager(this.mainBatch, { referenceSequenceNumber, contents });
+		}
 		this.flushInternal(this.mainBatch);
 	}
 

@@ -148,6 +148,7 @@ export interface IContainerContext {
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+	readonly offlineLoadEnabled?: boolean;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */

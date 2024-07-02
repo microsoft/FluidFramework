@@ -143,6 +143,8 @@ export interface IContainerContext {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
+    // (undocumented)
+    readonly offlineLoadEnabled?: boolean;
     readonly options: Record<string | number, any>;
     // (undocumented)
     pendingLocalState?: unknown;

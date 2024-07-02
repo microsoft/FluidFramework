@@ -56,6 +56,8 @@ export enum ContainerMessageType {
 	 * state across all clients.
 	 */
 	GC = "GC",
+
+	NoOp = "noop",
 }
 
 /**
@@ -129,6 +131,10 @@ export type ContainerRuntimeRejoinMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Rejoin,
 	undefined
 >;
+export type ContainerRuntimeNoOpMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.NoOp,
+	undefined
+>;
 export type ContainerRuntimeAliasMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.Alias,
 	IDataStoreAliasMessage
@@ -173,6 +179,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeChunkedOpMessage
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
+	| ContainerRuntimeNoOpMessage
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
@@ -189,6 +196,7 @@ export type LocalContainerRuntimeMessage =
 	| OutboundContainerRuntimeAttachMessage
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
+	| ContainerRuntimeNoOpMessage
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
@@ -203,6 +211,7 @@ export type OutboundContainerRuntimeMessage =
 	| ContainerRuntimeChunkedOpMessage
 	| ContainerRuntimeBlobAttachMessage
 	| ContainerRuntimeRejoinMessage
+	| ContainerRuntimeNoOpMessage
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage

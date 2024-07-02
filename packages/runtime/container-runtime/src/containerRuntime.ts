@@ -774,6 +774,7 @@ export class ContainerRuntime
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
+	offlineLoadEnabled: any;
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
@@ -1418,6 +1419,7 @@ export class ContainerRuntime
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
+			offlineLoadEnabled,
 		} = context;
 
 		this.logger = createChildLogger({ logger: this.baseLogger });
@@ -1445,7 +1447,7 @@ export class ContainerRuntime
 		this.submitBatchFn = submitBatchFn;
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
-
+		this.offlineLoadEnabled = offlineLoadEnabled;
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
@@ -2439,6 +2441,8 @@ export class ContainerRuntime
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
+			case ContainerMessageType.NoOp:
+				return;
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			case ContainerMessageType.GC:
@@ -2771,6 +2775,8 @@ export class ContainerRuntime
 				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
 				assert(false, 0x93d /* should not even get here */);
+			case ContainerMessageType.NoOp:
+				break;
 			case ContainerMessageType.Rejoin:
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
@@ -2889,13 +2895,13 @@ export class ContainerRuntime
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
 	 */
-	private flush(): void {
+	private flush(resubmitFlush?: boolean): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(resubmitFlush, this.offlineLoadEnabled);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4119,7 +4125,7 @@ export class ContainerRuntime
 				this.reSubmit(message);
 			}
 		});
-		this.flush();
+		this.flush(true);
 	}
 
 	private reSubmit(message: IPendingBatchMessage) {
@@ -4164,6 +4170,9 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.reSubmit(opMetadata);
+				break;
+			case ContainerMessageType.NoOp:
+				this.submit(message);
 				break;
 			case ContainerMessageType.Rejoin:
 				this.submit(message);
