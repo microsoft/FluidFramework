@@ -3,7 +3,7 @@
 The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value that can be edited or deleted.
 
 This package is primarily intended as a minimal example of how distributed data structures work.
-For real-world scenarios, we recommend using one of our other DDSs like [SharedTree](https://fluidframework.com./docs/data-structures/tree/).
+For real-world scenarios, we recommend using one of our other DDSs, like [SharedTree](https://fluidframework.com./docs/data-structures/tree/).
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 
