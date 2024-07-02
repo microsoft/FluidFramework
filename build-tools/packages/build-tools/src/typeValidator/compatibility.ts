@@ -115,9 +115,11 @@ namespace Test2 {
 }
 
 {
-	// This really seems like it shouldn't compile, but maybe its ok for non const enums since the actual values are
-	// Enums apparently just check that the names (of both the enum and its members) and the values of its members match, but not that the pairing of them is the same.
+	// @ts-expect-error Changing the value of an enum member breaks assignability (this changed somewhere between TypeScript 5.1 and 5.4).
 	type _check = requireAssignableTo<Test1.A, Test2.A>;
+	// TypeOnly does not consider renumbering the Enum to be a breaking change.
+	// Maybe this is ok for non const enums since the references should be to the enum member not the constant.
+	type _check4 = requireAssignableTo<TypeOnly<Test1.A>, TypeOnly<Test2.A>>;
 
 	// @ts-expect-error This means that renaming an Enum (even if you also export an alias to it under the old name) would be incorrectly detected as a breaking change.
 	type _check2 = requireAssignableTo<Test1.A, Test2.Renamed>;
@@ -151,7 +153,7 @@ namespace Test5 {
 }
 
 {
-	// @ts-expect-error The odd case that compiles for non-const enums clearly should not be considered compatible for const ones, and fortunately it is not.
+	// @ts-expect-error The odd case that used to compile for non-const enums clearly should not be considered compatible for const ones, and fortunately it is not.
 	type _check = requireAssignableTo<Test3.A, Test4.A>;
 	// @ts-expect-error This stricter checking introduces another issue: identical const enums in different locations are not assignable.
 	type _check5 = requireAssignableTo<Test3.A, Test5.A>;
