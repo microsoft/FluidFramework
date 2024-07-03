@@ -11,7 +11,6 @@ import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
-	type InsertableTreeFieldFromImplicitField,
 	type TreeView,
 } from "../../index.js";
 
@@ -23,8 +22,6 @@ class RootNodeSchema extends builder.object("root-item", {
 		itemOne: builder.string,
 	}),
 }) {}
-
-class EmptyRootNodeSchema extends builder.object("empty-root-item", {}) {}
 
 function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
 	const sharedTree = SharedTree.create(
@@ -117,28 +114,6 @@ describe("SharedTree memory usage", () => {
 
 				public beforeIteration(): void {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
-				}
-			})(),
-		);
-
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				public readonly title = `Add ${x} integers to a local SharedTree, clear it`;
-				private readonly sharedTree: TreeView<typeof RootNodeSchema> =
-					createLocalSharedTree("testSharedTree");
-
-				public async run(): Promise<void> {
-					for (let i = 0; i < x; i++) {
-						this.sharedTree.root.propertyOne = x;
-						this.sharedTree.root.propertyTwo.itemOne = i.toString().padStart(6, "0");
-					}
-					this.sharedTree.root = new EmptyRootNodeSchema(
-						{},
-					) as unknown as InsertableTreeFieldFromImplicitField<typeof RootNodeSchema>;
-				}
-
-				public beforeIteration(): void {
-					// Ensuring each iteration starts with a fresh tree
 				}
 			})(),
 		);
