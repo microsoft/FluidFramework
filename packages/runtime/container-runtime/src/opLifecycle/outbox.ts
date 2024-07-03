@@ -22,6 +22,7 @@ import {
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	sequenceNumbersMatch,
+	type BatchId,
 } from "./batchManager.js";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
@@ -232,29 +233,37 @@ export class Outbox {
 		}
 	}
 
-	public flush() {
+	/**
+	 * Flush all the batches to the ordering service.
+	 * This method is expected to be called at the end of a batch.
+	 * @param mainBatchId - If provided, will be stamped on the main batch before it is sent
+	 */
+	public flush(mainBatchId?: BatchId) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll();
+		this.flushAll(mainBatchId);
 	}
 
-	private flushAll() {
+	private flushAll(mainBatchId?: BatchId) {
 		this.flushInternal(this.idAllocationBatch);
 		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
-		this.flushInternal(this.mainBatch);
+		this.flushInternal(this.mainBatch, false /* disableGroupedBatching */, mainBatchId);
 	}
 
-	private flushInternal(batchManager: BatchManager, disableGroupedBatching: boolean = false) {
+	private flushInternal(
+		batchManager: BatchManager,
+		disableGroupedBatching: boolean = false,
+		batchId?: BatchId, //* TODO: Rethink plumbing here. Params obj, or prop on BatchManager instead?
+	) {
 		if (batchManager.empty) {
 			return;
 		}
 
-		//* Add batchId to batch metadata inside popBatch (pass through if given)
-		const rawBatch = batchManager.popBatch();
+		const rawBatch = batchManager.popBatch(batchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {

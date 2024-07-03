@@ -105,7 +105,11 @@ export class BatchManager {
 		return this.pendingBatch.length === 0;
 	}
 
-	public popBatch(): IBatch {
+	//* TEST: unit tests
+	/**
+	 * Gets the pending batch and clears state for the next batch.
+	 */
+	public popBatch(batchId?: BatchId): IBatch {
 		const batch: IBatch = {
 			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
@@ -118,7 +122,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch);
+		return addBatchMetadata(batch, batchId);
 	}
 
 	/**
@@ -141,15 +145,21 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: IBatch): IBatch => {
+const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
 	if (batch.messages.length > 1) {
 		batch.messages[0].metadata = {
 			...batch.messages[0].metadata,
 			batch: true,
+			batchId,
 		};
 		batch.messages[batch.messages.length - 1].metadata = {
 			...batch.messages[batch.messages.length - 1].metadata,
 			batch: false,
+		};
+	} else {
+		batch.messages[0].metadata = {
+			...batch.messages[0].metadata,
+			batchId,
 		};
 	}
 

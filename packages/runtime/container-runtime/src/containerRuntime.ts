@@ -2885,14 +2885,15 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @param batchId - If provided, will be stamped on the batch before it is sent
 	 */
-	private flush(): void {
+	private flush(batchId?: BatchId): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(batchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4118,8 +4119,7 @@ export class ContainerRuntime
 				this.reSubmit(message);
 			}
 		});
-		//* TODO: Plumb batchId through here
-		this.flush();
+		this.flush(batchId);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {
@@ -4347,10 +4347,10 @@ export class ContainerRuntime
 			return pendingState;
 		};
 
-		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-		// to close current batch.
-		this.flush();
+		if (props?.notifyImminentClosure === true) {
+			// Flush pending batch. No harm done since we're about to close anyway
+			this.flush();
+		}
 
 		return props?.notifyImminentClosure === true
 			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
