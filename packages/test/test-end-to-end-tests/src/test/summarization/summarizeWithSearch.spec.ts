@@ -41,7 +41,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-import { wrapObjectAndOverride } from "../mocking.js";
+import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.

@@ -15,6 +15,11 @@
 		"gen-version": "bin/gen-version",
 		"markdown-magic": "bin/markdown-magic"
 	},
+	"exports": {
+		".": "./index.js",
+		"./alpha": "./alpha.js",
+		"./legacy": "./legacy.js"
+	},
 	"scripts": {
 		"test-script-1": "echo This is a test script",
 		"test-script-2": "echo This is another test script"

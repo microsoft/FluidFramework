@@ -35,7 +35,7 @@ export class OpCompressor {
 	 */
 	public compressBatch(batch: IBatch): IBatch {
 		assert(
-			batch.contentSizeInBytes > 0 && batch.content.length > 0,
+			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
 			0x5a4 /* Batch should not be empty */,
 		);
 
@@ -47,14 +47,14 @@ export class OpCompressor {
 
 		const messages: BatchMessage[] = [];
 		messages.push({
-			...batch.content[0],
+			...batch.messages[0],
 			contents: JSON.stringify({ packedContents: compressedContent }),
-			metadata: batch.content[0].metadata,
+			metadata: batch.messages[0].metadata,
 			compression: CompressionAlgorithms.lz4,
 		});
 
 		// Add empty placeholder messages to reserve the sequence numbers
-		for (const message of batch.content.slice(1)) {
+		for (const message of batch.messages.slice(1)) {
 			messages.push({
 				localOpMetadata: message.localOpMetadata,
 				metadata: message.metadata,
@@ -64,7 +64,7 @@ export class OpCompressor {
 
 		const compressedBatch: IBatch = {
 			contentSizeInBytes: compressedContent.length,
-			content: messages,
+			messages,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
 
@@ -74,7 +74,7 @@ export class OpCompressor {
 				duration,
 				sizeBeforeCompression: batch.contentSizeInBytes,
 				sizeAfterCompression: compressedBatch.contentSizeInBytes,
-				opCount: compressedBatch.content.length,
+				opCount: compressedBatch.messages.length,
 				socketSize: estimateSocketSize(compressedBatch),
 			});
 		}
@@ -88,7 +88,7 @@ export class OpCompressor {
 	private serializeBatchContents(batch: IBatch): string {
 		try {
 			// Yields a valid JSON array, since each message.contents is already serialized to JSON
-			return `[${batch.content.map((message) => message.contents).join(",")}]`;
+			return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
 		} catch (e: any) {
 			if (e.message === "Invalid string length") {
 				// This is how JSON.stringify signals that
@@ -98,7 +98,7 @@ export class OpCompressor {
 					{
 						eventName: "BatchTooLarge",
 						size: batch.contentSizeInBytes,
-						length: batch.content.length,
+						length: batch.messages.length,
 					},
 					error,
 				);

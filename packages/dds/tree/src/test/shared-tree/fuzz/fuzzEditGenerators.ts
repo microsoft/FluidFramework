@@ -64,6 +64,7 @@ import type {
 	FieldEdit,
 	CrossFieldMove,
 	FieldDownPath,
+	Constraint,
 } from "./operationTypes.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
@@ -217,6 +218,7 @@ export interface EditGeneratorOpWeights {
 	fieldSelection: FieldSelectionWeights;
 	synchronizeTrees: number;
 	schema: number;
+	nodeConstraint: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	set: 0,
@@ -233,6 +235,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	fieldSelection: defaultFieldSelectionWeights,
 	synchronizeTrees: 0,
 	schema: 0,
+	nodeConstraint: 0,
 };
 
 export interface EditGeneratorOptions {
@@ -505,6 +508,31 @@ export const makeUndoRedoEditGenerator = (
 	]);
 };
 
+export const makeConstraintEditGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<Constraint, FuzzTestState> => {
+	const opWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeightsArg,
+	};
+	return createWeightedGenerator<Constraint, FuzzTestState>([
+		[
+			(state): Constraint => ({
+				type: "constraint",
+				content: {
+					type: "nodeConstraint",
+					path: maybeDownPathFromNode(
+						// Selecting the parent node here, since the field is possibly empty.
+						selectTreeField(viewFromState(state), state.random, opWeights.fieldSelection)
+							.content.parent,
+					),
+				},
+			}),
+			opWeights.nodeConstraint,
+		],
+	]);
+};
+
 export function makeOpGenerator(
 	weightsArg: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
@@ -527,6 +555,7 @@ export function makeOpGenerator(
 		fieldSelection,
 		schema,
 		synchronizeTrees,
+		nodeConstraint,
 		...others
 	} = weights;
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
@@ -535,6 +564,8 @@ export function makeOpGenerator(
 	const editWeight = sumWeights([insert, remove, intraFieldMove, crossFieldMove, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
+	// Currently we only support node constraints, but this may be expanded in the future.
+	const constraintWeight = nodeConstraint;
 
 	const syncGenerator = createWeightedGenerator<Operation, FuzzTestState>(
 		(
@@ -549,10 +580,15 @@ export function makeOpGenerator(
 					weights.synchronizeTrees,
 				],
 				[() => schemaEditGenerator, weights.schema],
+				[
+					() => makeConstraintEditGenerator(weights),
+					constraintWeight,
+					(state: FuzzTestState) => viewFromState(state).checkout.transaction.inProgress(),
+				],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
-			.map(([f, weight]) => [f(), weight]),
+			.map(([f, weight, acceptanceCriteria]) => [f(), weight, acceptanceCriteria]),
 	);
 	return async (state) => {
 		return syncGenerator(state);

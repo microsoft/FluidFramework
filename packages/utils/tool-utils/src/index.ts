@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { IAsyncCache, IResources, loadRC, lockRC, saveRC } from "./fluidToolRC.js";
+export type { IAsyncCache, IResources } from "./fluidToolRc.js";
+export { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
+export type { IOdspTokenManagerCacheKey, OdspTokenConfig } from "./odspTokenManager.js";
 export {
 	getMicrosoftConfiguration,
-	IOdspTokenManagerCacheKey,
-	OdspTokenConfig,
 	OdspTokenManager,
 	odspTokensCache,
 } from "./odspTokenManager.js";
-export {
-	gcBlobPrefix,
-	getNormalizedSnapshot,
-	ISnapshotNormalizerConfig,
-} from "./snapshotNormalizer.js";
+export type { ISnapshotNormalizerConfig } from "./snapshotNormalizer.js";
+export { gcBlobPrefix, getNormalizedSnapshot } from "./snapshotNormalizer.js";

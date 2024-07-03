@@ -61,7 +61,12 @@ import {
 	SharedObject,
 	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	LoggingError,
+	createChildLogger,
+	createConfigBasedOptionsProxy,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import {
@@ -69,7 +74,11 @@ import {
 	SequenceIntervalCollectionValueType,
 } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
+import {
+	IMapMessageLocalMetadata,
+	IValueChanged,
+	type SequenceOptions,
+} from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
@@ -109,6 +118,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @legacy
  * @alpha
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
@@ -127,6 +137,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedSegmentSequence<T extends ISegment>
@@ -332,6 +343,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
@@ -478,6 +490,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						}
 					});
 
+		const options = createConfigBasedOptionsProxy<SequenceOptions>(
+			loggerToMonitoringContext(this.logger).config,
+			"Fluid.Sequence",
+			{
+				mergeTreeEnableObliterate: (c, n) => c.getBoolean(n),
+				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
+				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
+			},
+			dataStoreRuntime.options,
+		);
+
 		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
@@ -485,7 +508,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				logger: this.logger,
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
-			dataStoreRuntime.options,
+			options,
 			getMinInFlightRefSeq,
 		);
 
@@ -513,7 +536,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.submitLocalMessage(op, localOpMetadata);
 			},
 			new SequenceIntervalCollectionValueType(),
-			dataStoreRuntime.options,
+			options,
 		);
 	}
 
