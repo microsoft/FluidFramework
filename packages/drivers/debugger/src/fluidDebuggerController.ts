@@ -58,7 +58,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			return 0;
 		}
 
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here
 		const attributesHash = tree.trees[".protocol"]!.blobs.attributes!;
 		const attrib = await readAndParse<IDocumentAttributes>(
 			documentStorageService,

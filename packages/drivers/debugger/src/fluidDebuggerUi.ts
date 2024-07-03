@@ -223,7 +223,7 @@ export class DebuggerUI {
 		const buttonVers = doc.getElementById("buttonVers") as HTMLDivElement;
 		buttonVers.onclick = () => {
 			const index = this.selector!.selectedIndex;
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here
 			controller.onVersionSelection(this.versions[index]!);
 		};
 
@@ -233,7 +233,7 @@ export class DebuggerUI {
 			() => {
 				const files = fileSnapshot.files;
 				if (files) {
-					// Why are we non null asserting here
+					// TODO Why are we non null asserting here
 					controller.onSnapshotFileSelection(files[0]!);
 				}
 			},
