@@ -77,7 +77,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 };
 
 /**
- * Generats a simple Markdown heading and contents with trademark information.
+ * Generates a simple Markdown heading and contents with trademark information.
  *
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
@@ -87,7 +87,7 @@ const generateTrademarkSection = (includeHeading) => {
 };
 
 /**
- * Generats a simple Markdown heading and contents with guidelines for taking dependencies on Fluid libraries.
+ * Generates a simple Markdown heading and contents with guidelines for taking dependencies on Fluid libraries.
  *
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
