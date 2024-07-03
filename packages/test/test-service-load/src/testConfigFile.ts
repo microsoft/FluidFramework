@@ -107,25 +107,6 @@ export interface ILoadTestConfig {
 		 */
 		numClients?: number;
 	};
-	virtualization?: {
-		/**
-		 * Once every `createRate` ops, a virtualized dataStore will be created
-		 */
-		createRate?: number;
-		/**
-		 * Once every `loadRate` ops, a virtualized dataStore will be loaded
-		 */
-		loadRate?: number;
-		/**
-		 * Once every `virtualOpRate` ops, send an op from a virtualized data store
-		 */
-		opRate?: number;
-		/**
-		 * How many clients should create/load/modify virtual data stores if `createRate` is specified.
-		 * By default, only one client will send create/load/modify virtual data stores.
-		 */
-		numClients?: number;
-	};
 }
 
 export interface OptionOverride {
