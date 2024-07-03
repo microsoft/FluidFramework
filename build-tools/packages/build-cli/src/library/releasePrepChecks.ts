@@ -4,7 +4,6 @@
  */
 
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
-import { every } from "async";
 import execa from "execa";
 import { ResetMode } from "simple-git";
 import type { Context } from "./context.js";
@@ -99,24 +98,12 @@ export const CheckDependenciesInstalled: CheckFunction = async (
 			? releaseGroupOrPackage.packages
 			: [releaseGroupOrPackage];
 
-	const checkDeps = async (pkg: Package): Promise<boolean> => {
-		return pkg.checkInstall(false);
-	};
+	const installChecks = await Promise.all(
+		packagesToCheck.map(async (pkg) => pkg.checkInstall(false)),
+	);
 
-	// Works at runtime and does not require a lint disable, but looks weird.
-	const installed: boolean = await every(packagesToCheck, () => checkDeps);
-
-	// Works at runtime but requires a lint disable.
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	// const installed = await every(packagesToCheck, checkDeps);
-
-	// Works at runtime but requires a lint disable..
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	// const installed: boolean = await every(packagesToCheck, async (item, callback) =>
-	// 	checkDeps(item),
-	// );
-
-	if (!installed) {
+	// If any of the install checks returned false, dependencies need to be installed
+	if (installChecks.includes(false)) {
 		return {
 			message: "Some dependencies aren't installed. Try installing dependencies manually.",
 			fixCommand: "pnpm install",
