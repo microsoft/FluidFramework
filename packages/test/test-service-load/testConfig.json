@@ -51,11 +51,6 @@
 				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
 				"numClients": 12
-			},
-			"virtualization": {
-				"createRate": 1000,
-				"loadRate": 1000,
-				"opRate": 1000
 			}
 		},
 		"ci_frs": {
@@ -117,7 +112,8 @@
 			"virtualization": {
 				"createRate": 60,
 				"loadRate": 60,
-				"opRate": 60
+				"opRate": 60,
+				"numClients": 2
 			}
 		},
 		"debug": {

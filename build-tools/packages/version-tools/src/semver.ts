@@ -102,6 +102,7 @@ export function detectBumpType(
 	if (v2Parsed === null || v2 === null) {
 		throw new Error(`Invalid version: ${v2}`);
 	}
+	const v2Scheme = detectVersionScheme(v2Parsed);
 
 	const v1IsInternal = isInternalVersionScheme(v1, true, true);
 	const v2IsInternal = isInternalVersionScheme(v2, true, true);
@@ -121,7 +122,6 @@ export function detectBumpType(
 		v2PrereleaseId = prereleaseId;
 	}
 
-	const v2Scheme = detectVersionScheme(v2Parsed);
 	if (
 		// This is a special case for RC and internal builds. RC builds are always a
 		// major bump compared to an internal build.
