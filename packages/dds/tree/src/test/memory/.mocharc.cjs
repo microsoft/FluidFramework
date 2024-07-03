@@ -16,7 +16,6 @@ module.exports = {
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 	"require": [
 		"node_modules/@fluid-internal/mocha-test-setup",
-		"node_modules/@fluidframework/id-compressor/" // updated path
 	],
 	"spec": ["dist/test/memory/**/*.spec.*js", "--perfMode"],
 	"timeout": "90000",
