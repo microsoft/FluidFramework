@@ -17,6 +17,6 @@ module.exports = {
 	"require": [
 		"node_modules/@fluid-internal/mocha-test-setup",
 	],
-	"spec": ["dist/test/memory/**/*.spec.*js", "--perfMode"],
+	"spec": ["lib/test/memory/**/*.spec.*js", "--perfMode"],
 	"timeout": "90000",
 };
