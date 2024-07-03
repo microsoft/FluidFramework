@@ -7,13 +7,10 @@ import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-// Normal usage pattern for @testing-library/jest-dom
-// eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules
 import { act } from "react-dom/test-utils";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";

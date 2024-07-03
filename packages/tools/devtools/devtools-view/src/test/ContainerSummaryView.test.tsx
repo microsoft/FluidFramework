@@ -7,8 +7,6 @@ import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-// Normal usage pattern for @testing-library/jest-dom
-// eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";
 import React from "react";
