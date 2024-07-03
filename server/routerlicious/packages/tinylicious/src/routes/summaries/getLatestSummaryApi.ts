@@ -36,6 +36,34 @@ export function createGetLatestSummaryApiRoute(
 	return router;
 }
 
+export function createGetAppSerializationApiRoute(
+	tenantManager: ITenantManager,
+	router: Router,
+): Router {
+	router.get("/app-serialization/:tenantId/:documentId", (request, response) => {
+		console.log("received app serialization get request");
+		const documentId = getParam(request.params, "documentId");
+		const tenantId = getParam(request.params, "tenantId");
+
+		const tenantManagerP = tenantManager.getTenant(tenantId, documentId);
+
+		tenantManagerP
+			.then(async (tenant) => {
+				const apiResponse: GetAppSerializationResponse = await getAppSerialization(
+					tenant,
+					documentId,
+				);
+				return response.status(200).json(apiResponse);
+			})
+			.catch((error) => {
+				console.log(error);
+				response.status(400).json(error);
+			});
+	});
+
+	return router;
+}
+
 /**
  * Object returned by the getSummary route
  */
@@ -154,6 +182,85 @@ async function getLatestSummary(
 			attributes: ddsSummary.attributes,
 			contents: ddsSummary.content,
 		});
+	}
+
+	return apiResponse;
+}
+
+export interface GetAppSerializationResponse {
+	data?: string;
+}
+
+async function getAppSerialization(
+	tenant: ITenant,
+	documentId: string,
+): Promise<GetAppSerializationResponse> {
+	const commits = await tenant.gitManager.getCommits(documentId, 1);
+	const treeHash = commits[0].commit?.tree?.sha;
+	console.log(" tenant.gitManager.getCommits(documentId, 1) returned:", commits);
+	console.log(`Document git tree hash is ${treeHash}`);
+
+	const fullTree = await tenant.gitManager.getTree(treeHash, true);
+	console.log("obtained full tree: ", fullTree);
+
+	const ddsSummaryMap = new Map<string, { content?: string; attributes?: string }>();
+	for (const item of fullTree.tree) {
+		if (item.path.startsWith(".channels") && item.type === "blob") {
+			if (item.path.endsWith(".component")) {
+				// Not sure what this data is supposed to be but it doesn't seem useful
+				continue;
+			}
+
+			// 1. Identify UUID for the DDS
+			let ddsCommitChannelId;
+			const pathParts = item.path.split("/");
+			if (pathParts.length > 3) {
+				// the channel id exists within item.path and I think its like the uuid name for a folder in git for a given dds
+				ddsCommitChannelId = pathParts[3];
+			} else {
+				console.warn(
+					"Unable to identify which dds data belongs to due to missing channel id:",
+					item,
+				);
+			}
+			if (!ddsSummaryMap.has(ddsCommitChannelId)) {
+				ddsSummaryMap.set(ddsCommitChannelId, {
+					content: undefined,
+					attributes: undefined,
+				});
+			}
+
+			// 2. Decode git commit blob contents
+			const gitChannelData = await tenant.gitManager.getBlob(item.sha);
+			const decodedCommitContents = atob(gitChannelData.content);
+
+			// 3. Identify what type of information about the DDS this is
+			if (item.path.endsWith("header")) {
+				// This is the actual content in the DDS
+				if (ddsCommitChannelId) {
+					ddsSummaryMap.get(ddsCommitChannelId).content = decodedCommitContents;
+				}
+			} else if (item.path.endsWith(".attributes")) {
+				// This is the metadata about the DDS
+				if (ddsCommitChannelId) {
+					ddsSummaryMap.get(ddsCommitChannelId).attributes = decodedCommitContents;
+				}
+			}
+		}
+	}
+
+	const apiResponse: GetAppSerializationResponse = {
+		data: undefined,
+	};
+
+	for (const ddsSummary of ddsSummaryMap.values()) {
+		if (JSON.parse(ddsSummary.attributes)?.type === "https://graph.microsoft.com/types/cell") {
+			const contents = JSON.parse(ddsSummary.content);
+			const parsedContent = contents.value.split("APPSERAILIZERFILETYPEHEADER::::");
+			if (parsedContent.length === 2) {
+				apiResponse.data = parsedContent[1];
+			}
+		}
 	}
 
 	return apiResponse;

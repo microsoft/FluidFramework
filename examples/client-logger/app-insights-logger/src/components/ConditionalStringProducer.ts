@@ -1,4 +1,6 @@
 import { ISharedCell } from "@fluidframework/cell/internal";
+// import type { IFluidHandle } from "@fluidframework/core-interfaces";
+// import { useEffect, useState } from "react";
 
 // type QualifierFunction<T> = (newValue: T, oldValue: T | undefined) => boolean;
 
@@ -116,6 +118,8 @@ export class MultiDepTracker<V> {
 	) {
 		this.prevValues = dependencies.map((dep) => dep.getValue());
 		this.dependencies = dependencies;
+		// initialize effect results
+		this.effectResult = this.effect();
 	}
 
 	public dependencies: Dependency<any>[];
@@ -153,12 +157,13 @@ export class MultiDepTracker<V> {
 
 export class AppSerializer {
 	private readonly lastSerialization: string | undefined;
+	private readonly intervalId: number | undefined;
 	constructor(
 		private readonly segments: MultiDepTracker<string>[],
 		private readonly intervalMs: number,
 		private readonly destination: ISharedCell,
 	) {
-		setInterval(() => {
+		this.intervalId = setInterval(() => {
 			let serialization = "";
 			this.segments.forEach((segment) => {
 				if (segment.effectResult) {
@@ -166,7 +171,47 @@ export class AppSerializer {
 				}
 			});
 			console.log("Saving serialized app to shared cell: \n", serialization);
-			if (this.lastSerialization !== serialization) this.destination.set(serialization);
+			if (this.lastSerialization !== serialization)
+				this.destination.set(`APPSERAILIZERFILETYPEHEADER::::${serialization}`);
 		}, this.intervalMs);
+		console.log("new AppSerilaizer instance created with intervalId id", this.intervalId);
+	}
+
+	stop() {
+		console.log("new AppSerilaizer intervalId stopped", this.intervalId);
+		clearInterval(this.intervalId);
 	}
 }
+
+// type useAppSerializerProps = {
+// 	intervalMs: number;
+// 	segments: MultiDepTracker<string>[];
+// 	destinationCellHandle: IFluidHandle<ISharedCell>;
+// };
+
+// let appSerializer_global
+
+// export function useAppSerializer(props: useAppSerializerProps) {
+// 	const [appSerializer, setAppSerializer] = useState<AppSerializer>();
+
+// 	useEffect(() => {
+// 		if (props.segments.length > 0) {
+// 			const initializeAppSerializer = async () => {
+// 				if (appSerializer != undefined) {
+// 					// we need to replace the existing serializer since the segments have changed.
+// 					appSerializer.stop();
+// 				}
+// 				const sharedCell = await props.destinationCellHandle.get();
+// 				setAppSerializer(new AppSerializer(props.segments, 5000, sharedCell));
+// 			};
+
+// 			initializeAppSerializer();
+// 		}
+
+// 		return () => {
+// 			appSerializer?.stop();
+// 		};
+// 	}, [props.segments]);
+
+// 	return [appSerializer];
+// }

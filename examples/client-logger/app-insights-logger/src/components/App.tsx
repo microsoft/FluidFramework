@@ -233,7 +233,8 @@ function CollabForm(props: CollabFormProps) {
 
 	React.useEffect(() => {
 
-		const segments: MultiDepTracker<string>[] = [];
+		const serializationSegments: MultiDepTracker<string>[] = [];
+
 		// Author field
 		if (field1Input !== undefined) {
 			const field1Dependency: Dependency<string> = {
@@ -251,25 +252,25 @@ function CollabForm(props: CollabFormProps) {
 				multiDep1.trigger(); //TODO: Debounce this
 			});
 
-			segments.push(multiDep1);
+			serializationSegments.push(multiDep1);
 		}
 
 
 		if (field2Input !== undefined && field3Input !== undefined) {
+			// dependencies
 			const field2Dependency: Dependency<string> = {
 				getValue: () => field2Input.getText(),
 				qualifier: (prev, next) => prev !== next,
 			};
-
 			const field3Dependency: Dependency<string> = {
 				getValue: () => field3Input.getText(),
 				qualifier: (prev, next) => prev !== next,
 			};
 
+			// tracker for detecting dependency changes
 			const multiDep2 = new MultiDepTracker([field2Dependency, field3Dependency], () => {
 				const val = `## The description of the application\n\n "${field2Input?.getText()}" \n\n`;
 				const val2 = `## The way the applications front end communicates with back end services\n\n ${field3Input?.getText()} \n\n`
-				// console.log(val + val2);
 				return val + val2;
 			});
 
@@ -282,18 +283,19 @@ function CollabForm(props: CollabFormProps) {
 				multiDep2.trigger(); //TODO: Debounce this
 			});
 
-			segments.push(multiDep2);
+			serializationSegments.push(multiDep2);
 		}
 
 		if (counter1 !== undefined) {
+			// dependencies
 			const counter1Dependency: Dependency<number> = {
 				getValue: () => counter1.value,
 				qualifier: (prev, next) => prev !== next,
 			};
 
+			// tracker for detecting dependency changes
 			const multiDep3 = new MultiDepTracker([counter1Dependency], () => {
 				const val = `## The number of customer facing API endpoints: ${counter1?.value}`;
-				// console.log(val);
 				return val;
 			});
 
@@ -302,19 +304,23 @@ function CollabForm(props: CollabFormProps) {
 				multiDep3.trigger();
 			});
 
-			segments.push(multiDep3);
+			serializationSegments.push(multiDep3);
 		}
 
+		if (serializationSegments.length === 3 && appSerializer === undefined) {
 
-		if (segments.length === 3 && appSerializer === undefined) {
 			const initializeAppSerializer = async () => {
 				const rootMap = props.containerInfo.container.initialObjects.rootMap as ISharedMap;
 				const sharedCellHandle = rootMap.get(sharedCellKey) as IFluidHandle<ISharedCell>;
 				const sharedCell = await sharedCellHandle.get();
-				setAppSerializer(new AppSerializer(segments, 5000, sharedCell));
+				setAppSerializer(new AppSerializer(serializationSegments, 5000, sharedCell));
 
 			}
 			initializeAppSerializer();
+		}
+
+		return () => {
+			appSerializer?.stop()
 		}
 
 	}, [field1Input, field2Input, field3Input, counter1]);

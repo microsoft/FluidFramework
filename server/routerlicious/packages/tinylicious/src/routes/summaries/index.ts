@@ -5,7 +5,10 @@
 
 import { Router } from "express";
 import type { ITenantManager } from "@fluidframework/server-services-core";
-import { createGetLatestSummaryApiRoute } from "./getLatestSummaryApi";
+import {
+	createGetAppSerializationApiRoute,
+	createGetLatestSummaryApiRoute,
+} from "./getLatestSummaryApi";
 
 /**
  * Main entrypoint that creates a set of API Routes related to Fluid Framework Summaries that are assigned to an {@link Router}
@@ -14,6 +17,7 @@ import { createGetLatestSummaryApiRoute } from "./getLatestSummaryApi";
 export function create(tenantManager: ITenantManager): Router {
 	const summariesRouter = Router();
 	createGetLatestSummaryApiRoute(tenantManager, summariesRouter);
+	createGetAppSerializationApiRoute(tenantManager, summariesRouter);
 
 	const router: Router = Router();
 	router.use("/summaries", summariesRouter);
