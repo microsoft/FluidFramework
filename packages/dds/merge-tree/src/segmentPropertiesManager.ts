@@ -13,6 +13,7 @@ import { IMergeTreeAnnotateMsg } from "./ops.js";
 import { MapLike, PropertySet, createMap } from "./properties.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum PropertiesRollback {
@@ -24,6 +25,7 @@ export enum PropertiesRollback {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class PropertiesManager {

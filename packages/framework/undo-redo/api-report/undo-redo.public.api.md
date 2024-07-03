@@ -4,10 +4,4 @@
 
 ```ts
 
-import { ISegment } from '@fluidframework/merge-tree/internal';
-import { ISharedMap } from '@fluidframework/map/internal';
-import { ISharedSegmentSequence } from '@fluidframework/sequence/internal';
-import { IValueChanged } from '@fluidframework/map/internal';
-import { SequenceDeltaEvent } from '@fluidframework/sequence/internal';
-
 ```

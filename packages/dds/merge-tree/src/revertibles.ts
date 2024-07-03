@@ -19,6 +19,7 @@ import { PropertySet, matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type MergeTreeDeltaRevertible =
@@ -61,6 +62,7 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface MergeTreeRevertibleDriver {
@@ -195,6 +197,7 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
@@ -225,6 +228,7 @@ export function appendToMergeTreeDeltaRevertibles(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
@@ -393,6 +397,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(

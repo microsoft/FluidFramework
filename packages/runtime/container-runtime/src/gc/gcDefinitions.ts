@@ -24,6 +24,7 @@ import {
 } from "../summary/index.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type GCVersion = number;
@@ -60,8 +61,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC sweep on / off. */
-export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 /** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
@@ -97,6 +96,7 @@ export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
  * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
+ * @legacy
  * @alpha
  */
 export type GCFeatureMatrix =
@@ -134,6 +134,7 @@ export interface IGCMetadata_Deprecated {
 /**
  * GC-specific metadata to be written into the summary.
  *
+ * @legacy
  * @alpha
  */
 export interface IGCMetadata {
@@ -181,6 +182,7 @@ export interface IGCMetadata {
 
 /**
  * The statistics of the system state after a garbage collection mark phase run.
+ * @legacy
  * @alpha
  */
 export interface IMarkPhaseStats {
@@ -206,6 +208,7 @@ export interface IMarkPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection sweep phase run.
+ * @legacy
  * @alpha
  */
 export interface ISweepPhaseStats {
@@ -225,12 +228,14 @@ export interface ISweepPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection run.
+ * @legacy
  * @alpha
  */
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 
 /**
  * The types of GC nodes in the GC reference graph.
+ * @legacy
  * @alpha
  */
 export const GCNodeType = {
@@ -245,6 +250,7 @@ export const GCNodeType = {
 } as const;
 
 /**
+ * @legacy
  * @alpha
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
@@ -423,6 +429,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IGCRuntimeOptions {
@@ -476,6 +483,8 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
+	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
+	readonly tombstoneAutorecoveryEnabled: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

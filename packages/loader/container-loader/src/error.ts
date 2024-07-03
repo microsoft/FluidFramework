@@ -42,7 +42,8 @@ export class ThrottlingWarning
 		retryAfterSeconds: number,
 		logger: ITelemetryLoggerExt,
 	): IThrottlingWarning {
-		const newErrorFn = (errMsg: string) => new ThrottlingWarning(errMsg, retryAfterSeconds);
+		const newErrorFn = (errMsg: string): ThrottlingWarning =>
+			new ThrottlingWarning(errMsg, retryAfterSeconds);
 		return wrapErrorAndLog(error, newErrorFn, logger);
 	}
 }

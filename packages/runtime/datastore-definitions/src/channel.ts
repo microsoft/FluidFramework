@@ -16,6 +16,7 @@ import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 import type { IChannelAttributes } from "./storage.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IChannel extends IFluidLoadable {
@@ -119,6 +120,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
+ * @legacy
  * @alpha
  */
 export interface IDeltaHandler {
@@ -178,6 +180,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
+ * @legacy
  * @alpha
  */
 export interface IDeltaConnection {
@@ -206,6 +209,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
+ * @legacy
  * @alpha
  */
 export interface IChannelStorageService {
@@ -227,6 +231,7 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
+ * @legacy
  * @alpha
  */
 export interface IChannelServices {
@@ -261,6 +266,7 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
+ * @legacy
  * @alpha
  */
 export interface IChannelFactory<out TChannel = unknown> {

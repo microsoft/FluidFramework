@@ -5,6 +5,7 @@
 
 /**
  * Any mapping from a string to values of type `T`
+ * @legacy
  * @alpha
  */
 export interface MapLike<T> {
@@ -19,6 +20,7 @@ export interface MapLike<T> {
  * @privateRemarks PropertySet is typed using `any` because when you include
  * custom methods such as toJSON(), JSON.stringify accepts most types other than
  * functions
+ * @legacy
  * @alpha
  */
 export type PropertySet = MapLike<any>;
