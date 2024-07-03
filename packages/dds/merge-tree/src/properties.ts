@@ -91,7 +91,7 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 	for (const key in extension) {
 		const v = extension[key];
 		if (v !== null) {
-			// TODO why are we non null asserting here?
+			// If `v` is undefined, undefined must have been assignable to `T`.
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cloneMap[key] = v!;
 		}
