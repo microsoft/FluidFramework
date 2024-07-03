@@ -20,7 +20,7 @@ export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]) {
 		const childId = route.split("/")[1];
 		assert(
 			childId !== undefined,
-			0x5e3 /* childId is undefined in unpackChildNodesUsedRoutes */,
+			0x9ab /* childId is undefined in unpackChildNodesUsedRoutes */,
 		);
 		const childUsedRoute = route.slice(childId.length + 1);
 
