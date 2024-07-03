@@ -13,6 +13,7 @@ import {
 
 /**
  * Similar to AbortController, but using promise instead of events
+ * @legacy
  * @alpha
  */
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {

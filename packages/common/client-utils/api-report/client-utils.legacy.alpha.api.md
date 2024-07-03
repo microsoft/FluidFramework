@@ -4,15 +4,10 @@
 
 ```ts
 
-// @alpha
-export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
-
 export { EventEmitter }
 
 // @alpha
 export type EventEmitterEventType = string;
-
-export { performance_2 as performance }
 
 // @alpha
 export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {

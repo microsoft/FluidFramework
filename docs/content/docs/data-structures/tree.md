@@ -545,16 +545,22 @@ on<K extends keyof TreeChangeEvents>(
 	): () => void;
 ```
 
-`Tree.on` assigns the specified `listener` function to the specified `eventType` for the specified `node`. The `node` can be any node of the tree. The `eventType` can be either "treeChanged" or "nodeChanged". `nodeChanged` fires whenever the given node changes (values of the fields in the node). `treeChanged` fires whenever the given node or any of the nodes in its child subtree changes.
 
-An `event` object is automatically passed to the `listener`. It has one member:
-
--   `event.target`: The node on which the event was triggered.
+`Tree.on` assigns the specified `listener` function to the specified `eventName` for the specified `node`.
+The `node` can be any node of the tree.
+The `eventName` can be either "treeChanged" or "nodeChanged".
+`nodeChanged` fires whenever one or more properties of the specified node change.
+`treeChanged` fires whenever one or more properties of the specified node or any node in its subtree, change.
+We recommend looking at the documentation of each of the events for more details.
 
 The `Tree.on()` method returns a function that unsubscribes the handler from the event. This method is typically called in clean up code when the node is being removed. For example:
 
 ```typescript
 const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
+
 ```
 
 ### Type guard
