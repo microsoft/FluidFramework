@@ -24,7 +24,7 @@ RUN chmod +x /tini
 
 # There are some packages outside the routerlicious folder that we need to build, so we copy the package to the /usr directory
 WORKDIR /usr
-COPY --from=root tools/changelog-generator-wrapper/package*.json tools/changelog-generator-wrapper/
+COPY --from=root packages/tools/changelog-generator-wrapper/package*.json packages/tools/changelog-generator-wrapper/
 
 # Copy over and build the server
 WORKDIR /usr/src/server

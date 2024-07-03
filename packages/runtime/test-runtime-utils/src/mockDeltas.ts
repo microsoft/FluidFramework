@@ -22,6 +22,7 @@ import {
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
+ * @legacy
  * @alpha
  */
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
@@ -97,6 +98,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 /**
  * Mock implementation of IDeltaManager for testing that creates mock DeltaQueues for testing
+ * @legacy
  * @alpha
  */
 export class MockDeltaManager

@@ -29,6 +29,7 @@ import type { DataObjectTypes, IDataObjectProps } from "./types.js";
  * you are creating another base data store class
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @legacy
  * @alpha
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
@@ -99,16 +100,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.context = props.context;
 		this.providers = props.providers;
 		this.initProps = props.initProps;
-
-		/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-		/* eslint-disable @typescript-eslint/no-explicit-any */
-		assert(
-			(this.runtime as any)._dataObject === undefined,
-			0x0bd /* "Object runtime already has DataObject!" */,
-		);
-		(this.runtime as any)._dataObject = this;
-		/* eslint-enable @typescript-eslint/no-explicit-any */
-		/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 	}
 
 	/**
