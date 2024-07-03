@@ -49,7 +49,7 @@ export class LocalResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const parsedUrl = new URL(request.url);
 		const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const documentId = fullPath.split("/")[0]!;
 		const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

@@ -100,7 +100,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const rawTree = await this.manager.getTree(versionId);
 		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		const groupIds = new Set<string>(snapshotFetchOptions?.loadingGroupIds ?? []);
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const attributesBlobId = snapshotTree.trees[".protocol"]!.blobs.attributes!;
 		// Only populate contents for the blobs which are supposed to be returned.
@@ -302,7 +302,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			}
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return version[0]!.id;
 		}
