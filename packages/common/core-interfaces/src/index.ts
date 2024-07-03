@@ -58,4 +58,4 @@ export type { ISignalEnvelope } from "./messages.js";
 export type { ErasedType } from "./erasedType.js";
 
 // eslint-disable-next-line no-restricted-syntax
-export * from "./exposedUtilityTypes.js";
+export type * from "./exposedUtilityTypes.js";
