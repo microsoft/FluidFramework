@@ -41,6 +41,8 @@ export class ReleasePrepareCommand extends BaseCommand<typeof ReleasePrepareComm
 	public static readonly summary =
 		`Runs checks on a local branch to verify it is ready to serve as the base for a release branch.`;
 
+	public static readonly aliases: string[] = ["release:prep"];
+
 	public static readonly description = `Runs the following checks:\n${[
 		"",
 		...allChecks.keys(),

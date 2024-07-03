@@ -161,6 +161,9 @@ DESCRIPTION
   - Has no pre-release Fluid dependencies
   - No repo policy violations
   - No untagged asserts
+
+ALIASES
+  $ flub release prep
 ```
 
 _See code: [src/commands/release/prepare.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/prepare.ts)_
