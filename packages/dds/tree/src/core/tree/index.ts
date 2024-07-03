@@ -111,7 +111,4 @@ export {
 } from "./deltaUtil.js";
 
 export { DetachedFieldIndex } from "./detachedFieldIndex.js";
-export {
-	type ForestRootId,
-	fakeRevisionWhenNotSet,
-} from "./detachedFieldIndexTypes.js";
+export { type ForestRootId } from "./detachedFieldIndexTypes.js";

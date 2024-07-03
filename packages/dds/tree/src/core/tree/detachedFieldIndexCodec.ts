@@ -18,11 +18,10 @@ import {
 	type RootRanges,
 	version,
 } from "./detachedFieldIndexFormat.js";
-import {
-	fakeRevisionWhenNotSet,
-	type DetachedField,
-	type DetachedFieldSummaryData,
-	type Major,
+import type {
+	DetachedField,
+	DetachedFieldSummaryData,
+	Major,
 } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -109,16 +108,10 @@ export function makeDetachedNodeToFieldCodec(
 				const innerMap = new Map<number, DetachedField>();
 				if (rootsForRevision.length === 2) {
 					for (const [minor, root] of rootsForRevision[1]) {
-						innerMap.set(minor, {
-							root,
-							latestRelevantRevision: fakeRevisionWhenNotSet,
-						});
+						innerMap.set(minor, { root });
 					}
 				} else {
-					innerMap.set(rootsForRevision[1], {
-						root: rootsForRevision[2],
-						latestRelevantRevision: fakeRevisionWhenNotSet,
-					});
+					innerMap.set(rootsForRevision[1], { root: rootsForRevision[2] });
 				}
 				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
 			}

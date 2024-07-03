@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor";
-
 import type { Brand, ReadonlyNestedMap } from "../../util/index.js";
 import type { RevisionTag } from "../rebase/index.js";
 
@@ -25,12 +23,6 @@ export interface DetachedFieldSummaryData {
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
 /**
- * fake revision used to mark that the revision stored in a {@link DetachedFieldIndex} is not yet
- * set after loading data from a summary
- */
-export const fakeRevisionWhenNotSet = Number.NaN as SessionSpaceCompressedId;
-
-/**
  * A field that is detached from the main document tree.
  */
 export interface DetachedField {
@@ -49,7 +41,13 @@ export interface DetachedField {
 	 * the contents of the associated subtree (and the very fact of its past existence) can be erased.
 	 *
 	 * @remarks
-	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually
+	 * undefined revisions are tolerated but any roots not associated with a revision must be disposed manually.
+	 * Current usages of undefined are:
+	 * - When loading a {@link DetachedFieldIndex} from a snapshot,
+	 * until {@link DetachedFieldIndex.setRevisionsForLoadedData} is called.
+	 * - When applying a rollback changeset.
+	 * This only occurs within the context of {@link DefaultResubmitMachine} whose repair data is GC-ed when its
+	 * `DetachedField` and `Forest` are GC-ed.
 	 */
-	readonly latestRelevantRevision: RevisionTag | undefined;
+	readonly latestRelevantRevision?: RevisionTag;
 }

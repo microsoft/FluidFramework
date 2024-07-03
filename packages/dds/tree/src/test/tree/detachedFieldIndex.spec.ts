@@ -8,12 +8,7 @@ import { strict as assert } from "assert";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import {
-	DetachedFieldIndex,
-	type ForestRootId,
-	RevisionTagCodec,
-	fakeRevisionWhenNotSet,
-} from "../../core/index.js";
+import { DetachedFieldIndex, type ForestRootId, RevisionTagCodec } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -140,12 +135,7 @@ export function generateTestCases(
 			name: "single range with single node",
 			data: {
 				maxId,
-				data: new Map([
-					[
-						revision,
-						new Map([[0, { root: 1, latestRelevantRevision: fakeRevisionWhenNotSet }]]),
-					],
-				]),
+				data: new Map([[revision, new Map([[0, { root: 1 }]])]]),
 			},
 		},
 		{
@@ -156,9 +146,9 @@ export function generateTestCases(
 					[
 						revision,
 						new Map([
-							[2, { root: 1, latestRelevantRevision: fakeRevisionWhenNotSet }],
-							[0, { root: 2, latestRelevantRevision: fakeRevisionWhenNotSet }],
-							[1, { root: 4, latestRelevantRevision: fakeRevisionWhenNotSet }],
+							[2, { root: 1 }],
+							[0, { root: 2 }],
+							[1, { root: 4 }],
 						]),
 					],
 				]),
@@ -172,11 +162,11 @@ export function generateTestCases(
 					[
 						revision,
 						new Map([
-							[1, { root: 2, latestRelevantRevision: fakeRevisionWhenNotSet }],
-							[3, { root: 4, latestRelevantRevision: fakeRevisionWhenNotSet }],
-							[2, { root: 3, latestRelevantRevision: fakeRevisionWhenNotSet }],
-							[7, { root: 6, latestRelevantRevision: fakeRevisionWhenNotSet }],
-							[6, { root: 5, latestRelevantRevision: fakeRevisionWhenNotSet }],
+							[1, { root: 2 }],
+							[3, { root: 4 }],
+							[2, { root: 3 }],
+							[7, { root: 6 }],
+							[6, { root: 5 }],
 						]),
 					],
 				]),

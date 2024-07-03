@@ -24,13 +24,12 @@ import type { FieldKey } from "../schema-stored/index.js";
 import type * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import type { Format } from "./detachedFieldIndexFormat.js";
-import {
-	fakeRevisionWhenNotSet,
-	type DetachedField,
-	type DetachedFieldSummaryData,
-	type ForestRootId,
-	type Major,
-	type Minor,
+import type {
+	DetachedField,
+	DetachedFieldSummaryData,
+	ForestRootId,
+	Major,
+	Minor,
 } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -273,7 +272,7 @@ export class DetachedFieldIndex {
 					0x7ce /* Detached node ID already exists in index */,
 				);
 				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, {
-					root: root + i,
+					root: brand<ForestRootId>(root + i),
 					latestRelevantRevision: revision,
 				});
 				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
@@ -332,7 +331,7 @@ export class DetachedFieldIndex {
 			rootMap.set(root, { major, minor });
 		});
 
-		this.latestRelevantRevisionToFields.set(fakeRevisionWhenNotSet, rootMap);
+		this.latestRelevantRevisionToFields.set(undefined, rootMap);
 	}
 
 	/**
@@ -354,7 +353,7 @@ export class DetachedFieldIndex {
 		});
 
 		this.detachedNodeToField = newDetachedNodeToField;
-		this.latestRelevantRevisionToFields.delete(fakeRevisionWhenNotSet);
+		this.latestRelevantRevisionToFields.delete(undefined);
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
 		this.isFullyLoaded = true;
 	}
