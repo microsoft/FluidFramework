@@ -37,7 +37,6 @@
 		"@azure/msal-browser": "^2.34.0",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"css-loader": "^6.11.0",
 		"fluid-framework": "workspace:~",
 		"react": "^17.0.1",

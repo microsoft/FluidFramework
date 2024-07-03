@@ -21,7 +21,7 @@ describe("OpCompressor", () => {
 	const createBatch = (length: number, messageSize: number) =>
 		messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(messageSize))));
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
-		content: messages,
+		messages,
 		contentSizeInBytes: messages
 			.map((message) => JSON.stringify(message).length)
 			.reduce((a, b) => a + b),
@@ -48,17 +48,17 @@ describe("OpCompressor", () => {
 			// large batch with small messages
 			createBatch(1000, 100 * 1024),
 		].forEach((batch) => {
-			it(`Batch of ${batch.content.length} ops of total size ${toMB(
+			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
 				const compressedBatch = compressor.compressBatch(batch);
-				assert.strictEqual(compressedBatch.content.length, batch.content.length);
-				assert.strictEqual(compressedBatch.content[0].compression, "lz4");
-				assert.strictEqual(compressedBatch.content[0].metadata?.flag, true);
-				if (compressedBatch.content.length > 1) {
-					assert.strictEqual(compressedBatch.content[1].contents, undefined);
-					assert.strictEqual(compressedBatch.content[1].compression, undefined);
-					assert.strictEqual(compressedBatch.content[1].contents, undefined);
+				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
+				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
+				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
+				if (compressedBatch.messages.length > 1) {
+					assert.strictEqual(compressedBatch.messages[1].contents, undefined);
+					assert.strictEqual(compressedBatch.messages[1].compression, undefined);
+					assert.strictEqual(compressedBatch.messages[1].contents, undefined);
 				}
 			}).timeout(3000);
 		}));
@@ -70,7 +70,7 @@ describe("OpCompressor", () => {
 			// small batch with large messages
 			createBatch(6, 100 * 1024 * 1024),
 		].forEach((batch) => {
-			it(`Not compressing batch of ${batch.content.length} ops of total size ${toMB(
+			it(`Not compressing batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
 				assert.throws(() => compressor.compressBatch(batch));
@@ -78,7 +78,7 @@ describe("OpCompressor", () => {
 					{
 						eventName: "OpCompressor:BatchTooLarge",
 						category: "error",
-						length: batch.content.length,
+						length: batch.messages.length,
 						size: batch.contentSizeInBytes,
 					},
 				]);

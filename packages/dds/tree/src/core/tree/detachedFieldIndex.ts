@@ -90,7 +90,15 @@ export class DetachedFieldIndex {
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
-	private fullyLoaded = true;
+	/**
+	 * The process for loading `DetachedFieldIndex` data from a summary is split into two steps:
+	 * 1. Call {@link loadData}
+	 * 2. Call {@link setRevisionsForLoadedData}
+	 *
+	 * This flag is only set to `false` after calling `loadData` and is set back to `true` after calling `setRevisionsForLoadedData`.
+	 * This helps ensure that `setRevisionsForLoadedData` is only called after `loadData` and only called once.
+	 */
+	private isFullyLoaded = true;
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -116,8 +124,10 @@ export class DetachedFieldIndex {
 			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
-		this.latestRelevantRevisionToFields.forEach((set, key) =>
-			clone.latestRelevantRevisionToFields.set(key, new Map(set)),
+		populateNestedMap(
+			this.latestRelevantRevisionToFields,
+			clone.latestRelevantRevisionToFields,
+			true,
 		);
 		return clone;
 	}
@@ -153,25 +163,55 @@ export class DetachedFieldIndex {
 	}
 
 	public updateMajor(current: Major, updated: Major): void {
-		const innerCurrent = this.detachedNodeToField.get(current);
-		if (innerCurrent !== undefined) {
-			this.detachedNodeToField.delete(current);
-			const innerUpdated = this.detachedNodeToField.get(updated);
-			if (innerUpdated === undefined) {
-				this.detachedNodeToField.set(updated, innerCurrent);
-			}
-
-			for (const [minor, entry] of innerCurrent) {
-				if (innerUpdated !== undefined) {
-					assert(
-						innerUpdated.get(minor) === undefined,
-						0x7a9 /* Collision during index update */,
+		// Update latestRelevantRevision information corresponding to `current`
+		{
+			const inner = this.latestRelevantRevisionToFields.get(current);
+			if (inner !== undefined) {
+				for (const nodeId of inner.values()) {
+					const entry = tryGetFromNestedMap(
+						this.detachedNodeToField,
+						nodeId.major,
+						nodeId.minor,
 					);
-					innerUpdated.set(minor, entry);
+					assert(entry !== undefined, "Inconsistent data: missing detached node entry");
+					setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor, {
+						...entry,
+						latestRelevantRevision: updated,
+					});
 				}
-				this.latestRelevantRevisionToFields
-					.get(entry.latestRelevantRevision)
-					?.set(entry.root, { major: updated, minor });
+				this.latestRelevantRevisionToFields.delete(current);
+				this.latestRelevantRevisionToFields.set(updated, inner);
+			}
+		}
+
+		// Update the major keys corresponding to `current`
+		{
+			const innerCurrent = this.detachedNodeToField.get(current);
+			if (innerCurrent !== undefined) {
+				this.detachedNodeToField.delete(current);
+				const innerUpdated = this.detachedNodeToField.get(updated);
+				if (innerUpdated === undefined) {
+					this.detachedNodeToField.set(updated, innerCurrent);
+				} else {
+					for (const [minor, entry] of innerCurrent) {
+						assert(
+							innerUpdated.get(minor) === undefined,
+							0x7a9 /* Collision during index update */,
+						);
+						innerUpdated.set(minor, entry);
+					}
+				}
+
+				for (const [minor, entry] of innerCurrent) {
+					const entryInLatest = this.latestRelevantRevisionToFields.get(
+						entry.latestRelevantRevision,
+					);
+					assert(
+						entryInLatest !== undefined,
+						"Inconsistent data: missing node entry in latestRelevantRevision",
+					);
+					entryInLatest.set(entry.root, { major: updated, minor });
+				}
 			}
 		}
 	}
@@ -203,35 +243,17 @@ export class DetachedFieldIndex {
 	}
 
 	/**
-	 * Returns all entries last created or used by the given revision.
+	 * Returns the detached root IDs for all the trees that were detached or last modified by the given revision.
 	 */
 	public *getRootsLastTouchedByRevision(revision: RevisionTag): Iterable<ForestRootId> {
 		const roots = this.latestRelevantRevisionToFields.get(revision);
 		if (roots !== undefined) {
-			for (const root of roots.keys()) {
-				yield root;
-			}
+			yield* roots.keys();
 		}
 	}
 
 	/**
-	 * Removes all entries created by the given revision, no matter what their latest
-	 * relevant revision is.
-	 */
-	public deleteRoots(revision: RevisionTag): void {
-		const entries = this.detachedNodeToField.get(revision);
-		if (entries === undefined) {
-			return;
-		}
-
-		for (const [_, { root, latestRelevantRevision }] of entries.entries()) {
-			deleteFromNestedMap(this.latestRelevantRevisionToFields, latestRelevantRevision, root);
-		}
-		this.detachedNodeToField.delete(revision);
-	}
-
-	/**
-	 * Removes all entries last created or used by the given revision.
+	 * Removes the detached roots for all the trees that were detached or last modified by the given revision.
 	 */
 	public deleteRootsLastTouchedByRevision(revision: RevisionTag): void {
 		const entries = this.latestRelevantRevisionToFields.get(revision);
@@ -263,6 +285,11 @@ export class DetachedFieldIndex {
 
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
+	 * @param nodeId - The ID of the detached node.
+	 * @param revision - The revision that last detached the root.
+	 * See {@link DetachedField.latestRelevantRevision} for details.
+	 * @param count - The number of entries to create. These entries will have consecutive minor IDs.
+	 * @returns The atomic ID that the `DetachedFieldIndex` uses to uniquely identify the first root.
 	 */
 	public createEntry(
 		nodeId?: Delta.DetachedNodeId,
@@ -335,7 +362,7 @@ export class DetachedFieldIndex {
 
 		this.detachedNodeToField = new Map();
 		this.latestRelevantRevisionToFields = new Map();
-		this.fullyLoaded = false;
+		this.isFullyLoaded = false;
 		const rootMap = new Map<ForestRootId, Delta.DetachedNodeId>();
 		forEachInNestedMap(detachedFieldIndex.data, (root, major, minor) => {
 			setInNestedMap(this.detachedNodeToField, major, minor, {
@@ -355,7 +382,7 @@ export class DetachedFieldIndex {
 	 */
 	public setRevisionsForLoadedData(latestRevision: RevisionTag): void {
 		assert(
-			!this.fullyLoaded,
+			!this.isFullyLoaded,
 			"revisions should only be set once using this function after loading data from a summary",
 		);
 
@@ -369,6 +396,6 @@ export class DetachedFieldIndex {
 		this.detachedNodeToField = newDetachedNodeToField;
 		this.latestRelevantRevisionToFields.delete(fakeRevisionWhenNotSet);
 		this.latestRelevantRevisionToFields.set(latestRevision, rootMap);
-		this.fullyLoaded = true;
+		this.isFullyLoaded = true;
 	}
 }

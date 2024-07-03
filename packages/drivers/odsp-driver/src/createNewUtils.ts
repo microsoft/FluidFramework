@@ -4,7 +4,7 @@
  */
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ISummaryBlob,
 	ISummaryTree,
@@ -149,6 +149,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
+		assert(!key.includes("/"), "id should not include slashes");
 		const summaryObject = summary.tree[key];
 
 		let value: OdspSummaryTreeValue;
@@ -188,7 +189,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 		}
 
 		const entry: OdspSummaryTreeEntry = {
-			path: encodeURIComponent(key),
+			path: key,
 			type: getGitType(summaryObject),
 			value,
 			unreferenced,

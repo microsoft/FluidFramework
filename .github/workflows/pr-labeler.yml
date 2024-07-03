@@ -2,7 +2,7 @@ name: "Pull Request Labeler"
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches: [main, next, release/*]
+    branches: [main, next, release/**/*]
 
 permissions:
   pull-requests: write
