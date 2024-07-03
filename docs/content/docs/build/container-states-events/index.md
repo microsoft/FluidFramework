@@ -96,7 +96,7 @@ But the new container has a different ID from the deleted one and subsequent cli
 
 #### Handling publication status
 
-Your code can test for the publication status with the [container.AttachState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#attachstate-propertysignature) property which has an [AttachState]({{< packageref "container-definitions" "v2" >}}attachstate-enum) value.
+Your code can test for the publication status with the [container.AttachState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#attachstate-propertysignature) property which has an [AttachState]({{< apiref "container-definitions" "AttachState" "enum" "v2" >}}) value.
 This can be useful if your application will publish the container in some code paths on the creating client, but not others.
 For example, on the creating computer, you don't want to call `container.attach` if it has already been called. In simple cases, you can know at coding time if that has happened, but when the creating client in complex code flows and calls of `container.attach` appear in more than one branch, you may need to test for this possibility. The following is a simple example.
 
