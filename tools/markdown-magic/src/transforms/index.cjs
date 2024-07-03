@@ -13,6 +13,8 @@ const {
 	exampleGettingStartedSectionTransform,
 } = require("./exampleGettingStartedTransform.cjs");
 
+const { generateHelpSection, helpSectionTransform } = require("./helpSectionTransform.cjs");
+
 const { includeTransform } = require("./includeTransform.cjs");
 
 const {
@@ -40,10 +42,12 @@ module.exports = {
 	exampleGettingStartedSectionTransform,
 	generateApiDocsLinkSection,
 	generateExampleGettingStartedSection,
+	generateHelpSection,
 	generateInstallationInstructionsSection,
 	generatePackageImportInstructionsSection,
 	generatePackageScopeNotice,
 	generatePackageScriptsSection,
+	helpSectionTransform,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,

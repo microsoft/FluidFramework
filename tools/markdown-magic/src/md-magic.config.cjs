@@ -18,10 +18,12 @@ const {
 	exampleGettingStartedSectionTransform,
 	generateApiDocsLinkSection,
 	generateExampleGettingStartedSection,
+	generateHelpSection,
 	generateInstallationInstructionsSection,
 	generatePackageImportInstructionsSection,
 	generatePackageScopeNotice,
 	generatePackageScriptsSection,
+	helpSectionTransform,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,
@@ -63,17 +65,6 @@ const generateContributionGuidelinesSection = (includeHeading) => {
 		sectionBody,
 		includeHeading ? "Contribution Guidelines" : undefined,
 	);
-};
-
-/**
- * Generates a simple Markdown heading and contents with a section pointing developers to other sources of documentation,
- * and to our issue tracker.
- *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
- */
-const generateHelpSection = (includeHeading) => {
-	const sectionBody = readTemplate("Help-Template.md");
-	return formattedSectionText(sectionBody, includeHeading ? "Help" : undefined);
 };
 
 /**
@@ -327,21 +318,6 @@ function readmeDependencyGuidelinesSectionTransform(content, options, config) {
 }
 
 /**
- * Generates a README "help" section.
- *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
- */
-function readmeHelpSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
-	return formattedGeneratedContentBody(generateHelpSection(includeHeading));
-}
-
-/**
  * markdown-magic config
  */
 module.exports = {
@@ -477,7 +453,7 @@ module.exports = {
 		README_DEPENDENCY_GUIDELINES_SECTION: readmeDependencyGuidelinesSectionTransform,
 
 		/**
-		 * See {@link readmeHelpSectionTransform}.
+		 * See {@link helpSectionTransform}.
 		 *
 		 * @example
 		 *
@@ -486,7 +462,7 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_HELP_SECTION: readmeHelpSectionTransform,
+		README_HELP_SECTION: helpSectionTransform,
 
 		/**
 		 * See {@link packageScriptsSectionTransform}.

@@ -6,7 +6,11 @@
 const fs = require("fs");
 const path = require("path");
 
-const { embeddedContentNotice, generatedContentNotice, templatesDirectoryPath } = require("./constants.cjs");
+const {
+	embeddedContentNotice,
+	generatedContentNotice,
+	templatesDirectoryPath,
+} = require("./constants.cjs");
 
 /**
  * Reads and returns the contents from the specified template file.
