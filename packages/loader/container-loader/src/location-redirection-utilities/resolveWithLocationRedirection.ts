@@ -35,6 +35,7 @@ export function isLocationRedirectionError(
  * @param urlResolver - resolver used to resolve the url.
  * @param logger - logger to send events.
  * @returns Response from the API call.
+ * @legacy
  * @alpha
  */
 export async function resolveWithLocationRedirectionHandling<T>(

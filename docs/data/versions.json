@@ -8,6 +8,6 @@
 	"apiDocsDirectory": "/docs/api/",
 	"apiVersionOptionName": {
 		"Fluid Framework 1.0": "v1",
-		"Fluid Framework 2.0 (BETA)": "v2"
+		"Fluid Framework 2.0": "v2"
 	}
 }

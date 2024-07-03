@@ -30,12 +30,14 @@ class PendingProposal implements ISequencedProposal {
 
 /**
  * Snapshot format for a QuorumClients
+ * @legacy
  * @alpha
  */
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 /**
  * Snapshot format for a QuorumProposals
+ * @legacy
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -46,6 +48,7 @@ export type QuorumProposalsSnapshot = {
 
 /**
  * Snapshot format for a Quorum
+ * @legacy
  * @alpha
  */
 export interface IQuorumSnapshot {

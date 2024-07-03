@@ -21,7 +21,6 @@ import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	ICreateBlobResponse,
-	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
@@ -32,7 +31,6 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
-	SummaryTreeBuilder,
 	createResponseError,
 	generateHandleContextPath,
 	responseToException,
@@ -47,7 +45,14 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IBlobMetadata } from "./metadata.js";
+import { IBlobMetadata } from "../metadata.js";
+
+import {
+	getStorageIds,
+	summarizeBlobManagerState,
+	toRedirectTable,
+	type IBlobManagerLoadInfo,
+} from "./blobManagerSnapSum.js";
 
 /**
  * This class represents blob (long string)
@@ -85,15 +90,6 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 	public bind(handle: IFluidHandleInternal) {
 		throw new Error("Cannot bind to blob handle");
 	}
-}
-
-/**
- * Information from a snapshot needed to load BlobManager
- * @alpha
- */
-export interface IBlobManagerLoadInfo {
-	ids?: string[];
-	redirectTable?: [string, string][];
 }
 
 // Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
@@ -145,9 +141,9 @@ const stashedPendingBlobOverrides: Pick<
 	uploadTime: undefined,
 } as const;
 
+export const blobManagerBasePath = "_blobs" as const;
+
 export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
-	public static readonly basePath = "_blobs";
-	private static readonly redirectTableBlobName = ".redirectTable";
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -177,10 +173,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly routeContext: IFluidHandleContext;
 	private readonly getStorage: () => IDocumentStorageService;
 	// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
-	// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly blobRequested: (blobPath: string) => void;
 	// Called to check if a blob has been deleted by GC.
-	// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly closeContainer: (error?: ICriticalContainerError) => void;
@@ -201,10 +197,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		 */
 		sendBlobAttachOp: (localId: string, storageId?: string) => void;
 		// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
-		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+		// blobPath's format - `/<basePath>/<blobId>`.
 		readonly blobRequested: (blobPath: string) => void;
 		// Called to check if a blob has been deleted by GC.
-		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
+		// blobPath's format - `/<basePath>/<blobId>`.
 		readonly isBlobDeleted: (blobPath: string) => boolean;
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
@@ -234,7 +230,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			namespace: "BlobManager",
 		});
 
-		this.redirectTable = this.load(snapshot);
+		this.redirectTable = toRedirectTable(snapshot, this.mc.logger, this.runtime.attachState);
 
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs ?? {}).forEach(([localId, entry]) => {
@@ -346,27 +342,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	/**
-	 * Set of actual storage IDs (i.e., IDs that can be requested from storage). This will be empty if the container is
-	 * detached or there are no (non-pending) attachment blobs in the document
-	 */
-	private get storageIds(): Set<string> {
-		const ids = new Set<string | undefined>(this.redirectTable.values());
-
-		// If we are detached, we will not have storage IDs, only undefined
-		const undefinedValueInTable = ids.delete(undefined);
-
-		// For a detached container, entries are inserted into the redirect table with an undefined storage ID.
-		// For an attached container, entries are inserted w/storage ID after the BlobAttach op round-trips.
-		assert(
-			!undefinedValueInTable ||
-				(this.runtime.attachState === AttachState.Detached && ids.size === 0),
-			0x382 /* 'redirectTable' must contain only undefined while detached / defined values while attached */,
-		);
-
-		return ids as Set<string>;
-	}
-
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
 		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
 		// an error, failing the call.
@@ -418,7 +393,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 			: undefined;
 		return new BlobHandle(
-			`${BlobManager.basePath}/${id}`,
+			getGCNodePathFromBlobId(id),
 			this.routeContext,
 			async () => this.getBlob(id),
 			callback,
@@ -568,7 +543,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		if (!entry.opsent) {
 			this.sendBlobAttachOp(localId, response.id);
 		}
-		if (this.storageIds.has(response.id)) {
+		const storageIds = getStorageIds(this.redirectTable, this.runtime.attachState);
+		if (storageIds.has(response.id)) {
 			// The blob is de-duped. Set up a local ID to storage ID mapping and return the blob. Since this is
 			// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 			// happened before and so, the server won't delete it.
@@ -661,74 +637,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	/**
-	 * Reads blobs needed to load BlobManager from storage.
-	 * @param blobsTree - Tree containing IDs of previously attached blobs. We
-	 * look for the IDs in the blob entries of the tree since the both the r11s
-	 * and SPO drivers replace the attachment types returned in snapshot() with blobs.
-	 */
-	public static async load(
-		blobsTree: ISnapshotTree | undefined,
-		tryFetchBlob: (id: string) => Promise<[string, string][]>,
-	): Promise<IBlobManagerLoadInfo> {
-		if (!blobsTree) {
-			return {};
-		}
-		let redirectTable;
-		const tableId = blobsTree.blobs[this.redirectTableBlobName];
-		if (tableId) {
-			redirectTable = await tryFetchBlob(tableId);
-		}
-		const ids = Object.entries(blobsTree.blobs)
-			.filter(([k, _]) => k !== this.redirectTableBlobName)
-			.map(([_, v]) => v);
-		return { ids, redirectTable };
-	}
-
-	/**
-	 * Load a set of previously attached blob IDs and redirect table from a previous snapshot.
-	 */
-	private load(snapshot: IBlobManagerLoadInfo): Map<string, string | undefined> {
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "AttachmentBlobsLoaded",
-			count: snapshot.ids?.length ?? 0,
-			redirectTable: snapshot.redirectTable?.length,
-		});
-		const table = new Map<string, string | undefined>(snapshot.redirectTable);
-		if (snapshot.ids) {
-			const detached = this.runtime.attachState === AttachState.Detached;
-			// If we are detached, we don't have storage IDs yet, so set to undefined
-			// Otherwise, set identity (id -> id) entries
-			snapshot.ids.forEach((entry) => table.set(entry, detached ? undefined : entry));
-		}
-		return table;
-	}
-
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
-		const blobIds =
-			this.storageIds.size > 0
-				? Array.from(this.storageIds)
-				: Array.from(this.redirectTable.keys());
-		const builder = new SummaryTreeBuilder();
-		blobIds.forEach((blobId) => {
-			builder.addAttachment(blobId);
-		});
-
-		// Any non-identity entries in the table need to be saved in the summary
-		if (this.redirectTable.size > blobIds.length) {
-			builder.addBlob(
-				BlobManager.redirectTableBlobName,
-				// filter out identity entries
-				JSON.stringify(
-					Array.from(this.redirectTable.entries()).filter(
-						([localId, storageId]) => localId !== storageId,
-					),
-				),
-			);
-		}
-
-		return builder.getSummaryTree();
+		return summarizeBlobManagerState(this.redirectTable, this.runtime.attachState);
 	}
 
 	/**
@@ -765,7 +675,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * Delete blobs with the given routes from the redirect table.
-	 * The routes are GC nodes paths of format -`/<BlobManager.basePath>/<blobId>`. The blob ids are all local ids.
+	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<blobId>`. The blob ids are all local ids.
 	 * Deleting the blobs involves 2 steps:
 	 * 1. The redirect table entry for the local ids are deleted.
 	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
@@ -838,7 +748,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.mc.logger.sendErrorEvent(
 			{
 				eventName: "GC_Deleted_Blob_Requested",
-				pkg: BlobManager.basePath,
+				pkg: blobManagerBasePath,
 			},
 			error,
 		);
@@ -935,22 +845,28 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 }
 
 /**
- * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`.
+ * For a blobId, returns its path in GC's graph. The node path is of the format `/<blobManagerBasePath>/<blobId>`.
  * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
  * referenced by storing these handles in a referenced DDS.
  */
-function getGCNodePathFromBlobId(blobId: string) {
-	return `/${BlobManager.basePath}/${blobId}`;
-}
+const getGCNodePathFromBlobId = (blobId: string) => `/${blobManagerBasePath}/${blobId}`;
 
 /**
- * For a given GC node path, return the blobId. The node path is of the format `/<BlobManager.basePath>/<blobId>`.
+ * For a given GC node path, return the blobId. The node path is of the format `/<basePath>/<blobId>`.
  */
-function getBlobIdFromGCNodePath(nodePath: string) {
+const getBlobIdFromGCNodePath = (nodePath: string) => {
 	const pathParts = nodePath.split("/");
-	assert(
-		pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-		0x5bd /* Invalid blob node path */,
-	);
+	assert(areBlobPathParts(pathParts), 0x5bd /* Invalid blob node path */);
 	return pathParts[2];
-}
+};
+
+/**
+ * Returns whether a given path is for attachment blobs that are in the format - "/blobManagerBasePath/...".
+ */
+export const isBlobPath = (path: string): path is `/${typeof blobManagerBasePath}/${string}` =>
+	areBlobPathParts(path.split("/"));
+
+export const areBlobPathParts = (
+	pathParts: string[],
+): pathParts is ["", typeof blobManagerBasePath, string] =>
+	pathParts.length === 3 && pathParts[1] === blobManagerBasePath;
