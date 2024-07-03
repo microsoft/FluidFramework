@@ -127,7 +127,7 @@ describe("Outbox", () => {
 	//* Double-check batchIdContext value / coverage
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
-		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number): void => {
+		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
 			batch.forEach(
 				({ contents: content = "", referenceSequenceNumber, metadata: opMetadata }) =>
 					state.pendingOpContents.push({
@@ -136,7 +136,7 @@ describe("Outbox", () => {
 						opMetadata,
 						batchIdContext: {
 							clientId: "CLIENT_ID",
-							batchStartCsn: clientSequenceNumber,
+							batchStartCsn: clientSequenceNumber ?? -1,
 						},
 					}),
 			);
@@ -309,7 +309,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: csn,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
 			})),
 		);
 	});
@@ -344,7 +344,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: i === 2 ? undefined : 1, // Third batch got no CSN as it was not submitted
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: i === 2 ? -1 : 1 }, // Third batch got no CSN as it was not submitted
 			})),
 		);
 	});
@@ -392,7 +392,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: csn,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
 			})),
 		);
 	});
@@ -455,7 +455,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: csn,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
 			})),
 		);
 	});
@@ -516,7 +516,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: csn,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
 			})),
 		);
 	});
@@ -608,7 +608,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: csn,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
 			})),
 		);
 	});
@@ -694,7 +694,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: i + 1 }, // Each message should have been in its own batch. CSN starts at 1.
 			})),
 		);
 
@@ -879,7 +879,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchStartCsn: csn,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
 			})),
 		);
 	});

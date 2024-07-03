@@ -361,7 +361,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
@@ -449,7 +449,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
