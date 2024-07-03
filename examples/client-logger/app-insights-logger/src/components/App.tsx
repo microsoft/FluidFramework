@@ -28,7 +28,7 @@ import {
 	from "./AppSerializer.js";
 
 /**
- * Key in the app's `rootMap` under which the SharedCell object is stored.
+ * Key in the app's `metadata` under which the SharedCell object is stored.
  */
 const sharedCellKey = "shared-cell";
 
@@ -38,6 +38,7 @@ const sharedCellKey = "shared-cell";
 const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
+		metadata: SharedMap,
 	},
 	dynamicObjectTypes: [SharedCounter, SharedMap, SharedString, SharedCell],
 };
@@ -58,10 +59,6 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
 
-	// Set up SharedText for text form
-	const sharedCell = await container.create(SharedCell);
-	rootMap.set(sharedCellKey, sharedCell.handle);
-
 
 	// ------ Collab Form Setup --------
 	const field1String = await container.create(SharedString);
@@ -78,6 +75,14 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 
 	const counter1 = await container.create(SharedCounter);
 	rootMap.set("counterField1", counter1.handle);
+
+	const metadataMap = container.initialObjects.rootMap as ISharedMap;
+	if (metadataMap === undefined) {
+		throw new Error('"metadataMap" not found in initialObjects tree.');
+	}
+	// Set up SharedText for text form
+	const sharedCell = await container.create(SharedCell);
+	metadataMap.set(sharedCellKey, sharedCell.handle);
 }
 
 /**
@@ -274,8 +279,8 @@ function CollabForm(props: CollabFormProps) {
 
 		if (serializationSegments.length === 3 && appSerializer === undefined) {
 			const initializeAppSerializer = async () => {
-				const rootMap = props.containerInfo.container.initialObjects.rootMap as ISharedMap;
-				const sharedCellHandle = rootMap.get(sharedCellKey) as IFluidHandle<ISharedCell>;
+				const metadata = props.containerInfo.container.initialObjects.metadata as ISharedMap;
+				const sharedCellHandle = metadata.get(sharedCellKey) as IFluidHandle<ISharedCell>;
 				const sharedCell = await sharedCellHandle.get();
 				setAppSerializer(new AppSerializer(serializationSegments, 5000, sharedCell));
 
