@@ -37,7 +37,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const relativeUrl = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const documentIdFromRequest = relativeUrl.split("/")[0]!;
 
