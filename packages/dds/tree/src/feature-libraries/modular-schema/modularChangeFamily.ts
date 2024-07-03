@@ -220,42 +220,82 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
+		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
+			this.composeChanges(change1.change, change2.change, revInfos, idState);
+
+		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers([
+			change1,
+			change2,
+		]);
+
+		return makeModularChangeset(
+			this.pruneFieldMap(fieldChanges, nodeChanges),
+			nodeChanges,
+			nodeToParent,
+			nodeAliases,
+			crossFieldKeys,
+			idState.maxId,
+			revInfos,
+			undefined,
+			allBuilds,
+			allDestroys,
+			allRefreshers,
+		);
+	}
+
+	private composeChanges(
+		change1: ModularChangeset,
+		change2: ModularChangeset,
+		revInfos: RevisionInfo[],
+		idState: IdAllocationState,
+	): ModularChangesetContent {
+		if (hasConflicts(change1) && hasConflicts(change2)) {
+			return {
+				fieldChanges: new Map(),
+				nodeChanges: new Map(),
+				nodeToParent: new Map(),
+				nodeAliases: new Map(),
+				crossFieldKeys: newBTree(),
+			};
+		} else if (hasConflicts(change1)) {
+			return change2;
+		} else if (hasConflicts(change2)) {
+			return change1;
+		}
+
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 
-		const crossFieldTable = newComposeTable(change1.change, change2.change);
+		const crossFieldTable = newComposeTable(change1, change2);
 
 		const composedNodeChanges: ChangeAtomIdMap<NodeChangeset> = mergeNestedMaps(
-			change1.change.nodeChanges,
-			change2.change.nodeChanges,
+			change1.nodeChanges,
+			change2.nodeChanges,
 		);
 
-		const composedNodeToParent = mergeNestedMaps(
-			change1.change.nodeToParent,
-			change2.change.nodeToParent,
-		);
+		const composedNodeToParent = mergeNestedMaps(change1.nodeToParent, change2.nodeToParent);
 
 		const composedFields = this.composeFieldMaps(
-			getActiveFieldChanges(change1.change),
-			getActiveFieldChanges(change2.change),
+			change1.fieldChanges,
+			change2.fieldChanges,
 			genId,
 			crossFieldTable,
 			revisionMetadata,
 		);
 
-		const nodeAliases: ChangeAtomIdMap<NodeId> = mergeNestedMaps(
-			change1.change.nodeAliases,
-			change2.change.nodeAliases,
+		const composedNodeAliases: ChangeAtomIdMap<NodeId> = mergeNestedMaps(
+			change1.nodeAliases,
+			change2.nodeAliases,
 		);
 
 		this.composeDiscoveredFields(
-			change1.change,
-			change2.change,
+			change1,
+			change2,
 			crossFieldTable,
 			composedFields,
 			composedNodeChanges,
 			composedNodeToParent,
-			nodeAliases,
+			composedNodeAliases,
 			genId,
 			revisionMetadata,
 		);
@@ -265,8 +305,8 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
 				this.composeInvalidatedField(
-					change1.change,
-					change2.change,
+					change1,
+					change2,
 					composedNodeChanges,
 					fieldChange,
 					crossFieldTable,
@@ -276,43 +316,29 @@ export class ModularChangeFamily
 
 				// Process any newly discovered fields.
 				this.composeDiscoveredFields(
-					change1.change,
-					change2.change,
+					change1,
+					change2,
 					crossFieldTable,
 					composedFields,
 					composedNodeChanges,
 					composedNodeToParent,
-					nodeAliases,
+					composedNodeAliases,
 					genId,
 					revisionMetadata,
 				);
 			}
 		}
 
-		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers([
-			change1,
-			change2,
-		]);
-
 		// XXX
-		const composedCrossFieldKeys = mergeBTrees(
-			change1.change.crossFieldKeys,
-			change2.change.crossFieldKeys,
-		);
+		const composedCrossFieldKeys = mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys);
 
-		return makeModularChangeset(
-			this.pruneFieldMap(composedFields, composedNodeChanges),
-			composedNodeChanges,
-			composedNodeToParent,
-			nodeAliases,
-			composedCrossFieldKeys,
-			idState.maxId,
-			revInfos,
-			undefined,
-			allBuilds,
-			allDestroys,
-			allRefreshers,
-		);
+		return {
+			fieldChanges: composedFields,
+			nodeChanges: composedNodeChanges,
+			nodeToParent: composedNodeToParent,
+			nodeAliases: composedNodeAliases,
+			crossFieldKeys: composedCrossFieldKeys,
+		};
 	}
 
 	private composeInvalidatedField(
@@ -2858,10 +2884,8 @@ function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdMap<NodeId>): 
 	return dealiased !== undefined ? normalizeNodeId(dealiased, nodeAliases) : nodeId;
 }
 
-function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {
-	return (changes.constraintViolationCount ?? 0) === 0
-		? changes.fieldChanges
-		: new Map<FieldKey, FieldChange>();
+function hasConflicts(change: ModularChangeset): boolean {
+	return (change.constraintViolationCount ?? 0) > 0;
 }
 
 export function newCrossFieldKeyTable(): CrossFieldKeyTable {
@@ -2888,4 +2912,12 @@ function compareTuples(arrayA: unknown[], arrayB: unknown[]): number {
 	}
 
 	return 0;
+}
+
+interface ModularChangesetContent {
+	fieldChanges: FieldChangeMap;
+	nodeChanges: ChangeAtomIdMap<NodeChangeset>;
+	nodeToParent: ChangeAtomIdMap<FieldId>;
+	nodeAliases: ChangeAtomIdMap<NodeId>;
+	crossFieldKeys: CrossFieldKeyTable;
 }
