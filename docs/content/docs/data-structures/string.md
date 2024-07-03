@@ -79,6 +79,8 @@ efficient spatial querying of the nearest Marker to a given position. -->
     -   [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/example-utils/src/reactInputs/CollaborativeTextArea.tsx)
     -   [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/example-utils/src/reactInputs/CollaborativeInput.tsx)
 
+<!-- This line ends the content that is copied to the string.md README -->
+
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
