@@ -44,41 +44,49 @@ const supportDocsLinkSpan = new SpanNode([
 function createImportNotice(apiItem) {
 	const packageName = apiItem.getAssociatedPackage().displayName;
 
-	const isLegacy = apiItem.tsdocComment?.customBlocks?.includes("@legacy");
-	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
-
-	let importSubpath, alertTitle, alertKind;
-	if (isLegacy) {
-		importSubpath = "legacy";
-		alertTitle =
-			"This API is provided for existing users, but is not recommended for new users.";
-		alertKind = "info";
-	} else if (releaseTag === "alpha") {
-		importSubpath = "alpha";
-		alertTitle = "This API is provided as an alpha preview and may change without notice.";
-		alertKind = "warning";
-	} else if (releaseTag === "beta") {
-		importSubpath = "beta";
-		alertTitle = "This API is provided as an beta preview and may change without notice.";
-		alertKind = "warning";
-	} else {
-		// If the API is non-legacy, and not alpha/beta, no notice is needed.
-		return undefined;
+	function createImportAlert(importSubpath, alertTitle, alertKind) {
+		return new AlertNode(
+			[
+				new SpanNode([
+					new PlainTextNode("To use, import via "),
+					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
+					new PlainTextNode("."),
+				]),
+				LineBreakNode.Singleton,
+				supportDocsLinkSpan,
+			],
+			alertKind,
+			alertTitle,
+		);
 	}
 
-	return new AlertNode(
-		[
-			new SpanNode([
-				new PlainTextNode("To use, import via "),
-				CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
-				new PlainTextNode("."),
-			]),
-			LineBreakNode.Singleton,
-			supportDocsLinkSpan,
-		],
-		alertKind,
-		alertTitle,
-	);
+	if (apiItem.tsdocComment?.customBlocks?.includes("@legacy")) {
+		return createImportAlert(
+			"legacy",
+			"This API is provided for existing users, but is not recommended for new users.",
+			"info",
+		);
+	}
+
+	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+
+	if (releaseTag === ReleaseTag.Alpha) {
+		return createImportAlert(
+			"alpha",
+			"This API is provided as an alpha preview and may change without notice.",
+			"warning",
+		);
+	}
+
+	if (releaseTag === ReleaseTag.Beta) {
+		return createImportAlert(
+			"beta",
+			"This API is provided as a beta preview and may change without notice.",
+			"warning",
+		);
+	}
+
+	return undefined;
 }
 
 /**
