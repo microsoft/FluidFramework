@@ -814,8 +814,24 @@ export const handlers: Handler[] = [
 				ret.push(`repository field missing`);
 			} else if (typeof json.repository === "string") {
 				ret.push(`repository should be an object, not a string`);
-			} else if (json.repository?.url !== repository) {
-				ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+			} else {
+				if (json.repository?.url !== repository) {
+					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
+				}
+
+				// file is already relative to the repo root, so we can use it as-is.
+				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+
+				// The directory field should be omitted from the root package, so consider this a policy failure.
+				if (relativePkgDir === ".") {
+					ret.push(
+						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
+					);
+				} else if (json.repository?.directory !== relativePkgDir) {
+					ret.push(
+						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
+					);
+				}
 			}
 
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -836,18 +852,25 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string, root: string): { resolved: boolean } => {
+		resolver: (file: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
 
-				if (json.repository === undefined || typeof json.repository === "string") {
-					json.repository = {
-						type: "git",
-						url: repository,
-						directory: path.posix.relative(root, path.dirname(file)),
-					};
-				}
+				// file is already relative to the repo root, so we can use it as-is.
+				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				json.repository =
+					// The directory field should be omitted from the root package.
+					relativePkgDir === "."
+						? {
+								type: "git",
+								url: repository,
+							}
+						: {
+								type: "git",
+								url: repository,
+								directory: relativePkgDir,
+							};
 
 				json.homepage = homepage;
 			});

@@ -26,6 +26,22 @@ describe("semver", () => {
 			assert.equal(detectBumpType("0.0.1", "0.0.2"), "patch");
 		});
 
+		it("RC patch", () => {
+			assert.equal(detectBumpType("2.0.0-rc.5.0.2", "2.0.0-rc.5.0.3"), "patch");
+		});
+
+		it("internal version scheme patch", () => {
+			assert.equal(detectBumpType("2.0.0-internal.4.0.7", "2.0.0-internal.4.0.8"), "patch");
+		});
+
+		it("internal -> RC is major", () => {
+			assert.equal(detectBumpType("2.0.0-internal.1.0.7", "2.0.0-rc.2.0.8"), "major");
+		});
+
+		it("RC -> internal throws", () => {
+			assert.throws(() => detectBumpType("2.0.0-rc.4.0.7", "2.0.0-internal.5.0.0"));
+		});
+
 		it("premajor", () => {
 			assert.equal(detectBumpType("0.0.1-foo", "1.0.0"), "major");
 		});
