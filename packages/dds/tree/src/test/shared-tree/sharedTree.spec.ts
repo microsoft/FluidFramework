@@ -1023,7 +1023,16 @@ describe("SharedTree", () => {
 			const root1 = tree1.flexTree;
 			const root2 = tree2.flexTree;
 
+			// get an anchor on the peer to the node we're removing
+			const cursor = tree1.checkout.forest.allocateCursor();
+			moveToDetachedField(tree2.checkout.forest, cursor);
+			cursor.firstNode();
+			assert.equal(cursor.value, "A");
+			const anchor = cursor.buildAnchor();
+			cursor.free();
+
 			// remove in first tree
+			// todo: remove usages of removeAt
 			root1.removeAt(0);
 
 			provider.processMessages();
@@ -1047,10 +1056,10 @@ describe("SharedTree", () => {
 			// ensure the remove is out of the collab window
 			assert(removeSequenceNumber < provider.minimumSequenceNumber);
 			// check that the repair data on the peer is destroyed
-			const repairCursor2 = tree2.checkout.forest.allocateCursor();
-			moveToDetachedField(tree2.checkout.forest, repairCursor2, brand("repair-4"));
-			assert.equal(repairCursor2.firstNode(), false);
-			repairCursor2.free();
+			const repairCursor1 = tree2.checkout.forest.allocateCursor();
+			const result1 = tree2.checkout.forest.tryMoveCursorToNode(anchor, repairCursor1);
+			assert.equal(result1, TreeNavigationResult.NotFound);
+			repairCursor1.free();
 			undoStack[0]?.revert();
 
 			provider.processMessages();
