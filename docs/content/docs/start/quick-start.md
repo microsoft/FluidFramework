@@ -14,7 +14,7 @@ localhost.
 
 {{< callout note >}}
 
-The demo app uses Fluid Framework 2.
+The demo app uses Fluid Framework 2.X.
 
 {{< /callout >}}
 
