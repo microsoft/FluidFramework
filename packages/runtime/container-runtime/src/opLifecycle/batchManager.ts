@@ -56,6 +56,10 @@ export class BatchManager {
 			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
+	/**
+	 * The last-processed CSN when this batch started.
+	 * This is used to ensure that while the batch is open, no incoming ops are processed.
+	 */
 	private clientSequenceNumber: number | undefined;
 
 	constructor(public readonly options: IBatchManagerOptions) {}
@@ -95,7 +99,7 @@ export class BatchManager {
 
 	public popBatch(): IBatch {
 		const batch: IBatch = {
-			content: this.pendingBatch,
+			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
@@ -130,13 +134,13 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch): IBatch => {
-	if (batch.content.length > 1) {
-		batch.content[0].metadata = {
-			...batch.content[0].metadata,
+	if (batch.messages.length > 1) {
+		batch.messages[0].metadata = {
+			...batch.messages[0].metadata,
 			batch: true,
 		};
-		batch.content[batch.content.length - 1].metadata = {
-			...batch.content[batch.content.length - 1].metadata,
+		batch.messages[batch.messages.length - 1].metadata = {
+			...batch.messages[batch.messages.length - 1].metadata,
 			batch: false,
 		};
 	}
@@ -153,7 +157,7 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
  * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
  */
 export const estimateSocketSize = (batch: IBatch): number => {
-	return batch.contentSizeInBytes + opOverhead * batch.content.length;
+	return batch.contentSizeInBytes + opOverhead * batch.messages.length;
 };
 
 export const sequenceNumbersMatch = (

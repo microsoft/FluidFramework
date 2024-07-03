@@ -14,6 +14,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ISegment } from "./mergeTreeNodes.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface SequenceOffsets {
@@ -35,6 +36,7 @@ export interface SequenceOffsets {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface SerializedAttributionCollection extends SequenceOffsets {
@@ -44,6 +46,7 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IAttributionCollectionSpec<T> {
@@ -55,6 +58,7 @@ export interface IAttributionCollectionSpec<T> {
 }
 
 /**
+ * @legacy
  * @alpha
  * @sealed
  */
@@ -77,6 +81,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IAttributionCollection<T> {

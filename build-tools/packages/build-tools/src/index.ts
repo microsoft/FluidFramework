@@ -35,7 +35,12 @@ export {
 export { getApiExtractorConfigFilePath, getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";
 
-export { TypeOnly, MinimalType, FullType } from "./typeValidator/compatibility";
+export {
+	TypeOnly,
+	MinimalType,
+	FullType,
+	requireAssignableTo,
+} from "./typeValidator/compatibility";
 export { type TestCaseTypeData, buildTestCase } from "./typeValidator/testGeneration";
 export { type TypeData, getFullTypeName } from "./typeValidator/typeData";
 export { getTypeTestPreviousPackageDetails } from "./typeValidator/validatorUtils";
