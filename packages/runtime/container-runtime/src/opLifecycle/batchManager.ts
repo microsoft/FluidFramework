@@ -29,10 +29,10 @@ export interface BatchSequenceNumbers {
 	clientSequenceNumber?: number;
 }
 
-//* TODO: Comment
+/** Type alias for the batchId stored in batch metadata */
 export type BatchId = string;
 
-//* TODO: Comment
+/** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
 export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
 	return JSON.stringify([originalClientId, batchStartCsn]);
 }

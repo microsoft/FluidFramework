@@ -261,7 +261,7 @@ export class Outbox {
 	private flushInternal(
 		batchManager: BatchManager,
 		disableGroupedBatching: boolean = false,
-		batchId?: BatchId, //* TODO: Rethink plumbing here. Params obj, or prop on BatchManager instead?
+		batchId?: BatchId,
 	) {
 		if (batchManager.empty) {
 			return;

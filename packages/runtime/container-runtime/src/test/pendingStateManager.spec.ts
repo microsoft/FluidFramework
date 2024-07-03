@@ -551,7 +551,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -559,7 +559,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -567,7 +567,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -575,7 +575,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 		];
 

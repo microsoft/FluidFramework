@@ -135,7 +135,7 @@ describe("Outbox", () => {
 						referenceSequenceNumber,
 						opMetadata,
 						batchIdContext: {
-							originalClientId: "CLIENT_ID",
+							clientId: "CLIENT_ID",
 							batchStartCsn: clientSequenceNumber,
 						},
 					}),

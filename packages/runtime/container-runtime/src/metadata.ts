@@ -23,8 +23,10 @@ export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
  * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
  */
 export interface IBatchMetadata {
+	/** Set on first/last messages of a multi-message batch, to true/false respectively */
 	batch?: boolean;
-	batchId?: BatchId; //* TODO: Consider modeling the fact that batch: false can't have batchId
+	/** Maybe set on first message of a batch, to the batchId generated when resubmitting (the first time) */
+	batchId?: BatchId;
 }
 
 /**

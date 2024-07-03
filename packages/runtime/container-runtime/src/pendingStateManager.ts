@@ -14,6 +14,7 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
+import { v4 as uuid } from "uuid";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
@@ -31,13 +32,22 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	//* TODO: This will be missing when loading an older stash. Maybe just make up a value in that case? We don't need to support it thorougly, just avoid a crash.
 	/** Info needed to compute the batchId on reconnect */
 	batchIdContext: {
-		originalClientId: string;
+		/** The Batch's original clientId, from when it was first flushed to be submitted */
+		clientId: string;
+		/** The Batch's original clientSequenceNumber, from when it was first flushed to be submitted */
 		batchStartCsn: number;
 	};
 }
+
+type Patch<T, U> = U & Omit<T, keyof U>;
+
+/** First version of the type */
+type IPendingMessageV0 = Patch<IPendingMessage, { batchIdContext?: undefined }>;
+
+/** Union of all supported schemas for when applying stashed ops */
+type IPendingMessageFromStash = IPendingMessageV0 | IPendingMessage;
 
 export interface IPendingLocalState {
 	/**
@@ -99,9 +109,10 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
+	/** Messages that will need to be resubmitted if not ack'd before the next reconnection */
 	private readonly pendingMessages = new Deque<IPendingMessage>();
-	// This queue represents already acked messages.
-	private readonly initialMessages = new Deque<IPendingMessage>();
+	/** Messages stashed from a previous container that is being rehydrated */
+	private readonly initialMessages = new Deque<IPendingMessageFromStash>();
 
 	/**
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
@@ -203,14 +214,12 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
 		// If we're connected this is the client of the current connection,
-		// otherwise it's the clientId that disconnected
+		// otherwise it's the clientId that just disconnected
 		const clientId = this.stateHandler.clientId();
 
 		//* This may get hit by the "applies stashed ops with no saved ops" test in stashedOps.spec.ts
 		assert(clientId !== undefined, "Shouldn't see ops before the first connection");
 
-		//* Should we just put clientId on the first message in the batch? I think that's all we need.
-		//* I'm even wondering if we can just use the clientId at the time of replay...?
 		for (const message of batch) {
 			const {
 				contents: content = "",
@@ -224,10 +233,10 @@ export class PendingStateManager implements IDisposable {
 				content,
 				localOpMetadata,
 				opMetadata,
-				// We set batchIdContext even if batchId is already set, so we have batchStartCsn on every message (don't need clientId)
+				// Note: We only need this on the first message.
 				batchIdContext: {
-					originalClientId: clientId,
-					batchStartCsn: clientSequenceNumber ?? -1,
+					clientId,
+					batchStartCsn: clientSequenceNumber ?? -1, // -1 means not ever submitted yet (e.g. disconnected right before flush fired)
 				},
 			};
 			this.pendingMessages.push(pendingMessage);
@@ -263,6 +272,7 @@ export class PendingStateManager implements IDisposable {
 				} else {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
+					patchBatchIdContext(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 				}
 			} catch (error) {
@@ -282,32 +292,20 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage,
 		batchStartCsn: number,
 	): unknown {
-		// Pre-processing part - This may be the start of a batch.
-		this.maybeProcessBatchBegin(message);
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
+
+		// This may be the start of a batch.
+		this.maybeProcessBatchBegin(message, batchStartCsn, pendingMessage);
+
 		pendingMessage.sequenceNumber = message.sequenceNumber;
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
-
-		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
-			this.logger?.sendErrorEvent({
-				eventName: "BatchClientSequenceNumberMismatch",
-				details: {
-					processingBatch: !!this.pendingBatchBeginMessage,
-					pendingBatchCsn: pendingMessage.batchIdContext.batchStartCsn,
-					batchStartCsn,
-					messageBatchMetadata: (message.metadata as any)?.batch,
-					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
-				},
-				messageDetails: extractSafePropertiesFromMessage(message),
-			});
-		}
 
 		const messageContent = buildPendingMessageContent(message);
 
@@ -335,8 +333,31 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * This message could be the first message in batch. If so, set batch state marking the beginning of a batch.
 	 * @param message - The message that is being processed.
+	 * @param pendingMessage - The corresponding pendingMessage.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
 	 */
-	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
+	private maybeProcessBatchBegin(
+		message: ISequencedDocumentMessage,
+		batchStartCsn: number,
+		pendingMessage: IPendingMessage,
+	) {
+		if (!this.isProcessingBatch) {
+			// Expecting the start of a batch (maybe single-message).
+			if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
+				this.logger?.sendErrorEvent({
+					eventName: "BatchClientSequenceNumberMismatch",
+					details: {
+						processingBatch: !!this.pendingBatchBeginMessage,
+						pendingBatchCsn: pendingMessage.batchIdContext.batchStartCsn,
+						batchStartCsn,
+						messageBatchMetadata: (message.metadata as any)?.batch,
+						pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
+					},
+					messageDetails: extractSafePropertiesFromMessage(message),
+				});
+			}
+		}
+
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
 		if ((message.metadata as IBatchMetadata | undefined)?.batch) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
@@ -448,13 +469,13 @@ export class PendingStateManager implements IDisposable {
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
-			// The next message starts a batch (possibley single-message), and we'll need its batchId.
+			// The next message starts a batch (possibly single-message), and we'll need its batchId.
 			// We'll find batchId on this message if it was previously generated.
 			// Otherwise, generate it now - this is the first time resubmitting this batch.
 			const batchId =
 				asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
 				generateBatchId(
-					pendingMessage.batchIdContext.originalClientId,
+					pendingMessage.batchIdContext.clientId,
 					pendingMessage.batchIdContext.batchStartCsn,
 				);
 
@@ -525,5 +546,16 @@ export class PendingStateManager implements IDisposable {
 				clientId: this.stateHandler.clientId(),
 			});
 		}
+	}
+}
+
+/** For back-compat if trying to apply stashed ops that pre-date batchIdContext */
+function patchBatchIdContext(
+	message: IPendingMessageFromStash,
+): asserts message is IPendingMessage {
+	const batchIdContext: IPendingMessageFromStash["batchIdContext"] = message.batchIdContext;
+	if (batchIdContext === undefined) {
+		// Using uuid guarantees uniqueness, retaining existing
+		message.batchIdContext = { clientId: uuid(), batchStartCsn: -1 };
 	}
 }
