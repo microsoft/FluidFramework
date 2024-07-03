@@ -5,6 +5,7 @@
 
 import { type IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import { testIdCompressor } from "../utils.js";
 
 import {
 	SchemaFactory,
@@ -27,7 +28,10 @@ class EmptyRootNodeSchema extends builder.object("empty-root-item", {}) {}
 
 function createLocalSharedTree(id: string): TreeView<typeof RootNodeSchema> {
 	const sharedTree = SharedTree.create(
-		new MockFluidDataStoreRuntime({ registry: [SharedTree.getFactory()] }),
+		new MockFluidDataStoreRuntime({
+			registry: [SharedTree.getFactory()],
+			idCompressor: testIdCompressor,
+		}),
 		id,
 	);
 
