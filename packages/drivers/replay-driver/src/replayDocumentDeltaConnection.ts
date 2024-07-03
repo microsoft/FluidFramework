@@ -129,7 +129,7 @@ export class ReplayControllerStatic extends ReplayController {
 			const replayNextOps = () => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
-				// Why are we non null asserting here
+				// TODO Why are we non null asserting here
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const currentOp = fetchedOps[current]!;
 				const playbackOps = [currentOp];
@@ -142,7 +142,7 @@ export class ReplayControllerStatic extends ReplayController {
 						// Emit more ops that is in the ReplayResolution window
 
 						while (current < fetchedOps.length) {
-							// Why are we non null asserting here
+							// TODO Why are we non null asserting here
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							const op = fetchedOps[current]!;
 							if (op.timestamp === undefined) {
@@ -339,7 +339,7 @@ export class ReplayDocumentDeltaConnection
 
 				const messages = result.value;
 				currentOp += messages.length;
-				// Why are we non null asserting here
+				// TODO Why are we non null asserting here
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				done = controller.isDoneFetch(currentOp, messages[messages.length - 1]!.timestamp);
 			} while (!done);
