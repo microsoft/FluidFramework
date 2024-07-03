@@ -8,6 +8,8 @@ const {
 	generateApiDocsLinkSection,
 } = require("./apiDocsLinkSectionTransform.cjs");
 
+const {generateExampleGettingStartedSection, exampleGettingStartedSectionTransform} = require("./exampleGettingStartedTransform.cjs");
+
 const {includeTransform} = require("./includeTransform.cjs");
 
 const {
@@ -27,7 +29,9 @@ const {
 
 module.exports = {
 	apiDocsLinkSectionTransform,
+	exampleGettingStartedSectionTransform,
 	generateApiDocsLinkSection,
+	generateExampleGettingStartedSection,
 	generateInstallationInstructionsSection,
 	generatePackageImportInstructionsSection,
 	generatePackageScriptsSection,
