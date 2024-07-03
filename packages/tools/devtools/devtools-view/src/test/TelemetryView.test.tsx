@@ -29,7 +29,7 @@ describe("TelemetryView Accessibility Check", () => {
 	const mockMessageRelay = new MockMessageRelay(() => {
 		return {
 			type: DevtoolsFeatures.MessageType,
-			source: "MenuAccessibilityTest",
+			source: "TelemetryViewAccessibilityTest",
 			data: {
 				features: supportedFeatures,
 				devtoolsVersion: "1.0.0",
@@ -65,7 +65,7 @@ describe("TelemetryView Accessibility Check", () => {
 
 		mockMessageRelay.emit("message", {
 			type: "TELEMETRY_EVENT",
-			source: "fluid-client-devtools",
+			source: "TelemetryViewAccessibilityTest",
 			data: {
 				event: {
 					category: "performance",
