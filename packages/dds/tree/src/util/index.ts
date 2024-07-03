@@ -24,6 +24,7 @@ export {
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
 	type NestedMap,
+	type ReadonlyNestedMap,
 	SizedNestedMap,
 	populateNestedMap,
 	setInNestedMap,

@@ -110,8 +110,8 @@ export {
 	emptyDelta,
 } from "./deltaUtil.js";
 
+export { DetachedFieldIndex } from "./detachedFieldIndex.js";
 export {
-	DetachedFieldIndex,
 	type ForestRootId,
 	fakeRevisionWhenNotSet,
-} from "./detachedFieldIndex.js";
+} from "./detachedFieldIndexTypes.js";
