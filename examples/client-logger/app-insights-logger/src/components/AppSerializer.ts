@@ -17,6 +17,7 @@ export type Dependency<T> = {
 export class MultiDepTracker<V> {
 	private prevValues: unknown[];
 	public effectResult: V | undefined;
+	public effectResultIteration: number;
 
 	constructor(
 		dependencies: Dependency<any>[],
@@ -26,6 +27,7 @@ export class MultiDepTracker<V> {
 		this.dependencies = dependencies;
 		// initialize effect results
 		this.effectResult = this.effect();
+		this.effectResultIteration = 0;
 	}
 
 	public dependencies: Dependency<any>[];
@@ -56,6 +58,10 @@ export class MultiDepTracker<V> {
 		});
 
 		if (shouldTriggerEffect) {
+			const newEffect = this.effect();
+			if (this.effectResult != newEffect) {
+				this.effectResultIteration += 1;
+			}
 			this.effectResult = this.effect();
 		}
 	}
@@ -64,23 +70,54 @@ export class MultiDepTracker<V> {
 export class AppSerializer {
 	private readonly lastSerialization: string | undefined;
 	private readonly intervalId: number | undefined;
+	private readonly segmentIterationCounts: number[];
+
 	constructor(
 		private readonly segments: MultiDepTracker<string>[],
 		private readonly intervalMs: number,
 		private readonly destination: ISharedCell,
 	) {
+		this.segmentIterationCounts = [];
+		for (let i = 0; i < segments.length; i++) {
+			this.segmentIterationCounts[i] = segments[i].effectResultIteration;
+		}
+
 		this.intervalId = setInterval(() => {
-			let serialization = "";
-			this.segments.forEach((segment) => {
-				if (segment.effectResult) {
+			// If atleast one segment has changed, we should resave the serialized state.
+			if (this.hasASegmentChanged()) {
+				let serialization = "";
+
+				this.segments.forEach((segment) => {
 					serialization += segment.effectResult;
-				}
-			});
-			console.log("Saving serialized app to shared cell: \n", serialization);
-			if (this.lastSerialization !== serialization)
-				this.destination.set(`APPSERAILIZERFILETYPEHEADER::::${serialization}`);
+				});
+
+				console.log("Saving serialized app to shared cell: \n", serialization);
+				if (this.lastSerialization !== serialization)
+					this.destination.set(`APPSERAILIZERFILETYPEHEADER::::${serialization}`);
+			} else {
+				console.log("Skipping saving app serialization because no changes were detected");
+			}
 		}, this.intervalMs);
+
 		console.log("new AppSerilaizer instance created with intervalId id", this.intervalId);
+	}
+
+	/**
+	 * By keeping track of the last known iteration count on each segment, we can
+	 * loop over each segment and both update the last know iteraction count and determine if
+	 * atleast one segment has a new change.
+	 */
+	hasASegmentChanged(): boolean {
+		let hasASegmentChanged = false;
+		for (let i = 0; i < this.segments.length; i++) {
+			const segment = this.segments[i];
+			const lastSegmentIterationCount = this.segmentIterationCounts[i];
+			if (lastSegmentIterationCount < segment.effectResultIteration && segment.effectResult) {
+				hasASegmentChanged = true;
+				this.segmentIterationCounts[i] = segment.effectResultIteration;
+			}
+		}
+		return hasASegmentChanged;
 	}
 
 	stop() {
