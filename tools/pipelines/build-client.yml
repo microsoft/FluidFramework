@@ -108,6 +108,8 @@ pr:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - fluidBuild.config.cjs
+    # markdown-magic is part of the client release group
+    - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-policy-check.yml
