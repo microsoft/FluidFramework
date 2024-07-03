@@ -9,7 +9,6 @@ import { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	SharedCell,
 	type ISharedCell,
-	// type ISharedCell
 } from "@fluidframework/cell/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
@@ -21,25 +20,12 @@ import {
 	createFluidContainer,
 	loadExistingFluidContainer,
 } from "./ClientUtilities.js";
-// import { useAppSerializer } from "./useAppSerializer.js";
-// import { CounterTracker } from "./AppSerializerV2.js";
 import {
 	AppSerializer,
-	// APPSDepTrackerV1,
 	MultiDepTracker,
 	type Dependency
 }
-	from "./ConditionalStringProducer.js";
-
-/**
- * Key in the app's `rootMap` under which the SharedString object is stored.
- */
-const sharedTextKey = "shared-text";
-
-/**
- * Key in the app's `rootMap` under which the SharedCounter object is stored.
- */
-const sharedCounterKey = "shared-counter";
+	from "./AppSerializer.js";
 
 /**
  * Key in the app's `rootMap` under which the SharedCell object is stored.
@@ -73,17 +59,6 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	}
 
 	// Set up SharedText for text form
-	const sharedText = await container.create(SharedString);
-	sharedText.insertText(0, "Enter text here.");
-	rootMap.set(sharedTextKey, sharedText.handle);
-
-
-
-	// Set up SharedCounter for counter widget
-	const sharedCounter = await container.create(SharedCounter);
-	rootMap.set(sharedCounterKey, sharedCounter.handle);
-
-	// Set up SharedText for text form
 	const sharedCell = await container.create(SharedCell);
 	rootMap.set(sharedCellKey, sharedCell.handle);
 
@@ -99,7 +74,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 
 	const field3String = await container.create(SharedString);
 	field3String.insertText(0, "");
-	rootMap.set('field3String', sharedText.handle);
+	rootMap.set('field3String', field3String.handle);
 
 	const counter1 = await container.create(SharedCounter);
 	rootMap.set("counterField1", counter1.handle);
@@ -167,16 +142,6 @@ function AppView(props: AppViewProps): React.ReactElement {
 	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
 		throw new Error('"rootMap" not found in initialObjects tree.');
-	}
-
-	const sharedTextHandle = rootMap.get(sharedTextKey) as IFluidHandle<SharedString>;
-	if (sharedTextHandle === undefined) {
-		throw new Error(`"${sharedTextKey}" entry not found in rootMap.`);
-	}
-
-	const sharedCounterHandle = rootMap.get(sharedCounterKey) as IFluidHandle<SharedCounter>;
-	if (sharedCounterHandle === undefined) {
-		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
 
 	return (
@@ -308,7 +273,6 @@ function CollabForm(props: CollabFormProps) {
 		}
 
 		if (serializationSegments.length === 3 && appSerializer === undefined) {
-
 			const initializeAppSerializer = async () => {
 				const rootMap = props.containerInfo.container.initialObjects.rootMap as ISharedMap;
 				const sharedCellHandle = rootMap.get(sharedCellKey) as IFluidHandle<ISharedCell>;
