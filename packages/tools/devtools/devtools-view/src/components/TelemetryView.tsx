@@ -521,7 +521,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		<>
 			<div style={{ display: "flex", gap: "10px" }}>
 				<Dropdown
-					aria-label="Filter Category"
+					aria-label="Category Filter"
 					aria-expanded="false"
 					placeholder="Filter Category"
 					size="small"

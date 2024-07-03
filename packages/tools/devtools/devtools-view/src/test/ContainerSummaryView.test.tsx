@@ -12,8 +12,6 @@ import {
 import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules
-// import { act } from "react-dom/test-utils";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { ContainerSummaryView } from "../components/index.js";
