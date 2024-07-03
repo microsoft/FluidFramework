@@ -120,9 +120,13 @@ export class Outbox {
 		// We need to allow infinite size batches if we enable compression
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
 
-		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
-		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
+		// Only put batch ID on op metadata if offline load is enabled
+		const includeBatchId =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true, includeBatchId });
+		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true, includeBatchId });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false, includeBatchId });
 	}
 
 	public get messageCount(): number {

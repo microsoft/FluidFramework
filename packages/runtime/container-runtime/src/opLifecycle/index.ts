@@ -9,6 +9,7 @@ export {
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	generateBatchId,
+	IBatchManagerOptions,
 } from "./batchManager.js";
 export { BatchMessage, IBatch, IBatchCheckpoint, IChunkedOp } from "./definitions.js";
 export { Outbox, getLongStack } from "./outbox.js";

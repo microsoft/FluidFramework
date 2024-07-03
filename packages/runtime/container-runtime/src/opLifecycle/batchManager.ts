@@ -4,6 +4,7 @@
  */
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { type IBatchMetadata } from "../metadata.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 
@@ -15,6 +16,12 @@ export interface IBatchManagerOptions {
 	 * If true, the outbox is allowed to rebase the batch during flushing.
 	 */
 	readonly canRebase: boolean;
+
+	/**
+	 * If true, include batchID in batch metadata
+	 * Batch ID is used to detect / prevent duplicate processing of the same batch (e.g. if the Container forks).
+	 */
+	readonly includeBatchId: boolean;
 }
 
 export interface BatchSequenceNumbers {
@@ -122,7 +129,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch, batchId);
+		return addBatchMetadata(batch, this.options.includeBatchId ? batchId : undefined);
 	}
 
 	/**
@@ -146,21 +153,20 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
+	const firstMetadata: Partial<IBatchMetadata> = batch.messages[0].metadata ?? {};
+	batch.messages[0].metadata = firstMetadata;
+
+	const batchEnd = batch.messages.length - 1;
+	const lastMetadata: Partial<IBatchMetadata> = batch.messages[batchEnd].metadata ?? {};
+	batch.messages[batchEnd].metadata = lastMetadata;
+
 	if (batch.messages.length > 1) {
-		batch.messages[0].metadata = {
-			...batch.messages[0].metadata,
-			batch: true,
-			batchId,
-		};
-		batch.messages[batch.messages.length - 1].metadata = {
-			...batch.messages[batch.messages.length - 1].metadata,
-			batch: false,
-		};
-	} else {
-		batch.messages[0].metadata = {
-			...batch.messages[0].metadata,
-			batchId,
-		};
+		firstMetadata.batch = true;
+		lastMetadata.batch = false;
+	}
+
+	if (batchId !== undefined) {
+		firstMetadata.batchId = batchId;
 	}
 
 	return batch;
