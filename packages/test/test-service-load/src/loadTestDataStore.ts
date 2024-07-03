@@ -520,14 +520,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
 		// Create virtual data store
-		const virtualDataStore = await VirtualDataStoreFactory.createInstance(
-			this.context.containerRuntime,
-			undefined,
-			"0",
-		);
+		// const virtualDataStore = await VirtualDataStoreFactory.createInstance(
+		// 	this.context.containerRuntime,
+		// 	undefined,
+		// 	"0",
+		// );
 		const dataStoresMap = SharedMap.create(this.runtime);
 		this.root.set(dataStoresSharedMapKey, dataStoresMap.handle);
-		dataStoresMap.set("0", virtualDataStore.handle);
+		// dataStoresMap.set("0", virtualDataStore.handle);
 	}
 
 	public async detached(config: Omit<IRunConfig, "runId">) {
