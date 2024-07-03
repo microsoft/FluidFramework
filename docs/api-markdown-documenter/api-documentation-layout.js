@@ -44,7 +44,7 @@ const supportDocsLinkSpan = new SpanNode([
 function createImportNotice(apiItem) {
 	const packageName = apiItem.getAssociatedPackage().displayName;
 
-	function createImportAlert(importSubpath, alertTitle, alertKind) {
+	function createImportAlert(importSubpath, alertTitle) {
 		return new AlertNode(
 			[
 				new SpanNode([
@@ -55,16 +55,15 @@ function createImportNotice(apiItem) {
 				LineBreakNode.Singleton,
 				supportDocsLinkSpan,
 			],
-			alertKind,
+			/* alertKind: */ "warning",
 			alertTitle,
 		);
 	}
 
-	if (apiItem.tsdocComment?.customBlocks?.includes("@legacy")) {
+	if (apiItem.tsdocComment?.modifierTagSet?.hasTagName("@legacy")) {
 		return createImportAlert(
 			"legacy",
 			"This API is provided for existing users, but is not recommended for new users.",
-			"info",
 		);
 	}
 
@@ -74,7 +73,6 @@ function createImportNotice(apiItem) {
 		return createImportAlert(
 			"alpha",
 			"This API is provided as an alpha preview and may change without notice.",
-			"warning",
 		);
 	}
 
@@ -82,7 +80,6 @@ function createImportNotice(apiItem) {
 		return createImportAlert(
 			"beta",
 			"This API is provided as a beta preview and may change without notice.",
-			"warning",
 		);
 	}
 
