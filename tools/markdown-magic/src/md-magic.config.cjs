@@ -275,6 +275,24 @@ function includeTransform(content, options, config) {
 /**
  * Generates simple README contents for a library package.
  *
+ * Includes:
+ *
+ * - Package scope notice (if applicable)
+ *
+ * - Installation instructions
+ *
+ * - Import instructions
+ *
+ * - Link to API documentation for the package on <fluidframework.com>
+ *
+ * - Package script documentation (only if specified)
+ *
+ * - Fluid Framework contribution guidelines
+ *
+ * - Help section
+ *
+ * - Microsoft trademark info
+ *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
