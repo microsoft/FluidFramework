@@ -133,10 +133,10 @@ export function validateMessages(
 				let validOpsCount = 1;
 				while (
 					validOpsCount < messages.length &&
-					// Why are we non null asserting here
+					// TODO Why are we non null asserting here
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					messages[validOpsCount]!.sequenceNumber ===
-						// Why are we non null asserting here
+						// TODO Why are we non null asserting here
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						messages[validOpsCount - 1]!.sequenceNumber + 1
 				) {
