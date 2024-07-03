@@ -17,7 +17,11 @@ const {
  * @param {boolean} includeTinyliciousStep - Whether or not to include the `Tinylicious` step in the instructions.
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
-const generateExampleGettingStartedSection = (packageJsonPath, includeTinyliciousStep, includeHeading) => {
+const generateExampleGettingStartedSection = (
+	packageJsonPath,
+	includeTinyliciousStep,
+	includeHeading,
+) => {
 	const packageJsonMetadata = getPackageMetadata(packageJsonPath);
 	const packageName = packageJsonMetadata.name;
 
@@ -45,7 +49,6 @@ const generateExampleGettingStartedSection = (packageJsonPath, includeTinyliciou
 		includeHeading ? "Getting Started" : undefined,
 	);
 };
-
 
 /**
  * Generates a "Getting Started" section for an example app README.

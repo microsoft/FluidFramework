@@ -27,7 +27,6 @@ npm i ${packageName}${devDependency ? " -D" : ""}
 	return formattedSectionText(sectionBody, includeHeading ? "Installation" : undefined);
 };
 
-
 /**
  * Generates a README section with package installation instructions.
  *

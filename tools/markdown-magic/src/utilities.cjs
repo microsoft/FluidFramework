@@ -6,7 +6,20 @@
 const fs = require("fs");
 const path = require("path");
 
-const { embeddedContentNotice, generatedContentNotice } = require("./constants.cjs");
+const { embeddedContentNotice, generatedContentNotice, templatesDirectoryPath } = require("./constants.cjs");
+
+/**
+ * Reads and returns the contents from the specified template file.
+ *
+ * @param {string} templateFileName - Name of the file to read, under {@link templatesDirectoryPath} (e.g. "Trademark-Template.md").
+ */
+const readTemplate = (templateFileName) => {
+	return fs
+		.readFileSync(path.resolve(templatesDirectoryPath, templateFileName), {
+			encoding: "utf-8",
+		})
+		.trim();
+};
 
 /**
  * Resolves the provided relative path from its document path.
@@ -107,6 +120,7 @@ module.exports = {
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
+	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
 };

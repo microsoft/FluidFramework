@@ -4,15 +4,13 @@
  */
 
 const { PackageName } = require("@rushstack/node-core-library");
-const fs = require("fs");
-const pathLib = require("path");
 const scripts = require("markdown-magic-package-scripts");
 
-const { templatesDirectoryPath } = require("./constants.cjs");
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
+	readTemplate,
 	resolveRelativePackageJsonPath,
 } = require("./utilities.cjs");
 const {
@@ -22,27 +20,14 @@ const {
 	generateExampleGettingStartedSection,
 	generateInstallationInstructionsSection,
 	generatePackageImportInstructionsSection,
+	generatePackageScopeNotice,
 	generatePackageScriptsSection,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,
+	packageScopeNoticeTransform,
 	packageScriptsSectionTransform,
 } = require("./transforms/index.cjs");
-
-/**
- * Reads and returns the contents from the specified template file.
- *
- * @param {string} templateFileName - Name of the file to read, under {@link templatesDirectoryPath} (e.g. "Trademark-Template.md").
- */
-const readTemplate = (templateFileName) => {
-	return fs
-		.readFileSync(pathLib.resolve(templatesDirectoryPath, templateFileName), {
-			encoding: "utf-8",
-		})
-		.trim();
-};
-
-
 
 /**
  * Generates a simple Markdown heading and contents with trademark information.
@@ -92,53 +77,6 @@ const generateHelpSection = (includeHeading) => {
 };
 
 /**
- * Generates simple Markdown contents indicating that the associated package is experimental.
- */
-const generateExperimentalPackageNotice = () => {
-	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, undefined);
-};
-
-/**
- * Generates simple Markdown contents indicating that the associated package is internal to the fluid-framework
- * (published, but not intended for external consumption).
- */
-const generateInternalPackageNotice = () => {
-	const rawContents = readTemplate("Internal-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, undefined);
-};
-
-/**
- * Generates simple Markdown contents indicating that the associated package is private to the fluid-framework
- * (unpublished - used only within the repo).
- */
-const generatePrivatePackageNotice = () => {
-	const rawContents = readTemplate("Private-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, undefined);
-};
-
-/**
- * Generates simple Markdown contents indicating implications of the specified kind of package scope.
- *
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE"} kind - Scope kind to switch on.
- * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
- * INTERNAL: See templates/Internal-Package-Notice-Template.md.
- * PRIVATE: See templates/Private-Package-Notice-Template.md.
- */
-const generatePackageScopeNotice = (kind) => {
-	switch (kind) {
-		case "EXPERIMENTAL":
-			return generateExperimentalPackageNotice();
-		case "INTERNAL":
-			return generateInternalPackageNotice();
-		case "PRIVATE":
-			return generatePrivatePackageNotice();
-		default:
-			throw new Error(`Unrecognized package scope kind: ${kind}`);
-	}
-};
-
-/**
  * Gets the appropriate scope kind for the provided package name.
  *
  * @param {string} packageName
@@ -174,7 +112,6 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
 	);
 	return getPackageMetadata(resolvedPackageJsonPath);
 }
-
 
 /**
  * Generates simple README contents for a library package.
@@ -345,37 +282,6 @@ function examplePackageReadmeTransform(content, options, config) {
 }
 
 /**
- * Generates simple Markdown contents indicating implications of the specified kind of package scope.
- *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
- * Default: "./package.json".
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} scopeKind - Scope kind to switch on.
- * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
- * INTERNAL: See templates/Internal-Package-Notice-Template.md.
- * PRIVATE: See templates/Private-Package-Notice-Template.md.
- * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
- */
-function readmePackageScopeNoticeTransform(content, options, config) {
-	const { packageJsonPath, scopeKind } = options;
-
-	const packageMetadata = getPackageMetadataFromRelativePath(
-		config.originalPath,
-		packageJsonPath,
-	);
-	const packageName = packageMetadata.name;
-
-	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
-	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
-	if (scopeKindWithInheritance !== undefined) {
-		return generatePackageScopeNotice(scopeKindWithInheritance);
-	}
-}
-
-/**
  * Generates a README section with Microsoft trademark info.
  *
  * @param {object} content - The original document file contents.
@@ -487,7 +393,7 @@ module.exports = {
 		README_EXAMPLE_GETTING_STARTED_SECTION: exampleGettingStartedSectionTransform,
 
 		/**
-		 * See {@link readmePackageScopeNoticeTransform}.
+		 * See {@link packageScopeNoticeTransform}.
 		 *
 		 * @example
 		 *
@@ -496,7 +402,7 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_PACKAGE_SCOPE_NOTICE: readmePackageScopeNoticeTransform,
+		README_PACKAGE_SCOPE_NOTICE: packageScopeNoticeTransform,
 
 		/**
 		 * See {@link readmeApiDocsSectionTransform}.

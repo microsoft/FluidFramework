@@ -59,4 +59,4 @@ function includeTransform(content, options, config) {
 	}
 }
 
-module.exports = {includeTransform};
+module.exports = { includeTransform };

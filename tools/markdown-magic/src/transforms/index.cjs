@@ -8,9 +8,12 @@ const {
 	generateApiDocsLinkSection,
 } = require("./apiDocsLinkSectionTransform.cjs");
 
-const {generateExampleGettingStartedSection, exampleGettingStartedSectionTransform} = require("./exampleGettingStartedTransform.cjs");
+const {
+	generateExampleGettingStartedSection,
+	exampleGettingStartedSectionTransform,
+} = require("./exampleGettingStartedTransform.cjs");
 
-const {includeTransform} = require("./includeTransform.cjs");
+const { includeTransform } = require("./includeTransform.cjs");
 
 const {
 	generateInstallationInstructionsSection,
@@ -21,6 +24,11 @@ const {
 	generatePackageImportInstructionsSection,
 	packageImportInstructionsSectionTransform,
 } = require("./packageImportInstructionsTransform.cjs");
+
+const {
+	generatePackageScopeNotice,
+	packageScopeNoticeTransform,
+} = require("./packageScopeNoticeTransform.cjs");
 
 const {
 	generatePackageScriptsSection,
@@ -34,9 +42,11 @@ module.exports = {
 	generateExampleGettingStartedSection,
 	generateInstallationInstructionsSection,
 	generatePackageImportInstructionsSection,
+	generatePackageScopeNotice,
 	generatePackageScriptsSection,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,
+	packageScopeNoticeTransform,
 	packageScriptsSectionTransform,
 };
