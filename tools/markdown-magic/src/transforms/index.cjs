@@ -37,6 +37,11 @@ const {
 	packageScriptsSectionTransform,
 } = require("./packageScriptsTransform.cjs");
 
+const {
+	generateTrademarkSection,
+	trademarkSectionTransform,
+} = require("./trademarkSectionTransform.cjs");
+
 module.exports = {
 	apiDocsLinkSectionTransform,
 	exampleGettingStartedSectionTransform,
@@ -47,10 +52,12 @@ module.exports = {
 	generatePackageImportInstructionsSection,
 	generatePackageScopeNotice,
 	generatePackageScriptsSection,
+	generateTrademarkSection,
 	helpSectionTransform,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,
 	packageScopeNoticeTransform,
 	packageScriptsSectionTransform,
+	trademarkSectionTransform,
 };

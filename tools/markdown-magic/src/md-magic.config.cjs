@@ -23,23 +23,15 @@ const {
 	generatePackageImportInstructionsSection,
 	generatePackageScopeNotice,
 	generatePackageScriptsSection,
+	generateTrademarkSection,
 	helpSectionTransform,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,
 	packageScopeNoticeTransform,
 	packageScriptsSectionTransform,
+	trademarkSectionTransform,
 } = require("./transforms/index.cjs");
-
-/**
- * Generates a simple Markdown heading and contents with trademark information.
- *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
- */
-const generateTrademarkSection = (includeHeading) => {
-	const sectionBody = readTemplate("Trademark-Template.md");
-	return formattedSectionText(sectionBody, includeHeading ? "Trademark" : undefined);
-};
 
 /**
  * Generates a simple Markdown heading and contents with guidelines for taking dependencies on Fluid libraries.
@@ -273,21 +265,6 @@ function examplePackageReadmeTransform(content, options, config) {
 }
 
 /**
- * Generates a README section with Microsoft trademark info.
- *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
- */
-function readmeTrademarkSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
-	return formattedGeneratedContentBody(generateTrademarkSection(includeHeading));
-}
-
-/**
  * Generates a README section with fluid-framework contribution guidelines.
  *
  * @param {object} content - The original document file contents.
@@ -417,7 +394,7 @@ module.exports = {
 		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
 
 		/**
-		 * See {@link readmeTrademarkSectionTransform}.
+		 * See {@link trademarkSectionTransform}.
 		 *
 		 * @example
 		 *
@@ -426,7 +403,7 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_TRADEMARK_SECTION: readmeTrademarkSectionTransform,
+		README_TRADEMARK_SECTION: trademarkSectionTransform,
 
 		/**
 		 * See {@link readmeContributionGuidelinesSectionTransform}.
