@@ -22,7 +22,7 @@ import {
 } from "./ClientUtilities.js";
 import {
 	AppSerializer,
-	MultiDepTracker,
+	DependencyChangeEffect,
 	type Dependency
 }
 	from "./AppSerializer.js";
@@ -203,7 +203,7 @@ function CollabForm(props: CollabFormProps) {
 
 	React.useEffect(() => {
 
-		const serializationSegments: MultiDepTracker<string>[] = [];
+		const serializationSegments: DependencyChangeEffect<string>[] = [];
 
 		// Author field
 		if (field1Input !== undefined) {
@@ -212,20 +212,22 @@ function CollabForm(props: CollabFormProps) {
 				qualifier: (prev, next) => prev !== next,
 			};
 
-			const multiDep1 = new MultiDepTracker([field1Dependency], () => {
+			// tracker for detecting dependency changes and running an effect that produces a serialization
+			const serializationSegment = new DependencyChangeEffect([field1Dependency], () => {
 				const val = `# Application Security Report\n\n- Author: ${field1Input?.getText()} \n\n`;
-				// console.log(val);
 				return val;
 			});
 
+			// Setting up when to trigger the segment serialization
 			new SharedStringHelper(field1Input).on('textChanged', () => {
-				multiDep1.trigger(); //TODO: Debounce this
+				serializationSegment.trigger(); //TODO: Debounce this
 			});
 
-			serializationSegments.push(multiDep1);
+			serializationSegments.push(serializationSegment);
 		}
 
 
+		// The second and third input fields together make up the second segment
 		if (field2Input !== undefined && field3Input !== undefined) {
 			// dependencies
 			const field2Dependency: Dependency<string> = {
@@ -237,25 +239,26 @@ function CollabForm(props: CollabFormProps) {
 				qualifier: (prev, next) => prev !== next,
 			};
 
-			// tracker for detecting dependency changes
-			const multiDep2 = new MultiDepTracker([field2Dependency, field3Dependency], () => {
+			// tracker for detecting dependency changes and running an effect that produces a serialization
+			const serializationSegment = new DependencyChangeEffect([field2Dependency, field3Dependency], () => {
 				const val = `## The description of the application\n\n "${field2Input?.getText()}" \n\n`;
 				const val2 = `## The way the applications front end communicates with back end services\n\n ${field3Input?.getText()} \n\n`
 				return val + val2;
 			});
 
-			// Triggers
+			// Setting up when to trigger the segment serialization
 			new SharedStringHelper(field2Input).on('textChanged', () => {
-				multiDep2.trigger(); //TODO: Debounce this
+				serializationSegment.trigger(); //TODO: Debounce this
 			});
 
 			new SharedStringHelper(field3Input).on('textChanged', () => {
-				multiDep2.trigger(); //TODO: Debounce this
+				serializationSegment.trigger(); //TODO: Debounce this
 			});
 
-			serializationSegments.push(multiDep2);
+			serializationSegments.push(serializationSegment);
 		}
 
+		// The number of customer face api's counter.
 		if (counter1 !== undefined) {
 			// dependencies
 			const counter1Dependency: Dependency<number> = {
@@ -263,18 +266,18 @@ function CollabForm(props: CollabFormProps) {
 				qualifier: (prev, next) => prev !== next,
 			};
 
-			// tracker for detecting dependency changes
-			const multiDep3 = new MultiDepTracker([counter1Dependency], () => {
+			// tracker for detecting dependency changes and running an effect that produces a serialization
+			const serializationSegment = new DependencyChangeEffect([counter1Dependency], () => {
 				const val = `## The number of customer facing API endpoints: ${counter1?.value}`;
 				return val;
 			});
 
-			// Triggers
+			// Setting up when to trigger the segment serialization
 			counter1.on('incremented', () => {
-				multiDep3.trigger();
+				serializationSegment.trigger();
 			});
 
-			serializationSegments.push(multiDep3);
+			serializationSegments.push(serializationSegment);
 		}
 
 		if (serializationSegments.length === 3 && appSerializer === undefined) {

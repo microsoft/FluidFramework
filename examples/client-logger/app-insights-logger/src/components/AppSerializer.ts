@@ -14,7 +14,7 @@ export type Dependency<T> = {
 /**
  * Takes an array of dependencies and executes and produces a specified effect when the dependencies change
  */
-export class MultiDepTracker<V> {
+export class DependencyChangeEffect<V> {
 	private prevValues: unknown[];
 	public effectResult: V | undefined;
 	public effectResultIteration: number;
@@ -73,7 +73,7 @@ export class AppSerializer {
 	private readonly segmentIterationCounts: number[];
 
 	constructor(
-		private readonly segments: MultiDepTracker<string>[],
+		private readonly segments: DependencyChangeEffect<string>[],
 		private readonly intervalMs: number,
 		private readonly destination: ISharedCell,
 	) {
