@@ -121,7 +121,7 @@ export class OpSplitter {
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
-			batch.contentSizeInBytes > 0 && batch.content.length > 0,
+			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
 			0x514 /* Batch needs to be non-empty */,
 		);
 		assert(
@@ -134,13 +134,13 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
-		const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
+		const firstMessage = batch.messages[0]; // we expect this to be the large compressed op, which needs to be split
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
 
-		const restOfMessages = batch.content.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
+		const restOfMessages = batch.messages.slice(1); // we expect these to be empty ops, created to reserve sequence numbers
 		const socketSize = estimateSocketSize(batch);
 		const chunks = splitOp(
 			firstMessage,
@@ -171,7 +171,7 @@ export class OpSplitter {
 		this.logger.sendPerformanceEvent({
 			// Used to be "Chunked compressed batch"
 			eventName: "CompressedChunkedBatch",
-			length: batch.content.length,
+			length: batch.messages.length,
 			sizeInBytes: batch.contentSizeInBytes,
 			chunks: chunks.length,
 			chunkSizeInBytes: this.chunkSizeInBytes,
@@ -179,7 +179,7 @@ export class OpSplitter {
 		});
 
 		return {
-			content: [lastChunk, ...restOfMessages],
+			messages: [lastChunk, ...restOfMessages],
 			contentSizeInBytes: lastChunk.contents?.length ?? 0,
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};

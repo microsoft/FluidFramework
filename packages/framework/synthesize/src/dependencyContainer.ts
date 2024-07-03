@@ -17,6 +17,7 @@ import {
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
+ * @legacy
  * @alpha
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {

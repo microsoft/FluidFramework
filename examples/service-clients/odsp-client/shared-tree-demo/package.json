@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/service-clients/shared-tree-demo"
+		"directory": "examples/service-clients/odsp-client/shared-tree-demo"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -37,7 +37,6 @@
 		"@azure/msal-browser": "^2.34.0",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"css-loader": "^6.11.0",
 		"fluid-framework": "workspace:~",
 		"react": "^17.0.1",

@@ -29,6 +29,7 @@ export {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
 } from "./nestedMap.js";

@@ -7,7 +7,7 @@ See [examples.spec.ts](./src/test/examples.spec.ts) for usage examples.
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
+**NOTE: This package is private to the `@microsoft/fluid-framework` repository.**
 **It is not published, and therefore may only be used as a dev dependency.**
 
 ## Contribution Guidelines

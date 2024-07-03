@@ -249,13 +249,8 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		"@typescript-eslint/brace-style": [
-			"error",
-			"1tbs",
-			{
-				allowSingleLine: true,
-			},
-		],
+		// Disabled because it conflicts with formatter rules
+		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-spacing": "error",
 		"@typescript-eslint/func-call-spacing": "error",
 		"@typescript-eslint/keyword-spacing": "error",
