@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { BatchId } from "./opLifecycle/index.js";
+
 /**
  * Does the metadata object look like batch metadata?
  */
@@ -22,6 +24,7 @@ export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
  */
 export interface IBatchMetadata {
 	batch?: boolean;
+	batchId?: BatchId; //* TODO: Consider modeling the fact that batch: false can't have batchId
 }
 
 /**

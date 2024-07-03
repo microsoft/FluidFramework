@@ -22,6 +22,14 @@ export interface BatchSequenceNumbers {
 	clientSequenceNumber?: number;
 }
 
+//* TODO: Comment
+export type BatchId = string;
+
+//* TODO: Comment
+export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
+	return JSON.stringify([originalClientId, batchStartCsn]);
+}
+
 /**
  * Estimated size of the stringification overhead for an op accumulated
  * from runtime to loader to the service.

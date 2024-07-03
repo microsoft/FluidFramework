@@ -253,6 +253,7 @@ export class Outbox {
 			return;
 		}
 
+		//* Add batchId to batch metadata inside popBatch (pass through if given)
 		const rawBatch = batchManager.popBatch();
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);

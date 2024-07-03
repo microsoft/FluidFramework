@@ -124,6 +124,7 @@ describe("Outbox", () => {
 		},
 	});
 
+	//* Double-check batchIdContext value / coverage
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number): void => {
@@ -133,7 +134,10 @@ describe("Outbox", () => {
 						content,
 						referenceSequenceNumber,
 						opMetadata,
-						batchStartCsn: clientSequenceNumber,
+						batchIdContext: {
+							originalClientId: "CLIENT_ID",
+							batchStartCsn: clientSequenceNumber,
+						},
 					}),
 			);
 		},

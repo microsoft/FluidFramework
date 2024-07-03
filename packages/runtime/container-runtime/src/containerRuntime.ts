@@ -169,6 +169,7 @@ import {
 } from "./messageTypes.js";
 import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
+	BatchId,
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
@@ -4111,12 +4112,13 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		});
+		//* TODO: Plumb batchId through here
 		this.flush();
 	}
 

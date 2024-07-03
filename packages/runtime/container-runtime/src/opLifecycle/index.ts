@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { BatchManager, estimateSocketSize, BatchSequenceNumbers } from "./batchManager.js";
+export {
+	BatchId,
+	BatchManager,
+	BatchSequenceNumbers,
+	estimateSocketSize,
+	generateBatchId,
+} from "./batchManager.js";
 export { BatchMessage, IBatch, IBatchCheckpoint, IChunkedOp } from "./definitions.js";
 export { Outbox, getLongStack } from "./outbox.js";
 export { OpCompressor } from "./opCompressor.js";

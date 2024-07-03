@@ -538,6 +538,7 @@ describe("Pending State Manager", () => {
 		});
 	});
 
+	//* Check the batchIdContext values - make sense?
 	describe("Minimum sequence number", () => {
 		const messages: IPendingMessage[] = [
 			{
@@ -546,6 +547,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -553,6 +555,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -560,6 +563,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -567,6 +571,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { originalClientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 		];
 

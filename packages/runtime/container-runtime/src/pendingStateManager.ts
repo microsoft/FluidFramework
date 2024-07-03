@@ -17,7 +17,7 @@ import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
-import type { BatchMessage } from "./opLifecycle/index.js";
+import { BatchId, BatchMessage, generateBatchId } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -31,7 +31,12 @@ export interface IPendingMessage {
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 	sequenceNumber?: number;
-	batchStartCsn?: number;
+	//* TODO: This will be missing when loading an older stash. Maybe just make up a value in that case? We don't need to support it thorougly, just avoid a crash.
+	/** Info needed to compute the batchId on reconnect */
+	batchIdContext: {
+		originalClientId: string;
+		batchStartCsn: number;
+	};
 }
 
 export interface IPendingLocalState {
@@ -52,7 +57,7 @@ export interface IRuntimeStateHandler {
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
-	reSubmitBatch(batch: PendingMessageResubmitData[]): void;
+	reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -197,6 +202,15 @@ export class PendingStateManager implements IDisposable {
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 */
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
+		// If we're connected this is the client of the current connection,
+		// otherwise it's the clientId that disconnected
+		const clientId = this.stateHandler.clientId();
+
+		//* This may get hit by the "applies stashed ops with no saved ops" test in stashedOps.spec.ts
+		assert(clientId !== undefined, "Shouldn't see ops before the first connection");
+
+		//* Should we just put clientId on the first message in the batch? I think that's all we need.
+		//* I'm even wondering if we can just use the clientId at the time of replay...?
 		for (const message of batch) {
 			const {
 				contents: content = "",
@@ -210,7 +224,11 @@ export class PendingStateManager implements IDisposable {
 				content,
 				localOpMetadata,
 				opMetadata,
-				batchStartCsn: clientSequenceNumber,
+				// We set batchIdContext even if batchId is already set, so we have batchStartCsn on every message (don't need clientId)
+				batchIdContext: {
+					originalClientId: clientId,
+					batchStartCsn: clientSequenceNumber ?? -1,
+				},
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -277,12 +295,12 @@ export class PendingStateManager implements IDisposable {
 
 		this.pendingMessages.shift();
 
-		if (pendingMessage.batchStartCsn !== batchStartCsn) {
+		if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
 			this.logger?.sendErrorEvent({
 				eventName: "BatchClientSequenceNumberMismatch",
 				details: {
 					processingBatch: !!this.pendingBatchBeginMessage,
-					pendingBatchCsn: pendingMessage.batchStartCsn,
+					pendingBatchCsn: pendingMessage.batchIdContext.batchStartCsn,
 					batchStartCsn,
 					messageBatchMetadata: (message.metadata as any)?.batch,
 					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
@@ -430,6 +448,16 @@ export class PendingStateManager implements IDisposable {
 			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
+			// The next message starts a batch (possibley single-message), and we'll need its batchId.
+			// We'll find batchId on this message if it was previously generated.
+			// Otherwise, generate it now - this is the first time resubmitting this batch.
+			const batchId =
+				asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
+				generateBatchId(
+					pendingMessage.batchIdContext.originalClientId,
+					pendingMessage.batchIdContext.batchStartCsn,
+				);
+
 			/**
 			 * We must preserve the distinct batches on resubmit.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
@@ -437,13 +465,17 @@ export class PendingStateManager implements IDisposable {
 			 */
 			if (batchMetadataFlag === undefined) {
 				// Single-message batch
-				this.stateHandler.reSubmitBatch([
-					{
-						content: pendingMessage.content,
-						localOpMetadata: pendingMessage.localOpMetadata,
-						opMetadata: pendingMessage.opMetadata,
-					},
-				]);
+
+				this.stateHandler.reSubmitBatch(
+					[
+						{
+							content: pendingMessage.content,
+							localOpMetadata: pendingMessage.localOpMetadata,
+							opMetadata: pendingMessage.opMetadata,
+						},
+					],
+					batchId,
+				);
 				continue;
 			}
 			// else: batchMetadataFlag === true  (It's a typical multi-message batch)
@@ -477,7 +509,7 @@ export class PendingStateManager implements IDisposable {
 				);
 			}
 
-			this.stateHandler.reSubmitBatch(batch);
+			this.stateHandler.reSubmitBatch(batch, batchId);
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit
