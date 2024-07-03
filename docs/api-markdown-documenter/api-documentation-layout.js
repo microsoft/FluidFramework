@@ -60,6 +60,7 @@ function createImportNotice(apiItem) {
 		);
 	}
 
+	// TODO: Use `getModifierTag` helper once added to `@fluid-tools/api-markdown-documenter`
 	if (apiItem.tsdocComment?.modifierTagSet?.hasTagName("@legacy")) {
 		return createImportAlert(
 			"legacy",

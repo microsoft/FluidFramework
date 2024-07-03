@@ -87,11 +87,14 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				alerts.push("Deprecated");
 			}
 
+			// TODO: Use `getModifierTag` helper once added to `@fluid-tools/api-markdown-documenter`
+			if (apiItem.tsdocComment?.modifierTagSet?.hasTagName("@legacy")) {
+				alerts.push("Legacy");
+			}
+
 			const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
 			if (releaseTag === ReleaseTag.Alpha) {
-				// Temporary workaround for the current `@alpha` => "Legacy" state.
-				// This should be replaced with "Alpha" once that has been cleaned up.
-				alerts.push("Legacy");
+				alerts.push("Alpha");
 			} else if (releaseTag === ReleaseTag.Beta) {
 				alerts.push("Beta");
 			}
