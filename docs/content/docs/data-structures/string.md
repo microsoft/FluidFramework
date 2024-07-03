@@ -69,7 +69,6 @@ efficient spatial querying of the nearest Marker to a given position. -->
 -   Rich Text Editor Implementations
 
     -   [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
-    -   [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/shared-text/src/client-ui-lib/controls/flowView.ts)
 
 -   Integrations with Open Source Rich Text Editors
 
