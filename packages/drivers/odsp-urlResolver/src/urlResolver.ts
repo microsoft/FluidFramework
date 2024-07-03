@@ -118,7 +118,7 @@ async function initializeFluidOfficeOrOneNote(
 		return undefined;
 	}
 
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const site = decodeURIComponent(siteDriveItemMatch[2]!);
 
@@ -136,10 +136,10 @@ async function initializeFluidOfficeOrOneNote(
 
 	// Since we have the drive and item, only take the host ignore the rest
 	const siteUrl = decodedSite.slice(Math.max(0, storageType.length + 1));
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const driveId = decodeURIComponent(siteDriveItemMatch[3]!);
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const itemId = decodeURIComponent(siteDriveItemMatch[4]!);
 	return { siteUrl, driveId, itemId };
