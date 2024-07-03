@@ -308,7 +308,7 @@ export class DetachedFieldIndex {
 					root: root + i,
 					latestRelevantRevision: revision,
 				});
-				this.updateLatestRevision({ major: nodeId.major, minor: nodeId.minor + i }, revision);
+				setInNestedMap(this.latestRelevantRevisionToFields, revision, root, nodeId);
 			}
 		}
 		return root;
