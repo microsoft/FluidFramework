@@ -7,10 +7,9 @@ const { PackageName } = require("@rushstack/node-core-library");
 const scripts = require("markdown-magic-package-scripts");
 
 const {
+	createSectionFromTemplate,
 	formattedGeneratedContentBody,
-	formattedSectionText,
 	getPackageMetadata,
-	readTemplate,
 	resolveRelativePackageJsonPath,
 } = require("./utilities.cjs");
 const {
@@ -18,19 +17,16 @@ const {
 	exampleGettingStartedSectionTransform,
 	generateApiDocsLinkSection,
 	generateExampleGettingStartedSection,
-	generateHelpSection,
 	generateInstallationInstructionsSection,
 	generatePackageImportInstructionsSection,
 	generatePackageScopeNotice,
 	generatePackageScriptsSection,
-	generateTrademarkSection,
-	helpSectionTransform,
+	generateSectionFromTemplate,
 	includeTransform,
 	installationInstructionsTransform,
 	packageImportInstructionsSectionTransform,
 	packageScopeNoticeTransform,
 	packageScriptsSectionTransform,
-	trademarkSectionTransform,
 } = require("./transforms/index.cjs");
 
 /**
@@ -38,26 +34,38 @@ const {
  *
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
-const generateDependencyGuidelines = (includeHeading) => {
-	const sectionBody = readTemplate("Dependency-Guidelines-Template.md");
-	return formattedSectionText(
-		sectionBody,
+const generateDependencyGuidelines = (includeHeading) =>
+	createSectionFromTemplate(
+		"Dependency-Guidelines-Template.md",
 		includeHeading ? "Using Fluid Framework libraries" : undefined,
 	);
-};
 
 /**
  * Generates a Markdown heading and contents with a section pointing developers to our contribution guidelines.
  *
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
-const generateContributionGuidelinesSection = (includeHeading) => {
-	const sectionBody = readTemplate("Contribution-Guidelines-Template.md");
-	return formattedSectionText(
-		sectionBody,
+const generateContributionGuidelinesSection = (includeHeading) =>
+	createSectionFromTemplate(
+		"Contribution-Guidelines-Template.md",
 		includeHeading ? "Contribution Guidelines" : undefined,
 	);
-};
+
+/**
+ * Generates a simple Markdown heading and contents with help information.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const generateHelpSection = (includeHeading) =>
+	createSectionFromTemplate("Help-Template.md", includeHeading ? "Help" : undefined);
+
+/**
+ * Generates a simple Markdown heading and contents with trademark information.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const generateTrademarkSection = (includeHeading) =>
+	createSectionFromTemplate("Trademark-Template.md", includeHeading ? "Trademark" : undefined);
 
 /**
  * Gets the appropriate scope kind for the provided package name.
@@ -77,24 +85,6 @@ const getScopeKindFromPackage = (packageName) => {
 		return undefined;
 	}
 };
-
-/**
- * Gets the package.json metadata from the optionally provided file path, expressed relative
- * to the path of the document being modified.
- *
- * @param {string} documentFilePath - Path to the document file being modified by this tooling.
- * @param {string} packageJsonFilePath - (optional) Relative file path to the package.json file for the package.
- * Default: "./package.json".
- *
- * @returns The package.json content metadata.
- */
-function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePath) {
-	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
-		documentFilePath,
-		packageJsonFilePath,
-	);
-	return getPackageMetadata(resolvedPackageJsonPath);
-}
 
 /**
  * Generates simple README contents for a library package.
@@ -267,31 +257,14 @@ function examplePackageReadmeTransform(content, options, config) {
 /**
  * Generates a README section with fluid-framework contribution guidelines.
  *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
+ * @param {string} templateFileName - The name of the template file to be embedded.
+ * @param {string|undefined} maybeHeadingText - (optional) Text to use for the heading.
+ * A heading will only be included if this is specified.
  */
-function readmeContributionGuidelinesSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
-	return formattedGeneratedContentBody(generateContributionGuidelinesSection(includeHeading));
-}
-
-/**
- * Generates a README section with fluid-framework dependency guidelines.
- *
- * @param {object} content - The original document file contents.
- * @param {object} options - Transform options.
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
- * @param {object} config - Transform configuration.
- * @param {string} config.originalPath - Path to the document being modified.
- */
-function readmeDependencyGuidelinesSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
-	return formattedGeneratedContentBody(generateDependencyGuidelines(includeHeading));
+function templateTransform(templateFileName, maybeHeadingText) {
+	return formattedGeneratedContentBody(
+		generateSectionFromTemplate(templateFileName, maybeHeadingText),
+	);
 }
 
 /**
@@ -394,7 +367,14 @@ module.exports = {
 		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
 
 		/**
-		 * See {@link trademarkSectionTransform}.
+		 * Generates a README section with Microsoft trademark info.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+		 * Default: `TRUE`.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
@@ -403,10 +383,21 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_TRADEMARK_SECTION: trademarkSectionTransform,
+		README_TRADEMARK_SECTION: (content, options, config) =>
+			templateTransform(
+				"Trademark-Template.md",
+				options.includeHeading !== "FALSE" ? "Trademark" : undefined,
+			),
 
 		/**
-		 * See {@link readmeContributionGuidelinesSectionTransform}.
+		 * Generates a README section with fluid-framework contribution guidelines.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+		 * Default: `TRUE`.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
@@ -415,10 +406,21 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_CONTRIBUTION_GUIDELINES_SECTION: readmeContributionGuidelinesSectionTransform,
+		README_CONTRIBUTION_GUIDELINES_SECTION: (content, options, config) =>
+			templateTransform(
+				"Contribution-Guidelines-Template.md",
+				options.includeHeading !== "FALSE" ? "Contribution Guidelines" : undefined,
+			),
 
 		/**
-		 * See {@link readmeContributionGuidelinesSectionTransform}.
+		 * Generates a README section with fluid-framework dependency guidelines.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+		 * Default: `TRUE`.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
@@ -427,10 +429,21 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_DEPENDENCY_GUIDELINES_SECTION: readmeDependencyGuidelinesSectionTransform,
+		README_DEPENDENCY_GUIDELINES_SECTION: (content, options, config) =>
+			templateTransform(
+				"Dependency-Guidelines-Template.md",
+				options.includeHeading !== "FALSE" ? "Dependency Guidelines" : undefined,
+			),
 
 		/**
-		 * See {@link helpSectionTransform}.
+		 * Generates a README "Help" section.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+		 * Default: `TRUE`.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
@@ -439,7 +452,11 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_HELP_SECTION: helpSectionTransform,
+		README_HELP_SECTION: (content, options, config) =>
+			templateTransform(
+				"Help-Template.md",
+				options.includeHeading !== "FALSE" ? "Help" : undefined,
+			),
 
 		/**
 		 * See {@link packageScriptsSectionTransform}.

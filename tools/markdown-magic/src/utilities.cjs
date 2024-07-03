@@ -26,6 +26,16 @@ const readTemplate = (templateFileName) => {
 };
 
 /**
+ * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const createSectionFromTemplate = (templateName, maybeHeadingName) => {
+	const sectionBody = readTemplate(templateName);
+	return formattedSectionText(sectionBody, maybeHeadingName);
+};
+
+/**
  * Resolves the provided relative path from its document path.
  *
  * @param {string} documentPath - The path to the document this system is modifying.
@@ -120,6 +130,7 @@ function formattedEmbeddedContentBody(contents) {
 }
 
 module.exports = {
+	createSectionFromTemplate,
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
