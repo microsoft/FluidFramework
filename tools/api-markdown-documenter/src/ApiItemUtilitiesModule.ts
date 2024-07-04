@@ -28,6 +28,7 @@ export {
 	getSingleLineExcerptText,
 	getThrowsBlocks,
 	getUnscopedPackageName,
+	hasModifierTag,
 	isDeprecated,
 	isOptional,
 	isReadonly,

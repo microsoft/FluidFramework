@@ -177,11 +177,28 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
  *
  * @public
  */
-export function getModifierTags(apiItem: ApiItem): string[] {
+export function getModifierTags(apiItem: ApiItem): ReadonlySet<string> {
+	const modifierTags = new Set<string>();
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-		return apiItem.tsdocComment.modifierTagSet.nodes.map((node) => node.tagName);
+		for (const tag of apiItem.tsdocComment.modifierTagSet.nodes) {
+			modifierTags.add(tag.tagName);
+		}
 	}
-	return [];
+	return modifierTags;
+}
+
+/**
+ * Checks if the provided API item is tagged with the specified {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
+ *
+ * @throws If the provided tag name is malformed (i.e., does not begin with `@`).
+ *
+ * @public
+ */
+export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
+	if (!tagName.startsWith("@")) {
+		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
+	}
+	return getModifierTags(apiItem).has(tagName);
 }
 
 /**

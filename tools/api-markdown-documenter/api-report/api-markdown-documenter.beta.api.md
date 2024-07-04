@@ -90,6 +90,7 @@ declare namespace ApiItemUtilities {
         getSingleLineExcerptText,
         getThrowsBlocks,
         getUnscopedPackageName,
+        hasModifierTag,
         isDeprecated,
         isOptional,
         isReadonly,
@@ -359,7 +360,7 @@ function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformat
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public
-function getModifierTags(apiItem: ApiItem): string[];
+function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
 
 // @public
 function getQualifiedApiItemName(apiItem: ApiItem): string;
@@ -381,6 +382,9 @@ function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
 function getUnscopedPackageName(apiPackage: ApiPackage): string;
+
+// @public
+function hasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
 // @public
 export interface Heading {
