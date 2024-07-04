@@ -158,7 +158,7 @@ export class Chunker implements IChunker {
  * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return chunkRange(cursor, policy, 1, true)[0]!;
 }
@@ -282,7 +282,7 @@ export function tryShapeFromFieldSchema(
 	if (type.types?.size !== 1) {
 		return undefined;
 	}
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const childType = [...type.types][0]!;
 	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);

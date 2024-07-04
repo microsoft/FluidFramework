@@ -438,7 +438,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
-					// Why are we non null asserting here
+					// TODO Why are we non null asserting here?
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					gcNodes[id]!.push(route);
 				}

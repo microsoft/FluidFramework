@@ -206,10 +206,10 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
-				// Why are we non null asserting here
+				// TODO Why are we non null asserting here?
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				while (indexWithinChunk >= chunks[indexOfChunk]!.topLevelLength) {
-					// Why are we non null asserting here
+					// TODO Why are we non null asserting here?
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					indexWithinChunk -= chunks[indexOfChunk]!.topLevelLength;
 					indexOfChunk++;
@@ -217,7 +217,7 @@ export class ChunkedForest implements IEditableForest {
 						fail("missing edited node");
 					}
 				}
-				// Why are we non null asserting here
+				// TODO Why are we non null asserting here?
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				let found = chunks[indexOfChunk]!;
 				if (!(found instanceof BasicChunk)) {
@@ -234,7 +234,7 @@ export class ChunkedForest implements IEditableForest {
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
-					// Why are we non null asserting here
+					// TODO Why are we non null asserting here?
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					found = newChunks[indexWithinChunk]!;
 				}

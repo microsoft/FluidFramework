@@ -156,21 +156,21 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 1, 0x3b8 /* must field height */);
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.siblingStack[height]![this.indexStack[height]!] as FieldKey;
 	}
 
 	private getStackedNodeIndex(height: number): number {
 		// assert(height % 2 === 0, "must be node height");
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.indexStack[height]!;
 	}
 
 	private getStackedNode(height: number): TNode {
 		const index = this.getStackedNodeIndex(height);
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return (this.siblingStack[height] as readonly TNode[])[index]!;
 	}

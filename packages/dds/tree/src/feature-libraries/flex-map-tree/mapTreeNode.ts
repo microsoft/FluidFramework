@@ -250,7 +250,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 			const field = getOrCreateField(this, key, mapTrees, this.schema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
-					// Why are we non null asserting here
+					// TODO Why are we non null asserting here?
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					mapTrees[index]!,
 					this.schema.getFieldSchema(key).allowedTypes,
@@ -529,7 +529,7 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 	implements FlexTreeRequiredField<T>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> {
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return unboxedUnion(this.schema, this.mapTrees[0]!, { parent: this, index: 0 });
 	}
@@ -571,7 +571,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		if (i === undefined) {
 			return undefined;
 		}
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return unboxedUnion(this.schema, this.mapTrees[i]!, { parent: this, index: i });
 	}

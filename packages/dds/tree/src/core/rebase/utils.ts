@@ -251,7 +251,7 @@ export function rebaseBranch<TChange>(
 	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		if (sourcePath[0]!.revision === targetRebasePath[0]!.revision) {
 			sourcePath.shift();
@@ -267,7 +267,7 @@ export function rebaseBranch<TChange>(
 	// base commit.
 	if (targetRebasePath.length === 0) {
 		for (const c of sourcePath) {
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1]! ?? newBase, c));
 		}
@@ -316,7 +316,7 @@ export function rebaseBranch<TChange>(
 
 	let netChange: TChange | undefined;
 	return {
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		newSourceHead: newHead!,
 		get sourceChange(): TChange | undefined {

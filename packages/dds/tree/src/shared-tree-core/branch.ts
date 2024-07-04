@@ -472,10 +472,10 @@ export class SharedTreeBranch<
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const src = targetCommits[0]!.parent?.revision;
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const dst = targetCommits[targetCommits.length - 1]!.revision;
 			if (src !== undefined && dst !== undefined) {

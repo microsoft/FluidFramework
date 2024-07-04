@@ -222,7 +222,7 @@ function invertMark(
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let detachInverse = detachInverses[0]!;
 			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);

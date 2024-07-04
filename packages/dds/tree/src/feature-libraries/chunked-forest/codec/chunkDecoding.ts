@@ -183,7 +183,7 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const decoder = decoders[this.shape]!;
 
@@ -219,7 +219,7 @@ export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const length = this.shape.length;
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const decoder = decoders[this.shape.shape]!;
 		const chunks: TreeChunk[] = [];
@@ -258,7 +258,7 @@ function fieldDecoder(
 	shape: number,
 ): BasicFieldDecoder {
 	assertValidIndex(shape, cache.shapes);
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return (decoders, stream) => [key, decoders[shape]!.decode(decoders, stream)];
 }
@@ -307,7 +307,7 @@ export class TreeDecoder implements ChunkDecoder {
 		}
 
 		if (this.shape.extraFields !== undefined) {
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const decoder = decoders[this.shape.extraFields]!;
 			const inner = readStreamStream(stream);

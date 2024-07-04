@@ -112,11 +112,11 @@ export function setInRangeMap<T>(
 	}
 
 	const iFirst = iBefore + 1;
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const firstEntry = map[iFirst]!;
 	const iLast = iAfter - 1;
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const lastEntry = map[iLast]!;
 	const lengthBeforeFirst = start - firstEntry.start;

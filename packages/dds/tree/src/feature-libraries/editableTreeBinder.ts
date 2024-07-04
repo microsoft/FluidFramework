@@ -484,7 +484,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		contextType: BindingContextType,
 		downPath: DownPath,
 	): Set<Listener> | undefined {
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const foundRoot = this.findRoot(contextType, downPath[0]!.field);
 		if (foundRoot === undefined) {
