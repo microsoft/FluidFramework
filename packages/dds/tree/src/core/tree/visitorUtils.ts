@@ -11,7 +11,8 @@ import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ProtoNodes, Root } from "./delta.js";
-import { DetachedFieldIndex, type ForestRootId } from "./detachedFieldIndex.js";
+import { DetachedFieldIndex } from "./detachedFieldIndex.js";
+import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";

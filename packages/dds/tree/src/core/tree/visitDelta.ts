@@ -20,8 +20,8 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil.js";
-import type { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
-import type { Major, Minor } from "./detachedFieldIndexTypes.js";
+import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
+import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
 import type { RevisionTag } from "../index.js";
 
