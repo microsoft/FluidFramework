@@ -13,6 +13,7 @@ const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTy
 
 /**
  * Different error types the Driver may report out to the Host.
+ * @legacy
  * @alpha
  */
 export const DriverErrorTypes = {
@@ -107,6 +108,7 @@ export const DriverErrorTypes = {
 } as const;
 /**
  * {@inheritDoc (DriverErrorTypes:variable)}
+ * @legacy
  * @alpha
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
@@ -121,6 +123,7 @@ export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErro
  * "Any" in the interface name is a nod to the fact that errorType has lost its type constraint.
  * It will be either {@link @fluidframework/driver-definitions#(DriverErrorTypes:variable)} or the specific driver's specialized error type enum,
  * but we can't reference a specific driver's error type enum in this code.
+ * @legacy
  * @alpha
  */
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
@@ -134,6 +137,7 @@ export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
 
 /**
  * Base interface for all errors and warnings
+ * @legacy
  * @alpha
  */
 export interface IDriverErrorBase {
@@ -167,6 +171,7 @@ export interface IDriverErrorBase {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IThrottlingWarning extends IDriverErrorBase {
@@ -175,6 +180,7 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IGenericNetworkError extends IDriverErrorBase {
@@ -183,6 +189,7 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IAuthorizationError extends IDriverErrorBase {
@@ -192,6 +199,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ILocationRedirectionError extends IDriverErrorBase {
@@ -202,6 +210,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
+ * @legacy
  * @alpha
  */
 export interface IDriverBasicError extends IDriverErrorBase {
@@ -223,6 +232,7 @@ export interface IDriverBasicError extends IDriverErrorBase {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type DriverError =

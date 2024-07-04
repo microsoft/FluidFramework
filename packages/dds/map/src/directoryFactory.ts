@@ -19,6 +19,7 @@ import { pkgVersion } from "./packageVersion.js";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedDirectory}.
  *
  * @sealed
+ * @legacy
  * @alpha
  */
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
@@ -78,12 +79,14 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
+ * @legacy
  * @alpha
  */
 export const SharedDirectory = createSharedObjectKind<ISharedDirectory>(DirectoryFactory);
 
 /**
  * Entrypoint for {@link ISharedDirectory} creation.
+ * @legacy
  * @alpha
  * @privateRemarks
  * This alias is for legacy compat from when the SharedDirectory class was exported as public.

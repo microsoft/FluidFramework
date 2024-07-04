@@ -140,7 +140,10 @@ export function makeField(
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends FlexAllowedTypes>
+export abstract class LazyField<
+		out TKind extends FlexFieldKind,
+		TTypes extends FlexAllowedTypes,
+	>
 	extends LazyEntity<FlexFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements FlexTreeField
 {
@@ -601,14 +604,14 @@ export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyFie
 
 type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
-	// TODO: use something other than `any`
+	// Correct use of these builders requires the builder of the matching type to be used.
+	// Since this has to be done at runtime anyway, trying to use safer typing than `any` here (such as `never`, which is only slightly safer)
+	// does not seem worth it (ends up requiring type casts that are just as unsafe).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	schema: FlexFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
-	// TODO: use something other than `any`
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-) => LazyField<any, TTypes>;
+) => LazyField<FlexFieldKind, TTypes>;
 
 const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],

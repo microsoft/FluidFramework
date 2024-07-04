@@ -41,7 +41,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { pkgVersion } from "../packageVersion.js";
+import { pkgVersion } from "../../packageVersion.js";
 
 // Test DDS factory for the blob dds
 class TestBlobDDSFactory implements IChannelFactory {

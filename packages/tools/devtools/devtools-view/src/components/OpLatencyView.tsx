@@ -236,6 +236,7 @@ export function OpLatencyView(): React.ReactElement {
 					As you make changes in your Fluid-based application, you'll see this graph update in real time with latency data for any ops your client produces.`}
 								&nbsp;
 								<Link
+									aria-label="Fluid Framework Ops Documentation"
 									target="_blank"
 									rel="noreferrer"
 									href="https://fluidframework.com/docs/concepts/tob/"
