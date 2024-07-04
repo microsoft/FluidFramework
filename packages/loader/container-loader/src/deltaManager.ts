@@ -364,11 +364,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			);
 		} else {
 			assert(
+				// TODO why are we non null asserting here?
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				(batch[0]!.metadata as IBatchMetadata)?.batch === true,
 				0x3ca /* no start batch markup */,
 			);
 			assert(
+				// TODO why are we non null asserting here?
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				(batch[batch.length - 1]!.metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
