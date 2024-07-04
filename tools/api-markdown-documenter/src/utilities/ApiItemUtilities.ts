@@ -23,7 +23,7 @@ import {
 	ApiReleaseTagMixin,
 	ApiStaticMixin,
 	type Excerpt,
-	ReleaseTag,
+	type ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import { type DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
