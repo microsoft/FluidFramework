@@ -33,7 +33,7 @@ export class Breakable {
 	 */
 	public break(brokenBy: Error): never {
 		// If already broken by this error, let it bubble up without rethrowing a modified version.
-		// This prevents internal errors like asserts getting rethrow different errors when wrapped with multiple catches to ensure brokenBy is set.
+		// This prevents internal errors like asserts getting rethrown as different errors when wrapped with multiple call to `{@link Breakable.run}` or `{@link breakingMethod}`.
 		if (this.brokenBy !== brokenBy) {
 			this.use();
 			this.brokenBy = brokenBy;
