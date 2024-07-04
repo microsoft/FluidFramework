@@ -367,6 +367,7 @@ export class SharedTreeBranch<
 
 		this.emit("transactionAborted", this.transactions.size === 0);
 		if (commits.length === 0) {
+			this.emit("transactionRolledBack", this.transactions.size === 0);
 			return [undefined, []];
 		}
 
