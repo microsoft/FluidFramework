@@ -91,7 +91,8 @@ declare namespace ApiItemUtilities {
         isDeprecated,
         isOptional,
         isReadonly,
-        isStatic
+        isStatic,
+        releaseTagToString
     }
 }
 export { ApiItemUtilities }
@@ -554,6 +555,9 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 }
 
 export { ReleaseTag }
+
+// @public
+function releaseTagToString(releaseTag: ReleaseTag): string | undefined;
 
 // @public
 function renderApiModelAsMarkdown(transformConfig: Omit<ApiItemTransformationConfiguration, "logger">, renderConfig: Omit<MarkdownRenderConfiguration, "logger">, fileSystemConfig: FileSystemConfiguration, logger?: Logger): Promise<void>;
