@@ -346,8 +346,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public flush(): void {
 		const batch = this.messageBuffer;
-		const firstBatch = batch[0];
-		if (firstBatch === undefined) {
+		if (batch.length === 0) {
 			return;
 		}
 
@@ -358,18 +357,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				(firstBatch.metadata as IBatchMetadata)?.batch === undefined,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(batch[0]!.metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
 			assert(
-				(firstBatch.metadata as IBatchMetadata)?.batch === true,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(batch[0]!.metadata as IBatchMetadata)?.batch === true,
 				0x3ca /* no start batch markup */,
 			);
-			const lastBatch = batch[batch.length - 1];
-			assert(lastBatch !== undefined, "lastBatch is undefined in DeltaManager.flush()");
 			assert(
-				(lastBatch.metadata as IBatchMetadata)?.batch === false,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(batch[batch.length - 1]!.metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
@@ -895,13 +896,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
-		const firstSeq = messages[0];
-		const lastSeq = messages[messages.length - 1];
-		if (firstSeq === undefined || lastSeq === undefined) {
-			return;
-		}
-		const from = firstSeq.sequenceNumber;
-		const last = lastSeq.sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const from = messages[0]!.sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const last = messages[messages.length - 1]!.sequenceNumber;
 
 		// Report stats about missing and duplicate ops
 		// This helps better understand why we fetch ops from storage, and thus may delay
@@ -968,7 +968,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 		}
 
-		this.updateLatestKnownOpSeqNumber(lastSeq.sequenceNumber);
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1]!.sequenceNumber);
 
 		const n = this.previouslyProcessedMessage?.sequenceNumber;
 		assert(

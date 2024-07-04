@@ -51,6 +51,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
  * May not be compatible or relevant for any Url Resolver
+ * @legacy
  * @alpha
  */
 export interface IParsedUrl {
@@ -80,6 +81,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
+ * @legacy
  * @alpha
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
@@ -90,21 +92,19 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 	const query = parsed.search ?? "";
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
-	if (match?.length !== 3) {
-		return undefined;
-	}
-	const id = match[1];
-	const path = match[2];
-	if (id === undefined || path === undefined) {
-		return undefined;
-	}
-	return {
-		id,
-		path,
-		query,
-		// URLSearchParams returns null if the param is not provided.
-		version: parsed.searchParams.get("version") ?? undefined,
-	};
+	return match?.length === 3
+		? {
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				id: match[1]!,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				path: match[2]!,
+				query,
+				// URLSearchParams returns null if the param is not provided.
+				version: parsed.searchParams.get("version") ?? undefined,
+			}
+		: undefined;
 }
 
 /**
@@ -149,8 +149,12 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 		unreferenced: summary.unreferenced,
 		groupId: summary.groupId,
 	};
+	const keys = Object.keys(summary.tree);
+	for (const key of keys) {
+		// TODO change this to use object.entries
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const summaryObject = summary.tree[key]!;
 
-	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);
@@ -420,14 +424,12 @@ export async function getDocumentAttributes(
 	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
 	const attributesHash =
 		".protocol" in tree.trees
-			? // TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				tree.trees[".protocol"].blobs.attributes!
-			: // TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				tree.blobs[".attributes"]!;
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
 
-	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+	// Non null asserting here because of the length check above
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash!);
 
 	return attributes;
 }

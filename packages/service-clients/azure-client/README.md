@@ -9,9 +9,31 @@ The azure-client package provides a simple and powerful way to consume collabora
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/azure-client` like normal.
+
+To access the `beta` APIs, import via `@fluidframework/azure-client/beta`.
+
+To access the `legacy` APIs, import via `@fluidframework/azure-client/legacy`.
 
 <!-- prettier-ignore-end -->
 
@@ -184,10 +206,14 @@ const text1 = await map1.get(); // Resolve the handle to get the object
 const text1 = await map1.get("text1-unique-id").get();
 ```
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&importInstructions=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## API Documentation
+
+API documentation for **@fluidframework/azure-client** is available at <https://fluidframework.com/docs/apis/azure-client>.
 
 ## Contribution Guidelines
 
@@ -207,33 +233,13 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 ## Help
 
-Not finding what you're looking for in this README? Check out our [GitHub
-Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an
-issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 

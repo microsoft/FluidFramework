@@ -38,8 +38,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -119,6 +119,7 @@
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
+		"@types/proper-lockfile": "^4.1.4",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

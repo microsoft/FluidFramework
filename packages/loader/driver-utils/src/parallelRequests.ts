@@ -594,18 +594,22 @@ export function requestOps(
 		},
 		(deltas: ISequencedDocumentMessage[]) => {
 			// Assert continuing and right start.
-			const firstDelta = deltas[0];
-			assert(firstDelta !== undefined, "firstDelta is undefined in requestOps");
 			if (lastFetch === undefined) {
-				assert(firstDelta.sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				assert(deltas[0]!.sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
 			} else {
-				assert(firstDelta.sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				assert(deltas[0]!.sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
 			}
-			const lastDelta = deltas[deltas.length - 1];
-			assert(lastDelta !== undefined, "lastDelta is undefined in requestOps");
-			lastFetch = lastDelta.sequenceNumber;
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			lastFetch = deltas[deltas.length - 1]!.sequenceNumber;
 			assert(
-				lastFetch - firstDelta.sequenceNumber + 1 === deltas.length,
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				lastFetch - deltas[0]!.sequenceNumber + 1 === deltas.length,
 				0x26f /* "continuous and no duplicates" */,
 			);
 			length += deltas.length;

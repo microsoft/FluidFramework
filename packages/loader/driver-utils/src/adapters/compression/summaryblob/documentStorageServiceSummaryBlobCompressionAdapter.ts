@@ -91,6 +91,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		algorithm: number,
 	): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
+			// TODO why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const firstByte = IsoBuffer.from(blob)[0]!;
 			// eslint-disable-next-line no-bitwise

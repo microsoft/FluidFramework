@@ -14,7 +14,7 @@ import type {
 	ITelemetryBaseLogger,
 	Tagged,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { Timer, assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -150,8 +150,10 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
-	private refreshSnapshotP: Promise<void> | undefined;
+	private _refreshSnapshotP: Promise<number> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
+	private readonly refreshTimer: Timer;
+	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -169,23 +171,28 @@ export class SerializedStateManager {
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
+		snapshotRefreshTimeoutMs?: number,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
 
+		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
+		this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
+			this.tryRefreshSnapshot(),
+		);
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
-		if (pendingLocalState !== undefined) {
+		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
 			const savedOpsSize = pendingLocalState.savedOps.length;
-			const lastSavedOp = pendingLocalState.savedOps[savedOpsSize - 1];
-			if (lastSavedOp !== undefined) {
-				this.lastSavedOpSequenceNumber = lastSavedOp.sequenceNumber;
-			}
+			this.lastSavedOpSequenceNumber =
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				pendingLocalState.savedOps[savedOpsSize - 1]!.sequenceNumber;
 		}
-		containerEvent.once("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
+		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -194,9 +201,11 @@ export class SerializedStateManager {
 
 	/**
 	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
+	 * only intended to be used for testing purposes.
+	 * @returns The snapshot sequence number associated with the latest fetched snapshot
 	 */
-	public get waitForInitialRefresh(): Promise<void> | undefined {
-		return this.refreshSnapshotP;
+	public get refreshSnapshotP(): Promise<number> | undefined {
+		return this._refreshSnapshotP;
 	}
 
 	/**
@@ -243,6 +252,7 @@ export class SerializedStateManager {
 					snapshotBlobs,
 					snapshotSequenceNumber: attributes.sequenceNumber,
 				};
+				this.refreshTimer.start();
 			}
 			return { baseSnapshot, version };
 		} else {
@@ -253,23 +263,7 @@ export class SerializedStateManager {
 				snapshotBlobs,
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
-
-			if (
-				this.refreshSnapshotP === undefined &&
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true
-			) {
-				// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
-				this.refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
-				this.refreshSnapshotP.catch(
-					(error: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>) => {
-						this.mc.logger.sendErrorEvent({
-							eventName: "RefreshLatestSnapshotFailed",
-							error,
-						});
-					},
-				);
-			}
-
+			this.tryRefreshSnapshot();
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
 				blobContents.set(id, stringToBuffer(value, "utf8"));
@@ -286,13 +280,36 @@ export class SerializedStateManager {
 		}
 	}
 
+	private tryRefreshSnapshot(): void {
+		if (
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true &&
+			this._refreshSnapshotP === undefined &&
+			this.latestSnapshot === undefined
+		) {
+			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
+			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
+			this._refreshSnapshotP
+				.catch(
+					(error: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>) => {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "RefreshLatestSnapshotFailed",
+							error,
+						});
+					},
+				)
+				.finally(() => {
+					this._refreshSnapshotP = undefined;
+				});
+		}
+	}
+
 	/**
 	 * Fetch the latest snapshot for the container, including delay-loaded groupIds if pendingLocalState was provided and contained any groupIds.
 	 * Note that this will update the StorageAdapter's cached snapshots for the groupIds (if present)
 	 *
 	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree (must be true to fetch by groupIds)
 	 */
-	private async refreshLatestSnapshot(supportGetSnapshotApi: boolean): Promise<void> {
+	private async refreshLatestSnapshot(supportGetSnapshotApi: boolean): Promise<number> {
 		this.latestSnapshot = await getLatestSnapshotInfo(
 			this.mc,
 			this.storageAdapter,
@@ -318,18 +335,18 @@ export class SerializedStateManager {
 			assert(snapshot !== undefined, 0x973 /* Snapshot should exist */);
 		}
 
-		this.updateSnapshotAndProcessedOpsMaybe();
+		return this.updateSnapshotAndProcessedOpsMaybe();
 	}
 
 	/**
 	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
-	private updateSnapshotAndProcessedOpsMaybe(): void {
+	private updateSnapshotAndProcessedOpsMaybe(): number {
+		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (
-			this.latestSnapshot === undefined ||
-			this.processedOps[0] === undefined ||
-			this.processedOps[this.processedOps.length - 1] === undefined ||
-			// Non null asserting here because of the undefined check above
+			snapshotSequenceNumber === undefined ||
+			this.processedOps.length === 0 ||
+			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.processedOps[this.processedOps.length - 1]!.sequenceNumber <
 				this.lastSavedOpSequenceNumber ||
@@ -337,11 +354,11 @@ export class SerializedStateManager {
 		) {
 			// can't refresh latest snapshot until we have processed the ops up to it.
 			// Pending state would be behind the latest snapshot.
-			return;
+			return -1;
 		}
-		const snapshotSequenceNumber = this.latestSnapshot.snapshotSequenceNumber;
-		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
-		// Non null asserting here because of the undefined check above
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const firstProcessedOpSequenceNumber = this.processedOps[0]!.sequenceNumber;
 		const lastProcessedOpSequenceNumber =
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -358,20 +375,25 @@ export class SerializedStateManager {
 				stashedSnapshotSequenceNumber: this.snapshot?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
+			this.refreshTimer.restart();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
+			this.refreshTimer.restart();
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				newFirstProcessedOpSequenceNumber:
-					this.processedOps.length === 0 ? undefined : this.processedOps[0].sequenceNumber,
+					// Non null asserting here because of the length check above
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this.processedOps.length === 0 ? undefined : this.processedOps[0]!.sequenceNumber,
 			});
 		}
+		return snapshotSequenceNumber;
 	}
 
 	/**
@@ -392,7 +414,6 @@ export class SerializedStateManager {
 				".protocol" in baseSnapshot.trees
 					? baseSnapshot.trees[".protocol"].blobs.attributes
 					: baseSnapshot.blobs[".attributes"];
-			// Why are we non null asserting here
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-non-null-assertion
 			const attributes = JSON.parse(snapshotBlobs[attributesHash!]!);
 			assert(
@@ -405,6 +426,7 @@ export class SerializedStateManager {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				snapshotSequenceNumber: attributes.sequenceNumber as number,
 			};
+			this.refreshTimer.start();
 		}
 	}
 
@@ -484,11 +506,19 @@ export async function getLatestSnapshotInfo(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
+			// get the latest non cached snapshot version
+			const specifiedVersion: IVersion[] = await storageAdapter.getVersions(
+				// eslint-disable-next-line unicorn/no-null
+				null,
+				1,
+				"getLatestSnapshotInfo",
+				FetchSource.noCache,
+			);
 			const { baseSnapshot } = await getSnapshot(
 				mc,
 				storageAdapter,
 				supportGetSnapshotApi,
-				undefined,
+				specifiedVersion[0]?.id,
 			);
 
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);

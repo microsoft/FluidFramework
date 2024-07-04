@@ -1230,12 +1230,9 @@ export class ConnectionManager implements IConnectionManager {
 
 	// Always connect in write mode after getting nacked.
 	private readonly nackHandler = (documentId: string, messages: INack[]): void => {
-		const message = messages[0];
-
-		if (message === undefined) {
-			return;
-		}
-
+		// TODO Why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const message = messages[0]!;
 		if (this._readonlyPermissions === true) {
 			this.props.closeHandler(
 				createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }),

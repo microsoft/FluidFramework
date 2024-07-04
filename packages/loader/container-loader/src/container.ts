@@ -262,6 +262,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
+ * @legacy
  * @alpha
  */
 export async function waitContainerToCatchUp(container: IContainer): Promise<boolean> {
@@ -1015,6 +1016,7 @@ export class Container
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
+			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),
 		);
 
 		const isDomAvailable =
