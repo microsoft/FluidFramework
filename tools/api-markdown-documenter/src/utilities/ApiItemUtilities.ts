@@ -171,6 +171,26 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 }
 
 /**
+ * Gets all custom {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags | block comments} associated with the provided API item.
+ * @returns A mapping from tag name to the associated block contents.
+ *
+ * @public
+ */
+export function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, DocSection[]> {
+	const customBlockComments = new Map<string, DocSection[]>();
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
+		for (const block of apiItem.tsdocComment.customBlocks) {
+			if (!customBlockComments.has(block.blockTag.tagName)) {
+				customBlockComments.set(block.blockTag.tagName, []);
+			}
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			customBlockComments.get(block.blockTag.tagName)!.push(block.content);
+		}
+	}
+	return customBlockComments;
+}
+
+/**
  * Gets any custom-tag comment blocks on the API item matching the provided tag name, if any.
  * Intended for use with tag types for which only multiple instances are allowed in a TSDoc comment (e.g.
  * {@link https://tsdoc.org/pages/tags/throws/ | @throws}).
@@ -188,13 +208,8 @@ function getCustomBlockSectionsForMultiInstanceTags(
 	if (!tagName.startsWith("@")) {
 		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
 	}
-	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
-		const defaultValueBlocks = apiItem.tsdocComment.customBlocks.filter(
-			(block) => block.blockTag.tagName === tagName,
-		);
-		return defaultValueBlocks.map((block) => block.content);
-	}
-	return undefined;
+	const allBlocks = getCustomBlockComments(apiItem);
+	return allBlocks.get(tagName);
 }
 
 /**
