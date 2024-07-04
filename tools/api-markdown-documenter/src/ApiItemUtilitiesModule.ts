@@ -20,6 +20,7 @@ export {
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getModifiers,
+	getModifierTags,
 	getQualifiedApiItemName,
 	getReleaseTag,
 	getReturnsBlock,

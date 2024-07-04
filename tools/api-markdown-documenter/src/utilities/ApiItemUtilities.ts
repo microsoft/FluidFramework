@@ -171,6 +171,20 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
 }
 
 /**
+ * Gets all {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tags} associated with the provided API item.
+ *
+ * @remarks Note that this will include both standard and any preserved custom tags.
+ *
+ * @public
+ */
+export function getModifierTags(apiItem: ApiItem): string[] {
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		return apiItem.tsdocComment.modifierTagSet.nodes.map((node) => node.tagName);
+	}
+	return [];
+}
+
+/**
  * Gets all custom {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags | block comments} associated with the provided API item.
  * @returns A mapping from tag name to the associated block contents.
  *

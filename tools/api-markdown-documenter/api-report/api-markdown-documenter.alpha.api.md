@@ -82,6 +82,7 @@ declare namespace ApiItemUtilities {
         getDeprecatedBlock,
         getExampleBlocks,
         getModifiers,
+        getModifierTags,
         getQualifiedApiItemName,
         getReleaseTag,
         getReturnsBlock,
@@ -365,6 +366,9 @@ function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformat
 
 // @public
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
+
+// @public
+function getModifierTags(apiItem: ApiItem): string[];
 
 // @public
 function getQualifiedApiItemName(apiItem: ApiItem): string;
