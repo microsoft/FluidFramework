@@ -7,8 +7,10 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
@@ -46,7 +48,7 @@ describe("RemoteMessageProcessor", () => {
 					? undefined
 					: {
 							batch: batchMetadata,
-					  },
+						},
 			referenceSequenceNumber: Infinity,
 			contents: JSON.stringify({
 				contents: {
@@ -71,7 +73,7 @@ describe("RemoteMessageProcessor", () => {
 					? undefined
 					: {
 							batch: batchMetadata,
-					  },
+						},
 			compression: undefined,
 			sequenceNumber: seqNum,
 			clientSequenceNumber: clientSeqNum,
@@ -108,7 +110,7 @@ describe("RemoteMessageProcessor", () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: Infinity,
-				content: [
+				messages: [
 					getOutboundMessage("a", true),
 					getOutboundMessage("b"),
 					getOutboundMessage("c"),
@@ -130,6 +132,7 @@ describe("RemoteMessageProcessor", () => {
 				batch = groupingManager.groupBatch(batch);
 			}
 
+			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
 				const compressor = new OpCompressor(mockLogger);
@@ -139,6 +142,7 @@ describe("RemoteMessageProcessor", () => {
 					const splitter = new OpSplitter(
 						[],
 						(messages: IBatchMessage[], refSeqNum?: number) => {
+							++leadingChunkCount;
 							outboundMessages.push(...messages);
 							return 0;
 						},
@@ -150,11 +154,13 @@ describe("RemoteMessageProcessor", () => {
 				}
 			}
 			let startSeqNum = outboundMessages.length + 1;
-			outboundMessages.push(...batch.content);
+			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
 			const actual: ISequencedDocumentMessage[] = [];
 			let seqNum = 1;
+			let actualBatchStartCsn: number | undefined;
+			let emptyProcessResultCount = 0;
 			for (const message of outboundMessages) {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
@@ -167,8 +173,30 @@ describe("RemoteMessageProcessor", () => {
 					referenceSequenceNumber: message.referenceSequenceNumber,
 				} as ISequencedDocumentMessage;
 
-				actual.push(...messageProcessor.process(inboundMessage));
+				const processResult = messageProcessor.process(inboundMessage);
+
+				// It'll be undefined for the first n-1 chunks if chunking is enabled
+				if (processResult === undefined) {
+					++emptyProcessResultCount;
+					continue;
+				}
+
+				actual.push(...processResult.messages);
+
+				if (actualBatchStartCsn === undefined) {
+					actualBatchStartCsn = processResult.batchStartCsn;
+				} else {
+					assert(
+						actualBatchStartCsn === processResult.batchStartCsn,
+						"batchStartCsn shouldn't change while processing a single batch",
+					);
+				}
 			}
+			assert.equal(
+				emptyProcessResultCount,
+				leadingChunkCount,
+				"expected empty result to be 1-1 with leading chunks",
+			);
 
 			const expected = option.grouping
 				? [
@@ -177,16 +205,17 @@ describe("RemoteMessageProcessor", () => {
 						getProcessedMessage("c", startSeqNum, 3),
 						getProcessedMessage("d", startSeqNum, 4),
 						getProcessedMessage("e", startSeqNum, 5, false),
-				  ]
+					]
 				: [
 						getProcessedMessage("a", startSeqNum, startSeqNum++, true),
 						getProcessedMessage("b", startSeqNum, startSeqNum++),
 						getProcessedMessage("c", startSeqNum, startSeqNum++),
 						getProcessedMessage("d", startSeqNum, startSeqNum++),
 						getProcessedMessage("e", startSeqNum, startSeqNum, false),
-				  ];
+					];
 
 			assert.deepStrictEqual(actual, expected, "unexpected output");
+			assert.equal(actualBatchStartCsn, leadingChunkCount + 1, "unexpected batchStartCsn");
 		});
 	});
 
@@ -203,7 +232,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -221,7 +250,7 @@ describe("RemoteMessageProcessor", () => {
 			metadata: { meta: "data" },
 		};
 		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+		const processResult = messageProcessor.process(documentMessage)?.messages ?? [];
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
@@ -282,6 +311,10 @@ describe("RemoteMessageProcessor", () => {
 				},
 			},
 		];
-		assert.deepStrictEqual(result, expected, "unexpected processing of groupedBatch");
+		assert.deepStrictEqual(
+			result,
+			{ messages: expected, batchStartCsn: 12 },
+			"unexpected processing of groupedBatch",
+		);
 	});
 });

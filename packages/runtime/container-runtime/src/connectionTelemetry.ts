@@ -8,8 +8,11 @@ import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
-import { IDocumentMessage, MessageType } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentMessage,
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IEventSampler,
@@ -138,8 +141,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.DELTA_LATENCY_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 					}
@@ -160,8 +162,7 @@ class OpPerfTelemetry {
 			return {
 				sample: () => {
 					eventCount++;
-					const shouldSample =
-						eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
+					const shouldSample = eventCount % OpPerfTelemetry.PROCESSED_OPS_SAMPLE_RATE === 0;
 					if (shouldSample) {
 						eventCount = 0;
 						this.noOpCountForTelemetry = 0;
@@ -209,10 +210,7 @@ class OpPerfTelemetry {
 				) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const latencyStats = this.latencyStatistics.get(msg.clientSequenceNumber)!;
-					assert(
-						latencyStats !== undefined,
-						0x7c2 /* Latency stats for op should exist */,
-					);
+					assert(latencyStats !== undefined, 0x7c2 /* Latency stats for op should exist */);
 					assert(
 						latencyStats.opProcessingTimes.outboundPushEventTime === undefined,
 						0x2c8 /* "outboundPushEventTime should be undefined" */,

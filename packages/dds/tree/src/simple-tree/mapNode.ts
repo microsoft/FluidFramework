@@ -3,22 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import type { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexMapNodeSchema,
-	FlexTreeMapNode,
-	FlexTreeNode,
-	FlexTreeNodeSchema,
-	FlexTreeTypedField,
-	FlexTreeUnboxField,
-	FlexibleFieldContent,
+	type FlexMapNodeSchema,
+	type FlexTreeNode,
+	type MapTreeNode,
+	cursorForMapTreeNode,
+	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
+	isMapTreeNode,
 } from "../feature-libraries/index.js";
 import {
-	InsertableContent,
+	type InsertableContent,
 	getProxyForField,
 	markContentType,
-	prepareContentForInsert,
+	prepareContentForHydration,
 } from "./proxies.js";
 import { getFlexNode } from "./proxyBinding.js";
 import { getSimpleNodeSchema } from "./schemaCaching.js";
@@ -26,16 +25,16 @@ import {
 	NodeKind,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchemaClass,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeFromImplicitAllowedTypes,
-	type,
+	type TreeNodeSchemaClass,
+	type WithType,
+	type TreeNodeSchema,
+	type TreeNodeFromImplicitAllowedTypes,
+	typeNameSymbol,
 } from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeNode, TreeNodeValid } from "./types.js";
+import { mapTreeFromNodeData } from "./toMapTree.js";
+import { type TreeNode, TreeNodeValid } from "./types.js";
 import { getFlexSchema } from "./toFlexSchema.js";
-import { RawTreeNode, nodeContent, rawError } from "./rawNode.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * A map of string keys to tree objects.
@@ -43,7 +42,7 @@ import { RawTreeNode, nodeContent, rawError } from "./rawNode.js";
  * @privateRemarks
  * Add support for `clear` once we have established merge semantics for it.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
@@ -137,15 +136,16 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public delete(key: string): void {
 		const node = getFlexNode(this);
+		if (isMapTreeNode(node)) {
+			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
+		}
+
 		node.delete(key);
 	}
 	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = getFlexNode(this);
 		for (const key of node.keys()) {
-			yield [
-				key,
-				getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
-			];
+			yield [key, getProxyForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
@@ -163,19 +163,20 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeMapNode {
 		const node = getFlexNode(this);
-		const content = prepareContentForInsert(
-			value as InsertableContent,
-			node.context.checkout.forest,
-		);
+		if (isMapTreeNode(node)) {
+			throw new UsageError(`A map cannot be mutated before being inserted into the tree`);
+		}
 
 		const classSchema = getSimpleNodeSchema(node.schema);
-		const cursor = cursorFromNodeData(
-			content,
+		const mapTree = mapTreeFromNodeData(
+			value as InsertableContent,
 			classSchema.info as ImplicitAllowedTypes,
 			node.context.nodeKeyManager,
 			getSchemaAndPolicy(node),
 		);
 
+		prepareContentForHydration(mapTree, node.context.checkout.forest);
+		const cursor = mapTree !== undefined ? cursorForMapTreeNode(mapTree) : undefined;
 		node.set(key, cursor);
 		return this;
 	}
@@ -235,13 +236,13 @@ export function mapSchema<
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
 			input: T2,
-		): RawTreeNode<FlexTreeNodeSchema, unknown> {
-			return new RawMapNode(
+		): MapTreeNode {
+			return getOrCreateMapTreeNode(
 				flexSchema,
-				copyContent(
-					flexSchema.name,
-					input as Iterable<[string, InsertableContent]>,
-				) as ReadonlyMap<string, InsertableContent>,
+				mapTreeFromNodeData(
+					copyContent(flexSchema.name, input as Iterable<[string, InsertableContent]>),
+					this as unknown as ImplicitAllowedTypes,
+				),
 			);
 		}
 
@@ -256,7 +257,7 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 	}
@@ -269,67 +270,6 @@ export function mapSchema<
 		T
 	> = schema;
 	return schemaErased;
-}
-
-/**
- * The implementation of a map node created by {@link createRawNode}.
- */
-export class RawMapNode<TSchema extends FlexMapNodeSchema>
-	extends RawTreeNode<TSchema, ReadonlyMap<string, InsertableContent>>
-	implements FlexTreeMapNode<TSchema>
-{
-	public get size(): number {
-		return this[nodeContent].size;
-	}
-	public has(key: string): boolean {
-		return this[nodeContent].has(key);
-	}
-	public get(key: string): FlexTreeUnboxField<TSchema["info"]> {
-		return this[nodeContent].get(key) as FlexTreeUnboxField<TSchema["info"]>;
-	}
-	public keys(): IterableIterator<FieldKey> {
-		return this[nodeContent].keys() as IterableIterator<FieldKey>;
-	}
-	public values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">> {
-		throw rawError("Iterating map values");
-	}
-	public entries(): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	> {
-		throw rawError("Iterating map entries");
-	}
-	public forEach(
-		callbackFn: (
-			value: FlexTreeUnboxField<TSchema["info"], "notEmpty">,
-			key: FieldKey,
-			map: FlexTreeMapNode<TSchema>,
-		) => void,
-		thisArg?: unknown,
-	): void {
-		throw rawError("Iterating maps with forEach");
-	}
-	public set(key: string, value: FlexibleFieldContent<TSchema["info"]> | undefined): void {
-		throw rawError("Setting a map entry");
-	}
-	public delete(key: string): void {
-		throw rawError("Deleting a map entry");
-	}
-
-	public get asObject(): {
-		readonly [P in FieldKey]?: FlexTreeUnboxField<TSchema["info"], "notEmpty">;
-	} {
-		throw rawError("Converting a map to an object");
-	}
-
-	public [Symbol.iterator](): IterableIterator<
-		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
-	> {
-		return this.entries();
-	}
-
-	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
-		throw rawError("Boxed iteration");
-	}
 }
 
 function copyContent<T>(

@@ -5,22 +5,22 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
-import { IdAllocator, brand } from "../../util/index.js";
+import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
+import { type IdAllocator, brand } from "../../util/index.js";
 import {
-	CrossFieldManager,
+	type CrossFieldManager,
 	CrossFieldTarget,
-	NodeChangeRebaser,
-	NodeExistenceState,
-	NodeId,
-	RebaseRevisionMetadata,
+	type NodeChangeRebaser,
+	NodeAttachState,
+	type NodeId,
+	type RebaseRevisionMetadata,
 } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	MoveEffect,
-	MoveEffectTable,
+	type MoveEffect,
+	type MoveEffectTable,
 	getMoveEffect,
 	isMoveIn,
 	isMoveMark,
@@ -28,16 +28,16 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	CellId,
-	CellMark,
-	Changeset,
-	Mark,
-	MarkEffect,
-	MarkList,
-	MoveId,
-	MoveIn,
-	MoveOut,
-	NoopMark,
+	type CellId,
+	type CellMark,
+	type Changeset,
+	type Mark,
+	type MarkEffect,
+	type MarkList,
+	type MoveId,
+	type MoveIn,
+	type MoveOut,
+	type NoopMark,
 	NoopMarkType,
 } from "./types.js";
 import {
@@ -74,7 +74,6 @@ export function rebase(
 	genId: IdAllocator,
 	manager: CrossFieldManager,
 	revisionMetadata: RebaseRevisionMetadata,
-	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Changeset {
 	return rebaseMarkList(
 		change,
@@ -83,7 +82,6 @@ export function rebase(
 		rebaseChild,
 		genId,
 		manager as MoveEffectTable,
-		nodeExistenceState,
 	);
 }
 
@@ -94,21 +92,13 @@ function rebaseMarkList(
 	rebaseChild: NodeChangeRebaser,
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect>,
-	nodeExistenceState: NodeExistenceState,
 ): MarkList {
 	const factory = new MarkListFactory();
 	const queue = new RebaseQueue(baseMarkList, currMarkList, metadata, moveEffects);
 
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
-		const rebasedMark = rebaseMark(
-			currMark,
-			baseMark,
-			metadata,
-			rebaseChild,
-			moveEffects,
-			nodeExistenceState,
-		);
+		const rebasedMark = rebaseMark(currMark, baseMark, rebaseChild, moveEffects);
 		factory.push(rebasedMark);
 	}
 
@@ -121,9 +111,9 @@ function rebaseMarkList(
  * @param revision - The revision, if available.
  * @returns A NoOp mark that targets the same cells as the input mark.
  */
-function generateNoOpWithCellId(mark: Mark, metadata: RevisionMetadataSource): CellMark<NoopMark> {
+function generateNoOpWithCellId(mark: Mark): CellMark<NoopMark> {
 	const length = mark.count;
-	const cellId = getInputCellId(mark, metadata);
+	const cellId = getInputCellId(mark);
 	return cellId === undefined ? { count: length } : { count: length, cellId };
 }
 
@@ -141,8 +131,8 @@ class RebaseQueue {
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
 		this.newMarks = new MarkQueue(newMarks, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, metadata, getInputCellId);
-		this.newMarksCellSources = cellSourcesFromMarks(newMarks, metadata, getInputCellId);
+		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getInputCellId);
+		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
 
 	public isEmpty(): boolean {
@@ -160,14 +150,14 @@ class RebaseQueue {
 		if (baseMark === undefined) {
 			const dequeuedNewMark = this.newMarks.dequeue();
 			return {
-				baseMark: generateNoOpWithCellId(dequeuedNewMark, this.metadata),
+				baseMark: generateNoOpWithCellId(dequeuedNewMark),
 				newMark: dequeuedNewMark,
 			};
 		} else if (newMark === undefined) {
 			return this.dequeueBase();
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			const baseId = getInputCellId(baseMark, this.metadata);
-			const newId = getInputCellId(newMark, this.metadata);
+			const baseId = getInputCellId(baseMark);
+			const newId = getInputCellId(newMark);
 			assert(
 				baseId !== undefined && newId !== undefined,
 				0x89f /* Both marks should have cell IDs */,
@@ -202,7 +192,7 @@ class RebaseQueue {
 		const baseMark =
 			length !== undefined ? this.baseMarks.dequeueUpTo(length) : this.baseMarks.dequeue();
 
-		let newMark: Mark = generateNoOpWithCellId(baseMark, this.metadata);
+		let newMark: Mark = generateNoOpWithCellId(baseMark);
 
 		const movedEffect = getMovedEffectFromBaseMark(this.moveEffects, baseMark);
 
@@ -218,7 +208,7 @@ class RebaseQueue {
 
 	private dequeueNew(): RebaseMarks {
 		const newMark = this.newMarks.dequeue();
-		return { newMark, baseMark: generateNoOpWithCellId(newMark, this.metadata) };
+		return { newMark, baseMark: generateNoOpWithCellId(newMark) };
 	}
 
 	private dequeueBoth(): RebaseMarks {
@@ -235,9 +225,7 @@ class RebaseQueue {
 		return {
 			baseMark: sizedBaseMark,
 			newMark:
-				movedMark === undefined
-					? sizedNewMark
-					: addMovedMarkEffect(sizedNewMark, movedMark),
+				movedMark === undefined ? sizedNewMark : addMovedMarkEffect(sizedNewMark, movedMark),
 		};
 	}
 }
@@ -271,10 +259,8 @@ interface RebaseMarks {
 function rebaseMark(
 	currMark: Mark,
 	baseMark: Mark,
-	metadata: RevisionMetadataSource,
 	rebaseChild: NodeChangeRebaser,
 	moveEffects: MoveEffectTable,
-	nodeExistenceState: NodeExistenceState,
 ): Mark {
 	const rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const movedNodeChanges = getMovedChangesFromBaseMark(moveEffects, baseMark);
@@ -286,15 +272,13 @@ function rebaseMark(
 		rebasedMark.changes = movedNodeChanges;
 	}
 
-	return rebaseMarkIgnoreChild(rebasedMark, baseMark, metadata, moveEffects, nodeExistenceState);
+	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects);
 }
 
 function rebaseMarkIgnoreChild(
 	currMark: Mark,
 	baseMark: Mark,
-	metadata: RevisionMetadataSource,
 	moveEffects: MoveEffectTable,
-	nodeExistenceState: NodeExistenceState,
 ): Mark {
 	let rebasedMark: Mark;
 	if (isDetach(baseMark)) {
@@ -306,7 +290,7 @@ function rebaseMarkIgnoreChild(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
-		const baseCellId = getDetachOutputCellId(baseMark, metadata);
+		const baseCellId = getDetachOutputCellId(baseMark);
 
 		if (isMoveOut(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
@@ -336,19 +320,19 @@ function rebaseMarkIgnoreChild(
 			baseMark.cellId !== undefined,
 			0x81a /* AttachAndDetach mark should target an empty cell */,
 		);
+		if (isMoveIn(baseMark.attach) && isMoveOut(baseMark.detach)) {
+			// Orphaned moves are effectively cell renames.
+			return withCellId(currMark, getDetachOutputCellId(baseMark.detach));
+		}
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
-			metadata,
 			moveEffects,
-			nodeExistenceState,
 		);
 		rebasedMark = rebaseMarkIgnoreChild(
 			halfRebasedMark,
 			{ ...baseMark.detach, count: baseMark.count },
-			metadata,
 			moveEffects,
-			nodeExistenceState,
 		);
 	} else {
 		rebasedMark = currMark;
@@ -360,7 +344,10 @@ function rebaseMarkIgnoreChild(
  * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follows?: MarkEffect } {
+function separateEffectsForMove(mark: MarkEffect): {
+	remains?: MarkEffect;
+	follows?: MarkEffect;
+} {
 	const type = mark.type;
 	switch (type) {
 		case "Remove":
@@ -458,7 +445,11 @@ function moveRebasedChanges(
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1, newEffect);
 }
 
-function rebaseNodeChange(currMark: Mark, baseMark: Mark, nodeRebaser: NodeChangeRebaser): Mark {
+function rebaseNodeChange(
+	currMark: Mark,
+	baseMark: Mark,
+	nodeRebaser: NodeChangeRebaser,
+): Mark {
 	const baseChange = baseMark.changes;
 	const currChange = currMark.changes;
 
@@ -466,19 +457,18 @@ function rebaseNodeChange(currMark: Mark, baseMark: Mark, nodeRebaser: NodeChang
 		return currMark;
 	}
 
-	if (markEmptiesCells(baseMark) && !isMoveMark(baseMark)) {
-		return withNodeChange(
-			currMark,
-			nodeRebaser(currChange, baseChange, NodeExistenceState.Dead),
-		);
-	} else if (markFillsCells(baseMark) && !isMoveMark(baseMark)) {
-		return withNodeChange(
-			currMark,
-			nodeRebaser(currChange, baseChange, NodeExistenceState.Alive),
-		);
-	}
+	const nodeState = nodeStateAfterMark(baseMark);
+	return withNodeChange(currMark, nodeRebaser(currChange, baseChange, nodeState));
+}
 
-	return withNodeChange(currMark, nodeRebaser(currChange, baseChange));
+function nodeStateAfterMark(mark: Mark): NodeAttachState {
+	if (markEmptiesCells(mark)) {
+		return NodeAttachState.Detached;
+	} else if (markFillsCells(mark)) {
+		return NodeAttachState.Attached;
+	} else {
+		return mark.cellId === undefined ? NodeAttachState.Attached : NodeAttachState.Detached;
+	}
 }
 
 function makeDetachedMark(mark: Mark, cellId: ChangeAtomId): Mark {

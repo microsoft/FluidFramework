@@ -4,21 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { ISummarizer } from "@fluidframework/container-runtime/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { SessionId } from "@fluidframework/id-compressor";
+import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -26,11 +30,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
-	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	ITestFluidObject,
-	ITestObjectProvider,
-	SummaryInfo,
+	type ChannelFactoryRegistry,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	type SummaryInfo,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
@@ -38,35 +42,35 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
-	AnnouncedVisitor,
-	ChangeFamily,
-	ChangeFamilyEditor,
+	type AnnouncedVisitor,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
 	CommitKind,
-	CommitMetadata,
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeDestruction,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-	DeltaMark,
-	DeltaRoot,
-	DeltaVisitor,
-	DetachedFieldIndex,
-	FieldUpPath,
-	IEditableForest,
-	IForestSubscription,
-	JsonableTree,
-	Revertible,
-	RevisionInfo,
-	RevisionMetadataSource,
-	RevisionTag,
+	type CommitMetadata,
+	type DeltaDetachedNodeBuild,
+	type DeltaDetachedNodeDestruction,
+	type DeltaFieldChanges,
+	type DeltaFieldMap,
+	type DeltaMark,
+	type DeltaRoot,
+	type DeltaVisitor,
+	type DetachedFieldIndex,
+	type FieldUpPath,
+	type IEditableForest,
+	type IForestSubscription,
+	type JsonableTree,
+	type Revertible,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	RevisionTagCodec,
-	TaggedChange,
-	TreeStoredSchema,
+	type TaggedChange,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	UpPath,
+	type UpPath,
 	announceDelta,
 	applyDelta,
 	clonePath,
@@ -89,14 +93,14 @@ import {
 	leaf,
 	singleJsonCursor,
 } from "../domains/index.js";
-import { HasListeners, IEmitter, Listenable } from "../events/index.js";
+import type { HasListeners, IEmitter, Listenable } from "../events/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
-	ContextuallyTypedNodeData,
+	type ContextuallyTypedNodeData,
 	FieldKinds,
-	FlexFieldSchema,
-	FlexTreeTypedField,
-	NodeKeyManager,
+	type FlexFieldSchema,
+	type FlexTreeTypedField,
+	type NodeKeyManager,
 	SchemaBuilderBase,
 	ViewSchema,
 	buildForest,
@@ -113,17 +117,17 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
-	CheckoutEvents,
+	type CheckoutEvents,
 	CheckoutFlexTreeView,
-	ISharedTree,
-	ITreeCheckout,
-	InitializeAndSchematizeConfiguration,
-	RevertibleFactory,
+	type ISharedTree,
+	type ITreeCheckout,
+	type InitializeAndSchematizeConfiguration,
+	type RevertibleFactory,
 	SharedTree,
-	SharedTreeContentSnapshot,
+	type SharedTreeContentSnapshot,
 	SharedTreeFactory,
-	TreeCheckout,
-	TreeContent,
+	type TreeCheckout,
+	type TreeContent,
 	createTreeCheckout,
 	type ISharedTreeEditor,
 	type ITransaction,
@@ -131,12 +135,15 @@ import {
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
+import {
+	SchematizingSimpleTreeView,
+	requireSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
-import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
-import { JsonCompatible, Mutable, nestedMapFromFlatList } from "../util/index.js";
+import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import type { ImplicitFieldSchema, TreeViewConfiguration } from "../simple-tree/index.js";
+import { type JsonCompatible, type Mutable, nestedMapFromFlatList } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 
@@ -230,9 +237,7 @@ export class TestTreeProvider {
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
-							summarizeType === SummarizeType.disabled
-								? { state: "disabled" }
-								: undefined,
+							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
 					},
 					enableRuntimeIdCompressor: "on",
 				},
@@ -347,6 +352,7 @@ export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
 	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
+	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -376,6 +382,7 @@ export class TestTreeProviderLite {
 				clientId: `test-client-${i}`,
 				id: "test",
 				idCompressor: createIdCompressor(sessionId),
+				logger: this.logger,
 			});
 			const tree = this.factory.create(
 				runtime,
@@ -677,12 +684,32 @@ export function checkoutWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): TreeCheckout {
+	const { checkout } = createCheckoutWithContent(content, args);
+	return checkout;
+}
+
+export function createCheckoutWithContent(
+	content: TreeContent,
+	args?: {
+		events?: Listenable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
+	},
+): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const forest = forestWithContent(content);
-	return createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		...args,
-		forest,
-		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
-	});
+	const logger = createMockLoggerExt();
+	const checkout = createTreeCheckout(
+		testIdCompressor,
+		mintRevisionTag,
+		testRevisionTagCodec,
+		{
+			...args,
+			forest,
+			schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
+			logger,
+		},
+	);
+	return { checkout, logger };
 }
 
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
@@ -713,7 +740,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
-	initializeForest(forest, nodeCursors, testRevisionTagCodec);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec, testIdCompressor);
 	return forest;
 }
 
@@ -841,7 +868,10 @@ export function expectJsonTree(
 	}
 }
 
-export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+export function expectEqualPaths(
+	path: UpPath | undefined,
+	expectedPath: UpPath | undefined,
+): void {
 	if (!compareUpPaths(path, expectedPath)) {
 		// This is slower than above compare, so only do it in the error case.
 		// Make a nice error message:
@@ -1029,7 +1059,8 @@ export function applyTestDelta(
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
+		detachedFieldIndex ??
+			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
 	);
 }
 
@@ -1044,7 +1075,8 @@ export function announceTestDelta(
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
+		detachedFieldIndex ??
+			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
 	);
 }
 
@@ -1107,8 +1139,13 @@ export function createTestUndoRedoStacks(events: Listenable<CheckoutEvents>): {
 	return { undoStack, redoStack, unsubscribe };
 }
 
+export function assertIsSessionId(sessionId: string): SessionId {
+	assertIsStableId(sessionId);
+	return sessionId as SessionId;
+}
+
 export const testIdCompressor = createAlwaysFinalizedIdCompressor(
-	"00000000-0000-4000-b000-000000000000" as SessionId,
+	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
 );
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
@@ -1117,7 +1154,7 @@ export function mintRevisionTag(): RevisionTag {
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
 
 /**
- * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+ * Like {@link ITree.viewWith}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
  */
 export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	tree: SharedTree,
@@ -1178,17 +1215,26 @@ export function treeTestFactory(
 }
 
 /**
- * Given the TreeConfiguration, returns a view.
+ * Given the TreeViewConfiguration, returns an uninitialized view.
  *
  * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
  * This should allow realistic (app like testing) of all the simple-tree APIs.
+ *
+ * Typically, users will want to initialize the returned view with some content (thereby setting its schema) using `TreeView.initialize`.
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
-	config: TreeConfiguration<TSchema>,
+	config: TreeViewConfiguration<TSchema>,
 	nodeKeyManager?: NodeKeyManager,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config, nodeKeyManager ?? new MockNodeKeyManager());
-	const checkout = checkoutWithContent(flexConfig);
+	const checkout = createTreeCheckout(
+		testIdCompressor,
+		mintRevisionTag,
+		testRevisionTagCodec,
+		{
+			forest: buildForest(),
+			schema: new TreeStoredSchemaRepository(),
+		},
+	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

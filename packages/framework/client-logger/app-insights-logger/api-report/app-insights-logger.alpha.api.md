@@ -4,9 +4,6 @@
 
 ```ts
 
-import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-
 // @beta
 export interface CategoryFilter {
     categories: TelemetryEventCategory[];

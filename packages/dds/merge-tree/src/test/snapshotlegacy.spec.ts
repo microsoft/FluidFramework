@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -149,8 +149,7 @@ describe("snapshot", () => {
 				options: {
 					attribution: {
 						track: true,
-						policyFactory:
-							createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+						policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 					},
 				},
 			},
@@ -162,7 +161,9 @@ describe("snapshot", () => {
 		const applyAllOps = () =>
 			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
 
-		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
+		ops.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
+		);
 
 		applyAllOps();
 
@@ -208,7 +209,9 @@ describe("snapshot", () => {
 		const applyAllOps = () =>
 			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
 
-		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
+		ops.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
+		);
 
 		applyAllOps();
 

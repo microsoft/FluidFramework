@@ -4,7 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -71,9 +71,7 @@ export function getW3CData(url: string, initiatorType: string) {
 					? indResTime.responseEnd - indResTime.responseStart
 					: undefined;
 			fetchStartToResponseEndTime =
-				indResTime.fetchStart > 0
-					? indResTime.responseEnd - indResTime.fetchStart
-					: undefined;
+				indResTime.fetchStart > 0 ? indResTime.responseEnd - indResTime.fetchStart : undefined;
 			reqStartToResponseEndTime =
 				indResTime.requestStart > 0
 					? indResTime.responseEnd - indResTime.requestStart
@@ -119,9 +117,13 @@ export function validateMessages(
 	strict: boolean = true,
 ) {
 	if (messages.length !== 0) {
-		const start = messages[0].sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const start = messages[0]!.sequenceNumber;
 		const length = messages.length;
-		const last = messages[length - 1].sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const last = messages[length - 1]!.sequenceNumber;
 		if (last + 1 !== from + length) {
 			// If not strict, then return the first consecutive sub-block. If strict or start
 			// seq number is not what we expected, then return no ops.
@@ -131,8 +133,12 @@ export function validateMessages(
 				let validOpsCount = 1;
 				while (
 					validOpsCount < messages.length &&
-					messages[validOpsCount].sequenceNumber ===
-						messages[validOpsCount - 1].sequenceNumber + 1
+					// TODO Why are we non null asserting here
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					messages[validOpsCount]!.sequenceNumber ===
+						// TODO Why are we non null asserting here
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						messages[validOpsCount - 1]!.sequenceNumber + 1
 				) {
 					validOpsCount++;
 				}
@@ -149,7 +155,9 @@ export function validateMessages(
 					validLength: messages.length,
 					lastValidOpSeqNumber:
 						messages.length > 0
-							? messages[messages.length - 1].sequenceNumber
+							? // Non null asserting here because of the length check
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								messages[messages.length - 1]!.sequenceNumber
 							: undefined,
 					strict,
 				}),

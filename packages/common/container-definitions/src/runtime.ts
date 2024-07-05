@@ -11,7 +11,6 @@ import type {
 import type {
 	IClientDetails,
 	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISummaryTree,
 } from "@fluidframework/driver-definitions";
 import type {
@@ -22,6 +21,7 @@ import type {
 	ISummaryContent,
 	IVersion,
 	MessageType,
+	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -56,6 +56,7 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
+ * @legacy
  * @alpha
  */
 export interface IRuntime extends IDisposable {
@@ -113,6 +114,7 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
+ * @legacy
  * @alpha
  */
 export interface IBatchMessage {
@@ -129,6 +131,7 @@ export interface IBatchMessage {
  *
  * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn
  * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+ * @legacy
  * @alpha
  */
 export interface IContainerContext {
@@ -148,8 +151,14 @@ export interface IContainerContext {
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+	readonly submitFn: (
+		type: MessageType,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		contents: any,
+		batch: boolean,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		appData?: any,
+	) => number;
 	/**
 	 * @returns clientSequenceNumber of last message in a batch
 	 */
@@ -212,11 +221,13 @@ export interface IContainerContext {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProvideRuntimeFactory {
@@ -228,6 +239,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
+ * @legacy
  * @alpha
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
@@ -243,6 +255,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
+ * @legacy
  * @alpha
  */
 export interface IGetPendingLocalStateProps {

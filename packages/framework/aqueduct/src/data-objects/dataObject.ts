@@ -4,11 +4,15 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
+import {
+	type ISharedDirectory,
+	MapFactory,
+	SharedDirectory,
+} from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
-import { type DataObjectTypes } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -19,6 +23,7 @@ import { type DataObjectTypes } from "./types.js";
  * will automatically be registered.
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @legacy
  * @alpha
  */
 export abstract class DataObject<

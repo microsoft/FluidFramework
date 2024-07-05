@@ -18,6 +18,7 @@ export async function disconnectDocument(
 	socket: IWebSocket,
 	{
 		clientManager,
+		ordererManager,
 		logger,
 		throttleAndUsageStorageManager,
 		socketTracker,
@@ -43,10 +44,11 @@ export async function disconnectDocument(
 		}
 		const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
 		logger.info(`Disconnect of ${clientId}`, { messageMetaData });
-		Lumberjack.info(
-			`Disconnect of ${clientId}`,
-			getLumberBaseProperties(connection.documentId, connection.tenantId),
+		const lumberjackProperties = getLumberBaseProperties(
+			connection.documentId,
+			connection.tenantId,
 		);
+		Lumberjack.info(`Disconnect of ${clientId}`, lumberjackProperties);
 
 		connection
 			.disconnect()
@@ -54,14 +56,11 @@ export async function disconnectDocument(
 				// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 				// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 				disconnectedOrdererConnections.add(clientId);
+				ordererManager.removeOrderer(connection.tenantId, connection.documentId);
 			})
 			.catch((error) => {
 				const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
-				Lumberjack.error(
-					errorMsg,
-					getLumberBaseProperties(connection.documentId, connection.tenantId),
-					error,
-				);
+				Lumberjack.error(errorMsg, lumberjackProperties, error);
 			});
 		if (isClientConnectivityCountingEnabled && throttleAndUsageStorageManager) {
 			const connectionTimestamp = connectionTimeMap.get(clientId);

@@ -4,7 +4,10 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import {
+	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
@@ -28,6 +31,7 @@ import {
 	InstrumentedStorageTokenFetcher,
 	InstrumentedTokenFetcher,
 	OdspErrorTypes,
+	authHeaderFromTokenResponse,
 	OdspResourceTokenFetchOptions,
 	TokenFetchOptions,
 	TokenFetcher,
@@ -52,6 +56,7 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOdspResponse<T> {
@@ -61,7 +66,14 @@ export interface IOdspResponse<T> {
 	duration: number;
 }
 
-export interface TokenFetchOptionsEx extends TokenFetchOptions {
+/**
+ * This interface captures the portion of TokenFetchOptions required for refreshing tokens
+ * It is controlled by logic in getWithRetryForTokenRefresh to specify what is the required refresh behavior
+ */
+export interface TokenFetchOptionsEx {
+	refresh: boolean;
+	claims?: string;
+	tenantId?: string;
 	/**
 	 * The previous error we hit in {@link getWithRetryForTokenRefresh}.
 	 */
@@ -164,13 +176,9 @@ export async function fetchHelper(
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (error.name === "AbortError") {
-				throw new RetryableError(
-					"Fetch Timeout (AbortError)",
-					OdspErrorTypes.fetchTimeout,
-					{
-						driverVersion,
-					},
-				);
+				throw new RetryableError("Fetch Timeout (AbortError)", OdspErrorTypes.fetchTimeout, {
+					driverVersion,
+				});
 			}
 			// TCP/IP timeout
 			if (redactedErrorText.includes("ETIMEDOUT")) {
@@ -216,7 +224,10 @@ export async function fetchArray(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<ArrayBuffer>> {
-	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	const { content, headers, propsToLog, duration } = await fetchHelper(
+		requestInfo,
+		requestInit,
+	);
 	let arrayBuffer: ArrayBuffer;
 	try {
 		arrayBuffer = await content.arrayBuffer();
@@ -250,7 +261,10 @@ export async function fetchAndParseAsJSONHelper<T>(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<T>> {
-	const { content, headers, propsToLog, duration } = await fetchHelper(requestInfo, requestInit);
+	const { content, headers, propsToLog, duration } = await fetchHelper(
+		requestInfo,
+		requestInit,
+	);
 	let text: string | undefined;
 	try {
 		text = await content.text();
@@ -349,7 +363,8 @@ export function toInstrumentedOdspStorageTokenFetcher(
 		logger,
 		resolvedUrlParts,
 		tokenFetcher,
-		true, // throwOnNullToken,
+		true, // throwOnNullToken
+		false, // returnPlainToken
 	);
 	// Drop undefined from signature - we can do it safely due to throwOnNullToken == true above
 	return res as InstrumentedStorageTokenFetcher;
@@ -359,12 +374,14 @@ export function toInstrumentedOdspStorageTokenFetcher(
  * Returns a function that can be used to fetch storage or websocket token.
  * There are scenarios where websocket token is not required / present (consumer stack and ordering service token),
  * thus it could return null. Use toInstrumentedOdspStorageTokenFetcher if you deal with storage token.
+ * @param returnPlainToken - When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
  */
 export function toInstrumentedOdspTokenFetcher(
 	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
+	returnPlainToken: boolean,
 ): InstrumentedTokenFetcher {
 	return async (
 		options: TokenFetchOptions,
@@ -389,7 +406,9 @@ export function toInstrumentedOdspTokenFetcher(
 					...resolvedUrlParts,
 				}).then(
 					(tokenResponse) => {
-						const token = tokenFromResponse(tokenResponse);
+						const returnVal = returnPlainToken
+							? tokenFromResponse(tokenResponse)
+							: authHeaderFromTokenResponse(tokenResponse);
 						// This event alone generates so many events that is materially impacts cost of telemetry
 						// Thus do not report end event when it comes back quickly.
 						// Note that most of the hosts do not report if result is comming from cache or not,
@@ -398,10 +417,10 @@ export function toInstrumentedOdspTokenFetcher(
 						if (alwaysRecordTokenFetchTelemetry || event.duration >= 32) {
 							event.end({
 								fromCache: isTokenFromCache(tokenResponse),
-								isNull: token === null,
+								isNull: returnVal === null,
 							});
 						}
-						if (token === null && throwOnNullToken) {
+						if (returnVal === null && throwOnNullToken) {
 							throw new NonRetryableError(
 								// pre-0.58 error message: Token is null for ${name} call
 								`The Host-provided token fetcher returned null`,
@@ -409,7 +428,7 @@ export function toInstrumentedOdspTokenFetcher(
 								{ method: name, driverVersion },
 							);
 						}
-						return token;
+						return returnVal;
 					},
 					(error) => {
 						// There is an important but unofficial contract here where token providers can set canRetry: true
@@ -422,9 +441,7 @@ export function toInstrumentedOdspTokenFetcher(
 								new NetworkErrorBasic(
 									`The Host-provided token fetcher threw an error`,
 									OdspErrorTypes.fetchTokenError,
-									typeof rawCanRetry === "boolean"
-										? rawCanRetry
-										: false /* canRetry */,
+									typeof rawCanRetry === "boolean" ? rawCanRetry : false /* canRetry */,
 									{ method: name, errorMessage, driverVersion },
 								),
 						);
@@ -507,7 +524,9 @@ export function isInstanceOfISnapshot(
  * This tells whether request if for a specific loading group or not. The snapshot which
  * we fetch on initial load, fetches all ungrouped content.
  */
-export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined): boolean {
+export function isSnapshotFetchForLoadingGroup(
+	loadingGroupIds: string[] | undefined,
+): boolean {
 	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
 }
 

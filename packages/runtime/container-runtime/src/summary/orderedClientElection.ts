@@ -24,12 +24,12 @@ export type ImmutablePrimitives = undefined | null | boolean | string | number |
 export type Immutable<T> = T extends ImmutablePrimitives
 	? T
 	: T extends (infer A)[]
-	? readonly Immutable<A>[]
-	: T extends Map<infer K, infer V>
-	? ReadonlyMap<Immutable<K>, Immutable<V>>
-	: T extends Set<infer V>
-	? ReadonlySet<Immutable<V>>
-	: { readonly [K in keyof T]: Immutable<T[K]> };
+		? readonly Immutable<A>[]
+		: T extends Map<infer K, infer V>
+			? ReadonlyMap<Immutable<K>, Immutable<V>>
+			: T extends Set<infer V>
+				? ReadonlySet<Immutable<V>>
+				: { readonly [K in keyof T]: Immutable<T[K]> };
 
 /** Minimum information for a client tracked for election consideration. */
 export interface ITrackedClient {
@@ -68,7 +68,8 @@ export interface IOrderedClientCollectionEvents extends IEvent {
 }
 
 /** Contract for a sorted collection of all clients in the quorum. */
-export interface IOrderedClientCollection extends IEventProvider<IOrderedClientCollectionEvents> {
+export interface IOrderedClientCollection
+	extends IEventProvider<IOrderedClientCollectionEvents> {
 	/** Count of clients in the collection. */
 	readonly count: number;
 	/** Pointer to the oldest client in the collection. */
@@ -230,6 +231,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
 
 /**
  * Serialized state of IOrderedClientElection.
+ * @legacy
  * @alpha
  */
 export interface ISerializedElection {
@@ -375,7 +377,9 @@ export class OrderedClientElection
 			}
 		}
 		orderedClientCollection.on("addClient", (client, seq) => this.addClient(client, seq));
-		orderedClientCollection.on("removeClient", (client, seq) => this.removeClient(client, seq));
+		orderedClientCollection.on("removeClient", (client, seq) =>
+			this.removeClient(client, seq),
+		);
 
 		if (typeof initialState === "number") {
 			this._electionSequenceNumber = initialState;
@@ -487,7 +491,9 @@ export class OrderedClientElection
 	 * @param client - client to start checking
 	 * @returns oldest eligible client starting with passed in client or undefined if none.
 	 */
-	private findFirstEligibleParent(client: ILinkedClient | undefined): ILinkedClient | undefined {
+	private findFirstEligibleParent(
+		client: ILinkedClient | undefined,
+	): ILinkedClient | undefined {
 		let candidateClient = client;
 		while (
 			candidateClient !== undefined &&
@@ -597,7 +603,9 @@ export class OrderedClientElection
 	 * and no client has been elected.
 	 */
 	public resetElectedClient(sequenceNumber: number): void {
-		const firstClient = this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
+		const firstClient = this.findFirstEligibleParent(
+			this.orderedClientCollection.oldestClient,
+		);
 		if (this._electedClient === undefined || this._electedClient === this._electedParent) {
 			this.tryElectingClient(firstClient, sequenceNumber, "ResetElectedClient");
 		} else {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-lambdas",
-	"version": "5.0.0",
+	"version": "6.0.0",
 	"description": "Fluid service lambdas",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,11 +75,11 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.39.0-264124",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0-264124",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@4.0.0",
+		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/async": "^3.2.9",
 		"@types/json-stringify-safe": "^5.0.0",
@@ -96,19 +96,12 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
-		"source-map-loader": "^0.2.4",
+		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_DeliLambda": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ICheckpointParams": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

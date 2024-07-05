@@ -269,6 +269,37 @@ export const selectionFlags = {
 		char: undefined,
 		aliases: ["releaseGroupRoots"],
 	}),
+	changed: Flags.boolean({
+		description:
+			"Select only packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with other options.",
+		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all", "packages"],
+		required: false,
+		default: false,
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	branch: Flags.string({
+		description:
+			"Select only packages that have been changed when compared to this base branch. Can only be used with --changed.",
+		dependsOn: ["changed"],
+		relationships: [
+			{
+				type: "all",
+				flags: [
+					{
+						name: "changed",
+						// Only make the "branch" flag required if the "changed" flag is passed. This enables us to have a default
+						// value on the flag without oclif complaining that "--changed must be passed if --branch is used."
+						when: async (flags): Promise<boolean> => {
+							return !(flags.changed === undefined);
+						},
+					},
+				],
+			},
+		],
+		required: false,
+		default: "main",
+		helpGroup: "PACKAGE SELECTION",
+	}),
 };
 
 /**
@@ -284,6 +315,8 @@ export interface selectionFlags {
 	readonly packages: boolean;
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;
+	readonly changed: boolean;
+	readonly branch: string;
 }
 
 export const defaultSelectionKinds = ["dir", "all"] as const;

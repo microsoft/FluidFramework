@@ -4,7 +4,10 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	ISharedObjectRegistry,
+} from "@fluidframework/datastore/internal";
 import {
 	IChannel,
 	IChannelAttributes,
@@ -12,7 +15,8 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -86,13 +90,15 @@ class UnknownChannel implements IChannel {
 }
 
 export class UnknownChannelFactory implements IChannelFactory {
-	readonly attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "1.0",
-		packageVersion: "1.0",
-	};
+	readonly attributes: IChannelAttributes;
 
-	constructor(public readonly type: string) {}
+	constructor(public readonly type: string) {
+		this.attributes = {
+			type,
+			snapshotFormatVersion: "1.0",
+			packageVersion: "1.0",
+		};
+	}
 
 	async load(
 		runtime: IFluidDataStoreRuntime,

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { AttributionCollection } from "./attributionCollection.js";
@@ -46,10 +46,7 @@ function createAttributionPolicyFromCallbacks({
 	return {
 		// eslint-disable-next-line import/no-deprecated
 		attach: (client: Client) => {
-			assert(
-				unsubscribe === undefined,
-				0x557 /* cannot attach to multiple clients at once */,
-			);
+			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
 			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
 				delta(opArgs, deltaArgs, client);
@@ -134,7 +131,9 @@ const insertOnlyAttributionPolicyCallbacks: AttributionCallbacks = {
 	},
 };
 
-function createPropertyTrackingMergeTreeCallbacks(...propNames: string[]): AttributionCallbacks {
+function createPropertyTrackingMergeTreeCallbacks(
+	...propNames: string[]
+): AttributionCallbacks {
 	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
 	const attributeAnnotateOnSegments = (
 		deltaSegments: IMergeTreeSegmentDelta[],

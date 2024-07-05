@@ -4,47 +4,11 @@
 
 ```ts
 
-import { Client } from '@fluidframework/merge-tree/internal';
-import { ErasedType } from '@fluidframework/core-interfaces';
-import { IChannel } from '@fluidframework/datastore-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import { IJSONSegment } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree/internal';
-import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree/internal';
-import { IRelativePosition } from '@fluidframework/merge-tree/internal';
-import { ISegment } from '@fluidframework/merge-tree/internal';
-import { ISegmentAction } from '@fluidframework/merge-tree/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { LocalReferencePosition } from '@fluidframework/merge-tree/internal';
-import { Marker } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree/internal';
-import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree/internal';
-import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree/internal';
-import { PropertiesManager } from '@fluidframework/merge-tree/internal';
-import { PropertySet } from '@fluidframework/merge-tree/internal';
-import { ReferencePosition } from '@fluidframework/merge-tree/internal';
-import { ReferenceType } from '@fluidframework/merge-tree/internal';
-import { SharedObjectKind as SharedObjectKind_2 } from '@fluidframework/shared-object-base/internal';
-import { SlidingPreference } from '@fluidframework/merge-tree/internal';
-import { TextSegment } from '@fluidframework/merge-tree/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @public
-export type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
+type ApplyKind<T, Kind extends FieldKind, DefaultsAreOptional extends boolean> = {
     [FieldKind.Required]: T;
     [FieldKind.Optional]: T | undefined;
     [FieldKind.Identifier]: DefaultsAreOptional extends true ? T | undefined : T;
@@ -64,7 +28,7 @@ export enum CommitKind {
     Undo = 1
 }
 
-// @public
+// @public @sealed
 export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
@@ -98,12 +62,24 @@ export interface ContainerSchema {
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
-// @public
-export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
+// @public @sealed
+interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
+}
+
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
 }
 
 // @public
-export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+
+// @public
+type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+
+// @public @sealed
+type FieldHasDefaultUnsafe<T extends Unenforced<ImplicitFieldSchema>> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, Unenforced<ImplicitAllowedTypes>> ? true : false;
 
 // @public
 export enum FieldKind {
@@ -135,17 +111,23 @@ export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends
 }
 
 // @public
-export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
+type FlattenKeys<T> = [{
+    [Property in keyof T]: T[Property];
+}][_InlineTrick];
 
 // @public
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
-export interface IBranchOrigin {
-    id: string;
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-}
+type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+
+// @public
+export type FluidObject<T = unknown> = {
+    [P in FluidObjectProviderKeys<T>]?: T[P];
+};
+
+// @public
+export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @public
 export interface IConnection {
@@ -155,6 +137,198 @@ export interface IConnection {
 
 // @public
 export type ICriticalContainerError = IErrorBase;
+
+// @public @sealed
+export interface IDisposable {
+    dispose(error?: Error): void;
+    readonly disposed: boolean;
+}
+
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
+
+// @public
+export interface IErrorEvent extends IEvent {
+    // @eventProperty
+    (event: "error", listener: (message: any) => void): any;
+}
+
+// @public
+export interface IEvent {
+    // @eventProperty
+    (event: string, listener: (...args: any[]) => void): any;
+}
+
+// @public @sealed
+export interface IEventProvider<TEvent extends IEvent> {
+    readonly off: IEventTransformer<this, TEvent>;
+    readonly on: IEventTransformer<this, TEvent>;
+    readonly once: IEventTransformer<this, TEvent>;
+}
+
+// @public
+export type IEventThisPlaceHolder = {
+    thisPlaceHolder: "thisPlaceHolder";
+};
+
+// @public
+export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: infer E14, listener: (...args: infer A14) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> & TransformedEvent<TThis, E14, A14> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: infer E13, listener: (...args: infer A13) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> & TransformedEvent<TThis, E13, A13> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: infer E12, listener: (...args: infer A12) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> & TransformedEvent<TThis, E12, A12> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: infer E11, listener: (...args: infer A11) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> & TransformedEvent<TThis, E11, A11> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: infer E10, listener: (...args: infer A10) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> & TransformedEvent<TThis, E10, A10> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: infer E9, listener: (...args: infer A9) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> & TransformedEvent<TThis, E9, A9> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: infer E8, listener: (...args: infer A8) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> & TransformedEvent<TThis, E8, A8> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: infer E7, listener: (...args: infer A7) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> & TransformedEvent<TThis, E7, A7> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: infer E6, listener: (...args: infer A6) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> & TransformedEvent<TThis, E6, A6> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: infer E5, listener: (...args: infer A5) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> & TransformedEvent<TThis, E5, A5> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: infer E4, listener: (...args: infer A4) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> & TransformedEvent<TThis, E4, A4> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: infer E3, listener: (...args: infer A3) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> & TransformedEvent<TThis, E3, A3> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: infer E2, listener: (...args: infer A2) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> & TransformedEvent<TThis, E2, A2> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: infer E1, listener: (...args: infer A1) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> & TransformedEvent<TThis, E1, A1> : TEvent extends {
+    (event: infer E0, listener: (...args: infer A0) => void): any;
+    (event: string, listener: (...args: any[]) => void): any;
+} ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
@@ -179,6 +353,29 @@ export interface IFluidContainerEvents extends IEvent {
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
 }
 
+// @public (undocumented)
+export const IFluidHandle = "IFluidHandle";
+
+// @public @sealed
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
+    get(): Promise<T>;
+    readonly isAttached: boolean;
+}
+
+// @public @sealed
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
+}
+
+// @public (undocumented)
+export const IFluidLoadable: keyof IProvideFluidLoadable;
+
+// @public @sealed
+export interface IFluidLoadable extends IProvideFluidLoadable {
+    // (undocumented)
+    readonly handle: IFluidHandle;
+}
+
 // @public
 export interface IMember {
     readonly connections: IConnection[];
@@ -197,13 +394,20 @@ export type InitialObjects<T extends ContainerSchema> = {
 };
 
 // @public
-export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
-    readonly [Property in keyof T]: InsertableTreeFieldFromImplicitField<T[Property]>;
-};
+type _InlineTrick = 0;
+
+// @public
+type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FlattenKeys<{
+    readonly [Property in keyof T]?: InsertableTreeFieldFromImplicitField<T[Property]>;
+} & {
+    readonly [Property in keyof T as FieldHasDefault<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitField<T[Property]>;
+}>;
 
 // @public
 export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
-    readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+} & {
+    readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends true ? Property : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
 // @public
@@ -224,33 +428,55 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
 // @public
-export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
+type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = [
+Unhydrated<NodeFromSchemaUnsafe<T>> | (T extends {
     implicitlyConstructable: true;
-} ? NodeBuilderDataUnsafe<T> : never);
+} ? NodeBuilderDataUnsafe<T> : never)
+][_InlineTrick];
 
-// @public
+// @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
 
-// @public
-export interface ISequencedDocumentMessage {
-    clientId: string | null;
-    clientSequenceNumber: number;
-    // @deprecated
-    compression?: string;
-    contents: unknown;
-    data?: string;
-    // @deprecated
-    expHash1?: string;
-    metadata?: unknown;
-    minimumSequenceNumber: number;
-    origin?: IBranchOrigin;
-    referenceSequenceNumber: number;
-    sequenceNumber: number;
-    serverMetadata?: unknown;
-    timestamp: number;
-    traces?: ITrace[];
-    type: string;
+declare namespace InternalTypes {
+    export {
+        _InlineTrick,
+        FlattenKeys,
+        ApplyKind,
+        NodeBuilderData,
+        FieldHasDefault,
+        TreeNodeSchemaNonClass,
+        TreeArrayNodeBase,
+        ScopedSchemaName,
+        DefaultProvider,
+        typeNameSymbol,
+        InsertableObjectFromSchemaRecord,
+        ObjectFromSchemaRecord,
+        FieldHasDefaultUnsafe,
+        ObjectFromSchemaRecordUnsafe,
+        TreeObjectNodeUnsafe,
+        TreeFieldFromImplicitFieldUnsafe,
+        TreeNodeFromImplicitAllowedTypesUnsafe,
+        InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+        TreeArrayNodeUnsafe,
+        TreeMapNodeUnsafe,
+        InsertableObjectFromSchemaRecordUnsafe,
+        InsertableTreeFieldFromImplicitFieldUnsafe,
+        InsertableTypedNodeUnsafe,
+        NodeBuilderDataUnsafe,
+        NodeFromSchemaUnsafe,
+        FlexList,
+        FlexListToUnion,
+        ExtractItemType,
+        TreeApi
+    }
+}
+export { InternalTypes }
+
+// @public (undocumented)
+export interface IProvideFluidLoadable {
+    // (undocumented)
+    readonly IFluidLoadable: IFluidLoadable;
 }
 
 // @public
@@ -273,20 +499,18 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 
 // @public
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
+}
+
+// @public @sealed
 export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
-// @public
-export interface ITrace {
-    action: string;
-    service: string;
-    timestamp: number;
-}
-
-// @public
+// @public @sealed
 export interface ITree extends IFluidLoadable {
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TRoot>;
+    viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public
@@ -295,9 +519,15 @@ export interface ITreeConfigurationOptions {
 }
 
 // @public
-export type LazyItem<Item = unknown> = Item | (() => Item);
+export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
+    readonly enableSchemaValidation?: boolean;
+    readonly schema: TSchema;
+}
 
 // @public
+export type LazyItem<Item = unknown> = Item | (() => Item);
+
+// @public @sealed
 export interface Listenable<TListeners extends object> {
     on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 }
@@ -307,7 +537,7 @@ export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
 
-// @public
+// @public @sealed
 export interface MakeNominal {
 }
 
@@ -320,16 +550,16 @@ export type Myself<M extends IMember = IMember> = M & {
 };
 
 // @public
-export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
+type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @public
-export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
+type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
 
 // @public
 export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
-export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
+type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<string, NodeKind, infer TNode> ? TNode : never;
 
 // @public
 export interface NodeInDocumentConstraint {
@@ -348,12 +578,12 @@ export enum NodeKind {
 }
 
 // @public
-export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
+type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
 
 // @public
-export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
+type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
@@ -361,11 +591,16 @@ export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonl
 export type Off = () => void;
 
 // @public
+export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
+    [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
+} : L;
+
+// @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @public
+// @public @sealed
 export interface Revertible {
     dispose(): void;
     revert(): void;
@@ -373,7 +608,7 @@ export interface Revertible {
     readonly status: RevertibleStatus;
 }
 
-// @public
+// @public @sealed
 export type RevertibleFactory = (onRevertibleDisposed?: (revertible: Revertible) => void) => Revertible;
 
 // @public
@@ -385,7 +620,7 @@ export enum RevertibleStatus {
 // @public
 export const rollback: unique symbol;
 
-// @public
+// @public @sealed
 export interface RunTransaction {
     <TNode extends TreeNode, TResult>(node: TNode, transaction: (node: TNode) => TResult): TResult;
     <TView extends TreeView<ImplicitFieldSchema>, TResult>(tree: TView, transaction: (root: TView["root"]) => TResult): TResult;
@@ -400,6 +635,14 @@ export interface RunTransaction {
     <TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void, preconditions?: readonly TransactionConstraint[]): void;
     <TView extends TreeView<ImplicitFieldSchema>>(tree: TView, transaction: (root: TView["root"]) => void, preconditions?: readonly TransactionConstraint[]): void;
     readonly rollback: typeof rollback;
+}
+
+// @public @sealed
+export interface SchemaCompatibilityStatus {
+    readonly canInitialize: boolean;
+    readonly canUpgrade: boolean;
+    readonly canView: boolean;
+    readonly isEquivalent: boolean;
 }
 
 // @public @sealed
@@ -424,7 +667,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
-    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & { readonly [Property in keyof T as FieldHasDefaultUnsafe<T[Property]> extends false ? Property : never]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>; } & { readonly [Property_1 in keyof T as FieldHasDefaultUnsafe<T[Property_1]> extends true ? Property_1 : never]?: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property_1]> | undefined; }, false, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Optional, T>;
     optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
     required<const T extends ImplicitAllowedTypes>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchema<FieldKind.Required, T>;
@@ -435,14 +678,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 }
 
 // @public
-export interface SchemaIncompatible {
-    readonly canUpgrade: boolean;
-}
+type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @public
-export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-
-// @public
+// @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
 }
 
@@ -450,28 +688,42 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 export const SharedTree: SharedObjectKind<ITree>;
 
 // @public
+export interface Tagged<V, T extends string = string> {
+    // (undocumented)
+    tag: T;
+    // (undocumented)
+    value: V;
+}
+
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
+
+// @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @public
+export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
 // @public
 export const Tree: TreeApi;
 
-// @public
-export interface TreeApi extends TreeNodeApi {
+// @public @sealed
+interface TreeApi extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;
 }
 
-// @public
+// @public @sealed
 export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>, TreeArrayNode> {
 }
 
 // @public
 export const TreeArrayNode: {
-    spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
+    readonly spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
-// @public
-export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
+// @public @sealed
+interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
     insertAt(index: number, ...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
     insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
@@ -491,36 +743,26 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
     removeRange(start?: number, end?: number): void;
 }
 
-// @public
+// @public @sealed
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, TreeArrayNode> {
 }
 
-// @public
+// @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(): void;
     treeChanged(): void;
 }
 
 // @public
-export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-    constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>, options?: ITreeConfigurationOptions);
-    // (undocumented)
-    readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    readonly options: Required<ITreeConfigurationOptions>;
-    // (undocumented)
-    readonly schema: TSchema;
-}
-
-// @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @public
-export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
+type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, false> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
 
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
-// @public
+// @public @sealed
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
     entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
@@ -530,19 +772,21 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
     values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 }
 
-// @public
+// @public @sealed
 export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>, TreeNode {
     delete(key: string): void;
     set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined): void;
 }
 
-// @public
+// @public @sealed
 export abstract class TreeNode implements WithType {
-    abstract get [type](): string;
+    static [Symbol.hasInstance](value: unknown): value is TreeNode;
+    static [Symbol.hasInstance]<TSchema extends abstract new (...args: any[]) => TreeNode>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
+    abstract get [typeNameSymbol](): string;
     protected constructor();
 }
 
-// @public
+// @public @sealed
 export interface TreeNodeApi {
     is<TSchema extends ImplicitAllowedTypes>(value: unknown, schema: TSchema): value is TreeNodeFromImplicitAllowedTypes<TSchema>;
     key(node: TreeNode): string | number;
@@ -557,18 +801,18 @@ export interface TreeNodeApi {
 export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
 // @public
-export type TreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
+type TreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
-// @public
+// @public @sealed
 export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean, Info = unknown> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
 
-// @public
+// @public @sealed
 export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
     new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
 }
 
-// @public
+// @public @sealed
 export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown> {
     // (undocumented)
     readonly identifier: Name;
@@ -578,8 +822,8 @@ export interface TreeNodeSchemaCore<out Name extends string, out Kind extends No
     readonly kind: Kind;
 }
 
-// @public
-export interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
+// @public @sealed
+interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // (undocumented)
     create(data: TInsertable): TNode;
 }
@@ -598,24 +842,32 @@ export enum TreeStatus {
     Removed = 1
 }
 
-// @public
+// @public @sealed
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
-    readonly error?: SchemaIncompatible;
+    readonly compatibility: SchemaCompatibilityStatus;
     readonly events: Listenable<TreeViewEvents>;
+    initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     upgradeSchema(): void;
 }
 
-// @public
+// @public @sealed
+export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
+    constructor(props: ITreeViewConfiguration<TSchema>);
+    readonly enableSchemaValidation: boolean;
+    readonly schema: TSchema;
+}
+
+// @public @sealed
 export interface TreeViewEvents {
-    afterBatch(): void;
     commitApplied(data: CommitMetadata, getRevertible?: RevertibleFactory): void;
     rootChanged(): void;
+    schemaChanged(): void;
 }
 
 // @public
-export const type: unique symbol;
+const typeNameSymbol: unique symbol;
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
@@ -634,9 +886,9 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
     [NodeKind.Map]: ImplicitAllowedTypes;
 }[T["kind"]]>> = true;
 
-// @public
+// @public @sealed
 export interface WithType<TName extends string = string> {
-    get [type](): TName;
+    get [typeNameSymbol](): TName;
 }
 
 ```

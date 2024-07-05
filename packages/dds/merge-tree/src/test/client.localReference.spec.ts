@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { Client } from "../client.js";
 import {
@@ -186,7 +186,10 @@ describe("MergeTree.Client", () => {
 		client1.applyMsg(remove);
 		client2.applyMsg(remove);
 
-		assert.equal(client1.localReferencePositionToPosition(c1LocalRef), client2.getLength() - 1);
+		assert.equal(
+			client1.localReferencePositionToPosition(c1LocalRef),
+			client2.getLength() - 1,
+		);
 	});
 
 	it("Remove segments from end with sliding local reference", () => {

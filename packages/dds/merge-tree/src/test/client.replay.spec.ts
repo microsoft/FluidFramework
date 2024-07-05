@@ -8,7 +8,7 @@
 import assert from "assert";
 import * as fs from "fs";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { createGroupOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
@@ -44,9 +44,7 @@ describe("MergeTree.Client", () => {
 				}
 			}
 			for (const group of file) {
-				const logger = new TestClientLogger(
-					[...msgClients.values()].map((mc) => mc.client),
-				);
+				const logger = new TestClientLogger([...msgClients.values()].map((mc) => mc.client));
 				const initialText = logger.validate();
 				assert.strictEqual(initialText, group.initialText, "Initial text not as expected");
 				for (const msg of group.msgs) {

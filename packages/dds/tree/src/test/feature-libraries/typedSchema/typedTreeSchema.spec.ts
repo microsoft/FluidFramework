@@ -9,11 +9,11 @@ import { jsonArray, jsonObject, jsonSchema, leaf } from "../../../domains/index.
 import { FieldKinds, SchemaBuilderBase } from "../../../feature-libraries/index.js";
 import {
 	Any,
-	FlexFieldNodeSchema,
+	type FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	LeafNodeSchema,
+	type FlexMapNodeSchema,
+	type FlexObjectNodeSchema,
+	type LeafNodeSchema,
 	allowedTypesIsAny,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -21,7 +21,7 @@ import {
 	schemaIsObjectNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
-import {
+import type {
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,

@@ -412,6 +412,20 @@
 				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
+			// These skipped files contain exceptions that are consistently thrown during test setup
+			// You can comment out this part if you want to debug these files
+			"skipFiles": [
+				"<node_internals>/**",
+				// @fluid-internal/mocha-test-setup is resolved first using esm resolution algorithm first before cjs resolution algorithm (require)
+				"**/node_modules/mocha/lib/nodejs/esm-utils.js",
+				// We pass multiple glob patterns to mocha (as seen above) to look for the correct spec file to debug
+				// Two of these will always throw file not found error, so we skip them here
+				"**/node_modules/mocha/lib/cli/lookup-files.js",
+				// There's an empty catch here for CommonJS default export support
+				"**/node_modules/uuid/dist/v35.js",
+				// test-version-utils checks for valid semver version first and handles ranges seperately.
+				"**/node_modules/semver/classes/semver.js",
+			],
 			"outFiles": [
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",

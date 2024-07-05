@@ -4,38 +4,6 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/driver-definitions';
-import { IClientConfiguration } from '@fluidframework/driver-definitions/internal';
-import { IConnected } from '@fluidframework/driver-definitions/internal';
-import { ICreateBlobResponse } from '@fluidframework/driver-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
-import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
-import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentMessage } from '@fluidframework/driver-definitions/internal';
-import { IDocumentService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
-import { IFileSnapshot } from '@fluidframework/replay-driver/internal';
-import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ISequencedDocumentMessage } from '@fluidframework/driver-definitions';
-import { ISignalClient } from '@fluidframework/driver-definitions/internal';
-import { ISignalMessage } from '@fluidframework/driver-definitions';
-import { ISnapshot } from '@fluidframework/driver-definitions/internal';
-import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/internal';
-import { ISnapshotTree } from '@fluidframework/driver-definitions/internal';
-import { IStream } from '@fluidframework/driver-definitions/internal';
-import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
-import { ISummaryHandle } from '@fluidframework/driver-definitions';
-import { ISummaryTree } from '@fluidframework/driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/driver-definitions/internal';
-import { ITree } from '@fluidframework/driver-definitions/internal';
-import { IVersion } from '@fluidframework/driver-definitions/internal';
-import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver/internal';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
 // (No @packageDocumentation comment for this package)
 
 ```

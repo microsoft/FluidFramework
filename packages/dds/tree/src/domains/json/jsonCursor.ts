@@ -7,14 +7,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
-	FieldKey,
-	ITreeCursor,
-	ITreeCursorSynchronous,
+	type FieldKey,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
 	mapCursorField,
 	mapCursorFields,
 } from "../../core/index.js";
-import { CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries/index.js";
-import { JsonCompatible } from "../../util/index.js";
+import { type CursorAdapter, stackTreeNodeCursor } from "../../feature-libraries/index.js";
+import type { JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
 
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";

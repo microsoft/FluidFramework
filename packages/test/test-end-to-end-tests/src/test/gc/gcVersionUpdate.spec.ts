@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
+import {
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IGCMetadata,
 	IGarbageCollector,
@@ -120,7 +123,10 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 	 * gcVersionDiff param. It either increments or decrements the version to provide the ability to test clients
 	 * running different GC versions.
 	 */
-	async function setupGCVersionUpdateInMetadata(summarizer: ISummarizer, gcVersionDiff: number) {
+	async function setupGCVersionUpdateInMetadata(
+		summarizer: ISummarizer,
+		gcVersionDiff: number,
+	) {
 		// Override the getMetadata function in GarbageCollector to update the gcFeature property.
 		const containerRuntime = (summarizer as any).runtime as IContainerRuntimeWithPrivates;
 		let getMetadataFunc = containerRuntime.garbageCollector.getMetadata;

@@ -72,8 +72,17 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
  * @public
  */
 export interface ITelemetryBaseLogger {
+	/**
+	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
+	 * @param event - The event to log.
+	 * @param logLevel - The log level of the event. Default: {@link (LogLevel:variable).default}.
+	 */
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 
+	/**
+	 * Minimum log level to be logged.
+	 * @defaultValue {@link (LogLevel:variable).default}
+	 */
 	minLogLevel?: LogLevel;
 }
 
@@ -91,6 +100,7 @@ export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 
 /**
  * An error object that supports exporting its properties to be logged to telemetry
+ * @legacy
  * @alpha
  */
 export interface ILoggingError extends Error {

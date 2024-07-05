@@ -4,10 +4,12 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IPublicClientConfig,
 	IOdspTokens,
 	TokenRequestCredentials,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
 	fetchTokens,
 	getLoginPageUrl,
 	getOdspScope,
@@ -18,18 +20,22 @@ import { Mutex } from "async-mutex";
 import { jwtDecode } from "jwt-decode";
 
 import { debug } from "./debug.js";
-import { IAsyncCache, loadRC, lockRC, saveRC } from "./fluidToolRC.js";
+import type { IAsyncCache, IResources } from "./fluidToolRc.js";
+import { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
 import { endResponse, serverListenAndHandle } from "./httpHelpers.js";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @internal
  */
 export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
-	get clientId() {
+	get clientId(): string {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (!process.env.login__microsoft__clientId) {
 			throw new Error("Client ID environment variable not set: login__microsoft__clientId.");
 		}
@@ -60,18 +66,18 @@ export interface IOdspTokenManagerCacheKey {
 	readonly userOrServer: string;
 }
 
-const isValidToken = (token: string) => {
+const isValidToken = (token: string): boolean => {
 	// Return false for undefined or empty tokens.
 	if (!token || token.length === 0) {
 		return false;
 	}
 
-	const decodedToken = jwtDecode<any>(token);
+	const decodedToken = jwtDecode<{ exp: number }>(token);
 	// Give it a 60s buffer
-	return decodedToken.exp - 60 >= new Date().getTime() / 1000;
+	return decodedToken.exp - 60 >= Date.now() / 1000;
 };
 
-const cacheKeyToString = (key: IOdspTokenManagerCacheKey) => {
+const cacheKeyToString = (key: IOdspTokenManagerCacheKey): string => {
 	return `${key.userOrServer}${key.isPush ? "[Push]" : ""}`;
 };
 
@@ -82,17 +88,23 @@ export class OdspTokenManager {
 	private readonly storageCache = new Map<string, IOdspTokens>();
 	private readonly pushCache = new Map<string, IOdspTokens>();
 	private readonly cacheMutex = new Mutex();
-	constructor(
+	public constructor(
 		private readonly tokenCache?: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens>,
 	) {}
 
-	public async updateTokensCache(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
+	public async updateTokensCache(
+		key: IOdspTokenManagerCacheKey,
+		value: IOdspTokens,
+	): Promise<void> {
 		await this.cacheMutex.runExclusive(async () => {
 			await this.updateTokensCacheWithoutLock(key, value);
 		});
 	}
 
-	private async updateTokensCacheWithoutLock(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
+	private async updateTokensCacheWithoutLock(
+		key: IOdspTokenManagerCacheKey,
+		value: IOdspTokens,
+	): Promise<void> {
 		debug(`${cacheKeyToString(key)}: Saving tokens`);
 		const memoryCache = key.isPush ? this.pushCache : this.storageCache;
 		memoryCache.set(key.userOrServer, value);
@@ -121,7 +133,9 @@ export class OdspTokenManager {
 		return this.getTokens(true, server, clientConfig, tokenConfig, forceRefresh, forceReauth);
 	}
 
-	private async getTokenFromCache(cacheKey: IOdspTokenManagerCacheKey) {
+	private async getTokenFromCache(
+		cacheKey: IOdspTokenManagerCacheKey,
+	): Promise<IOdspTokens | undefined> {
 		const memoryCache = cacheKey.isPush ? this.pushCache : this.storageCache;
 		const memoryToken = memoryCache.get(cacheKey.userOrServer);
 		if (memoryToken) {
@@ -156,7 +170,7 @@ export class OdspTokenManager {
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
-		const invokeGetTokensCore = async () => {
+		const invokeGetTokensCore = async (): Promise<IOdspTokens> => {
 			// Don't solely rely on tokenCache lock, ensure serialized execution of
 			// cache update to avoid multiple fetch.
 			return this.cacheMutex.runExclusive(async () => {
@@ -195,8 +209,8 @@ export class OdspTokenManager {
 		server: string,
 		clientConfig: IPublicClientConfig,
 		tokenConfig: OdspTokenConfig,
-		forceRefresh,
-		forceReauth,
+		forceRefresh: boolean,
+		forceReauth: boolean,
 	): Promise<IOdspTokens> {
 		const scope = isPush ? pushScope : getOdspScope(server);
 		const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
@@ -226,7 +240,7 @@ export class OdspTokenManager {
 		}
 
 		switch (tokenConfig.type) {
-			case "password":
+			case "password": {
 				tokens = await this.acquireTokensWithPassword(
 					server,
 					scope,
@@ -235,7 +249,8 @@ export class OdspTokenManager {
 					tokenConfig.password,
 				);
 				break;
-			case "browserLogin":
+			}
+			case "browserLogin": {
 				tokens = await this.acquireTokensViaBrowserLogin(
 					getLoginPageUrl(server, clientConfig, scope, odspAuthRedirectUri),
 					server,
@@ -245,8 +260,10 @@ export class OdspTokenManager {
 					tokenConfig.redirectUriCallback,
 				);
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(tokenConfig);
+			}
 		}
 
 		await this.updateTokensCacheWithoutLock(cacheKey, tokens);
@@ -307,7 +324,10 @@ export class OdspTokenManager {
 		return odspTokens;
 	}
 
-	private async onTokenRetrievalFromCache(config: OdspTokenConfig, tokens: IOdspTokens) {
+	private async onTokenRetrievalFromCache(
+		config: OdspTokenConfig,
+		tokens: IOdspTokens,
+	): Promise<void> {
 		if (config.type === "browserLogin" && config.redirectUriCallback) {
 			config.navigator(await config.redirectUriCallback(tokens));
 		}
@@ -315,22 +335,23 @@ export class OdspTokenManager {
 
 	private extractAuthorizationCode(relativeUrl: string | undefined): string {
 		if (relativeUrl === undefined) {
-			throw Error("Failed to get authorization");
+			throw new Error("Failed to get authorization");
 		}
 		const parsedUrl = new URL(relativeUrl, odspAuthRedirectOrigin);
 		const code = parsedUrl.searchParams.get("code");
-		if (!code) {
-			throw Error("Failed to get authorization");
+		if (code === null || code === undefined) {
+			throw new Error("Failed to get authorization");
 		}
 		return code;
 	}
 }
 
-async function loadAndPatchRC() {
+async function loadAndPatchRC(): Promise<IResources> {
 	const rc = await loadRC();
 	if (rc.tokens && rc.tokens.version === undefined) {
 		// Clean up older versions
-		delete (rc as any).tokens;
+		delete rc.tokens;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		delete (rc as any).pushTokens;
 	}
 	return rc;

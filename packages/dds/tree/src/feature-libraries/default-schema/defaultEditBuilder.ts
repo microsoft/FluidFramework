@@ -5,37 +5,42 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ICodecFamily } from "../../codec/index.js";
+import type { ICodecFamily } from "../../codec/index.js";
 import {
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ChangeRebaser,
-	ChangesetLocalId,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type ChangesetLocalId,
 	CursorLocationType,
-	DeltaDetachedNodeId,
-	DeltaRoot,
-	FieldUpPath,
-	ITreeCursorSynchronous,
-	TaggedChange,
-	UpPath,
+	type DeltaDetachedNodeId,
+	type DeltaRoot,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type TaggedChange,
+	type UpPath,
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
-	EditDescription,
-	FieldChangeset,
-	FieldEditDescription,
+	type EditDescription,
+	type FieldChangeset,
+	type FieldEditDescription,
 	ModularChangeFamily,
-	ModularChangeset,
+	type ModularChangeset,
 	ModularEditBuilder,
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
-import { OptionalChangeset } from "../optional-field/index.js";
+import type { OptionalChangeset } from "../optional-field/index.js";
 
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
+import {
+	fieldKinds,
+	optional,
+	sequence,
+	required as valueFieldKind,
+} from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -44,7 +49,9 @@ export type DefaultChangeset = ModularChangeset;
  *
  * @sealed
  */
-export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
+export class DefaultChangeFamily
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>
+{
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
@@ -242,6 +249,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
+		if (count === 0) {
+			return;
+		} else if (count < 0 || !Number.isSafeInteger(count)) {
+			throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+		}
 		const detachId = this.modularBuilder.generateId(count);
 		const attachId = this.modularBuilder.generateId(count);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
@@ -352,6 +364,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
+				if (count === 0) {
+					return;
+				} else if (count < 0 || !Number.isSafeInteger(count)) {
+					throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+				}
 				const detachId = this.modularBuilder.generateId(count);
 				const attachId = this.modularBuilder.generateId(count);
 				const change = sequence.changeHandler.editor.move(
