@@ -3,7 +3,9 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:18.17.1-buster-slim AS base
+# Use a direct sha256 hash to ensure we are always using the same version of the base image.
+# This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
+FROM node:18.17.1-buster-slim@sha256:12b6e9ef92a5cceace00ed2021250d4eef264c3ac58e9b195cf6acedbf9ff67c AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
