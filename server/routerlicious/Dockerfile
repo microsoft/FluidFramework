@@ -5,7 +5,7 @@
 
 # Use a direct sha256 hash to ensure we are always using the same version of the base image.
 # This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
-FROM node:18.17.1-buster-slim@sha256:12b6e9ef92a5cceace00ed2021250d4eef264c3ac58e9b195cf6acedbf9ff67c AS base
+FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
