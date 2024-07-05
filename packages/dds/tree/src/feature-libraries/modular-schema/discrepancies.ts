@@ -4,15 +4,15 @@
  */
 
 import {
-	FieldKey,
-	FieldKindIdentifier,
+	type FieldKey,
+	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchema,
-	TreeTypeSet,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
+	type TreeTypeSet,
 	type ValueSchema,
 } from "../../core/index.js";
 
@@ -199,8 +199,8 @@ export function getAllowedContentIncompatibilities(
 					storedNodeSchema instanceof MapNodeStoredSchema
 						? "map"
 						: storedNodeSchema instanceof ObjectNodeStoredSchema
-						? "object"
-						: "leaf",
+							? "object"
+							: "leaf",
 			} satisfies NodeKindIncompatibility);
 		}
 	}

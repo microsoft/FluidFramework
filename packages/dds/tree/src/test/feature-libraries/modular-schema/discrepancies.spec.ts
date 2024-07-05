@@ -183,33 +183,30 @@ describe("Schema Discrepancies", () => {
 
 		const objectNodeSchema2 = createObjectNodeSchema(
 			[
-				[
-					"x",
-					fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")]),
-				],
-				[
-					"y",
-					fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")]),
-				],
+				["x", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")])],
+				["y", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")])],
 			],
 			"tree2",
 			root,
 		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(objectNodeSchema1, objectNodeSchema2), [
-			{
-				identifier: "tree",
-				mismatch: "nodeKind",
-				view: "object",
-				stored: undefined,
-			},
-			{
-				identifier: "tree2",
-				mismatch: "nodeKind",
-				view: undefined,
-				stored: "object",
-			},
-		]);
+		assert.deepEqual(
+			getAllowedContentIncompatibilities(objectNodeSchema1, objectNodeSchema2),
+			[
+				{
+					identifier: "tree",
+					mismatch: "nodeKind",
+					view: "object",
+					stored: undefined,
+				},
+				{
+					identifier: "tree2",
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "object",
+				},
+			],
+		);
 
 		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema, objectNodeSchema2), [
 			{
@@ -238,45 +235,42 @@ describe("Schema Discrepancies", () => {
 
 		const objectNodeSchema2 = createObjectNodeSchema(
 			[
-				[
-					"x",
-					fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")]),
-				],
-				[
-					"y",
-					fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")]),
-				],
+				["x", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")])],
+				["y", fieldSchema(FieldKinds.optional, [brand<TreeNodeSchemaIdentifier>("string")])],
 			],
 			"tree",
 			root,
 		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(objectNodeSchema1, objectNodeSchema2), [
-			{
-				identifier: "tree",
-				mismatch: "fields",
-				differences: [
-					{
-						identifier: "x",
-						mismatch: "allowedTypes",
-						view: ["number"],
-						stored: ["string"],
-					},
-					{
-						identifier: "x",
-						mismatch: "fieldKind",
-						view: "Value",
-						stored: "Optional",
-					},
-					{
-						identifier: "y",
-						mismatch: "fieldKind",
-						view: undefined,
-						stored: "Optional",
-					},
-				],
-			},
-		]);
+		assert.deepEqual(
+			getAllowedContentIncompatibilities(objectNodeSchema1, objectNodeSchema2),
+			[
+				{
+					identifier: "tree",
+					mismatch: "fields",
+					differences: [
+						{
+							identifier: "x",
+							mismatch: "allowedTypes",
+							view: ["number"],
+							stored: ["string"],
+						},
+						{
+							identifier: "x",
+							mismatch: "fieldKind",
+							view: "Value",
+							stored: "Optional",
+						},
+						{
+							identifier: "y",
+							mismatch: "fieldKind",
+							view: undefined,
+							stored: "Optional",
+						},
+					],
+				},
+			],
+		);
 	});
 
 	it("Differing value types on leaf node schema", () => {
