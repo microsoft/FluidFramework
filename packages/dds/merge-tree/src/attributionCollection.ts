@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable unicorn/no-null */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -411,6 +412,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	): void {
 		const { channels } = summary;
 		assert(
+			// Destructuring here would require renaming the variables, since seqs is declared below
 			// eslint-disable-next-line unicorn/consistent-destructuring
 			summary.seqs.length === summary.posBreakpoints.length,
 			0x445 /* Invalid attribution summary blob provided */,

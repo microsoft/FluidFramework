@@ -326,9 +326,6 @@ export class TestClient extends Client {
 	public relText(clientId: number, refSeq: number): string {
 		return `cli: ${this.getLongClientId(
 			clientId,
-		)} refSeq: ${refSeq}: ${this.textHelper.getText(
-			refSeq,
-			clientId,
 		)} refSeq: ${refSeq}: ${this.textHelper.getText(refSeq, clientId)}`;
 	}
 

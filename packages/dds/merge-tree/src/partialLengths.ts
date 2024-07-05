@@ -943,18 +943,7 @@ export class PartialSequenceLengths {
 			// TODO Non null asserting, why is this not null?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const child = node.children[i]!;
-			if (!child.isLeaf()) {
-				const childBlock = child;
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const branchPartialLengths = childBlock.partialLengths!;
-				const partialLengths = branchPartialLengths.partialLengths;
-				const leqPartial = partialLengths.latestLeq(seq);
-				if (leqPartial && leqPartial.seq === seq) {
-					seqSeglen += leqPartial.seglen;
-					remoteObliteratedLen += leqPartial.remoteObliteratedLen ?? 0;
-				}
-				segCount += branchPartialLengths.segmentCount;
-			} else {
+			if (child.isLeaf()) {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -1011,9 +1000,7 @@ export class PartialSequenceLengths {
 					}
 				}
 				segCount++;
-			}
-			else
-			{
+			} else {
 				const childBlock = child;
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const branchPartialLengths = childBlock.partialLengths!;

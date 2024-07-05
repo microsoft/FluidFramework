@@ -185,7 +185,9 @@ describe("Attribution Policy", () => {
 				remoteUserLongId,
 			);
 			client.insertTextRemote(1, "2", { bar: 1 }, ++seq, seq - 1, remoteUserLongId);
-			client.annotateRangeRemote(0, 1, { foo: undefined }, ++seq, seq - 1, remoteUserLongId);
+			// Null is used to represent deleting a property, since undefined will not be sent over the wire.
+			// eslint-disable-next-line unicorn/no-null
+			client.annotateRangeRemote(0, 1, { foo: null }, ++seq, seq - 1, remoteUserLongId);
 			client.updateMinSeq(seq);
 			let segmentCount = 0;
 			client.walkSegments(() => {

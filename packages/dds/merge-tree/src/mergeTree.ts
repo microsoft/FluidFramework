@@ -1208,19 +1208,19 @@ export class MergeTree {
 					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
 
 					if (locallyMovedSegments) {
-						for (const segment of locallyMovedSegments.segments) {
-							// Cast is needed since parent was removed from ISegment
-							const segWithParent = segment as ISegmentLeaf;
-							segWithParent.localMovedSeq = undefined;
+						// Disabling because a for of loop causes the type of segment to be ISegment, which does not have parent information stored
+						// eslint-disable-next-line unicorn/no-array-for-each
+						locallyMovedSegments.segments.forEach((segment: ISegmentLeaf) => {
+							segment.localMovedSeq = undefined;
 
-							if (!nodesToUpdate.includes(segWithParent.parent!)) {
-								nodesToUpdate.push(segWithParent.parent!);
+							if (!nodesToUpdate.includes(segment.parent!)) {
+								nodesToUpdate.push(segment.parent!);
 							}
 
-							if (segWithParent.movedSeq === UnassignedSequenceNumber) {
-								segWithParent.movedSeq = seq;
+							if (segment.movedSeq === UnassignedSequenceNumber) {
+								segment.movedSeq = seq;
 							}
-						}
+						});
 
 						this.locallyMovedSegments.delete(localMovedSeq);
 					}
@@ -2174,38 +2174,36 @@ export class MergeTree {
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
-			for (const segment of pendingSegmentGroup.segments) {
-				// Cast is needed because parent was removed from ISegment
-				const segWithParent = segment as ISegmentLeaf;
-				const segmentSegmentGroup = segWithParent.segmentGroups?.pop?.();
+			// Disabling because a for of loop causes the type of segment to be ISegment, which does not have parent information stored
+			// eslint-disable-next-line unicorn/no-array-for-each
+			pendingSegmentGroup.segments.forEach((segment: ISegmentLeaf) => {
+				const segmentSegmentGroup = segment.segmentGroups?.pop?.();
 				assert(
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ee /* Unexpected segmentGroup in segment */,
 				);
 
 				assert(
-					segWithParent.removedClientIds !== undefined &&
-						segWithParent.removedClientIds[0] === this.collabWindow.clientId,
+					segment.removedClientIds !== undefined &&
+						segment.removedClientIds[0] === this.collabWindow.clientId,
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
-				segWithParent.removedClientIds = undefined;
-				segWithParent.removedSeq = undefined;
-				segWithParent.localRemovedSeq = undefined;
+				segment.removedClientIds = undefined;
+				segment.removedSeq = undefined;
+				segment.localRemovedSeq = undefined;
 
 				// Note: optional chaining short-circuits:
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
 				this.mergeTreeDeltaCallback?.(
-					{
-						op: createInsertSegmentOp(this.findRollbackPosition(segWithParent), segWithParent),
-					},
+					{ op: createInsertSegmentOp(this.findRollbackPosition(segment), segment) },
 					{
 						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment: segWithParent }],
+						deltaSegments: [{ segment }],
 					},
 				);
 
 				for (
-					let updateNode = segWithParent.parent;
+					let updateNode = segment.parent;
 					updateNode !== undefined;
 					updateNode = updateNode.parent
 				) {
@@ -2215,7 +2213,7 @@ export class MergeTree {
 						this.collabWindow.clientId,
 					);
 				}
-			}
+			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE
@@ -2410,8 +2408,7 @@ export class MergeTree {
 			}
 		}
 
-		// eslint-disable-next-line unicorn/no-useless-spread
-		const newOrder = [...affectedSegments.map(({ data }) => data)];
+		const newOrder = Array.from(affectedSegments, ({ data }) => data);
 		for (const seg of newOrder)
 			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref));
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();

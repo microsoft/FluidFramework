@@ -271,7 +271,7 @@ export class LocalReferenceCollection {
 	}
 
 	/**
-	 * Returns an iterator.
+	 * Returns an iterator over this LocalReferenceCollection.
 	 * @remarks This method should only be called by mergeTree.
 	 */
 	public [Symbol.iterator](): {
