@@ -110,7 +110,7 @@ describe("RemoteMessageProcessor", () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: Infinity,
-				content: [
+				messages: [
 					getOutboundMessage("a", true),
 					getOutboundMessage("b"),
 					getOutboundMessage("c"),
@@ -154,7 +154,7 @@ describe("RemoteMessageProcessor", () => {
 				}
 			}
 			let startSeqNum = outboundMessages.length + 1;
-			outboundMessages.push(...batch.content);
+			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
 			const actual: ISequencedDocumentMessage[] = [];
