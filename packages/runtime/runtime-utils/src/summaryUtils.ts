@@ -310,7 +310,9 @@ export function convertSnapshotTreeToSummaryTree(
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
 			// only for blobPath -> blobId mapping and not for blobId -> blob value contents.
 		} else if (snapshot.blobs[id] !== undefined) {
-			decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+			// Non null asserting here because of the undefined check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			decoded = fromBase64ToUtf8(snapshot.blobs[id]!);
 		}
 		if (decoded !== undefined) {
 			builder.addBlob(path, decoded);
