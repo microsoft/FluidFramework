@@ -257,7 +257,7 @@ export class LocalReferenceCollection {
 	/***/
 	private constructor(
 		/**
-		 * Segment this `LocalReferenceCollection` is associated to.
+		 * The segment this `LocalReferenceCollection` is associated with.
 		 */
 		private readonly segment: ISegment,
 		initialRefsByfOffset: (IRefsAtOffset | undefined)[] = Array.from({

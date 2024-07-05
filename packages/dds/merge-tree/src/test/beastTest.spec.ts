@@ -748,7 +748,7 @@ export function TestPack(verbose = true): {
 			a[i] = new MergeTree();
 		}
 		for (;;) {
-			// infinte loop
+			// infinite loop
 		}
 	}
 

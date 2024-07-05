@@ -200,7 +200,7 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 }
 
 /**
- * Creates an AttributionPolicy for inserted content only.
+ * Creates an {@link AttributionPolicy} for inserted content only.
  * @returns An {@link AttributionPolicy} which tracks only insertion of content.
  * @internal
  */
@@ -214,7 +214,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 }
 
 /**
- * Creates an AttributionPolicy for tracking annotation of specific properties.
+ * Creates an {@link AttributionPolicy} for tracking annotation of specific properties.
  * @param propNames - List of property names for which attribution should be tracked.
  * @returns A policy which only attributes annotation of the properties specified.
  * Keys for each property are stored under attribution channels of the same name--see example below.
