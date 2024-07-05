@@ -8,6 +8,7 @@ import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	ValueSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -290,5 +291,121 @@ describe("Schema Discrepancies", () => {
 		]);
 
 		assert.deepEqual(getAllowedContentIncompatibilities(leafNodeSchema1, leafNodeSchema3), []);
+	});
+
+	describe("Special types of tree schemas", () => {
+		const root = storedEmptyFieldSchema;
+		const objectNodeSchema = createObjectNodeSchema(
+			[["x", fieldSchema(FieldKinds.required, [brand<TreeNodeSchemaIdentifier>("number")])]],
+			"tree",
+			root,
+		);
+		const mapNodeSchema = createMapNodeSchema(
+			fieldSchema(FieldKinds.required, [brand<TreeNodeSchemaIdentifier>("number")]),
+			"tree",
+			root,
+		);
+
+		const neverField = fieldSchema(FieldKinds.required, []);
+		const neverTree = createMapNodeSchema(neverField, "tree", root);
+		const neverTree2 = createObjectNodeSchema([["x", neverField]], "tree", root);
+
+		it("neverTree", () => {
+			assert.deepEqual(getAllowedContentIncompatibilities(neverTree, neverTree2), [
+				{
+					identifier: "tree",
+					mismatch: "nodeKind",
+					view: "map",
+					stored: "object",
+				},
+			]);
+
+			assert.deepEqual(getAllowedContentIncompatibilities(neverTree, mapNodeSchema), [
+				{
+					identifier: "tree",
+					mismatch: "allowedTypes",
+					view: [],
+					stored: ["number"],
+				},
+			]);
+
+			assert.deepEqual(getAllowedContentIncompatibilities(neverTree2, objectNodeSchema), [
+				{
+					identifier: "tree",
+					mismatch: "fields",
+					differences: [
+						{
+							identifier: "x",
+							mismatch: "allowedTypes",
+							view: [],
+							stored: ["number"],
+						},
+					],
+				},
+			]);
+		});
+
+		it("emptyTree", () => {
+			const emptyTree = createObjectNodeSchema([], "tree", root);
+			const emptyLocalFieldTree = createObjectNodeSchema(
+				[["x", storedEmptyFieldSchema]],
+				"tree",
+				root,
+			);
+
+			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, emptyLocalFieldTree), [
+				{
+					identifier: "tree",
+					mismatch: "fields",
+					differences: [
+						{
+							identifier: "x",
+							mismatch: "fieldKind",
+							view: undefined,
+							stored: "Forbidden",
+						},
+					],
+				},
+			]);
+
+			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, objectNodeSchema), [
+				{
+					identifier: "tree",
+					mismatch: "fields",
+					differences: [
+						{
+							identifier: "x",
+							mismatch: "fieldKind",
+							view: undefined,
+							stored: "Value",
+						},
+					],
+				},
+			]);
+
+			assert.deepEqual(
+				getAllowedContentIncompatibilities(emptyLocalFieldTree, objectNodeSchema),
+				[
+					{
+						identifier: "tree",
+						mismatch: "fields",
+						differences: [
+							{
+								identifier: "x",
+								mismatch: "allowedTypes",
+								view: [],
+								stored: ["number"],
+							},
+							{
+								identifier: "x",
+								mismatch: "fieldKind",
+								view: "Forbidden",
+								stored: "Value",
+							},
+						],
+					},
+				],
+			);
+		});
 	});
 });
