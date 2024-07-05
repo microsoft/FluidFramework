@@ -346,6 +346,7 @@ extends:
               useBuildKit: true
               enableNetwork: true
               enableCache: true
+              enablePull: ${{ parameters.enableDockerImagePull }}
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
