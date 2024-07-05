@@ -721,7 +721,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getLongClientId(shortClientId: number): string {
-		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
+		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId]! : "original";
 	}
 
 	addLongClientId(longClientId: string): void {
@@ -1058,7 +1058,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// eslint-disable-next-line import/no-deprecated
 					return createGroupOp();
 				}
-				firstGroup = segmentGroup[0];
+				// TODO Non null asserting, why is this not null?
+				firstGroup = segmentGroup[0]!;
 			} else {
 				firstGroup = segmentGroup;
 			}
@@ -1088,7 +1089,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				);
 
 				for (let i = 0; i < resetOp.ops.length; i++) {
-					opList.push(...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+					// Non null asserting because resetOp and segmentGroup are arrays of same length and loop is length of resetOp
+					opList.push(...this.resetPendingDeltaToOps(resetOp.ops[i]!, segmentGroup[i]!));
 				}
 			} else {
 				// A group op containing a single op will pass a direct reference to 'segmentGroup'
@@ -1097,7 +1099,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					resetOp.ops.length === 1,
 					0x03b /* "Number of ops in 'resetOp' must match the number of segment groups provided." */,
 				);
-				opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
+				// Non null asserting because of length assert above
+				opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0]!, segmentGroup));
 			}
 		} else {
 			assert(
@@ -1110,8 +1113,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
+		// TODO why are we non null asserting here?
 		// eslint-disable-next-line import/no-deprecated
-		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
+		return opList.length === 1 ? opList[0]! : createGroupOp(...opList);
 	}
 
 	// eslint-disable-next-line import/no-deprecated

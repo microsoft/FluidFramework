@@ -87,7 +87,8 @@ export class SnapshotLoader {
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
 			//       (See https://github.com/microsoft/FluidFramework/issues/84)
 
-			return this.loadCatchupOps(services.readBlob(blobs[0]), this.serializer);
+			// TODO Non null asserting, why is this not null?
+			return this.loadCatchupOps(services.readBlob(blobs[0]!), this.serializer);
 		} else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
 			throw new Error("Unexpected blobs in snapshot");
 		}
@@ -216,7 +217,8 @@ export class SnapshotLoader {
 		) {
 			const chunk = await SnapshotV1.loadChunk(
 				services,
-				headerMetadata.orderedChunkMetadata[chunkIndex].id,
+				// TODO Non null asserting, why is this not null?
+				headerMetadata.orderedChunkMetadata[chunkIndex]!.id,
 				this.logger,
 				this.mergeTree.options,
 				this.serializer,
@@ -281,8 +283,6 @@ export class SnapshotLoader {
 	}
 
 	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
-		this.mergeTree.options ??= {};
-		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

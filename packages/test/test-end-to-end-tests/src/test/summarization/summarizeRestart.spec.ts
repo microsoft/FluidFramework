@@ -15,8 +15,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import { reconnectSummarizerToBeElected } from "./gc/gcTestSummaryUtils.js";
+import { reconnectSummarizerToBeElected } from "../gc/index.js";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
@@ -46,7 +45,7 @@ describeCompat(
 
 		beforeEach("setup", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 100);
+			configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
 		});
 
 		afterEach(() => {

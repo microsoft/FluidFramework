@@ -43,7 +43,8 @@ export class PropertiesManager {
 		for (const [key, value] of Object.entries(props)) {
 			if (value !== undefined && this.pendingKeyUpdateCount?.[key] !== undefined) {
 				assert(
-					this.pendingKeyUpdateCount[key] > 0,
+					// TODO Non null asserting, why is this not null?
+					this.pendingKeyUpdateCount[key]! > 0,
 					0x05c /* "Trying to update more annotate props than do exist!" */,
 				);
 				this.pendingKeyUpdateCount[key]--;
@@ -133,7 +134,8 @@ export class PropertiesManager {
 			// eslint-disable-next-line import/no-deprecated
 			newManager.pendingKeyUpdateCount = createMap<number>();
 			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
-				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
+				// TODO Non null asserting, why is this not null?
+				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key]!;
 			}
 		}
 		return newProps;

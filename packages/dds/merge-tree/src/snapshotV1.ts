@@ -92,14 +92,22 @@ export class SnapshotV1 {
 		let segmentCount = 0;
 		let hasAttribution = false;
 		while (length < approxSequenceLength && startIndex + segmentCount < allSegments.length) {
-			const pseg = allSegments[startIndex + segmentCount];
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const pseg = allSegments[startIndex + segmentCount]!;
 			segments.push(pseg);
-			length += allLengths[startIndex + segmentCount];
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			length += allLengths[startIndex + segmentCount]!;
 			if (attributionCollections[startIndex + segmentCount]) {
 				hasAttribution = true;
 				collections.push({
-					attribution: attributionCollections[startIndex + segmentCount],
-					cachedLength: allLengths[startIndex + segmentCount],
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					attribution: attributionCollections[startIndex + segmentCount]!,
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					cachedLength: allLengths[startIndex + segmentCount]!,
 				});
 			}
 			segmentCount++;
@@ -306,7 +314,9 @@ export class SnapshotV1 {
 					raw.removedClient =
 						segment.removedClientIds === undefined
 							? undefined
-							: this.getLongClientId(segment.removedClientIds[0]);
+							: // TODO Non null asserting, why is this not null?
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								this.getLongClientId(segment.removedClientIds[0]!);
 
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
 						this.getLongClientId(id),
