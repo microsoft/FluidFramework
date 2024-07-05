@@ -38,10 +38,6 @@ export class OpCompressor {
 			batch.contentSizeInBytes > 0 && batch.messages.length > 0,
 			0x5a4 /* Batch should not be empty */,
 		);
-		assert(
-			batch.content[0] !== undefined,
-			"batch.content[0] undefined in OpCompressor.compressBatch",
-		);
 
 		const compressionStart = Date.now();
 		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatchContents(batch));
@@ -51,9 +47,13 @@ export class OpCompressor {
 
 		const messages: BatchMessage[] = [];
 		messages.push({
-			...batch.messages[0],
+			// Non null asserting here because of the length assert above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			...batch.messages[0]!,
 			contents: JSON.stringify({ packedContents: compressedContent }),
-			metadata: batch.messages[0].metadata,
+			// Non null asserting here because of the length assert above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			metadata: batch.messages[0]!.metadata,
 			compression: CompressionAlgorithms.lz4,
 		});
 

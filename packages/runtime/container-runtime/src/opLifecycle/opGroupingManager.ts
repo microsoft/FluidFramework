@@ -58,10 +58,6 @@ export class OpGroupingManager {
 	 */
 	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
-		assert(
-			batch.content[0] !== undefined,
-			"batch.content[0] undefined in OpGroupingManager.groupBatch",
-		);
 
 		if (batch.messages.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -69,7 +65,9 @@ export class OpGroupingManager {
 				length: batch.messages.length,
 				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 			});
 		}
 
@@ -95,7 +93,9 @@ export class OpGroupingManager {
 			messages: [
 				{
 					metadata: undefined,
-					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
+					// TODO why are we non null asserting here?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],

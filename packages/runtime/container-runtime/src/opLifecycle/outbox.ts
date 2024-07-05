@@ -387,14 +387,12 @@ export class Outbox {
 
 		let clientSequenceNumber: number;
 		if (this.params.submitBatchFn === undefined) {
-			assert(
-				batch.content[0] !== undefined,
-				"batch.content[0] is undefined in Outbox.sendBatch()",
-			);
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
-				batch.messages[0].compression === undefined,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				batch.messages[0]!.compression === undefined,
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
