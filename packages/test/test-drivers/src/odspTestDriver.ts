@@ -8,7 +8,10 @@ import os from "os";
 
 import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentServiceFactory,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,
 	getDriveId,
@@ -78,16 +81,17 @@ export function assertOdspEndpoint(
 }
 
 /**
- * Get from the env a set of credential to use from a single tenant
- * @param tenantIndex - interger to choose the tenant from an array
+ * Get from the env a set of credentials to use from a single tenant
+ * @param tenantIndex - integer to choose the tenant from array of options (if multiple tenants are available)
  * @param requestedUserName - specific user name to filter to
+ * @internal
  */
-function getCredentials(
+export function getOdspCredentials(
 	odspEndpointName: OdspEndpoint,
 	tenantIndex: number,
 	requestedUserName?: string,
-) {
-	const creds: { [user: string]: string } = {};
+): { username: string; password: string }[] {
+	const creds: { username: string; password: string }[] = [];
 	const loginTenants =
 		odspEndpointName === "odsp"
 			? process.env.login__odsp__test__tenants
@@ -104,7 +108,7 @@ function getCredentials(
 		for (let i = 0; i < range.count; i++) {
 			const username = `${range.prefix}${range.start + i}@${tenant}`;
 			if (requestedUserName === undefined || requestedUserName === username) {
-				creds[username] = range.password;
+				creds.push({ username, password: range.password });
 			}
 		}
 	} else {
@@ -112,14 +116,24 @@ function getCredentials(
 			odspEndpointName === "odsp"
 				? process.env.login__odsp__test__accounts
 				: process.env.login__odspdf__test__accounts;
-		assert(loginAccounts !== undefined, "Missing login__odsp/odspdf__test__accounts");
+		if (loginAccounts === undefined) {
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			const inCi = !!process.env.TF_BUILD;
+			const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
+			assert.fail(
+				`Missing secrets from environment. At least one of login__${odspOrOdspdf}__test__tenants or login__${odspOrOdspdf}__test__accounts must be set.${
+					inCi ? "" : "\n\nRun getkeys to populate these environment variables."
+				}`,
+			);
+		}
+
 		// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
 		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
 
 		// Need to choose one out of the set as these account might be from different tenant
 		const username = requestedUserName ?? Object.keys(passwords)[0];
 		assert(passwords[username], `No password for username: ${username}`);
-		creds[username] = passwords[username];
+		creds.push({ username, password: passwords[username] });
 	}
 	return creds;
 }
@@ -170,15 +184,14 @@ export class OdspTestDriver implements ITestDriver {
 		const tenantIndex = config?.tenantIndex ?? 0;
 		assertOdspEndpoint(config?.odspEndpointName);
 		const endpointName = config?.odspEndpointName ?? "odsp";
-		const creds = getCredentials(endpointName, tenantIndex, config?.username);
+		const creds = getOdspCredentials(endpointName, tenantIndex, config?.username);
 		// Pick a random one on the list (only supported for >= 0.46)
-		const users = Object.keys(creds);
 		const randomUserIndex =
 			compare(api.version, "0.46.0") >= 0
 				? Math.random()
 				: OdspTestDriver.legacyDriverUserRandomIndex;
-		const userIndex = Math.floor(randomUserIndex * users.length);
-		const username = users[userIndex];
+		const userIndex = Math.floor(randomUserIndex * creds.length);
+		const { username, password } = creds[userIndex];
 
 		const emailServer = username.substr(username.indexOf("@") + 1);
 
@@ -201,7 +214,7 @@ export class OdspTestDriver implements ITestDriver {
 		return this.create(
 			{
 				username,
-				password: creds[username],
+				password,
 				siteUrl,
 				supportsBrowserAuth: config?.supportsBrowserAuth,
 			},

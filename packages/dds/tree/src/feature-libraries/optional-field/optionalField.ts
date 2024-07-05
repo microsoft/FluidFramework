@@ -6,22 +6,22 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	ChangeAtomIdMap,
-	ChangesetLocalId,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	DeltaMark,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangeAtomIdMap,
+	type ChangesetLocalId,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type DeltaMark,
+	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 	replaceAtomRevisions,
 	taggedAtomId,
 } from "../../core/index.js";
 import {
-	IdAllocator,
-	Mutable,
+	type IdAllocator,
+	type Mutable,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	setInNestedMap,
@@ -29,19 +29,19 @@ import {
 } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
-	FieldChangeHandler,
-	FieldChangeRebaser,
-	FieldEditor,
-	NodeChangeComposer,
-	NodeChangePruner,
-	NodeChangeRebaser,
-	NodeExistenceState,
-	NodeId,
-	RelevantRemovedRootsFromChild,
-	ToDelta,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NodeChangeComposer,
+	type NodeChangePruner,
+	type NodeChangeRebaser,
+	NodeAttachState,
+	type NodeId,
+	type RelevantRemovedRootsFromChild,
+	type ToDelta,
 } from "../modular-schema/index.js";
 
-import {
+import type {
 	ChildChange,
 	Move,
 	OptionalChangeset,
@@ -107,9 +107,7 @@ export class RegisterMap<T> implements IRegisterMap<T> {
 			} else {
 				for (const [revisionTag, _] of nestedMap) {
 					changeIds.push(
-						revisionTag === undefined
-							? { localId }
-							: { localId, revision: revisionTag },
+						revisionTag === undefined ? { localId } : { localId, revision: revisionTag },
 					);
 				}
 			}
@@ -169,11 +167,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composedFieldSrc = "self";
 			} else {
 				composedFieldSrc =
-					tryGetFromNestedMap(
-						dstToSrc,
-						change2FieldSrc.revision,
-						change2FieldSrc.localId,
-					) ?? change2FieldSrc;
+					tryGetFromNestedMap(dstToSrc, change2FieldSrc.revision, change2FieldSrc.localId) ??
+					change2FieldSrc;
 			}
 		} else if (change1FieldSrc !== undefined && change2.valueReplace === undefined) {
 			composedFieldSrc = change1FieldSrc;
@@ -304,13 +299,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						? {
 								isEmpty: true,
 								dst: makeChangeAtomId(genId.allocate()),
-						  }
+							}
 						: {
 								isEmpty: false,
-								dst: isRollback
-									? change.valueReplace.src
-									: makeChangeAtomId(genId.allocate()),
-						  };
+								dst: isRollback ? change.valueReplace.src : makeChangeAtomId(genId.allocate()),
+							};
 				if (change.valueReplace.isEmpty === false) {
 					replace.src = change.valueReplace.dst;
 				}
@@ -373,7 +366,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const rebasedChildChange = rebaseChild(
 				childChange,
 				overChildChange,
-				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
 			);
 			if (rebasedChildChange !== undefined) {
 				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
@@ -385,7 +378,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const rebasedChildChange = rebaseChild(
 				undefined,
 				overChildChange,
-				rebasedId === "self" ? NodeExistenceState.Alive : NodeExistenceState.Dead,
+				rebasedId === "self" ? NodeAttachState.Attached : NodeAttachState.Detached,
 			);
 			if (rebasedChildChange !== undefined) {
 				rebasedChildChanges.push([rebasedId, rebasedChildChange]);
@@ -701,7 +694,10 @@ export function optionalFieldIntoDelta(
 	return delta;
 }
 
-export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
+export const optionalChangeHandler: FieldChangeHandler<
+	OptionalChangeset,
+	OptionalFieldEditor
+> = {
 	rebaser: optionalChangeRebaser,
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,

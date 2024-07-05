@@ -4,14 +4,14 @@
  */
 
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionTag,
 	offsetChangeAtomId,
 } from "../../../core/index.js";
-import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
+import type { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { CellId } from "../../../feature-libraries/sequence-field/index.js";
+import type { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import { brand } from "../../../util/index.js";
@@ -383,11 +383,7 @@ export function testInvert() {
 				];
 
 				const actual = invert(input, tag1);
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag1 },
-					cellId,
-				);
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag1 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 
@@ -401,11 +397,7 @@ export function testInvert() {
 				];
 
 				const actual = invertChange(tagChangeInline(input, tag2, tag3 /* <= ignored */));
-				const expected = Change.modifyDetached(
-					0,
-					{ ...childChange1, revision: tag2 },
-					cellId,
-				);
+				const expected = Change.modifyDetached(0, { ...childChange1, revision: tag2 }, cellId);
 				assertChangesetsEqual(actual, expected);
 			});
 

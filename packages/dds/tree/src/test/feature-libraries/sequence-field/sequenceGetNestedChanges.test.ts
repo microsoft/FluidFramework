@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { NodeId } from "../../../feature-libraries/index.js";
+import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/index.js";
 import { brand } from "../../../util/index.js";
 import { MarkMaker as Mark } from "./testEdits.js";
-import { RevisionTag } from "../../../core/index.js";
+import type { RevisionTag } from "../../../core/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 const tag1: RevisionTag = mintRevisionTag();

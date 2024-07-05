@@ -4,27 +4,27 @@
  */
 
 import {
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	DeltaFieldChanges,
-	FieldKindIdentifier,
+	type ChangesetLocalId,
+	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
+	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
-	FieldChangeHandler,
-	FieldEditor,
-	FieldKindConfiguration,
-	FieldKindConfigurationEntry,
+	type FieldChangeHandler,
+	type FieldEditor,
+	type FieldKindConfiguration,
+	type FieldKindConfigurationEntry,
 	FieldKindWithEditor,
-	FlexFieldKind,
-	ToDelta,
+	type FlexFieldKind,
+	type ToDelta,
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
 import {
-	OptionalChangeset,
+	type OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
@@ -113,7 +113,8 @@ export const sequence = new FieldKindWithEditor(
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind === sequenceIdentifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
+		other.kind === sequenceIdentifier &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
 );

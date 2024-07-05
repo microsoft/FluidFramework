@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
-import { BlobManager } from "../../blobManager.js";
+import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
@@ -60,7 +60,7 @@ describe("GC Telemetry Tracker", () => {
 		// Path with two parts such as "/id1/id2" - sub data stores.
 		// Everything else - other.
 		const getNodeType = (nodePath: string) => {
-			if (nodePath.split("/")[1] === BlobManager.basePath) {
+			if (nodePath.split("/")[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (nodePath.split("/").length === 2) {
@@ -75,6 +75,7 @@ describe("GC Telemetry Tracker", () => {
 			gcEnabled: true,
 			sweepEnabled: false,
 			shouldRunSweep: "NO",
+			tombstoneAutorecoveryEnabled: false,
 			runFullGC: false,
 			testMode: false,
 			tombstoneMode: false,
@@ -212,11 +213,12 @@ describe("GC Telemetry Tracker", () => {
 				}
 			}
 
-			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
-			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
-			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
-			mockLogger.events = cachedEvents;
+			mockLogger.assertMatch(
+				expectedEvents,
+				message,
+				true /* inlineDetailsProp */,
+				false /* clearEventsAfterCheck */, // Don't clear events so we can run another check.
+			);
 			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
 

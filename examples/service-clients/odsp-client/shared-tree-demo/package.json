@@ -1,13 +1,13 @@
 {
 	"name": "@fluid-example/shared-tree-demo",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"private": true,
 	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/service-clients/shared-tree-demo"
+		"directory": "examples/service-clients/odsp-client/shared-tree-demo"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -17,12 +17,12 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check . --formatter-enabled=true",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -37,7 +37,6 @@
 		"@azure/msal-browser": "^2.34.0",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"css-loader": "^6.11.0",
 		"fluid-framework": "workspace:~",
 		"react": "^17.0.1",

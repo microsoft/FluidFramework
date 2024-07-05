@@ -7,20 +7,23 @@ import { strict as assert, fail } from "assert";
 
 import { makeAnonChange } from "../../../core/index.js";
 import {
-	ValueFieldEditor,
+	type ValueFieldEditor,
 	valueChangeHandler,
 	valueFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { CrossFieldManager, FieldChangeHandler } from "../../../feature-libraries/index.js";
+import type {
+	CrossFieldManager,
+	FieldChangeHandler,
+} from "../../../feature-libraries/index.js";
 import {
-	NodeId,
+	type NodeId,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
+import type { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
 import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import {
@@ -46,7 +49,10 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-const childComposer1_2 = (change1: NodeId | undefined, change2: NodeId | undefined): NodeId => {
+const childComposer1_2 = (
+	change1: NodeId | undefined,
+	change2: NodeId | undefined,
+): NodeId => {
 	assert(change1 !== undefined && change2 !== undefined);
 	assert.deepEqual(change1, nodeChange1);
 	assert.deepEqual(change2, nodeChange2);

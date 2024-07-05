@@ -8,6 +8,7 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
+	type IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -15,9 +16,16 @@ import {
  * the protocol summary, using the provided callback to add it if necessary.
  */
 export class ProtocolTreeStorageService implements IDocumentStorageService, IDisposable {
+	/**
+	 *
+	 * @param internalStorageService - Document storage service responsible to make api calls to the storage.
+	 * @param addProtocolSummaryIfMissing - Function to add protocol summary tree to the summary. Used in scenarios where single-commit summaries are used.
+	 * @param shouldSummarizeProtocolTree - Callback function to learn about the service preference on whether single-commit summaries are enabled.
+	 */
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService & IDisposable,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
+		private readonly shouldSummarizeProtocolTree: () => boolean,
 	) {
 		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(internalStorageService);
 		this.getSnapshot = internalStorageService.getSnapshot?.bind(internalStorageService);
@@ -27,10 +35,10 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		this.downloadSummary = internalStorageService.downloadSummary.bind(internalStorageService);
 		this.dispose = internalStorageService.dispose.bind(internalStorageService);
 	}
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.internalStorageService.disposed;
 	}
 
@@ -46,9 +54,11 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		return this.internalStorageService.uploadSummaryWithContext(
-			this.addProtocolSummaryIfMissing(summary),
-			context,
-		);
+		return this.shouldSummarizeProtocolTree()
+			? this.internalStorageService.uploadSummaryWithContext(
+					this.addProtocolSummaryIfMissing(summary),
+					context,
+				)
+			: this.internalStorageService.uploadSummaryWithContext(summary, context);
 	}
 }

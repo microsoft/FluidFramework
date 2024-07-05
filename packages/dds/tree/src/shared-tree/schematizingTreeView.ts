@@ -7,36 +7,42 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, Compatibility } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
 import {
-	FlexFieldSchema,
-	NodeKeyManager,
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
+import {
+	type FlexFieldSchema,
+	type NodeKeyManager,
 	ViewSchema,
 	defaultSchemaPolicy,
 	ContextSlot,
+	cursorForMapTreeNode,
+	type FlexTreeSchema,
 } from "../feature-libraries/index.js";
 import {
-	FieldSchema,
-	ImplicitFieldSchema,
-	SchemaCompatibilityStatus,
-	InsertableTreeFieldFromImplicitField,
-	// eslint-disable-next-line import/no-deprecated
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-	TreeViewEvents,
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	type SchemaCompatibilityStatus,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type TreeView,
+	type TreeViewEvents,
 	getProxyForField,
-	toFlexConfig,
+	toFlexSchema,
 	setField,
 	normalizeFieldSchema,
-	InsertableContent,
-	cursorFromUnhydratedRoot,
+	type InsertableContent,
 	type TreeViewConfiguration,
+	mapTreeFromNodeData,
+	prepareContentForHydration,
 } from "../simple-tree/index.js";
 import { disposeSymbol } from "../util/index.js";
 
-import { TreeContent, canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import { TreeCheckout } from "./treeCheckout.js";
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 
 /**
@@ -56,7 +62,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 * Undefined iff uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
-	private readonly flexConfig: TreeContent;
+	private readonly flexSchema: FlexTreeSchema;
 	public readonly events: Listenable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
@@ -78,8 +84,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		// eslint-disable-next-line import/no-deprecated
-		public readonly config: TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
+		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
 		const policy = {
@@ -87,11 +92,9 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			validateSchema: config.enableSchemaValidation,
 		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
-			schema: checkout.storedSchema,
-			policy,
-		});
-		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
+		this.flexSchema = toFlexSchema(config.schema);
+
+		this.viewSchema = new ViewSchema(policy, {}, this.flexSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -117,16 +120,23 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		}
 
 		this.runSchemaEdit(() => {
+			const mapTree = mapTreeFromNodeData(
+				content as InsertableContent,
+				this.rootFieldSchema.allowedTypes,
+				this.nodeKeyManager,
+				{
+					schema: this.checkout.storedSchema,
+					policy: {
+						...defaultSchemaPolicy,
+						validateSchema: this.config.enableSchemaValidation,
+					},
+				},
+			);
+
+			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.flexConfig.schema,
-				initialTree:
-					content === undefined
-						? undefined
-						: cursorFromUnhydratedRoot(
-								this.config.schema,
-								content,
-								this.nodeKeyManager,
-						  ),
+				schema: this.flexSchema,
+				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
 	}
@@ -149,10 +159,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.runSchemaEdit(() => {
 			const result = ensureSchema(
 				this.viewSchema,
-				// eslint-disable-next-line no-bitwise
-				AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
+				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
-				this.flexConfig,
+				{
+					schema: this.flexSchema,
+					initialTree: undefined,
+				},
 			);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
@@ -228,8 +240,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 					lastRoot = this.root;
 					this.events.emit("rootChanged");
 				}
-
-				this.events.emit("afterBatch");
 			});
 
 			const onViewDispose = (): void => {
@@ -338,7 +348,12 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		);
 	}
 
-	const view = new CheckoutFlexTreeView(checkout, viewSchema.schema, nodeKeyManager, onDispose);
+	const view = new CheckoutFlexTreeView(
+		checkout,
+		viewSchema.schema,
+		nodeKeyManager,
+		onDispose,
+	);
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {

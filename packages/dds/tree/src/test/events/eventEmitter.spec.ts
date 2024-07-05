@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter, Listenable, createEmitter } from "../../events/index.js";
+import { EventEmitter, type Listenable, createEmitter } from "../../events/index.js";
 
 interface TestEvents {
 	open: () => void;
@@ -96,13 +96,36 @@ describe("EventEmitter", () => {
 		assert(!closed);
 	});
 
-	it("correctly handles multiple event listeners", () => {
+	it("correctly handles multiple registrations for the same event", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count: number;
 		const listener = () => (count += 1);
 		const off1 = emitter.on("open", listener);
-		assert.throws(() => emitter.on("open", listener)); // Registering the exact same function is currently forbidden.
 		const off2 = emitter.on("open", () => listener());
+
+		count = 0;
+		emitter.emit("open");
+		assert.strictEqual(count, 2); // Listener should be fired twice
+
+		count = 0;
+		off1();
+		emitter.emit("open");
+		assert.strictEqual(count, 1);
+
+		count = 0;
+		off2();
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	// Note: This behavior is not contractually required (see docs for `Listenable.on()`),
+	// but is tested here to check for changes or regressions.
+	it("correctly handles multiple registrations of the same listener", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count: number;
+		const listener = () => (count += 1);
+		const off1 = emitter.on("open", listener);
+		const off2 = emitter.on("open", listener);
 
 		count = 0;
 		emitter.emit("open");

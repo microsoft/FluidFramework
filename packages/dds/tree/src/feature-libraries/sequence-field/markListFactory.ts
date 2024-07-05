@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Mark, MarkList } from "./types.js";
+import type { Mark, MarkList } from "./types.js";
 import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
 /**

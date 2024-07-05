@@ -40,9 +40,7 @@ class InMemoryByValue {
 			retainedPaths = _.intersection(
 				retainedPaths,
 				limitedPaths.map((lp) =>
-					PathHelper.tokenizePathString(lp)
-						.map(PathHelper.quotePathSegmentIfNeeded)
-						.join("."),
+					PathHelper.tokenizePathString(lp).map(PathHelper.quotePathSegmentIfNeeded).join("."),
 				),
 			);
 		}
@@ -130,16 +128,8 @@ class InMemoryByValue {
 						) {
 							return cb("break");
 						}
-						if (
-							ScanTraversalUtils.isItemContext(
-								tokenizedPagingPath,
-								depthLimit,
-								context,
-							)
-						) {
-							if (
-								!paths[_getPath(context._parentStack, context._parentStack.length)]
-							) {
+						if (ScanTraversalUtils.isItemContext(tokenizedPagingPath, depthLimit, context)) {
+							if (!paths[_getPath(context._parentStack, context._parentStack.length)]) {
 								paths[_getPath(context._parentStack, context._parentStack.length)] =
 									_.cloneDeep(fieldsToGather);
 							}
@@ -183,10 +173,7 @@ class InMemoryByValue {
 					},
 				},
 				() => {
-					let matchingPaths = InMemoryByValue._matchGatheredFieldsAgainstWhere(
-						paths,
-						where,
-					);
+					let matchingPaths = InMemoryByValue._matchGatheredFieldsAgainstWhere(paths, where);
 					resolve(matchingPaths);
 				},
 			);
@@ -203,7 +190,12 @@ class InMemoryByValue {
 	 * @param {Object} context - Traversal context
 	 * @return {Boolean} - Whether this represent the property to filter upon
 	 */
-	static _getWhereClauseKey(tokenizedPagingPath, tokenizedFieldsToGather, depthLimit, context) {
+	static _getWhereClauseKey(
+		tokenizedPagingPath,
+		tokenizedFieldsToGather,
+		depthLimit,
+		context,
+	) {
 		let found = Object.keys(tokenizedFieldsToGather).find((f) => {
 			let v = tokenizedFieldsToGather[f];
 			const expectedStackLength = tokenizedPagingPath.length + v.length + depthLimit;
@@ -404,11 +396,7 @@ class InMemoryByValue {
 			if (wc[clause]) {
 				for (const field of Object.keys(wc[clause])) {
 					if (
-						!clauseToEval[clause](
-							wc[clause][field],
-							value[field].value,
-							value[field].typeId,
-						)
+						!clauseToEval[clause](wc[clause][field], value[field].value, value[field].typeId)
 					) {
 						return false;
 					}

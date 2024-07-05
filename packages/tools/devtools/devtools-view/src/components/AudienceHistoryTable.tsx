@@ -23,7 +23,7 @@ import React from "react";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 
-import { type TransformedAudienceHistoryData } from "./AudienceView.js";
+import type { TransformedAudienceHistoryData } from "./AudienceView.js";
 import { clientIdTooltipText } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
 
@@ -90,15 +90,14 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="Client ID"
 									infoTooltipContent={clientIdTooltipText}
 								>
 									{column.label}
 								</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<LabelCellLayout icon={<Clock12Regular />}>
-									{column.label}
-								</LabelCellLayout>
+								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
 							)}
 						</TableCell>
 					))}
@@ -114,18 +113,14 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							themeInfo.name === ThemeOption.HighContrast
 								? style.highContrast
 								: item.changeKind === "joined"
-								? style.joined
-								: style.left
+									? style.joined
+									: style.left
 						}
 					>
 						<TableCell>
 							<LabelCellLayout
 								icon={
-									item.changeKind === "joined" ? (
-										<ArrowJoinRegular />
-									) : (
-										<ArrowExitRegular />
-									)
+									item.changeKind === "joined" ? <ArrowJoinRegular /> : <ArrowExitRegular />
 								}
 							>
 								{item.changeKind}

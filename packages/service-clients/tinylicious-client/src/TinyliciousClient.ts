@@ -4,23 +4,23 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IContainer,
-	type IFluidModuleWithDetails,
-	type IHostLoader,
+import type {
+	IContainer,
+	IFluidModuleWithDetails,
+	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import type { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/driver-definitions";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	type ContainerSchema,
-	type IFluidContainer,
-	type CompatibilityMode,
+import type {
+	ContainerSchema,
+	IFluidContainer,
+	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
 	type IRootDataObject,
@@ -37,7 +37,7 @@ import {
 } from "@fluidframework/tinylicious-driver/internal";
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import type { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -95,7 +95,6 @@ export class TinyliciousClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state.");
 			}

@@ -1,12 +1,12 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "azure/packages/test/end-to-end-tests"
+		"directory": "packages/service-clients/end-to-end-tests/azure-client"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -17,12 +17,12 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check . --formatter-enabled=true",
-		"check:format": "npm run check:prettier",
+		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check . --formatter-enabled=true --apply",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
@@ -102,7 +102,7 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0-265463",
+		"tinylicious": "^5.0.0",
 		"typescript": "~5.4.5",
 		"uuid": "^9.0.0"
 	},
@@ -136,7 +136,7 @@
 		"moment": "^2.21.0",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0-265463",
+		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
 	},
 	"fluidBuild": {

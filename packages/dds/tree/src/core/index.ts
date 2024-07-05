@@ -191,6 +191,8 @@ export {
 	offsetChangeAtomId,
 	replaceAtomRevisions,
 	replaceChange,
+	type RebaseStats,
+	type RebaseStatsWithDuration,
 } from "./rebase/index.js";
 
 export {

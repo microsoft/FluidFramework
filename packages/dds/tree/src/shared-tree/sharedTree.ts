@@ -4,29 +4,34 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ICodecOptions, noopValidator } from "../codec/index.js";
+import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
-	JsonableTree,
+	type JsonableTree,
 	RevisionTagCodec,
-	TreeStoredSchema,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
-import { HasListeners, IEmitter, Listenable, createEmitter } from "../events/index.js";
+import {
+	type HasListeners,
+	type IEmitter,
+	type Listenable,
+	createEmitter,
+} from "../events/index.js";
 import {
 	DetachedFieldIndexSummarizer,
-	FlexFieldSchema,
+	type FlexFieldSchema,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
@@ -42,26 +47,23 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	DefaultResubmitMachine,
-	ExplicitCoreCodecVersions,
+	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import {
+import type {
 	ITree,
 	ImplicitFieldSchema,
-	// eslint-disable-next-line import/no-deprecated
-	TreeConfiguration,
-	TreeView,
-	type TreeViewConfiguration,
+	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
-import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
+import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { CheckoutEvents, TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -135,8 +137,18 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 }
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
-	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
-	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
+	[
+		1,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 },
+	],
+	[
+		2,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 },
+	],
+	[
+		3,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -198,6 +210,7 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
+			originatorId: runtime.idCompressor.localSessionId,
 			idCompressor: runtime.idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
@@ -270,6 +283,7 @@ export class SharedTree
 				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
+				logger: this.logger,
 			},
 		);
 	}
@@ -305,25 +319,9 @@ export class SharedTree
 		);
 	}
 
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		// eslint-disable-next-line import/no-deprecated
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		const view = new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
-		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.compatibility.canInitialize === true) {
-			view.initialize(config.initialTree());
-		}
-		return view;
-	}
-
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): TreeView<TRoot> {
+	): SchematizingSimpleTreeView<TRoot> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
@@ -356,6 +354,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v2: 2,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v3: 3,
 } as const;
 
 /**
@@ -422,7 +425,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v2,
+	formatVersion: SharedTreeFormatVersion.v3,
 };
 
 /**

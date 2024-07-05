@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
+import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {
 	BatchManager,
@@ -41,14 +41,14 @@ export interface IOutboxParameters {
 	readonly submitBatchFn:
 		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 		| undefined;
-	readonly legacySendBatchFn: (batch: IBatch) => void;
+	readonly legacySendBatchFn: (batch: IBatch) => number;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryBaseLogger;
 	readonly groupingManager: OpGroupingManager;
 	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
-	readonly reSubmit: (message: IPendingBatchMessage) => void;
+	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 }
@@ -87,6 +87,13 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 	}
 }
 
+/**
+ * The Outbox collects messages submitted by the ContainerRuntime into a batch,
+ * and then flushes the batch when requested.
+ *
+ * @remarks There are actually multiple independent batches (some are for a specific message type),
+ * to support slight variation in semantics for each batch (e.g. support for rebasing or grouping).
+ */
 export class Outbox {
 	private readonly mc: MonitoringContext;
 	private readonly mainBatch: BatchManager;
@@ -126,10 +133,14 @@ export class Outbox {
 	}
 
 	/**
-	 * If we detect that the reference sequence number of the incoming message does not match
-	 * what was already in the batch managers, this means that batching has been interrupted so
+	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
 	 * message as the first message.
+	 *
+	 * @remarks - To detect batch interruption, we compare both the reference sequence number
+	 * (i.e. last message processed by DeltaManager) and the client sequence number of the
+	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
+	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
 	private maybeFlushPartialBatch() {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
@@ -254,6 +265,7 @@ export class Outbox {
 			return;
 		}
 
+		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
@@ -261,10 +273,10 @@ export class Outbox {
 			const processedBatch = this.compressBatch(
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
-			this.sendBatch(processedBatch);
+			clientSequenceNumber = this.sendBatch(processedBatch);
 		}
 
-		this.persistBatch(rawBatch.content);
+		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);
 	}
 
 	/**
@@ -275,10 +287,10 @@ export class Outbox {
 	 */
 	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
-		assert(batchManager.options.canRebase, "BatchManager does not support rebase");
+		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
 		this.rebasing = true;
-		for (const message of rawBatch.content) {
+		for (const message of rawBatch.messages) {
 			this.params.reSubmit({
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				content: message.contents!,
@@ -291,7 +303,7 @@ export class Outbox {
 			this.mc.logger.sendTelemetryEvent(
 				{
 					eventName: "BatchRebase",
-					length: rawBatch.content.length,
+					length: rawBatch.messages.length,
 					referenceSequenceNumber: rawBatch.referenceSequenceNumber,
 				},
 				new UsageError("BatchRebase"),
@@ -318,7 +330,7 @@ export class Outbox {
 	 */
 	private compressBatch(batch: IBatch): IBatch {
 		if (
-			batch.content.length === 0 ||
+			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
@@ -340,7 +352,7 @@ export class Outbox {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
 				batchSize: batch.contentSizeInBytes,
 				compressedBatchSize: compressedBatch.contentSizeInBytes,
-				count: compressedBatch.content.length,
+				count: compressedBatch.messages.length,
 				limit: this.params.config.maxBatchSizeInBytes,
 				chunkingEnabled: this.params.splitter.isBatchChunkingEnabled,
 				compressionOptions: JSON.stringify(this.params.config.compressionOptions),
@@ -355,39 +367,38 @@ export class Outbox {
 	 * Sends the batch object to the container context to be sent over the wire.
 	 *
 	 * @param batch - batch to be sent
+	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
 	private sendBatch(batch: IBatch) {
-		const length = batch.content.length;
+		const length = batch.messages.length;
 		if (length === 0) {
-			return;
+			return undefined; // Nothing submitted
 		}
 
 		const socketSize = estimateSocketSize(batch);
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
 			this.mc.logger.sendPerformanceEvent({
 				eventName: "LargeBatch",
-				length: batch.content.length,
+				length: batch.messages.length,
 				sizeInBytes: batch.contentSizeInBytes,
 				socketSize,
 			});
 		}
 
+		let clientSequenceNumber: number;
 		if (this.params.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
-				batch.content[0].compression === undefined,
+				batch.messages[0].compression === undefined,
 				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
-			this.params.legacySendBatchFn(batch);
+			clientSequenceNumber = this.params.legacySendBatchFn(batch);
 		} else {
-			assert(
-				batch.referenceSequenceNumber !== undefined,
-				0x58e /* Batch must not be empty */,
-			);
-			this.params.submitBatchFn(
-				batch.content.map((message) => ({
+			assert(batch.referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
+			clientSequenceNumber = this.params.submitBatchFn(
+				batch.messages.map<IBatchMessage>((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,
 					compression: message.compression,
@@ -396,23 +407,17 @@ export class Outbox {
 				batch.referenceSequenceNumber,
 			);
 		}
+
+		// Convert from clientSequenceNumber of last message in the batch to clientSequenceNumber of first message.
+		clientSequenceNumber -= length - 1;
+		assert(clientSequenceNumber >= 0, 0x3d0 /* clientSequenceNumber can't be negative */);
+		return clientSequenceNumber;
 	}
 
-	private persistBatch(batch: BatchMessage[]) {
-		// Let the PendingStateManager know that a message was submitted.
-		// In future, need to shift toward keeping batch as a whole!
-		for (const message of batch) {
-			this.params.pendingStateManager.onSubmitMessage(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				message.contents!,
-				message.referenceSequenceNumber,
-				message.localOpMetadata,
-				message.metadata,
-			);
-		}
-	}
-
-	public checkpoint() {
+	/**
+	 * @returns A checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
+	 */
+	public getBatchCheckpoints() {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();

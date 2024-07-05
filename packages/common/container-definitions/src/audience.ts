@@ -7,6 +7,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 /**
  * Manages the state and the members for {@link IAudience}
+ * @legacy
  * @alpha
  */
 export interface IAudienceOwner extends IAudience {
@@ -48,7 +49,10 @@ export interface IAudienceEvents extends IEvent {
 	 * @param newValue - represents newly established connection. While {@link IAudience.getSelf} is experimental, it's not guaranteed that
 	 * newValue.client is present. Same is true if you are consuming audience from container runtime layer and running against old version of loader.
 	 */
-	(event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
+	(
+		event: "selfChanged",
+		listener: (oldValue: ISelf | undefined, newValue: ISelf) => void,
+	): void;
 }
 
 /**

@@ -6,47 +6,53 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	RevisionMetadataSource,
-	RevisionTag,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type RevisionMetadataSource,
+	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
 } from "../../core/index.js";
-import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
-	CrossFieldManager,
-	CrossFieldQuerySet,
+	type Mutable,
+	type RangeMap,
+	brand,
+	fail,
+	getFromRangeMap,
+} from "../../util/index.js";
+import {
+	type CrossFieldManager,
+	type CrossFieldQuerySet,
 	CrossFieldTarget,
-	NodeId,
+	type NodeId,
 	addCrossFieldQuery,
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
 
-import {
+import type {
 	CellRename,
 	DetachOfRemovedNodes,
 	EmptyInputCellMark,
 	MoveMarkEffect,
 } from "./helperTypes.js";
 import {
-	Attach,
-	AttachAndDetach,
-	CellId,
-	CellMark,
-	Changeset,
-	Detach,
-	DetachFields,
-	HasRevisionTag,
-	Insert,
-	Mark,
-	MarkEffect,
-	MoveId,
-	MoveIn,
-	MoveOut,
-	NoopMark,
+	type Attach,
+	type AttachAndDetach,
+	type CellId,
+	type CellMark,
+	type Changeset,
+	type Detach,
+	type DetachFields,
+	type HasRevisionTag,
+	type Insert,
+	type Mark,
+	type MarkEffect,
+	type MoveId,
+	type MoveIn,
+	type MoveOut,
+	type NoopMark,
 	NoopMarkType,
-	Remove,
+	type Remove,
 } from "./types.js";
 
 export function isEmpty(change: Changeset): boolean {
@@ -531,7 +537,10 @@ export function compareCellsFromSameRevision(
 	cell2: CellId,
 	count2: number,
 ): number | undefined {
-	assert(cell1.revision === cell2.revision, 0x85b /* Expected cells to have the same revision */);
+	assert(
+		cell1.revision === cell2.revision,
+		0x85b /* Expected cells to have the same revision */,
+	);
 	if (areOverlappingIdRanges(cell1.localId, count1, cell2.localId, count2)) {
 		return cell1.localId - cell2.localId;
 	}
@@ -556,7 +565,9 @@ function areMergeableChangeAtoms(
 		return lhs === undefined && rhs === undefined;
 	}
 
-	return lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId);
+	return (
+		lhs.revision === rhs.revision && areAdjacentIdRanges(lhs.localId, lhsCount, rhs.localId)
+	);
 }
 
 function areAdjacentIdRanges(
@@ -567,7 +578,11 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
-function haveMergeableIdOverrides(lhs: DetachFields, lhsCount: number, rhs: DetachFields): boolean {
+function haveMergeableIdOverrides(
+	lhs: DetachFields,
+	lhsCount: number,
+	rhs: DetachFields,
+): boolean {
 	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
 		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
 	}
@@ -875,7 +890,9 @@ function splitDetachEvent(detachEvent: CellId, length: number): CellId {
 }
 
 // TODO: Refactor MarkEffect into a field of CellMark so this function isn't necessary.
-export function extractMarkEffect<TEffect extends MarkEffect>(mark: CellMark<TEffect>): TEffect {
+export function extractMarkEffect<TEffect extends MarkEffect>(
+	mark: CellMark<TEffect>,
+): TEffect {
 	const { cellId: _cellId, count: _count, changes: _changes, ...effect } = mark;
 	return effect as unknown as TEffect;
 }
@@ -949,6 +966,6 @@ export function getEndpoint(effect: MoveMarkEffect): ChangeAtomId {
 		? {
 				...effect.finalEndpoint,
 				revision: effect.finalEndpoint.revision ?? effect.revision,
-		  }
+			}
 		: { revision: effect.revision, localId: effect.id };
 }

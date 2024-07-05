@@ -11,7 +11,12 @@ export {
 	type ValueFromBranded,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
-export { brandOpaque, extractFromOpaque, type ExtractFromOpaque, type Opaque } from "./opaque.js";
+export {
+	brandOpaque,
+	extractFromOpaque,
+	type ExtractFromOpaque,
+	type Opaque,
+} from "./opaque.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
@@ -24,6 +29,7 @@ export {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
 } from "./nestedMap.js";
@@ -87,12 +93,12 @@ export type {
 	AllowOptional,
 	RequiredFields,
 	OptionalFields,
-	_InlineTrick,
 	_RecursiveTrick,
-	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
 	Assume,
+	_InlineTrick,
+	FlattenKeys,
 } from "./typeUtils.js";
 
 export {
