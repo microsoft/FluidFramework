@@ -78,8 +78,7 @@ describe("SharedTree memory usage", () => {
 		new (class implements IMemoryTestObject {
 			public readonly title = "Create empty SharedTree";
 
-			private sharedTree: TreeView<typeof RootNodeSchema> =
-				createLocalSharedTree("testSharedTree");
+			private sharedTree: TreeView<typeof RootNodeSchema> | undefined;
 
 			public async run(): Promise<void> {
 				this.sharedTree = createLocalSharedTree("testSharedTree");
