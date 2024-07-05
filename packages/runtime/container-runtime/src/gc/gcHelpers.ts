@@ -241,7 +241,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 		}
 
 		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const childId = id.split("/")[1]!;
 		let childGCNodeId = id.slice(childId.length + 1);
@@ -272,7 +272,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
 		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const childId = route.split("/")[1]!;
 		const childUsedRoute = route.slice(childId.length + 1);
@@ -300,7 +300,7 @@ function trimLeadingAndTrailingSlashes(str: string) {
 
 /** Reformats a request URL to match expected format for a GC node path */
 export function urlToGCNodePath(url: string): string {
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0]!)}`;
 }

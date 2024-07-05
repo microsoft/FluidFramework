@@ -2163,11 +2163,11 @@ export class ContainerRuntime
 		let childTree = snapshotTree;
 		for (const part of pathParts) {
 			if (hasIsolatedChannels) {
-				// Why are we non null asserting here
+				// TODO Why are we non null asserting here
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				childTree = childTree.trees[channelsTreeName]!;
 			}
-			// Why are we non null asserting here
+			// TODO Why are we non null asserting here
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			childTree = childTree.trees[part]!;
 		}
