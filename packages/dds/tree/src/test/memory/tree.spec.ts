@@ -96,8 +96,9 @@ describe("SharedTree memory usage", () => {
 					createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
+					assert(this.sharedTree.root.child !== undefined);
+
 					for (let i = 0; i < x; i++) {
-						assert(this.sharedTree.root.child !== undefined);
 						this.sharedTree.root.child.propertyOne = x;
 					}
 				}
@@ -115,8 +116,9 @@ describe("SharedTree memory usage", () => {
 					createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
+					assert(this.sharedTree.root.child !== undefined);
+
 					for (let i = 0; i < x; i++) {
-						assert(this.sharedTree.root.child !== undefined);
 						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
 					}
 				}
@@ -134,8 +136,9 @@ describe("SharedTree memory usage", () => {
 					createLocalSharedTree("testSharedTree");
 
 				public async run(): Promise<void> {
+					assert(this.sharedTree.root.child !== undefined);
+
 					for (let i = 0; i < x; i++) {
-						assert(this.sharedTree.root.child !== undefined);
 						this.sharedTree.root.child.propertyOne = x;
 						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
 						this.sharedTree.root.child.propertyThree.set(i.toString(), i);
