@@ -65,26 +65,12 @@ const azureClientFeatureGates = {
 };
 
 /**
- * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
- */
-const azureClientV1CompatFeatureGates = {
-	// Disable Garbage Collection
-	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
-	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
-	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
-};
-
-/**
  * Wrap the config provider to fall back on the appropriate defaults for Azure Client.
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	const defaults = {
-		...azureClientFeatureGates,
-		...azureClientV1CompatFeatureGates,
-	};
-	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+	return wrapConfigProviderWithDefaults(baseConfigProvider, azureClientFeatureGates);
 }
 
 /**
@@ -326,7 +312,6 @@ export class AzureClient {
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (): Promise<string> => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}

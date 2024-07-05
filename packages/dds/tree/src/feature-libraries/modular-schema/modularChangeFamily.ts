@@ -31,7 +31,6 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
-	emptyDelta,
 	isEmptyFieldChanges,
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -203,14 +202,10 @@ export class ModularChangeFamily
 	}
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-		const activeChanges = changes.filter(
-			(change) => (change.change.constraintViolationCount ?? 0) === 0,
-		);
-
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		return activeChanges.reduce(
+		return changes.reduce(
 			(change1, change2) =>
 				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
 			makeAnonChange({ fieldChanges: new Map(), nodeChanges: new Map() }),
@@ -229,8 +224,8 @@ export class ModularChangeFamily
 		const crossFieldTable = newComposeTable();
 
 		const composedFields = this.composeFieldMaps(
-			change1.change.fieldChanges,
-			change2.change.fieldChanges,
+			getActiveFieldChanges(change1.change),
+			getActiveFieldChanges(change2.change),
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -472,9 +467,27 @@ export class ModularChangeFamily
 		change: TaggedChange<ModularChangeset>,
 		isRollback: boolean,
 	): ModularChangeset {
-		// Return an empty inverse for changes with constraint violations
+		// Rollback changesets destroy the nodes created by the change being rolled back.
+		const destroys = isRollback
+			? invertBuilds(change.change.builds, change.revision)
+			: undefined;
+
+		// Destroys only occur in rollback changesets, which are never inverted.
+		assert(
+			change.change.destroys === undefined,
+			0x89a /* Unexpected destroys in change to invert */,
+		);
+
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
-			return makeModularChangeset();
+			return makeModularChangeset(
+				undefined,
+				undefined,
+				change.change.maxId,
+				[],
+				undefined,
+				undefined,
+				destroys,
+			);
 		}
 
 		const idState: IdAllocationState = { maxId: change.change.maxId ?? -1 };
@@ -539,17 +552,6 @@ export class ModularChangeFamily
 				invertedField.change = brand(amendedChange);
 			}
 		}
-
-		// Rollback changesets destroy the nodes created by the change being rolled back.
-		const destroys = isRollback
-			? invertBuilds(change.change.builds, change.revision)
-			: undefined;
-
-		// Destroys only occur in rollback changesets, which are never inverted.
-		assert(
-			change.change.destroys === undefined,
-			0x89a /* Unexpected destroys in change to invert */,
-		);
 
 		return makeModularChangeset(
 			invertedFields,
@@ -1313,22 +1315,23 @@ export function intoDelta(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): DeltaRoot {
 	const change = taggedChange.change;
-	// Return an empty delta for changes with constraint violations
-	if ((change.constraintViolationCount ?? 0) > 0) {
-		return emptyDelta;
-	}
-
 	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
 	const rootDelta: Mutable<DeltaRoot> = {};
-	const fieldDeltas = intoDeltaImpl(
-		change.fieldChanges,
-		change.nodeChanges,
-		idAllocator,
-		fieldKinds,
-	);
-	if (fieldDeltas.size > 0) {
-		rootDelta.fields = fieldDeltas;
+
+	if ((change.constraintViolationCount ?? 0) === 0) {
+		// If there are no constraint violations, then tree changes apply.
+		const fieldDeltas = intoDeltaImpl(
+			change.fieldChanges,
+			change.nodeChanges,
+			idAllocator,
+			fieldKinds,
+		);
+		if (fieldDeltas.size > 0) {
+			rootDelta.fields = fieldDeltas;
+		}
 	}
+
+	// Constraint violations should not prevent nodes from being built
 	if (change.builds && change.builds.size > 0) {
 		rootDelta.build = copyDetachedNodes(change.builds);
 	}
@@ -1931,4 +1934,10 @@ function revisionFromRevInfos(
 		return undefined;
 	}
 	return revInfos[0].revision;
+}
+
+function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {
+	return (changes.constraintViolationCount ?? 0) === 0
+		? changes.fieldChanges
+		: new Map<FieldKey, FieldChange>();
 }

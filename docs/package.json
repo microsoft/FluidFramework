@@ -23,7 +23,7 @@
 		"ci:build": "npm run build",
 		"ci:linkcheck": "start-server-and-test ci:start 1313 linkcheck:full",
 		"ci:start": "http-server ./public --port 1313 --silent",
-		"clean": "rimraf --glob public content/docs/api _api-extractor-temp",
+		"clean": "rimraf --glob public content/docs/api _api-extractor-temp _doc-models",
 		"download:api": "node ./download-apis.js",
 		"format": "npm run prettier:fix",
 		"hugo": "hugo",
@@ -39,7 +39,7 @@
 		"start": "hugo server"
 	},
 	"dependencies": {
-		"@fluid-tools/api-markdown-documenter": "^0.13.0",
+		"@fluid-tools/api-markdown-documenter": "^0.14.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@rushstack/node-core-library": "^4.0.2",
@@ -54,7 +54,6 @@
 		"hugo-extended": "^0.113.0",
 		"js-yaml": "^4.1.0",
 		"linkcheck-bin": "3.0.0-1",
-		"markdown-magic": "npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1",
 		"markdown-magic-package-json": "^2.0.2",
 		"markdown-magic-package-scripts": "^1.2.2",
 		"markdown-magic-template": "^1.0.1",

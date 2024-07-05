@@ -23,6 +23,7 @@ import type { DataObjectTypes } from "./types.js";
  * will automatically be registered.
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @legacy
  * @alpha
  */
 export abstract class DataObject<

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,16 +20,6 @@
 			},
 			"require": {
 				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -58,8 +48,8 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -70,10 +60,8 @@
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json",
-		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
-		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
@@ -103,7 +91,7 @@
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:run": "npm run test:mocha:end-to-end",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -137,7 +125,7 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^5.0.0-265463",
+		"tinylicious": "^5.0.0",
 		"tslib": "^1.10.0",
 		"typescript": "~5.4.5"
 	},

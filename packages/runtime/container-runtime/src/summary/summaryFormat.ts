@@ -20,12 +20,14 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 
+import { blobsTreeName } from "../blobManager/index.js";
 import { IGCMetadata } from "../gc/index.js";
 
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export type OmitAttributesVersions<T> = Omit<
@@ -35,6 +37,7 @@ export type OmitAttributesVersions<T> = Omit<
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreAttributes0 {
@@ -51,6 +54,7 @@ export interface IFluidDataStoreAttributes0 {
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreAttributes1
@@ -61,6 +65,7 @@ export interface IFluidDataStoreAttributes1
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreAttributes2
@@ -83,6 +88,7 @@ export interface IFluidDataStoreAttributes2
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
+ * @legacy
  * @alpha
  *
  */
@@ -120,6 +126,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
@@ -139,6 +146,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICreateContainerMetadata {
@@ -150,6 +158,7 @@ export interface ICreateContainerMetadata {
 
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
+ * @legacy
  * @alpha
  */
 export type ISummaryMetadataMessage = Pick<
@@ -200,7 +209,6 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
-export const blobsTreeName = ".blobs";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
 

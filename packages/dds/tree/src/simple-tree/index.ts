@@ -7,7 +7,6 @@ export {
 	type ITree,
 	type TreeView,
 	type TreeViewEvents,
-	TreeConfiguration,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
@@ -26,7 +25,7 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	type,
+	typeNameSymbol,
 	type WithType,
 	type AllowedTypes,
 	FieldKind,
@@ -42,7 +41,7 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
-export { toFlexConfig, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
+export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
@@ -60,7 +59,11 @@ export type {
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
 export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
-export { getProxyForField, type InsertableContent } from "./proxies.js";
+export {
+	getProxyForField,
+	type InsertableContent,
+	prepareContentForHydration,
+} from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -93,3 +96,4 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode } from "./mapNode.js";
+export { mapTreeFromNodeData } from "./toMapTree.js";

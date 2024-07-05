@@ -75,12 +75,14 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 
 /**
  * Entrypoint for {@link ISharedCounter} creation.
+ * @legacy
  * @alpha
  */
 export const SharedCounter = createSharedObjectKind<ISharedCounter>(CounterFactory);
 
 /**
  * Alias for {@link ISharedCounter} for compatibility.
+ * @legacy
  * @alpha
  */
 export type SharedCounter = ISharedCounter;
