@@ -694,10 +694,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const maybeUnusedStorageIds: Set<string> = new Set();
 		for (const route of blobRoutes) {
 			const blobId = getBlobIdFromGCNodePath(route);
-			assert(
-				blobId !== undefined,
-				"blobId is undefined in BlobManager.deleteBlobsFromRedirectTable()",
-			);
 			// If the blob hasn't already been deleted, log an error because this should never happen.
 			// If the blob has already been deleted, log a telemetry event. This can happen because multiple GC
 			// sweep ops can contain the same data store. It would be interesting to track how often this happens.

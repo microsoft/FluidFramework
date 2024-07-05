@@ -1304,11 +1304,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	): readonly string[] {
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
-			const dataStoreId = pathParts[1];
-			assert(
-				dataStoreId !== undefined,
-				"dataStoreId undefined in ChannelCollection.deleteSweepReadyNodes()",
-			);
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreId = pathParts[1]!;
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
@@ -1353,11 +1351,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			if (pathParts.length > 2) {
 				continue;
 			}
-			const dataStoreId = pathParts[1];
-			assert(
-				dataStoreId !== undefined,
-				"dataStoreId undefined in ChannelCollection.updateTombstonedRoutes()",
-			);
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreId = pathParts[1]!;
 			assert(this.contexts.has(dataStoreId), 0x510 /* No data store with specified id */);
 			tombstonedDataStoresSet.add(dataStoreId);
 		}
@@ -1424,8 +1420,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	public async request(request: IRequest): Promise<IResponse> {
 		const requestParser = RequestParser.create(request);
-		const id = requestParser.pathParts[0];
-		assert(id !== undefined, "id undefined in ChannelCollection.request");
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = requestParser.pathParts[0]!;
 
 		// Differentiate between requesting the dataStore directly, or one of its children
 		const requestForChild = !requestParser.isLeaf(1);

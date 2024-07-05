@@ -134,7 +134,9 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
-		const firstMessage = batch.messages[0]; // we expect this to be the large compressed op, which needs to be split
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const firstMessage = batch.messages[0]!; // we expect this to be the large compressed op, which needs to be split
 		assert(
 			firstMessage !== undefined,
 			0x9ab /* First message in the batch needs to be defined */,
