@@ -103,6 +103,11 @@ parameters:
     type: boolean
     default: false
 
+  # Whether the docker image build should try to pull from the registry
+  - name: enableDockerImagePull
+    type: boolean
+    default: true
+
 trigger: none
 
 resources:
@@ -478,6 +483,7 @@ extends:
             useBuildKit: true
             enableNetwork: true
             enableCache: true
+            enablePull: ${{ parameters.enableDockerImagePull }}
 
         # TODO: move the image pushes to templateContext.outputs?
         # Push
