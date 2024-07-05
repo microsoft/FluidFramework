@@ -271,7 +271,9 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;
 	splitAt(pos: number): ISegment | undefined;
-	toJSONObject(): unknown;
+	// Changing this to something other than any would break consumers.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	toJSONObject(): any;
 	/**
 	 * Acks the current segment against the segment group, op, and merge tree.
 	 *

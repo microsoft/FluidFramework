@@ -301,9 +301,11 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			// TODO Non null asserting, why is this not null?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			splitCollection.offsets.push(Math.max(this.offsets[i]! - pos, 0));
-			// Non null asserting, this.keys[i] will always exist since we are looping though the length of it?
-
-			splitCollection.keys.push(this.keys[i]);
+			if (this.keys[i] !== undefined) {
+				// Non null asserting, this.keys[i] will always exist since we are looping though the length of it?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+				splitCollection.keys.push(this.keys[i]!);
+			}
 		}
 
 		if (this.channels) {
@@ -326,8 +328,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			if (i !== 0 || !areEqualAttributionKeys(lastEntry, other.keys[i])) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				this.offsets.push(other.offsets[i]! + this.length);
-
-				this.keys.push(other.keys[i]);
+				// TODO: see line 305
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+				this.keys.push(other.keys[i]!);
 			}
 		}
 
@@ -448,15 +451,15 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const nextOffset = Math.max(posBreakpoints[curIndex]! - cumulativeSegPos, 0);
 					// TODO Non null asserting, why is this not null?
-
-					pushEntry(nextOffset, seqs[curIndex]);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+					pushEntry(nextOffset, seqs[curIndex]!);
 					curIndex++;
 				}
 
 				if (attribution.offsets.length === 0) {
 					// TODO Non null asserting, why is this not null?
-
-					pushEntry(0, seqs[curIndex - 1]);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+					pushEntry(0, seqs[curIndex - 1]!);
 				}
 
 				assignToSegment(attribution, segment);

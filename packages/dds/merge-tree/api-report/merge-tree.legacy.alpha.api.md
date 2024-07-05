@@ -450,7 +450,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
-    toJSONObject(): unknown;
+    toJSONObject(): any;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
