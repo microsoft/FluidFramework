@@ -1752,6 +1752,9 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
+				includeBatchId:
+					// Only include batch ID in op metadata if offline load is enabled
+					this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,

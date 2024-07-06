@@ -20,7 +20,7 @@ export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
 }
 
 /**
- * Batching makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
+ * Properties put on the op metadata object for batch tracking
  */
 export interface IBatchMetadata {
 	/** Set on first/last messages of a multi-message batch, to true/false respectively */

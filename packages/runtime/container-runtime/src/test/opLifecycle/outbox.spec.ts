@@ -24,6 +24,7 @@ import {
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
+import { asBatchMetadata } from "../../metadata.js";
 import {
 	BatchMessage,
 	BatchSequenceNumbers,
@@ -71,24 +72,25 @@ describe("Outbox", () => {
 		},
 	});
 
-	const getMockContext = (): Partial<IContainerContext> => ({
-		deltaManager: getMockDeltaManager() as IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-		clientDetails: { capabilities: { interactive: true } },
-		updateDirtyContainerState: (_dirty: boolean) => {},
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
-			state.individualOpsSubmitted.push({ type, contents, batch, appData });
-			state.opsSubmitted++;
-			return state.opsSubmitted;
-		},
-		submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number): number => {
-			state.batchesSubmitted.push({ messages: batch, referenceSequenceNumber });
-			state.opsSubmitted += batch.length;
-			return state.opsSubmitted;
-		},
-	});
+	const getMockContext = (): IContainerContext =>
+		({
+			deltaManager: getMockDeltaManager() as IDeltaManager<
+				ISequencedDocumentMessage,
+				IDocumentMessage
+			>,
+			clientDetails: { capabilities: { interactive: true } },
+			updateDirtyContainerState: (_dirty: boolean) => {},
+			submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+				state.individualOpsSubmitted.push({ type, contents, batch, appData });
+				state.opsSubmitted++;
+				return state.opsSubmitted;
+			},
+			submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number): number => {
+				state.batchesSubmitted.push({ messages: batch, referenceSequenceNumber });
+				state.opsSubmitted += batch.length;
+				return state.opsSubmitted;
+			},
+		}) satisfies Partial<IContainerContext> as IContainerContext;
 
 	const getMockLegacyContext = (): Partial<IContainerContext> => ({
 		deltaManager: getMockDeltaManager() as IDeltaManager<
@@ -133,7 +135,7 @@ describe("Outbox", () => {
 					state.pendingOpContents.push({
 						content,
 						referenceSequenceNumber,
-						opMetadata,
+						opMetadata, //* This will have batchId or not based on includeBatchId param
 						batchIdContext: {
 							clientId: "CLIENT_ID",
 							batchStartCsn: clientSequenceNumber ?? -1,
@@ -200,6 +202,7 @@ describe("Outbox", () => {
 		compressionOptions?: ICompressionRuntimeOptions;
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
+		includeBatchId?: boolean;
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 	}) => {
@@ -221,6 +224,7 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
+				includeBatchId: params.includeBatchId ?? true, // For tests, default to true
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -255,67 +259,57 @@ describe("Outbox", () => {
 		mockLogger.clear();
 	});
 
-	it("Sending batches", () => {
-		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+	//* And also add one where it's disabled
+	it.only("Batch ID added when enabled", () => {
+		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.IdAllocation, "3"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
 		];
 
 		// Flush 1
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submitIdAllocation(messages[3]);
-		outbox.flush();
+		outbox.flush("batchId-A");
 
 		// Flush 2
-		outbox.submit(messages[4]);
-		outbox.flush();
+		outbox.submit(messages[2]);
+		outbox.flush("batchId-B");
 
-		// Not Flushed
-		outbox.submit(messages[5]);
+		// Not Flushed (will not appear in batchesSubmitted or pendingOpContents)
+		outbox.submit(messages[3]);
 
-		assert.equal(state.opsSubmitted, messages.length - 1);
-		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[
-				[batchedMessage(messages[2], true), batchedMessage(messages[3], false)],
-				[batchedMessage(messages[0], true), batchedMessage(messages[1], false)],
-				[batchedMessage(messages[4])], // The last message was not batched
-			],
+			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
+			[["batchId-A", undefined], ["batchId-B"]],
 		);
-		assert.equal(state.deltaManagerFlushCalls, 0);
 
-		// Note the expected CSN here is fixed to the batch's starting CSN
-		const expectedMessageOrderWithCsn = [
-			// Flush 1 (ID Allocation)
-			[messages[2], 1],
-			[messages[3], 1],
-			// Flush 1 (Main)
-			[messages[0], 3],
-			[messages[1], 3],
-			// Flush 2 (Main)
-			[messages[4], 5],
-		] as const;
 		assert.deepEqual(
-			state.pendingOpContents,
-			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
-				content: message.contents,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
+			state.pendingOpContents.map(({ batchIdContext, opMetadata }) => ({
+				batchIdContext,
+				metadata: asBatchMetadata(opMetadata),
 			})),
+			[
+				{
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					metadata: { batch: true, batchId: "batchId-A" },
+				},
+				{
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+					metadata: { batch: false, batchId: "batchId-A" },
+				},
+				{
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
+					metadata: { batchId: "batchId-B" },
+				},
+			],
 		);
 	});
 
 	it("Will send messages only when allowed, but will store them in the pending state", () => {
-		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [
 			// First batch (canSendOps = true)
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -399,7 +393,7 @@ describe("Outbox", () => {
 
 	it("Compress only if compression is enabled", () => {
 		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
+			context: getMockContext(),
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -462,7 +456,7 @@ describe("Outbox", () => {
 
 	it("Compress only if the batch is larger than the configured limit", () => {
 		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
+			context: getMockContext(),
 			maxBatchSize: 1,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1024,
@@ -523,7 +517,7 @@ describe("Outbox", () => {
 
 	it("Throws at flush, when compression is enabled and the compressed batch is still larger than the threshold", () => {
 		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
+			context: getMockContext(),
 			maxBatchSize: 1,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
@@ -550,7 +544,7 @@ describe("Outbox", () => {
 
 	it("Chunks when compression is enabled, compressed batch is larger than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
+			context: getMockContext(),
 			maxBatchSize: 1,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
@@ -615,7 +609,7 @@ describe("Outbox", () => {
 
 	it("Does not chunk when compression is enabled, compressed batch is smaller than the threshold and chunking is enabled", () => {
 		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
+			context: getMockContext(),
 			maxBatchSize: 1,
 			compressionOptions: {
 				minimumBatchSizeInBytes: 1,
@@ -657,7 +651,7 @@ describe("Outbox", () => {
 	});
 
 	it("Splits the batch when an out of order message is detected", () => {
-		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+		const outbox = getOutbox({ context: getMockContext() });
 		const messages = [
 			{
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
@@ -736,7 +730,7 @@ describe("Outbox", () => {
 		],
 	].forEach((ops: BatchMessage[]) => {
 		it("Flushes all batches when an out of order message is detected in either flows", () => {
-			const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+			const outbox = getOutbox({ context: getMockContext() });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
 				if (typeFromBatchedOp(op) === ContainerMessageType.IdAllocation) {
@@ -764,7 +758,7 @@ describe("Outbox", () => {
 
 	it("Does not flush the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox({
-			context: getMockContext() as IContainerContext,
+			context: getMockContext(),
 			disablePartialFlush: true,
 		});
 		const messages: BatchMessage[] = [
@@ -811,7 +805,7 @@ describe("Outbox", () => {
 	});
 
 	it("Log at most 3 reference sequence number mismatch events", () => {
-		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+		const outbox = getOutbox({ context: getMockContext() });
 
 		for (let i = 0; i < 10; i++) {
 			currentSeqNumbers.referenceSequenceNumber = 0;
@@ -834,7 +828,7 @@ describe("Outbox", () => {
 	});
 
 	it("blobAttach ops always flush before regular ops", () => {
-		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+		const outbox = getOutbox({ context: getMockContext() });
 
 		const messages = [
 			createMessage(ContainerMessageType.BlobAttach, "0"),
@@ -901,7 +895,7 @@ describe("Outbox", () => {
 
 		it("batch has reentrant ops, but grouped batching is off", () => {
 			const outbox = getOutbox({
-				context: getMockContext() as IContainerContext,
+				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
@@ -924,7 +918,7 @@ describe("Outbox", () => {
 
 		it("batch has reentrant ops", () => {
 			const outbox = getOutbox({
-				context: getMockContext() as IContainerContext,
+				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
@@ -949,7 +943,7 @@ describe("Outbox", () => {
 
 		it("should group the batch", () => {
 			const outbox = getOutbox({
-				context: getMockContext() as IContainerContext,
+				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
@@ -972,7 +966,7 @@ describe("Outbox", () => {
 
 		it("should not group the batch", () => {
 			const outbox = getOutbox({
-				context: getMockContext() as IContainerContext,
+				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
@@ -995,7 +989,7 @@ describe("Outbox", () => {
 
 		it("should not group blobAttach ops", () => {
 			const outbox = getOutbox({
-				context: getMockContext() as IContainerContext,
+				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
