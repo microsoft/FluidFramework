@@ -6,17 +6,10 @@
 import type { BatchId } from "./opLifecycle/index.js";
 
 /**
- * Does the metadata object look like batch metadata?
- */
-export function isBatchMetadata(metadata: any): metadata is IBatchMetadata {
-	return typeof metadata?.batch === "boolean";
-}
-
-/**
  * Cast the given metadata object to IBatchMetadata if it is so, otherwise yield undefined
  */
 export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
-	return isBatchMetadata(metadata) ? metadata : undefined;
+	return metadata as IBatchMetadata | undefined;
 }
 
 /**

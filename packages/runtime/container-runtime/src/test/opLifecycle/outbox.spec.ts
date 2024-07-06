@@ -289,20 +289,20 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents.map(({ batchIdContext, opMetadata }) => ({
 				batchIdContext,
-				metadata: asBatchMetadata(opMetadata),
+				batchId: asBatchMetadata(opMetadata)?.batchId,
 			})),
 			[
 				{
 					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
-					metadata: { batch: true, batchId: "batchId-A" },
+					batchId: "batchId-A",
 				},
 				{
 					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
-					metadata: { batch: false, batchId: "batchId-A" },
+					batchId: undefined,
 				},
 				{
 					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
-					metadata: { batchId: "batchId-B" },
+					batchId: "batchId-B",
 				},
 			],
 		);
