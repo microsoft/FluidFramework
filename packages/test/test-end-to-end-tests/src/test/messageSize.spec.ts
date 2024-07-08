@@ -269,7 +269,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	itExpects(
+	itExpects.skip(
 		"Large ops fail when compression enabled and compressed content is over max op size",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {

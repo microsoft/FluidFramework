@@ -174,7 +174,7 @@ export class ContainerStorageAdapter
 		let snapshot: ISnapshot;
 		if (
 			this.loadingGroupIdSnapshotsFromPendingState !== undefined &&
-			snapshotFetchOptions?.loadingGroupIds !== undefined
+			snapshotFetchOptions?.loadingGroupIds?.[0] !== undefined
 		) {
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
@@ -352,6 +352,7 @@ async function getBlobManagerTreeFromTree(
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
 	const id = tree.blobs[redirectTableBlobName];
+	assert(id !== undefined, "id is undefined in getBlobManagerTreeFromTree");
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
 	blobs[id] = bufferToString(blob, "utf8");
@@ -394,6 +395,7 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	blobs: ISerializableBlobContents,
 ): void {
 	const id = tree.blobs[redirectTableBlobName];
+	assert(id !== undefined, "id is undefined in getBlobManagerTreeFromTreeWithBlobContents");
 	const blob = tree.blobsContents?.[id];
 	assert(blob !== undefined, 0x70f /* Blob must be present in blobsContents */);
 	// ArrayBufferLike will not survive JSON.stringify()

@@ -252,8 +252,6 @@ export function createFluidContainer<
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
- * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
- * @internal
  */
 class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
@@ -326,7 +324,6 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 * but internally this separation is not there.
 	 */
 	public async attach(props?: ContainerAttachProps): Promise<string> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.40.0",
+	"version": "0.41.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,7 +38,7 @@
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
-		"build:readme": "fluid-readme generate readme --multi",
+		"build:readme": "fluid-readme generate readme --multi --no-aliases",
 		"build:test": "tsc --project ./test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",

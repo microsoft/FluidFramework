@@ -9,7 +9,8 @@ import { Args } from "@oclif/core";
 import { Context, isMonoRepoKind } from "./library/index.js";
 
 /**
- * A re-usable CLI argument for package or release group names.
+ * Creates a CLI argument for package or release group names. It's a factory function so that commands can override the
+ * properties more easily when using the argument.
  */
 export const packageOrReleaseGroupArg = Args.custom({
 	name: "package_or_release_group",
