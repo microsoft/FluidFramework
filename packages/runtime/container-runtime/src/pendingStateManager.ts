@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
+import { type InboundSequencedContainerRuntimeMessageOrSystemMessage } from "./messageTypes.js";
 import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
 import type { BatchMessage } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -68,7 +68,7 @@ type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
 function buildPendingMessageContent(
 	// AnyComboFromUnion is needed need to gain access to compatDetails that
 	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
+	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessageOrSystemMessage>,
 ): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
@@ -253,6 +253,19 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	public processPendingLocalBatch(
+		batch: InboundSequencedContainerRuntimeMessageOrSystemMessage[],
+		batchStartCsn: number,
+	): {
+		message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
+		localOpMetadata: unknown;
+	}[] {
+		return batch.map((message) => ({
+			message,
+			localOpMetadata: this.processPendingLocalMessage(message, batchStartCsn),
+		}));
+	}
+
 	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
@@ -261,7 +274,7 @@ export class PendingStateManager implements IDisposable {
 	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
 	public processPendingLocalMessage(
-		message: InboundSequencedContainerRuntimeMessage,
+		message: InboundSequencedContainerRuntimeMessageOrSystemMessage,
 		batchStartCsn: number,
 	): unknown {
 		// Pre-processing part - This may be the start of a batch.

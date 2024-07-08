@@ -2620,7 +2620,16 @@ export class ContainerRuntime
 			// and we need to process more messages before the rest of the system can understand it.
 			return;
 		}
-		for (const message of processResult.messages) {
+		const batchStartCsn = processResult.batchStartCsn;
+		const batch = processResult.messages;
+		const messages: {
+			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
+			localOpMetadata: unknown;
+		}[] =
+			local && modernRuntimeMessage
+				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
+				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+		messages.forEach(({ message, localOpMetadata }) => {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2640,10 +2649,8 @@ export class ContainerRuntime
 						batchStartCsn: processResult.batchStartCsn,
 					};
 			msg.savedOp = savedOp;
-
-			// ensure that we observe any re-entrancy, and if needed, rebase ops
-			this.ensureNoDataModelChanges(() => this.processCore(msg));
-		}
+			this.ensureNoDataModelChanges(() => this.processCore(msg, localOpMetadata));
+		});
 	}
 
 	private _processedClientSequenceNumber: number | undefined;
@@ -2651,7 +2658,7 @@ export class ContainerRuntime
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
-	private processCore(messageWithContext: MessageWithContext) {
+	private processCore(messageWithContext: MessageWithContext, localOpMetadata?: unknown) {
 		const { message, local } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
@@ -2680,14 +2687,6 @@ export class ContainerRuntime
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
 			);
-
-			let localOpMetadata: unknown;
-			if (local && messageWithContext.modernRuntimeMessage) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					messageWithContext.message,
-					messageWithContext.batchStartCsn,
-				);
-			}
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.

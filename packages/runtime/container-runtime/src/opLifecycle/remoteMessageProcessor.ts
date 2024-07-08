@@ -36,6 +36,8 @@ export class RemoteMessageProcessor {
 	 * @remarks For chunked batches, this is the CSN of the "representative" chunk (the final chunk)
 	 */
 	private batchStartCsn: number | undefined;
+	private readonly processorBatch: InboundSequencedContainerRuntimeMessageOrSystemMessage[] =
+		[];
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -106,6 +108,10 @@ export class RemoteMessageProcessor {
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchStartCsn undefined)
 			assert(this.batchStartCsn === undefined, "Grouped batch interrupting another batch");
+			assert(
+				this.processorBatch.length === 0,
+				"Processor batch should be empty on grouped batch",
+			);
 			return {
 				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
 				batchStartCsn: message.clientSequenceNumber,
@@ -116,10 +122,17 @@ export class RemoteMessageProcessor {
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
-		return {
-			messages: [message as InboundSequencedContainerRuntimeMessageOrSystemMessage],
-			batchStartCsn,
-		};
+		this.processorBatch.push(
+			message as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+		);
+		if (this.batchStartCsn === undefined) {
+			const messages = [...this.processorBatch];
+			this.processorBatch.length = 0;
+			return {
+				messages,
+				batchStartCsn,
+			};
+		}
 	}
 
 	/**
