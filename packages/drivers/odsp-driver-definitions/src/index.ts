@@ -19,6 +19,7 @@ export {
 	IFileEntry,
 	IPersistedCache,
 	snapshotKey,
+	snapshotWithLoadingGroupIdKey,
 } from "./odspCache.js";
 export {
 	IOdspResolvedUrl,
