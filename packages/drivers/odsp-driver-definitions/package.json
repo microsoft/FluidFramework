@@ -114,6 +114,16 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_CacheContentType": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ICacheEntry": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IEntry": {
+				"backCompat": false
+			}
+		}
 	}
 }
