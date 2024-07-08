@@ -4,16 +4,23 @@
  */
 
 /**
- * Mocha configuration file to run memory-profiling tests
+ * Mocha configuration file for memory profiling tests
  */
 
-module.exports = {
+const getFluidTreeTestMochaConfig = require("../../../.mocharc.cjs");
+
+const extendedConfig = {
+	...getFluidTreeTestMochaConfig,
 	"fgrep": ["@Benchmark", "@MemoryUsage"],
-	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
-	"recursive": true,
-	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
+	"node-option": [
+		"conditions=allow-ff-test-exports",
+		"expose-gc",
+		"gc-global",
+		"unhandled-rejections=strict",
+	], // without leading "--"
+	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js", // Changed reporter option to use the memory test reporter.
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"require": ["node_modules/@fluid-internal/mocha-test-setup"],
-	"spec": ["lib/test/memory/**/*.spec.*js", "--perfMode"],
-	"timeout": "90000",
+	"timeout": "360000", // depending on the test and the size of the E2E document, the timeout might not be enough. To address it, let's first try to decrease the number of iterations (minSampleCount).
 };
+
+module.exports = extendedConfig;
