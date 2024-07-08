@@ -8,6 +8,7 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
+	type IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -34,10 +35,10 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		this.downloadSummary = internalStorageService.downloadSummary.bind(internalStorageService);
 		this.dispose = internalStorageService.dispose.bind(internalStorageService);
 	}
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.internalStorageService.disposed;
 	}
 

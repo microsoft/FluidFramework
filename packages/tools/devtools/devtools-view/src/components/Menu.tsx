@@ -156,7 +156,7 @@ interface OpLatencyMenuSelection {
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection =
+export type MenuSelection =
 	| TelemetryMenuSelection
 	| ContainerMenuSelection
 	| SettingsMenuSelection
@@ -285,11 +285,11 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 /**
  * {@link Menu} input props.
  */
-interface MenuProps {
+export interface MenuProps {
 	/**
 	 * The current menu selection (if any).
 	 */
-	currentSelection?: MenuSelection;
+	currentSelection?: MenuSelection | undefined;
 
 	/**
 	 * Sets the menu selection to the specified value.

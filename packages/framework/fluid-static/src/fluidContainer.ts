@@ -326,7 +326,6 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	 * but internally this separation is not there.
 	 */
 	public async attach(props?: ContainerAttachProps): Promise<string> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- AB#7608
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}

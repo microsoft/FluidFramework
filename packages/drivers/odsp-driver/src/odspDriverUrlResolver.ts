@@ -93,6 +93,7 @@ const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
+ * @legacy
  * @alpha
  */
 export class OdspDriverUrlResolver implements IUrlResolver {
@@ -230,7 +231,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	}
 }
 
-function decodeOdspUrl(url: string): {
+export function decodeOdspUrl(url: string): {
 	siteUrl: string;
 	driveId: string;
 	itemId: string;
