@@ -6,7 +6,34 @@
 const fs = require("fs");
 const path = require("path");
 
-const { embeddedContentNotice, generatedContentNotice } = require("./constants.cjs");
+const {
+	embeddedContentNotice,
+	generatedContentNotice,
+	templatesDirectoryPath,
+} = require("./constants.cjs");
+
+/**
+ * Reads and returns the contents from the specified template file.
+ *
+ * @param {string} templateFileName - Name of the file to read, under {@link templatesDirectoryPath} (e.g. "Trademark-Template.md").
+ */
+const readTemplate = (templateFileName) => {
+	return fs
+		.readFileSync(path.resolve(templatesDirectoryPath, templateFileName), {
+			encoding: "utf-8",
+		})
+		.trim();
+};
+
+/**
+ * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const createSectionFromTemplate = (templateName, maybeHeadingName) => {
+	const sectionBody = readTemplate(templateName);
+	return formattedSectionText(sectionBody, maybeHeadingName);
+};
 
 /**
  * Resolves the provided relative path from its document path.
@@ -103,10 +130,12 @@ function formattedEmbeddedContentBody(contents) {
 }
 
 module.exports = {
+	createSectionFromTemplate,
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
+	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
 };
