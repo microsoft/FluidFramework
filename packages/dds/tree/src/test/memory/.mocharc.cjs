@@ -7,20 +7,19 @@
  * Mocha configuration file for memory profiling tests
  */
 
-const getFluidTreeTestMochaConfig = require("../../../.mocharc.cjs");
+const baseConfig = require("../../../.mocharc.cjs");
+
+const baseNodeOptions = Array.isArray(baseConfig["node-option"])
+	? baseConfig["node-option"]
+	: [baseConfig["node-option"]]; // If string, wrap in array to use spread operator.
 
 const extendedConfig = {
-	...getFluidTreeTestMochaConfig,
+	...baseConfig,
 	"fgrep": ["@Benchmark", "@MemoryUsage"],
-	"node-option": [
-		"conditions=allow-ff-test-exports",
-		"expose-gc",
-		"gc-global",
-		"unhandled-rejections=strict",
-	], // without leading "--"
+	"node-option": [...baseNodeOptions, "expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js", // Changed reporter option to use the memory test reporter.
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"timeout": "120000",
+	"timeout": "240000",
 };
 
 module.exports = extendedConfig;
