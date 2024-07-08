@@ -4,6 +4,7 @@
  */
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISnapshotOptions {
@@ -29,6 +30,7 @@ export interface ISnapshotOptions {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IOpsCachingPolicy {
@@ -60,10 +62,12 @@ export interface IOpsCachingPolicy {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICollabSessionOptions {
 	/**
+	 * @deprecated starting in 2.0-RC3. No longer needed.
 	 * Value indicating the display name for session that admits unauthenticated user.
 	 * This name will be used in attribution associated with edits made by such user.
 	 */
@@ -82,6 +86,7 @@ export interface ICollabSessionOptions {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface HostStoragePolicy {

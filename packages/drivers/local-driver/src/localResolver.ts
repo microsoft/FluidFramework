@@ -15,6 +15,7 @@ import {
 import { generateToken } from "./auth.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
@@ -30,6 +31,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
+ * @legacy
  * @alpha
  */
 export class LocalResolver implements IUrlResolver {
@@ -47,7 +49,9 @@ export class LocalResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const parsedUrl = new URL(request.url);
 		const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
-		const documentId = fullPath.split("/")[0];
+		// TODO Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const documentId = fullPath.split("/")[0]!;
 		const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 		const resolved: IResolvedUrl = {
 			endpoints: {
