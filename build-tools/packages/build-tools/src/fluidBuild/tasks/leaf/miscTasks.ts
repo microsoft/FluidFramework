@@ -232,6 +232,13 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	private outputFiles: string[] | undefined;
 
 	/**
+	 * Use hashes instead of modified times in donefile.
+	 */
+	protected get useHashes(): boolean {
+		return true;
+	}
+
+	/**
 	 * All config for the type tests is contained in package.json.
 	 */
 	protected async getInputFiles(): Promise<string[]> {

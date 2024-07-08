@@ -19,6 +19,13 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	private readonly gitRepo = this.repoRoot.then((repoRoot) => new GitRepo(repoRoot));
 
 	/**
+	 * Use hashes instead of modified times in donefile.
+	 */
+	protected get useHashes(): boolean {
+		return true;
+	}
+
+	/**
 	 * Includes all files in the task's package directory and any biome config files in the directory tree. Files ignored
 	 * by git are excluded.
 	 */

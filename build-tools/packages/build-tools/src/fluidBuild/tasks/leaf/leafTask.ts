@@ -562,6 +562,11 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 	 * @returns the list of files that this task generates. The files are relative to the package directory.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
+
+	/**
+	 * If this returns true, then the donefile will use the hash of the file contents instead of the last modified time
+	 * and other file stats.
+	 */
 	protected get useHashes(): boolean {
 		return false;
 	}
