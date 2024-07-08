@@ -2614,43 +2614,41 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		const processResult = this.remoteMessageProcessor.process(messageCopy);
-		if (processResult === undefined) {
-			// This means the incoming message is an incomplete part of a message or batch
-			// and we need to process more messages before the rest of the system can understand it.
-			return;
-		}
-		const batchStartCsn = processResult.batchStartCsn;
-		const batch = processResult.messages;
-		const messages: {
-			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
-			localOpMetadata: unknown;
-		}[] =
-			local && modernRuntimeMessage
+		if (modernRuntimeMessage) {
+			const processResult = this.remoteMessageProcessor.process(messageCopy);
+			if (processResult === undefined) {
+				// This means the incoming message is an incomplete part of a message or batch
+				// and we need to process more messages before the rest of the system can understand it.
+				return;
+			}
+			const batchStartCsn = processResult.batchStartCsn;
+			const batch = processResult.messages;
+			const messages: {
+				message: InboundSequencedContainerRuntimeMessage;
+				localOpMetadata: unknown;
+			}[] = local
 				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
-		messages.forEach(({ message, localOpMetadata }) => {
-			const msg: MessageWithContext = modernRuntimeMessage
-				? {
-						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-						// There is nothing really ensuring that anytime original message.type is Operation that
-						// the result messages will be so. In the end modern bool being true only directs to
-						// throw error if ultimately unrecognized without compat details saying otherwise.
-						message: message as InboundSequencedContainerRuntimeMessage,
-						local,
-						modernRuntimeMessage,
-						batchStartCsn: processResult.batchStartCsn,
-					}
-				: // Unrecognized message will be ignored.
-					{
-						message,
-						local,
-						modernRuntimeMessage,
-						batchStartCsn: processResult.batchStartCsn,
-					};
-			msg.savedOp = savedOp;
-			this.ensureNoDataModelChanges(() => this.processCore(msg, localOpMetadata));
-		});
+			messages.forEach(({ message, localOpMetadata }) => {
+				const msg: MessageWithContext = {
+					message,
+					local,
+					modernRuntimeMessage,
+					batchStartCsn,
+					savedOp,
+				};
+				this.ensureNoDataModelChanges(() => this.processCore(msg, localOpMetadata));
+			});
+		} else {
+			const msg: MessageWithContext = {
+				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+				local,
+				modernRuntimeMessage,
+				savedOp,
+				batchStartCsn: messageCopy.clientSequenceNumber,
+			};
+			this.ensureNoDataModelChanges(() => this.processCore(msg, undefined));
+		}
 	}
 
 	private _processedClientSequenceNumber: number | undefined;

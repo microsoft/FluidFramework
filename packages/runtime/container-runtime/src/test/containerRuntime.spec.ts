@@ -725,7 +725,10 @@ describe("Runtime", () => {
 						return undefined;
 					},
 					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
-						return [];
+						return _messages.map((message) => ({
+							message,
+							localOpMetadata: undefined,
+						}));
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;
@@ -884,7 +887,7 @@ describe("Runtime", () => {
 				},
 			);
 
-			it.only(
+			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
 					"processing local op, should not generate telemetry event nor throw an error that closes the container",
 				async () => {

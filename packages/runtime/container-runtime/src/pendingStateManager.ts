@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import { type InboundSequencedContainerRuntimeMessageOrSystemMessage } from "./messageTypes.js";
+import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
 import type { BatchMessage } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -68,7 +68,7 @@ type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
 function buildPendingMessageContent(
 	// AnyComboFromUnion is needed need to gain access to compatDetails that
 	// is only defined for some cases.
-	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessageOrSystemMessage>,
+	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
 ): string {
 	// IMPORTANT: Order matters here, this must match the order of the properties used
 	// when submitting the message.
@@ -254,10 +254,10 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	public processPendingLocalBatch(
-		batch: InboundSequencedContainerRuntimeMessageOrSystemMessage[],
+		batch: InboundSequencedContainerRuntimeMessage[],
 		batchStartCsn: number,
 	): {
-		message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
+		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
 		return batch.map((message) => ({
@@ -274,7 +274,7 @@ export class PendingStateManager implements IDisposable {
 	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
 	public processPendingLocalMessage(
-		message: InboundSequencedContainerRuntimeMessageOrSystemMessage,
+		message: InboundSequencedContainerRuntimeMessage,
 		batchStartCsn: number,
 	): unknown {
 		// Pre-processing part - This may be the start of a batch.
