@@ -20,7 +20,7 @@ const extendedConfig = {
 	], // without leading "--"
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js", // Changed reporter option to use the memory test reporter.
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"timeout": "90000",
+	"timeout": "100000",
 };
 
 module.exports = extendedConfig;
