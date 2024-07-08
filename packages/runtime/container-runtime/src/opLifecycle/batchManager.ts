@@ -53,7 +53,9 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
+			: // Non null asserting here since we are checking the length above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
 	}
 
 	/**
@@ -99,7 +101,7 @@ export class BatchManager {
 
 	public popBatch(): IBatch {
 		const batch: IBatch = {
-			content: this.pendingBatch,
+			messages: this.pendingBatch,
 			contentSizeInBytes: this.batchContentSize,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			hasReentrantOps: this.hasReentrantOps,
@@ -122,7 +124,9 @@ export class BatchManager {
 			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
-					const message = this.pendingBatch[i];
+					// Non null asserting here since we are iterating though pendingBatch
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const message = this.pendingBatch[i]!;
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
@@ -134,13 +138,21 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch): IBatch => {
-	if (batch.content.length > 1) {
-		batch.content[0].metadata = {
-			...batch.content[0].metadata,
+	if (batch.messages.length > 1) {
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		batch.messages[0]!.metadata = {
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			...batch.messages[0]!.metadata,
 			batch: true,
 		};
-		batch.content[batch.content.length - 1].metadata = {
-			...batch.content[batch.content.length - 1].metadata,
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		batch.messages[batch.messages.length - 1]!.metadata = {
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			...batch.messages[batch.messages.length - 1]!.metadata,
 			batch: false,
 		};
 	}
@@ -157,7 +169,7 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
  * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
  */
 export const estimateSocketSize = (batch: IBatch): number => {
-	return batch.contentSizeInBytes + opOverhead * batch.content.length;
+	return batch.contentSizeInBytes + opOverhead * batch.messages.length;
 };
 
 export const sequenceNumbersMatch = (

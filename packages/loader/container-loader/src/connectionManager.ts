@@ -938,8 +938,12 @@ export class ConnectionManager implements IConnectionManager {
 		let last = -1;
 		if (initialMessages.length > 0) {
 			this._connectionVerboseProps.connectionInitialOpsFrom =
-				initialMessages[0].sequenceNumber;
-			last = initialMessages[initialMessages.length - 1].sequenceNumber;
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				initialMessages[0]!.sequenceNumber;
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			last = initialMessages[initialMessages.length - 1]!.sequenceNumber;
 			this._connectionVerboseProps.connectionInitialOpsTo = last + 1;
 			// Update knowledge of how far we are behind, before raising "connect" event
 			// This is duplication of what incomingOpHandler() does, but we have to raise event before we get there,
@@ -1226,7 +1230,9 @@ export class ConnectionManager implements IConnectionManager {
 
 	// Always connect in write mode after getting nacked.
 	private readonly nackHandler = (documentId: string, messages: INack[]): void => {
-		const message = messages[0];
+		// TODO Why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const message = messages[0]!;
 		if (this._readonlyPermissions === true) {
 			this.props.closeHandler(
 				createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }),

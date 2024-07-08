@@ -126,7 +126,15 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
-import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
+import {
+	BlobManager,
+	IPendingBlobs,
+	blobManagerBasePath,
+	blobsTreeName,
+	isBlobPath,
+	loadBlobManagerLoadInfo,
+	type IBlobManagerLoadInfo,
+} from "./blobManager/index.js";
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
@@ -173,7 +181,7 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	IPendingBatchMessage,
+	PendingMessageResubmitData,
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
@@ -211,7 +219,6 @@ import {
 	SummaryCollection,
 	SummaryManager,
 	aliasBlobName,
-	blobsTreeName,
 	chunksBlobName,
 	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
@@ -661,7 +668,7 @@ export const makeLegacySendBatchFn =
 	(batch: IBatch) => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
-		for (const message of batch.content) {
+		for (const message of batch.messages) {
 			clientSequenceNumber = submitFn(
 				MessageType.Operation,
 				// For back-compat (submitFn only works on deserialized content)
@@ -677,23 +684,26 @@ export const makeLegacySendBatchFn =
 	};
 
 /** Helper type for type constraints passed through several functions.
+ * local - Did this client send the op?
+ * savedOp - Is this op being replayed after being serialized (having been sequenced previously)
+ * batchStartCsn - The clientSequenceNumber given on submit to the start of this batch
  * message - The unpacked message. Likely a TypedContainerRuntimeMessage, but could also be a system op
  * modernRuntimeMessage - Does this appear like a current TypedContainerRuntimeMessage?
- * local - Did this client send the op?
  */
-type MessageWithContext =
+type MessageWithContext = {
+	local: boolean;
+	savedOp?: boolean;
+	batchStartCsn: number;
+} & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
 			modernRuntimeMessage: true;
-			local: boolean;
-			savedOp?: boolean;
 	  }
 	| {
 			message: InboundSequencedContainerRuntimeMessageOrSystemMessage;
 			modernRuntimeMessage: false;
-			local: boolean;
-			savedOp?: boolean;
-	  };
+	  }
+);
 
 const summarizerRequestUrl = "_summarizer";
 
@@ -857,18 +867,7 @@ export class ContainerRuntime
 			]);
 
 		// read snapshot blobs needed for BlobManager to load
-		const blobManagerSnapshot = await BlobManager.load(
-			context.baseSnapshot?.trees[blobsTreeName],
-			async (id) => {
-				// IContainerContext storage api return type still has undefined in 0.39 package version.
-				// So once we release 0.40 container-defn package we can remove this check.
-				assert(
-					context.storage !== undefined,
-					0x256 /* "storage undefined in attached container" */,
-				);
-				return readAndParse(context.storage, id);
-			},
-		);
+		const blobManagerSnapshot = await loadBlobManagerLoadInfo(context);
 
 		const messageAtLastSummary = lastMessageFromMetadata(metadata);
 
@@ -1361,6 +1360,8 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
+	private readonly isSnapshotInstanceOfISnapshot: boolean | undefined;
+
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
@@ -1550,10 +1551,6 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit(message);
-					this.flush();
-				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -1665,6 +1662,10 @@ export class ContainerRuntime
 		}
 
 		const parentContext = wrapContext(this);
+
+		if (snapshotWithContents !== undefined) {
+			this.isSnapshotInstanceOfISnapshot = true;
+		}
 
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
@@ -2168,9 +2169,13 @@ export class ContainerRuntime
 		let childTree = snapshotTree;
 		for (const part of pathParts) {
 			if (hasIsolatedChannels) {
-				childTree = childTree?.trees[channelsTreeName];
+				// TODO Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				childTree = childTree.trees[channelsTreeName]!;
 			}
-			childTree = childTree?.trees[part];
+			// TODO Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			childTree = childTree.trees[part]!;
 		}
 		return childTree;
 	}
@@ -2221,8 +2226,10 @@ export class ContainerRuntime
 				return this.resolveHandle(requestParser.createSubRequest(1));
 			}
 
-			if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]!);
 				return blob
 					? {
 							status: 200,
@@ -2619,7 +2626,13 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+		const processResult = this.remoteMessageProcessor.process(messageCopy);
+		if (processResult === undefined) {
+			// This means the incoming message is an incomplete part of a message or batch
+			// and we need to process more messages before the rest of the system can understand it.
+			return;
+		}
+		for (const message of processResult.messages) {
 			const msg: MessageWithContext = modernRuntimeMessage
 				? {
 						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
@@ -2629,12 +2642,14 @@ export class ContainerRuntime
 						message: message as InboundSequencedContainerRuntimeMessage,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					}
 				: // Unrecognized message will be ignored.
 					{
 						message,
 						local,
 						modernRuntimeMessage,
+						batchStartCsn: processResult.batchStartCsn,
 					};
 			msg.savedOp = savedOp;
 
@@ -2682,6 +2697,7 @@ export class ContainerRuntime
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
+					messageWithContext.batchStartCsn,
 				);
 			}
 
@@ -2901,7 +2917,7 @@ export class ContainerRuntime
 			// Note: we are not touching any batches other than mainBatch here, for two reasons:
 			// 1. It would not help, as other batches are flushed independently from main batch.
 			// 2. There is no way to undo process of data store creation, blob creation, ID compressor ops, or other things tracked by other batches.
-			checkpoint = this.outbox.checkpoint().mainBatch;
+			checkpoint = this.outbox.getBatchCheckpoints().mainBatch;
 		}
 		try {
 			this._orderSequentiallyCalls++;
@@ -3044,7 +3060,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Are we in the middle of batching ops together?
+	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
 	private currentlyBatching() {
 		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
@@ -3360,7 +3376,7 @@ export class ContainerRuntime
 	 * blob manager.
 	 */
 	public getNodeType(nodePath: string): GCNodeType {
-		if (this.isBlobPath(nodePath)) {
+		if (isBlobPath(nodePath)) {
 			return GCNodeType.Blob;
 		}
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
@@ -3379,24 +3395,13 @@ export class ContainerRuntime
 
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
-				return [BlobManager.basePath];
+				return [blobManagerBasePath];
 			case GCNodeType.DataStore:
 			case GCNodeType.SubDataStore:
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			default:
 				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
 		}
-	}
-
-	/**
-	 * Returns whether a given path is for attachment blobs that are in the format - "/BlobManager.basePath/...".
-	 */
-	private isBlobPath(path: string): boolean {
-		const pathParts = path.split("/");
-		if (pathParts.length < 2 || pathParts[1] !== BlobManager.basePath) {
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -3409,7 +3414,7 @@ export class ContainerRuntime
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
-			if (this.isBlobPath(route)) {
+			if (isBlobPath(route)) {
 				blobManagerRoutes.push(route);
 			} else {
 				dataStoreRoutes.push(route);
@@ -3697,7 +3702,9 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			const dataStoreTree = summaryTree.tree[channelsTreeName];
+			// TODO why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreTree = summaryTree.tree[channelsTreeName]!;
 
 			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(
@@ -4035,7 +4042,9 @@ export class ContainerRuntime
 				this.outbox.submit(message);
 			}
 
-			if (!this.currentlyBatching()) {
+			// Note: Technically, the system "always" batches - if this case is true we'll just have a single-message batch.
+			const flushImmediatelyOnSubmit = !this.currentlyBatching();
+			if (flushImmediatelyOnSubmit) {
 				this.flush();
 			} else {
 				this.scheduleFlush();
@@ -4116,7 +4125,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: IPendingBatchMessage[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4125,7 +4134,7 @@ export class ContainerRuntime
 		this.flush();
 	}
 
-	private reSubmit(message: IPendingBatchMessage) {
+	private reSubmit(message: PendingMessageResubmitData) {
 		// Need to parse from string for back-compat
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
@@ -4286,21 +4295,46 @@ export class ContainerRuntime
 				} = {};
 				const trace = Trace.start();
 
-				const versions = await this.storage.getVersions(
-					null,
-					1,
-					"prefetchLatestSummaryBeforeClose",
-					FetchSource.noCache,
-				);
-				assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-				stats.getVersionDuration = trace.trace().duration;
+				let maybeSnapshotTree: ISnapshotTree | null;
+				const scenarioName = "prefetchLatestSummaryBeforeClose";
+				// If loader supplied us the ISnapshot when loading, the new getSnapshotApi is supported and feature gate is ON, then use the
+				// new API, otherwise it will reduce the service performance because the service will need to recalculate the full snapshot
+				// in case previously getSnapshotApi was used and now we use the getVersions API.
+				if (
+					this.isSnapshotInstanceOfISnapshot &&
+					this.storage.getSnapshot !== undefined &&
+					this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
+						true
+				) {
+					const snapshot = await this.storage.getSnapshot({
+						scenarioName,
+						fetchSource: FetchSource.noCache,
+					});
+					const id = snapshot.snapshotTree.id;
+					assert(id !== undefined, "id of the fetched snapshot should be defined");
+					stats.snapshotVersion = id;
+					maybeSnapshotTree = snapshot.snapshotTree;
+				} else {
+					const versions = await this.storage.getVersions(
+						null,
+						1,
+						scenarioName,
+						FetchSource.noCache,
+					);
+					assert(
+						!!versions && !!versions[0],
+						0x137 /* "Failed to get version from storage" */,
+					);
+					stats.getVersionDuration = trace.trace().duration;
+					maybeSnapshotTree = await this.storage.getSnapshotTree(versions[0]);
+					assert(!!maybeSnapshotTree, 0x138 /* "Failed to get snapshot from storage" */);
 
-				const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-				assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+					stats.snapshotVersion = versions[0].id;
+				}
+
 				stats.getSnapshotDuration = trace.trace().duration;
-				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
+				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshotTree, readAndParseBlob);
 				stats.snapshotRefSeq = latestSnapshotRefSeq;
-				stats.snapshotVersion = versions[0].id;
 
 				perfEvent.end(stats);
 			},

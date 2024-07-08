@@ -11,11 +11,12 @@ import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { IBatchMetadata } from "./metadata.js";
+import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
 import type { BatchMessage } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 
@@ -40,19 +41,18 @@ export interface IPendingLocalState {
 	pendingStates: IPendingMessage[];
 }
 
-export interface IPendingBatchMessage {
-	content: string;
-	localOpMetadata: unknown;
-	opMetadata: Record<string, unknown> | undefined;
-}
+/** Info needed to replay/resubmit a pending message */
+export type PendingMessageResubmitData = Pick<
+	IPendingMessage,
+	"content" | "localOpMetadata" | "opMetadata"
+>;
 
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
 	applyStashedOp(content: string): Promise<unknown>;
-	reSubmit(message: IPendingBatchMessage): void;
-	reSubmitBatch(batch: IPendingBatchMessage[]): void;
+	reSubmitBatch(batch: PendingMessageResubmitData[]): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
 }
@@ -115,7 +115,8 @@ export class PendingStateManager implements IDisposable {
 	// the correct batch metadata.
 	private pendingBatchBeginMessage: ISequencedDocumentMessage | undefined;
 
-	private clientId: string | undefined;
+	/** Used to ensure we don't replay ops on the same connection twice */
+	private clientIdFromLastReplay: string | undefined;
 
 	/**
 	 * The pending messages count. Includes `pendingMessages` and `initialMessages` to keep in sync with
@@ -256,9 +257,12 @@ export class PendingStateManager implements IDisposable {
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
+	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
 	public processPendingLocalMessage(
 		message: InboundSequencedContainerRuntimeMessage,
+		batchStartCsn: number,
 	): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
@@ -272,6 +276,20 @@ export class PendingStateManager implements IDisposable {
 		this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 		this.pendingMessages.shift();
+
+		if (pendingMessage.batchStartCsn !== batchStartCsn) {
+			this.logger?.sendErrorEvent({
+				eventName: "BatchClientSequenceNumberMismatch",
+				details: {
+					processingBatch: !!this.pendingBatchBeginMessage,
+					pendingBatchCsn: pendingMessage.batchStartCsn,
+					batchStartCsn,
+					messageBatchMetadata: (message.metadata as any)?.batch,
+					pendingMessageBatchMetadata: (pendingMessage.opMetadata as any)?.batch,
+				},
+				messageDetails: extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		const messageContent = buildPendingMessageContent(message);
 
@@ -388,10 +406,10 @@ export class PendingStateManager implements IDisposable {
 
 		// This assert suggests we are about to send same ops twice, which will result in data loss.
 		assert(
-			this.clientId !== this.stateHandler.clientId(),
+			this.clientIdFromLastReplay !== this.stateHandler.clientId(),
 			0x173 /* "replayPendingStates called twice for same clientId!" */,
 		);
-		this.clientId = this.stateHandler.clientId();
+		this.clientIdFromLastReplay = this.stateHandler.clientId();
 
 		assert(
 			this.initialMessages.isEmpty(),
@@ -408,54 +426,58 @@ export class PendingStateManager implements IDisposable {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
-			assert(
-				pendingMessage.opMetadata?.batch !== false,
-				0x41b /* We cannot process batches in chunks */,
-			);
+
+			const batchMetadataFlag = asBatchMetadata(pendingMessage.opMetadata)?.batch;
+			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			/**
-			 * We want to ensure grouped messages get processed in a batch.
+			 * We must preserve the distinct batches on resubmit.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
-			 * either receive the whole batch ack or nothing at all.
+			 * either receive the whole batch ack or nothing at all.  @see ScheduleManager for how this works.
 			 */
-			if (pendingMessage.opMetadata?.batch) {
-				assert(
-					remainingPendingMessagesCount > 0,
-					0x554 /* Last pending message cannot be a batch begin */,
-				);
-
-				const batch: IPendingBatchMessage[] = [];
-
-				// check is >= because batch end may be last pending message
-				while (remainingPendingMessagesCount >= 0) {
-					batch.push({
+			if (batchMetadataFlag === undefined) {
+				// Single-message batch
+				this.stateHandler.reSubmitBatch([
+					{
 						content: pendingMessage.content,
 						localOpMetadata: pendingMessage.localOpMetadata,
 						opMetadata: pendingMessage.opMetadata,
-					});
+					},
+				]);
+				continue;
+			}
+			// else: batchMetadataFlag === true  (It's a typical multi-message batch)
 
-					if (pendingMessage.opMetadata?.batch === false) {
-						break;
-					}
-					assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
+			assert(
+				remainingPendingMessagesCount > 0,
+				0x554 /* Last pending message cannot be a batch begin */,
+			);
 
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					pendingMessage = this.pendingMessages.shift()!;
-					remainingPendingMessagesCount--;
-					assert(
-						pendingMessage.opMetadata?.batch !== true,
-						0x556 /* Batch start needs a corresponding batch end */,
-					);
-				}
+			const batch: PendingMessageResubmitData[] = [];
 
-				this.stateHandler.reSubmitBatch(batch);
-			} else {
-				this.stateHandler.reSubmit({
+			// check is >= because batch end may be last pending message
+			while (remainingPendingMessagesCount >= 0) {
+				batch.push({
 					content: pendingMessage.content,
 					localOpMetadata: pendingMessage.localOpMetadata,
 					opMetadata: pendingMessage.opMetadata,
 				});
+
+				if (pendingMessage.opMetadata?.batch === false) {
+					break;
+				}
+				assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
+
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				pendingMessage = this.pendingMessages.shift()!;
+				remainingPendingMessagesCount--;
+				assert(
+					pendingMessage.opMetadata?.batch !== true,
+					0x556 /* Batch start needs a corresponding batch end */,
+				);
 			}
+
+			this.stateHandler.reSubmitBatch(batch);
 		}
 
 		// pending ops should no longer depend on previous sequenced local ops after resubmit
