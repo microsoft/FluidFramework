@@ -329,15 +329,12 @@ export class ModularChangeFamily
 			}
 		}
 
-		// XXX
-		const composedCrossFieldKeys = mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys);
-
 		return {
 			fieldChanges: composedFields,
 			nodeChanges: composedNodeChanges,
 			nodeToParent: composedNodeToParent,
 			nodeAliases: composedNodeAliases,
-			crossFieldKeys: composedCrossFieldKeys,
+			crossFieldKeys: mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys),
 		};
 	}
 
@@ -921,7 +918,7 @@ export class ModularChangeFamily
 		);
 
 		return makeModularChangeset(
-			this.pruneFieldMap(rebasedFields, rebasedNodes), // XXX
+			this.pruneFieldMap(rebasedFields, rebasedNodes),
 			rebasedNodes,
 			change.nodeToParent, // XXX
 			change.nodeAliases,
@@ -2059,11 +2056,6 @@ interface InvertContext {
 	invertedField: FieldChange;
 }
 
-// XXX: We want to have a cross field table for each field, so that the field can iterate the set of keys touched
-// Each field should also have the set of base node IDs which should be included
-// Probably we should merge this information with RebaseFieldContext
-// What is the key for this table?
-// Need to support both new and base field ID, reconciling them when we discover they are the same?
 interface RebaseTable extends CrossFieldTable<FieldChange> {
 	readonly baseChange: ModularChangeset;
 	readonly newChange: ModularChangeset;
