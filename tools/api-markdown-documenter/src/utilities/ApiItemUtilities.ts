@@ -214,7 +214,7 @@ export function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, re
 			if (!customBlockComments.has(block.blockTag.tagName)) {
 				customBlockComments.set(block.blockTag.tagName, []);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Guaranteed to exist because we added it above
 			customBlockComments.get(block.blockTag.tagName)!.push(block.content);
 		}
 	}
