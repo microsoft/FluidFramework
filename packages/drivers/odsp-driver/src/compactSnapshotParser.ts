@@ -70,7 +70,9 @@ function readBlobSection(node: NodeTypes): {
 			 */
 			slowBlobStructureCount += 1;
 			const records = getNodeProps(blob);
+			// TODO why are we non null asserting here?
 			assertBlobCoreInstance(records.data!, "data should be of BlobCore type");
+			// TODO why are we non null asserting here?
 			const id = getStringInstance(records.id!, "blob id should be string");
 			blobContents.set(id, records.data.arrayBuffer);
 		}
