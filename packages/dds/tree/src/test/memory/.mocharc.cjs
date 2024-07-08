@@ -9,9 +9,12 @@
 
 const baseConfig = require("../../../.mocharc.cjs");
 
-const baseNodeOptions = Array.isArray(baseConfig["node-option"])
-	? baseConfig["node-option"]
-	: [baseConfig["node-option"]]; // If string, wrap in array to use spread operator.
+const baseNodeOptions =
+	baseConfig["node-option"] !== undefined
+		? Array.isArray(baseConfig["node-option"])
+			? baseConfig["node-option"]
+			: [baseConfig["node-option"]] // If string, wrap as array to use spread operator
+		: []; // If undefined, use an empty array
 
 const extendedConfig = {
 	...baseConfig,
