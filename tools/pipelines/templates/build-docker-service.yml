@@ -117,7 +117,11 @@ resources:
     name: 1ESPipelineTemplates/M365GPT
     ref: refs/tags/release
 extends:
-  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  # The pipeline extends the 1ES PT which will inject different SDL and compliance tasks.
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  ${{ else }}:
+    template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
       name: ${{ parameters.pool }}
