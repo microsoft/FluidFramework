@@ -3561,7 +3561,7 @@ export class ContainerRuntime
 			summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-			const lastAck = this.summaryCollection.latestAck;
+			const lastAckedContext = this.lastAckedSummaryContext;
 
 			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
@@ -3628,10 +3628,10 @@ export class ContainerRuntime
 					0x395 /* it's one and the same thing */,
 				);
 
-				if (lastAck !== this.summaryCollection.latestAck) {
+				if (lastAckedContext !== this.lastAckedSummaryContext) {
 					return {
 						continue: false,
-						error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
+						error: `Last summary changed while summarizing. ${this.lastAckedSummaryContext} !== ${lastAckedContext}`,
 					};
 				}
 				return { continue: true };
@@ -4251,14 +4251,19 @@ export class ContainerRuntime
 
 		/**
 		 * If the snapshot corresponding to the ack is not tracked by this client, it was submitted by another client.
-		 * If that snapshot is older than the one tracked by this client, ignore the ack. Otherwise, attempt to fetch
-		 * the latest snapshot.
-		 * If the fetched snapshot is same or newer than the one for which ack was received, close this client. The next
-		 * summarizer client will likely start from this snapshot and get out of this state. Fetching the snapshot
+		 * Take action as per the following scenarios:
+		 * - If that snapshot is older than the one tracked by this client, ignore the ack because only the latest
+		 * snapshot is tracked.
+		 * - If that snapshot is newer, attempt to fetch the latest snapshot and do one of the following:
+		 * - If the fetched snapshot is same or newer than the one for which ack was received, close this client. The
+		 * next summarizer client will likely start from this snapshot and get out of this state. Fetching the snapshot
 		 * updates the cache for this client so if it's re-elected as summarizer, this will prevent any thrashing.
-		 * If the fetched snapshot is older than the one for which ack was received, ignore the ack. This can happen
-		 * in scenarios where the snapshot for the ack was lost in storage in scenarios like DB rollback, etc. Closing
-		 * the summarizer will result in this document stuck in this state in a loop.
+		 * - If the fetched snapshot is older than the one for which ack was received, ignore the ack. This can happen
+		 * in scenarios where the snapshot for the ack was lost in storage (in scenarios like DB rollback, etc.) but the
+		 * summary ack is still there because it's tracked a different service. In such cases, ignoring the ack is the
+		 * correct thing to do because the latest snapshot in storage is not the one for the ack but is still the one
+		 * tracked by this client. If we were to close the summarizer like in the previous scenario, it will result in
+		 * this document stuck in this state in a loop.
 		 */
 		if (!result.isSummaryTracked) {
 			if (result.isSummaryNewer) {
