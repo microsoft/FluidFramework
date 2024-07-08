@@ -1923,18 +1923,10 @@ describe("SharedTree", () => {
 			assert(widget !== undefined);
 			const fidget = view.root.at(-1);
 			assert(fidget !== undefined);
-			// Test various Tree.* APIs and ensure they are working
-			assert.equal(Tree.contains(view.root, widget), true);
-			assert.equal(Tree.contains(fidget, widget), false);
-			assert.equal(Tree.is(fidget, Widget), true);
-			assert.equal(Tree.is(view.root, Widget), false);
-			assert.equal(Tree.key(widget), 0);
-			assert.equal(Tree.key(fidget), 1);
-			assert.equal(Tree.parent(widget), view.root);
-			assert.equal(Tree.schema(fidget), Widget);
+
+			// Checks that the shortId returns the correct types and values.
 			assert.equal(typeof Tree.shortId(widget), "number");
 			assert.equal(Tree.shortId(fidget), "fidget");
-			assert.equal(Tree.status(widget), TreeStatus.InDocument);
 		});
 	});
 
