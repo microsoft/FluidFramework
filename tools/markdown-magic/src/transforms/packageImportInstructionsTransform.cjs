@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+const { defaultSectionHeadingLevel } = require("../constants.cjs");
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
+	parseIntegerOptionOrDefault,
 	resolveRelativePackageJsonPath,
 } = require("../utilities.cjs");
 
@@ -16,9 +18,11 @@ const {
  * Note: this function will only generate contents if one of our special export paths is found (`/alpha`, `/beta`, or `/legacy`).
  *
  * @param {object} packageMetadata - package.json file contents.
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {number} headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
  */
-const generatePackageImportInstructionsSection = (packageMetadata, includeHeading) => {
+const generatePackageImportInstructionsSection = (packageMetadata, headingLevel) => {
 	const packageName = packageMetadata.name;
 	const packageExports = packageMetadata.exports;
 
@@ -59,10 +63,10 @@ const generatePackageImportInstructionsSection = (packageMetadata, includeHeadin
 
 	const sectionBody = lines.join("\n");
 
-	return formattedSectionText(
-		sectionBody,
-		includeHeading ? "Importing from this package" : undefined,
-	);
+	return formattedSectionText(sectionBody, {
+		headingLevel,
+		headingText: "Importing from this package",
+	});
 };
 
 /**
@@ -75,13 +79,18 @@ const generatePackageImportInstructionsSection = (packageMetadata, includeHeadin
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
- * Default: `TRUE`.
+ * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+ * Must be a non-negative integer.
+ * If 0, not heading will be included in the generated section.
+ * Default: {@link defaultSectionHeadingLevel}.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function packageImportInstructionsSectionTransform(content, options, config) {
-	const includeHeading = options.includeHeading !== "FALSE";
+	const headingLevel = parseIntegerOptionOrDefault(
+		options.headingLevel,
+		defaultSectionHeadingLevel,
+	);
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
@@ -90,7 +99,7 @@ function packageImportInstructionsSectionTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 
 	return formattedGeneratedContentBody(
-		generatePackageImportInstructionsSection(packageMetadata, includeHeading),
+		generatePackageImportInstructionsSection(packageMetadata, headingLevel),
 	);
 }
 

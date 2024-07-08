@@ -9,12 +9,15 @@ const { formattedSectionText, readTemplate } = require("../utilities.cjs");
  * Generates a simple Markdown heading with the contents of the specified template file and (optionally) a heading.
  *
  * @param {string} templateFileName - The name of the template file to be embedded.
- * @param {string|undefined} maybeHeadingText - (optional) Text to use for the heading.
+ * @param {object} options - Content generation options.
+ * @param {number} options.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
+ * @param {string} options.headingText - Text to use for the heading, if one is to be generated.
  * A heading will only be included if this is specified.
  */
-const generateSectionFromTemplate = (templateFileName, maybeHeadingText) => {
-	const sectionBody = readTemplate(templateFileName);
-	return formattedSectionText(sectionBody, maybeHeadingText);
+const generateSectionFromTemplate = (templateFileName, options) => {
+	const sectionBody = readTemplate(templateFileName, options.headingLevel);
+	return formattedSectionText(sectionBody, options);
 };
 
 module.exports = {

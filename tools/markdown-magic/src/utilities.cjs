@@ -17,23 +17,43 @@ const {
  * Reads and returns the contents from the specified template file.
  *
  * @param {string} templateFileName - Name of the file to read, under {@link templatesDirectoryPath} (e.g. "Trademark-Template.md").
+ * @param {number} headingOffset - (optional) Level offset for all headings in the target template.
+ * Must be a non-negative integer.
  */
-const readTemplate = (templateFileName) => {
-	return fs
+const readTemplate = (templateFileName, headingOffset = 0) => {
+	if (!Number.isInteger(headingOffset) || headingOffset < 0) {
+		throw new TypeError(
+			`"headingOffset" must be a non-negative integer. Got "${headingOffset}".`,
+		);
+	}
+
+	const unmodifiedContents = fs
 		.readFileSync(path.resolve(templatesDirectoryPath, templateFileName), {
 			encoding: "utf-8",
 		})
 		.trim();
+
+	if (headingOffset === 0) {
+		return unmodifiedContents;
+	}
+
+	const headingOffsetString = "#".repeat(headingOffset);
+	return unmodifiedContents.replace(/(^#)/gm, `$1${headingOffsetString}`);
 };
 
 /**
  * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
  *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {string} templateName - The name of the template file to embed.
+ * @param {object} options - Content generation options.
+ * @param {number} options.headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
+ * @param {string} options.headingText - Text to display in the section heading, if one was requested.
  */
-const createSectionFromTemplate = (templateName, maybeHeadingName) => {
+const createSectionFromTemplate = (templateName, options) => {
 	const sectionBody = readTemplate(templateName);
-	return formattedSectionText(sectionBody, maybeHeadingName);
+	return formattedSectionText(sectionBody, options);
 };
 
 /**
@@ -110,11 +130,19 @@ const getScopeKindFromPackage = (packageName) => {
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
  *
  * @param {string} sectionBody - Body text to include in the section.
- * @param {string | undefined} maybeHeaderText - (optional) header text to display.
- * If not provided, will not include header in output.
+ * @param {object} options - Content generation options.
+ * @param {number} options.headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
+ * @param {string} options.headingText - Text to display in the section heading, if one was requested.
  */
-function formattedSectionText(sectionBody, maybeHeaderText) {
-	return `\n${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}\n\n`}${sectionBody}\n`;
+function formattedSectionText(sectionBody, { headingLevel, headingText }) {
+	if (!Number.isInteger(headingLevel) || headingLevel < 0) {
+		throw new TypeError(`"headingLevel" must be a positive integer. Got "${headingLevel}".`);
+	}
+	return `\n${
+		headingLevel === 0 ? "" : `${"#".repeat(headingLevel)} ${headingText}\n\n`
+	}${sectionBody}\n`;
 }
 
 /**
@@ -149,6 +177,17 @@ function formattedEmbeddedContentBody(contents) {
 	return bundlePrettierPragmas([embeddedContentNotice, contents].join("\n"));
 }
 
+/**
+ * Parses the string representation of a MarkdownMagic parameter as an integer and returns it.
+ * Returns the default value if the parameter was not provided.
+ * @param {string | undefined} paramString - The string representation of the parameter to parse.
+ * @param {number} defaultValue - The default value to return if the parameter was not provided.
+ * @throws If the parameter was provided, but is not an integer.
+ */
+function parseIntegerOptionOrDefault(paramString, defaultValue) {
+	return paramString ? Number.parseInt(paramString) ?? defaultValue : defaultValue;
+}
+
 module.exports = {
 	createSectionFromTemplate,
 	formattedSectionText,
@@ -156,6 +195,7 @@ module.exports = {
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	parseIntegerOptionOrDefault,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,

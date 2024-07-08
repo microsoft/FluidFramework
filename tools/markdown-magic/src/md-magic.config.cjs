@@ -5,11 +5,13 @@
 
 const scripts = require("markdown-magic-package-scripts");
 
+const { defaultSectionHeadingLevel } = require("./constants.cjs");
 const {
 	createSectionFromTemplate,
 	formattedGeneratedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	parseIntegerOptionOrDefault,
 	resolveRelativePackageJsonPath,
 } = require("./utilities.cjs");
 const {
@@ -32,40 +34,48 @@ const {
 /**
  * Generates a simple Markdown heading and contents with guidelines for taking dependencies on Fluid libraries.
  *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {number} headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
  */
-const generateDependencyGuidelines = (includeHeading) =>
-	createSectionFromTemplate(
-		"Dependency-Guidelines-Template.md",
-		includeHeading ? "Using Fluid Framework libraries" : undefined,
-	);
+const generateDependencyGuidelines = (headingLevel) =>
+	createSectionFromTemplate("Dependency-Guidelines-Template.md", {
+		headingLevel,
+		headingText: "Using Fluid Framework libraries",
+	});
 
 /**
  * Generates a Markdown heading and contents with a section pointing developers to our contribution guidelines.
  *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {number} headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
  */
-const generateContributionGuidelinesSection = (includeHeading) =>
-	createSectionFromTemplate(
-		"Contribution-Guidelines-Template.md",
-		includeHeading ? "Contribution Guidelines" : undefined,
-	);
+const generateContributionGuidelinesSection = (headingLevel) =>
+	createSectionFromTemplate("Contribution-Guidelines-Template.md", {
+		headingLevel,
+		headingText: "Contribution Guidelines",
+	});
 
 /**
  * Generates a simple Markdown heading and contents with help information.
  *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {number} headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
  */
-const generateHelpSection = (includeHeading) =>
-	createSectionFromTemplate("Help-Template.md", includeHeading ? "Help" : undefined);
+const generateHelpSection = (headingLevel) =>
+	createSectionFromTemplate("Help-Template.md", { headingLevel, headingText: "Help" });
 
 /**
  * Generates a simple Markdown heading and contents with trademark information.
  *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {number} headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
  */
-const generateTrademarkSection = (includeHeading) =>
-	createSectionFromTemplate("Trademark-Template.md", includeHeading ? "Trademark" : undefined);
+const generateTrademarkSection = (headingLevel) =>
+	createSectionFromTemplate("Trademark-Template.md", { headingLevel, headingText: "Trademark" });
 
 /**
  * Generates simple README contents for a library package.
@@ -138,35 +148,37 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	if (options.installation !== "FALSE") {
 		sections.push(
-			generateDependencyGuidelines(true),
-			generateInstallationInstructionsSection(packageName, options.devDependency, true),
+			generateDependencyGuidelines(defaultSectionHeadingLevel),
+			generateInstallationInstructionsSection(packageName, options.devDependency, defaultSectionHeadingLevel),
 		);
 	}
 
 	if (options.importInstructions !== "FALSE") {
-		sections.push(generatePackageImportInstructionsSection(packageMetadata, true));
+		sections.push(
+			generatePackageImportInstructionsSection(packageMetadata, defaultSectionHeadingLevel),
+		);
 	}
 
 	if (options.apiDocs !== "FALSE") {
-		sections.push(generateApiDocsLinkSection(packageName, true));
+		sections.push(generateApiDocsLinkSection(packageName, defaultSectionHeadingLevel));
 	}
 
 	if (options.scripts === "TRUE") {
 		options.pkg = relativePackageJsonPath;
 		const scriptsTable = scripts(content, options, config);
-		sections.push(generatePackageScriptsSection(scriptsTable, true));
+		sections.push(generatePackageScriptsSection(scriptsTable, defaultSectionHeadingLevel));
 	}
 
 	if (options.contributionGuidelines !== "FALSE") {
-		sections.push(generateContributionGuidelinesSection(true));
+		sections.push(generateContributionGuidelinesSection(defaultSectionHeadingLevel));
 	}
 
 	if (options.help !== "FALSE") {
-		sections.push(generateHelpSection(true));
+		sections.push(generateHelpSection(defaultSectionHeadingLevel));
 	}
 
 	if (options.trademark !== "FALSE") {
-		sections.push(generateTrademarkSection(true));
+		sections.push(generateTrademarkSection(defaultSectionHeadingLevel));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
@@ -209,7 +221,7 @@ function examplePackageReadmeTransform(content, options, config) {
 			generateExampleGettingStartedSection(
 				resolvedPackageJsonPath,
 				/* includeTinyliciousStep: */ options.usesTinylicious !== "FALSE",
-				/* includeHeading: */ true,
+				/* headingLevel: */ defaultSectionHeadingLevel,
 			),
 		);
 	}
@@ -217,19 +229,26 @@ function examplePackageReadmeTransform(content, options, config) {
 	if (options.scripts === "TRUE") {
 		options.pkg = relativePackageJsonPath;
 		const scriptsTable = scripts(content, options, config);
-		sections.push(generatePackageScriptsSection(scriptsTable, /* includeHeading: */ true));
+		sections.push(
+			generatePackageScriptsSection(
+				scriptsTable,
+				/* headingLevel: */ defaultSectionHeadingLevel,
+			),
+		);
 	}
 
 	if (options.contributionGuidelines !== "FALSE") {
-		sections.push(generateContributionGuidelinesSection(/* includeHeading: */ true));
+		sections.push(
+			generateContributionGuidelinesSection(/* headingLevel: */ defaultSectionHeadingLevel),
+		);
 	}
 
 	if (options.help !== "FALSE") {
-		sections.push(generateHelpSection(/* includeHeading: */ true));
+		sections.push(generateHelpSection(/* headingLevel: */ defaultSectionHeadingLevel));
 	}
 
 	if (options.trademark !== "FALSE") {
-		sections.push(generateTrademarkSection(/* includeHeading: */ true));
+		sections.push(generateTrademarkSection(/* headingLevel: */ defaultSectionHeadingLevel));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
@@ -239,13 +258,15 @@ function examplePackageReadmeTransform(content, options, config) {
  * Generates a README section with fluid-framework contribution guidelines.
  *
  * @param {string} templateFileName - The name of the template file to be embedded.
- * @param {string|undefined} maybeHeadingText - (optional) Text to use for the heading.
- * A heading will only be included if this is specified.
+ * @param {object} options - Content generation options.
+ * @param {number} options.headingLevel - Root heading level for the generated section.
+ * If 0, no heading will be included.
+ * Must be a non-negative integer.
+ * @param {string} options.headingText - Text to display in the section heading, if one was requested.
  */
-function templateTransform(templateFileName, maybeHeadingText) {
-	return formattedGeneratedContentBody(
-		generateSectionFromTemplate(templateFileName, maybeHeadingText),
-	);
+function templateTransform(templateFileName, options) {
+	console.log("TEMPLATE TRANSFORM options: ", options);
+	return formattedGeneratedContentBody(generateSectionFromTemplate(templateFileName, options));
 }
 
 /**
@@ -317,7 +338,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
@@ -329,7 +350,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&devDependency=FALSE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&headingLevel=2&devDependency=FALSE) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
@@ -341,103 +362,152 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
 
 		/**
-		 * Generates a README section with Microsoft trademark info.
+		 * Generates a README section with Fluid Framework client requirements.
 		 *
 		 * @param {object} content - The original document file contents.
 		 * @param {object} options - Transform options.
-		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
-		 * Default: `TRUE`.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a non-negative integer.
+		 * If 0, not heading will be included in the generated section.
+		 * Default: {@link defaultSectionHeadingLevel}.
 		 * @param {object} config - Transform configuration.
 		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_CLIENT_REQUIREMENTS_SECTION:headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_CLIENT_REQUIREMENTS_SECTION: (content, options, config) => {
+			return templateTransform("Client-Requirements-Template.md", {
+				headingLevel: parseIntegerOptionOrDefault(
+					options.headingLevel,
+					defaultSectionHeadingLevel,
+				),
+				headingText: "Client Requirements",
+			});
+		},
+
+		/**
+		 * Generates a README section with Microsoft trademark info.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a non-negative integer.
+		 * If 0, not heading will be included in the generated section.
+		 * Default: {@link defaultSectionHeadingLevel}.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_TRADEMARK_SECTION: (content, options, config) =>
-			templateTransform(
-				"Trademark-Template.md",
-				options.includeHeading !== "FALSE" ? "Trademark" : undefined,
-			),
+			templateTransform("Trademark-Template.md", {
+				headingLevel: parseIntegerOptionOrDefault(
+					options.headingLevel,
+					defaultSectionHeadingLevel,
+				),
+				headingText: "Trademark",
+			}),
 
 		/**
 		 * Generates a README section with fluid-framework contribution guidelines.
 		 *
 		 * @param {object} content - The original document file contents.
 		 * @param {object} options - Transform options.
-		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
-		 * Default: `TRUE`.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a non-negative integer.
+		 * If 0, not heading will be included in the generated section.
+		 * Default: {@link defaultSectionHeadingLevel}.
 		 * @param {object} config - Transform configuration.
 		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_CONTRIBUTION_GUIDELINES_SECTION: (content, options, config) =>
-			templateTransform(
-				"Contribution-Guidelines-Template.md",
-				options.includeHeading !== "FALSE" ? "Contribution Guidelines" : undefined,
-			),
+			templateTransform("Contribution-Guidelines-Template.md", {
+				headingLevel: parseIntegerOptionOrDefault(
+					options.headingLevel,
+					defaultSectionHeadingLevel,
+				),
+				headingText: "Contribution Guidelines",
+			}),
 
 		/**
 		 * Generates a README section with fluid-framework dependency guidelines.
 		 *
 		 * @param {object} content - The original document file contents.
 		 * @param {object} options - Transform options.
-		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
-		 * Default: `TRUE`.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a non-negative integer.
+		 * If 0, not heading will be included in the generated section.
+		 * Default: {@link defaultSectionHeadingLevel}.
 		 * @param {object} config - Transform configuration.
 		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_DEPENDENCY_GUIDELINES_SECTION: (content, options, config) =>
-			templateTransform(
-				"Dependency-Guidelines-Template.md",
-				options.includeHeading !== "FALSE" ? "Using Fluid Framework libraries" : undefined,
-			),
+			templateTransform("Dependency-Guidelines-Template.md", {
+				headingLevel: parseIntegerOptionOrDefault(
+					options.headingLevel,
+					defaultSectionHeadingLevel,
+				),
+				headingText: "Using Fluid Framework libraries",
+			}),
 
 		/**
 		 * Generates a README "Help" section.
 		 *
 		 * @param {object} content - The original document file contents.
 		 * @param {object} options - Transform options.
-		 * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
-		 * Default: `TRUE`.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a non-negative integer.
+		 * If 0, not heading will be included in the generated section.
+		 * Default: {@link defaultSectionHeadingLevel}.
 		 * @param {object} config - Transform configuration.
 		 * @param {string} config.originalPath - Path to the document being modified.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
 		README_HELP_SECTION: (content, options, config) =>
-			templateTransform(
-				"Help-Template.md",
-				options.includeHeading !== "FALSE" ? "Help" : undefined,
-			),
+			templateTransform("Help-Template.md", {
+				headingLevel: parseIntegerOptionOrDefault(
+					options.headingLevel,
+					defaultSectionHeadingLevel,
+				),
+				headingText: "Help",
+			}),
 
 		/**
 		 * See {@link packageScriptsSectionTransform}.
@@ -445,7 +515,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_JSON_SCRIPTS:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_JSON_SCRIPTS:headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
