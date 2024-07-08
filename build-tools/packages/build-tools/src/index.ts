@@ -14,6 +14,7 @@ export type { Logger } from "./common/logging";
 export { MonoRepo } from "./common/monoRepo";
 export {
 	Package,
+	type PackageDependency,
 	type PackageJson,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
