@@ -207,7 +207,7 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  *
  * @public
  */
-export function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, DocSection[]> {
+export function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]> {
 	const customBlockComments = new Map<string, DocSection[]>();
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
 		for (const block of apiItem.tsdocComment.customBlocks) {
@@ -235,7 +235,7 @@ export function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, Do
 function getCustomBlockSectionsForMultiInstanceTags(
 	apiItem: ApiItem,
 	tagName: string,
-): DocSection[] | undefined {
+): readonly DocSection[] | undefined {
 	if (!tagName.startsWith("@")) {
 		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
 	}
