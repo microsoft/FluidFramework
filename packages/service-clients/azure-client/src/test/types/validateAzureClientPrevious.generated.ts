@@ -130,6 +130,7 @@ declare type current_as_old_for_InterfaceDeclaration_AzureContainerVersion = req
  * typeValidation.broken:
  * "RemovedClassDeclaration_AzureFunctionTokenProvider": {"forwardCompat": false}
  */
+declare type old_as_current_for_ClassDeclaration_AzureFunctionTokenProvider = requireAssignableTo<TypeOnly<old.AzureFunctionTokenProvider>, TypeOnly<current.AzureFunctionTokenProvider>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
