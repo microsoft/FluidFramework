@@ -1572,5 +1572,6 @@ export const shortCodeMap = {
 	"0x9a8": "should be in fields mode",
 	"0x9a9": "expected to find a parent commit",
 	"0x9aa": "identifier must be type string",
-	"0x9ab": "Missing tenant ID!",
+	"0x9ab": "childId is undefined in unpackChildNodesUsedRoutes",
+	"0x9ac": "Missing tenant ID!"
 };

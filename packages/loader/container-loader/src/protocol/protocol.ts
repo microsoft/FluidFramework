@@ -20,6 +20,7 @@ import {
 import { IQuorumSnapshot, Quorum } from "./quorum.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IScribeProtocolState {
@@ -31,6 +32,7 @@ export interface IScribeProtocolState {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IProtocolHandler {
