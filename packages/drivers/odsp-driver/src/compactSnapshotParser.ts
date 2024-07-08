@@ -216,7 +216,7 @@ function readTreeSection(node: NodeCore): {
 			trees[path] = result.snapshotTree;
 			if (records.groupId !== undefined) {
 				const groupId = getStringInstance(records.groupId, "groupId should be a string");
-				// Non ull asserting since trees[path] is already created
+				// Non null asserting since trees[path] is already created
 				trees[path]!.groupId = groupId;
 			}
 			slowTreeStructureCount += result.slowTreeStructureCount;
