@@ -75,12 +75,12 @@
 		},
 		"./internal/test/blobManager": {
 			"import": {
-				"types": "./lib/blobManager.d.ts",
-				"default": "./lib/blobManager.js"
+				"types": "./lib/blobManager/index.d.ts",
+				"default": "./lib/blobManager/index.js"
 			},
 			"require": {
-				"types": "./dist/blobManager.d.ts",
-				"default": "./dist/blobManager.js"
+				"types": "./dist/blobManager/index.d.ts",
+				"default": "./dist/blobManager/index.js"
 			}
 		},
 		"./internal/test/summary": {
@@ -108,8 +108,8 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileAlpha legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileAlpha legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "flub generate entrypoints --outDir ./dist",
+		"api-extractor:esnext": "flub generate entrypoints --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",

@@ -23,6 +23,7 @@ export interface ICodeLoaderBundle {
 
 /**
  * Instance that holds all the details for Fluid file conversion
+ * @legacy
  * @alpha
  */
 export interface IFluidFileConverter {

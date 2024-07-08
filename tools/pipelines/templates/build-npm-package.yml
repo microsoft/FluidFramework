@@ -51,10 +51,6 @@ parameters:
   type: boolean
   default: true
 
-- name: poolCG
-  type: object
-  default: Small-1ES
-
 - name: poolBuild
   type: object
   default: Small-1ES
@@ -591,25 +587,6 @@ extends:
                     artifactName: release_reports
                     sbomEnabled: false
                     publishLocation: pipeline
-
-          # Job - Component detection
-          - ${{ if eq(parameters.publish, true) }}:
-              - job: CG
-                displayName: Component Detection
-                pool: ${{ parameters.poolCG }}
-                steps:
-                  - checkout: self
-                    clean: true
-                    lfs: false
-                    submodules: false
-                  - ${{ parameters.preCG }}
-                  - task: ComponentGovernanceComponentDetection@0
-                    displayName: Component Detection
-                    inputs:
-                      sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
-                      verbosity: Verbose
-                      scanType: Register
-                      alertWarningLevel: High
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:

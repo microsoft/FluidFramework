@@ -188,28 +188,16 @@ use_old_InterfaceDeclaration_AzureContainerVersion(
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_AzureFunctionTokenProvider": {"forwardCompat": false}
+ * "RemovedClassDeclaration_AzureFunctionTokenProvider": {"forwardCompat": false}
  */
-declare function get_old_ClassDeclaration_AzureFunctionTokenProvider():
-    TypeOnly<old.AzureFunctionTokenProvider>;
-declare function use_current_ClassDeclaration_AzureFunctionTokenProvider(
-    use: TypeOnly<current.AzureFunctionTokenProvider>): void;
-use_current_ClassDeclaration_AzureFunctionTokenProvider(
-    get_old_ClassDeclaration_AzureFunctionTokenProvider());
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassDeclaration_AzureFunctionTokenProvider": {"backCompat": false}
+ * "RemovedClassDeclaration_AzureFunctionTokenProvider": {"backCompat": false}
  */
-declare function get_current_ClassDeclaration_AzureFunctionTokenProvider():
-    TypeOnly<current.AzureFunctionTokenProvider>;
-declare function use_old_ClassDeclaration_AzureFunctionTokenProvider(
-    use: TypeOnly<old.AzureFunctionTokenProvider>): void;
-use_old_ClassDeclaration_AzureFunctionTokenProvider(
-    get_current_ClassDeclaration_AzureFunctionTokenProvider());
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
