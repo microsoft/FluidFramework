@@ -1907,7 +1907,7 @@ describe("SharedTree", () => {
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			});
-			const provider = new TestTreeProviderLite(2, factory, true);
+			const provider = new TestTreeProviderLite(1, factory, true);
 			const tree1 = provider.trees[0];
 			const sf = new SchemaFactory("com.example");
 			class Widget extends sf.object("Widget", { id: sf.identifier }) {}
@@ -1918,6 +1918,7 @@ describe("SharedTree", () => {
 					enableSchemaValidation: true,
 				}),
 			);
+			view.initialize([new Widget({}), new Widget({ id: "fidget" })]);
 			const widget = view.root.at(0);
 			assert(widget !== undefined);
 			const fidget = view.root.at(-1);
