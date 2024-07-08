@@ -110,9 +110,9 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 			}
 		}
 
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		const driveId = joinSessionMatch[3] ?? joinSessionMatch[5]!;
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		const itemId = joinSessionMatch[4]!;
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
@@ -122,9 +122,9 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		if (joinSessionMatch === null) {
 			return undefined;
 		}
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		const driveId = joinSessionMatch[2]!;
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		const itemId = joinSessionMatch[3]!;
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };

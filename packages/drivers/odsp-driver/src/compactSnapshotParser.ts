@@ -86,9 +86,9 @@ function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	assertNumberInstance(records.firstSequenceNumber!, "Seq number should be a number");
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	assertNodeCoreInstance(records.deltas!, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -200,7 +200,7 @@ function readTreeSection(node: NodeCore): {
 			snapshotTree.unreferenced = true;
 		}
 
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		const path = getStringInstance(records.name!, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
@@ -237,12 +237,12 @@ function readSnapshotSection(node: NodeTypes): {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	assertNodeCoreInstance(records.treeNodes!, "TreeNodes should be of type NodeCore");
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	assertNumberInstance(records.sequenceNumber!, "sequenceNumber should be of type number");
 	const { snapshotTree, slowTreeStructureCount } = readTreeSection(records.treeNodes);
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	snapshotTree.id = getStringInstance(records.id!, "snapshotId should be string");
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
@@ -268,9 +268,9 @@ export function parseCompactSnapshotResponse(
 
 	const records = getNodeProps(root);
 
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	const mrv = getStringInstance(records.mrv!, "minReadVersion should be string");
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	const cv = getStringInstance(records.cv!, "createVersion should be string");
 	if (records.lsn !== undefined) {
 		assertNumberInstance(records.lsn, "lsn should be a number");
@@ -290,10 +290,10 @@ export function parseCompactSnapshotResponse(
 	);
 
 	const [snapshot, durationSnapshotTree] = measure(() =>
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		readSnapshotSection(records.snapshot!),
 	);
-	// Why are we non null asserting here
+	// TODO Why are we non null asserting here?
 	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs!));
 
 	return {

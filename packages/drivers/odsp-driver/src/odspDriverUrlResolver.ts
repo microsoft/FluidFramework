@@ -261,7 +261,7 @@ function decodeOdspUrl(url: string): {
 	}
 
 	return {
-		// Why are we non null asserting here
+		// TODO Why are we non null asserting here?
 		siteUrl: siteUrl!,
 		driveId: decodeURIComponent(driveId),
 		itemId: decodeURIComponent(itemId),
