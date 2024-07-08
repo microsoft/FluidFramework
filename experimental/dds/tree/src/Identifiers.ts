@@ -24,7 +24,7 @@ export type UuidString = string & {
 export type AttributionId = UuidString;
 
 /**
- * A version 4, variant 2 uuid (https://datatracker.ietf.org/doc/html/rfc4122).
+ * A {@link https://datatracker.ietf.org/doc/html/rfc4122 | version 4, variant 2 uuid}.
  * @internal
  */
 export type StableId = UuidString & {
