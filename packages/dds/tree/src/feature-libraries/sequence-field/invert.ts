@@ -7,11 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { RevisionTag } from "../../core/index.js";
 import { type IdAllocator, type Mutable, fail } from "../../util/index.js";
-import {
-	type CrossFieldManager,
-	CrossFieldTarget,
-	type NodeId,
-} from "../modular-schema/index.js";
+import { type CrossFieldManager, CrossFieldTarget, type NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
 import {
@@ -131,7 +127,10 @@ function invertMark(
 		}
 		case "MoveOut": {
 			if (mark.changes !== undefined) {
-				assert(mark.count === 1, 0x6ed /* Mark with changes can only target a single cell */);
+				assert(
+					mark.count === 1,
+					0x6ed /* Mark with changes can only target a single cell */,
+				);
 
 				const endpoint = getEndpoint(mark);
 				crossFieldManager.set(
@@ -228,7 +227,10 @@ function invertMark(
 			for (const attachInverse of attachInverses) {
 				let detachInverseCurr: Mark = detachInverse;
 				if (attachInverse.count !== detachInverse.count) {
-					[detachInverseCurr, detachInverse] = splitMark(detachInverse, attachInverse.count);
+					[detachInverseCurr, detachInverse] = splitMark(
+						detachInverse,
+						attachInverse.count,
+					);
 				}
 
 				if (attachInverse.type === NoopMarkType) {
@@ -242,7 +244,10 @@ function invertMark(
 					inverses.push(detachInverseCurr);
 					continue;
 				}
-				assert(isDetach(attachInverse), 0x810 /* Inverse of an attach should be a detach */);
+				assert(
+					isDetach(attachInverse),
+					0x810 /* Inverse of an attach should be a detach */,
+				);
 
 				const inverted: Mark = {
 					type: "AttachAndDetach",
@@ -293,17 +298,14 @@ function applyMovedChanges(
 	}
 
 	if (entry.value !== undefined) {
+		manager.moveNode(entry.value);
 		return [withNodeChange<CellMark<MoveOut>, MoveOut>(mark, entry.value)];
 	}
 
 	return [mark];
 }
 
-function invertNodeChangeOrSkip(
-	count: number,
-	changes: NodeId | undefined,
-	cellId?: CellId,
-): Mark {
+function invertNodeChangeOrSkip(count: number, changes: NodeId | undefined, cellId?: CellId): Mark {
 	if (changes !== undefined) {
 		assert(count === 1, 0x66c /* A modify mark must have length equal to one */);
 		const noop: CellMark<NoopMark> = {

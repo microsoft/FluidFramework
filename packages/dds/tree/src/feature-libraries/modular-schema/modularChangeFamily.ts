@@ -40,6 +40,7 @@ import {
 	setInChangeAtomIdMap,
 	areEqualChangeAtomIds,
 	getFromChangeAtomIdMap,
+	type ChangeAtomId,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -675,9 +676,14 @@ export class ModularChangeFamily
 		}
 
 		const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
+		const invertedNodeToParent = nestedMapFromFlatList(
+			nestedMapToFlatList(change.change.nodeToParent),
+		);
+
 		const crossFieldTable: InvertTable = {
 			...newCrossFieldTable<FieldChange>(),
 			originalFieldToContext: new Map(),
+			invertedNodeToParent,
 		};
 
 		const { revInfos } = getRevInfoFromTaggedChanges([change]);
@@ -685,6 +691,7 @@ export class ModularChangeFamily
 
 		const invertedFields = this.invertFieldMap(
 			change.change.fieldChanges,
+			undefined,
 			isRollback,
 			genId,
 			crossFieldTable,
@@ -699,6 +706,7 @@ export class ModularChangeFamily
 				localId,
 				this.invertNodeChange(
 					nodeChangeset,
+					{ revision, localId },
 					isRollback,
 					genId,
 					crossFieldTable,
@@ -717,7 +725,7 @@ export class ModularChangeFamily
 					context !== undefined,
 					0x851 /* Should have context for every invalidated field */,
 				);
-				const { invertedField } = context;
+				const { invertedField, fieldId } = context;
 
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
@@ -726,7 +734,7 @@ export class ModularChangeFamily
 					originalFieldChange,
 					isRollback,
 					genId,
-					new CrossFieldManagerI(crossFieldTable, fieldChange),
+					new InvertManager(crossFieldTable, fieldChange, fieldId),
 					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
@@ -738,7 +746,7 @@ export class ModularChangeFamily
 		return makeModularChangeset(
 			invertedFields,
 			invertedNodes,
-			change.change.nodeToParent, // XXX
+			invertedNodeToParent,
 			change.change.nodeAliases,
 			crossFieldKeys,
 			genId.getMaxId(),
@@ -751,6 +759,7 @@ export class ModularChangeFamily
 
 	private invertFieldMap(
 		changes: FieldChangeMap,
+		parentId: NodeId | undefined,
 		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
@@ -759,7 +768,8 @@ export class ModularChangeFamily
 		const invertedFields: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of changes) {
-			const manager = new CrossFieldManagerI(crossFieldTable, fieldChange);
+			const fieldId = { nodeId: parentId, field };
+			const manager = new InvertManager(crossFieldTable, fieldChange, fieldId);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
@@ -772,6 +782,7 @@ export class ModularChangeFamily
 			invertedFields.set(field, invertedFieldChange);
 
 			crossFieldTable.originalFieldToContext.set(fieldChange, {
+				fieldId,
 				invertedField: invertedFieldChange,
 			});
 		}
@@ -781,6 +792,7 @@ export class ModularChangeFamily
 
 	private invertNodeChange(
 		change: NodeChangeset,
+		id: NodeId,
 		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
@@ -791,6 +803,7 @@ export class ModularChangeFamily
 		if (change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
 				change.fieldChanges,
+				id,
 				isRollback,
 				genId,
 				crossFieldTable,
@@ -2050,9 +2063,11 @@ interface CrossFieldTable<TFieldData> {
 
 interface InvertTable extends CrossFieldTable<FieldChange> {
 	originalFieldToContext: Map<FieldChange, InvertContext>;
+	invertedNodeToParent: ChangeAtomIdMap<FieldId>;
 }
 
 interface InvertContext {
+	fieldId: FieldId;
 	invertedField: FieldChange;
 }
 
@@ -2155,7 +2170,7 @@ function newConstraintState(violationCount: number): ConstraintState {
 	};
 }
 
-class CrossFieldManagerI<T> implements CrossFieldManager {
+abstract class CrossFieldManagerI<T> implements CrossFieldManager {
 	public constructor(
 		protected readonly crossFieldTable: CrossFieldTable<T>,
 		private readonly currentFieldKey: T,
@@ -2212,12 +2227,14 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 		return getFirstFromCrossFieldMap(this.getMap(target), revision, id, count);
 	}
 
-	public moveKey(
+	public abstract moveNode(id: NodeId): void;
+
+	public abstract moveKey(
 		target: CrossFieldTarget,
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
 		count: number,
-	): void {}
+	): void;
 
 	private getMap(target: CrossFieldTarget): CrossFieldMap<unknown> {
 		return target === CrossFieldTarget.Source
@@ -2229,6 +2246,34 @@ class CrossFieldManagerI<T> implements CrossFieldManager {
 		return target === CrossFieldTarget.Source
 			? this.crossFieldTable.srcDependents
 			: this.crossFieldTable.dstDependents;
+	}
+}
+
+class InvertManager extends CrossFieldManagerI<FieldChange> {
+	public constructor(
+		table: InvertTable,
+		field: FieldChange,
+		private readonly fieldId: FieldId,
+		allowInval = true,
+	) {
+		super(table, field, allowInval);
+	}
+
+	public override moveNode(id: ChangeAtomId): void {
+		setInChangeAtomIdMap(this.table.invertedNodeToParent, id, this.fieldId);
+	}
+
+	public override moveKey(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+
+	private get table(): InvertTable {
+		return this.crossFieldTable as InvertTable;
 	}
 }
 
@@ -2294,13 +2339,16 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 		super.set(target, revision, id, count, newValue, invalidateDependents);
 	}
 
+	public override moveNode(id: ChangeAtomId): void {
+		throw new Error("Method not implemented.");
+	}
+
 	public override moveKey(
 		target: CrossFieldTarget,
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		super.moveKey(target, revision, id, count);
 		// XXX: Need custom setter which handles key ranges
 		this.table.rebasedCrossFieldKeys.set([target, revision, id, count], this.fieldId);
 	}
@@ -2366,6 +2414,18 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 		}
 
 		super.set(target, revision, id, count, newValue, invalidateDependents);
+	}
+
+	public override moveNode(id: ChangeAtomId): void {
+		throw new Error("Method not implemented.");
+	}
+	public override moveKey(
+		target: CrossFieldTarget,
+		revision: RevisionTag | undefined,
+		id: ChangesetLocalId,
+		count: number,
+	): void {
+		throw new Error("Method not implemented.");
 	}
 
 	private get table(): ComposeTable {

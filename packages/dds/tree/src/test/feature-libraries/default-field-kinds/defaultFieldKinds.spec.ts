@@ -13,10 +13,7 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import type {
-	CrossFieldManager,
-	FieldChangeHandler,
-} from "../../../feature-libraries/index.js";
+import type { CrossFieldManager, FieldChangeHandler } from "../../../feature-libraries/index.js";
 import {
 	type NodeId,
 	rebaseRevisionMetadataFromInfo,
@@ -47,13 +44,11 @@ const nodeChange2: NodeId = { localId: brand(2) };
 const failCrossFieldManager: CrossFieldManager = {
 	get: () => assert.fail("Should not query CrossFieldManager"),
 	set: () => assert.fail("Should not modify CrossFieldManager"),
+	moveNode: () => assert.fail("Should not modify CrossFieldManager"),
 	moveKey: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-const childComposer1_2 = (
-	change1: NodeId | undefined,
-	change2: NodeId | undefined,
-): NodeId => {
+const childComposer1_2 = (change1: NodeId | undefined, change2: NodeId | undefined): NodeId => {
 	assert(change1 !== undefined && change2 !== undefined);
 	assert.deepEqual(change1, nodeChange1);
 	assert.deepEqual(change2, nodeChange2);

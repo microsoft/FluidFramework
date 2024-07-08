@@ -11,6 +11,7 @@ import {
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util/index.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
@@ -84,9 +85,13 @@ export interface CrossFieldManager<T = unknown> {
 	): void;
 
 	/**
-	 * Notifies the system that the specified cross field key range has been moved into this field
-	 * as part of the current rebase or compose.
-	 * This must be called whenever a new cross field key is moved into this field.
+	 * This must be called whenever a new node is moved into this field as part of the current rebase, compose, or invert.
+	 * Calling this for a node which was already in the field is tolerated.
+	 */
+	moveNode(id: NodeId): void;
+
+	/**
+	 * This must be called whenever a new cross field key is moved into this field as part of the current rebase, compose, or invert.
 	 * Calling this for a key which was already in the field is tolerated.
 	 */
 	moveKey(

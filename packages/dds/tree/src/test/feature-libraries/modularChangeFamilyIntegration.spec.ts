@@ -37,12 +37,7 @@ import {
 	intoDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import {
-	type IdAllocator,
-	type Mutable,
-	brand,
-	idAllocatorFromMaxId,
-} from "../../util/index.js";
+import { type IdAllocator, type Mutable, brand, idAllocatorFromMaxId } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -375,7 +370,11 @@ describe("ModularChangeFamily integration", () => {
 			const [moveA, moveB, moveC, removeD] = getChanges();
 
 			const moves = makeAnonChange(
-				family.compose([makeAnonChange(moveA), makeAnonChange(moveB), makeAnonChange(moveC)]),
+				family.compose([
+					makeAnonChange(moveA),
+					makeAnonChange(moveB),
+					makeAnonChange(moveC),
+				]),
 			);
 
 			const remove = makeAnonChange(removeD);
@@ -523,7 +522,9 @@ describe("ModularChangeFamily integration", () => {
 										[
 											fieldC,
 											{
-												local: [{ count: 1, attach: { major: tag2, minor: 2 } }],
+												local: [
+													{ count: 1, attach: { major: tag2, minor: 2 } },
+												],
 											},
 										],
 									]),
@@ -604,6 +605,61 @@ describe("ModularChangeFamily integration", () => {
 	});
 
 	describe("invert", () => {
+		it("Cross-field move of edited node", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			editor.enterTransaction();
+
+			// Remove a node
+			editor
+				.sequenceField({
+					parent: { parent: undefined, parentField: fieldA, parentIndex: 0 },
+					field: fieldC,
+				})
+				.remove(0, 1);
+
+			// Move the parent of the removed node to another field
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
+			);
+			editor.exitTransaction();
+
+			const [remove, move] = getChanges();
+			const edit = family.compose([makeAnonChange(remove), makeAnonChange(move)]);
+
+			const inverse = removeAliases(family.invert(tagChangeInline(edit, tag1), false));
+
+			const fieldAExpected = [
+				MarkMaker.returnTo(1, brand(2), { revision: tag1, localId: brand(2) }),
+			];
+			const fieldBExpected = [
+				MarkMaker.moveOut(1, brand(2), { changes: { revision: tag1, localId: brand(1) } }),
+			];
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(0) })];
+
+			const expected = Change.build(
+				{ family, maxId: 3 },
+				Change.field(fieldA, sequence.identifier, fieldAExpected),
+				Change.field(
+					fieldB,
+					sequence.identifier,
+					fieldBExpected,
+					Change.nodeWithId(
+						0,
+						{ revision: tag1, localId: brand(1) },
+						Change.field(fieldC, sequence.identifier, fieldCExpected),
+					),
+				),
+			);
+
+			assert.deepEqual(inverse, expected);
+		});
+
 		it("Nested moves both requiring a second pass", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
