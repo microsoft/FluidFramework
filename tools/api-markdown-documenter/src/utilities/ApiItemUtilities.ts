@@ -213,11 +213,12 @@ export function getCustomBlockComments(
 	const customBlockComments = new Map<string, DocSection[]>();
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
 		for (const block of apiItem.tsdocComment.customBlocks) {
-			if (!customBlockComments.has(block.blockTag.tagName)) {
-				customBlockComments.set(block.blockTag.tagName, []);
+			let sections = customBlockComments.get(block.blockTag.tagName);
+			if (sections === undefined) {
+				sections = [];
+				customBlockComments.set(block.blockTag.tagName, sections);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- Guaranteed to exist because we added it above
-			customBlockComments.get(block.blockTag.tagName)!.push(block.content);
+			sections.push(block.content);
 		}
 	}
 	return customBlockComments;
