@@ -13,6 +13,7 @@ import { ISerializableInterval } from "../intervals/index.js";
  * - "find all intervals with start endpoint between these two points"
  * - "find all intervals which overlap this range"
  * etc.
+ * @legacy
  * @alpha
  */
 export interface IntervalIndex<TInterval extends ISerializableInterval> {

@@ -64,13 +64,13 @@ import {
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
-	encodeCompactIdToString,
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
+	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
@@ -96,6 +96,7 @@ import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export enum DataStoreMessageType {
@@ -105,6 +106,7 @@ export enum DataStoreMessageType {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISharedObjectRegistry {
@@ -115,6 +117,7 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
+ * @legacy
  * @alpha
  */
 export class FluidDataStoreRuntime
@@ -252,7 +255,7 @@ export class FluidDataStoreRuntime
 
 		// Must always receive the data store type inside of the attributes
 		if (tree?.trees !== undefined) {
-			Object.keys(tree.trees).forEach((path) => {
+			Object.entries(tree.trees).forEach(([path, subtree]) => {
 				// Issue #4414
 				if (path === "_search") {
 					return;
@@ -263,7 +266,7 @@ export class FluidDataStoreRuntime
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
 				if (dataStoreContext.isLocalDataStore) {
-					channelContext = this.createRehydratedLocalChannelContext(path, tree.trees[path]);
+					channelContext = this.createRehydratedLocalChannelContext(path, subtree);
 					// This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
 					// data store, if the data store is loaded after the container is attached, then we missed making
 					// the channel visible. So do it now. Otherwise, add it to local channel context queue, so
@@ -281,7 +284,7 @@ export class FluidDataStoreRuntime
 						(content, localOpMetadata) => this.submitChannelOp(path, content, localOpMetadata),
 						(address: string) => this.setChannelDirty(address),
 						path,
-						tree.trees[path],
+						subtree,
 						this.sharedObjectRegistry,
 						undefined /* extraBlobs */,
 						this.dataStoreContext.getCreateChildSummarizerNodeFn(path, {
@@ -359,17 +362,19 @@ export class FluidDataStoreRuntime
 				return await this.request(parser.createSubRequest(1));
 			}
 
-			// Check for a data type reference first
-			const context = this.contexts.get(id);
-			if (context !== undefined && parser.isLeaf(1)) {
-				try {
-					const channel = await context.getChannel();
+			if (id !== undefined) {
+				// Check for a data type reference first
+				const context = this.contexts.get(id);
+				if (context !== undefined && parser.isLeaf(1)) {
+					try {
+						const channel = await context.getChannel();
 
-					return { mimeType: "fluid/object", status: 200, value: channel };
-				} catch (error) {
-					this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
+						return { mimeType: "fluid/object", status: 200, value: channel };
+					} catch (error) {
+						this.mc.logger.sendErrorEvent({ eventName: "GetChannelFailedInRequest" }, error);
 
-					return createResponseError(500, `Failed to get Channel: ${error}`, request);
+						return createResponseError(500, `Failed to get Channel: ${error}`, request);
+					}
 				}
 			}
 
@@ -439,21 +444,30 @@ export class FluidDataStoreRuntime
 			id = idArg;
 			this.validateChannelId(id);
 		} else {
-			// We use three non-overlapping namespaces:
-			// - detached state: even numbers
-			// - attached state: odd numbers
-			// - uuids
-			// In first two cases we will encode result as strings in more compact form, with leading underscore,
-			// to ensure no overlap with user-provided DDS names (see validateChannelId())
-			if (this.visibilityState !== VisibilityState.GloballyVisible) {
-				// container is detached, only one client observes content, no way to hit collisions with other clients.
-				id = encodeCompactIdToString(2 * this.contexts.size, "_");
+			/**
+			 * There is currently a bug where certain data store ids such as "[" are getting converted to ASCII characters
+			 * in the snapshot.
+			 * So, return short ids only if explicitly enabled via feature flags. Else, return uuid();
+			 */
+			if (this.mc.config.getBoolean("Fluid.Runtime.UseShortIds") === true) {
+				// We use three non-overlapping namespaces:
+				// - detached state: even numbers
+				// - attached state: odd numbers
+				// - uuids
+				// In first two cases we will encode result as strings in more compact form, with leading underscore,
+				// to ensure no overlap with user-provided DDS names (see validateChannelId())
+				if (this.visibilityState !== VisibilityState.GloballyVisible) {
+					// container is detached, only one client observes content, no way to hit collisions with other clients.
+					id = encodeCompactIdToString(2 * this.contexts.size, "_");
+				} else {
+					// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
+					// We can remove the need to leverage uuid() as fall-back in couple releases.
+					const res =
+						this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+				}
 			} else {
-				// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
-				// We can remove the need to leverage uuid() as fall-back in couple releases.
-				const res =
-					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
-				id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+				id = uuid();
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
@@ -838,7 +852,9 @@ export class FluidDataStoreRuntime
 						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
 					);
 					summaryTree = convertSnapshotTreeToSummaryTree(
-						this.dataStoreContext.baseSnapshot.trees[contextId],
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						this.dataStoreContext.baseSnapshot.trees[contextId]!,
 					);
 				}
 				summaryBuilder.addWithStats(contextId, summaryTree);
@@ -1234,6 +1250,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
+ * @legacy
  * @alpha
  */
 export const mixinRequestHandler = (
@@ -1255,6 +1272,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @legacy
  * @alpha
  */
 export const mixinSummaryHandler = (
