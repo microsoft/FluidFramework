@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@types/node@<18': ^18.19.0
+  '@types/node@<18': ^18.19.39
   rimraf>path-scurry@<=1.10.1: ^1.11.1
   qs: ^6.11.0
   socket.io-parser: ^4.2.4
@@ -5137,7 +5137,7 @@ packages:
   /@rushstack/node-core-library@3.59.4:
     resolution: {integrity: sha512-YAKJDC6Mz/KA1D7bvB88WaRX3knt/ZuLzkRu5G9QADGSjLtvTWzCNCytRF2PCSaaHOZaZsWul4F1KQdgFgUDqA==}
     peerDependencies:
-      '@types/node': ^18.19.0
+      '@types/node': ^18.19.39
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -5154,7 +5154,7 @@ packages:
   /@rushstack/node-core-library@3.63.0(@types/node@18.19.39):
     resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
     peerDependencies:
-      '@types/node': ^18.19.0
+      '@types/node': ^18.19.39
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -5172,7 +5172,7 @@ packages:
   /@rushstack/node-core-library@5.3.0(@types/node@18.19.39):
     resolution: {integrity: sha512-t23gjdZV6aWkbwXSE3TkKr1UXJFbXICvAOJ0MRQEB/ZYGhfSJqqrQFaGd20I1a/nIIHJEkNO0xzycHixjcbCPw==}
     peerDependencies:
-      '@types/node': ^18.19.0
+      '@types/node': ^18.19.39
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -5198,7 +5198,7 @@ packages:
   /@rushstack/terminal@0.12.2(@types/node@18.19.39):
     resolution: {integrity: sha512-yaHKyD/l6Zg34pC5zzc/KdiRBHy8zAH7ZbL3umpDLnvTrZ0SP8MVYZu9xA2lRsGkKfGbv/6gQhyNq4/tRzXH4A==}
     peerDependencies:
-      '@types/node': ^18.19.0
+      '@types/node': ^18.19.39
     peerDependenciesMeta:
       '@types/node':
         optional: true
