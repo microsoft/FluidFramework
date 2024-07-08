@@ -29,6 +29,7 @@ import {
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -51,11 +52,13 @@ import {
 	type FieldUpPath,
 } from "../../../core/index.js";
 import {
+	type Mutable,
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
 	setInNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 } from "../../../util/index.js";
 import {
 	type EncodingTestData,
@@ -1418,6 +1421,39 @@ describe("ModularChangeFamily", () => {
 			successes: [
 				["without constraint", inlineRevision(rootChange1a, tag1), context],
 				["with constraint", inlineRevision(rootChange3, tag1), context],
+				[
+					"with violated constraint",
+					inlineRevision({ ...buildChangeset([]), constraintViolationCount: 42 }, tag1),
+					context,
+				],
+				[
+					"with builds",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							builds: new Map([
+								[undefined, new Map([[brand(1), node1Chunk]])],
+								[tag2, new Map([[brand(2), nodesChunk]])],
+							]),
+						},
+						tag1,
+					),
+					context,
+				],
+				[
+					"with refreshers",
+					inlineRevision(
+						{
+							...buildChangeset([]),
+							refreshers: new Map([
+								[undefined, new Map([[brand(1), node1Chunk]])],
+								[tag2, new Map([[brand(2), nodesChunk]])],
+							]),
+						},
+						tag1,
+					),
+					context,
+				],
 				["with node existence constraint", inlineRevision(rootChange4, tag1), context],
 				[
 					"without node field changes",
@@ -1469,6 +1505,13 @@ function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
 	return chunkTree(cursor, defaultChunkPolicy);
 }
 
+function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
+	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
+	const cursor = cursorForJsonableTreeField(jsonable);
+	const clone = chunkFieldSingle(cursor, defaultChunkPolicy);
+	return clone;
+}
+
 function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 	const idAllocator = idAllocatorFromMaxId();
 
@@ -1514,7 +1557,17 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 
 	const fieldChanges = normalizeFieldChanges(change.fieldChanges);
 	assert(nodeChanges.size === change.nodeChanges.size);
-	return { ...change, nodeChanges, fieldChanges };
+
+	const normal: Mutable<ModularChangeset> = { ...change, nodeChanges, fieldChanges };
+
+	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
+	if (change.builds !== undefined) {
+		normal.builds = mapNestedMap(change.builds, deepCloneChunkedTree);
+	}
+	if (change.refreshers !== undefined) {
+		normal.refreshers = mapNestedMap(change.refreshers, deepCloneChunkedTree);
+	}
+	return normal;
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {

@@ -60,7 +60,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
 	 */
 	protected async containerHasInitialized(runtime: IContainerRuntime) {
-		console.info("Using runtime factory version two");
 		// Force the MigrationTool to instantiate in all cases.  The Quorum it uses must be loaded and running in
 		// order to respond with accept ops, and without this call the MigrationTool won't be instantiated on the
 		// summarizer client.

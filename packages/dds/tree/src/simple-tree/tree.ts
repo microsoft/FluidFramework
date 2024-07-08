@@ -19,7 +19,7 @@ import type {
  * Channel for a Fluid Tree DDS.
  * @remarks
  * Allows storing and collaboratively editing schema-aware hierarchial data.
- * @public
+ * @sealed @public
  */
 export interface ITree extends IFluidLoadable {
 	/**
@@ -108,7 +108,7 @@ export interface ITreeViewConfiguration<
 
 /**
  * Configuration for {@link ITree.viewWith}.
- * @public
+ * @sealed @public
  */
 export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
 	implements Required<ITreeViewConfiguration<TSchema>>
@@ -134,43 +134,6 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 }
 
 /**
- * Configuration for how to {@link ITree.schematize | schematize} a tree.
- * @public
- * @deprecated Please migrate to use {@link TreeViewConfiguration} with {@link ITree.viewWith} instead.
- */
-export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
-	/**
-	 * If `true`, the tree will validate new content against its stored schema at insertion time
-	 * and throw an error if the new content doesn't match the expected schema.
-	 *
-	 * @defaultValue `false`.
-	 *
-	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
-	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
-	 * bit slower.
-	 */
-	public readonly enableSchemaValidation: boolean;
-
-	/**
-	 * @param schema - The schema which the application wants to view the tree with.
-	 * @param initialTree - A function that returns the default tree content to initialize the tree with iff the tree is uninitialized
-	 * (meaning it does not even have any schema set at all).
-	 * If `initialTree` returns any actual node instances, they should be recreated each time `initialTree` runs.
-	 * This is because if the config is used a second time any nodes that were not recreated could error since nodes cannot be inserted into the tree multiple times.
-	 * @param options - Additional options that can be specified when {@link ITree.schematize | schematizing } a tree.
-	 */
-	public constructor(
-		public readonly schema: TSchema,
-		public readonly initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-		options?: ITreeConfigurationOptions,
-	) {
-		this.enableSchemaValidation =
-			options?.enableSchemaValidation ??
-			defaultTreeConfigurationOptions.enableSchemaValidation;
-	}
-}
-
-/**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
  * This schema--known as the view schema--may or may not align the stored schema of the document.
@@ -185,7 +148,7 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
- * @public
+ * @sealed @public
  */
 export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposable {
 	/**
@@ -247,7 +210,7 @@ export interface TreeView<TSchema extends ImplicitFieldSchema> extends IDisposab
  * Information about a view schema's compatibility with the document's stored schema.
  *
  * See SharedTree's README for more information about choosing a compatibility policy.
- * @public
+ * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
 	/**
@@ -321,7 +284,7 @@ export interface SchemaCompatibilityStatus {
 
 /**
  * Events for {@link TreeView}.
- * @public
+ * @sealed @public
  */
 export interface TreeViewEvents {
 	/**

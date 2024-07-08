@@ -27,7 +27,6 @@ import {
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import type { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
 import type { InsertableContent } from "./proxies.js";
@@ -48,8 +47,6 @@ import {
 	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-// eslint-disable-next-line import/no-deprecated
-import { TreeConfiguration, type TreeViewConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -75,50 +72,6 @@ export function cursorFromUnhydratedRoot(
 			schemaValidationPolicy,
 		) ?? fail("failed to decode tree")
 	);
-}
-
-/* eslint-disable import/no-deprecated */
-function isTreeConfiguration(
-	config: TreeViewConfiguration | TreeConfiguration,
-): config is TreeConfiguration {
-	return config instanceof TreeConfiguration;
-}
-/* eslint-enable import/no-deprecated */
-
-/**
- * Generates a configuration object (schema + initial tree) for a FlexTree.
- * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
- * @param nodeKeyManager - See {@link NodeKeyManager}.
- * @param schemaValidationPolicy - Stored schema and policy for the tree. If the policy specifies
- * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
- * object.
- * @returns A configuration object for a FlexTree.
- *
- * @privateremarks
- * I wrote these docs without a ton of context, they can probably be improved.
- */
-export function toFlexConfig(
-	// eslint-disable-next-line import/no-deprecated
-	config: TreeViewConfiguration | TreeConfiguration,
-	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): TreeContent {
-	const unhydrated = isTreeConfiguration(config) ? config.initialTree() : undefined;
-	const initialTree =
-		unhydrated === undefined
-			? undefined
-			: [
-					cursorFromUnhydratedRoot(
-						config.schema,
-						unhydrated,
-						nodeKeyManager,
-						schemaValidationPolicy,
-					),
-				];
-	return {
-		schema: toFlexSchema(config.schema),
-		initialTree,
-	};
 }
 
 interface SchemaInfo {

@@ -90,6 +90,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="Client ID"
 									infoTooltipContent={clientIdTooltipText}
 								>
 									{column.label}

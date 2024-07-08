@@ -16,7 +16,7 @@ import {
 import {
 	NodeKind,
 	type TreeNodeSchema,
-	type,
+	typeNameSymbol,
 	// Used to test that TreeNode is a type only export.
 	TreeNode as TreeNodePublic,
 } from "../../simple-tree/index.js";
@@ -41,13 +41,13 @@ describe("simple-tree types", () => {
 			const n: TreeNode = {};
 			// @ts-expect-error TreeNode should not allow non-node objects.
 			const n2: TreeNode = {
-				[type]: "",
+				[typeNameSymbol]: "",
 			};
 
 			// Declared as a separate implicitly typed variable to avoid "Object literal may only specify known properties" error
 			// (which is good, but not what we are testing for here).
 			const n3 = {
-				[type]: "",
+				[typeNameSymbol]: "",
 				"#brand": undefined,
 			};
 			// @ts-expect-error TreeNode should not allow non-node objects, even if you use "add missing properties" refactor.
@@ -56,7 +56,7 @@ describe("simple-tree types", () => {
 
 		it("subclassing", () => {
 			class Subclass extends TreeNode {
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -158,7 +158,7 @@ describe("simple-tree types", () => {
 					log.push("oneTimeSetup");
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor(input: number | InternalTreeNode) {
@@ -191,7 +191,7 @@ describe("simple-tree types", () => {
 					super(1);
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 			}
@@ -223,7 +223,7 @@ describe("simple-tree types", () => {
 					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {
@@ -272,7 +272,7 @@ describe("simple-tree types", () => {
 					return new MockFlexNode(this as unknown as TreeNodeSchema);
 				}
 
-				public override get [type](): string {
+				public override get [typeNameSymbol](): string {
 					throw new Error("Method not implemented.");
 				}
 				public constructor() {

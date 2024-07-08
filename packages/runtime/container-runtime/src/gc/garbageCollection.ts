@@ -26,7 +26,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager } from "../blobManager.js";
+import { blobManagerBasePath } from "../blobManager/index.js";
 import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
@@ -910,7 +910,10 @@ export class GarbageCollector implements IGarbageCollector {
 				break;
 			}
 			case GarbageCollectionMessageType.TombstoneLoaded: {
-				if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+				if (
+					!this.configs.tombstoneAutorecoveryEnabled ||
+					this.mc.config.getBoolean(disableAutoRecoveryKey) === true
+				) {
 					break;
 				}
 
@@ -1083,7 +1086,10 @@ export class GarbageCollector implements IGarbageCollector {
 	 * before runnint GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string) {
-		if (this.mc.config.getBoolean(disableAutoRecoveryKey) === true) {
+		if (
+			!this.configs.tombstoneAutorecoveryEnabled ||
+			this.mc.config.getBoolean(disableAutoRecoveryKey) === true
+		) {
 			return;
 		}
 
@@ -1266,7 +1272,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
 		const getDeletedNodeType = (nodeId: string): GCNodeType => {
 			const pathParts = nodeId.split("/");
-			if (pathParts[1] === BlobManager.basePath) {
+			if (pathParts[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (pathParts.length === 2) {

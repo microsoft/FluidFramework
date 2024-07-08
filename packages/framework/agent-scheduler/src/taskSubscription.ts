@@ -10,6 +10,7 @@ import { IAgentScheduler } from "./agent.js";
 
 /**
  * Events emitted by {@link TaskSubscription}.
+ * @legacy
  * @alpha
  */
 export interface ITaskSubscriptionEvents extends IEvent {
@@ -18,6 +19,7 @@ export interface ITaskSubscriptionEvents extends IEvent {
 
 /**
  * TaskSubscription works with an AgentScheduler to make it easier to monitor a specific task ownership.
+ * @legacy
  * @alpha
  */
 export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {

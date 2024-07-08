@@ -19,6 +19,7 @@ import {
 	getOrCreateMapTreeNode,
 	getSchemaAndPolicy,
 	isMapTreeNode,
+	isFlexTreeNode,
 } from "../feature-libraries/index.js";
 import {
 	type InsertableContent,
@@ -35,7 +36,7 @@ import {
 	type TreeNodeSchemaClass,
 	type WithType,
 	type TreeNodeSchema,
-	type,
+	typeNameSymbol,
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
@@ -51,7 +52,7 @@ import { assert } from "@fluidframework/core-utils/internal";
  * @privateRemarks
  * Inlining this into TreeArrayNode causes recursive array use to stop compiling.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 	extends ReadonlyArray<T>,
@@ -222,7 +223,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
  *
  * @typeParam TAllowedTypes - Schema for types which are allowed as members of this array.
  *
- * @public
+ * @sealed @public
  */
 export interface TreeArrayNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
@@ -248,7 +249,7 @@ export const TreeArrayNode = {
 	 * ```
 	 */
 	spread: <T>(content: Iterable<T>) => create(content),
-};
+} as const;
 
 /**
  * Package internal construction API.
@@ -259,7 +260,7 @@ let create: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 /**
  * Used to insert iterable content into a {@link (TreeArrayNode:interface)}.
  * Use {@link (TreeArrayNode:variable).spread} to create an instance of this type.
- * @public
+ * @sealed @public
  */
 export class IterableTreeArrayContent<T> implements Iterable<T> {
 	static {
@@ -554,16 +555,10 @@ function createArrayNodeProxy(
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
-			const value = field.boxedAt(maybeIndex);
-
-			if (value === undefined) {
-				return undefined;
-			}
-
-			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
-			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
-			//       inner field.
-			return getOrCreateNodeProxy(value);
+			const maybeUnboxedContent = field.at(maybeIndex);
+			return isFlexTreeNode(maybeUnboxedContent)
+				? getOrCreateNodeProxy(maybeUnboxedContent)
+				: maybeUnboxedContent;
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -773,20 +768,28 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		fieldEditor.remove(removeStart, removeEnd - removeStart);
 	}
 	public moveToStart(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndex(sourceIndex, field, "moveToStart");
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToStart");
 		this.moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndex(sourceIndex, field, "moveToEnd");
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		validateIndex(sourceIndex, sourceField, "moveToEnd");
 		this.moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
-	public moveToIndex(index: number, sourceIndex: number, source?: TreeArrayNode): void {
-		const field = getSequenceField(this);
-		validateIndex(index, field, "moveToIndex", true);
-		validateIndex(sourceIndex, field, "moveToIndex");
-		this.moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
+	public moveToIndex(
+		destinationIndex: number,
+		sourceIndex: number,
+		source?: TreeArrayNode,
+	): void {
+		const sourceArray = source ?? this;
+		const sourceField = getSequenceField(sourceArray);
+		const destinationField = getSequenceField(this);
+		validateIndex(destinationIndex, destinationField, "moveToIndex", true);
+		validateIndex(sourceIndex, sourceField, "moveToIndex");
+		this.moveRangeToIndex(destinationIndex, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveRangeToStart(
 		sourceStart: number,
@@ -811,41 +814,40 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		this.moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
 	public moveRangeToIndex(
-		index: number,
+		destinationIndex: number,
 		sourceStart: number,
 		sourceEnd: number,
 		source?: TreeArrayNode,
 	): void {
-		const field = getSequenceField(this);
-		validateIndex(index, field, "moveRangeToIndex", true);
-		validateIndexRange(sourceStart, sourceEnd, source ?? field, "moveRangeToIndex");
+		const destinationField = getSequenceField(this);
+		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
+		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
 		const sourceField =
 			source !== undefined
-				? field.isSameAs(getSequenceField(source))
-					? field
+				? destinationField.isSameAs(getSequenceField(source))
+					? destinationField
 					: getSequenceField(source)
-				: field;
+				: destinationField;
 
 		// TODO: determine support for move across different sequence types
-		if (field.schema.types !== undefined && sourceField !== field) {
+		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode =
-					sourceField.boxedAt(sourceStart) ?? fail("impossible out of bounds index");
-				if (!field.schema.types.has(sourceNode.schema.name)) {
-					throw new Error("Type in source sequence is not allowed in destination.");
+				const sourceNode = sourceField.boxedAt(i) ?? fail("impossible out of bounds index");
+				if (!destinationField.schema.types.has(sourceNode.schema.name)) {
+					throw new UsageError("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}
 		const movedCount = sourceEnd - sourceStart;
 		const sourceFieldPath = sourceField.getFieldPath();
 
-		const destinationFieldPath = field.getFieldPath();
-		field.context.checkout.editor.move(
+		const destinationFieldPath = destinationField.getFieldPath();
+		destinationField.context.checkout.editor.move(
 			sourceFieldPath,
 			sourceStart,
 			movedCount,
 			destinationFieldPath,
-			index,
+			destinationIndex,
 		);
 	}
 }
@@ -950,7 +952,7 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 
-		public get [type](): TName {
+		public get [typeNameSymbol](): TName {
 			return identifier;
 		}
 
@@ -1024,6 +1026,6 @@ function validateIndexRange(
 function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	assert(cursor.mode === CursorLocationType.Fields, 0x9a8 /* should be in fields mode */);
 	return cursor;
 }
