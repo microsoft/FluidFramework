@@ -1918,11 +1918,9 @@ describe("SharedTree", () => {
 					enableSchemaValidation: true,
 				}),
 			);
-			view.initialize([new Widget({}), new Widget({ id: "fidget" })]);
-			const widget = view.root.at(0);
-			assert(widget !== undefined);
-			const fidget = view.root.at(-1);
-			assert(fidget !== undefined);
+			const widget = new Widget({});
+			const fidget = new Widget({ id: "fidget" });
+			view.initialize([widget, fidget]);
 
 			// Checks that the shortId returns the correct types and values.
 			assert.equal(typeof Tree.shortId(widget), "number");
