@@ -207,7 +207,9 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  *
  * @public
  */
-export function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]> {
+export function getCustomBlockComments(
+	apiItem: ApiItem,
+): ReadonlyMap<string, readonly DocSection[]> {
 	const customBlockComments = new Map<string, DocSection[]>();
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
 		for (const block of apiItem.tsdocComment.customBlocks) {
@@ -286,7 +288,7 @@ function getCustomBlockSectionForSingleInstanceTag(
  *
  * @public
  */
-export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
+export function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
 	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.example.tagName);
 }
 
@@ -299,7 +301,7 @@ export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined {
  *
  * @public
  */
-export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
+export function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.seeBlocks !== undefined) {
 		const seeBlocks = apiItem.tsdocComment.seeBlocks.map((block) => block.content);
 		return seeBlocks.length === 0 ? undefined : seeBlocks;
@@ -316,7 +318,7 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  *
  * @public
  */
-export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined {
+export function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undefined {
 	return getCustomBlockSectionsForMultiInstanceTags(apiItem, StandardTags.throws.tagName);
 }
 
