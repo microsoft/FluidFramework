@@ -20,7 +20,7 @@ const extendedConfig = {
 	], // without leading "--"
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js", // Changed reporter option to use the memory test reporter.
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"timeout": "360000", // depending on the test and the size of the E2E document, the timeout might not be enough. To address it, let's first try to decrease the number of iterations (minSampleCount).
+	"timeout": "90000",
 };
 
 module.exports = extendedConfig;
