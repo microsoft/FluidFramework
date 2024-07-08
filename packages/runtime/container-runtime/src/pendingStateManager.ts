@@ -253,6 +253,12 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
+	/**
+	 * Processes the incoming batch from the server. It verifies that messages are received in the right order and
+	 * that the batch information is correct.
+	 * @param batch - The batch that is being processed.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 */
 	public processPendingLocalBatch(
 		batch: InboundSequencedContainerRuntimeMessage[],
 		batchStartCsn: number,

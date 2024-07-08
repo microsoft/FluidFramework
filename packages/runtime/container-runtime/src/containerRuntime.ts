@@ -693,7 +693,7 @@ export const makeLegacySendBatchFn =
 type MessageWithContext = {
 	local: boolean;
 	savedOp?: boolean;
-	batchStartCsn: number;
+	localOpMetadata?: unknown;
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
@@ -2634,10 +2634,10 @@ export class ContainerRuntime
 					message,
 					local,
 					modernRuntimeMessage,
-					batchStartCsn,
 					savedOp,
+					localOpMetadata,
 				};
-				this.ensureNoDataModelChanges(() => this.processCore(msg, localOpMetadata));
+				this.ensureNoDataModelChanges(() => this.processCore(msg));
 			});
 		} else {
 			const msg: MessageWithContext = {
@@ -2645,9 +2645,8 @@ export class ContainerRuntime
 				local,
 				modernRuntimeMessage,
 				savedOp,
-				batchStartCsn: messageCopy.clientSequenceNumber,
 			};
-			this.ensureNoDataModelChanges(() => this.processCore(msg, undefined));
+			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
 
@@ -2656,8 +2655,8 @@ export class ContainerRuntime
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
-	private processCore(messageWithContext: MessageWithContext, localOpMetadata?: unknown) {
-		const { message, local } = messageWithContext;
+	private processCore(messageWithContext: MessageWithContext) {
+		const { message, local, localOpMetadata } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
@@ -2677,8 +2676,7 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
-			// See commit that added this assert for more details.
-			// These subsequent calls should be made for all but chunked ops:
+			// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
