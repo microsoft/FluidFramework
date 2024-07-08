@@ -10,6 +10,7 @@ import {
 	ITenantManager,
 	IThrottler,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	verifyStorageToken,
 	throttle,
@@ -89,7 +90,7 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
-            Lumberjack.info(`alfred headers`, req.headers);
+            Lumberjack.info(`alfred headers`, request.headers);
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
@@ -116,7 +117,7 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
-            Lumberjack.info(`alfred headers`, req.headers);
+            Lumberjack.info(`alfred headers`, request.headers);
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
 			// Query for the raw deltas (no from/to since we want all of them)
@@ -148,7 +149,7 @@ export function create(
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
-            Lumberjack.info(`alfred headers`, req.headers);
+            Lumberjack.info(`alfred headers`, request.headers);
 			let from = stringToSequenceNumber(request.query.from);
 			let to = stringToSequenceNumber(request.query.to);
 			if (from === undefined && to === undefined) {
