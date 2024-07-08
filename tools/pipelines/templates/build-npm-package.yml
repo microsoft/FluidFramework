@@ -155,9 +155,9 @@ extends:
       name: ${{ parameters.poolBuild }}
       os: linux
     sdl:
-      arrow:
-        # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
-        ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+      ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        arrow:
+          # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
           serviceConnection: ff-internal-arrow-sc
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
