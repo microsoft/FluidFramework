@@ -6,6 +6,7 @@
 const {
 	formattedSectionText,
 	getPackageMetadata,
+	getScopeKindFromPackage,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 } = require("../utilities.cjs");
