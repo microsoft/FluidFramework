@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-const { PackageName } = require("@rushstack/node-core-library");
 const scripts = require("markdown-magic-package-scripts");
 
 const {
 	createSectionFromTemplate,
 	formattedGeneratedContentBody,
 	getPackageMetadata,
+	getScopeKindFromPackage,
 	resolveRelativePackageJsonPath,
 } = require("./utilities.cjs");
 const {
@@ -66,25 +66,6 @@ const generateHelpSection = (includeHeading) =>
  */
 const generateTrademarkSection = (includeHeading) =>
 	createSectionFromTemplate("Trademark-Template.md", includeHeading ? "Trademark" : undefined);
-
-/**
- * Gets the appropriate scope kind for the provided package name.
- *
- * @param {string} packageName
- * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
- */
-const getScopeKindFromPackage = (packageName) => {
-	const packageScope = PackageName.getScope(packageName);
-	if (packageScope === `@fluid-experimental`) {
-		return "EXPERIMENTAL";
-	} else if (packageScope === `@fluid-internal`) {
-		return "INTERNAL";
-	} else if (packageScope === `@fluid-private`) {
-		return "PRIVATE";
-	} else {
-		return undefined;
-	}
-};
 
 /**
  * Generates simple README contents for a library package.
@@ -432,7 +413,7 @@ module.exports = {
 		README_DEPENDENCY_GUIDELINES_SECTION: (content, options, config) =>
 			templateTransform(
 				"Dependency-Guidelines-Template.md",
-				options.includeHeading !== "FALSE" ? "Dependency Guidelines" : undefined,
+				options.includeHeading !== "FALSE" ? "Using Fluid Framework libraries" : undefined,
 			),
 
 		/**

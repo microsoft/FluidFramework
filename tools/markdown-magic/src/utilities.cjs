@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { PackageName } = require("@rushstack/node-core-library");
 
 const {
 	embeddedContentNotice,
@@ -85,6 +86,25 @@ function getPackageMetadata(packageJsonFilePath) {
 }
 
 /**
+ * Gets the appropriate scope kind for the provided package name.
+ *
+ * @param {string} packageName
+ * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
+ */
+const getScopeKindFromPackage = (packageName) => {
+	const packageScope = PackageName.getScope(packageName);
+	if (packageScope === `@fluid-experimental`) {
+		return "EXPERIMENTAL";
+	} else if (packageScope === `@fluid-internal`) {
+		return "INTERNAL";
+	} else if (packageScope === `@fluid-private`) {
+		return "PRIVATE";
+	} else {
+		return undefined;
+	}
+};
+
+/**
  * Generates the appropriately formatted Markdown section contents for the provided section body.
  * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
@@ -135,6 +155,7 @@ module.exports = {
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
+	getScopeKindFromPackage,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
