@@ -273,7 +273,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
 	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
-	public processPendingLocalMessage(
+	private processPendingLocalMessage(
 		message: InboundSequencedContainerRuntimeMessage,
 		batchStartCsn: number,
 	): unknown {

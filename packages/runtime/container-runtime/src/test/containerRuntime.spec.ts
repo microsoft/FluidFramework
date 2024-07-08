@@ -721,9 +721,6 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
-						return undefined;
-					},
 					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
 						return _messages.map((message) => ({
 							message,

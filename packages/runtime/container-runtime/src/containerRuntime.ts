@@ -2678,9 +2678,7 @@ export class ContainerRuntime
 
 		try {
 			// See commit that added this assert for more details.
-			// These calls should be made for all but chunked ops:
-			// 1) this.pendingStateManager.processPendingLocalMessage() below
-			// 2) this.resetReconnectCount() below
+			// These subsequent calls should be made for all but chunked ops:
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
