@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { DevtoolsFeatures } from "@fluidframework/devtools-core/internal";
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
