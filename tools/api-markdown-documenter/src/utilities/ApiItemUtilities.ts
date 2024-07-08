@@ -25,7 +25,7 @@ import {
 	type Excerpt,
 	type ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { type DocSection, StandardTags } from "@microsoft/tsdoc";
+import { type DocSection, StandardTags, TSDocTagDefinition } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import { type Logger } from "../Logging.js";
 
@@ -190,14 +190,16 @@ export function getModifierTags(apiItem: ApiItem): ReadonlySet<string> {
 /**
  * Checks if the provided API item is tagged with the specified {@link https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags | modifier tag}.
  *
- * @throws If the provided tag name is malformed (i.e., does not begin with `@`).
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ *
+ * @throws If the provided TSDoc tag name is invalid.
  *
  * @public
  */
 export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
-	if (!tagName.startsWith("@")) {
-		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
-	}
+	TSDocTagDefinition.validateTSDocTagName(tagName);
 	return getModifierTags(apiItem).has(tagName);
 }
 
@@ -231,7 +233,10 @@ export function getCustomBlockComments(
  *
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
- * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ * Must be a valid TSDoc tag (including starting with `@`).
+ * See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ *
+ * @throws If the provided TSDoc tag name is invalid.
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
@@ -239,9 +244,7 @@ function getCustomBlockSectionsForMultiInstanceTags(
 	apiItem: ApiItem,
 	tagName: string,
 ): readonly DocSection[] | undefined {
-	if (!tagName.startsWith("@")) {
-		throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
-	}
+	TSDocTagDefinition.validateTSDocTagName(tagName);
 	const allBlocks = getCustomBlockComments(apiItem);
 	return allBlocks.get(tagName);
 }
