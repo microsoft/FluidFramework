@@ -24,6 +24,8 @@ import { pkgVersion } from "./packageVersion.js";
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ *
+ * @remarks This is the current serialization format for pending local state when a Container is serialized.
  */
 export interface IPendingMessage {
 	type: "message";
@@ -43,10 +45,14 @@ export interface IPendingMessage {
 
 type Patch<T, U> = U & Omit<T, keyof U>;
 
-/** First version of the type */
+/** First version of the type (pre-dates batchIdContext) */
 type IPendingMessageV0 = Patch<IPendingMessage, { batchIdContext?: undefined }>;
 
-/** Union of all supported schemas for when applying stashed ops */
+/**
+ * Union of all supported schemas for when applying stashed ops
+ *
+ * @remarks When the format changes, this type should update to reflect all possible schemas.
+ */
 type IPendingMessageFromStash = IPendingMessageV0 | IPendingMessage;
 
 export interface IPendingLocalState {
@@ -111,7 +117,7 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 export class PendingStateManager implements IDisposable {
 	/** Messages that will need to be resubmitted if not ack'd before the next reconnection */
 	private readonly pendingMessages = new Deque<IPendingMessage>();
-	/** Messages stashed from a previous container that is being rehydrated */
+	/** Messages stashed from a previous container, now being rehydrated. Need to be resubmitted. */
 	private readonly initialMessages = new Deque<IPendingMessageFromStash>();
 
 	/**
@@ -333,8 +339,8 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * This message could be the first message in batch. If so, set batch state marking the beginning of a batch.
 	 * @param message - The message that is being processed.
-	 * @param pendingMessage - The corresponding pendingMessage.
 	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
+	 * @param pendingMessage - The corresponding pendingMessage.
 	 */
 	private maybeProcessBatchBegin(
 		message: ISequencedDocumentMessage,

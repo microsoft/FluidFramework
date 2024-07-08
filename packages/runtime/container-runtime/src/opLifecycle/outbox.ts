@@ -34,7 +34,6 @@ export interface IOutboxConfig {
 	// The maximum size of a batch that we can send over the wire.
 	readonly maxBatchSizeInBytes: number;
 	readonly disablePartialFlush: boolean;
-	readonly includeBatchId: boolean;
 }
 
 export interface IOutboxParameters {
@@ -121,11 +120,10 @@ export class Outbox {
 			Number.POSITIVE_INFINITY;
 		// We need to allow infinite size batches if we enable compression
 		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
-		const { includeBatchId } = params.config;
 
-		this.mainBatch = new BatchManager({ hardLimit, canRebase: true, includeBatchId });
-		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true, includeBatchId });
-		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false, includeBatchId });
+		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.idAllocationBatch = new BatchManager({ hardLimit, canRebase: false });
 	}
 
 	public get messageCount(): number {
@@ -239,34 +237,45 @@ export class Outbox {
 	/**
 	 * Flush all the batches to the ordering service.
 	 * This method is expected to be called at the end of a batch.
-	 * @param mainBatchId - If provided, will be stamped on the main batch before it is sent
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
 	 */
-	public flush(mainBatchId?: BatchId) {
+	public flush(resubmittingBatchId?: BatchId) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll(mainBatchId);
+		this.flushAll(resubmittingBatchId);
 	}
 
-	private flushAll(mainBatchId?: BatchId) {
+	private flushAll(resubmittingBatchId?: BatchId) {
+		// Don't use resubmittingBatchId for idAllocationBatch.
+		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
-		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
-		this.flushInternal(this.mainBatch, false /* disableGroupedBatching */, mainBatchId);
+		this.flushInternal(
+			this.blobAttachBatch,
+			true /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
+		this.flushInternal(
+			this.mainBatch,
+			false /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
 	}
 
 	private flushInternal(
 		batchManager: BatchManager,
 		disableGroupedBatching: boolean = false,
-		batchId?: BatchId,
+		resubmittingBatchId?: BatchId,
 	) {
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch(batchId);
+		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {

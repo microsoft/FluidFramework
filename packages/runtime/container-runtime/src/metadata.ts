@@ -5,9 +5,7 @@
 
 import type { BatchId } from "./opLifecycle/index.js";
 
-/**
- * Cast the given metadata object to IBatchMetadata if it is so, otherwise yield undefined
- */
+/** Syntactic sugar for casting */
 export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
 	return metadata as IBatchMetadata | undefined;
 }
@@ -18,7 +16,7 @@ export function asBatchMetadata(metadata: unknown): IBatchMetadata | undefined {
 export interface IBatchMetadata {
 	/** Set on first/last messages of a multi-message batch, to true/false respectively */
 	batch?: boolean;
-	/** Maybe set on first message of a batch, to the batchId generated when resubmitting (the first time) */
+	/** Maybe set on first message of a batch, to the batchId generated when resubmitting (set/fixed on first resubmit) */
 	batchId?: BatchId;
 }
 

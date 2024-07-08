@@ -1752,9 +1752,6 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				includeBatchId:
-					// Only include batch ID in op metadata if offline load is enabled
-					this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -2888,15 +2885,16 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
-	 * @param batchId - If provided, will be stamped on the batch before it is sent
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
 	 */
-	private flush(batchId?: BatchId): void {
+	private flush(resubmittingBatchId?: BatchId): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush(batchId);
+		this.outbox.flush(resubmittingBatchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4122,7 +4120,13 @@ export class ContainerRuntime
 				this.reSubmit(message);
 			}
 		});
-		this.flush(batchId);
+
+		// Only include Batch ID if "Offline Load" feature is enabled
+		// It's only needed to identify batches across container forks arising from misuse of offline load.
+		const includeBatchId =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		this.flush(includeBatchId ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {

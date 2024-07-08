@@ -16,12 +16,6 @@ export interface IBatchManagerOptions {
 	 * If true, the outbox is allowed to rebase the batch during flushing.
 	 */
 	readonly canRebase: boolean;
-
-	/**
-	 * If true, include batchID in batch metadata
-	 * Batch ID is used to detect / prevent duplicate processing of the same batch (e.g. if the Container forks).
-	 */
-	readonly includeBatchId: boolean;
 }
 
 export interface BatchSequenceNumbers {
@@ -112,7 +106,6 @@ export class BatchManager {
 		return this.pendingBatch.length === 0;
 	}
 
-	//* TEST: unit tests
 	/**
 	 * Gets the pending batch and clears state for the next batch.
 	 */
@@ -129,7 +122,7 @@ export class BatchManager {
 		this.clientSequenceNumber = undefined;
 		this.hasReentrantOps = false;
 
-		return addBatchMetadata(batch, this.options.includeBatchId ? batchId : undefined);
+		return addBatchMetadata(batch, batchId);
 	}
 
 	/**
