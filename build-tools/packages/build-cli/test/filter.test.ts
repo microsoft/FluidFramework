@@ -178,7 +178,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
-			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-internal/getkeys",
 			"@fluidframework/test-tools",
 		]);

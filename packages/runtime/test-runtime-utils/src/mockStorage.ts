@@ -15,6 +15,7 @@ import {
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
+ * @legacy
  * @alpha
  */
 export class MockStorage implements IChannelStorageService {

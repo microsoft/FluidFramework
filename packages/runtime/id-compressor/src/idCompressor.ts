@@ -742,6 +742,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
+ * @legacy
  * @alpha
  */
 export function createIdCompressor(
@@ -750,6 +751,7 @@ export function createIdCompressor(
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
+ * @legacy
  * @alpha
  */
 export function createIdCompressor(
@@ -782,6 +784,7 @@ export function createIdCompressor(
 
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @legacy
  * @alpha
  */
 export function deserializeIdCompressor(
@@ -790,6 +793,7 @@ export function deserializeIdCompressor(
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @legacy
  * @alpha
  */
 export function deserializeIdCompressor(

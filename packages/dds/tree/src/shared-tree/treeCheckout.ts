@@ -572,6 +572,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public rebase(view: TreeCheckout): void {
 		this.checkNotDisposed();
+		assert(
+			!view.transaction.inProgress(),
+			"A view cannot be rebased while it has a pending transaction",
+		);
 		view.branch.rebaseOnto(this.branch);
 	}
 
@@ -585,8 +589,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public merge(view: TreeCheckout, disposeView = true): void {
 		this.checkNotDisposed();
 		assert(
-			!this.transaction.inProgress() || disposeView,
-			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
+			!this.transaction.inProgress(),
+			"Views cannot be merged into a view while it has a pending transaction",
 		);
 		while (view.transaction.inProgress()) {
 			view.transaction.commit();
@@ -679,7 +683,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			revertAge++;
 
 			const parentCommit = currentCommit.parent;
-			assert(parentCommit !== undefined, "expected to find a parent commit");
+			assert(parentCommit !== undefined, 0x9a9 /* expected to find a parent commit */);
 			currentCommit = parentCommit;
 		}
 

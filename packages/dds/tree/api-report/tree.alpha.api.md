@@ -4,18 +4,6 @@
 
 ```ts
 
-import type { ErasedType } from '@fluidframework/core-interfaces';
-import type { IDisposable as IDisposable_2 } from '@fluidframework/core-interfaces';
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidLoadable } from '@fluidframework/core-interfaces';
-import type { ISharedObject } from '@fluidframework/shared-object-base/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import type { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import type { SharedObjectKind } from '@fluidframework/shared-object-base';
-import type { StableId } from '@fluidframework/id-compressor';
-import type { Static } from '@sinclair/typebox';
-import type { TSchema } from '@sinclair/typebox';
-
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
@@ -348,9 +336,6 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-
-// @alpha
-export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;

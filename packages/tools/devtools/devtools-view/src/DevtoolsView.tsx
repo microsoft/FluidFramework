@@ -12,7 +12,6 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	type HasContainerKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
@@ -31,6 +30,7 @@ import {
 	ContainerDevtoolsView,
 	LandingView,
 	Menu,
+	type MenuSelection,
 	NoDevtoolsErrorBar,
 	OpLatencyView,
 	SettingsView,
@@ -52,74 +52,6 @@ const getSupportedFeaturesMessage = GetDevtoolsFeatures.createMessage();
  * Message sent to the webpage to query for the full container list.
  */
 const getContainerListMessage = GetContainerList.createMessage();
-
-/**
- * Indicates that the currently selected menu option is a particular Container.
- * @see {@link MenuSection} for other possible options.
- */
-interface ContainerMenuSelection extends HasContainerKey {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "containerMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Telemetry view.
- * @see {@link MenuSection} for other possible options.
- */
-interface TelemetryMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "telemetryMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Settings view.
- * @see {@link MenuSection} for other possible options.
- */
-interface SettingsMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "settingsMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Home view.
- * @see {@link MenuSection} for other possible options.
- */
-interface HomeMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "homeMenuSelection";
-}
-
-/**
- * Indicates that the currently selected menu option is the Op Latency view
- * @see {@link MenuSection} for other possible options.
- */
-interface OpLatencyMenuSelection {
-	/**
-	 * String to differentiate between different types of options in menu.
-	 */
-	type: "opLatencyMenuSelection";
-}
-
-/**
- * Discriminated union type for all the selectable options in the menu.
- * Each specific type should contain any additional information it requires.
- * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
- * is selected, and has a 'containerKey' property to indicate which Container.
- */
-type MenuSelection =
-	| TelemetryMenuSelection
-	| ContainerMenuSelection
-	| SettingsMenuSelection
-	| HomeMenuSelection
-	| OpLatencyMenuSelection;
 
 const useDevtoolsStyles = makeStyles({
 	root: {

@@ -103,6 +103,11 @@ parameters:
     type: boolean
     default: false
 
+  # Whether the docker image build should try to pull from the registry
+  - name: enableDockerImagePull
+    type: boolean
+    default: true
+
 trigger: none
 
 resources:
@@ -122,9 +127,9 @@ extends:
         # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
         # Currently we want to use different names for internal and public builds for Arrow Service Connection
         ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-          armServiceConnection: ff-internal-arrow-arm-sc
+          serviceConnection: ff-internal-arrow-sc
         ${{ else }}:
-          armServiceConnection: ff-public-arrow-arm-sc
+          serviceConnection: ff-public-arrow-sc
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
@@ -341,6 +346,7 @@ extends:
               useBuildKit: true
               enableNetwork: true
               enableCache: true
+              enablePull: ${{ parameters.enableDockerImagePull }}
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
@@ -478,6 +484,7 @@ extends:
             useBuildKit: true
             enableNetwork: true
             enableCache: true
+            enablePull: ${{ parameters.enableDockerImagePull }}
 
         # TODO: move the image pushes to templateContext.outputs?
         # Push

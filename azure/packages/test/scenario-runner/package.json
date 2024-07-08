@@ -1,12 +1,12 @@
 {
 	"name": "@fluid-experimental/azure-scenario-runner",
-	"version": "2.0.0-rc.5.0.0",
+	"version": "2.1.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "azure/packages/test/end-to-end-tests"
+		"directory": "azure/packages/test/scenario-runner"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -40,7 +40,7 @@
 		"test:realsvc:azure:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 10000",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:azure:run",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
-		"typetests:gen": "flub generate typetests --dir . -v --publicFallback",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -76,10 +76,12 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
+		"axios": "^1.6.2",
 		"commander": "^5.1.0",
 		"cross-env": "^7.0.3",
 		"js-yaml": "^4.1.0",
