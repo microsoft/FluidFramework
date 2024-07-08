@@ -38,8 +38,10 @@ import {
 	isTokenFromCache,
 	snapshotKey,
 	tokenFromResponse,
+	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	type IConfigProvider,
 	type IFluidErrorBase,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -452,9 +454,12 @@ export function toInstrumentedOdspTokenFetcher(
 	};
 }
 
-export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICacheEntry {
+export function createCacheSnapshotKey(
+	odspResolvedUrl: IOdspResolvedUrl,
+	snapshotWithLoadingGroupId: boolean | undefined,
+): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
-		type: snapshotKey,
+		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
 		key: odspResolvedUrl.fileVersion ?? "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
@@ -462,6 +467,12 @@ export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICach
 		},
 	};
 	return cacheEntry;
+}
+
+export function snapshotWithLoadingGroupIdSupported(
+	config: IConfigProvider,
+): boolean | undefined {
+	return config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2");
 }
 
 // 80KB is the max body size that we can put in ump post body for server to be able to accept it.
