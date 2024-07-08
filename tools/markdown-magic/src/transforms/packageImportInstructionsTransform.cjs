@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const { PackageName } = require("@rushstack/node-core-library");
-
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
