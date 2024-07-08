@@ -116,6 +116,5 @@ extends:
     tagName: historian
     lint: true
     pack: true
-    enableDockerImagePull: false
     checks:
     - prettier

@@ -103,11 +103,6 @@ parameters:
     type: boolean
     default: false
 
-  # Whether the docker image build should try to pull from the registry
-  - name: enableDockerImagePull
-    type: boolean
-    default: true
-
 trigger: none
 
 resources:
@@ -346,7 +341,6 @@ extends:
               useBuildKit: true
               enableNetwork: true
               enableCache: true
-              enablePull: ${{ parameters.enableDockerImagePull }}
 
           # Pack
           - ${{ if eq(parameters.pack, true) }}:
@@ -473,7 +467,6 @@ extends:
           # At this point we want to publish the artifact with docs, but as part of 1ES migration that's now part of
           # templateContext.outputs below.
 
-
         # Build final image
         - task: 1ES.BuildContainerImage@1
           inputs:
@@ -484,7 +477,6 @@ extends:
             useBuildKit: true
             enableNetwork: true
             enableCache: true
-            enablePull: ${{ parameters.enableDockerImagePull }}
 
         # TODO: move the image pushes to templateContext.outputs?
         # Push
