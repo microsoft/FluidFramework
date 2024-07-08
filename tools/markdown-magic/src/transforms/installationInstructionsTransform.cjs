@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const { PackageName } = require("@rushstack/node-core-library");
-
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
@@ -13,19 +11,24 @@ const {
 } = require("../utilities.cjs");
 
 /**
- * Generates a simple Markdown heading and contents with information about API documentation for the package.
+ * Generates a simple Markdown heading and contents with package installation instructions.
  *
  * @param {string} packageName - Name of the package (fully scoped).
+ * @param {boolean} devDependency - Whether or not the package is intended to be installed as a dev dependency.
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
  */
-const generateApiDocsLinkSection = (packageName, includeHeading) => {
-	const shortName = PackageName.getUnscopedName(packageName);
-	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
-	return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined);
+const generateInstallationInstructionsSection = (packageName, devDependency, includeHeading) => {
+	const sectionBody = `To get started, install the package by running the following command:
+
+\`\`\`bash
+npm i ${packageName}${devDependency ? " -D" : ""}
+\`\`\``;
+
+	return formattedSectionText(sectionBody, includeHeading ? "Installation" : undefined);
 };
 
 /**
- * Generates a README section pointing readers to the published library API docs on <fluidframework.com>.
+ * Generates a README section with package installation instructions.
  *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
@@ -33,23 +36,28 @@ const generateApiDocsLinkSection = (packageName, includeHeading) => {
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
  * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a dev dependency.
+ * Default: `FALSE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function apiDocsLinkSectionTransform(content, options, config) {
+function installationInstructionsTransform(content, options, config) {
 	const includeHeading = options.includeHeading !== "FALSE";
+	const devDependency = options.devDependency === "TRUE";
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		options.packageJsonPath,
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
-	const packageName = packageMetadata.name;
 
-	return formattedGeneratedContentBody(generateApiDocsLinkSection(packageName, includeHeading));
+	const packageName = packageMetadata.name;
+	return formattedGeneratedContentBody(
+		generateInstallationInstructionsSection(packageName, devDependency, includeHeading),
+	);
 }
 
 module.exports = {
-	generateApiDocsLinkSection,
-	apiDocsLinkSectionTransform,
+	generateInstallationInstructionsSection,
+	installationInstructionsTransform,
 };
