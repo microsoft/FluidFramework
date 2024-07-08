@@ -140,10 +140,8 @@ describe("SharedTree memory usage", () => {
 
 					for (let i = 0; i < x; i++) {
 						this.sharedTree.root.child.propertyOne = x;
-						this.sharedTree.root.child.propertyTwo.itemOne = i.toString().padStart(6, "0");
-						this.sharedTree.root.child.propertyThree.set(i.toString(), i);
 					}
-					this.sharedTree.root.child = undefined; // This is possible since the property is optional.
+					this.sharedTree.root.child.propertyOne = undefined; // This is possible since the property is optional.
 				}
 
 				public beforeIteration(): void {
