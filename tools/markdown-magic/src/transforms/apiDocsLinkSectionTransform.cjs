@@ -13,7 +13,7 @@ const {
 } = require("../utilities.cjs");
 
 /**
- * Generats a simple Markdown heading and contents with information about API documentation for the package.
+ * Generates a simple Markdown heading and contents with information about API documentation for the package.
  *
  * @param {string} packageName - Name of the package (fully scoped).
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.

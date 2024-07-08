@@ -185,6 +185,18 @@ Arguments:
 -   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
     -   Default: `true`.
 
+#### `README_IMPORT_INSTRUCTIONS`
+
+Generates a README section including instructions for how to import from Fluid Framework library packages.
+Accounts for our use of package.json exports.
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
+
 #### `README_TRADEMARK_SECTION`
 
 Generates a section containing our `Microsoft` trademark.

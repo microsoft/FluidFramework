@@ -92,6 +92,4 @@ export { IUser }
 
 export { ScopeType }
 
-// (No @packageDocumentation comment for this package)
-
 ```

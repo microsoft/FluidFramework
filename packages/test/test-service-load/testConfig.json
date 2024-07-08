@@ -28,15 +28,13 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
-						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
-						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				},
 				"tinylicious": {
@@ -104,16 +102,9 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false],
-						"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": [true, false]
+						"Fluid.Summarizer.PendingOpsRetryDelayMs": [true, false]
 					}
 				}
-			},
-			"virtualization": {
-				"createRate": 60,
-				"loadRate": 60,
-				"opRate": 60,
-				"numClients": 2
 			}
 		},
 		"debug": {
