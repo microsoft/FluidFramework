@@ -378,7 +378,7 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
     // (undocumented)
-    values(): Generator<T>;
+    values(): IterableIterator<T>;
 }
 
 // @public @sealed

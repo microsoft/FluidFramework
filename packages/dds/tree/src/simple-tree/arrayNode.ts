@@ -217,7 +217,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 		source: TMoveFrom,
 	): void;
 
-	values(): Generator<T>;
+	values(): IterableIterator<T>;
 }
 
 /**
@@ -865,7 +865,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 	}
 
-	public *values(): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		const initialLastUpdatedStamp = this.#generationNumber;
 		let index = 0;
 		while (true) {
