@@ -166,7 +166,9 @@ export function concatGarbageCollectionData(
 		if (combinedGCData.gcNodes[id] === undefined) {
 			combinedGCData.gcNodes[id] = Array.from(routes);
 		} else {
-			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
+			// Non null asserting here since we are checking if combinedGCData.gcNodes[id] is not undefined above.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]!];
 			combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];
 		}
 	}
@@ -187,13 +189,17 @@ export async function getGCDataFromSnapshot(
 	for (const key of Object.keys(gcSnapshotTree.blobs)) {
 		// Update deleted nodes blob.
 		if (key === gcDeletedBlobKey) {
-			deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+			// Non null asserting here, we can change this to Object.entries later
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]!);
 			continue;
 		}
 
 		// Update tombstone blob.
 		if (key === gcTombstoneBlobKey) {
-			tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
+			// Non null asserting here, we can change this to Object.entries later
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]!);
 			continue;
 		}
 
@@ -235,7 +241,9 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 		}
 
 		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
-		const childId = id.split("/")[1];
+		// TODO Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const childId = id.split("/")[1]!;
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
 		// of format `/root`. In this case, the childId is root and childGCNodeId is "". Make childGCNodeId = "/".
@@ -264,7 +272,9 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
 		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
-		const childId = route.split("/")[1];
+		// TODO Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const childId = route.split("/")[1]!;
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
@@ -290,7 +300,9 @@ function trimLeadingAndTrailingSlashes(str: string) {
 
 /** Reformats a request URL to match expected format for a GC node path */
 export function urlToGCNodePath(url: string): string {
-	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
+	// TODO Why are we non null asserting here
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0]!)}`;
 }
 
 /**
