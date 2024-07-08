@@ -76,7 +76,7 @@
 		"@fluidframework/server-test-utils-previous": "npm:@fluidframework/server-test-utils@5.0.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^18.19.36",
+		"@types/node": "^18.19.39",
 		"@types/sinon": "^9.0.9",
 		"@types/string-hash": "^1.1.1",
 		"@types/uuid": "^9.0.2",
@@ -85,7 +85,7 @@
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^5.0.7",
+		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"typescript": "~5.1.6"
 	},
