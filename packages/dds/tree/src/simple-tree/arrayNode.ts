@@ -672,10 +672,20 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	protected abstract get simpleSchema(): T;
 
+	/**
+	 * Generation number which is incremented any time we have an edit on the node.
+	 * Used during iteration to make sure there has been no edits that were concurrently made.
+	 */
 	#generationNumber: number = 0;
-	#updateGenerationNumber = getFlexNode(this).on("nodeChanged", () => {
+
+	/**
+	 * This function is only created to initialize the event listener to increment the generationNumber.
+	 * However, it should not be called anywhere else, as it will unregister generation number updates.
+	 */
+	#initializeGenerationNumberEvent = getFlexNode(this).on("nodeChanged", () => {
 		this.#generationNumber += 1;
 	});
+
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		if (isMapTreeNode(getFlexNode(this))) {
 			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
@@ -854,7 +864,6 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			destinationFieldPath,
 			index,
 		);
-		this.#generationNumber += 1;
 	}
 
 	public *values(): Generator<TreeNodeFromImplicitAllowedTypes<T>> {

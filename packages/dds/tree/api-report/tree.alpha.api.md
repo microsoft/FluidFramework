@@ -380,6 +380,8 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
+    // (undocumented)
+    values(): Generator<T>;
 }
 
 // @public @sealed

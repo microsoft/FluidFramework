@@ -593,10 +593,9 @@ describe("ArrayNode", () => {
 
 	describe("Iteration", () => {
 		it("Concurrently iterating and editing should throw an error.", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 			assert.throws(
-				// False positive
 				() => {
-					const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 					for (const nodeChild of array[Symbol.iterator]()) {
 						array.removeRange(1, 3);
 					}
@@ -605,6 +604,35 @@ describe("ArrayNode", () => {
 					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
 			);
 		});
+
+		it("Concurrently iterating and editing after inserting unhydrated nodes should throw an error.", () => {
+			class TestLeaf extends schemaFactory.object("Leaf Object", {
+				value: schemaFactory.number,
+			}) {}
+			class TestArray extends schemaFactory.array("Array", TestLeaf) {}
+
+			const array = hydrate(TestArray, []);
+
+			// Create unhydrated nodes
+			const leaf1 = new TestLeaf({ value: 1 });
+			const leaf2 = new TestLeaf({ value: 2 });
+			const leaf3 = new TestLeaf({ value: 3 });
+
+			array.insertAt(0, leaf1);
+			array.insertAt(1, leaf2);
+			array.insertAt(2, leaf3);
+
+			assert.throws(
+				() => {
+					for (const nodeChild of array[Symbol.iterator]()) {
+						array.removeRange(1, 3);
+					}
+				},
+				(error: Error) =>
+					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
+			);
+		});
+
 		it("Iterates through the values of the array", () => {
 			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 			const result = [];
