@@ -182,6 +182,8 @@ export function configureWebSocketServices(
 		let connectDocumentP: Promise<void> | undefined;
 		let disconnectDocumentP: Promise<void> | undefined;
 
+		const disposers: ((() => void) | undefined)[] = [socket.dispose?.bind(socket)];
+
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("connect_document", async (connectionMessage: IConnect) => {
@@ -214,6 +216,7 @@ export function configureWebSocketServices(
 					)
 						.then((message) => {
 							socket.emit("connect_document_success", message.connection);
+							disposers.push(message.dispose);
 						})
 						.catch((error) => {
 							socket.emit("connect_document_error", error);
@@ -578,7 +581,14 @@ export function configureWebSocketServices(
 			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
 			}
-			socket.dispose?.();
+
+			// Dispose all resources and clear list.
+			for (const dispose of disposers) {
+				if (dispose) {
+					dispose();
+				}
+			}
+			disposers.splice(0, disposers.length);
 		});
 	});
 }
