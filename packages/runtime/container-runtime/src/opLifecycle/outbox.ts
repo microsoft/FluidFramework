@@ -9,9 +9,9 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	GenericError,
+	MonitoringContext,
 	UsageError,
-	createChildLogger,
-	type ITelemetryLoggerExt,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
@@ -96,7 +96,7 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
  * to support slight variation in semantics for each batch (e.g. support for rebasing or grouping).
  */
 export class Outbox {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly mc: MonitoringContext;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
 	private readonly idAllocationBatch: BatchManager;
@@ -113,8 +113,7 @@ export class Outbox {
 	private mismatchedOpsReported = 0;
 
 	constructor(private readonly params: IOutboxParameters) {
-		this.logger = createChildLogger({ logger: params.logger, namespace: "Outbox" });
-
+		this.mc = createChildMonitoringContext({ logger: params.logger, namespace: "Outbox" });
 		const isCompressionEnabled =
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
@@ -167,7 +166,7 @@ export class Outbox {
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.logger.sendTelemetryEvent(
+			this.mc.logger.sendTelemetryEvent(
 				{
 					category: this.params.config.disablePartialFlush ? "error" : "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
@@ -322,7 +321,7 @@ export class Outbox {
 		}
 
 		if (this.batchRebasesToReport > 0) {
-			this.logger.sendTelemetryEvent(
+			this.mc.logger.sendTelemetryEvent(
 				{
 					eventName: "BatchRebase",
 					length: rawBatch.messages.length,
@@ -399,7 +398,7 @@ export class Outbox {
 
 		const socketSize = estimateSocketSize(batch);
 		if (socketSize >= this.params.config.maxBatchSizeInBytes) {
-			this.logger.sendPerformanceEvent({
+			this.mc.logger.sendPerformanceEvent({
 				eventName: "LargeBatch",
 				length: batch.messages.length,
 				sizeInBytes: batch.contentSizeInBytes,
