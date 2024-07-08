@@ -70,6 +70,12 @@ module.exports = {
 				"@typescript-eslint/explicit-function-return-type": "off",
 			},
 		},
+		{
+			files: ["src/test/**/*.generated.ts*"],
+			rules: {
+				"@typescript-eslint/no-explicit-any": ["off"],
+			},
+		},
 	],
 	settings: {
 		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
