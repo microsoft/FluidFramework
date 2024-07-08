@@ -52,7 +52,7 @@ export class RemoteMessageProcessor {
 	}
 
 	/**
-	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
+	 * Ungroups and Unchunks the runtime ops of a batch received over the wire
 	 * @param remoteMessageCopy - A shallow copy of a message from another client, possibly virtualized
 	 * (grouped, compressed, and/or chunked).
 	 * Being a shallow copy, it's considered mutable, meaning no other Container or other parallel procedure
@@ -67,7 +67,8 @@ export class RemoteMessageProcessor {
 	 * 3. If grouped, ungroup the message
 	 * For more details, see https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/opLifecycle/README.md#inbound
 	 *
-	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
+	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
+	 * or undefined if the batch is not yet complete.
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
 	 * a singleton array [remoteMessageCopy] is returned
 	 */
@@ -121,6 +122,9 @@ export class RemoteMessageProcessor {
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
 		this.processorBatch.push(message as InboundSequencedContainerRuntimeMessage);
+		// this.batchStartCsn is undefined only if we have processed all messages in the batch.
+		// If it's still defined, we're still in the middle of a batch, so we return nothing, letting
+		// containerRuntime know that we're waiting for more messages to complete the batch.
 		if (this.batchStartCsn === undefined) {
 			const messages = [...this.processorBatch];
 			this.processorBatch.length = 0;
@@ -129,6 +133,8 @@ export class RemoteMessageProcessor {
 				batchStartCsn,
 			};
 		}
+		// batch not yet complete
+		return undefined;
 	}
 
 	/**
