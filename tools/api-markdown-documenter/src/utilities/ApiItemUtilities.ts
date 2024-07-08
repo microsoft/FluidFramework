@@ -376,7 +376,7 @@ export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined {
 }
 
 /**
- * Returns whether or not the provided API item is tagged a `@deprecated`.
+ * Returns whether or not the provided API item is tagged as `@deprecated`.
  *
  * @public
  */
