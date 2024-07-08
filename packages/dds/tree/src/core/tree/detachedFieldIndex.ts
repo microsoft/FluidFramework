@@ -42,7 +42,7 @@ export class DetachedFieldIndex {
 	 */
 	private detachedNodeToField: NestedMap<Major, Minor, DetachedField> = new Map();
 	/**
-	 * A map from revisions and all detached fields for which the revision is the latest relevant revision.
+	 * A map from revisions to all detached fields for which the revision is the latest relevant revision.
 	 * See {@link DetachedField.latestRelevantRevision}.
 	 *
 	 * @remarks
