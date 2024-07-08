@@ -489,6 +489,4 @@ export { TextSegment }
 
 export { TrackingGroup }
 
-// (No @packageDocumentation comment for this package)
-
 ```
