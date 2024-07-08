@@ -348,7 +348,7 @@ function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTrans
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
-function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, DocSection[]>;
+function getCustomBlockComments(apiItem: ApiItem): ReadonlyMap<string, readonly DocSection[]>;
 
 // @public
 function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined;
@@ -357,7 +357,7 @@ function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | u
 function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
@@ -381,13 +381,13 @@ function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
 function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getSeeBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getSingleLineExcerptText(excerpt: Excerpt): string;
 
 // @public
-function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getThrowsBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
 function getUnscopedPackageName(apiPackage: ApiPackage): string;
