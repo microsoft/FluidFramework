@@ -260,26 +260,4 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
 	});
-
-	// AB#8200: This test may not be necessary with the schematize API removed.
-	it("handles proxies in the initial tree", () => {
-		// This is a regression test for a bug in which the initial tree contained a proxy and subsequent reads of the tree would mix up the proxy associations.
-		const sf = new SchemaFactory(undefined);
-		class TestObject extends sf.object("TestObject", { value: sf.number }) {}
-		const viewConfig = new TreeViewConfiguration({ schema: TestObject });
-		const nodeKeyManager = new MockNodeKeyManager();
-		const view = new SchematizingSimpleTreeView(
-			checkoutWithInitialTree(viewConfig, new TestObject({ value: 3 }), nodeKeyManager),
-			viewConfig,
-			nodeKeyManager,
-		);
-
-		// We do not call `upgradeSchema()` and thus the initial tree remains unused.
-		// Therefore, the proxy for `new TestObject(...)` should not be bound.
-		assert.equal(view.root.value, 3);
-		// In the buggy case, the proxy for `new TestObject(...)` would get bound during this set, which is wrong...
-		view.root.value = 4;
-		// ...and would cause this read to return a proxy to the TestObject rather than the primitive value.
-		assert.equal(view.root.value, 4);
-	});
 });
