@@ -17,7 +17,7 @@ const { formattedSectionText, readTemplate } = require("../utilities.cjs");
  * A heading will only be included if this is specified.
  */
 const generateSectionFromTemplate = (templateFileName, headingOptions) => {
-	const sectionBody = readTemplate(templateFileName, headingOptions.headingLevel);
+	const sectionBody = readTemplate(templateFileName);
 	return formattedSectionText(sectionBody, headingOptions);
 };
 
