@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED-CONTENT:START (API_DOCS_LINK_SECTION:headingLevel=0) -->
+<!-- AUTO-GENERATED-CONTENT:START (API_DOCS_LINK_SECTION:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

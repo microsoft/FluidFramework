@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-const { defaultSectionHeadingLevel } = require("../constants.cjs");
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
-	parseIntegerOptionOrDefault,
+	parseHeadingOptions,
 	resolveRelativePackageJsonPath,
 } = require("../utilities.cjs");
 
@@ -17,14 +16,15 @@ const {
  *
  * @param {string} packageJsonPath - The path to the package's `package.json` file.
  * @param {boolean} includeTinyliciousStep - Whether or not to include the `Tinylicious` step in the instructions.
- * @param {number} headingLevel - Root heading level for the generated section.
- * If 0, no heading will be included.
- * Must be a non-negative integer.
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
  */
 const generateExampleGettingStartedSection = (
 	packageJsonPath,
 	includeTinyliciousStep,
-	headingLevel,
+	headingOptions,
 ) => {
 	const packageJsonMetadata = getPackageMetadata(packageJsonPath);
 	const packageName = packageJsonMetadata.name;
@@ -49,7 +49,7 @@ const generateExampleGettingStartedSection = (
 	);
 
 	return formattedSectionText(sectionBody.join("\n"), {
-		headingLevel,
+		...headingOptions,
 		headingText: "Getting Started",
 	});
 };
@@ -63,26 +63,24 @@ const generateExampleGettingStartedSection = (
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious | Tinylicious}.
  * Default: `TRUE`.
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
  * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
- * Must be a non-negative integer.
- * If 0, not heading will be included in the generated section.
+ * Must be a positive integer.
  * Default: {@link defaultSectionHeadingLevel}.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function exampleGettingStartedSectionTransform(content, options, config) {
 	const usesTinylicious = options.usesTinylicious !== "FALSE";
-	const headingLevel = parseIntegerOptionOrDefault(
-		options.headingLevel,
-		defaultSectionHeadingLevel,
-	);
+	const headingOptions = parseHeadingOptions(options);
 
 	const packageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		options.packageJsonPath,
 	);
 	return formattedGeneratedContentBody(
-		generateExampleGettingStartedSection(packageJsonPath, usesTinylicious, headingLevel),
+		generateExampleGettingStartedSection(packageJsonPath, usesTinylicious, headingOptions),
 	);
 }
 

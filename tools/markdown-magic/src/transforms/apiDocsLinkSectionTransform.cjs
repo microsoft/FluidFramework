@@ -5,12 +5,11 @@
 
 const { PackageName } = require("@rushstack/node-core-library");
 
-const { defaultSectionHeadingLevel } = require("../constants.cjs");
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
-	parseIntegerOptionOrDefault,
+	parseHeadingOptions,
 	resolveRelativePackageJsonPath,
 } = require("../utilities.cjs");
 
@@ -18,14 +17,18 @@ const {
  * Generates a simple Markdown heading and contents with information about API documentation for the package.
  *
  * @param {string} packageName - Name of the package (fully scoped).
- * @param {number} headingLevel - Root heading level for the generated section.
- * If 0, no heading will be included.
- * Must be a non-negative integer.
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
  */
-const generateApiDocsLinkSection = (packageName, headingLevel) => {
+const generateApiDocsLinkSection = (packageName, headingOptions) => {
 	const shortName = PackageName.getUnscopedName(packageName);
 	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
-	return formattedSectionText(sectionBody, { headingLevel, headingText: "API Documentation" });
+	return formattedSectionText(sectionBody, {
+		...headingOptions,
+		headingText: "API Documentation",
+	});
 };
 
 /**
@@ -35,19 +38,16 @@ const generateApiDocsLinkSection = (packageName, headingLevel) => {
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
  * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
- * Must be a non-negative integer.
- * If 0, not heading will be included in the generated section.
+ * Must be a positive integer.
  * Default: {@link defaultSectionHeadingLevel}.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function apiDocsLinkSectionTransform(content, options, config) {
-	const headingLevel = parseIntegerOptionOrDefault(
-		options.headingLevel,
-		defaultSectionHeadingLevel,
-	);
-
+	const headingOptions = parseHeadingOptions(options);
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		options.packageJsonPath,
@@ -55,7 +55,7 @@ function apiDocsLinkSectionTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	return formattedGeneratedContentBody(generateApiDocsLinkSection(packageName, headingLevel));
+	return formattedGeneratedContentBody(generateApiDocsLinkSection(packageName, headingOptions));
 }
 
 module.exports = {

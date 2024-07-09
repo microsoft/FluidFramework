@@ -16,7 +16,7 @@ const {
  */
 const generateExperimentalPackageNotice = () => {
 	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, { headingLevel: 0 });
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**
@@ -25,7 +25,7 @@ const generateExperimentalPackageNotice = () => {
  */
 const generateInternalPackageNotice = () => {
 	const rawContents = readTemplate("Internal-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, { headingLevel: 0 });
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**
@@ -34,7 +34,7 @@ const generateInternalPackageNotice = () => {
  */
 const generatePrivatePackageNotice = () => {
 	const rawContents = readTemplate("Private-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, { headingLevel: 0 });
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**

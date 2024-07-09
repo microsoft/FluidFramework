@@ -5,11 +5,10 @@
 
 const scripts = require("markdown-magic-package-scripts");
 
-const { defaultSectionHeadingLevel } = require("../constants.cjs");
 const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
-	parseIntegerOptionOrDefault,
+	parseHeadingOptions,
 } = require("../utilities.cjs");
 
 /**
@@ -17,13 +16,14 @@ const {
  *
  * @param {string} scriptsTable - Table of scripts to display.
  * See `markdown-magic-package-scripts` (imported as `scripts`).
- * @param {number} headingLevel - Root heading level for the generated section.
- * If 0, no heading will be included.
- * Must be a non-negative integer.
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
  */
-const generatePackageScriptsSection = (scriptsTable, headingLevel) => {
+const generatePackageScriptsSection = (scriptsTable, headingOptions) => {
 	return formattedSectionText(scriptsTable, {
-		headingLevel: headingLevel,
+		...headingOptions,
 		headingText: "Scripts",
 	});
 };
@@ -35,20 +35,20 @@ const generatePackageScriptsSection = (scriptsTable, headingLevel) => {
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
  * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
- * Must be a non-negative integer.
- * If 0, not heading will be included in the generated section.
+ * Must be a positive integer.
  * Default: {@link defaultSectionHeadingLevel}.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function packageScriptsSectionTransform(content, options, config) {
-	const headingLevel = parseIntegerOptionOrDefault(
-		options.headingLevel,
-		defaultSectionHeadingLevel,
-	);
+	const headingOptions = parseHeadingOptions(options);
 	const scriptsTable = scripts(content, options, config);
-	return formattedGeneratedContentBody(generatePackageScriptsSection(scriptsTable, headingLevel));
+	return formattedGeneratedContentBody(
+		generatePackageScriptsSection(scriptsTable, headingOptions),
+	);
 }
 
 module.exports = {

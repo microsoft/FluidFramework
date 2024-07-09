@@ -8,8 +8,8 @@ const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
-	parseIntegerOptionOrDefault,
 	resolveRelativePackageJsonPath,
+	parseHeadingOptions,
 } = require("../utilities.cjs");
 
 /**
@@ -17,18 +17,22 @@ const {
  *
  * @param {string} packageName - Name of the package (fully scoped).
  * @param {boolean} devDependency - Whether or not the package is intended to be installed as a dev dependency.
- * @param {number} headingLevel - Root heading level for the generated section.
- * If 0, no heading will be included.
- * Must be a non-negative integer.
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
  */
-const generateInstallationInstructionsSection = (packageName, devDependency, headingLevel) => {
+const generateInstallationInstructionsSection = (packageName, devDependency, headingOptions) => {
 	const sectionBody = `To get started, install the package by running the following command:
 
 \`\`\`bash
 npm i ${packageName}${devDependency ? " -D" : ""}
 \`\`\``;
 
-	return formattedSectionText(sectionBody, { headingLevel, headingText: "Installation" });
+	return formattedSectionText(sectionBody, {
+		...headingOptions,
+		headingText: "Installation",
+	});
 };
 
 /**
@@ -38,9 +42,10 @@ npm i ${packageName}${devDependency ? " -D" : ""}
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
  * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
  * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
- * Must be a non-negative integer.
- * If 0, not heading will be included in the generated section.
+ * Must be a positive integer.
  * Default: {@link defaultSectionHeadingLevel}.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a dev dependency.
  * Default: `FALSE`.
@@ -48,10 +53,7 @@ npm i ${packageName}${devDependency ? " -D" : ""}
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function installationInstructionsTransform(content, options, config) {
-	const headingLevel = parseIntegerOptionOrDefault(
-		options.headingLevel,
-		defaultSectionHeadingLevel,
-	);
+	const headingOptions = parseHeadingOptions(options);
 	const devDependency = options.devDependency === "TRUE";
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
@@ -62,7 +64,7 @@ function installationInstructionsTransform(content, options, config) {
 
 	const packageName = packageMetadata.name;
 	return formattedGeneratedContentBody(
-		generateInstallationInstructionsSection(packageName, devDependency, headingLevel),
+		generateInstallationInstructionsSection(packageName, devDependency, headingOptions),
 	);
 }
 

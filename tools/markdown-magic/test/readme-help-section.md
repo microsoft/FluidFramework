@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:headingLevel=0) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -13,7 +13,7 @@ Thank you!
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:headingLevel=2) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

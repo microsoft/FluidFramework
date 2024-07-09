@@ -8,6 +8,7 @@ const path = require("path");
 const { PackageName } = require("@rushstack/node-core-library");
 
 const {
+	defaultSectionHeadingLevel,
 	embeddedContentNotice,
 	generatedContentNotice,
 	templatesDirectoryPath,
@@ -130,19 +131,25 @@ const getScopeKindFromPackage = (packageName) => {
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
  *
  * @param {string} sectionBody - Body text to include in the section.
- * @param {object} options - Content generation options.
- * @param {number} options.headingLevel - Root heading level for the generated section.
- * If 0, no heading will be included.
- * Must be a non-negative integer.
- * @param {string} options.headingText - Text to display in the section heading, if one was requested.
+ * @param {object} headingOptions - (optional) Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
+ * @param {string} headingOptions.headingText - Text to display in the section heading, if one was requested.
  */
-function formattedSectionText(sectionBody, { headingLevel, headingText }) {
-	if (!Number.isInteger(headingLevel) || headingLevel < 0) {
-		throw new TypeError(`"headingLevel" must be a positive integer. Got "${headingLevel}".`);
+function formattedSectionText(sectionBody, headingOptions) {
+	let heading = "";
+	if (headingOptions?.includeHeading) {
+		const { headingLevel, headingText } = headingOptions;
+		if (!Number.isInteger(headingLevel) || headingLevel < 1) {
+			throw new TypeError(
+				`"headingLevel" must be a positive integer. Got "${headingLevel}".`,
+			);
+		}
+		heading = `${"#".repeat(headingLevel)} ${headingText}\n\n`;
 	}
-	return `\n${
-		headingLevel === 0 ? "" : `${"#".repeat(headingLevel)} ${headingText}\n\n`
-	}${sectionBody}\n`;
+
+	return `\n${heading}${sectionBody}\n`;
 }
 
 /**
@@ -178,14 +185,31 @@ function formattedEmbeddedContentBody(contents) {
 }
 
 /**
- * Parses the string representation of a MarkdownMagic parameter as an integer and returns it.
- * Returns the default value if the parameter was not provided.
- * @param {string | undefined} paramString - The string representation of the parameter to parse.
- * @param {number} defaultValue - The default value to return if the parameter was not provided.
- * @throws If the parameter was provided, but is not an integer.
+ * Parses the provided MarkdownMagic transform options to generate the appropriate section heading options.
+ *
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
+ * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+ * Must be a positive integer.
+ * Default: {@link defaultSectionHeadingLevel}.
+ * @param {string} headingText - The text to display in the section heading.
+ *
+ * @typedef {Object} HeadingOptions
+ * @property {boolean} includeHeading - Whether or not to include a heading in the generated content.
+ * @property {number} headingLevel - The heading level for the section.
+ * @property {string} headingText - The text to display in the section heading.
+ *
+ * @returns {HeadingOptions} Heading generation options.
  */
-function parseIntegerOptionOrDefault(paramString, defaultValue) {
-	return paramString ? Number.parseInt(paramString) ?? defaultValue : defaultValue;
+function parseHeadingOptions(transformationOptions, headingText) {
+	return {
+		includeHeading: transformationOptions.includeHeading !== "FALSE",
+		headingLevel: transformationOptions.headingLevel
+			? Number.parseInt(transformationOptions.headingLevel) ?? defaultSectionHeadingLevel
+			: defaultSectionHeadingLevel,
+		headingText: headingText,
+	};
 }
 
 module.exports = {
@@ -195,7 +219,7 @@ module.exports = {
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
-	parseIntegerOptionOrDefault,
+	parseHeadingOptions,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
