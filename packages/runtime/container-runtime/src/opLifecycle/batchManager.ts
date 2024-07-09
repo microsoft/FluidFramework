@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { type IBatchMetadata } from "../metadata.js";
 
@@ -151,29 +153,30 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
-	// non-null-assertion here is required for accessing the metadata property of the first/last messages.
-	// they're safe since we check the length first.
-	/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 	const batchEnd = batch.messages.length - 1;
-	const firstMetadata: Partial<IBatchMetadata> = batch.messages[0]?.metadata ?? {};
-	const lastMetadata: Partial<IBatchMetadata> = batch.messages[batchEnd]?.metadata ?? {};
 
+	const firstMsg = batch.messages[0];
+	const lastMsg = batch.messages[batchEnd];
+	assert(firstMsg !== undefined && lastMsg !== undefined, "expected non-empty batch");
+
+	const firstMetadata: Partial<IBatchMetadata> = firstMsg.metadata ?? {};
+	const lastMetadata: Partial<IBatchMetadata> = lastMsg.metadata ?? {};
+
+	// Multi-message batches: mark the first and last messages with the "batch" flag indicating batch start/end
 	if (batch.messages.length > 1) {
 		firstMetadata.batch = true;
 		lastMetadata.batch = false;
-		batch.messages[0]!.metadata = firstMetadata;
-		batch.messages[batchEnd]!.metadata = lastMetadata;
+		firstMsg.metadata = firstMetadata;
+		lastMsg.metadata = lastMetadata;
 	}
 
+	// If batchId is provided (e.g. in case of resubmit): stamp it on the first message
 	if (batchId !== undefined) {
 		firstMetadata.batchId = batchId;
-		batch.messages[0]!.metadata = firstMetadata;
+		firstMsg.metadata = firstMetadata;
 	}
 
 	return batch;
-
-	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 };
 
 /**
