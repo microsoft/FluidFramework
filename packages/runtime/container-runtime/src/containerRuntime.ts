@@ -3104,7 +3104,13 @@ export class ContainerRuntime
 		content: any,
 		targetClientId?: string,
 	): ISignalEnvelope {
-		const newSequenceNumber = ++this._perfSignalData.signalSequenceNumber;
+		const isTargetedSignal = targetClientId !== undefined;
+
+		// Do not increase the signal sequence number for targeted signals since we will not track them.
+		const newSequenceNumber = isTargetedSignal
+			? this._perfSignalData.signalSequenceNumber
+			: ++this._perfSignalData.signalSequenceNumber;
+
 		const newEnvelope: ISignalEnvelope = {
 			address,
 			clientSignalSequenceNumber: newSequenceNumber,
@@ -3113,11 +3119,10 @@ export class ContainerRuntime
 		};
 
 		// We should not track any signals in case we already have a tracking number.
-		// We should also only track signals that we expect to return to the current client.
 		if (
+			!isTargetedSignal &&
 			newSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
-			this._perfSignalData.trackingSignalSequenceNumber === undefined &&
-			(targetClientId === undefined || targetClientId === this.clientId)
+			this._perfSignalData.trackingSignalSequenceNumber === undefined
 		) {
 			this._perfSignalData.signalTimestamp = Date.now();
 			this._perfSignalData.trackingSignalSequenceNumber = newSequenceNumber;
