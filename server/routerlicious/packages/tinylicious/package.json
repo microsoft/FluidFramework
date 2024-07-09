@@ -86,7 +86,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/morgan": "^1.7.35",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^16.18.16",
+		"@types/node": "^18.19.39",
 		"@types/rimraf": "^3.0.0",
 		"@types/split": "^0.3.28",
 		"@types/uuid": "^9.0.2",
