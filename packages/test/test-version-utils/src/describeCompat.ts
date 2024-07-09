@@ -117,6 +117,7 @@ function createCompatSuite(
 					return provider;
 				}, apis);
 
+				// eslint-disable-next-line prefer-arrow-callback
 				afterEach(function (done: Mocha.Done) {
 					const logErrors = getUnexpectedLogErrorException(provider.tracker);
 					// Note: This will add a failure in "afterEach" to the results, which may appear redundant if the test itself failed
