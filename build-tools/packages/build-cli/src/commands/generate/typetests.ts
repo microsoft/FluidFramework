@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import {
 	type BrokenCompatTypes,
@@ -87,7 +87,7 @@ export default class GenerateTypetestsCommand extends PackageCommand<
 			this.info(
 				"Skipping type test generation because typeValidation.disabled is true in package.json",
 			);
-			rmSync(
+			await rm(
 				typeTestOutputFile,
 				// force means to ignore the error if the file does not exist.
 				{ force: true },
@@ -189,7 +189,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 			fileHeader,
 		);
 
-		mkdirSync(outDir, { recursive: true });
+		await mkdir(outDir, { recursive: true });
 
 		if (await writeFileIfContentsDiffers(typeTestOutputFile, testCases.join("\n"))) {
 			this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
