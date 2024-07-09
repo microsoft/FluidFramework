@@ -46,14 +46,17 @@ const readTemplate = (templateFileName, headingOffset = 0) => {
  * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
  *
  * @param {string} templateName - The name of the template file to embed.
- * @param {object} options - Content generation options.
+ * @param {object} options - (optional) Heading generation options.
  * @param {number} options.headingLevel - Root heading level for the generated section.
  * If 0, no heading will be included.
  * Must be a non-negative integer.
  * @param {string} options.headingText - Text to display in the section heading, if one was requested.
  */
 const createSectionFromTemplate = (templateName, options) => {
-	const sectionBody = readTemplate(templateName);
+	const sectionBody = readTemplate(
+		templateName,
+		/* headingOffset: */ options?.headingLevel ?? defaultSectionHeadingLevel - 1,
+	);
 	return formattedSectionText(sectionBody, options);
 };
 
