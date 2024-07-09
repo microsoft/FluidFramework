@@ -30,7 +30,7 @@ const generatePackageScriptsSection = (scriptsTable, headingOptions) => {
 
 /**
  * Generates a README section with a table enumerating the dev scripts in the specified package.json.
- *s
+ *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
  * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
