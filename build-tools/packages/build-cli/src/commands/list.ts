@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { mkdirpSync } from "fs-extra";
+import { mkdirp } from "fs-extra/esm";
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
 import { filterPackages, parsePackageFilterFlags } from "../filter.js";
 import { filterFlags, releaseGroupFlag } from "../flags.js";
-import { BaseCommand, getTarballName } from "../library/index.js";
+import { BaseCommand, getTarballName, writeFileIfContentsDiffers } from "../library/index.js";
 import {
 	type Feed,
 	feeds,
@@ -157,8 +156,8 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 		if (outFile === undefined) {
 			this.log(output);
 		} else {
-			mkdirpSync(path.dirname(outFile));
-			writeFileSync(outFile, output);
+			await mkdirp(path.dirname(outFile));
+			await writeFileIfContentsDiffers(outFile, output);
 		}
 	}
 }
