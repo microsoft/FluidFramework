@@ -41,6 +41,7 @@ declare function get_current_TypeAliasDeclaration_CacheContentType():
 declare function use_old_TypeAliasDeclaration_CacheContentType(
     use: TypeOnly<old.CacheContentType>): void;
 use_old_TypeAliasDeclaration_CacheContentType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_CacheContentType());
 
 /*
@@ -97,6 +98,7 @@ declare function get_current_InterfaceDeclaration_ICacheEntry():
 declare function use_old_InterfaceDeclaration_ICacheEntry(
     use: TypeOnly<old.ICacheEntry>): void;
 use_old_InterfaceDeclaration_ICacheEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICacheEntry());
 
 /*
@@ -153,6 +155,7 @@ declare function get_current_InterfaceDeclaration_IEntry():
 declare function use_old_InterfaceDeclaration_IEntry(
     use: TypeOnly<old.IEntry>): void;
 use_old_InterfaceDeclaration_IEntry(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IEntry());
 
 /*

@@ -10,7 +10,7 @@ import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 
 // @alpha (undocumented)
-export type CacheContentType = "snapshot" | "ops";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 // @alpha (undocumented)
 export interface HostStoragePolicy {
