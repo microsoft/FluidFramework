@@ -676,9 +676,7 @@ export class ModularChangeFamily
 		}
 
 		const genId: IdAllocator = idAllocatorFromMaxId(change.change.maxId ?? -1);
-		const invertedNodeToParent = nestedMapFromFlatList(
-			nestedMapToFlatList(change.change.nodeToParent),
-		);
+		const invertedNodeToParent = cloneNestedMap(change.change.nodeToParent);
 
 		const crossFieldTable: InvertTable = {
 			...newCrossFieldTable<FieldChange>(),
@@ -831,6 +829,7 @@ export class ModularChangeFamily
 			baseFieldToContext: new Map(),
 			baseToRebasedNodeId: new Map(),
 			rebasedFields: new Set(),
+			rebasedNodeToParent: cloneNestedMap(change.nodeToParent),
 			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
 			nodeIdPairs: [],
 			affectedNewFields: newBTree(),
@@ -848,8 +847,7 @@ export class ModularChangeFamily
 			getBaseRevisions,
 		};
 
-		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		populateNestedMap(change.nodeChanges, rebasedNodes, true);
+		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = cloneNestedMap(change.nodeChanges);
 
 		const rebasedFields = this.rebaseIntersectingFields(
 			crossFieldTable,
@@ -933,7 +931,7 @@ export class ModularChangeFamily
 		return makeModularChangeset(
 			this.pruneFieldMap(rebasedFields, rebasedNodes),
 			rebasedNodes,
-			change.nodeToParent, // XXX
+			crossFieldTable.rebasedNodeToParent,
 			change.nodeAliases,
 			crossFieldTable.rebasedCrossFieldKeys,
 			idState.maxId,
@@ -2082,6 +2080,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	readonly baseFieldToContext: Map<FieldChange, RebaseFieldContext>;
 	readonly baseToRebasedNodeId: ChangeAtomIdMap<NodeId>;
 	readonly rebasedFields: Set<FieldChange>;
+	readonly rebasedNodeToParent: ChangeAtomIdMap<FieldId>;
 	readonly rebasedCrossFieldKeys: CrossFieldKeyTable;
 
 	/**
@@ -2340,7 +2339,7 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 	}
 
 	public override moveNode(id: ChangeAtomId): void {
-		throw new Error("Method not implemented.");
+		setInChangeAtomIdMap(this.table.rebasedNodeToParent, id, this.fieldId);
 	}
 
 	public override moveKey(
@@ -2816,8 +2815,12 @@ function mergeNestedMaps<K1, K2, V>(
 	map1: NestedMap<K1, K2, V>,
 	map2: NestedMap<K1, K2, V>,
 ): NestedMap<K1, K2, V> {
+	const merged = new Map();
+	populateNestedMap(map1, merged, true);
+
 	// XXX: Should assert there are no collisions?
-	return nestedMapFromFlatList([...nestedMapToFlatList(map1), ...nestedMapToFlatList(map2)]);
+	populateNestedMap(map2, merged, true);
+	return merged;
 }
 
 function fieldChangeFromId(
@@ -2972,4 +2975,10 @@ interface ModularChangesetContent {
 	nodeToParent: ChangeAtomIdMap<FieldId>;
 	nodeAliases: ChangeAtomIdMap<NodeId>;
 	crossFieldKeys: CrossFieldKeyTable;
+}
+
+function cloneNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>): NestedMap<K1, K2, V> {
+	const cloned = new Map();
+	populateNestedMap(map, cloned, true);
+	return cloned;
 }

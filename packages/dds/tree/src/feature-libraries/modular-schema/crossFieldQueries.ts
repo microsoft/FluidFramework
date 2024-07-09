@@ -91,7 +91,7 @@ export interface CrossFieldManager<T = unknown> {
 	moveNode(id: NodeId): void;
 
 	/**
-	 * This must be called whenever a new cross field key is moved into this field as part of the current rebase, compose, or invert.
+	 * This must be called whenever a new cross field key is moved into this field as part of the current rebase or compose.
 	 * Calling this for a key which was already in the field is tolerated.
 	 */
 	moveKey(

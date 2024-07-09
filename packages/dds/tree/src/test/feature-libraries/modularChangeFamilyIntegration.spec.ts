@@ -54,6 +54,7 @@ import type {
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
+import { merge } from "../objMerge.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -103,6 +104,49 @@ describe("ModularChangeFamily integration", () => {
 			const rebasedDelta = intoDelta(makeAnonChange(rebased), family.fieldKinds);
 			const expectedDelta = intoDelta(makeAnonChange(expected), family.fieldKinds);
 			assert.deepEqual(rebasedDelta, expectedDelta);
+		});
+
+		it("nested change over cross-field move", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				0,
+				1,
+				{ parent: undefined, field: fieldB },
+				0,
+			);
+
+			editor
+				.sequenceField({
+					parent: { parent: undefined, parentField: fieldA, parentIndex: 0 },
+					field: fieldC,
+				})
+				.remove(0, 1);
+
+			const [move, remove] = getChanges();
+			const rebased = family.rebase(
+				makeAnonChange(remove),
+				tagChangeInline(move, tag1),
+				revisionMetadataSourceFromInfo([{ revision: tag1 }]),
+			);
+
+			const expected = Change.build(
+				{ family, maxId: 3 },
+				Change.field(
+					fieldB,
+					sequence.identifier,
+					[],
+					Change.nodeWithId(
+						0,
+						{ localId: brand(3) },
+						Change.field(fieldC, sequence.identifier, [MarkMaker.remove(1, brand(2))]),
+					),
+				),
+			);
+
+			assert.deepEqual(rebased, expected);
 		});
 
 		it("cross-field move over remove", () => {
