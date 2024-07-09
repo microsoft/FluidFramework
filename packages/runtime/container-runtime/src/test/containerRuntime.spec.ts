@@ -69,6 +69,7 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
+import type { BatchMessage } from "../opLifecycle/index.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -720,20 +721,17 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
-						return undefined;
+					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
+						return _messages.map((message) => ({
+							message,
+							localOpMetadata: undefined,
+						}));
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;
 					},
-					onSubmitMessage: (
-						_type: ContainerMessageType,
-						_clientSequenceNumber: number,
-						_referenceSequenceNumber: number,
-						_content: any,
-						_localOpMetadata: unknown,
-						_opMetadata: Record<string, unknown> | undefined,
-					) => pendingMessages++,
+					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
+						(pendingMessages += batch.length),
 				} as unknown as PendingStateManager;
 			};
 			const getMockChannelCollection = (): ChannelCollection => {
@@ -784,7 +782,7 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onSubmitMessage("", 0, "", undefined);
+				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 0);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
@@ -904,6 +902,7 @@ describe("Runtime", () => {
 								contents: {
 									address: "address",
 								},
+								clientSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							true /* local */,
 						);

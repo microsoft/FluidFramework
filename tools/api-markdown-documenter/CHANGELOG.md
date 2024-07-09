@@ -1,5 +1,21 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.15.0
+
+-   Added the following new utility functions to `ApiItemUtilities`:
+    1. `getCustomBlockComments`: Gets all _custom_ [block comments](https://tsdoc.org/pages/spec/tag_kinds/#block-tags) associated with the provided API item.
+        - **Will not** include built-in block comment kinds like `@see`, `@param`, etc.
+    2. `getModifierTags`: Gets all [modifier tags](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags) associated with the provided API item.
+        - **Will** include built-in modifier tags like `@sealed`, release tags, etc.
+    3. `hasModifierTag`: Checks if the provided API item is tagged with the specified [modifier tag](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags).
+
+### ⚠ BREAKING CHANGES
+
+-   The following existing APIs were updated to return `readonly` arrays, where they were not previously `readonly`:
+    -   `getExampleBlocks`
+    -   `getSeeBlocks`
+    -   `getThrowsBlocks`
+
 ## 0.14.0
 
 -   Allow configuration of "alerts" in child item tables.

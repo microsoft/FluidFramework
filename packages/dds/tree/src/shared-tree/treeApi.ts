@@ -17,7 +17,7 @@ import {
 import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import type { TreeCheckout } from "./treeCheckout.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
 
 /**
@@ -445,7 +445,7 @@ export function runTransaction<
 }
 
 function runTransactionInCheckout<TResult>(
-	checkout: TreeCheckout,
+	checkout: ITreeCheckout,
 	transaction: () => TResult | typeof rollback,
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {

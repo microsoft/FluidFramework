@@ -57,6 +57,7 @@ import {
  *
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
+ * @legacy
  * @alpha
  */
 export class OdspDocumentServiceFactoryCore
@@ -167,7 +168,7 @@ export class OdspDocumentServiceFactoryCore
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
 			async (event) => {
-				const getStorageToken = toInstrumentedOdspStorageTokenFetcher(
+				const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
 					odspLogger,
 					resolvedUrlData,
 					this.getStorageToken,
@@ -188,7 +189,7 @@ export class OdspDocumentServiceFactoryCore
 					});
 				const _odspResolvedUrl = isNewFileInfo(fileInfo)
 					? await module.createNewFluidFile(
-							getStorageToken,
+							getAuthHeader,
 							fileInfo,
 							odspLogger,
 							createNewSummary,
@@ -200,7 +201,7 @@ export class OdspDocumentServiceFactoryCore
 							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 						)
 					: await module.createNewContainerOnExistingFile(
-							getStorageToken,
+							getAuthHeader,
 							fileInfo,
 							odspLogger,
 							createNewSummary,
@@ -300,11 +301,13 @@ export class OdspDocumentServiceFactoryCore
 			this.getWebsocketToken === undefined
 				? undefined
 				: async (options: TokenFetchOptions): Promise<string | null> =>
+						// websocket expects a plain token
 						toInstrumentedOdspTokenFetcher(
 							extLogger,
 							resolvedUrlData,
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
+							true /* returnPlainToken */,
 						)(options, "GetWebsocketToken");
 
 		return OdspDocumentService.create(
