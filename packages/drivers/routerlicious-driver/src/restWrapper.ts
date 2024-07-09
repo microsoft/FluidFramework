@@ -116,6 +116,12 @@ export function getPropsToLogFromResponse(headers: {
 class RouterliciousRestWrapper extends RestWrapper {
 	private readonly restLess = new RestLessClient();
 	private token: ITokenResponse | undefined;
+
+	/**
+	 * A locally maintained map which saves the number of retries for any REST api call made through restWrapper.
+	 * It uses the href of the request url as a key against which it saves the retry counts. Retries are only counted in case of failures.
+	 * This feature is added to enable FRS to have more telemetry insights into whether the requests are being retried from same client or multiple.
+	 */
 	private readonly retryCounter = new Map<string, number>();
 
 	constructor(
@@ -161,6 +167,9 @@ class RouterliciousRestWrapper extends RestWrapper {
 		const res = await this.rateLimiter.schedule(async () => {
 			const perfStart = performance.now();
 			const result = await fetch(...fetchRequestConfig).catch(async (error) => {
+				// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
+				this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
+
 				// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
 				const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
 				const errorMessage = isNetworkError
@@ -174,13 +183,12 @@ class RouterliciousRestWrapper extends RestWrapper {
 				const err = errorMessage.includes("failed, reason: self signed certificate")
 					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
 							driverVersion,
+							retryQueryParam: requestRetryCount,
 						})
 					: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
 							driverVersion,
+							retryQueryParam: requestRetryCount,
 						});
-
-				// on failure, add the request entry into the retryCounter map to count the subsequent retries
-				this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 				throw err;
 			});
 			return {
