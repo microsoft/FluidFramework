@@ -38,6 +38,7 @@ import {
 	ensureDevDependencyExists,
 	knownApiLevels,
 	unscopedPackageNameString,
+	writeFileIfContentsDiffers,
 } from "../../library/index.js";
 
 export default class GenerateTypetestsCommand extends PackageCommand<
@@ -190,8 +191,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 
 		mkdirSync(outDir, { recursive: true });
 
-		writeFileSync(typeTestOutputFile, testCases.join("\n"));
-		this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
+		if (await writeFileIfContentsDiffers(typeTestOutputFile, testCases.join("\n"))) {
+			this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
+		} else {
+			this.verbose(`Skipped writing type test file because it's up-to-date: ${path.resolve(typeTestOutputFile)}`);
+		}
 	}
 }
 
