@@ -1082,7 +1082,7 @@ export class ModularChangeFamily
 				stateChange: NodeAttachState | undefined,
 			): NodeId | undefined => {
 				assert(child === undefined, "There should be no new changes in this field");
-				return child;
+				return undefined;
 			};
 
 			const handler = getChangeHandler(this.fieldKinds, baseFieldChange.fieldKind);
@@ -1091,13 +1091,10 @@ export class ModularChangeFamily
 				change: brand(handler.createEmpty()),
 			};
 
-			let rebasedNodeId;
-			if (baseNodeId === undefined) {
-				rebasedNodeId = undefined;
-			} else {
-				const existingId = rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId);
-				rebasedNodeId = existingId ?? baseNodeId;
-			}
+			const rebasedNodeId =
+				baseNodeId !== undefined
+					? rebasedNodeIdFromBaseNodeId(crossFieldTable, baseNodeId)
+					: undefined;
 
 			const fieldId: FieldId = { nodeId: rebasedNodeId, field: fieldKey };
 			const rebasedField: unknown = handler.rebaser.rebase(
@@ -1141,17 +1138,15 @@ export class ModularChangeFamily
 		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
 		table: RebaseTable,
 		rebasedField: FieldChange,
-		{ nodeId: baseNodeId, field: fieldKey }: FieldId,
+		{ nodeId, field: fieldKey }: FieldId,
 		idAllocator: IdAllocator,
 		metadata: RebaseRevisionMetadata,
 	): void {
-		if (baseNodeId === undefined) {
+		if (nodeId === undefined) {
 			rebasedFields.set(fieldKey, rebasedField);
 			return;
 		}
-
-		const rebasedId = rebasedNodeIdFromBaseNodeId(table, baseNodeId);
-		const rebasedNode = getFromChangeAtomIdMap(rebasedNodes, rebasedId);
+		const rebasedNode = getFromChangeAtomIdMap(rebasedNodes, nodeId);
 		if (rebasedNode !== undefined) {
 			if (rebasedNode.fieldChanges === undefined) {
 				rebasedNode.fieldChanges = new Map([[fieldKey, rebasedField]]);
@@ -1167,18 +1162,16 @@ export class ModularChangeFamily
 			fieldChanges: new Map([[fieldKey, rebasedField]]),
 		};
 
-		setInChangeAtomIdMap(rebasedNodes, baseNodeId, newNode);
+		setInChangeAtomIdMap(rebasedNodes, nodeId, newNode);
+		setInChangeAtomIdMap(table.baseToRebasedNodeId, nodeId, nodeId);
 
-		assert(areEqualChangeAtomIds(baseNodeId, rebasedId), "Unknown rebased node ID");
-		setInChangeAtomIdMap(table.baseToRebasedNodeId, baseNodeId, baseNodeId);
-
-		const parentFieldId = getParentFieldId(table.baseChange, baseNodeId);
+		const parentFieldId = getParentFieldId(table.baseChange, nodeId);
 
 		this.attachRebasedNode(
 			rebasedFields,
 			rebasedNodes,
 			table,
-			baseNodeId,
+			nodeId,
 			parentFieldId,
 			idAllocator,
 			metadata,
@@ -1189,7 +1182,7 @@ export class ModularChangeFamily
 		rebasedFields: FieldChangeMap,
 		rebasedNodes: ChangeAtomIdMap<NodeChangeset>,
 		table: RebaseTable,
-		rebasedNode: NodeId,
+		baseNodeId: NodeId,
 		parentFieldIdBase: FieldId,
 		idAllocator: IdAllocator,
 		metadata: RebaseRevisionMetadata,
@@ -1200,12 +1193,14 @@ export class ModularChangeFamily
 			parentFieldIdBase,
 		);
 
+		const rebasedFieldId = rebasedFieldIdFromBaseId(table, parentFieldIdBase);
+		setInChangeAtomIdMap(table.rebasedNodeToParent, baseNodeId, rebasedFieldId);
+
 		const context = table.baseFieldToContext.get(baseFieldChange);
 		if (context !== undefined) {
 			// We've already processed this field.
 			// The new child node can be attached when processing invalidated fields.
-			// XXX: Add to rebased ancestry here as well?
-			context.baseNodeIds.push(rebasedNode);
+			context.baseNodeIds.push(baseNodeId);
 			table.invalidatedFields.add(baseFieldChange);
 			return;
 		}
@@ -1220,30 +1215,31 @@ export class ModularChangeFamily
 		const rebasedChangeset = handler.rebaser.rebase(
 			handler.createEmpty(),
 			baseFieldChange.change,
-			(id1, id2) => id1 ?? id2,
+			(_idNew, idBase) =>
+				idBase !== undefined && areEqualChangeAtomIds(idBase, baseNodeId)
+					? baseNodeId
+					: undefined,
 			idAllocator,
-			new RebaseManager(table, baseFieldChange, parentFieldIdBase),
+			new RebaseManager(table, baseFieldChange, rebasedFieldId),
 			metadata,
 		);
 
-		// XXX: Add to rebased ancestry
 		const rebasedField: FieldChange = { ...baseFieldChange, change: brand(rebasedChangeset) };
-
+		table.rebasedFields.add(rebasedField);
 		table.baseFieldToContext.set(baseFieldChange, {
 			newChange: fieldChange,
 			baseChange: baseFieldChange,
 			rebasedChange: rebasedField,
-			fieldId: parentFieldIdBase,
+			fieldId: rebasedFieldId,
 			baseNodeIds: [],
 		});
-		table.rebasedFields.add(rebasedField);
 
 		this.attachRebasedField(
 			rebasedFields,
 			rebasedNodes,
 			table,
 			rebasedField,
-			parentFieldIdBase,
+			rebasedFieldId,
 			idAllocator,
 			metadata,
 		);
@@ -2837,6 +2833,14 @@ function fieldMapFromNodeId(
 	const node = nodeChangeFromId(nodes, nodeId);
 	assert(node.fieldChanges !== undefined, "Expected node to have field changes");
 	return node.fieldChanges;
+}
+
+function rebasedFieldIdFromBaseId(table: RebaseTable, baseId: FieldId): FieldId {
+	if (baseId.nodeId === undefined) {
+		return baseId;
+	}
+
+	return { ...baseId, nodeId: rebasedNodeIdFromBaseNodeId(table, baseId.nodeId) };
 }
 
 function rebasedNodeIdFromBaseNodeId(table: RebaseTable, baseId: NodeId): NodeId {
