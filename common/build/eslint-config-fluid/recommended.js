@@ -58,6 +58,8 @@ module.exports = {
 
 		/**
 		 * Disabled due to false positives / disruptive behavior of auto-fix.
+		 * See {@link https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2018}.
+		 * We may consider re-enabling once the above issue has been resolved.
 		 */
 		"unicorn/no-useless-spread": "off",
 
