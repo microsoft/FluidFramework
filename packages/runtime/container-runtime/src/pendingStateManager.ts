@@ -16,7 +16,7 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
+import { type InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { asBatchMetadata, IBatchMetadata } from "./metadata.js";
 import { BatchId, BatchMessage, generateBatchId } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -288,13 +288,32 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * Processes the incoming batch from the server. It verifies that messages are received in the right order and
+	 * that the batch information is correct.
+	 * @param batch - The batch that is being processed.
+	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch
+	 */
+	public processPendingLocalBatch(
+		batch: InboundSequencedContainerRuntimeMessage[],
+		batchStartCsn: number,
+	): {
+		message: InboundSequencedContainerRuntimeMessage;
+		localOpMetadata: unknown;
+	}[] {
+		return batch.map((message) => ({
+			message,
+			localOpMetadata: this.processPendingLocalMessage(message, batchStartCsn),
+		}));
+	}
+
+	/**
 	 * Processes a local message once its ack'd by the server. It verifies that there was no data corruption and that
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 * @param batchStartCsn - The clientSequenceNumber of the start of this message's batch (assigned during submit)
 	 * (not to be confused with message.clientSequenceNumber - the overwritten value in case of grouped batching)
 	 */
-	public processPendingLocalMessage(
+	private processPendingLocalMessage(
 		message: InboundSequencedContainerRuntimeMessage,
 		batchStartCsn: number,
 	): unknown {

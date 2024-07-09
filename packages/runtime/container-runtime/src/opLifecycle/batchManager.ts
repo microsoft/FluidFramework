@@ -63,7 +63,9 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
+			: // Non null asserting here since we are checking the length above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
 	}
 
 	/**
@@ -135,7 +137,9 @@ export class BatchManager {
 			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
-					const message = this.pendingBatch[i];
+					// Non null asserting here since we are iterating though pendingBatch
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const message = this.pendingBatch[i]!;
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}
@@ -147,23 +151,29 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
+	// non-null-assertion here is required for accessing the metadata property of the first/last messages.
+	// they're safe since we check the length first.
+	/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 	const batchEnd = batch.messages.length - 1;
-	const firstMetadata: Partial<IBatchMetadata> = batch.messages[0].metadata ?? {};
-	const lastMetadata: Partial<IBatchMetadata> = batch.messages[batchEnd].metadata ?? {};
+	const firstMetadata: Partial<IBatchMetadata> = batch.messages[0]?.metadata ?? {};
+	const lastMetadata: Partial<IBatchMetadata> = batch.messages[batchEnd]?.metadata ?? {};
 
 	if (batch.messages.length > 1) {
 		firstMetadata.batch = true;
 		lastMetadata.batch = false;
-		batch.messages[0].metadata = firstMetadata;
-		batch.messages[batchEnd].metadata = lastMetadata;
+		batch.messages[0]!.metadata = firstMetadata;
+		batch.messages[batchEnd]!.metadata = lastMetadata;
 	}
 
 	if (batchId !== undefined) {
 		firstMetadata.batchId = batchId;
-		batch.messages[0].metadata = firstMetadata;
+		batch.messages[0]!.metadata = firstMetadata;
 	}
 
 	return batch;
+
+	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 };
 
 /**

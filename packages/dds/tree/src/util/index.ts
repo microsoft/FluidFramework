@@ -126,3 +126,5 @@ export {
 	type IdAllocationState,
 	fakeIdAllocator,
 } from "./idAllocator.js";
+
+export { Breakable, type WithBreakable, breakingMethod, throwIfBroken } from "./breakable.js";

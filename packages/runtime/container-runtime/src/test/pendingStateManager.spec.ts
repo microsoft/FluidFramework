@@ -164,12 +164,10 @@ describe("Pending State Manager", () => {
 		};
 
 		const process = (messages: Partial<ISequencedDocumentMessage>[], batchStartCsn: number) =>
-			messages.forEach((message) => {
-				pendingStateManager.processPendingLocalMessage(
-					message as InboundSequencedContainerRuntimeMessage,
-					batchStartCsn,
-				);
-			});
+			pendingStateManager.processPendingLocalBatch(
+				messages as InboundSequencedContainerRuntimeMessage[],
+				batchStartCsn,
+			);
 
 		it("proper batch is processed correctly", () => {
 			const messages: Partial<ISequencedDocumentMessage>[] = [
@@ -425,8 +423,8 @@ describe("Pending State Manager", () => {
 					],
 					1,
 				);
-				pendingStateManager.processPendingLocalMessage(
-					futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage,
+				pendingStateManager.processPendingLocalBatch(
+					[futureRuntimeMessage as ISequencedDocumentMessage & UnknownContainerRuntimeMessage],
 					1 /* batchStartCsn */,
 				);
 			});

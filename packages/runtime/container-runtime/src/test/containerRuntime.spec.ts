@@ -721,8 +721,11 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
-						return undefined;
+					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
+						return _messages.map((message) => ({
+							message,
+							localOpMetadata: undefined,
+						}));
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;
@@ -899,6 +902,7 @@ describe("Runtime", () => {
 								contents: {
 									address: "address",
 								},
+								clientSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							true /* local */,
 						);

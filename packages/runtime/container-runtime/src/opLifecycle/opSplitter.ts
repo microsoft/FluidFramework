@@ -134,7 +134,9 @@ export class OpSplitter {
 			0x516 /* Chunk size needs to be smaller than the max batch size */,
 		);
 
-		const firstMessage = batch.messages[0]; // we expect this to be the large compressed op, which needs to be split
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const firstMessage = batch.messages[0]!; // we expect this to be the large compressed op, which needs to be split
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
@@ -163,7 +165,9 @@ export class OpSplitter {
 		// The last chunk will be part of the new batch and needs to
 		// preserve the batch metadata of the original batch
 		const lastChunk = chunkToBatchMessage(
-			chunks[chunks.length - 1],
+			// Non null asserting here because of the length assert above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			chunks[chunks.length - 1]!,
 			batch.referenceSequenceNumber,
 			{ batch: firstMessage.metadata?.batch },
 		);

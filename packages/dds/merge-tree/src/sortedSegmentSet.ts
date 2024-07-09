@@ -65,7 +65,9 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 
 		while (start <= end) {
 			index = start + Math.floor((end - start) / 2);
-			const indexKey = this.getKey(this.keySortedItems[index]);
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const indexKey = this.getKey(this.keySortedItems[index]!);
 			if (indexKey > itemKey) {
 				if (start === index) {
 					return { exists: false, index };
@@ -85,7 +87,9 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 				}
 				for (
 					let b = index - 1;
-					b >= 0 && this.getKey(this.keySortedItems[b]) === itemKey;
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					b >= 0 && this.getKey(this.keySortedItems[b]!) === itemKey;
 					b--
 				) {
 					if (this.keySortedItems[b] === item) {
@@ -95,7 +99,9 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 				for (
 					index + 1;
 					index < this.keySortedItems.length &&
-					this.getKey(this.keySortedItems[index]) === itemKey;
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this.getKey(this.keySortedItems[index]!) === itemKey;
 					index++
 				) {
 					if (this.keySortedItems[index] === item) {

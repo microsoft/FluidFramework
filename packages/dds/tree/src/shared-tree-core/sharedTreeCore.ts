@@ -34,7 +34,14 @@ import {
 	type SchemaPolicy,
 	type TreeStoredSchemaRepository,
 } from "../core/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	brand,
+	Breakable,
+	type WithBreakable,
+	breakingMethod,
+	throwIfBroken,
+} from "../util/index.js";
 
 import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
@@ -67,7 +74,12 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
+export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
+	extends SharedObject
+	implements WithBreakable
+{
+	public readonly breaker: Breakable = new Breakable("Shared Tree");
+
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 	/**
@@ -262,6 +274,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
+	@throwIfBroken
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -287,6 +300,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return builder.getSummaryTree();
 	}
 
+	@breakingMethod
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
@@ -304,6 +318,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
+	@breakingMethod
 	private submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
@@ -351,6 +366,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.resubmitMachine.onCommitSubmitted(commit);
 	}
 
+	@breakingMethod
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -386,6 +402,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
+	@breakingMethod
 	protected override reSubmitCore(
 		content: JsonCompatibleReadOnly,
 		localOpMetadata: unknown,
@@ -418,6 +435,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
+	@breakingMethod
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
 		assert(
 			!this.getLocalBranch().isTransacting(),
