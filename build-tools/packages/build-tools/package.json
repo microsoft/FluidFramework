@@ -61,6 +61,7 @@
 		"rimraf": "^4.4.1",
 		"semver": "^7.5.4",
 		"sort-package-json": "1.57.0",
+		"ts-deepmerge": "^7.0.0",
 		"ts-morph": "^22.0.0",
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5",

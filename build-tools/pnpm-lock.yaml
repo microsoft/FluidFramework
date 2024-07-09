@@ -410,6 +410,9 @@ importers:
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
+      ts-deepmerge:
+        specifier: ^7.0.0
+        version: 7.0.0
       ts-morph:
         specifier: ^22.0.0
         version: 22.0.0
@@ -11350,6 +11353,11 @@ packages:
     dependencies:
       typescript: 5.4.5
     dev: true
+
+  /ts-deepmerge@7.0.0:
+    resolution: {integrity: sha512-WZ/iAJrKDhdINv1WG6KZIGHrZDar6VfhftG1QJFpVbOYZMYJLJOvZOo1amictRXVdBXZIgBHKswMTXzElngprA==}
+    engines: {node: '>=14.13.1'}
+    dev: false
 
   /ts-morph@20.0.0:
     resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
