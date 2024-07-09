@@ -9,7 +9,7 @@
 
 import path from "node:path";
 
-import { type Package, type PackageDependency, TscUtils } from "@fluidframework/build-tools";
+import { type Package, TscUtils } from "@fluidframework/build-tools";
 import type { TsConfigJson } from "type-fest";
 
 import { getGenerateEntrypointsOutput } from "../commands/index.js";
@@ -237,7 +237,10 @@ export class FluidBuildDatabase {
 		packageGroup: ReadonlyMap<PackageName, Package>,
 		packageName: PackageName,
 		script: Script,
-		ignorePackage?: (packageInfo: PackageDependency) => boolean,
+		ignorePackage?: (packageInfo: {
+			name: string;
+			version: string;
+		}) => boolean,
 	): BuildScript[][] {
 		const pkg = packageGroup.get(packageName);
 		if (pkg === undefined) {

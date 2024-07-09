@@ -73,7 +73,7 @@ export type PackageJson = SetRequired<
 /**
  * Information about a package dependency.
  */
-export interface PackageDependency {
+interface PackageDependency {
 	name: string;
 	version: string;
 	depClass: "prod" | "dev" | "peer";
