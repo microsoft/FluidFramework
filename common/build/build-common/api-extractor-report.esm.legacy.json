@@ -11,5 +11,10 @@
 	},
 	"docModel": {
 		"enabled": false
+	},
+	// Assume all projects use a "current" report and don't need tsdocMetadata generated a
+	// second time via "legacy" report.
+	"tsdocMetadata": {
+		"enabled": false
 	}
 }
