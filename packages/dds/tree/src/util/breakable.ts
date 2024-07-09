@@ -174,7 +174,7 @@ function isBreaker(f: Function): boolean {
 /**
  * Decorator for classes which should break when their methods throw.
  * @remarks
- * Applies {@link breakingMethod} to all methods declared directly class or its base classes.
+ * Applies {@link breakingMethod} to all methods declared directly by class or its base classes.
  * Does not include those on derived classes.
  * Does not include getters or setters, or value properties.
  * Methods already marked as {@link breakingMethod} or {@link throwIfBroken} are unaffected.
@@ -199,6 +199,7 @@ export function breakingClass<Target extends abstract new (...args: any[]) => Wi
 					// Method
 					if (typeof descriptor.value === "function") {
 						if (!isBreaker(descriptor.value)) {
+							// This does not affect the original class, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getOwnPropertyDescriptor
 							descriptor.value = breakingMethod(descriptor.value);
 							Object.defineProperty(DecoratedBreakable.prototype, key, descriptor);
 						}
