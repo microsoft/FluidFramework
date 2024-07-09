@@ -315,6 +315,12 @@ export function objectSchema<
 			[...flexKeyMap].map(([key, value]) => [key as string, value.schema]),
 		);
 
+		public static readonly identifierFieldKeys: (string | symbol)[] = Array.from(
+			flexKeyMap.entries(),
+		)
+			.filter(([key, schemaInfo]) => schemaInfo.schema.kind === FieldKind.Identifier)
+			.map(([key, schemaInfo]) => key);
+
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -476,6 +482,7 @@ export interface ObjectNodeSchema<
 		T
 	> {
 	readonly fields: ReadonlyMap<string, FieldSchema>;
+	readonly identifierFieldKeys: (string | symbol)[];
 }
 
 export const ObjectNodeSchema = {

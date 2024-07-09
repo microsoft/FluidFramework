@@ -333,6 +333,7 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	 * Schema for the root field which contains the whole tree.
 	 */
 	readonly rootFieldSchema: TreeFieldStoredSchema;
+	readonly identifierFieldKeys?: (string | symbol)[];
 }
 
 /**
