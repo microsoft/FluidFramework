@@ -13,7 +13,6 @@ import {
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
@@ -36,6 +35,7 @@ export class RemoteMessageProcessor {
 	 * @remarks For chunked batches, this is the CSN of the "representative" chunk (the final chunk)
 	 */
 	private batchStartCsn: number | undefined;
+	private readonly processorBatch: InboundSequencedContainerRuntimeMessage[] = [];
 
 	constructor(
 		private readonly opSplitter: OpSplitter,
@@ -52,7 +52,7 @@ export class RemoteMessageProcessor {
 	}
 
 	/**
-	 * Ungroups and Unchunks the runtime ops encapsulated by the single remoteMessage received over the wire
+	 * Ungroups and Unchunks the runtime ops of a batch received over the wire
 	 * @param remoteMessageCopy - A shallow copy of a message from another client, possibly virtualized
 	 * (grouped, compressed, and/or chunked).
 	 * Being a shallow copy, it's considered mutable, meaning no other Container or other parallel procedure
@@ -67,13 +67,12 @@ export class RemoteMessageProcessor {
 	 * 3. If grouped, ungroup the message
 	 * For more details, see https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/opLifecycle/README.md#inbound
 	 *
-	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
-	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
-	 * a singleton array [remoteMessageCopy] is returned
+	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
+	 * or undefined if the batch is not yet complete.
 	 */
 	public process(remoteMessageCopy: ISequencedDocumentMessage):
 		| {
-				messages: InboundSequencedContainerRuntimeMessageOrSystemMessage[];
+				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
 		  }
 		| undefined {
@@ -106,6 +105,10 @@ export class RemoteMessageProcessor {
 		if (isGroupedBatch(message)) {
 			// We should be awaiting a new batch (batchStartCsn undefined)
 			assert(this.batchStartCsn === undefined, "Grouped batch interrupting another batch");
+			assert(
+				this.processorBatch.length === 0,
+				"Processor batch should be empty on grouped batch",
+			);
 			return {
 				messages: this.opGroupingManager.ungroupOp(message).map(unpack),
 				batchStartCsn: message.clientSequenceNumber,
@@ -116,8 +119,20 @@ export class RemoteMessageProcessor {
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
+		this.processorBatch.push(message as InboundSequencedContainerRuntimeMessage);
+
+		// this.batchStartCsn is undefined only if we have processed all messages in the batch.
+		// If it's still defined, we're still in the middle of a batch, so we return nothing, letting
+		// containerRuntime know that we're waiting for more messages to complete the batch.
+		if (this.batchStartCsn !== undefined) {
+			// batch not yet complete
+			return undefined;
+		}
+
+		const messages = [...this.processorBatch];
+		this.processorBatch.length = 0;
 		return {
-			messages: [message as InboundSequencedContainerRuntimeMessageOrSystemMessage],
+			messages,
 			batchStartCsn,
 		};
 	}
