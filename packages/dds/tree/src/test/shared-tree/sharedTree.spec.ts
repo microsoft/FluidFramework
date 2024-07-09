@@ -67,6 +67,7 @@ import {
 	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
+	Tree,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
@@ -1897,6 +1898,33 @@ describe("SharedTree", () => {
 			const encodedTreeData2 = changesSummary2.trunk[0].change[1].data.builds.trees;
 			const expectedCompressedTreeData = [0, "A", 0, "B", 0, "C"];
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);
+		});
+	});
+
+	describe("Identifiers", () => {
+		it("Can use identifiers and the static Tree Apis", async () => {
+			const factory = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Compressed,
+			});
+			const provider = new TestTreeProviderLite(1, factory, true);
+			const tree1 = provider.trees[0];
+			const sf = new SchemaFactory("com.example");
+			class Widget extends sf.object("Widget", { id: sf.identifier }) {}
+
+			const view = tree1.viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(Widget),
+					enableSchemaValidation: true,
+				}),
+			);
+			const widget = new Widget({});
+			const fidget = new Widget({ id: "fidget" });
+			view.initialize([widget, fidget]);
+
+			// Checks that the shortId returns the correct types and values.
+			assert.equal(typeof Tree.shortId(widget), "number");
+			assert.equal(Tree.shortId(fidget), "fidget");
 		});
 	});
 

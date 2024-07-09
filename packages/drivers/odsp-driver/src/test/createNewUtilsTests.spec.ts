@@ -165,7 +165,12 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshotWithLoadingGroupId = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, true),
+		);
+		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
@@ -194,7 +199,12 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshotWithLoadingGroupId = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, true),
+		);
+		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
