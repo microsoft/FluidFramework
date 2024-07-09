@@ -1763,9 +1763,9 @@ describe("SharedTree", () => {
 					forest: ForestType.Reference,
 				}),
 			);
-			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			assert.equal((trees[0].checkout.forest as any).additionalAsserts, false);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, false);
 		});
 
 		it("ForestType.Optimized uses ChunkedForest", () => {
@@ -1787,9 +1787,9 @@ describe("SharedTree", () => {
 					forest: ForestType.Expensive,
 				}),
 			);
-			assert.equal(trees[0].checkout.forest instanceof ObjectForest, true);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			assert.equal((trees[0].checkout.forest as any).additionalAsserts, true);
+			const forest = trees[0].checkout.forest;
+			assert(forest instanceof ObjectForest);
+			assert.equal(forest.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {

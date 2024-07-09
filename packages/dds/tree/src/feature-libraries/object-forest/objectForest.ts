@@ -94,7 +94,7 @@ export class ObjectForest implements IEditableForest {
 
 	public constructor(
 		public readonly anchors: AnchorSet = new AnchorSet(),
-		private readonly additionalAsserts: boolean = false,
+		public readonly additionalAsserts: boolean = false,
 		roots?: MapTree,
 	) {
 		this.#roots =
