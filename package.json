@@ -291,7 +291,8 @@
 			"ci:build:docs": {
 				"dependsOn": [
 					"^ci:build:docs",
-					"build:gendocs:client"
+					"build:gendocs:client",
+					"ci:build:readme"
 				],
 				"script": false
 			},
