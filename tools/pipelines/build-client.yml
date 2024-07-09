@@ -171,6 +171,13 @@ extends:
     checks:
     - checks
     additionalBuildSteps:
+    # Run markdown-magic generation to ensure README contents are up-to-date
+    - task: Npm@1
+      displayName: Build README
+      inputs:
+        command: 'custom'
+        customCommand: 'ci:build:readme'
+
     - task: Bash@3
       displayName: Inject devtools telemetry logger token
       inputs:
