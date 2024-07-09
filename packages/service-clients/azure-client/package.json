@@ -136,7 +136,8 @@
 	"typeValidation": {
 		"broken": {
 			"RemovedClassDeclaration_AzureFunctionTokenProvider": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
