@@ -17,12 +17,12 @@ Chose `cjs` or `esm` based on primary or only output.
 
 ### API Task Set
 
-| Set Name  | report | model | lint | Description                                                 |
-| --------- | ------ | ----- | -----| ----------------------------------------------------------- |
-| report    |   ✔️   |       |      | generates `*.api.md` report files and `tsdoc-metadata.json` |
-| model     |        |  ✔️   |      | generates `_api-extractor-temp/doc-models/*.api.json`       |
-| lint      |        |       |  ✔️  | performs api-extractor linting                              |
-| base      |   ✔️   |  ✔️  |      | combined report and model                                   |
+| Set Name | report | model | lint | Description                                                 |
+| -------- | ------ | ----- | ---- | ----------------------------------------------------------- |
+| report   | ✔️     |       |      | generates `*.api.md` report files and `tsdoc-metadata.json` |
+| model    |        | ✔️    |      | generates `_api-extractor-temp/doc-models/*.api.json`       |
+| lint     |        |       | ✔️   | performs api-extractor linting                              |
+| base     | ✔️     | ✔️    |      | combined report and model                                   |
 
 ### Export Set
 
