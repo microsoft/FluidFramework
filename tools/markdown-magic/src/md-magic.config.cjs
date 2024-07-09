@@ -46,6 +46,23 @@ const generateDependencyGuidelines = (headingOptions) =>
 		headingText: "Using Fluid Framework libraries",
 	});
 
+
+
+/**
+ * Generates a Markdown section listing Fluid Framework's minimum client requirements.
+ *
+ * @param {object} headingOptions - Heading generation options.
+ * @param {boolean} includeHeading - Whether or not to include a heading in the generated content.
+ * If not specified, no top-level heading will be included in the section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
+ */
+const generateClientRequirementsSection = (headingOptions) =>
+	createSectionFromTemplate("Client-Requirements-Template.md", {
+		...headingOptions,
+		headingText: "Minimum Client Requirements",
+	});
+
 /**
  * Generates a Markdown heading and contents with a section pointing developers to our contribution guidelines.
  *
@@ -134,6 +151,8 @@ const generateTrademarkSection = (headingOptions) =>
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
  * Default: `FALSE`.
+ * @param {"TRUE" | "FALSE" | undefined} options.clientRequirements - (optional) Whether or not to include a section listing Fluid Framework's minimum client requirements.
+ * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
@@ -190,6 +209,10 @@ function libraryPackageReadmeTransform(content, options, config) {
 		options.pkg = relativePackageJsonPath;
 		const scriptsTable = scripts(content, options, config);
 		sections.push(generatePackageScriptsSection(scriptsTable, sectionHeadingOptions));
+	}
+
+	if (options.contributionGuidelines !== "FALSE") {
+		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
 	}
 
 	if (options.contributionGuidelines !== "FALSE") {
