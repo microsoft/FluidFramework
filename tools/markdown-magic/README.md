@@ -156,6 +156,9 @@ Arguments:
     -   Default: `true`.
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `API_DOCS_LINK_SECTION`
 
@@ -170,6 +173,9 @@ Arguments:
     -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_INSTALLATION_SECTION`
 
@@ -184,6 +190,9 @@ Arguments:
     -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_IMPORT_INSTRUCTIONS`
 
@@ -196,6 +205,9 @@ Arguments:
     -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_TRADEMARK_SECTION`
 
@@ -207,6 +219,9 @@ Arguments:
 
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_CONTRIBUTION_GUIDELINES_SECTION`
 
@@ -218,6 +233,9 @@ Arguments:
 
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_HELP_SECTION`
 
@@ -229,6 +247,9 @@ Arguments:
 
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_PACKAGE_SCRIPTS`
 
@@ -241,6 +262,9 @@ Arguments:
     -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_PACKAGE_SCOPE_NOTICE`
 
