@@ -46,8 +46,6 @@ const generateDependencyGuidelines = (headingOptions) =>
 		headingText: "Using Fluid Framework libraries",
 	});
 
-
-
 /**
  * Generates a Markdown section listing Fluid Framework's minimum client requirements.
  *
