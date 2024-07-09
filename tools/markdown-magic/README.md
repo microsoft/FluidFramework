@@ -154,7 +154,7 @@ Arguments:
     -   Default: `./package.json`.
 -   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
     -   Default: `true`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `API_DOCS_LINK_SECTION`
@@ -168,7 +168,7 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_INSTALLATION_SECTION`
@@ -182,7 +182,7 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_IMPORT_INSTRUCTIONS`
@@ -194,7 +194,7 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_TRADEMARK_SECTION`
@@ -205,7 +205,7 @@ See the corresponding template [here](./src/templates/Trademark-Template.md).
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_CONTRIBUTION_GUIDELINES_SECTION`
@@ -216,7 +216,7 @@ See the corresponding template [here](./src/templates/Contribution-Guidelines-Te
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_HELP_SECTION`
@@ -227,7 +227,7 @@ See the corresponding template [here](./src/templates/Help-Template.md).
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_PACKAGE_SCRIPTS`
@@ -239,7 +239,7 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 
 #### `README_PACKAGE_SCOPE_NOTICE`
