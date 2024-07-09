@@ -97,15 +97,16 @@ export class SessionSpaceNormalizer {
 		}
 
 		const lastRangeIndex = ranges.length - 1;
+		const lastRange = ranges[lastRangeIndex];
 		assert(
-			ranges[lastRangeIndex] !== undefined,
-			"ranges[lastRangeIndex] is undefined in SessionSpaceNormalizer.getRangesBetween",
+			lastRange !== undefined,
+			"lastRange is undefined in SessionSpaceNormalizer.getRangesBetween",
 		);
-		const [limitGenCount, limitCount] = ranges[lastRangeIndex];
-		if (this.rangeContains(ranges[lastRangeIndex], lastGenCount)) {
+		const [limitGenCount, limitCount] = lastRange;
+		if (this.rangeContains(lastRange, lastGenCount)) {
 			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
 			assert(
-				this.rangeContains(ranges[lastRangeIndex], lastGenCount),
+				this.rangeContains(lastRange, lastGenCount),
 				0x954 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {

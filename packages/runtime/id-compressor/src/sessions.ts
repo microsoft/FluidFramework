@@ -280,10 +280,11 @@ export class Session {
 		let right = arr.length - 1;
 		while (left <= right) {
 			const mid = Math.floor((left + right) / 2);
-			assert(arr[mid] !== undefined, "arr[mid] is undefined in Session.binarySearch");
-			const c = comparator(search, arr[mid]);
+			const value = arr[mid];
+			assert(value !== undefined, "value is undefined in Session.binarySearch");
+			const c = comparator(search, value);
 			if (c === 0) {
-				return arr[mid]; // Found the target, return its index.
+				return value; // Found the target, return its index.
 			} else if (c > 0) {
 				left = mid + 1; // Continue search on right half.
 			} else {
