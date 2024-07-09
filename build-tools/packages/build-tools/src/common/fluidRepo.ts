@@ -5,19 +5,15 @@
 
 import * as path from "path";
 
-import {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-	VersionBumpType,
-} from "@fluid-tools/version-tools";
+import { InterdependencyRange, VersionBumpType } from "@fluid-tools/version-tools";
 
-import registerDebug from "debug";
 import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
 import { loadFluidBuildConfig } from "./fluidUtils";
-import { MonoRepo } from "./monoRepo";
+import { Workspace } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
-const traceInit = registerDebug("fluid-build:init");
+// import registerDebug from "debug";
+// const traceInit = registerDebug("fluid-build:init");
 
 /**
  * Fluid build configuration that is expected in the repo-root package.json.
@@ -31,9 +27,24 @@ export interface IFluidBuildConfig {
 	/**
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
 	 * configured in the repo-wide Fluid build config (the repo-root package.json).
+	 *
+	 * @deprecated Use the repoLayout setting instead.
 	 */
 	repoPackages?: {
 		[name: string]: IFluidRepoPackageEntry;
+	};
+
+	repoLayout?: {
+		workspaces: {
+			/**
+			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml)
+			 */
+			[name: string]: WorkspaceDefinition;
+		};
+		/**
+		 * An array of paths containing individual packages that are not part of a workspace.
+		 */
+		packages?: string[];
 	};
 
 	/**
@@ -55,6 +66,71 @@ export interface IFluidBuildConfig {
 	branchReleaseTypes?: {
 		[name: string]: VersionBumpType | PreviousVersionStyle;
 	};
+}
+
+export interface WorkspaceDefinition {
+	directory: string;
+	/**
+	 * The interdependencyRange controls the type of semver range to use between packages in the same release
+	 * group. This setting controls the default range that will be used when updating the version of a release
+	 * group. The default can be overridden using the `--interdependencyRange` flag in the `flub bump` command.
+	 */
+	defaultInterdependencyRange?: InterdependencyRange;
+	independentPackages?: {
+		[name: string]: string;
+	};
+	releaseGroups?: {
+		[name: string]: ReleaseGroupDefinition;
+	};
+}
+
+export interface ReleaseGroupDefinition {
+	/**
+	 * An array of scopes or package names that should be included in the release group. Each package must
+	 * belong to a single release group.
+	 */
+	include: string[];
+
+	/**
+	 * An array of scopes or package names that should be excluded. Exclusions are applied AFTER inclusions, so
+	 * this can be used to exclude specific packages in a certain scope.
+	 */
+	exclude?: string[];
+	/**
+	 * The interdependencyRange controls the type of semver range to use between packages in the same release
+	 * group. This setting controls the default range that will be used when updating the version of a release
+	 * group. The default can be overridden using the `--interdependencyRange` flag in the `flub bump` command.
+	 */
+	defaultInterdependencyRange: InterdependencyRange;
+}
+
+export function matchesReleaseGroupDefinition(
+	pkg: Package,
+	definition: ReleaseGroupDefinition,
+): boolean {
+	const { include, exclude } = definition;
+	let shouldInclude = false;
+	if (
+		// If the package name matches an entry in the include list, it should be included
+		include.includes(pkg.name) ||
+		// If the package name starts with any of the include list entries, it should be included
+		include.some((scope) => pkg.name.startsWith(scope))
+	) {
+		shouldInclude = true;
+	}
+
+	return shouldInclude && !exclude?.includes(pkg.name);
+}
+
+export function findReleaseGroupForPackage(
+	pkg: Package,
+	definition: Map<string, ReleaseGroupDefinition>,
+): string | undefined {
+	for (const [rgName, def] of definition) {
+		if (matchesReleaseGroupDefinition(pkg, def)) {
+			return rgName;
+		}
+	}
 }
 
 /**
@@ -313,70 +389,111 @@ export type IFluidRepoPackageEntry =
 	| (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-	private readonly _releaseGroups = new Map<string, MonoRepo>();
+	private readonly _workspaces = new Map<string, Workspace>();
+	// private _releaseGroups: Set<string> | undefined;
 
-	public get releaseGroups() {
-		return this._releaseGroups;
+	// public get releaseGroups(): Set<string> {
+	// 	if(this._releaseGroups === undefined) {
+	// 		this._releaseGroups = new Set<string>();
+	// 		for(const ws of this.workspaces.values()) {
+	// 			for (const releaseGroup of ws.releaseGroups.keys())
+	// 				this._releaseGroups.add(releaseGroup);
+	// 		}
+	// 	}
+	// 	return this._releaseGroups;
+	// }
+
+	public get independentPackages(): Package[] {
+		return this.packages.packages.filter((pkg) => pkg.isIndependentPackage);
+	}
+
+	public get workspaces() {
+		return this._workspaces;
 	}
 
 	public readonly packages: Packages;
 
-	public static create(resolvedRoot: string) {
-		const packageManifest = loadFluidBuildConfig(resolvedRoot);
-		return new FluidRepo(resolvedRoot, packageManifest);
-	}
-
-	protected constructor(
-		public readonly resolvedRoot: string,
-		packageManifest: IFluidBuildConfig,
-	) {
-		// Expand to full IFluidRepoPackage and full path
-		const normalizeEntry = (
-			item: IFluidRepoPackageEntry,
-		): IFluidRepoPackage | IFluidRepoPackage[] => {
-			if (Array.isArray(item)) {
-				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
-			}
-			if (typeof item === "string") {
-				traceInit(
-					`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
-				);
-				return {
-					directory: path.join(resolvedRoot, item),
-					ignoredDirs: undefined,
-					defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
-				};
-			}
-			const directory = path.join(resolvedRoot, item.directory);
-			return {
-				directory,
-				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
-				defaultInterdependencyRange: item.defaultInterdependencyRange,
-			};
-		};
-		const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
-			return Packages.loadDir(item.directory, group, item.ignoredDirs);
-		};
-
+	constructor(public readonly resolvedRoot: string) {
+		const fluidBuildConfig = loadFluidBuildConfig(resolvedRoot);
 		const loadedPackages: Package[] = [];
-		for (const group in packageManifest.repoPackages) {
-			const item = normalizeEntry(packageManifest.repoPackages[group]);
-			if (Array.isArray(item)) {
-				for (const i of item) {
-					loadedPackages.push(...loadOneEntry(i, group));
-				}
-				continue;
+		if (fluidBuildConfig.repoLayout !== undefined) {
+			// Load workspaces
+			for (const [workspaceName, definition] of Object.entries(
+				fluidBuildConfig.repoLayout.workspaces,
+			)) {
+				const workspace = Workspace.load(workspaceName, definition);
+				this.workspaces.set(workspaceName, workspace);
+				loadedPackages.push(...workspace.packages);
 			}
-			const monoRepo = MonoRepo.load(group, item);
-			if (monoRepo) {
-				this.releaseGroups.set(group, monoRepo);
-				loadedPackages.push(...monoRepo.packages);
-			} else {
-				loadedPackages.push(...loadOneEntry(item, group));
+
+			// Load independent packages
+			for (const pkgPath of fluidBuildConfig.repoLayout.packages ?? []) {
+				const packageDir = path.resolve(resolvedRoot, pkgPath);
+				loadedPackages.push(Package.load(packageDir, undefined));
 			}
+		} else if (fluidBuildConfig.repoPackages !== undefined) {
+			throw new Error(
+				"No repoLayout in fluid-build config, but there is a repoPackages setting; this must be converted to repoLayout manually.",
+			);
+		} else {
+			throw new Error("No repoLayout in fluid-build config.");
 		}
 		this.packages = new Packages(loadedPackages);
 	}
+
+	// public static create(resolvedRoot: string) {
+	// 	const packageManifest = loadFluidBuildConfig(resolvedRoot);
+
+	// 			// Expand to full IFluidRepoPackage and full path
+	// 			const normalizeEntry = (
+	// 				item: IFluidRepoPackageEntry,
+	// 			): IFluidRepoPackage | IFluidRepoPackage[] => {
+	// 				if (Array.isArray(item)) {
+	// 					return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
+	// 				}
+	// 				if (typeof item === "string") {
+	// 					traceInit(
+	// 						`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
+	// 					);
+	// 					return {
+	// 						directory: path.join(resolvedRoot, item),
+	// 						ignoredDirs: undefined,
+	// 						defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
+	// 					};
+	// 				}
+	// 				const directory = path.join(resolvedRoot, item.directory);
+	// 				return {
+	// 					directory,
+	// 					ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+	// 					defaultInterdependencyRange: item.defaultInterdependencyRange,
+	// 				};
+	// 			};
+	// 			const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
+	// 				return Packages.loadDir(item.directory, group, item.ignoredDirs);
+	// 			};
+
+	// 			const loadedPackages: Package[] = [];
+	// 			for (const group in packageManifest.repoPackages) {
+	// 				const item = normalizeEntry(packageManifest.repoPackages[group]);
+	// 				if (Array.isArray(item)) {
+	// 					for (const i of item) {
+	// 						loadedPackages.push(...loadOneEntry(i, group));
+	// 					}
+	// 					continue;
+	// 				}
+	// 				const monoRepo = Workspace.load(group, item);
+	// 				if (monoRepo) {
+	// 					this.releaseGroups.set(group, monoRepo);
+	// 					loadedPackages.push(...monoRepo.packages);
+	// 				} else {
+	// 					loadedPackages.push(...loadOneEntry(item, group));
+	// 				}
+	// 			}
+	// 			this.packages = new Packages(loadedPackages);
+	// 		}
+
+	// 	return new FluidRepo(resolvedRoot, packageManifest);
+	// }
 
 	public createPackageMap() {
 		return new Map<string, Package>(this.packages.packages.map((pkg) => [pkg.name, pkg]));
@@ -387,13 +504,13 @@ export class FluidRepo {
 	}
 
 	public static async ensureInstalled(packages: Package[]) {
-		const installedMonoRepo = new Set<MonoRepo>();
+		const installedWorkspaces = new Set<Workspace>();
 		const installPromises: Promise<ExecAsyncResult>[] = [];
 		for (const pkg of packages) {
-			if (pkg.monoRepo) {
-				if (!installedMonoRepo.has(pkg.monoRepo)) {
-					installedMonoRepo.add(pkg.monoRepo);
-					installPromises.push(pkg.monoRepo.install());
+			if (pkg.workspace) {
+				if (!installedWorkspaces.has(pkg.workspace)) {
+					installedWorkspaces.add(pkg.workspace);
+					installPromises.push(pkg.workspace.install());
 				}
 			} else {
 				installPromises.push(pkg.install());

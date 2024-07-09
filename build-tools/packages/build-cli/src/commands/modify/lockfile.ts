@@ -46,7 +46,7 @@ export default class UpdateDependencyInLockfileCommand extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const context = await this.getContext();
-		const releaseGroup = context.repo.releaseGroups.get(this.flags.releaseGroup);
+		const releaseGroup = context.repo.workspaces.get(this.flags.releaseGroup);
 
 		if (releaseGroup === undefined) {
 			// exits the process

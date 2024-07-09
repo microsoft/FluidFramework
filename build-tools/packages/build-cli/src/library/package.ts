@@ -19,9 +19,9 @@ import {
 } from "@fluid-tools/version-tools";
 import {
 	Logger,
-	MonoRepo,
 	Package,
 	type PackageJson,
+	Workspace,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
@@ -96,7 +96,7 @@ export async function npmCheckUpdates(
 
 	const releaseGroupsToCheck =
 		releaseGroup === undefined // run on the whole repo
-			? [...context.repo.releaseGroups.keys()]
+			? [...context.repo.workspaces.keys()]
 			: isReleaseGroup(releaseGroup) // run on just this release group
 				? [releaseGroup]
 				: undefined;
@@ -117,21 +117,21 @@ export async function npmCheckUpdates(
 				continue;
 			}
 
-			const releaseGroupRoot = context.repo.releaseGroups.get(group);
+			const releaseGroupRoot = context.repo.workspaces.get(group);
 			if (releaseGroupRoot === undefined) {
 				throw new Error(`Cannot find release group: ${group}`);
 			}
 
 			log?.verbose(
-				`Adding ${releaseGroupRoot.workspaceGlobs.length} globs for release group ${releaseGroupRoot.kind}.`,
+				`Adding ${releaseGroupRoot.workspaceGlobs.length} globs for release group ${releaseGroupRoot.name}.`,
 			);
 
 			searchGlobs.push(
 				...releaseGroupRoot.workspaceGlobs.map((g) =>
-					path.join(path.relative(repoPath, releaseGroupRoot.repoPath), g),
+					path.join(path.relative(repoPath, releaseGroupRoot.directory), g),
 				),
 				// Includes the root package.json, in case there are deps there that also need upgrade.
-				path.relative(repoPath, releaseGroupRoot.repoPath),
+				path.relative(repoPath, releaseGroupRoot.directory),
 			);
 		}
 	}
@@ -244,7 +244,7 @@ export interface PreReleaseDependencies {
  */
 export async function getPreReleaseDependencies(
 	context: Context,
-	releaseGroup: ReleaseGroup | ReleasePackage | MonoRepo | Package,
+	releaseGroup: ReleaseGroup | ReleasePackage | Workspace | Package,
 ): Promise<PreReleaseDependencies> {
 	const prereleasePackages = new Map<ReleasePackage, string>();
 	const prereleaseGroups = new Map<ReleaseGroup, string>();
@@ -260,15 +260,15 @@ export async function getPreReleaseDependencies(
 		updateDependenciesOnThesePackages.push(
 			...context.packagesNotInReleaseGroup(releaseGroup).map((p) => p.name),
 		);
-	} else if (releaseGroup instanceof MonoRepo || isReleaseGroup(releaseGroup)) {
+	} else if (releaseGroup instanceof Workspace || isReleaseGroup(releaseGroup)) {
 		const monorepo =
-			releaseGroup instanceof MonoRepo
+			releaseGroup instanceof Workspace
 				? releaseGroup
-				: context.repo.releaseGroups.get(releaseGroup);
+				: context.repo.workspaces.get(releaseGroup);
 		if (monorepo === undefined) {
 			throw new Error(
 				`Can't find release group in context: ${
-					releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup
+					releaseGroup instanceof Workspace ? releaseGroup.name : releaseGroup
 				}`,
 			);
 		}
@@ -310,10 +310,10 @@ export async function getPreReleaseDependencies(
 					throw new Error(`Can't find package in context: ${depName}`);
 				}
 
-				if (depPkg.monoRepo === undefined) {
+				if (depPkg.workspace === undefined) {
 					prereleasePackages.set(depPkg.name, depVersion);
 				} else {
-					prereleaseGroups.set(depPkg.monoRepo.releaseGroup, depVersion);
+					prereleaseGroups.set(depPkg.workspace.name as ReleaseGroup, depVersion);
 				}
 			}
 		}
@@ -340,7 +340,7 @@ export async function getPreReleaseDependencies(
  */
 export async function isReleased(
 	context: Context,
-	releaseGroupOrPackage: MonoRepo | Package | string,
+	releaseGroupOrPackage: Workspace | Package | string,
 	version: string,
 	log?: Logger,
 ): Promise<boolean> {
@@ -349,7 +349,7 @@ export async function isReleased(
 	const tagName = generateReleaseGitTagName(releaseGroupOrPackage, version);
 	if (typeof releaseGroupOrPackage === "string" && isReleaseGroup(releaseGroupOrPackage)) {
 		// eslint-disable-next-line no-param-reassign, @typescript-eslint/no-non-null-assertion
-		releaseGroupOrPackage = context.repo.releaseGroups.get(releaseGroupOrPackage)!;
+		releaseGroupOrPackage = context.repo.workspaces.get(releaseGroupOrPackage)!;
 	}
 
 	log?.verbose(`Checking for tag '${tagName}'`);
@@ -365,13 +365,13 @@ export async function isReleased(
  * @returns The generated tag name.
  */
 export function generateReleaseGitTagName(
-	releaseGroupOrPackage: MonoRepo | Package | string,
+	releaseGroupOrPackage: Workspace | Package | string,
 	version?: string,
 ): string {
 	let tagName = "";
 
-	if (releaseGroupOrPackage instanceof MonoRepo) {
-		const kindLowerCase = releaseGroupOrPackage.kind.toLowerCase();
+	if (releaseGroupOrPackage instanceof Workspace) {
+		const kindLowerCase = releaseGroupOrPackage.name.toLowerCase();
 		tagName = `${kindLowerCase}_v${version ?? releaseGroupOrPackage.version}`;
 	} else if (releaseGroupOrPackage instanceof Package) {
 		tagName = `${PackageName.getUnscopedName(releaseGroupOrPackage.name)}_v${
@@ -474,8 +474,8 @@ export function getFluidDependencies(
 				throw new Error(`Failed to parse depVersion: ${dep.version}`);
 			}
 
-			if (pkg.monoRepo !== undefined) {
-				releaseGroups[pkg.monoRepo.kind] = newVersion.version;
+			if (pkg.workspace !== undefined) {
+				releaseGroups[pkg.workspace.name] = newVersion.version;
 				continue;
 			}
 
@@ -503,7 +503,7 @@ export interface DependencyWithRange {
  */
 export async function setVersion(
 	context: Context,
-	releaseGroupOrPackage: MonoRepo | Package,
+	releaseGroupOrPackage: Workspace | Package,
 	version: semver.SemVer,
 	interdependencyRange: InterdependencyRange = "^",
 	log?: Logger,
@@ -516,9 +516,9 @@ export async function setVersion(
 	let options: execa.Options | undefined;
 
 	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
-	if (releaseGroupOrPackage instanceof MonoRepo) {
+	if (releaseGroupOrPackage instanceof Workspace) {
 		options = {
-			cwd: releaseGroupOrPackage.repoPath,
+			cwd: releaseGroupOrPackage.directory,
 			stdio: "inherit",
 			shell: true,
 		};
@@ -574,7 +574,7 @@ export async function setVersion(
 
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
 	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
-	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
+	const lernaPath = path.join(releaseGroupOrPackage.directory, "lerna.json");
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const lernaJson = await readJson(lernaPath);
 
@@ -583,7 +583,7 @@ export async function setVersion(
 	const output = JSON.stringify(lernaJson);
 	await writeFile(lernaPath, output);
 
-	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
+	updatePackageJsonFile(path.join(releaseGroupOrPackage.directory, "package.json"), (json) => {
 		json.version = translatedVersion.version;
 	});
 
@@ -678,7 +678,7 @@ async function setPackageDependencies(
 	for (const { name, dev } of pkg.combinedDependencies) {
 		const dep = dependencyVersionMap.get(name);
 		if (dep !== undefined) {
-			const isSameReleaseGroup = MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo);
+			const isSameReleaseGroup = Workspace.isSame(dep.pkg.workspace, pkg.workspace);
 			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
 				const dependencies = dev
 					? pkg.packageJson.devDependencies
