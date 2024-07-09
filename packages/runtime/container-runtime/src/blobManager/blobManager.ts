@@ -775,6 +775,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
+	 * Part of container serialization when imminent closure is enabled (Currently when calling closeAndGetPendingLocalState).
 	 * This asynchronous function resolves all pending createBlob calls and waits for each blob
 	 * to be attached. It will also send BlobAttach ops for each pending blob that hasn't sent it
 	 * yet so that serialized container can resubmit them when rehydrated.
@@ -795,7 +796,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
-				// This while is used to protect against blob creation while attaching and getting blobs
+				// This while is used to stash blobs created while attaching and getting blobs
 				while (localBlobs.size < this.pendingBlobs.size) {
 					const attachBlobsP: Promise<void>[] = [];
 					for (const [id, entry] of this.pendingBlobs) {
