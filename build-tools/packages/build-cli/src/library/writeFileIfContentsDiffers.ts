@@ -8,7 +8,7 @@ import { readFile, writeFile } from "node:fs/promises";
 
 /**
  * Writes to a file, but first reads the contents to check if it matches the desired content. If it does, the operation
- * is skipped. Newlines are _always_ normalized to be line-feeds only. This pplies to both the input and the written
+ * is skipped. Newlines are _always_ normalized to be line-feeds only. This applies to both the input and the written
  * contents. This means this function _cannot_ be used to output carriage-return/line-feed line endings.
  *
  * @param filePath - The path to the file to write.
