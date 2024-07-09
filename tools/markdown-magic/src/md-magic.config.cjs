@@ -421,6 +421,33 @@ module.exports = {
 		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
 
 		/**
+		 * Generates a README section with Fluid Framework client requirements.
+		 *
+		 * @param {object} content - The original document file contents.
+		 * @param {object} options - Transform options.
+		 * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+		 * default: `TRUE`.
+		 * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+		 * Must be a positive integer.
+		 * Default: {@link defaultSectionHeadingLevel}.
+		 * @param {object} config - Transform configuration.
+		 * @param {string} config.originalPath - Path to the document being modified.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_CLIENT_REQUIREMENTS_SECTION:headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_CLIENT_REQUIREMENTS_SECTION: (content, options, config) => {
+			return templateTransform(
+				"Client-Requirements-Template.md",
+				parseHeadingOptions(options, "Client Requirements"),
+			);
+		},
+
+		/**
 		 * Generates a README section with Microsoft trademark info.
 		 *
 		 * @param {object} content - The original document file contents.
