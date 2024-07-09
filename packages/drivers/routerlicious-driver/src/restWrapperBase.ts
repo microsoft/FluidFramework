@@ -4,10 +4,7 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
-import {
-	buildUrlWithQueryString,
-	type QueryStringType,
-} from "./queryStringUtils.js";
+import { type QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
@@ -25,12 +22,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -41,8 +33,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "GET",
-			url: this.generateQueryString(url, queryString),
-			params: queryString,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 200);
 	}
@@ -55,12 +47,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -72,8 +59,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "POST",
-			url: this.generateQueryString(url, queryString),
-			params: queryString,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 201);
 	}
@@ -85,12 +72,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -101,8 +83,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
-			url: this.generateQueryString(url, queryString),
-			params: queryString,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 204);
 	}
@@ -115,12 +97,7 @@ export abstract class RestWrapper {
 		additionalOptions?: Partial<
 			Omit<
 				AxiosRequestConfig,
-				| "baseURL"
-				| "headers"
-				| "maxBodyLength"
-				| "maxContentLength"
-				| "method"
-				| "url"
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
 			>
 		>,
 	): Promise<IR11sResponse<T>> {
@@ -132,8 +109,8 @@ export abstract class RestWrapper {
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",
-			url: this.generateQueryString(url, queryString),
-			params: queryString,
+			url,
+			params: { ...this.defaultQueryString, ...queryString },
 		};
 		return this.request<T>(options, 200);
 	}
@@ -143,22 +120,6 @@ export abstract class RestWrapper {
 		statusCode: number,
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;
-
-	protected generateQueryString(
-		url: string,
-		queryStringValues?: QueryStringType,
-	) {
-		if (this.defaultQueryString || queryStringValues) {
-			const queryStringMap = {
-				...this.defaultQueryString,
-				...queryStringValues,
-			};
-
-			return buildUrlWithQueryString(url, queryStringMap);
-		}
-
-		return "";
-	}
 }
 
 /**
