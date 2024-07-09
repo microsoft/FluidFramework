@@ -266,6 +266,10 @@ module.exports = {
 				"tools/changelog-generator-wrapper/src/index.js",
 				"tools/getkeys/index.js",
 			],
+			"npm-package-metadata-and-sorting": [
+				// The root package.json is not checked temporarily due to AB#8640
+				"^package.json",
+			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],

@@ -8,7 +8,7 @@ const scripts = require("markdown-magic-package-scripts");
 const { formattedGeneratedContentBody, formattedSectionText } = require("../utilities.cjs");
 
 /**
- * Generats a simple Markdown heading and contents with a table describing all of the package's npm scripts.
+ * Generates a simple Markdown heading and contents with a table describing all of the package's npm scripts.
  *
  * @param {string} scriptsTable - Table of scripts to display.
  * See `markdown-magic-package-scripts` (imported as `scripts`).

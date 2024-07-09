@@ -1301,6 +1301,4 @@ export interface WithType<TName extends string = string> {
     get [typeNameSymbol](): TName;
 }
 
-// (No @packageDocumentation comment for this package)
-
 ```
