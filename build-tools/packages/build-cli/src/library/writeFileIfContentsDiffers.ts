@@ -24,7 +24,7 @@ export async function writeFileIfContentsDiffers(
 	const normalizedNewContents = contents.replace(/\r\n/g, "\n");
 
 	if (normalizedFileContents !== normalizedNewContents) {
-		await writeFile(filePath, normalizedNewContents);
+		await writeFile(filePath, normalizedNewContents, "utf8");
 		return true;
 	}
 	return false;
