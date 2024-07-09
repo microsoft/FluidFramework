@@ -3741,18 +3741,11 @@ export class ContainerRuntime
 				};
 			}
 
-			const summaryContext =
-				this.lastAckedSummaryContext === undefined
-					? {
-							proposalHandle: undefined,
-							ackHandle: this.loadedFromVersionId,
-							referenceSequenceNumber: summaryRefSeqNum,
-						}
-					: {
-							proposalHandle: this.lastAckedSummaryContext.proposalHandle,
-							ackHandle: this.lastAckedSummaryContext.ackHandle,
-							referenceSequenceNumber: summaryRefSeqNum,
-						};
+			const summaryContext: ISummaryContext = {
+				proposalHandle: this.lastAckedSummaryContext?.proposalHandle ?? undefined,
+				ackHandle: this.lastAckedSummaryContext?.ackHandle ?? this.loadedFromVersionId,
+				referenceSequenceNumber: summaryRefSeqNum,
+			};
 
 			let handle: string;
 			try {
