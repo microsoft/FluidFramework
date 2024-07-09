@@ -121,22 +121,3 @@ export abstract class RestWrapper {
 		addNetworkCallProps?: boolean,
 	): Promise<IR11sResponse<T>>;
 }
-
-/**
- * Generates query string from the given query parameters.
- * @param queryParams - Query parameters from which to create a query.
- */
-export function getQueryString(queryParams: QueryStringType): string {
-	let queryString = "";
-	for (const [key, value] of Object.entries(queryParams)) {
-		if (value !== undefined) {
-			const startChar = queryString === "" ? "?" : "&";
-			queryString += `${startChar}${key}=${encodeURIComponent(value)}`;
-			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
-		}
-	}
-
-	return queryString;
-}
-
-export type QueryStringType = Record<string, string | number | boolean>;
