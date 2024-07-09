@@ -55,7 +55,7 @@ describe("Outbox", () => {
 		batchesCompressed: IBatch[];
 		batchesSplit: IBatch[];
 		individualOpsSubmitted: any[];
-		pendingOpContents: Partial<IPendingMessage>[];
+		pendingOpContents: Partial<IPendingMessage & { batchStartCsn: number }>[];
 		opsSubmitted: number;
 		opsResubmitted: number;
 		isReentrant: boolean;
@@ -125,7 +125,6 @@ describe("Outbox", () => {
 		},
 	});
 
-	//* Double-check batchIdContext value / coverage
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
@@ -134,11 +133,8 @@ describe("Outbox", () => {
 					state.pendingOpContents.push({
 						content,
 						referenceSequenceNumber,
-						opMetadata, //* This will have batchId or not based on includeBatchId param
-						batchIdContext: {
-							clientId: "CLIENT_ID",
-							batchStartCsn: clientSequenceNumber ?? -1,
-						},
+						opMetadata,
+						batchStartCsn: clientSequenceNumber ?? -1,
 					}),
 			);
 		},
@@ -201,7 +197,6 @@ describe("Outbox", () => {
 		compressionOptions?: ICompressionRuntimeOptions;
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
-		includeBatchId?: boolean;
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 	}) => {
@@ -257,51 +252,53 @@ describe("Outbox", () => {
 		mockLogger.clear();
 	});
 
-	//* And also add one where it's disabled
-	it.only("Batch ID added when enabled", () => {
+	it.only("Batch ID added when applicable", () => {
 		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
-		const messages = [
-			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
-		];
 
-		// Flush 1
-		outbox.submit(messages[0]);
-		outbox.submit(messages[1]);
+		// Flush 1 - resubmit multi-message batch including ID Allocation
+		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
 		outbox.flush("batchId-A");
 
-		// Flush 2
-		outbox.submit(messages[2]);
+		// Flush 2 - resubmit single-message batch
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "3"));
 		outbox.flush("batchId-B");
 
+		// Flush 3 - resubmit blob attach batch
+		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "4"));
+		outbox.submitBlobAttach(createMessage(ContainerMessageType.BlobAttach, "5"));
+		outbox.flush("batchId-C");
+
+		// Flush 4 - no batch ID given
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "6"));
+		outbox.flush(); // Ignored - No batchID given (not resubmit)
+
 		// Not Flushed (will not appear in batchesSubmitted or pendingOpContents)
-		outbox.submit(messages[3]);
+		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "7"));
 
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
-			[["batchId-A", undefined], ["batchId-B"]],
+			[
+				[undefined], // ID Allocation (no batch ID used)
+				["batchId-A", undefined],
+				["batchId-B"],
+				["batchId-C", undefined],
+				[undefined],
+			],
+			"Submitted batches missing expected batch ID",
 		);
 
 		assert.deepEqual(
-			state.pendingOpContents.map(({ batchIdContext, opMetadata }) => ({
-				batchIdContext,
-				batchId: asBatchMetadata(opMetadata)?.batchId,
-			})),
+			state.pendingOpContents.map(({ opMetadata }) => asBatchMetadata(opMetadata)?.batchId),
 			[
-				{
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
-					batchId: "batchId-A",
-				},
-				{
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
-					batchId: undefined,
-				},
-				{
-					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
-					batchId: "batchId-B",
-				},
+				undefined, // ID Allocation (no batch ID used)
+				"batchId-A",
+				undefined, // second message in batch
+				"batchId-B",
+				"batchId-C",
+				undefined, // second message in batch
+				undefined, // no batchId given
 			],
 		);
 	});
@@ -336,7 +333,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: i === 2 ? -1 : 1 }, // Third batch got no CSN as it was not submitted
+				batchStartCsn: i === 2 ? -1 : 1, // Third batch got no CSN as it was not submitted
 			})),
 		);
 	});
@@ -384,7 +381,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -447,7 +444,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -508,7 +505,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -600,7 +597,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
+				batchStartCsn: csn,
 			})),
 		);
 	});
@@ -686,7 +683,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: i + 1 }, // Each message should have been in its own batch. CSN starts at 1.
+				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
 			})),
 		);
 
@@ -871,7 +868,7 @@ describe("Outbox", () => {
 				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: csn },
+				batchStartCsn: csn,
 			})),
 		);
 	});
