@@ -72,18 +72,21 @@ export class SessionSpaceNormalizer {
 			ranges.push([genCount, count]);
 		}
 
-		const firstEntry = ranges[0];
-		if (ranges.length === 0 || firstEntry === undefined) {
+		if (ranges.length === 0) {
 			return ranges;
 		}
+		assert(
+			ranges[0] !== undefined,
+			"ranges[0] is undefined in SessionSpaceNormalizer.getRangesBetween",
+		);
 
 		// now we touch up the first and last ranges to ensure that if they contain the
 		// queried IDs they are trimmed to start/end with the queried IDs
-		const [baseGenCount, baseCount] = firstEntry;
-		if (this.rangeContains(firstEntry, firstGenCount)) {
+		const [baseGenCount, baseCount] = ranges[0];
+		if (this.rangeContains(ranges[0], firstGenCount)) {
 			ranges[0] = [firstGenCount, baseCount - (firstGenCount - baseGenCount)];
 			assert(
-				this.rangeContains(firstEntry, firstGenCount),
+				this.rangeContains(ranges[0], firstGenCount),
 				0x952 /* Expected the touched up range to contain the queried ID */,
 			);
 		} else {
@@ -95,7 +98,10 @@ export class SessionSpaceNormalizer {
 
 		const lastRangeIndex = ranges.length - 1;
 		const lastRange = ranges[lastRangeIndex];
-		assert(lastRange !== undefined, 0x9ab /* Expected the last range to exist */);
+		assert(
+			lastRange !== undefined,
+			"lastRange is undefined in SessionSpaceNormalizer.getRangesBetween",
+		);
 		const [limitGenCount, limitCount] = lastRange;
 		if (this.rangeContains(lastRange, lastGenCount)) {
 			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
