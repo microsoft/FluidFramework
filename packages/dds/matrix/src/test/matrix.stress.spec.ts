@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -326,8 +326,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 								matrix.insertRows(row, numInserted);
 
 								// 90% probability of filling the newly inserted row with values.
-								if (float64() < 0.9) {
-									if (colCount > 0) {
+								if (float64() < 0.9 && colCount > 0) {
 										setCells(
 											matrixIndex,
 											row,
@@ -336,7 +335,6 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 											values(matrix.colCount * numInserted),
 										);
 									}
-								}
 								break;
 							}
 
@@ -354,8 +352,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 								matrix.insertCols(col, numInserted);
 
 								// 90% probability of filling the newly inserted col with values.
-								if (float64() < 0.9) {
-									if (rowCount > 0) {
+								if (float64() < 0.9 && rowCount > 0) {
 										setCells(
 											matrixIndex,
 											/* row: */ 0,
@@ -364,7 +361,6 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 											values(matrix.rowCount * numInserted),
 										);
 									}
-								}
 								break;
 							}
 

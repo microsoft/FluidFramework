@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -613,7 +613,7 @@ describe("Matrix1", () => {
 						matrix1.insertRows(0, 4);
 						matrix1.insertCols(0, 4);
 
-						const v = new Array(16).fill(0).map((_, index) => index);
+						const v = Array.from({length: 16}).fill(0).map((_, index) => index);
 
 						matrix1.setCells(0, 0, 4, v);
 						await expect();

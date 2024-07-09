@@ -63,21 +63,22 @@ export class VectorUndoProvider {
 				//		the tracking group provides one.
 				const trackingGroup = (removeTrackingGroup =
 					this.currentRemoveTrackingGroup ?? new TrackingGroup());
-				deltaArgs.deltaSegments.forEach((d) =>
-					d.segment.trackingCollection.link(trackingGroup),
-				);
+				for (const d of deltaArgs.deltaSegments) d.segment.trackingCollection.link(trackingGroup)
+				;
 			}
 
 			switch (deltaArgs.operation) {
 				case MergeTreeDeltaType.REMOVE:
-				case MergeTreeDeltaType.INSERT:
+				case MergeTreeDeltaType.INSERT: {
 					if (this.currentOp !== deltaArgs.operation) {
 						this.pushRevertible(revertibles, removeTrackingGroup);
 					}
 					break;
+				}
 
-				default:
+				default: {
 					throw new Error("operation type not revertible");
+				}
 			}
 
 			// If we are in the process of reverting, set 'currentOp' to remind ourselves not to push

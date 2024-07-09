@@ -25,7 +25,7 @@ class Stack<T> {
 	private readonly items: T[] = [];
 	constructor(...items: T[]) {
 		if (items !== undefined) {
-			items.forEach((item) => this.push(item));
+			for (const item of items) this.push(item);
 		}
 	}
 
@@ -62,10 +62,10 @@ class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
 	}
 
 	public closeCurrentOperationIfInProgress() {
-		if (this.top() !== undefined) {
-			this.push(undefined);
-		} else {
+		if (this.top() === undefined) {
 			this.callItemPushedCallback();
+		} else {
+			this.push(undefined);
 		}
 	}
 
@@ -160,21 +160,25 @@ export class UndoRedoStackManager {
 		let currentStack: UndoRedoStack;
 
 		switch (this.mode) {
-			case UndoRedoMode.None:
+			case UndoRedoMode.None: {
 				currentStack = this.undoStack;
 				this.clearRedoStack();
 				break;
+			}
 
-			case UndoRedoMode.Redo:
+			case UndoRedoMode.Redo: {
 				currentStack = this.undoStack;
 				break;
+			}
 
-			case UndoRedoMode.Undo:
+			case UndoRedoMode.Undo: {
 				currentStack = this.redoStack;
 				break;
+			}
 
-			default:
+			default: {
 				throw new Error("unknown mode");
+			}
 		}
 		const operationStack = currentStack.top();
 		if (operationStack === undefined) {

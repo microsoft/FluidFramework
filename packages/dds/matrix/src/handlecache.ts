@@ -53,7 +53,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		return index < this.handles.length ? this.handles[index] : this.cacheMiss(position);
 	}
 
-	/** Update the cache when a handle has been allocated for a given position. */
+	/**
+	 * Update the cache when a handle has been allocated for a given position.
+	 */
 	public addHandle(position: number, handle: Handle) {
 		assert(isHandleValid(handle), 0x017 /* "Trying to add invalid handle!" */);
 
@@ -67,7 +69,9 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		}
 	}
 
-	/** Used by 'CacheMiss()' to retrieve handles for a range of positions. */
+	/**
+	 * Used by 'CacheMiss()' to retrieve handles for a range of positions.
+	 */
 	private getHandles(start: number, end: number) {
 		// TODO: This can be accelerated substantially using 'walkSegments()'.  The only catch
 		//       is that

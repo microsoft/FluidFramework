@@ -48,7 +48,7 @@ describe("Matrix memory usage", () => {
 
 		const numbersOfEntriesForTests = [100, 1000, 5000];
 
-		numbersOfEntriesForTests.forEach((x) => {
+		for (const x of numbersOfEntriesForTests) {
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
 					readonly title = `Insert and remove a column ${x} times`;
@@ -142,6 +142,6 @@ describe("Matrix memory usage", () => {
 					}
 				})(),
 			);
-		});
+		}
 	});
 });

@@ -12,7 +12,7 @@ import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 //
 // (Lookup table ~17% faster than inlining the bit-twiddling on Node v12 x64)
 // (Array<T> ~2% faster than typed array on Node v12 x64)
-const x8ToInterlacedX16 = new Array(256).fill(0).map((value, i) => {
+const x8ToInterlacedX16 = Array.from({length: 256}).fill(0).map((value, i) => {
 	let j = i;
 	j = (j | (j << 4)) & 0x0f0f; // .... 7654 .... 3210
 	j = (j | (j << 2)) & 0x3333; // ..76 ..54 ..32 ..10
@@ -43,7 +43,9 @@ const r0c0ToMorton2x16 = (row: number, col: number) =>
 type RecurArrayHelper<T> = RecurArray<T> | T;
 type RecurArray<T> = RecurArrayHelper<T>[];
 
-/** Undo JSON serialization's coercion of 'undefined' to null. */
+/**
+ * Undo JSON serialization's coercion of 'undefined' to null.
+ */
 // eslint-disable-next-line @rushstack/no-new-null -- Private use of 'null' to preserve 'undefined'
 const nullToUndefined = <T>(array: RecurArray<T | null>): RecurArray<T | undefined> =>
 	array.map((value) => {
@@ -165,7 +167,9 @@ export class SparseArray2D<T>
 		});
 	}
 
-	/** Clears the all cells contained within the specified span of rows. */
+	/**
+	 * Clears the all cells contained within the specified span of rows.
+	 */
 	public clearRows(rowStart: number, rowCount: number) {
 		const rowEnd = rowStart + rowCount;
 		for (let row = rowStart; row < rowEnd; row++) {
@@ -192,7 +196,9 @@ export class SparseArray2D<T>
 		}
 	}
 
-	/** Clears the all cells contained within the specifed span of cols. */
+	/**
+	 * Clears the all cells contained within the specifed span of cols.
+	 */
 	public clearCols(colStart: number, colCount: number) {
 		const colEnd = colStart + colCount;
 		for (let col = colStart; col < colEnd; col++) {
@@ -221,8 +227,8 @@ export class SparseArray2D<T>
 
 	private getLevel<T>(parent: UA<UA<T>>, subKey: number) {
 		const level = parent[subKey];
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return level ?? (parent[subKey] = new Array(256).fill(undefined));
+		 
+		return level ?? (parent[subKey] = Array.from({length: 256}).fill(undefined));
 	}
 
 	public snapshot() {

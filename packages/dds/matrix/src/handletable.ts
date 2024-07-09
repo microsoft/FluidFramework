@@ -9,7 +9,9 @@ export const enum Handle {
 	 */
 	none = 0,
 
-	/** Minimum valid handle. */
+	/**
+	 * Minimum valid handle.
+	 */
 	valid = 1,
 
 	/**

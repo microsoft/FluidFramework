@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -35,20 +35,20 @@ async function createMatrixForReconnection(
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage:
-			summary !== undefined ? MockStorage.createFromSummary(summary) : new MockStorage(),
+			summary === undefined ? new MockStorage() : MockStorage.createFromSummary(summary),
 	};
 
 	let matrix: SharedMatrix;
-	if (summary !== undefined) {
+	if (summary === undefined) {
+		matrix = matrixFactory.create(dataStoreRuntime, id);
+		matrix.connect(services);
+	} else {
 		matrix = await matrixFactory.load(
 			dataStoreRuntime,
 			id,
 			services,
 			matrixFactory.attributes,
 		);
-	} else {
-		matrix = matrixFactory.create(dataStoreRuntime, id);
-		matrix.connect(services);
 	}
 
 	return {

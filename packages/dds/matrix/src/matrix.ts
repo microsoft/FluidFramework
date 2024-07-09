@@ -805,7 +805,7 @@ export class SharedMatrix<T = any>
 			}
 		} else {
 			switch (content.target) {
-				case SnapshotPath.cols:
+				case SnapshotPath.cols: {
 					this.submitColMessage(
 						this.cols.regeneratePendingOp(
 							content,
@@ -814,7 +814,8 @@ export class SharedMatrix<T = any>
 						),
 					);
 					break;
-				case SnapshotPath.rows:
+				}
+				case SnapshotPath.rows: {
 					this.submitRowMessage(
 						this.rows.regeneratePendingOp(
 							content,
@@ -823,6 +824,7 @@ export class SharedMatrix<T = any>
 						),
 					);
 					break;
+				}
 				default: {
 					unreachableCase(content);
 				}
@@ -913,12 +915,14 @@ export class SharedMatrix<T = any>
 		const target = contents.target;
 
 		switch (target) {
-			case SnapshotPath.cols:
+			case SnapshotPath.cols: {
 				this.cols.applyMsg(msg, local);
 				break;
-			case SnapshotPath.rows:
+			}
+			case SnapshotPath.rows: {
 				this.rows.applyMsg(msg, local);
 				break;
+			}
 			case undefined: {
 				assert(
 					contents.type === MatrixOp.set,
@@ -1018,8 +1022,9 @@ export class SharedMatrix<T = any>
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(target, "unknown target");
+			}
 		}
 	}
 

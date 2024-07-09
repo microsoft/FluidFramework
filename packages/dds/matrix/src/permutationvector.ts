@@ -332,7 +332,7 @@ export class PermutationVector extends Client {
 		}
 
 		switch (deltaArgs.operation) {
-			case MergeTreeDeltaType.INSERT:
+			case MergeTreeDeltaType.INSERT: {
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
 					// HACK: We need to include the allocated handle in the segment's JSON representation
@@ -356,6 +356,7 @@ export class PermutationVector extends Client {
 					);
 				}
 				break;
+			}
 
 			case MergeTreeDeltaType.REMOVE: {
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
@@ -378,8 +379,9 @@ export class PermutationVector extends Client {
 				break;
 			}
 
-			default:
+			default: {
 				throw new Error("Unhandled MergeTreeDeltaType");
+			}
 		}
 	};
 
