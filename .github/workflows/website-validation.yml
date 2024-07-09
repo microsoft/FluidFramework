@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "docs/**"
+      # Since we use `markdown-magic` to embed contents from other documents in our website markdown files,
+      # trigger website validation for *any* markdown file changes in the repo.
+      - "**/*.md"
 
 defaults:
   run:
