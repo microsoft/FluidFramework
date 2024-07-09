@@ -764,6 +764,20 @@ describe("ArrayNode", () => {
 			);
 		});
 
+		it("Iterating when edits were made after the iterator was returned from ArrayNode.values should throw an error.  ", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values = array.values();
+			array.removeRange();
+			assert.throws(
+				() => {
+					for (const v of values) {
+					}
+				},
+				(error: Error) =>
+					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
+			);
+		});
+
 		it("Iterates through the values of the array", () => {
 			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 			const result = [];

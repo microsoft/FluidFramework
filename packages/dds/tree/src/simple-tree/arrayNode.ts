@@ -865,19 +865,24 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		);
 	}
 
-	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
-		const initialLastUpdatedStamp = this.#generationNumber;
-		let index = 0;
-		while (true) {
+	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		return this.generateValues(this.#generationNumber);
+	}
+	private *generateValues(
+		initialLastUpdatedStamp: number,
+	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+		if (initialLastUpdatedStamp < this.#generationNumber) {
+			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+		}
+		for (
+			let i = 0, value = this.at(0);
+			i < this.length && value !== undefined;
+			i++, value = this.at(i)
+		) {
+			yield value;
 			if (initialLastUpdatedStamp < this.#generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
-			const value = this.at(index);
-			if (index >= this.length || value === undefined) {
-				break;
-			}
-			index += 1;
-			yield value;
 		}
 	}
 }
