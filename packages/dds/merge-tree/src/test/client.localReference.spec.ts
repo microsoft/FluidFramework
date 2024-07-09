@@ -699,7 +699,7 @@ describe("MergeTree.Client", () => {
 
 				segInfo.segment.localRefs.removeLocalRef(localRef);
 				assert(segInfo.segment.localRefs.empty);
-				// Cast is necessary because LocalReference is not exported, so we can't directly call link
+				// Cast is necessary because LocalReference is not exported, so we can't directly call link.
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(localRef as any).link(undefined, 0, undefined);
 				assert(segInfo.segment.localRefs.empty);

@@ -523,6 +523,7 @@ export abstract class BaseSegment implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet {
 		this.propertyManager ??= new PropertiesManager();
+		// A property set must be able to hold properties of any type, so the any is needed.
 		// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
@@ -567,7 +568,8 @@ export abstract class BaseSegment implements ISegment {
 			jseg.props = { ...this.properties };
 		}
 	}
-
+	// This has to return any type because the return type is different for different segment types.
+	// TODO: If possible, change the return type to match what should be returned for each segment type.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public abstract toJSONObject(): any;
 

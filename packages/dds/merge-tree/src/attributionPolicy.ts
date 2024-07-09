@@ -201,7 +201,6 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
 
 /**
  * Creates an {@link AttributionPolicy} for inserted content only.
- * @returns An {@link AttributionPolicy} which tracks only insertion of content.
  * @internal
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {

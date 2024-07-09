@@ -275,7 +275,8 @@ export function findRootMergeBlock(
 }
 
 /**
- * Find the segment to which a reference will slide if it needs to slide.
+ * Find the segment to which a reference will slide if it needs to slide, or undefined if there
+ * is no valid segment (i.e. the tree is empty).
  *
  * @param segment - The segment to slide from.
  * @param cache - Optional cache mapping segments to their sliding destinations.
@@ -283,8 +284,6 @@ export function findRootMergeBlock(
  * entries for all segments visited during excursion.
  * This can reduce the number of times the tree needs to be scanned if a range containing many
  * SlideOnRemove references is removed.
- * @returns The segment a SlideOnRemove reference should slide to, or undefined if there is no
- * valid segment (i.e. the tree is empty).
  * @internal
  */
 function getSlideToSegment(
@@ -1076,7 +1075,6 @@ export class MergeTree {
 	 * Defaults to including all edits which have been applied.
 	 * @param clientId - The ID of the client from whose perspective to resolve this reference. Defaults to the current client.
 	 * @param localSeq - The local sequence number to consider. Defaults to including all local edits.
-	 * @returns the count of elements before the given reference position in the given perspective.
 	 */
 	public referencePositionToLocalPosition(
 		refPos: ReferencePosition,

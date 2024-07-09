@@ -175,7 +175,6 @@ function assertLocalReferences(lref: unknown): asserts lref is LocalReference {
 
 /**
  * Determines if the given function is true for any position within the collection.
- * @returns true if `func` returns true for any position within the collection
  */
 export function anyLocalReferencePosition(
 	collection: LocalReferenceCollection,
@@ -192,8 +191,6 @@ export function anyLocalReferencePosition(
 
 /**
  * Finds the local reference positions that satisfy the given predicate.
- * @returns only the local reference positions for which the `predicate` returns
- * true
  */
 export function* filterLocalReferencePositions(
 	collection: LocalReferenceCollection,

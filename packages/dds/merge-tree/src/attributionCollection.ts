@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-null */
-
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AttributionKey,
@@ -301,10 +299,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			// TODO Non null asserting, why is this not null?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			splitCollection.offsets.push(Math.max(this.offsets[i]! - pos, 0));
-			if (this.keys[i] !== undefined) {
-				// Non null asserting, this.keys[i] will always exist since we are looping though the length of it?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				splitCollection.keys.push(this.keys[i]!);
+			const key = this.keys[i];
+			if (key !== undefined) {
+				splitCollection.keys.push(key);
 			}
 		}
 
@@ -339,12 +336,15 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			for (const [key, collection] of other.channelEntries) {
 				const thisCollection = (this.channels[key] ??= new AttributionCollection(
 					this.length,
+					// Null is needed as null and undefined have different meanings in the context of attribution collections.
+					// eslint-disable-next-line unicorn/no-null
 					null,
 				));
 				thisCollection.append(collection);
 			}
 			for (const [key, collection] of this.channelEntries) {
 				if (other.channels?.[key] === undefined) {
+					// eslint-disable-next-line unicorn/no-null
 					collection.append(new AttributionCollection(other.length, null));
 				}
 			}
@@ -435,6 +435,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				const pushEntry = (offset: number, seq: AttributionKey | number | null): void => {
 					attribution.offsets.push(offset);
 					attribution.keys.push(
+						// eslint-disable-next-line unicorn/no-null
 						seq === null ? null : typeof seq === "object" ? seq : { type: "op", seq },
 					);
 				};
@@ -497,6 +498,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		const allChannelNames = new Set<string>();
 		for (const segment of segments) {
 			const collection =
+				// eslint-disable-next-line unicorn/no-null
 				segment.attribution ?? new AttributionCollection(segment.cachedLength, null);
 			const spec = collection.getAll();
 			allCollectionSpecs.push(spec);
@@ -528,6 +530,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
+						// eslint-disable-next-line unicorn/no-null
 						seqs.push(key ? (key.type === "op" ? key.seq : key) : null);
 					}
 					mostRecentAttributionKey = key;
@@ -544,6 +547,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			const channels: { [name: string]: SequenceOffsets } = {};
 			for (const name of allChannelNames) {
 				const { posBreakpoints, seqs } = extractSequenceOffsets(
+					// eslint-disable-next-line unicorn/no-null
 					(spec) => spec.channels?.[name] ?? [{ offset: 0, key: null }],
 				);
 				channels[name] = { posBreakpoints, seqs };

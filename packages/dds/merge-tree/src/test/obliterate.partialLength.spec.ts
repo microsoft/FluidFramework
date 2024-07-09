@@ -140,7 +140,7 @@ describe("obliterate partial lengths", () => {
 				refSeq,
 			);
 		});
-		// here are tests failing w nouncheckedindexaccess
+
 		it("passes for remote remove and local obliterate", () => {
 			client.removeRangeRemote(
 				0,

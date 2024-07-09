@@ -436,7 +436,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 
 	/**
 	 * Finds the largest node that is less than or equal to a given key.
-	 * @returns The largest node in this tree which compares less than or equal to `key`
 	 */
 	public floor(key: TKey): RBNode<TKey, TData> | undefined {
 		if (!this.isEmpty()) {
@@ -463,7 +462,6 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
 
 	/**
 	 * Finds the smallest node that is greater than or equal to a given key.
-	 * @returns The smallest node in this tree which compares greater than or equal to `key`
 	 */
 	public ceil(key: TKey): RBNode<TKey, TData> | undefined {
 		if (!this.isEmpty()) {

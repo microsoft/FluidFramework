@@ -142,8 +142,7 @@ export class PropertiesManager {
 	}
 
 	/**
-	 * Determines if all of the properties in a given property set are pending.
-	 * @returns whether all valid (i.e. defined) entries of the property bag are pending
+	 * Determines if all of the defined properties in a given property set are pending.
 	 */
 	public hasPendingProperties(props: PropertySet): boolean {
 		for (const [key, value] of Object.entries(props)) {

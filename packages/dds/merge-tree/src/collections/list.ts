@@ -38,6 +38,7 @@ class HeadNode<T> {
 	}
 }
 
+// The any is needed for use in the remove function, where the nodes are defined with a generic type.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const DeadHead = new HeadNode<any>(undefined);
 

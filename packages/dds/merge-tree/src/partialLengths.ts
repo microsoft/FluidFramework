@@ -381,10 +381,8 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * PartialLengths for the leaves of a given MergeBlock.
-	 *
-	 * @returns a PartialSequenceLengths structure which tracks only lengths of leaf children of the provided
-	 * MergeBlock.
+	 * Creates and returns a PartialSequenceLengths structure that tracks the lengths of only the
+	 * leaf children of the provided MergeBlock.
 	 */
 	private static fromLeaves(
 		block: MergeBlock,
