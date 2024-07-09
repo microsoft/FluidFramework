@@ -360,7 +360,7 @@ extends:
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3
                       displayName: Upload tinylicious log
-                      condition: succeededOrFailed()
+                      condition: always()
                       continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                       inputs:
                         targetType: inline
