@@ -31,6 +31,7 @@ declare type old_as_current_for_TypeAliasDeclaration_CacheContentType = requireA
  * typeValidation.broken:
  * "TypeAliasDeclaration_CacheContentType": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAliasDeclaration_CacheContentType = requireAssignableTo<TypeOnly<current.CacheContentType>, TypeOnly<old.CacheContentType>>
 
 /*
@@ -67,6 +68,7 @@ declare type old_as_current_for_InterfaceDeclaration_ICacheEntry = requireAssign
  * typeValidation.broken:
  * "InterfaceDeclaration_ICacheEntry": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_ICacheEntry = requireAssignableTo<TypeOnly<current.ICacheEntry>, TypeOnly<old.ICacheEntry>>
 
 /*
@@ -103,6 +105,7 @@ declare type old_as_current_for_InterfaceDeclaration_IEntry = requireAssignableT
  * typeValidation.broken:
  * "InterfaceDeclaration_IEntry": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_IEntry = requireAssignableTo<TypeOnly<current.IEntry>, TypeOnly<old.IEntry>>
 
 /*
