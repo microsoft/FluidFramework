@@ -100,7 +100,7 @@ describe("BatchManager", () => {
 		const batchStartCsn = 123;
 		const batchId = generateBatchId(clientId, batchStartCsn);
 		const serialized = JSON.stringify({ batchId });
-		assert.equal(serialized, `{"batchId":"[\\"3627a2a9-963f-4e3b-a4d2-a31b1267ef29\\",123]"}`);
+		assert.equal(serialized, `{"batchId":"3627a2a9-963f-4e3b-a4d2-a31b1267ef29_[123]"}`);
 	});
 
 	it("Batch content size is tracked correctly", () => {

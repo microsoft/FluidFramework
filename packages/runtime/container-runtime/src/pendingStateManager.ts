@@ -38,7 +38,10 @@ export interface IPendingMessage {
 	batchIdContext: {
 		/** The Batch's original clientId, from when it was first flushed to be submitted */
 		clientId: string;
-		/** The Batch's original clientSequenceNumber, from when it was first flushed to be submitted */
+		/**
+		 * The Batch's original clientSequenceNumber, from when it was first flushed to be submitted
+		 *	@remarks A negative value means it was not yet submitted when queued here (e.g. disconnected right before flush fired)
+		 */
 		batchStartCsn: number;
 	};
 }
@@ -124,6 +127,9 @@ export class PendingStateManager implements IDisposable {
 	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
 	 */
 	private savedOps: IPendingMessage[] = [];
+
+	/** Used to stand in for batchStartCsn for messages that weren't submitted (so no CSN) */
+	private negativeCounter: number = -1;
 
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
@@ -221,10 +227,13 @@ export class PendingStateManager implements IDisposable {
 	public onFlushBatch(batch: BatchMessage[], clientSequenceNumber: number | undefined) {
 		// If we're connected this is the client of the current connection,
 		// otherwise it's the clientId that just disconnected
-		const clientId = this.stateHandler.clientId();
+		// It's only undefined if we've NEVER connected. This is a tight corner case and we can
+		// simply make up a unique ID in this case.
+		const clientId = this.stateHandler.clientId() ?? uuid();
 
-		//* This may get hit by the "applies stashed ops with no saved ops" test in stashedOps.spec.ts
-		assert(clientId !== undefined, "Shouldn't see ops before the first connection");
+		// If the batch was not yet sent, we need to assign a unique batchStartCsn
+		// Use a negative number to distinguish these from real CSNs
+		const batchStartCsn = clientSequenceNumber ?? this.negativeCounter--;
 
 		for (const message of batch) {
 			const {
@@ -240,10 +249,7 @@ export class PendingStateManager implements IDisposable {
 				localOpMetadata,
 				opMetadata,
 				// Note: We only need this on the first message.
-				batchIdContext: {
-					clientId,
-					batchStartCsn: clientSequenceNumber ?? -1, // -1 means not ever submitted yet (e.g. disconnected right before flush fired)
-				},
+				batchIdContext: { clientId, batchStartCsn },
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -580,7 +586,7 @@ function patchBatchIdContext(
 ): asserts message is IPendingMessage {
 	const batchIdContext: IPendingMessageFromStash["batchIdContext"] = message.batchIdContext;
 	if (batchIdContext === undefined) {
-		// Using uuid guarantees uniqueness, retaining existing
+		// Using uuid guarantees uniqueness, retaining existing behavior
 		message.batchIdContext = { clientId: uuid(), batchStartCsn: -1 };
 	}
 }

@@ -30,8 +30,7 @@ export type BatchId = string;
 
 /** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
 export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
-	//* TODO: Finalize format.  Don't need to optimize for parsing...
-	return JSON.stringify([originalClientId, batchStartCsn]);
+	return `${originalClientId}_[${batchStartCsn}]`;
 }
 
 /**

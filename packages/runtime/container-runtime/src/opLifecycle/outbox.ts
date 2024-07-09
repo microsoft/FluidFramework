@@ -295,6 +295,10 @@ export class Outbox {
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
 			clientSequenceNumber = this.sendBatch(processedBatch);
+			assert(
+				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
+				"unexpected negative clientSequenceNumber (empty batch should yield undefined)",
+			);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);

@@ -64,10 +64,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({
-				hardLimit: 950 * 1024,
-				canRebase: true,
-			});
+			batchManager = new BatchManager({ hardLimit: 950 * 1024, canRebase: true });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -539,7 +536,6 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	//* Check the batchIdContext values - make sense?
 	describe("Minimum sequence number", () => {
 		const messages: IPendingMessage[] = [
 			{
@@ -556,7 +552,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
 			},
 			{
 				type: "message",
@@ -564,7 +560,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 			{
 				type: "message",
@@ -572,7 +568,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
-				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 		];
 
