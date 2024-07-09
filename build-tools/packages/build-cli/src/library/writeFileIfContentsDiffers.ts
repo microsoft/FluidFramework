@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
 import { type PathLike } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 
 /**
  * Writes to a file, but first reads the contents to check if it matches the desired content. If it does, the operation
