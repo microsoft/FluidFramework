@@ -389,7 +389,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const callback = pending
 			? () => {
 					pending.attached = true;
-					// Notify serialization process that blob has been attached
+					// Notify listeners (e.g. serialization process) that blob has been attached
 					this.emit("blobAttached", pending);
 					this.deletePendingBlobMaybe(id);
 				}
