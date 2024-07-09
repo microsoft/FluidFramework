@@ -77,7 +77,7 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
-    abstract toJSONObject(): unknown;
+    abstract toJSONObject(): any;
     // (undocumented)
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)

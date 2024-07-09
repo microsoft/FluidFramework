@@ -446,7 +446,11 @@ export class MergeBlock implements IMergeNodeCommon {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		this.children = Array.from({ length: MaxNodesInBlock });
+		// Suppression needed due to the way the merge tree children are initalized - we
+		// allocate 8 children blocks, but any unused blocks are not counted in the childCount.
+		// Using Array.from leads to unused children being undefined, which are counted in childCount.
+		// eslint-disable-next-line unicorn/no-new-array
+		this.children = new Array<IMergeNode>(MaxNodesInBlock);
 		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<Marker>();
 		// eslint-disable-next-line import/no-deprecated
@@ -564,7 +568,8 @@ export abstract class BaseSegment implements ISegment {
 		}
 	}
 
-	public abstract toJSONObject(): unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public abstract toJSONObject(): any;
 
 	/***/
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
