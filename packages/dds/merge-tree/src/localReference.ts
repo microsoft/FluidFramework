@@ -254,7 +254,6 @@ export class LocalReferenceCollection {
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
-	/***/
 	private constructor(
 		/**
 		 * The segment this `LocalReferenceCollection` is associated with.
