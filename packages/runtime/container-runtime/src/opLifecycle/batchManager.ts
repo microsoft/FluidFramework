@@ -28,6 +28,7 @@ export type BatchId = string;
 
 /** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
 export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
+	//* TODO: Finalize format.  Don't need to optimize for parsing...
 	return JSON.stringify([originalClientId, batchStartCsn]);
 }
 
@@ -146,20 +147,20 @@ export class BatchManager {
 }
 
 const addBatchMetadata = (batch: IBatch, batchId?: BatchId): IBatch => {
-	const firstMetadata: Partial<IBatchMetadata> = batch.messages[0].metadata ?? {};
-	batch.messages[0].metadata = firstMetadata;
-
 	const batchEnd = batch.messages.length - 1;
+	const firstMetadata: Partial<IBatchMetadata> = batch.messages[0].metadata ?? {};
 	const lastMetadata: Partial<IBatchMetadata> = batch.messages[batchEnd].metadata ?? {};
-	batch.messages[batchEnd].metadata = lastMetadata;
 
 	if (batch.messages.length > 1) {
 		firstMetadata.batch = true;
 		lastMetadata.batch = false;
+		batch.messages[0].metadata = firstMetadata;
+		batch.messages[batchEnd].metadata = lastMetadata;
 	}
 
 	if (batchId !== undefined) {
 		firstMetadata.batchId = batchId;
+		batch.messages[0].metadata = firstMetadata;
 	}
 
 	return batch;

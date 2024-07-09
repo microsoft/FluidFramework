@@ -224,7 +224,6 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
-				includeBatchId: params.includeBatchId ?? true, // For tests, default to true
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(

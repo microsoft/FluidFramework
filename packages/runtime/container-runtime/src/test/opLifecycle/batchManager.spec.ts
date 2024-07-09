@@ -6,11 +6,13 @@
 import { strict as assert } from "assert";
 
 import { ContainerMessageType } from "../../messageTypes.js";
+import type { IBatchMetadata } from "../../metadata.js";
 import {
 	BatchManager,
 	BatchMessage,
 	IBatchManagerOptions,
 	estimateSocketSize,
+	generateBatchId,
 } from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
@@ -19,7 +21,6 @@ describe("BatchManager", () => {
 	const defaultOptions: IBatchManagerOptions = {
 		hardLimit,
 		canRebase: true,
-		includeBatchId: false,
 	};
 
 	const generateStringOfSize = (sizeInBytes: number): string =>
@@ -41,44 +42,65 @@ describe("BatchManager", () => {
 		}
 	});
 
-	it("Batch metadata is set correctly", () => {
-		const batchManager = new BatchManager(defaultOptions);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
-		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 1 },
-				/* reentrant */ false,
-			),
-			true,
-		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 2 },
-				/* reentrant */ false,
-			),
-			true,
-		);
+	[true, false].forEach((includeBatchId) =>
+		it(`Batch metadata is set correctly [with${includeBatchId ? "" : "out"} batchId]`, () => {
+			const batchManager = new BatchManager(defaultOptions);
+			const batchId = includeBatchId ? "BATCH_ID" : undefined;
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 0 },
+					/* reentrant */ false,
+				),
+				true,
+			);
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 1 },
+					/* reentrant */ false,
+				),
+				true,
+			);
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 2 },
+					/* reentrant */ false,
+				),
+				true,
+			);
 
-		const batch = batchManager.popBatch();
-		assert.equal(batch.messages[0].metadata?.batch, true);
-		assert.equal(batch.messages[1].metadata?.batch, undefined);
-		assert.equal(batch.messages[2].metadata?.batch, false);
+			const batch = batchManager.popBatch(batchId);
+			assert.deepEqual(
+				batch.messages.map((m) => m.metadata as IBatchMetadata),
+				[
+					{ batch: true, ...(includeBatchId ? { batchId } : undefined) }, // batchId propertly should be omitted (v. set to undefined) if not provided
+					undefined, // metadata not touched for intermediate messages
+					{ batch: false },
+				],
+			);
 
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
-		);
-		const singleOpBatch = batchManager.popBatch();
-		assert.equal(singleOpBatch.messages[0].metadata?.batch, undefined);
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 0 },
+					/* reentrant */ false,
+				),
+				true,
+			);
+			const singleOpBatch = batchManager.popBatch(batchId);
+			assert.deepEqual(
+				singleOpBatch.messages.map((m) => m.metadata as IBatchMetadata),
+				[
+					includeBatchId ? { batchId } : undefined, // batchId propertly should be omitted (v. set to undefined) if not provided
+				],
+			);
+		}),
+	);
+
+	it("BatchId Format", () => {
+		const clientId = "3627a2a9-963f-4e3b-a4d2-a31b1267ef29";
+		const batchStartCsn = 123;
+		const batchId = generateBatchId(clientId, batchStartCsn);
+		const serialized = JSON.stringify({ batchId });
+		assert.equal(serialized, `{"batchId":"[\\"3627a2a9-963f-4e3b-a4d2-a31b1267ef29\\",123]"}`);
 	});
 
 	it("Batch content size is tracked correctly", () => {

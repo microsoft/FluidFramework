@@ -67,7 +67,6 @@ describe("Pending State Manager", () => {
 			batchManager = new BatchManager({
 				hardLimit: 950 * 1024,
 				canRebase: true,
-				includeBatchId: true,
 			});
 		});
 
