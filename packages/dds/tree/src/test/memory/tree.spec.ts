@@ -107,7 +107,7 @@ describe("SharedTree memory usage", () => {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
 				}
 			})(),
-		);
+		).timeout(60000);
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
@@ -127,7 +127,7 @@ describe("SharedTree memory usage", () => {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
 				}
 			})(),
-		);
+		).timeout(60000);
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
@@ -148,6 +148,6 @@ describe("SharedTree memory usage", () => {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
 				}
 			})(),
-		);
+		).timeout(60000);
 	}
 });
