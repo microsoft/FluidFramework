@@ -57,6 +57,11 @@ module.exports = {
 		"unicorn/no-nested-ternary": "off",
 
 		/**
+		 * Disabled due to false positives / disruptive behavior of auto-fix.
+		 */
+		"unicorn/no-useless-spread": "off",
+
+		/**
 		 * Disabled due to the sheer number of false positives it detects, and because it is sometimes valuable to
 		 * explicitly denote `undefined`.
 		 */
