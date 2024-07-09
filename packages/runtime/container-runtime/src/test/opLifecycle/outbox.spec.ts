@@ -252,7 +252,66 @@ describe("Outbox", () => {
 		mockLogger.clear();
 	});
 
-	it.only("Batch ID added when applicable", () => {
+	it("Sending batches", () => {
+		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
+		const messages = [
+			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			createMessage(ContainerMessageType.IdAllocation, "2"),
+			createMessage(ContainerMessageType.IdAllocation, "3"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
+		];
+
+		// Flush 1
+		outbox.submit(messages[0]);
+		outbox.submit(messages[1]);
+		outbox.submitIdAllocation(messages[2]);
+		outbox.submitIdAllocation(messages[3]);
+		outbox.flush();
+
+		// Flush 2
+		outbox.submit(messages[4]);
+		outbox.flush();
+
+		// Not Flushed
+		outbox.submit(messages[5]);
+
+		assert.equal(state.opsSubmitted, messages.length - 1);
+		assert.equal(state.individualOpsSubmitted.length, 0);
+		assert.deepEqual(
+			state.batchesSubmitted.map((x) => x.messages),
+			[
+				[batchedMessage(messages[2], true), batchedMessage(messages[3], false)],
+				[batchedMessage(messages[0], true), batchedMessage(messages[1], false)],
+				[batchedMessage(messages[4])], // The last message was not batched
+			],
+		);
+		assert.equal(state.deltaManagerFlushCalls, 0);
+
+		// Note the expected CSN here is fixed to the batch's starting CSN
+		const expectedMessageOrderWithCsn = [
+			// Flush 1 (ID Allocation)
+			[messages[2], 1],
+			[messages[3], 1],
+			// Flush 1 (Main)
+			[messages[0], 3],
+			[messages[1], 3],
+			// Flush 2 (Main)
+			[messages[4], 5],
+		] as const;
+		assert.deepEqual(
+			state.pendingOpContents,
+			expectedMessageOrderWithCsn.map<Partial<IPendingMessage>>(([message, csn]) => ({
+				content: message.contents,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+				opMetadata: message.metadata,
+				batchStartCsn: csn,
+			})),
+		);
+	});
+
+	it("Batch ID added when applicable", () => {
 		const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 
 		// Flush 1 - resubmit multi-message batch including ID Allocation
@@ -280,13 +339,13 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
 			[
-				[undefined], // ID Allocation (no batch ID used)
-				["batchId-A", undefined],
-				["batchId-B"],
-				["batchId-C", undefined],
-				[undefined],
+				[undefined], // Flush 1 - ID Allocation (no batch ID used)
+				["batchId-A", undefined], // Flush 1 - Main
+				["batchId-B"], // Flush 2 - Main
+				["batchId-C", undefined], // Flush 3 - Blob Attach
+				[undefined], // Flush 4 - Main (no batch ID given)
 			],
-			"Submitted batches missing expected batch ID",
+			"Submitted batches have incorrect batch ID",
 		);
 
 		assert.deepEqual(
@@ -300,6 +359,7 @@ describe("Outbox", () => {
 				undefined, // second message in batch
 				undefined, // no batchId given
 			],
+			"Pending messages have incorrect batch ID",
 		);
 	});
 
