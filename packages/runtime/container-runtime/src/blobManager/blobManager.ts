@@ -385,7 +385,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			0x384 /* requesting handle for unknown blob */,
 		);
 		const pending = this.pendingBlobs.get(id);
-		// Create a callback function to handle the attachment of the blob
+		// Create a callback function for once the blob has been attached
 		const callback = pending
 			? () => {
 					pending.attached = true;
