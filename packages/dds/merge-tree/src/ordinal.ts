@@ -19,10 +19,11 @@ export function computeHierarchicalOrdinal(
 
 	const ordinalWidth = 1 << (maxCount - actualCount);
 	let ordinal: string;
-	if (previousOrdinal === undefined) {
+	if (previousOrdinal === undefined || previousOrdinal === "") {
 		ordinal = parentOrdinal + String.fromCodePoint(ordinalWidth - 1);
 	} else {
-		const prevOrdCode = previousOrdinal.codePointAt(previousOrdinal.length - 1) ?? Number.NaN;
+		const prevOrdCode = previousOrdinal.codePointAt(previousOrdinal.length - 1);
+		assert(prevOrdCode !== undefined, "previous ordinal should not be empty");
 		const localOrdinal = prevOrdCode + ordinalWidth;
 		ordinal = parentOrdinal + String.fromCodePoint(localOrdinal);
 	}

@@ -827,13 +827,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					let segInsertOp = segment;
+					// The suppression is needed because the segment needs to have a type of any.
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					if (typeof resetOp.seg === "object" && resetOp.seg.properties !== undefined) {
+					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
 						segInsertOp = segment.clone();
 						// eslint-disable-next-line import/no-deprecated
 						segInsertOp.properties = createMap();
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-						segInsertOp.addProperties(resetOp.seg.properties);
+						segInsertOp.addProperties(resetOp.seg.props);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);

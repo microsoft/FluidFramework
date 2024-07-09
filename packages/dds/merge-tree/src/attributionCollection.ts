@@ -303,7 +303,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			splitCollection.offsets.push(Math.max(this.offsets[i]! - pos, 0));
 			if (this.keys[i] !== undefined) {
 				// Non null asserting, this.keys[i] will always exist since we are looping though the length of it?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				splitCollection.keys.push(this.keys[i]!);
 			}
 		}
@@ -329,7 +329,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				this.offsets.push(other.offsets[i]! + this.length);
 				// TODO: see line 305
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				this.keys.push(other.keys[i]!);
 			}
 		}
@@ -451,14 +451,14 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const nextOffset = Math.max(posBreakpoints[curIndex]! - cumulativeSegPos, 0);
 					// TODO Non null asserting, why is this not null?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					pushEntry(nextOffset, seqs[curIndex]!);
 					curIndex++;
 				}
 
 				if (attribution.offsets.length === 0) {
 					// TODO Non null asserting, why is this not null?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					pushEntry(0, seqs[curIndex - 1]!);
 				}
 
