@@ -654,9 +654,9 @@ export async function setVersion(
  * Extracts the dependencies record from a package.json file based on the dependency group.
  */
 function getDependenciesRecord(
-	packageJson: Package["packageJson"],
+	packageJson: PackageJson,
 	depClass: "prod" | "dev" | "peer",
-): Partial<Record<string, string>> | undefined {
+): PackageJson["dependencies" | "devDependencies" | "peerDependencies"] | undefined {
 	switch (depClass) {
 		case "dev": {
 			return packageJson.devDependencies;
