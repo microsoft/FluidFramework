@@ -5,7 +5,7 @@ export type QueryStringType = Record<string, string | number | boolean>;
  * @param url - URL to which query params should be appended. Can include base/default query params.
  * @param queryParams - Query parameters from which to create a query. Will override any query params in url.
  */
-export function buildUrlWithQueryString(
+export function addOrUpdateQueryParams(
 	url: URL | string,
 	queryParams: QueryStringType,
 ): string {

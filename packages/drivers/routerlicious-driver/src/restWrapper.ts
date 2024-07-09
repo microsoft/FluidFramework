@@ -28,7 +28,7 @@ import safeStringify from "json-stringify-safe";
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { buildUrlWithQueryString, type QueryStringType } from "./queryStringUtils.js";
+import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
 import { RestWrapper } from "./restWrapperBase.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
@@ -42,8 +42,8 @@ const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
 
 const axiosRequestConfigToFetchRequestConfig = (
 	requestConfig: AxiosRequestConfig,
-): [RequestInfo, RequestInit] => {
-	const requestInfo: string = buildRequestUrl(requestConfig);
+): [string, RequestInit] => {
+	const requestUrl: string = buildRequestUrl(requestConfig);
 
 	const requestInit: RequestInit = {
 		method: requestConfig.method,
@@ -52,7 +52,7 @@ const axiosRequestConfigToFetchRequestConfig = (
 		headers: requestConfig.headers as Record<string, string>,
 		body: requestConfig.data,
 	};
-	return [requestInfo, requestInit];
+	return [requestUrl, requestInit];
 };
 
 export interface IR11sResponse<T> {
@@ -139,6 +139,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		// Check whether this request has been made before or if it is a retry.
 		// requestKey is built using the HTTP method appended with the complete URL ommitting the 'retry' param
 		const url = new URL(buildRequestUrl(requestConfig));
+		// delete the retry param, if any. We do this to ensure there is no retry added by any of callers, which would conflict with the one we maintain here in the retryCounter map.
 		url.searchParams.delete("retry");
 		const requestKey = `${requestConfig.method ?? ""}|${url.href}`;
 		const requestRetryCount = this.retryCounter.get(requestKey);
@@ -146,7 +147,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 			requestConfig.params = requestConfig.params
 				? { ...requestConfig.params, retry: requestRetryCount }
 				: { retry: requestRetryCount };
-			requestConfig.url = buildUrlWithQueryString(url, requestConfig.params);
+			requestConfig.url = addOrUpdateQueryParams(url, requestConfig.params);
 		}
 
 		const config = {
