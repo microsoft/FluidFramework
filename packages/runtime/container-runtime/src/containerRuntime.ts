@@ -4353,10 +4353,10 @@ export class ContainerRuntime
 			return pendingState;
 		};
 
-		if (props?.notifyImminentClosure === true) {
-			// Flush pending batch. No harm done since we're about to close anyway
-			this.flush();
-		}
+		// Flush pending batch.
+		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// to close current batch.
+		this.flush();
 
 		return props?.notifyImminentClosure === true
 			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
