@@ -8,5 +8,8 @@
 		// "reportVariants": ["public", "alpha"] // "beta" is not included to reduce noise
 		// Currently generate just .legacy.alpha.api.md report using legacy rollup.
 		"reportVariants": ["alpha"]
+	},
+	"docModel": {
+		"enabled": false
 	}
 }
