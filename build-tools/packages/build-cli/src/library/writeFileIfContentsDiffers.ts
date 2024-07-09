@@ -1,5 +1,10 @@
-import { readFile, writeFile } from "fs-extra";
-import {type PathLike} from "node:fs";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { readFile, writeFile } from "node:fs/promises";
+import { type PathLike } from "node:fs";
 
 /**
  * Writes to a file, but first reads the contents to check if it matches the desired content. If it does, the operation
@@ -13,8 +18,8 @@ export async function writeFileIfContentsDiffers(
 	filePath: PathLike,
 	contents: string,
 ): Promise<boolean> {
-	const fileContents = await readFile(filePath, {encoding:"utf8"});
-	if(fileContents !== contents) {
+	const fileContents = await readFile(filePath, { encoding: "utf8" });
+	if (fileContents !== contents) {
 		await writeFile(filePath, contents);
 		return true;
 	}

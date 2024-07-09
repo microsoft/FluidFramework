@@ -194,7 +194,11 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
 		if (await writeFileIfContentsDiffers(typeTestOutputFile, testCases.join("\n"))) {
 			this.info(`Generated type test file: ${path.resolve(typeTestOutputFile)}`);
 		} else {
-			this.verbose(`Skipped writing type test file because it's up-to-date: ${path.resolve(typeTestOutputFile)}`);
+			this.verbose(
+				`Skipped writing type test file because it's up-to-date: ${path.resolve(
+					typeTestOutputFile,
+				)}`,
+			);
 		}
 	}
 }
