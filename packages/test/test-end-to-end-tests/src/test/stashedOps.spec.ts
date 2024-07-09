@@ -52,6 +52,7 @@ import type {
 	SharedString,
 } from "@fluidframework/sequence/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -354,6 +355,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
 		collection1 = string1.getIntervalCollection(collectionId);
 		string1.insertText(0, "hello");
+	});
+
+	//* TEMP - DO NOT MERGE
+	it("testing double failure reporting", () => {
+		container1.close(new GenericError("Cause an error to be logged (will fail the 'afterEach' block)"));
+		assert.fail("Cause the test itself to fail");
 	});
 
 	it("resends op", async function () {
