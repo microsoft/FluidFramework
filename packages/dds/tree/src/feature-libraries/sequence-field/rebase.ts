@@ -225,9 +225,7 @@ class RebaseQueue {
 		return {
 			baseMark: sizedBaseMark,
 			newMark:
-				movedMark === undefined
-					? sizedNewMark
-					: addMovedMarkEffect(sizedNewMark, movedMark),
+				movedMark === undefined ? sizedNewMark : addMovedMarkEffect(sizedNewMark, movedMark),
 		};
 	}
 }
@@ -278,7 +276,11 @@ function rebaseMark(
 	return rebaseMarkIgnoreChild(rebasedMark, baseMark, moveEffects);
 }
 
-function rebaseMarkIgnoreChild(currMark: Mark, baseMark: Mark, moveEffects: MoveEffectTable): Mark {
+function rebaseMarkIgnoreChild(
+	currMark: Mark,
+	baseMark: Mark,
+	moveEffects: MoveEffectTable,
+): Mark {
 	let rebasedMark: Mark;
 	if (isDetach(baseMark)) {
 		if (baseMark.cellId !== undefined) {
@@ -444,7 +446,11 @@ function moveRebasedChanges(
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1, newEffect);
 }
 
-function rebaseNodeChange(currMark: Mark, baseMark: Mark, nodeRebaser: NodeChangeRebaser): Mark {
+function rebaseNodeChange(
+	currMark: Mark,
+	baseMark: Mark,
+	nodeRebaser: NodeChangeRebaser,
+): Mark {
 	const baseChange = baseMark.changes;
 	const currChange = currMark.changes;
 

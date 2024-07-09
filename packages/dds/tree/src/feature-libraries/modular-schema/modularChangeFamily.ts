@@ -102,7 +102,9 @@ import type {
  * as determined by the schema.
  */
 export class ModularChangeFamily
-	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
+	implements
+		ChangeFamily<ModularEditBuilder, ModularChangeset>,
+		ChangeRebaser<ModularChangeset>
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
@@ -461,13 +463,7 @@ export class ModularChangeFamily
 				? [fieldChange, emptyChange]
 				: [emptyChange, fieldChange];
 
-			const composedField = this.composeFieldChanges(
-				change1,
-				change2,
-				genId,
-				table,
-				metadata,
-			);
+			const composedField = this.composeFieldChanges(change1, change2, genId, table, metadata);
 
 			if (fieldId.nodeId === undefined) {
 				composedFields.set(fieldId.field, composedField);
@@ -515,7 +511,7 @@ export class ModularChangeFamily
 							genId,
 							crossFieldTable,
 							revisionMetadata,
-					  )
+						)
 					: fieldChange1;
 
 			composedFields.set(field, composedField);
@@ -620,7 +616,8 @@ export class ModularChangeFamily
 		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
-		const nodeExistsConstraint = change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
+		const nodeExistsConstraint =
+			change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
 
 		const composedFieldChanges = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -648,7 +645,10 @@ export class ModularChangeFamily
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 */
-	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
+	public invert(
+		change: TaggedChange<ModularChangeset>,
+		isRollback: boolean,
+	): ModularChangeset {
 		// Rollback changesets destroy the nodes created by the change being rolled back.
 		const destroys = isRollback
 			? invertBuilds(change.change.builds, change.revision)
@@ -1338,7 +1338,7 @@ export class ModularChangeFamily
 						genId,
 						crossFieldTable,
 						revisionMetadata,
-				  )
+					)
 				: change.fieldChanges;
 
 		const rebasedChange: NodeChangeset = {};
@@ -1508,11 +1508,7 @@ export class ModularChangeFamily
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(
-				change.refreshers,
-				oldRevisions,
-				newRevision,
-			);
+			updated.refreshers = replaceIdMapRevisions(change.refreshers, oldRevisions, newRevision);
 		}
 
 		if (newRevision !== undefined) {
@@ -2107,7 +2103,10 @@ interface RebaseFieldContext {
 	baseNodeIds: NodeId[];
 }
 
-function newComposeTable(baseChange: ModularChangeset, newChange: ModularChangeset): ComposeTable {
+function newComposeTable(
+	baseChange: ModularChangeset,
+	newChange: ModularChangeset,
+): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
 		baseChange,
@@ -2324,11 +2323,7 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 
 				for (const baseFieldId of baseFieldIds) {
 					this.table.affectedBaseFields.set(
-						[
-							baseFieldId.nodeId?.revision,
-							baseFieldId.nodeId?.localId,
-							baseFieldId.field,
-						],
+						[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
 						true,
 					);
 				}
@@ -2401,11 +2396,7 @@ class ComposeManager extends CrossFieldManagerI<FieldChange> {
 
 				for (const baseFieldId of baseFieldIds) {
 					this.table.affectedBaseFields.set(
-						[
-							baseFieldId.nodeId?.revision,
-							baseFieldId.nodeId?.localId,
-							baseFieldId.field,
-						],
+						[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
 						true,
 					);
 				}
@@ -2576,7 +2567,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							undefined,
 							undefined,
 							change.builds,
-					  )
+						)
 					: buildModularChangesetFromField(
 							change.field,
 							{
@@ -2590,7 +2581,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 							getChangeHandler(this.fieldKinds, change.fieldKind).getCrossFieldKeys(
 								change.change,
 							),
-					  ),
+						),
 			),
 		);
 		const composedChange: Mutable<ModularChangeset> =
@@ -2789,7 +2780,9 @@ function revisionInfoFromTaggedChange(
 	return revInfos;
 }
 
-function revisionFromTaggedChange(change: TaggedChange<ModularChangeset>): RevisionTag | undefined {
+function revisionFromTaggedChange(
+	change: TaggedChange<ModularChangeset>,
+): RevisionTag | undefined {
 	return change.revision ?? revisionFromRevInfos(change.change.revisions);
 }
 
@@ -2815,7 +2808,7 @@ function mergeNestedMaps<K1, K2, V>(
 	map1: NestedMap<K1, K2, V>,
 	map2: NestedMap<K1, K2, V>,
 ): NestedMap<K1, K2, V> {
-	const merged = new Map();
+	const merged: NestedMap<K1, K2, V> = new Map();
 	populateNestedMap(map1, merged, true);
 
 	// XXX: Should assert there are no collisions?
@@ -2901,7 +2894,12 @@ export function getFieldsForCrossFieldKey(
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		const entry = changeset.crossFieldKeys.getPairOrNextLower([target, revision, id, Infinity]);
+		const entry = changeset.crossFieldKeys.getPairOrNextLower([
+			target,
+			revision,
+			id,
+			Infinity,
+		]);
 		if (entry === undefined) {
 			return fields;
 		}
@@ -2978,7 +2976,7 @@ interface ModularChangesetContent {
 }
 
 function cloneNestedMap<K1, K2, V>(map: NestedMap<K1, K2, V>): NestedMap<K1, K2, V> {
-	const cloned = new Map();
+	const cloned: NestedMap<K1, K2, V> = new Map();
 	populateNestedMap(map, cloned, true);
 	return cloned;
 }

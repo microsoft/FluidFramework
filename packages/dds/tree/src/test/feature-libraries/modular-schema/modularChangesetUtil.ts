@@ -1,4 +1,3 @@
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	ChangeAtomIdMap,
 	FieldKey,
@@ -60,7 +59,10 @@ export interface NodeChangesetDescription {
 	readonly fields: FieldChangesetDescription[];
 }
 
-function node(index: number, ...fields: FieldChangesetDescription[]): NodeChangesetDescription {
+function node(
+	index: number,
+	...fields: FieldChangesetDescription[]
+): NodeChangesetDescription {
 	return { index, fields };
 }
 

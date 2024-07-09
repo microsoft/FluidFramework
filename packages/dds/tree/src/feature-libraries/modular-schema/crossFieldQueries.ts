@@ -11,7 +11,7 @@ import {
 	getOrAddInMap,
 	setInRangeMap,
 } from "../../util/index.js";
-import { NodeId } from "./modularChangeTypes.js";
+import type { NodeId } from "./modularChangeTypes.js";
 
 export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
