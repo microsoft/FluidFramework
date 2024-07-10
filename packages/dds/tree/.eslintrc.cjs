@@ -70,6 +70,7 @@ module.exports = {
 				"@typescript-eslint/explicit-function-return-type": "off",
 			},
 		},
+		// TODO: Remove this override once this config has been updated to extend at least the "recommended" base config.
 		{
 			files: ["src/test/**/*.generated.ts*"],
 			rules: {
