@@ -241,16 +241,15 @@ stages:
           persistCredentials: true
           repository: 'https://dev.azure.com/fluidframework/internal/_git/ff_internal'
           clean: true
-
-      - task: Bash@3
-        displayName: Run bug creation script
-        env:
-            BUILD_ID: $(Build.BuildId)
-            ADO_API_TOKEN: $(System.AccessToken)
-            ORGANIZATION: 'fluidframework'
-            PROJECT: 'internal'
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "Running bug creation script"
-            node $(Build.SourcesDirectory)/ff_internal/scripts/bugCreation.mjs
+        - task: Bash@3
+          displayName: Run bug creation script
+          env:
+              BUILD_ID: $(Build.BuildId)
+              ADO_API_TOKEN: $(System.AccessToken)
+              ORGANIZATION: 'fluidframework'
+              PROJECT: 'internal'
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "Running bug creation script"
+              node $(Build.SourcesDirectory)/ff_internal/scripts/bugCreation.mjs
