@@ -19,6 +19,11 @@ resources:
       - main
       - next
       - lts
+  repositories:
+  - repository: ff_internal
+    type: git
+    name: internal/_git/ff_internal
+    ref: main
 
 variables:
 - group: prague-key-vault
@@ -236,11 +241,10 @@ stages:
       displayName: Create or update work items for failing tests
       pool: Small
       steps:
+        - checkout: self
         - checkout: ff_internal
           displayName: 'Fluid Framework internal repository'
-          persistCredentials: true
-          repository: 'https://dev.azure.com/fluidframework/internal/_git/ff_internal'
-          clean: true
+
         - task: Bash@3
           displayName: Run bug creation script
           env:
