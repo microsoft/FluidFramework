@@ -130,7 +130,7 @@ export function jsonMorganLoggerMiddleware(
 					if (properties.status?.startsWith("2")) {
 						httpMetric.success(`Request successful in ${retry} retry`);
 					} else {
-						httpMetric.error(`Request failed ${retry} retry`);
+						httpMetric.error(`Request failed in ${retry} retry`);
 					}
 				} else {
 					if (properties.status?.startsWith("2")) {
