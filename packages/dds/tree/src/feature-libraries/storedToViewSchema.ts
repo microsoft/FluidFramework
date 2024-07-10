@@ -58,8 +58,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 			assert(innerSchema instanceof ObjectNodeStoredSchema, 0x882 /* unsupported node kind */);
 			const fields = new Map<string, FlexFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
-				const fieldSchema = fieldSchemaFromStoredSchema(field, map);
-				fields.set(key, fieldSchema);
+				fields.set(key, fieldSchemaFromStoredSchema(field, map));
 			}
 			const fieldsObject = mapToObject(fields);
 			map.set(

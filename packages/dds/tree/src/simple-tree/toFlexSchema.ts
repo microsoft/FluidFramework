@@ -224,20 +224,11 @@ export function convertNodeSchema(
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
-				// const identifierFieldKeys = Object.entries(fields)
-				// 	.filter(([key, fieldSchema]) => fieldSchema.type === "identifier")
-				// 	.map(([key, schema]) => key);
-				const identifierFieldKeys: (string | symbol)[] = [];
 				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
 					// If a `stored key` was provided, use it as the key in the flex schema.
 					// Otherwise, use the view key.
 					const flexKey = getStoredKey(viewKey, implicitFieldSchema);
-					if (
-						implicitFieldSchema instanceof FieldSchema &&
-						implicitFieldSchema.kind === FieldKind.Identifier
-					) {
-						identifierFieldKeys.push(viewKey);
-					}
+
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, flexKey, {
 						enumerable: true,

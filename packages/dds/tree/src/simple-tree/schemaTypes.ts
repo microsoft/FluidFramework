@@ -85,7 +85,6 @@ export interface TreeNodeSchemaClass<
 	 * @sealed
 	 */
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
-	
 }
 
 /**
