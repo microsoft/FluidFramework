@@ -69,7 +69,7 @@ export enum HttpProperties {
 	responseFinishToCloseLatencyMs = "responseFinishToCloseLatencyMs",
 	status = "status",
 	url = "url",
-	retry = "retry"
+	retryCount = "retryCount"
 }
 
 /**
