@@ -96,6 +96,7 @@ import type {
 import { deepFreeze as deepFreezeBase } from "@fluidframework/test-runtime-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { Change, removeAliases } from "./modularChangesetUtil.js";
+import { merge } from "../../objMerge.js";
 
 type SingleNodeChangeset = NodeId | undefined;
 const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
@@ -1504,7 +1505,10 @@ describe("ModularChangeFamily", () => {
 
 	describe("Encoding", () => {
 		function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset) {
-			assert.deepEqual(normalizeChangeset(change1), normalizeChangeset(change2));
+			const normalized1 = normalizeChangeset(change1);
+			const normalized2 = normalizeChangeset(change2);
+			const diff = merge(normalized1, normalized2);
+			assert.deepEqual(normalized1, normalized2);
 		}
 
 		const sessionId = "session1" as SessionId;
@@ -1685,6 +1689,7 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 		...change,
 		nodeChanges,
 		fieldChanges,
+		nodeToParent,
 		crossFieldKeys: crossFieldKeyTable,
 	};
 
