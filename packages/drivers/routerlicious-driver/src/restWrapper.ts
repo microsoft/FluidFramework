@@ -40,11 +40,7 @@ const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
 		: requestConfig.url ?? "";
 
-const axiosRequestConfigToFetchRequestConfig = (
-	requestConfig: AxiosRequestConfig,
-): [string, RequestInit] => {
-	const requestUrl: string = buildRequestUrl(requestConfig);
-
+const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
 	const requestInit: RequestInit = {
 		method: requestConfig.method,
 		// NOTE: I believe that although the Axios type permits non-string values in the header, here we are
@@ -52,7 +48,7 @@ const axiosRequestConfigToFetchRequestConfig = (
 		headers: requestConfig.headers as Record<string, string>,
 		body: requestConfig.data,
 	};
-	return [requestUrl, requestInit];
+	return requestInit;
 };
 
 export interface IR11sResponse<T> {
@@ -142,18 +138,25 @@ class RouterliciousRestWrapper extends RestWrapper {
 		statusCode: number,
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
+		if (requestConfig.params) {
+			// delete the retry param, if any. We do this to ensure there is no retry added by any of callers, which would conflict with the one we maintain here in the retryCounter map.
+			delete requestConfig.params.retry;
+		}
+
+		// Build the complete request url including baseUrl, url and query params. (all except 'retry' query param)
+		let completeRequestUrl = addOrUpdateQueryParams(
+			buildRequestUrl(requestConfig),
+			requestConfig.params,
+		);
+
 		// Check whether this request has been made before or if it is a retry.
 		// requestKey is built using the HTTP method appended with the complete URL ommitting the 'retry' param
-		const url = new URL(buildRequestUrl(requestConfig));
-		// delete the retry param, if any. We do this to ensure there is no retry added by any of callers, which would conflict with the one we maintain here in the retryCounter map.
-		url.searchParams.delete("retry");
-		const requestKey = `${requestConfig.method ?? ""}|${url.href}`;
+		const requestKey = `${requestConfig.method ?? ""}|${completeRequestUrl.href}`;
 		const requestRetryCount = this.retryCounter.get(requestKey);
 		if (requestRetryCount) {
-			requestConfig.params = requestConfig.params
-				? { ...requestConfig.params, retry: requestRetryCount }
-				: { retry: requestRetryCount };
-			requestConfig.url = addOrUpdateQueryParams(url, requestConfig.params);
+			completeRequestUrl = addOrUpdateQueryParams(completeRequestUrl, {
+				retry: requestRetryCount,
+			});
 		}
 
 		const config = {
@@ -162,35 +165,37 @@ class RouterliciousRestWrapper extends RestWrapper {
 		};
 
 		const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
-		const fetchRequestConfig = axiosRequestConfigToFetchRequestConfig(translatedConfig);
+		const fetchRequestConfig = axiosBuildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
 			const perfStart = performance.now();
-			const result = await fetch(...fetchRequestConfig).catch(async (error) => {
-				// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
-				this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
+			const result = await fetch(completeRequestUrl, fetchRequestConfig).catch(
+				async (error) => {
+					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
+					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 
-				// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
-				const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
-				const errorMessage = isNetworkError
-					? `NetworkError: ${error.message}`
-					: safeStringify(error);
-				// If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
-				// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
-				// the error message will start with NetworkError as defined in restWrapper.ts
-				// If there exists a self-signed SSL certificates error, throw a NonRetryableError
-				// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
-				const err = errorMessage.includes("failed, reason: self signed certificate")
-					? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
-							driverVersion,
-							retryQueryParam: requestRetryCount,
-						})
-					: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
-							driverVersion,
-							retryQueryParam: requestRetryCount,
-						});
-				throw err;
-			});
+					// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
+					const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
+					const errorMessage = isNetworkError
+						? `NetworkError: ${error.message}`
+						: safeStringify(error);
+					// If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
+					// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
+					// the error message will start with NetworkError as defined in restWrapper.ts
+					// If there exists a self-signed SSL certificates error, throw a NonRetryableError
+					// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
+					const err = errorMessage.includes("failed, reason: self signed certificate")
+						? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
+								driverVersion,
+								retryQueryParam: requestRetryCount,
+							})
+						: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
+								driverVersion,
+								retryQueryParam: requestRetryCount,
+							});
+					throw err;
+				},
+			);
 			return {
 				response: result,
 				duration: performance.now() - perfStart,
@@ -221,8 +226,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 			return {
 				content: result,
 				headers,
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				requestUrl: fetchRequestConfig[0].toString(),
+				requestUrl: completeRequestUrl.href,
 				propsToLog: {
 					...getPropsToLogFromResponse(headers),
 					bodySize,

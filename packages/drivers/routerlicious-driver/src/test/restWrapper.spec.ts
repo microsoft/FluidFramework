@@ -155,7 +155,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 					assert(q.retry === "1");
 					return true;
 				})
-				.reply(429, { retryAfter: 0.1 });
+				.reply(429, { retryAfter: 0.001 });
 			// Third request must contain the query param "retry=2"
 			nock(testHost)
 				.get(/.*/)
@@ -170,8 +170,8 @@ describe("RouterliciousDriverRestWrapper", () => {
 			assert(retryQueryParamTested);
 		});
 
-		it("retry query param is appended on subsequent api request - when request function is invoked multiple times externally on failure", async () => {
-			let retryQueryParamTested = false;
+		it.only("retry query param is appended on subsequent api request - when request function is invoked multiple times externally on failure", async () => {
+			let isTestedSuccessfully = false;
 			// Fail first request with retriable error
 			nock(testHost).get(testPath).reply(500);
 			// Second request must contain the query param "retry=1"
@@ -189,7 +189,19 @@ describe("RouterliciousDriverRestWrapper", () => {
 				.query((q) => {
 					assert(q);
 					assert(q.retry === "2");
-					retryQueryParamTested = true;
+					return true;
+				})
+				.reply(500);
+
+			// Fourth request is emulated to have predefined query params, which should also continue to exist along with retry=1
+			nock(testHost)
+				.get(/.*/)
+				.query((q) => {
+					assert(q);
+					assert(q.retry === undefined); // Check that original request's retry value is reset
+					assert(q.param_1 === "param_1"); // Check other query params are not lost
+					assert(q.param_2 === "param_2");
+					isTestedSuccessfully = true;
 					return true;
 				})
 				.reply(500);
@@ -197,7 +209,11 @@ describe("RouterliciousDriverRestWrapper", () => {
 			await restWrapper.get(testUrl).catch((_) => {});
 			await restWrapper.get(testUrl).catch((_) => {});
 			await restWrapper.get(testUrl).catch((_) => {});
-			assert(retryQueryParamTested);
+			// with pre existing query params
+			await restWrapper
+				.get(testUrl, { param_1: "param_1", param_2: "param_2", retry: 100 })
+				.catch((_) => {});
+			assert(isTestedSuccessfully);
 		});
 	});
 
