@@ -10,7 +10,11 @@ import {
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRepositoryManager, type IFileSystemManager } from "./definitions";
+import {
+	IRepositoryManager,
+	type IFileSystemManager,
+	type IRepoManagerParams,
+} from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
 	Constants,
@@ -22,7 +26,7 @@ import {
 	writeChannelSummary,
 	writeContainerSummary,
 } from "./wholeSummary";
-import { getSoftDeletedMarkerPath } from "./helpers";
+import { getSoftDeletedMarkerPath, type InMemoryRepoManagerFactory } from "./helpers";
 
 const DefaultSummaryWriteFeatureFlags: ISummaryWriteFeatureFlags = {
 	enableLowIoWrite: false,
@@ -46,6 +50,8 @@ export class GitWholeSummaryManager {
 	constructor(
 		private readonly documentId: string,
 		private readonly repoManager: IRepositoryManager,
+		private readonly repoManagerParams: IRepoManagerParams,
+		private readonly inMemoryRepoManagerFactory: InMemoryRepoManagerFactory,
 		private readonly lumberjackProperties: Record<string, any>,
 		private readonly externalStorageEnabled = true,
 		writeOptions?: Partial<ISummaryWriteFeatureFlags>,
@@ -72,6 +78,8 @@ export class GitWholeSummaryManager {
 				repoManager: this.repoManager,
 				externalStorageEnabled: this.externalStorageEnabled,
 				lumberjackProperties: this.lumberjackProperties,
+				repoManagerParams: this.repoManagerParams,
+				inMemoryRepoManagerFactory: this.inMemoryRepoManagerFactory,
 			});
 			readSummaryMetric.setProperty("commitSha", summaryTree.id);
 			readSummaryMetric.setProperty("treeId", summaryTree.trees[0]?.id);
@@ -116,6 +124,8 @@ export class GitWholeSummaryManager {
 						repoManager: this.repoManager,
 						externalStorageEnabled: this.externalStorageEnabled,
 						lumberjackProperties,
+						repoManagerParams: this.repoManagerParams,
+						inMemoryRepoManagerFactory: this.inMemoryRepoManagerFactory,
 					},
 					this.summaryWriteFeatureFlags,
 				);
@@ -136,6 +146,8 @@ export class GitWholeSummaryManager {
 						repoManager: this.repoManager,
 						externalStorageEnabled: this.externalStorageEnabled,
 						lumberjackProperties,
+						repoManagerParams: this.repoManagerParams,
+						inMemoryRepoManagerFactory: this.inMemoryRepoManagerFactory,
 					},
 					this.summaryWriteFeatureFlags,
 				);

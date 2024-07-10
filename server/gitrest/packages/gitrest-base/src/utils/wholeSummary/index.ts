@@ -13,3 +13,4 @@ export {
 	writeChannelSummary,
 	writeContainerSummary,
 } from "./writeWholeSummary";
+export { convertFullSummaryToWholeSummaryEntries } from "./conversions";

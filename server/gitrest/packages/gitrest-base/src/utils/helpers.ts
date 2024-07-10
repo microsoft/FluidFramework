@@ -6,6 +6,7 @@
 import { PathLike, Stats, type BigIntStats } from "fs";
 import * as path from "path";
 import { Request } from "express";
+import type { Provider } from "nconf";
 import {
 	IGetRefParamsExternal,
 	IWholeFlatSummary,
@@ -17,6 +18,7 @@ import {
 	HttpProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { ExternalStorageManager, NullExternalStorageManager } from "../externalStorageManager";
 import {
 	Constants,
 	IExternalWriterConfig,
@@ -25,11 +27,19 @@ import {
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 	IStorageRoutingId,
+	type IRepositoryManager,
+	type IStorageDirectoryConfig,
 } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
+import { MemFsManagerFactory } from "./filesystems";
+import { IsomorphicGitManagerFactory } from "./isomorphicgitManager";
+import {
+	RepoDoesNotExistMessage,
+	RepoDoesNotExistStatusCode,
+} from "./repositoryManagerFactoryBase";
 
 /**
  * Validates that the input encoding is valid
@@ -215,6 +225,68 @@ export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?:
 	return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
+interface IRepoInfo {
+	/**
+	 * Used by RepoManagerFactory as an internal cache key for existing repositories.
+	 * Not to be confused with {@link IRepositoryManager.path} which is actually equivalent to {@link IRepoInfo.directoryPath}.
+	 */
+	repoPath: string;
+	/**
+	 * The storage directory path for the repo.
+	 * This is the same as {@link IRepositoryManager.path}.
+	 */
+	directoryPath: string;
+	/**
+	 * Used by RepoManagerFactory to track mutexes for reading/writing to repositories.
+	 * Also used in Git object URLs.
+	 */
+	repoName: string;
+}
+
+/**
+ * Consistently calculate a Git repo's storage path and name from the given parameters and configs.
+ * This is useful for APIs that need to access the repo's storage path and name, without creating a full repo manager.
+ */
+export function getRepoInfoFromParamsAndStorageConfig(
+	repoPerDocEnabled: boolean,
+	repoManagerParams: IRepoManagerParams,
+	storageDirectoryConfig: IStorageDirectoryConfig,
+): IRepoInfo {
+	const repoPath = getRepoPath(
+		repoPerDocEnabled
+			? repoManagerParams.storageRoutingId.tenantId
+			: repoManagerParams.repoName,
+		repoPerDocEnabled ? repoManagerParams.storageRoutingId.documentId : undefined,
+		storageDirectoryConfig.useRepoOwner ? repoManagerParams.repoOwner : undefined,
+	);
+	const directoryPath = getGitDirectory(
+		repoPath,
+		storageDirectoryConfig.baseDir,
+		storageDirectoryConfig.suffixPath,
+	);
+	const repoName = repoPerDocEnabled
+		? `${repoManagerParams.storageRoutingId.tenantId}/${repoManagerParams.storageRoutingId.documentId}`
+		: repoManagerParams.repoName;
+	return {
+		repoPath,
+		directoryPath,
+		repoName,
+	};
+}
+
+/**
+ * Gets the directory path for the latest full summary blob for a document.
+ * @param repoDirectoryPath - The path to the repo directory. This should be the same as {@link IRepositoryManager.path}.
+ * @param documentId - The document ID of the summary.
+ * @returns storage path for the latest full summary blob.
+ */
+export function getLatestFullSummaryDirectory(
+	repoDirectoryPath: string,
+	documentId: string,
+): string {
+	return `${repoDirectoryPath}/${documentId}`;
+}
+
 export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
 	if (!storageRoutingId) {
 		return undefined;
@@ -271,28 +343,48 @@ export function logAndThrowApiError(
 	);
 }
 
+/**
+ * Whether the error is a "Repo does not exist" error.
+ * Ideally, this would be just a 404 error check, but there are back-compat problems
+ * with changing 400 response to 404.
+ */
+export function isRepoNotExistsError(error: unknown): boolean {
+	return (
+		isNetworkError(error) &&
+		error.code === RepoDoesNotExistStatusCode &&
+		error.message.startsWith(RepoDoesNotExistMessage)
+	);
+}
+
 export async function getRepoManagerFromWriteAPI(
 	repoManagerFactory: IRepositoryManagerFactory,
 	repoManagerParams: IRepoManagerParams,
 	repoPerDocEnabled: boolean,
 	optimizeForInitialSummary?: boolean,
-) {
+): Promise<{ createdNew: boolean; repoManager: IRepositoryManager }> {
 	if (optimizeForInitialSummary) {
-		return repoManagerFactory.create({ ...repoManagerParams, optimizeForInitialSummary });
+		return {
+			createdNew: true,
+			repoManager: await repoManagerFactory.create({
+				...repoManagerParams,
+				optimizeForInitialSummary,
+			}),
+		};
 	}
 	try {
-		return await repoManagerFactory.open(repoManagerParams);
+		return {
+			createdNew: false,
+			repoManager: await repoManagerFactory.open(repoManagerParams),
+		};
 	} catch (error: any) {
 		// If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
 		// creating the repository on the fly. So, if the open operation fails with a 400 code (representing
 		// the repo does not exist), we try to create the reposiroty instead.
-		if (
-			repoPerDocEnabled &&
-			error instanceof Error &&
-			error?.name === "NetworkError" &&
-			(error as NetworkError)?.code === 400
-		) {
-			return repoManagerFactory.create(repoManagerParams);
+		if (repoPerDocEnabled && isRepoNotExistsError(error)) {
+			return {
+				createdNew: true,
+				repoManager: await repoManagerFactory.create(repoManagerParams),
+			};
 		}
 		throw error;
 	}
@@ -340,5 +432,93 @@ export async function checkSoftDeleted(
 			error,
 		);
 		throw error;
+	}
+}
+
+export interface IGitManagerFactoryParams {
+	storageDirectoryConfig: IStorageDirectoryConfig;
+	gitLibraryName: string;
+	apiMetricsSamplingPeriod?: number;
+	enableRepositoryManagerMetrics: boolean;
+	repoPerDocEnabled: boolean;
+	enableSlimGitInit: boolean;
+	externalStorageManager: ExternalStorageManager;
+}
+
+export function getGitManagerFactoryParamsFromConfig(config: Provider): IGitManagerFactoryParams {
+	const storageDirectoryConfig: IStorageDirectoryConfig = config.get("storageDir") ?? {
+		useRepoOwner: true,
+	};
+	const gitLibraryName: string = config.get("git:lib:name") ?? "isomporphic-git";
+
+	const apiMetricsSamplingPeriod: number | undefined = config.get("git:apiMetricsSamplingPeriod");
+
+	const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
+	const enableRepositoryManagerMetrics: boolean =
+		config.get("git:enableRepositoryManagerMetrics") ?? false;
+	const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
+
+	const externalStorageManager = new ExternalStorageManager(config);
+
+	return {
+		storageDirectoryConfig,
+		gitLibraryName,
+		apiMetricsSamplingPeriod,
+		repoPerDocEnabled,
+		enableRepositoryManagerMetrics,
+		enableSlimGitInit,
+		externalStorageManager,
+	};
+}
+
+export class InMemoryRepoManagerFactory implements IRepositoryManagerFactory {
+	private readonly memfsVolumeCache: Map<string, MemFsManagerFactory> = new Map();
+
+	constructor(
+		private readonly storageDirectoryConfig: IStorageDirectoryConfig,
+		private readonly repoPerDocEnabled: boolean,
+		private readonly enableRepositoryManagerMetrics: boolean,
+		private readonly enableSlimGitInit: boolean,
+	) {}
+
+	public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
+		const inMemoryRepoManager = await this.getRepoFactory(params).create(params);
+		return inMemoryRepoManager;
+	}
+
+	public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
+		const inMemoryRepoManager = await this.getRepoFactory(params).create(params);
+		return inMemoryRepoManager;
+	}
+
+	public async delete(params: IRepoManagerParams): Promise<void> {
+		const inMemoryFsManagerFactory = this.memfsVolumeCache.get(this.getRepoCacheKey(params));
+		if (inMemoryFsManagerFactory) {
+			inMemoryFsManagerFactory.volume.reset();
+			this.memfsVolumeCache.delete(params.repoName);
+		}
+	}
+
+	private getRepoCacheKey(params: IRepoManagerParams): string {
+		return `${params.repoOwner}/${params.repoName}`;
+	}
+
+	private getRepoFactory(params: IRepoManagerParams): IsomorphicGitManagerFactory {
+		const cachedMemFsFactory = this.memfsVolumeCache.get(this.getRepoCacheKey(params));
+		const memFsFactory = cachedMemFsFactory ?? new MemFsManagerFactory();
+		if (!cachedMemFsFactory) {
+			this.memfsVolumeCache.set(this.getRepoCacheKey(params), memFsFactory);
+		}
+		return new IsomorphicGitManagerFactory(
+			this.storageDirectoryConfig,
+			{
+				defaultFileSystemManagerFactory: memFsFactory,
+				ephemeralFileSystemManagerFactory: memFsFactory,
+			},
+			new NullExternalStorageManager(),
+			this.repoPerDocEnabled,
+			this.enableRepositoryManagerMetrics,
+			this.enableSlimGitInit,
+		);
 	}
 }
