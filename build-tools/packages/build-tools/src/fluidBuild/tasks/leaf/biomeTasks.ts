@@ -66,7 +66,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		const files = await this.getBiomeFormattedFiles(this.node.pkg.directory);
 		const configPath = await this.getClosestBiomeConfigPath(this.node.pkg.directory);
 
-		if(configPath === undefined) {
+		if (configPath === undefined) {
 			// No configs to include, so just return all formatted files
 			return [...new Set(files)];
 		}

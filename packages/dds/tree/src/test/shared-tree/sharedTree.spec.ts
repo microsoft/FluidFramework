@@ -1965,6 +1965,36 @@ describe("SharedTree", () => {
 			),
 		);
 	});
+
+	it("breaks on exceptions", () => {
+		const tree = treeTestFactory();
+		const sf = new SchemaFactory("test");
+		const schema = sf.object("myObject", {});
+		const config = new TreeViewConfiguration({ schema, enableSchemaValidation: true });
+		const view = tree.viewWith(config);
+
+		view.initialize({});
+		assert.equal(view.breaker, tree.breaker);
+		// Invalid second initialize
+		assert.throws(() => view.initialize({}), validateUsageError(/initialized more than once/));
+		// Access after exception should throw broken object error
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+		// Methods should throw
+		assert.throws(
+			() => view.initialize({}),
+			validateUsageError(/invalid state by another error/),
+		);
+		// Methods on tree should throw after view broke
+		assert.throws(
+			() => tree.viewWith(config),
+			validateUsageError(/invalid state by another error/),
+		);
+		// Inherited methods on tree should throw after view broke
+		assert.throws(
+			() => tree.getAttachSummary(),
+			validateUsageError(/invalid state by another error/),
+		);
+	});
 });
 
 function assertSchema<TRoot extends FlexFieldSchema>(
