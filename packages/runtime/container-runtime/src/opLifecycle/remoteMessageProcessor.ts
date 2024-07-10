@@ -102,7 +102,7 @@ export class RemoteMessageProcessor {
 				return;
 			}
 			// This message will always be compressed
-			message = chunkProcessingResult.message as InboundSequencedContainerRuntimeMessage; //* CAST
+			message = chunkProcessingResult.message;
 		}
 
 		if (this.opDecompressor.isCompressedMessage(message)) {
@@ -110,7 +110,7 @@ export class RemoteMessageProcessor {
 		}
 
 		if (this.opDecompressor.currentlyUnrolling) {
-			message = this.opDecompressor.unroll(message) as InboundSequencedContainerRuntimeMessage; //* CAST
+			message = this.opDecompressor.unroll(message);
 			// Need to unpack after unrolling if not a groupedBatch
 			if (!isGroupedBatch(message)) {
 				unpack(message);

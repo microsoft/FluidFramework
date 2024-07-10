@@ -6,19 +6,22 @@
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+import {
+	ContainerMessageType,
+	ContainerRuntimeChunkedOpMessage,
+	type InboundSequencedContainerRuntimeMessage,
+} from "../messageTypes.js";
 
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
 
-export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
+export function isChunkedMessage(message: InboundSequencedContainerRuntimeMessage): boolean {
 	return isChunkedContents(message.contents);
 }
 
@@ -71,7 +74,7 @@ export class OpSplitter {
 	private addChunk(
 		clientId: string,
 		chunkedContent: IChunkedOp,
-		originalMessage: ISequencedDocumentMessage,
+		originalMessage: InboundSequencedContainerRuntimeMessage,
 	) {
 		let map = this.chunkMap.get(clientId);
 		if (map === undefined) {
@@ -189,7 +192,7 @@ export class OpSplitter {
 		};
 	}
 
-	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
+	public processChunk(message: InboundSequencedContainerRuntimeMessage): ProcessChunkResult {
 		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
 		const contents: IChunkedContents = message.contents;
 
@@ -235,7 +238,7 @@ type ProcessChunkResult =
 	  }
 	| {
 			readonly isFinalChunk: true;
-			readonly message: ISequencedDocumentMessage;
+			readonly message: InboundSequencedContainerRuntimeMessage;
 	  };
 
 const chunkToBatchMessage = (

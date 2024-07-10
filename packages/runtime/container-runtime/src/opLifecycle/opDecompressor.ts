@@ -6,12 +6,12 @@
 import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
-import { IBatchMetadata } from "../metadata.js";
+import type { InboundSequencedContainerRuntimeMessage } from "../messageTypes.js";
+import { IBatchMetadata, asBatchMetadata } from "../metadata.js";
 
 /**
  * Compression makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -38,7 +38,7 @@ export class OpDecompressor {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
 	}
 
-	public isCompressedMessage(message: ISequencedDocumentMessage): boolean {
+	public isCompressedMessage(message: InboundSequencedContainerRuntimeMessage): boolean {
 		if (message.compression === CompressionAlgorithms.lz4) {
 			return true;
 		}
@@ -70,7 +70,7 @@ export class OpDecompressor {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",
 					type: message.type,
-					batch: (message.metadata as IBatchMetadata | undefined)?.batch,
+					batch: asBatchMetadata(message.metadata)?.batch,
 				});
 				return true;
 			}
@@ -92,7 +92,7 @@ export class OpDecompressor {
 	 * Decompress the given compressed message and store it to be subsequently unrolled.
 	 * The stored message will be of type `any[]` where each element represents a message's `contents`
 	 */
-	public decompressAndStore(message: ISequencedDocumentMessage): void {
+	public decompressAndStore(message: InboundSequencedContainerRuntimeMessage): void {
 		assert(
 			message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
 			0x511 /* Only lz4 compression is supported */,
@@ -124,9 +124,11 @@ export class OpDecompressor {
 
 	/**
 	 * Unroll the next message from the decompressed content provided to {@link decompressAndStore}
-	 * @returns the unrolled `ISequencedDocumentMessage`
+	 * @returns the unrolled message
 	 */
-	public unroll(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+	public unroll(
+		message: InboundSequencedContainerRuntimeMessage,
+	): InboundSequencedContainerRuntimeMessage {
 		assert(this.currentlyUnrolling, 0x942 /* not currently unrolling */);
 		assert(this.rootMessageContents !== undefined, 0x943 /* missing rootMessageContents */);
 		assert(
@@ -161,9 +163,9 @@ export class OpDecompressor {
 
 // We should not be mutating the input message nor its metadata
 const newMessage = (
-	originalMessage: ISequencedDocumentMessage,
+	originalMessage: InboundSequencedContainerRuntimeMessage,
 	contents: any,
-): ISequencedDocumentMessage => ({
+): InboundSequencedContainerRuntimeMessage => ({
 	...originalMessage,
 	contents,
 	compression: undefined,
