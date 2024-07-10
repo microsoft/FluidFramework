@@ -170,7 +170,7 @@ describe("RouterliciousDriverRestWrapper", () => {
 			assert(retryQueryParamTested);
 		});
 
-		it.only("retry query param is appended on subsequent api request - when request function is invoked multiple times externally on failure", async () => {
+		it("retry query param is appended on subsequent api request - when request function is invoked multiple times externally on failure", async () => {
 			let isTestedSuccessfully = false;
 			// Fail first request with retriable error
 			nock(testHost).get(testPath).reply(500);
