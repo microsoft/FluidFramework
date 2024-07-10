@@ -19,7 +19,7 @@ const { formattedSectionText, readTemplate } = require("../utilities.cjs");
 const generateSectionFromTemplate = (templateFileName, headingOptions) => {
 	const sectionBody = readTemplate(
 		templateFileName,
-		headingOptions?.headingLevel ?? defaultSectionHeadingLevel - 1,
+		headingOptions?.headingLevel ?? 0,
 	);
 	return formattedSectionText(sectionBody, headingOptions);
 };
