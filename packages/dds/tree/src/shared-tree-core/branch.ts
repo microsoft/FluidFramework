@@ -369,7 +369,8 @@ export class SharedTreeBranch<
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const revision = this.mintRevisionTag();
-			const commit = commits[i] ?? fail("This wont run because we are iterating through commits");
+			const commit =
+				commits[i] ?? fail("This wont run because we are iterating through commits");
 			const inverse = this.changeFamily.rebaser.changeRevision(
 				this.changeFamily.rebaser.invert(commit, false),
 				revision,

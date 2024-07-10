@@ -339,7 +339,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField++;
 		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
 		if (this.indexOfField < fields.length) {
-			const fieldArr = fields[this.indexOfField]  ?? fail("This wont run due to the length check above");
+			const fieldArr =
+				fields[this.indexOfField] ?? fail("This wont run due to the length check above");
 			this.fieldKey = fieldArr[0];
 			return true;
 		}
@@ -417,7 +418,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 			return false; // Handle empty field (indexed by key into empty field)
 		}
 		const f =
-			shape.fieldsOffsetArray[this.indexOfField]  ?? fail("This wont run due to the length check above");
+			shape.fieldsOffsetArray[this.indexOfField] ??
+			fail("This wont run due to the length check above");
 		if (childIndex >= f.topLevelLength) {
 			return false;
 		}

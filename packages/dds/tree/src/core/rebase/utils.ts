@@ -238,7 +238,9 @@ export function rebaseBranch<TChange>(
 	}
 
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
-	const newBase = targetPath[newBaseIndex] ?? fail("This will not run because newBaseIndex will always be within targetPath");
+	const newBase =
+		targetPath[newBaseIndex] ??
+		fail("This will not run because newBaseIndex will always be within targetPath");
 	// Figure out how much of the trunk to start rebasing over.
 	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];
@@ -266,18 +268,10 @@ export function rebaseBranch<TChange>(
 	// base commit.
 	if (targetRebasePath.length === 0) {
 		for (const c of sourcePath) {
-			sourceCommits.push(
-				mintCommit(
-					sourceCommits[sourceCommits.length - 1] ??
-						newBase,
-					c,
-				),
-			);
+			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
 		}
 		return {
-			newSourceHead:
-				sourceCommits[sourceCommits.length - 1] ??
-				newBase,
+			newSourceHead: sourceCommits[sourceCommits.length - 1] ?? newBase,
 			sourceChange: undefined,
 			commits: {
 				deletedSourceCommits,

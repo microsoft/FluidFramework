@@ -106,7 +106,8 @@ export class ChunkedForest implements IEditableForest {
 			getParent(): StackNode {
 				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
 				return (
-					this.mutableChunkStack[this.mutableChunkStack.length - 1] ?? fail("This wont run due to the length check above")
+					this.mutableChunkStack[this.mutableChunkStack.length - 1] ??
+					fail("This wont run due to the length check above")
 				);
 			},
 			free(): void {

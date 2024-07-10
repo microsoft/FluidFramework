@@ -222,7 +222,8 @@ function invertMark(
 				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
-			let detachInverse = detachInverses[0] ?? fail("This wont run due to the length check above");;
+			let detachInverse =
+				detachInverses[0] ?? fail("This wont run due to the length check above");
 			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark[] = [];
