@@ -15,6 +15,7 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	getKeyForCacheEntry,
+	type InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	PerformanceEvent,
@@ -34,7 +35,9 @@ import {
 	createCacheSnapshotKey,
 	createOdspLogger,
 	getOdspResolvedUrl,
+	snapshotWithLoadingGroupIdSupported,
 	toInstrumentedOdspStorageTokenFetcher,
+	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 
 /**
@@ -45,7 +48,7 @@ import {
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  * is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
- * @param forceAccessTokenViaAuthorizationHeader - whether to force passing given token via authorization header.
+ * @param forceAccessTokenViaAuthorizationHeader - @deprecated Not used, true value always used instead. Whether to force passing given token via authorization header.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
@@ -74,9 +77,7 @@ export async function prefetchLatestSnapshot(
 ): Promise<boolean> {
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
-	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
-		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2",
-	);
+	const useGroupIdsForSnapshotFetch = snapshotWithLoadingGroupIdSupported(mc.config);
 	// For prefetch, we just want to fetch the ungrouped data and want to use the new API if the
 	// feature gate is set, so provide an empty array.
 	const loadingGroupIds = useGroupIdsForSnapshotFetch ? [] : undefined;
@@ -87,7 +88,7 @@ export async function prefetchLatestSnapshot(
 		driveId: odspResolvedUrl.driveId,
 		itemId: odspResolvedUrl.itemId,
 	};
-	const storageTokenFetcher = toInstrumentedOdspStorageTokenFetcher(
+	const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
 		odspLogger,
 		resolvedUrlData,
 		getStorageToken,
@@ -95,21 +96,23 @@ export async function prefetchLatestSnapshot(
 
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
-		storageToken: string,
+		storageTokenFetcher: InstrumentedStorageTokenFetcher,
+		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
-			storageToken,
+			storageTokenFetcher,
+			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
 			undefined,
 			controller,
 		);
 	};
-	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
+	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl, useGroupIdsForSnapshotFetch);
 	let cacheP: Promise<void> | undefined;
 	let snapshotEpoch: string | undefined;
 	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
@@ -136,7 +139,7 @@ export async function prefetchLatestSnapshot(
 			);
 			await fetchSnapshotWithRedeem(
 				odspResolvedUrl,
-				storageTokenFetcher,
+				getAuthHeader,
 				hostSnapshotFetchOptions,
 				forceAccessTokenViaAuthorizationHeader,
 				odspLogger,
