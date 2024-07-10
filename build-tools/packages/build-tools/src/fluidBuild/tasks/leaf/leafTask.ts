@@ -555,11 +555,12 @@ export class UnknownLeafTask extends LeafTask {
 
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
-	 * @returns the list of files that this task depends on. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task depends on.
 	 */
 	protected abstract getInputFiles(): Promise<string[]>;
+
 	/**
-	 * @returns the list of files that this task generates. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task generates.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
 

@@ -4,6 +4,7 @@
  */
 
 import { readFile } from "fs/promises";
+import path from "path";
 import ignore from "ignore";
 import * as JSON5 from "json5";
 import { merge } from "ts-deepmerge";
@@ -49,17 +50,19 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Includes all files in the the task's package directory that Biome would format and any Biome config files in the
 	 * directory tree.
-	 *
-	 * TODO: currently only includes the main config file. Need to follow extends and get paths for all of them.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		// Files that would be formatted by biome. Paths are relative to the package directory
+		// Files that would be formatted by biome. Paths are relative to the package directory.
 		const files = await this.getBiomeFormattedFiles(this.node.pkg.directory);
-		const configFile = await this.getBiomeConfigPath(this.node.pkg.directory);
+		const configPath = await this.getClosestBiomeConfigPath(this.node.pkg.directory);
 
-		return configFile === undefined
-			? [...new Set(files)]
-			: [...new Set([configFile, ...files])];
+		if(configPath === undefined) {
+			// No configs to include, so just return all formatted files
+			return [...new Set(files)];
+		}
+
+		const allConfigPaths = await getAllBiomeConfigPaths(configPath);
+		return [...new Set([...allConfigPaths, ...files])];
 	}
 
 	protected async getOutputFiles(): Promise<string[]> {
@@ -68,9 +71,10 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	}
 
 	/**
-	 * Returns the closest biome config file found from the current working directory up to the root of the repo.
+	 * Returns the absolute path to the closest Biome config file found from the current working directory up to the root
+	 * of the repo.
 	 */
-	private async getBiomeConfigPath(cwd: string): Promise<string | undefined> {
+	private async getClosestBiomeConfigPath(cwd: string): Promise<string | undefined> {
 		return (await findUp)
 			.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt: await this.repoRoot })
 			.then((config) => {
@@ -82,11 +86,9 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	}
 
 	/**
-	 * Return an array of paths to files that Biome would format under the provided path. The returned paths are relative
-	 * to the root of the repo.
+	 * Return an array of absolute paths to files that Biome would format under the provided path.
 	 */
 	private async getBiomeFormattedFiles(cwd: string): Promise<string[]> {
-		// const repoRoot = await this.repoRoot;
 		const gitRepo = await this.gitRepo;
 
 		/**
@@ -95,7 +97,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		 */
 		const allPossibleFiles = await gitRepo.getFiles(cwd);
 
-		const configFile = await this.getBiomeConfigPath(cwd);
+		const configFile = await this.getClosestBiomeConfigPath(cwd);
 		if (configFile === undefined) {
 			// No config, so all files are formatted
 			return allPossibleFiles;
@@ -107,12 +109,46 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 		const ignoreObject = ignore().add([...ignoreEntries]);
 		const filtered = ignoreObject.filter(allPossibleFiles);
 
-		console.warn(
-			`Found ${allPossibleFiles.length} files to format, reduced to ${filtered.length} files.`,
+		this.traceExec(
+			`Found ${allPossibleFiles.length} files to format, reduced to ${filtered.length} files by ignore settings.`,
 		);
 
-		return filtered;
+		// Convert repo-relative paths to absolute
+		const repoRoot = await this.repoRoot;
+		return filtered.map((filePath) => path.resolve(repoRoot, filePath));
 	}
+}
+
+/**
+ * Loads a Biome configuration file _without_ following any "extends" values. You probably want to use
+ * {@link loadBiomeConfig} instead of this function.
+ */
+async function loadRawBiomeConfig(configPath: string): Promise<BiomeConfig> {
+	const contents = await readFile(configPath, "utf8");
+	const config: BiomeConfig = JSON5.parse(contents);
+	return config;
+}
+
+/**
+ * Returns an array of absolute paths to Biome config files. The paths are in the order in which they are merged by
+ * Biome. That is, the last item in the array will be the absolute path to `configPath`.
+ */
+async function getAllBiomeConfigPaths(configPath: string): Promise<string[]> {
+	const config = await loadRawBiomeConfig(configPath);
+	let extendedConfigPaths: string[] = [];
+
+	if (config.extends) {
+		const pathsNested = await Promise.all(
+			config.extends.map((configToExtend) =>
+				getAllBiomeConfigPaths(path.join(path.dirname(configPath), configToExtend)),
+			),
+		);
+		extendedConfigPaths = pathsNested.flat();
+	}
+
+	// Add the current config as the last one to be applied when they're merged
+	extendedConfigPaths.push(configPath);
+	return extendedConfigPaths;
 }
 
 /**
@@ -120,30 +156,20 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
  * merged. Array-type values are not merged, in accordance with how Biome applies configs.
  */
 async function loadBiomeConfig(configPath: string): Promise<BiomeConfig> {
-	const contents = await readFile(configPath, "utf8");
-	const config: BiomeConfig = JSON5.parse(contents);
+	const allConfigPaths = await getAllBiomeConfigPaths(configPath);
+	const allConfigs = await Promise.all(
+		allConfigPaths.map((pathToConfig) => loadRawBiomeConfig(pathToConfig)),
+	);
 
-	if (config.extends !== undefined && config.extends.length > 0) {
-		// Iterate through each extended config, load it, then merge them
-		const configsToMerge = await Promise.all(
-			config.extends.map((configPath) => loadBiomeConfig(configPath)),
-		);
-		// Add the current config as the last one to be applied when they're merged
-		configsToMerge.push(config);
+	const mergedConfig = merge.withOptions(
+		{
+			// Biome does not merge arrays
+			mergeArrays: false,
+		},
+		...allConfigs,
+	);
 
-		const mergedConfig = merge.withOptions(
-			{
-				// Biome does not merge arrays
-				mergeArrays: false,
-			},
-			...configsToMerge,
-		);
-
-		return mergedConfig;
-	}
-
-	// extends is undefined, so return the config as-is
-	return config;
+	return mergedConfig;
 }
 
 /**
