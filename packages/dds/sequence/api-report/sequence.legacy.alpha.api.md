@@ -19,7 +19,75 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 // @alpha
 export function appendSharedStringDeltaToRevertibles(string: ISharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
-export { BaseSegment }
+// @alpha (undocumented)
+export abstract class BaseSegment implements ISegment {
+    // (undocumented)
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    // (undocumented)
+    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
+    // (undocumented)
+    protected addSerializedProps(jseg: IJSONSegment): void;
+    // (undocumented)
+    append(other: ISegment): void;
+    // (undocumented)
+    attribution?: IAttributionCollection<AttributionKey>;
+    // (undocumented)
+    cachedLength: number;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clientId: number;
+    // (undocumented)
+    abstract clone(): ISegment;
+    // (undocumented)
+    protected cloneInto(b: ISegment): void;
+    // (undocumented)
+    protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
+    // (undocumented)
+    hasProperty(key: string): boolean;
+    // (undocumented)
+    index: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    // (undocumented)
+    localMovedSeq?: number;
+    // (undocumented)
+    localRefs?: LocalReferenceCollection;
+    // (undocumented)
+    localRemovedSeq?: number;
+    // (undocumented)
+    localSeq?: number;
+    // (undocumented)
+    movedClientIds?: number[];
+    // (undocumented)
+    movedSeq?: number;
+    // (undocumented)
+    movedSeqs?: number[];
+    // (undocumented)
+    ordinal: string;
+    // (undocumented)
+    properties?: PropertySet;
+    // (undocumented)
+    propertyManager?: PropertiesManager;
+    // (undocumented)
+    removedClientIds?: number[];
+    // (undocumented)
+    removedSeq?: number;
+    // (undocumented)
+    readonly segmentGroups: SegmentGroupCollection;
+    // (undocumented)
+    seq: number;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    abstract toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    abstract readonly type: string;
+    // (undocumented)
+    wasMovedOnInsert?: boolean | undefined;
+}
 
 // @alpha (undocumented)
 export function createOverlappingIntervalsIndex(sharedString: ISharedString): IOverlappingIntervalsIndex<SequenceInterval>;
@@ -177,7 +245,37 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: SequencePlace, end?: SequencePlace): void;
 }
 
-export { ISegment }
+// @alpha
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
+    // (undocumented)
+    append(segment: ISegment): void;
+    attribution?: IAttributionCollection<AttributionKey>;
+    cachedLength: number;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    clientId: number;
+    // (undocumented)
+    clone(): ISegment;
+    readonly endpointType?: "start" | "end";
+    localRefs?: LocalReferenceCollection;
+    localRemovedSeq?: number;
+    localSeq?: number;
+    properties?: PropertySet;
+    propertyManager?: PropertiesManager;
+    // (undocumented)
+    readonly segmentGroups: SegmentGroupCollection;
+    seq?: number;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    readonly type: string;
+}
 
 // @alpha
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
@@ -283,21 +381,101 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
-export { LocalReferencePosition }
+// @alpha @sealed (undocumented)
+export interface LocalReferencePosition extends ReferencePosition {
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
+    readonly canSlideToEndpoint?: boolean;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+}
 
-export { MapLike }
+// @alpha
+export interface MapLike<T> {
+    // (undocumented)
+    [index: string]: T;
+}
 
-export { Marker }
+// @alpha
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
+    constructor(refType: ReferenceType);
+    // (undocumented)
+    append(): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(): Marker;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): undefined;
+    // (undocumented)
+    static fromJSONObject(spec: any): Marker | undefined;
+    // (undocumented)
+    getId(): string | undefined;
+    // (undocumented)
+    getOffset(): number;
+    // (undocumented)
+    getProperties(): PropertySet | undefined;
+    // (undocumented)
+    getSegment(): this;
+    // (undocumented)
+    static is(segment: ISegment): segment is Marker;
+    // (undocumented)
+    static make(refType: ReferenceType, props?: PropertySet): Marker;
+    // (undocumented)
+    refType: ReferenceType;
+    // (undocumented)
+    toJSONObject(): IJSONMarkerSegment;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    static readonly type = "Marker";
+    // (undocumented)
+    readonly type = "Marker";
+}
 
-export { MergeTreeDeltaType }
+// @alpha (undocumented)
+export const MergeTreeDeltaType: {
+    readonly INSERT: 0;
+    readonly REMOVE: 1;
+    readonly ANNOTATE: 2;
+    readonly GROUP: 3;
+    readonly OBLITERATE: 4;
+};
 
-export { PropertySet }
+// @alpha (undocumented)
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
-export { ReferencePosition }
+// @alpha
+export type PropertySet = MapLike<any>;
 
-export { ReferenceType }
+// @alpha
+export interface ReferencePosition {
+    // (undocumented)
+    addProperties(newProps: PropertySet): void;
+    getOffset(): number;
+    getSegment(): ISegment | undefined;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    properties?: PropertySet;
+    // (undocumented)
+    refType: ReferenceType;
+    slidingPreference?: SlidingPreference;
+}
 
-export { reservedMarkerIdKey }
+// @alpha
+export enum ReferenceType {
+    RangeBegin = 16,
+    RangeEnd = 32,
+    // (undocumented)
+    Simple = 0,
+    SlideOnRemove = 64,
+    StayOnRemove = 128,
+    Tile = 1,
+    Transient = 256
+}
+
+// @alpha
+export const reservedMarkerIdKey = "markerId";
 
 // @alpha
 export function revertSharedStringRevertibles(sharedString: ISharedString, revertibles: SharedStringRevertible[]): void;
@@ -485,8 +663,48 @@ export enum Side {
     Before = 0
 }
 
-export { TextSegment }
+// @alpha (undocumented)
+export class TextSegment extends BaseSegment {
+    constructor(text: string);
+    // (undocumented)
+    append(segment: ISegment): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(start?: number, end?: number): TextSegment;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): TextSegment | undefined;
+    // (undocumented)
+    static fromJSONObject(spec: any): TextSegment | undefined;
+    // (undocumented)
+    static is(segment: ISegment): segment is TextSegment;
+    // (undocumented)
+    static make(text: string, props?: PropertySet): TextSegment;
+    // (undocumented)
+    text: string;
+    // (undocumented)
+    toJSONObject(): IJSONTextSegment | string;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    static readonly type = "TextSegment";
+    // (undocumented)
+    readonly type = "TextSegment";
+}
 
-export { TrackingGroup }
+// @alpha (undocumented)
+export class TrackingGroup implements ITrackingGroup {
+    constructor();
+    // (undocumented)
+    has(trackable: Trackable): boolean;
+    // (undocumented)
+    link(trackable: Trackable): void;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
+}
 
 ```

@@ -4,6 +4,9 @@
 
 ```ts
 
-export { IUser }
+// @public
+export interface IUser {
+    id: string;
+}
 
 ```

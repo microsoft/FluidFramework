@@ -73,23 +73,71 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     type: "remote";
 }
 
-export { CompatibilityMode }
+// @public
+export type CompatibilityMode = "1" | "2";
 
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
-export { ITelemetryBaseEvent }
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
 
-export { ITelemetryBaseLogger }
+// @public
+export interface ITelemetryBaseLogger {
+    minLogLevel?: LogLevel;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
 
-export { ITokenClaims }
+// @alpha
+export interface ITokenClaims {
+    documentId: string;
+    exp: number;
+    iat: number;
+    jti?: string;
+    scopes: string[];
+    tenantId: string;
+    user: IUser;
+    ver: string;
+}
 
-export { ITokenProvider }
+// @public
+export interface ITokenProvider {
+    documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
+    fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
+    fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+}
 
-export { ITokenResponse }
+// @public (undocumented)
+export interface ITokenResponse {
+    fromCache?: boolean;
+    jwt: string;
+}
 
-export { IUser }
+// @public
+export interface IUser {
+    id: string;
+}
 
-export { ScopeType }
+// @public
+export const LogLevel: {
+    readonly verbose: 10;
+    readonly default: 20;
+    readonly error: 30;
+};
+
+// @public
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @alpha
+export enum ScopeType {
+    DocRead = "doc:read",
+    DocWrite = "doc:write",
+    SummaryWrite = "summary:write"
+}
 
 ```

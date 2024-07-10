@@ -36,7 +36,7 @@ export const ContainerErrorTypes: {
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
-export interface ContainerWarning extends IErrorBase_2 {
+export interface ContainerWarning extends IErrorBase {
     logged?: boolean;
 }
 
@@ -194,7 +194,7 @@ export interface IContainerLoadMode {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase_2;
+export type ICriticalContainerError = IErrorBase;
 
 // @alpha @sealed
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
@@ -231,7 +231,7 @@ export interface IDeltaManagerEvents extends IEvent {
     (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean, readonlyConnectionReason?: {
         reason: string;
-        error?: IErrorBase_2;
+        error?: IErrorBase;
     }) => void): any;
 }
 
@@ -262,7 +262,14 @@ export interface IDeltaSender {
     flush(): void;
 }
 
-export { IErrorBase }
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
 
 // @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
@@ -426,7 +433,12 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     };
 }
 
-export { IThrottlingWarning }
+// @alpha
+export interface IThrottlingWarning extends IErrorBase {
+    readonly errorType: typeof FluidErrorTypes.throttlingError;
+    // (undocumented)
+    readonly retryAfterSeconds: number;
+}
 
 // @alpha
 export enum LoaderHeader {

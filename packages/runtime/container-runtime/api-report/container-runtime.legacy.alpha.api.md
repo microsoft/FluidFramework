@@ -92,7 +92,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
-    getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>) => ISummarizerNodeWithGC;
+    getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>) => ISummarizerNodeWithGC_2;
     getCurrentReferenceTimestampMs(): number | undefined;
     getEntryPoint(): Promise<FluidObject>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;

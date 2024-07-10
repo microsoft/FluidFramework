@@ -7,8 +7,16 @@
 // @alpha
 export function generateToken(tenantId: string, key: string, scopes: ScopeType[], documentId?: string, user?: IUser, lifetime?: number, ver?: string): string;
 
-export { IUser }
+// @public
+export interface IUser {
+    id: string;
+}
 
-export { ScopeType }
+// @alpha
+export enum ScopeType {
+    DocRead = "doc:read",
+    DocWrite = "doc:write",
+    SummaryWrite = "summary:write"
+}
 
 ```
