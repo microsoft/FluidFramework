@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "./index.js";
+import { fail } from "./utils.js";
 
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.

@@ -5,12 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	fail,
-	type NestedMap,
-	setInNestedMap,
-	tryGetFromNestedMap,
-} from "../../util/index.js";
+import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";

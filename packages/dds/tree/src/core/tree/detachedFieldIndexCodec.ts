@@ -21,7 +21,7 @@ import {
 } from "./detachedFieldIndexFormat.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { fail } from "../../index.js";
+import { fail } from "../../util/index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(

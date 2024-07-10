@@ -14,7 +14,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
-import { fail } from "../../index.js";
+import { fail } from "../../util/index.js";
 
 /**
  * Uses field cursors
