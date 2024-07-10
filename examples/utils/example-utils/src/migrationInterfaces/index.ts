@@ -6,7 +6,6 @@
 export {
 	IImportExportModel,
 	IMigratableModel,
-	IMigratableModelEvents,
 	IVersionedModel,
 } from "./migratableModel.js";
 export {

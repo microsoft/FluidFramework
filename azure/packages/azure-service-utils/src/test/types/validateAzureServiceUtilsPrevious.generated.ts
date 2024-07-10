@@ -9,11 +9,11 @@
  */
 
 import type * as old from "@fluidframework/azure-service-utils-previous/internal";
-import type { TypeOnly, MinimalType, FullType } from "@fluidframework/build-tools";
+import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
 
 import type * as current from "../../index.js";
 
-declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current;
+declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -22,12 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "InterfaceDeclaration_IUser": {"forwardCompat": false}
  */
-declare function get_old_InterfaceDeclaration_IUser():
-    TypeOnly<old.IUser>;
-declare function use_current_InterfaceDeclaration_IUser(
-    use: TypeOnly<current.IUser>): void;
-use_current_InterfaceDeclaration_IUser(
-    get_old_InterfaceDeclaration_IUser());
+declare type old_as_current_for_InterfaceDeclaration_IUser = requireAssignableTo<TypeOnly<old.IUser>, TypeOnly<current.IUser>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -36,12 +31,7 @@ use_current_InterfaceDeclaration_IUser(
  * typeValidation.broken:
  * "InterfaceDeclaration_IUser": {"backCompat": false}
  */
-declare function get_current_InterfaceDeclaration_IUser():
-    TypeOnly<current.IUser>;
-declare function use_old_InterfaceDeclaration_IUser(
-    use: TypeOnly<old.IUser>): void;
-use_old_InterfaceDeclaration_IUser(
-    get_current_InterfaceDeclaration_IUser());
+declare type current_as_old_for_InterfaceDeclaration_IUser = requireAssignableTo<TypeOnly<current.IUser>, TypeOnly<old.IUser>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -50,12 +40,7 @@ use_old_InterfaceDeclaration_IUser(
  * typeValidation.broken:
  * "EnumDeclaration_ScopeType": {"forwardCompat": false}
  */
-declare function get_old_EnumDeclaration_ScopeType():
-    TypeOnly<old.ScopeType>;
-declare function use_current_EnumDeclaration_ScopeType(
-    use: TypeOnly<current.ScopeType>): void;
-use_current_EnumDeclaration_ScopeType(
-    get_old_EnumDeclaration_ScopeType());
+declare type old_as_current_for_EnumDeclaration_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -64,12 +49,7 @@ use_current_EnumDeclaration_ScopeType(
  * typeValidation.broken:
  * "EnumDeclaration_ScopeType": {"backCompat": false}
  */
-declare function get_current_EnumDeclaration_ScopeType():
-    TypeOnly<current.ScopeType>;
-declare function use_old_EnumDeclaration_ScopeType(
-    use: TypeOnly<old.ScopeType>): void;
-use_old_EnumDeclaration_ScopeType(
-    get_current_EnumDeclaration_ScopeType());
+declare type current_as_old_for_EnumDeclaration_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -78,12 +58,7 @@ use_old_EnumDeclaration_ScopeType(
  * typeValidation.broken:
  * "FunctionDeclaration_generateToken": {"forwardCompat": false}
  */
-declare function get_old_FunctionDeclaration_generateToken():
-    TypeOnly<typeof old.generateToken>;
-declare function use_current_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof current.generateToken>): void;
-use_current_FunctionDeclaration_generateToken(
-    get_old_FunctionDeclaration_generateToken());
+declare type old_as_current_for_FunctionDeclaration_generateToken = requireAssignableTo<TypeOnly<typeof old.generateToken>, TypeOnly<typeof current.generateToken>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -92,9 +67,4 @@ use_current_FunctionDeclaration_generateToken(
  * typeValidation.broken:
  * "FunctionDeclaration_generateToken": {"backCompat": false}
  */
-declare function get_current_FunctionDeclaration_generateToken():
-    TypeOnly<typeof current.generateToken>;
-declare function use_old_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof old.generateToken>): void;
-use_old_FunctionDeclaration_generateToken(
-    get_current_FunctionDeclaration_generateToken());
+declare type current_as_old_for_FunctionDeclaration_generateToken = requireAssignableTo<TypeOnly<typeof current.generateToken>, TypeOnly<typeof old.generateToken>>

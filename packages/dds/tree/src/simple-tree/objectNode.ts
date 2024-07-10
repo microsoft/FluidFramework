@@ -200,6 +200,12 @@ function createProxyHandler(
 			setField(flexNode.getBoxed(fieldInfo.storedKey), fieldInfo.schema, value);
 			return true;
 		},
+		deleteProperty(target, viewKey): boolean {
+			// TODO: supporting delete when it makes sense (custom local fields, and optional field) could be added as a feature in the future.
+			throw new UsageError(
+				`Object nodes do not support the delete operator. Optional fields can be assigned to undefined instead.`,
+			);
+		},
 		has: (target, viewKey) => {
 			return (
 				flexKeyMap.has(viewKey) ||
