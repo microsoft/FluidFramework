@@ -107,7 +107,7 @@ export class RemoteMessageProcessor {
 			const chunkProcessingResult = this.opSplitter.processChunk(message);
 			// Only continue further if current chunk is the final chunk
 			if (!chunkProcessingResult.isFinalChunk) {
-				return;
+				return undefined;
 			}
 			// This message will always be compressed
 			message = chunkProcessingResult.message;
@@ -141,34 +141,32 @@ export class RemoteMessageProcessor {
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
 
-		//* Change to always set this.batchInProgress and return a bool, and let caller clear this.batchInProgress?
-		const maybeCompletedBatch = this.getAndUpdateBatchState(
+		const batchEnd = this.addMessageToBatch(
 			message as InboundSequencedContainerRuntimeMessage & { clientId: string },
 		);
 
-		//* TODO: This can collapse to return maybeCompletedBatch (or even return this.getAndUpdateBatchState(message) directly)
-		if (maybeCompletedBatch === undefined) {
+		if (!batchEnd) {
 			// batch not yet complete
 			return undefined;
 		}
 
-		return maybeCompletedBatch;
+		const completedBatch = this.batchInProgress;
+		this.batchInProgress = undefined;
+		return completedBatch;
 	}
 
 	//* TODO: Review test coverage of batch metadata validation
 
 	/**
-	 * Add the given message to the current batch, and return the batch if it is now complete.
+	 * Add the given message to the current batch, and indicate whether the batch is now complete.
 	 *
-	 * @returns the completed batch (if the current message completes a batch) or undefined otherwise
+	 * @returns true if the batch is now complete, false if more messages are expected
 	 */
-	private getAndUpdateBatchState(
+	private addMessageToBatch(
 		message: InboundSequencedContainerRuntimeMessage & { clientId: string },
-	): IncomingBatch | undefined {
-		//* Or : IncomingBatch & {batchEnd: true} | { batchEnd: false }
+	): boolean {
 		const batchMetadataFlag = asBatchMetadata(message.metadata)?.batch;
 		if (this.batchInProgress === undefined) {
-			//* TODO?: Bring in extra checks / container close semantics from PSM.maybeProcessBatchEnd
 			// We are waiting for a new batch
 			assert(batchMetadataFlag !== false, "Unexpected batch end marker");
 
@@ -181,31 +179,23 @@ export class RemoteMessageProcessor {
 					batchStartCsn: message.clientSequenceNumber,
 				};
 
-				// Not batch end yet
-				return undefined;
+				return false;
 			}
 
 			// Single-message batch (Since metadata flag is undefined)
-			// IMPORTANT: Leave this.batchInProgress undefined, we're ready for the next batch now.
-			return {
+			this.batchInProgress = {
 				messages: [message],
 				batchStartCsn: message.clientSequenceNumber,
 				clientId: message.clientId,
 				batchId: asBatchMetadata(message.metadata)?.batchId,
 			};
+			return true;
 		}
-
 		assert(batchMetadataFlag !== true, "Unexpected batch start marker");
-		if (batchMetadataFlag === false) {
-			// Batch end? Then get ready for the next batch to start
-			const completedBatch = this.batchInProgress;
-			this.batchInProgress = undefined;
-			return completedBatch;
-		}
 
-		// Still in the middle of an existing multi-message batch
 		this.batchInProgress.messages.push(message);
-		return undefined;
+
+		return batchMetadataFlag === false;
 	}
 }
 
