@@ -6,10 +6,8 @@
 import { render, screen } from "@testing-library/react";
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 
-// eslint-disable-next-line import/no-internal-modules
 import { DynamicComposedChart, type GraphDataSet } from "../components/graphs/index.js";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.

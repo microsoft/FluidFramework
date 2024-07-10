@@ -357,16 +357,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(batch[0]!.metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
 			assert(
-				(batch[0].metadata as IBatchMetadata)?.batch === true,
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(batch[0]!.metadata as IBatchMetadata)?.batch === true,
 				0x3ca /* no start batch markup */,
 			);
 			assert(
-				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				(batch[batch.length - 1]!.metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
@@ -892,8 +898,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
-		const from = messages[0].sequenceNumber;
-		const last = messages[messages.length - 1].sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const from = messages[0]!.sequenceNumber;
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const last = messages[messages.length - 1]!.sequenceNumber;
 
 		// Report stats about missing and duplicate ops
 		// This helps better understand why we fetch ops from storage, and thus may delay
@@ -960,7 +970,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 		}
 
-		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
+		// Non null asserting here because of the length check above
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1]!.sequenceNumber);
 
 		const n = this.previouslyProcessedMessage?.sequenceNumber;
 		assert(
