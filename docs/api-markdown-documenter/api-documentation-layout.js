@@ -60,8 +60,7 @@ function createImportNotice(apiItem) {
 		);
 	}
 
-	// TODO: Use `getModifierTag` helper once added to `@fluid-tools/api-markdown-documenter`
-	if (apiItem.tsdocComment?.modifierTagSet?.hasTagName("@legacy")) {
+	if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
 		return createImportAlert(
 			"legacy",
 			"This API is provided for existing users, but is not recommended for new users.",
