@@ -68,10 +68,11 @@ export interface ReferencePosition {
 	properties?: PropertySet;
 
 	/**
-	 * The direction for this reference position to slide when the segment it
-	 * points to is removed. See {@link (SlidingPreference:type)} for additional context.
+	 * The direction for this reference position to slide when the segment it points to is removed.
 	 *
-	 * Defaults to SlidingPreference.Forward
+	 * @see {@link @fluidframework/merge-tree#(SlidingPreference:type)} for additional context.
+	 *
+	 * @defaultValue {@link @fluidframework/merge-tree#(SlidingPreference:variable).Forward}
 	 */
 	slidingPreference?: SlidingPreference;
 
