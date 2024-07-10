@@ -187,11 +187,11 @@ class RouterliciousRestWrapper extends RestWrapper {
 					const err = errorMessage.includes("failed, reason: self signed certificate")
 						? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
 								driverVersion,
-								retryQueryParam: requestRetryCount,
+								retryCount: requestRetryCount,
 							})
 						: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
 								driverVersion,
-								retryQueryParam: requestRetryCount,
+								retryCount: requestRetryCount,
 							});
 					throw err;
 				},
