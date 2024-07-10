@@ -2,6 +2,7 @@
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "./api-extractor-base.esm.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
+	"bundledPackages": ["@fluidframework/*"],
 	"apiReport": {
 		"reportFileName": "<unscopedPackageName>.legacy",
 		// Preferred:
@@ -16,5 +17,16 @@
 	// second time via "legacy" report.
 	"tsdocMetadata": {
 		"enabled": false
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			// Reported when an exported API refers to another declaration that is not exported.
+			// Disabled since we are using `bundledPackages` above to bundle re-exports in the reports.
+			// We don't currently require cross-package export completeness.
+			"ae-forgotten-export": {
+				"logLevel": "none",
+				"addToApiReportFile": false
+			}
+		}
 	}
 }
