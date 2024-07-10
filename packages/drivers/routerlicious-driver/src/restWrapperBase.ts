@@ -15,6 +15,13 @@ export abstract class RestWrapper {
 		protected readonly maxContentLength = 1000 * 1024 * 1024,
 	) {}
 
+	/**
+	 * @param url Relative or absolute request url.(should not contain any query params)
+	 * @param queryString query params to be appended to the request url
+	 * @param headers
+	 * @param additionalOptions
+	 * @returns
+	 */
 	public async get<T>(
 		url: string,
 		queryString?: QueryStringType,
@@ -39,6 +46,14 @@ export abstract class RestWrapper {
 		return this.request<T>(options, 200);
 	}
 
+	/**
+	 * @param url Relative or absolute request url.(should not contain any query params)
+	 * @param requestBody
+	 * @param queryString query params to be appended to the request url
+	 * @param headers
+	 * @param additionalOptions
+	 * @returns
+	 */
 	public async post<T>(
 		url: string,
 		requestBody: any,
@@ -65,6 +80,13 @@ export abstract class RestWrapper {
 		return this.request<T>(options, 201);
 	}
 
+	/**
+	 * @param url Relative or absolute request url.(should not contain any query params)
+	 * @param queryString query params to be appended to the request url
+	 * @param headers
+	 * @param additionalOptions
+	 * @returns
+	 */
 	public async delete<T>(
 		url: string,
 		queryString?: QueryStringType,
@@ -89,6 +111,14 @@ export abstract class RestWrapper {
 		return this.request<T>(options, 204);
 	}
 
+	/**
+	 * @param url Relative or absolute request url.(should not contain any query params)
+	 * @param requestBody
+	 * @param queryString query params to be appended to the request url
+	 * @param headers
+	 * @param additionalOptions
+	 * @returns
+	 */
 	public async patch<T>(
 		url: string,
 		requestBody: any,
