@@ -12,6 +12,7 @@ export {
 	Factory,
 	responseToException,
 } from "./dataStoreHelpers.js";
+export { toFluidHandleInternal } from "./handles.js";
 export { ISerializedHandle, isSerializedHandle } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils.js";

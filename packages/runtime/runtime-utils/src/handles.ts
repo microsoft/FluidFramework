@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+
 /**
  * JSON serialized form of an IFluidHandle
  * @internal
@@ -21,3 +24,11 @@ export interface ISerializedHandle {
  */
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
 	value?.type === "__fluid_handle__";
+
+/**
+ * Downcast an IFluidHandle to an IFluidHandleInternal.
+ * @alpha
+ */
+export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
+	return handle as IFluidHandleInternal<T>;
+}
