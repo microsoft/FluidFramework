@@ -22,6 +22,21 @@ import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
 /**
+ * Whether or not the message appears to be a runtime message from an up-to-date client.
+ * It may be a legacy runtime message (ie already unpacked with ContainerMessageType)
+ * or something different, like a system message.
+ */
+export function isModernRuntimeMessage(
+	message: ISequencedDocumentMessage,
+): message is InboundSequencedContainerRuntimeMessage {
+	if (message.type === MessageType.Operation) {
+		assert(message.clientId !== null, "clientId must be set for runtime messages");
+		return true;
+	}
+	return false;
+}
+
+/**
  * Stateful class for processing incoming remote messages as the virtualization measures are unwrapped,
  * potentially across numerous inbound ops.
  *
@@ -70,7 +85,7 @@ export class RemoteMessageProcessor {
 	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
 	 * or undefined if the batch is not yet complete.
 	 */
-	public process(remoteMessageCopy: ISequencedDocumentMessage):
+	public process(remoteMessageCopy: InboundSequencedContainerRuntimeMessage):
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
@@ -87,7 +102,7 @@ export class RemoteMessageProcessor {
 				return;
 			}
 			// This message will always be compressed
-			message = chunkProcessingResult.message;
+			message = chunkProcessingResult.message as InboundSequencedContainerRuntimeMessage; //* CAST
 		}
 
 		if (this.opDecompressor.isCompressedMessage(message)) {
@@ -95,7 +110,7 @@ export class RemoteMessageProcessor {
 		}
 
 		if (this.opDecompressor.currentlyUnrolling) {
-			message = this.opDecompressor.unroll(message);
+			message = this.opDecompressor.unroll(message) as InboundSequencedContainerRuntimeMessage; //* CAST
 			// Need to unpack after unrolling if not a groupedBatch
 			if (!isGroupedBatch(message)) {
 				unpack(message);
@@ -119,7 +134,7 @@ export class RemoteMessageProcessor {
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
-		this.processorBatch.push(message as InboundSequencedContainerRuntimeMessage);
+		this.processorBatch.push(message);
 
 		// this.batchStartCsn is undefined only if we have processed all messages in the batch.
 		// If it's still defined, we're still in the middle of a batch, so we return nothing, letting

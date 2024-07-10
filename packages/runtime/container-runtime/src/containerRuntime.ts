@@ -173,6 +173,7 @@ import {
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
+	isModernRuntimeMessage,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -2621,18 +2622,13 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
-		// Whether or not the message appears to be a runtime message from an up-to-date client.
-		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
-		// or something different, like a system message.
-		const modernRuntimeMessage = messageArg.type === MessageType.Operation;
-
 		// Do shallow copy of message, as the processing flow will modify it.
 		// There might be multiple container instances receiving the same message.
 		// We do not need to make a deep copy. Each layer will just replace message.contents itself,
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		if (modernRuntimeMessage) {
+		if (isModernRuntimeMessage(messageCopy)) {
 			const processResult = this.remoteMessageProcessor.process(messageCopy);
 			if (processResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
@@ -2641,17 +2637,14 @@ export class ContainerRuntime
 			}
 			const batchStartCsn = processResult.batchStartCsn;
 			const batch = processResult.messages;
-			const messages: {
-				message: InboundSequencedContainerRuntimeMessage;
-				localOpMetadata: unknown;
-			}[] = local
+			const messages = local
 				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
 				: batch.map((message) => ({ message, localOpMetadata: undefined }));
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
 					message,
 					local,
-					modernRuntimeMessage,
+					modernRuntimeMessage: true,
 					savedOp,
 					localOpMetadata,
 				};
@@ -2659,9 +2652,10 @@ export class ContainerRuntime
 			});
 		} else {
 			const msg: MessageWithContext = {
+				//* This is either System Message or "Legacy" CR message (no virtualization and no envelope). Is this the best type to use?
 				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
 				local,
-				modernRuntimeMessage,
+				modernRuntimeMessage: false,
 				savedOp,
 			};
 			this.ensureNoDataModelChanges(() => this.processCore(msg));

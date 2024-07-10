@@ -211,12 +211,13 @@ export type OutboundContainerRuntimeMessage =
 /**
  * An unpacked ISequencedDocumentMessage with the inner TypedContainerRuntimeMessage type/contents/etc
  * promoted up to the outer object
+ * We also know clientId will not be null - this came from another client, not the server.
  */
 export type InboundSequencedContainerRuntimeMessage = Omit<
 	ISequencedDocumentMessage,
 	"type" | "contents"
 > &
-	InboundContainerRuntimeMessage;
+	InboundContainerRuntimeMessage & { clientId: string };
 
 /** Essentially ISequencedDocumentMessage except that `type` is not `string` to enable narrowing
  * as `Exclude<string, InboundContainerRuntimeMessage['type']>` is not supported.
