@@ -74,4 +74,7 @@ export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFa
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMatrix class was exported as public.
  */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition SharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SharedMatrix<T = any> = ISharedMatrix<T>;

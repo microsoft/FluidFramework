@@ -21,25 +21,25 @@ export const matrixFactory = SharedMatrix.getFactory();
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
-class NullMatrixConsumer implements IMatrixConsumer<any> {
+class NullMatrixConsumer implements IMatrixConsumer<unknown> {
 	rowsChanged(
 		rowStart: number,
 		removedCount: number,
 		insertedCount: number,
-		producer: IMatrixProducer<any>,
+		producer: IMatrixProducer<unknown>,
 	): void {}
 	colsChanged(
 		colStart: number,
 		removedCount: number,
 		insertedCount: number,
-		producer: IMatrixProducer<any>,
+		producer: IMatrixProducer<unknown>,
 	): void {}
 	cellsChanged(
 		rowStart: number,
 		colStart: number,
 		rowCount: number,
 		colCount: number,
-		producer: IMatrixProducer<any>,
+		producer: IMatrixProducer<unknown>,
 	): void {}
 }
 

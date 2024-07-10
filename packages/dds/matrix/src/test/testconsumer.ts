@@ -15,7 +15,7 @@ import { MatrixItem } from "../index.js";
  * Comparing the state of the TestConsumer with the original IMatrixProducer is a
  * convenient way to vet that the producer is emitting the correct change notifications.
  */
-export class TestConsumer<T = any>
+export class TestConsumer<T = unknown>
 	implements IMatrixConsumer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>
 {
 	private readonly rows: DenseVector<void> = new DenseVector<void>();
@@ -84,8 +84,7 @@ export class TestConsumer<T = any>
 	}
 
 	public get matrixProducer(): IMatrixProducer<MatrixItem<T>> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return undefined as any;
+		return undefined as never;
 	}
 
 	// #region IMatrixConsumer

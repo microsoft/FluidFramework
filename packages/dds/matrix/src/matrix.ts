@@ -121,6 +121,9 @@ interface CellLastWriteTrackerItem {
  * @legacy
  * @alpha
  */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition ISharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
@@ -216,6 +219,9 @@ export interface ISharedMatrix<T = any>
  * @legacy
  * @alpha
  */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition SharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SharedMatrix<T = any>
 	extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents>
 	implements ISharedMatrix<T>

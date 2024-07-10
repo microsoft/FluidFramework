@@ -87,8 +87,10 @@ export class SparseArray2D<T>
 		return undefined;
 	}
 
-	public get matrixProducer() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	//
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public get matrixProducer(): any {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
 		return undefined as any;
 	}
 
@@ -136,6 +138,9 @@ export class SparseArray2D<T>
 	 * (Note that 'rowBits' is the appropriate byte from 'r0ToMorton16' for the current
 	 * level being traversed.)
 	 */
+	// The suppression is needed because forEachInRow is called in a loop, and expected to
+	// use various abstractions on UA<T> at each level of the loop.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private forEachInRow<V extends UA<any>, U extends UA<V>>(
 		currentLevel: U,
 		rowBits: number,
@@ -156,6 +161,9 @@ export class SparseArray2D<T>
 	 * (Note that 'colBits' is the appropriate byte from 'c0ToMorton16' for the current
 	 * level being traversed.)
 	 */
+	// The suppression is needed because forEachInRow is called in a loop, and expected to
+	// use various abstractions on UA<T> at each level of the loop.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private forEachInCol<V extends UA<any>, U extends UA<V>>(
 		currentLevel: U,
 		colBits: number,
