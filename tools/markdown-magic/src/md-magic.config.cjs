@@ -7,7 +7,6 @@ const scripts = require("markdown-magic-package-scripts");
 
 const { defaultSectionHeadingLevel } = require("./constants.cjs");
 const {
-	createSectionFromTemplate,
 	formattedGeneratedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
@@ -41,7 +40,7 @@ const {
  * Must be a positive integer.
  */
 const generateDependencyGuidelines = (headingOptions) =>
-	createSectionFromTemplate("Dependency-Guidelines-Template.md", {
+	generateSectionFromTemplate("Dependency-Guidelines-Template.md", {
 		...headingOptions,
 		headingText: "Using Fluid Framework libraries",
 	});
@@ -56,7 +55,7 @@ const generateDependencyGuidelines = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateClientRequirementsSection = (headingOptions) =>
-	createSectionFromTemplate("Client-Requirements-Template.md", {
+	generateSectionFromTemplate("Client-Requirements-Template.md", {
 		...headingOptions,
 		headingText: "Minimum Client Requirements",
 	});
@@ -71,7 +70,7 @@ const generateClientRequirementsSection = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateContributionGuidelinesSection = (headingOptions) =>
-	createSectionFromTemplate("Contribution-Guidelines-Template.md", {
+	generateSectionFromTemplate("Contribution-Guidelines-Template.md", {
 		...headingOptions,
 		headingText: "Contribution Guidelines",
 	});
@@ -86,7 +85,7 @@ const generateContributionGuidelinesSection = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateHelpSection = (headingOptions) =>
-	createSectionFromTemplate("Help-Template.md", {
+	generateSectionFromTemplate("Help-Template.md", {
 		...headingOptions,
 		headingText: "Help",
 	});
@@ -101,7 +100,7 @@ const generateHelpSection = (headingOptions) =>
  * Must be a positive integer.
  */
 const generateTrademarkSection = (headingOptions) =>
-	createSectionFromTemplate("Trademark-Template.md", {
+	generateSectionFromTemplate("Trademark-Template.md", {
 		...headingOptions,
 		headingText: "Trademark",
 	});
