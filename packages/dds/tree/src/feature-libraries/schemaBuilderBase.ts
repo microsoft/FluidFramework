@@ -33,7 +33,6 @@ import {
 	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./typed-schema/index.js";
-import { identifier } from "./default-schema/defaultFieldKinds.js";
 
 /**
  * Configuration for a SchemaBuilder.
@@ -102,8 +101,6 @@ export class SchemaBuilderBase<
 	 * Used in error messages to identify content produced by this builder.
 	 */
 	public readonly name: string;
-
-	private readonly identifierFieldKeys: (string | symbol)[] = [];
 
 	/**
 	 * @param defaultKind - The default field kind to use when inferring a {@link FlexFieldSchema} from {@link FlexImplicitAllowedTypes}.
@@ -194,7 +191,6 @@ export class SchemaBuilderBase<
 			adapters: library.adapters,
 			rootFieldSchema: field,
 			policy: defaultSchemaPolicy,
-			identifierFieldKeys: this.identifierFieldKeys,
 		};
 		return typed;
 	}
@@ -214,22 +210,12 @@ export class SchemaBuilderBase<
 		`${TScope}.${Name}`,
 		{ [key in keyof T]: NormalizeField<T[key], TDefaultKind> }
 	> {
-		for (const fieldKey of Object.keys(t)) {
-			const fieldSchema = t[fieldKey];
-			if (
-				fieldSchema instanceof FlexFieldSchema &&
-				fieldSchema.kind.identifier === identifier.identifier
-			) {
-				this.identifierFieldKeys.push(fieldKey);
-			}
-		}
 		const schema = FlexObjectNodeSchema.create(
 			this,
 			this.scoped(name),
 			transformObjectMap(t, (field): FlexFieldSchema => this.normalizeField(field)) as {
 				[key in keyof T]: NormalizeField<T[key], TDefaultKind>;
 			},
-			this.identifierFieldKeys,
 		);
 		this.addNodeSchema(schema);
 		return schema;

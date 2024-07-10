@@ -110,7 +110,6 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 		adapters: {},
 		rootFieldSchema: field,
 		policy: defaultSchemaPolicy,
-		identifierFieldKeys: [],
 	};
 	return typed;
 }
@@ -248,14 +247,7 @@ export function convertNodeSchema(
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ??
-					FlexObjectNodeSchema.create(
-						builder,
-						brand(schema.identifier),
-						fields,
-						identifierFieldKeys,
-					);
+				out = cached ?? FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
 				break;
 			}
 			default:

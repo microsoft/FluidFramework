@@ -154,7 +154,7 @@ export class FlexObjectNodeSchema<
 	const out Specification extends Unenforced<FlexObjectNodeFields> = FlexObjectNodeFields,
 > extends TreeNodeSchemaBase<Name, Specification> {
 	protected _typeCheck2?: MakeNominal;
-	public identifierFieldKeys: (string | symbol)[];
+	public identifierFieldKeys: FieldKey[] = [];
 
 	public static create<
 		const Name extends string,
@@ -163,7 +163,6 @@ export class FlexObjectNodeSchema<
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
-		identifierFieldKeys: (string | symbol)[],
 	): FlexObjectNodeSchema<Name, Specification> {
 		const objectNodeFieldsObject: NormalizeObjectNodeFields<Specification> =
 			normalizeStructFields<Specification>(specification);
@@ -178,7 +177,6 @@ export class FlexObjectNodeSchema<
 			specification,
 			objectNodeFieldsObject,
 			objectNodeFields,
-			identifierFieldKeys ?? [],
 		);
 	}
 
@@ -192,12 +190,15 @@ export class FlexObjectNodeSchema<
 		// Allows reading fields through the normal map.
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
-		identifierFieldKeys: (string | symbol)[],
 	) {
 		const fields = mapIterable(objectNodeFields, ([k, v]) => [k, v.stored] as const);
 		const objectNodeStoredSchema = new ObjectNodeStoredSchema(new Map(fields));
 		super(builder, name, info, objectNodeStoredSchema);
-		this.identifierFieldKeys = identifierFieldKeys;
+		objectNodeFields.forEach((flexFieldSchema, fieldKey) => {
+			if (flexFieldSchema.kind.identifier === "Identifier") {
+				this.identifierFieldKeys.push(fieldKey);
+			}
+		});
 	}
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
@@ -549,10 +550,6 @@ export interface FlexTreeSchema<out T extends FlexFieldSchema = FlexFieldSchema>
 	 * Compatibility information how how to interact with content who's stored schema is not directly compatible with this schema.
 	 */
 	readonly adapters: Adapters;
-	/**
-	 *
-	 */
-	readonly identifierFieldKeys: (string | symbol)[];
 }
 
 /**
@@ -562,7 +559,6 @@ export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 	return {
 		rootFieldSchema: treeSchema.rootFieldSchema.stored,
 		...intoStoredSchemaCollection(treeSchema),
-		identifierFieldKeys: treeSchema.identifierFieldKeys,
 	};
 }
 

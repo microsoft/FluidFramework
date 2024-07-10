@@ -64,7 +64,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 			const fieldsObject = mapToObject(fields);
 			map.set(
 				identifier,
-				FlexObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject, []),
+				FlexObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject),
 			);
 		}
 	}
@@ -73,7 +73,6 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		policy: defaultSchemaPolicy,
 		rootFieldSchema: fieldSchemaFromStoredSchema(schema.rootFieldSchema, map),
 		nodeSchema: map,
-		identifierFieldKeys: [],
 	};
 }
 
