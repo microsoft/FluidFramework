@@ -240,6 +240,8 @@ where bootstrap caption color is too light for white background */
  Long words such as function names would not break in api docs causing layout overflow
 */
 
-.table td:nth-child(2) {
-	word-break: break-word;
+@media only screen and (max-width: 600px) {
+	.table td:nth-child(2) {
+		word-break: break-word;
+	}
 }
