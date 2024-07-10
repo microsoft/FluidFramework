@@ -142,6 +142,7 @@ export interface IRef {
 
 /**
  * Required params to create ref
+ * @legacy
  * @alpha
  */
 export interface ICreateRefParams {
@@ -151,6 +152,7 @@ export interface ICreateRefParams {
 
 /**
  * Required params to patch ref
+ * @legacy
  * @alpha
  */
 export interface IPatchRefParams {

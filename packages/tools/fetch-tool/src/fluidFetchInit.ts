@@ -20,10 +20,9 @@ import {
 } from "@fluidframework/odsp-urlresolver/internal";
 import * as r11s from "@fluidframework/routerlicious-driver/internal";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver/internal";
-import { getMicrosoftConfiguration } from "@fluidframework/tool-utils/internal";
 
 import { localDataOnly, paramJWT } from "./fluidFetchArgs.js";
-import { resolveWrapper } from "./fluidFetchSharePoint.js";
+import { resolveWrapper, fetchToolClientConfig } from "./fluidFetchSharePoint.js";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
@@ -66,8 +65,6 @@ async function initializeODSPCore(
 			},
 			server,
 			clientConfig,
-			undefined,
-			true,
 		);
 	};
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -173,7 +170,7 @@ export async function fluidFetchInit(urlStr: string) {
 		return initializeODSPCore(
 			odspResolvedUrl,
 			new URL(odspResolvedUrl.siteUrl).host,
-			getMicrosoftConfiguration(),
+			fetchToolClientConfig,
 		);
 	} else if (resolvedInfo.serviceType === "r11s") {
 		const url = new URL(urlStr);

@@ -5,8 +5,7 @@
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": ""
+		"url": "https://github.com/microsoft/FluidFramework.git"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -156,11 +155,11 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
 		"@changesets/cli": "^2.26.1",
-		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
-		"@fluid-tools/build-cli": "^0.39.0",
-		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
+		"@fluid-private/changelog-generator-wrapper": "workspace:~",
+		"@fluid-tools/build-cli": "^0.40.0",
+		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.39.0",
+		"@fluidframework/build-tools": "^0.40.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
@@ -292,7 +291,8 @@
 			"ci:build:docs": {
 				"dependsOn": [
 					"^ci:build:docs",
-					"build:gendocs:client"
+					"build:gendocs:client",
+					"build:readme"
 				],
 				"script": false
 			},

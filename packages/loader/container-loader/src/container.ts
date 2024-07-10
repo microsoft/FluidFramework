@@ -262,6 +262,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
+ * @legacy
  * @alpha
  */
 export async function waitContainerToCatchUp(container: IContainer): Promise<boolean> {
@@ -485,7 +486,7 @@ export class Container
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
 	// eslint-disable-next-line import/no-deprecated
-	private readonly detachedBlobStorage: IDetachedBlobStorage;
+	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
@@ -805,7 +806,6 @@ export class Container
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = { ...options };
 		this.scope = scope;
-		this.detachedBlobStorage = detachedBlobStorage ?? createMemoryDetachedBlobStorage();
 		this.protocolHandlerBuilder =
 			protocolHandlerBuilder ??
 			((
@@ -881,7 +881,9 @@ export class Container
 							: this.deltaManager?.lastMessage?.clientId,
 					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 					connectionStateDuration: () =>
-						performance.now() - this.connectionTransitionTimes[this.connectionState],
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						performance.now() - this.connectionTransitionTimes[this.connectionState]!,
 				},
 			},
 		});
@@ -925,7 +927,10 @@ export class Container
 						mode,
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
-							performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
+							performance.now() -
+							// TODO why are we non null asserting here?
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							this.connectionTransitionTimes[ConnectionState.CatchingUp]!,
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
@@ -984,6 +989,12 @@ export class Container
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
 			options.summarizeProtocolTree;
 
+		this.detachedBlobStorage =
+			detachedBlobStorage ??
+			(this.mc.config.getBoolean("Fluid.Container.MemoryBlobStorageEnabled") === true
+				? createMemoryDetachedBlobStorage()
+				: undefined);
+
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.detachedBlobStorage,
 			this.mc.logger,
@@ -1005,6 +1016,7 @@ export class Container
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
+			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),
 		);
 
 		const isDomAvailable =
@@ -1245,7 +1257,8 @@ export class Container
 			baseSnapshot,
 			snapshotBlobs,
 			pendingRuntimeState,
-			hasAttachmentBlobs: this.detachedBlobStorage.size > 0,
+			hasAttachmentBlobs:
+				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
 			attachmentBlobs: serializeMemoryDetachedBlobStorage(this.detachedBlobStorage),
 		};
 		return JSON.stringify(detachedContainerState);
@@ -1362,7 +1375,7 @@ export class Container
 					const snapshotWithBlobs = await attachP;
 					this.serializedStateManager.setInitialSnapshot(snapshotWithBlobs);
 					if (!this.closed) {
-						this.detachedBlobStorage.dispose?.();
+						this.detachedBlobStorage?.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
 							fetchOpsFromStorage: false,
 							reason: { text: "createDetached" },
@@ -1811,7 +1824,7 @@ export class Container
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}
 			assert(
-				this.detachedBlobStorage.size > 0,
+				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 		}
@@ -1829,7 +1842,9 @@ export class Container
 		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
-			baseTree.blobs.quorumValues,
+			// Non null asserting here because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			baseTree.blobs.quorumValues!,
 		);
 		this.initializeProtocolState(
 			attributes,
@@ -1865,12 +1880,24 @@ export class Container
 			const baseTree = getProtocolSnapshotTree(snapshot);
 			[quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] =
 				await Promise.all([
-					readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
+					readAndParse<[string, ISequencedClient][]>(
+						storage,
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						baseTree.blobs.quorumMembers!,
+					),
 					readAndParse<[number, ISequencedProposal, string[]][]>(
 						storage,
-						baseTree.blobs.quorumProposals,
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						baseTree.blobs.quorumProposals!,
 					),
-					readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
+					readAndParse<[string, ICommittedProposal][]>(
+						storage,
+						// TODO why are we non null asserting here?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						baseTree.blobs.quorumValues!,
+					),
 				]);
 		}
 
@@ -2127,7 +2154,9 @@ export class Container
 		// Log actual event
 		const time = performance.now();
 		this.connectionTransitionTimes[value] = time;
-		const duration = time - this.connectionTransitionTimes[oldState];
+		// TODO why are we non null asserting here?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const duration = time - this.connectionTransitionTimes[oldState]!;
 
 		let durationFromDisconnected: number | undefined;
 		let connectionInitiationReason: string | undefined;
@@ -2139,7 +2168,9 @@ export class Container
 		} else {
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
-					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
+					// TODO why are we non null asserting here?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					time - this.connectionTransitionTimes[ConnectionState.Disconnected]!;
 				durationFromDisconnected = formatTick(durationFromDisconnected);
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.

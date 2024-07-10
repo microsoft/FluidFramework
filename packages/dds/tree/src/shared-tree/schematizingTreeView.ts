@@ -20,19 +20,18 @@ import {
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
+	type FlexTreeSchema,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type InsertableTreeFieldFromImplicitField,
-	// eslint-disable-next-line import/no-deprecated
-	type TreeConfiguration,
 	type TreeFieldFromImplicitField,
 	type TreeView,
 	type TreeViewEvents,
 	getProxyForField,
-	toFlexConfig,
+	toFlexSchema,
 	setField,
 	normalizeFieldSchema,
 	type InsertableContent,
@@ -40,22 +39,18 @@ import {
 	mapTreeFromNodeData,
 	prepareContentForHydration,
 } from "../simple-tree/index.js";
-import { disposeSymbol } from "../util/index.js";
+import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
-import {
-	type TreeContent,
-	canInitialize,
-	ensureSchema,
-	initialize,
-} from "./schematizeTree.js";
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
  */
+@breakingClass
 export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TRootSchema>
+	implements TreeView<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -68,7 +63,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 * Undefined iff uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
-	private readonly flexConfig: TreeContent;
+	private readonly flexSchema: FlexTreeSchema;
 	public readonly events: Listenable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
@@ -90,20 +85,18 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		public readonly config: // eslint-disable-next-line import/no-deprecated
-		TreeConfiguration<TRootSchema> | TreeViewConfiguration<TRootSchema>,
+		public readonly config: TreeViewConfiguration<TRootSchema>,
 		public readonly nodeKeyManager: NodeKeyManager,
+		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 	) {
 		const policy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
 		};
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.flexConfig = toFlexConfig(config, nodeKeyManager, {
-			schema: checkout.storedSchema,
-			policy,
-		});
-		this.viewSchema = new ViewSchema(policy, {}, this.flexConfig.schema);
+		this.flexSchema = toFlexSchema(config.schema);
+
+		this.viewSchema = new ViewSchema(policy, {}, this.flexSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -144,7 +137,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.flexConfig.schema,
+				schema: this.flexSchema,
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -168,10 +161,12 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.runSchemaEdit(() => {
 			const result = ensureSchema(
 				this.viewSchema,
-				// eslint-disable-next-line no-bitwise
-				AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
+				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
-				this.flexConfig,
+				{
+					schema: this.flexSchema,
+					initialTree: undefined,
+				},
 			);
 			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 		});
@@ -313,6 +308,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {
+		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
@@ -323,6 +319,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 
 	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
+		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",

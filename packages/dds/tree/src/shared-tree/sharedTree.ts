@@ -53,9 +53,6 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
-	// eslint-disable-next-line import/no-deprecated
-	TreeConfiguration,
-	TreeView,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
@@ -67,6 +64,7 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import { breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -165,6 +163,7 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  *
  * TODO: detail compatibility requirements.
  */
+@breakingClass
 export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
@@ -291,6 +290,7 @@ export class SharedTree
 		);
 	}
 
+	@throwIfBroken
 	public contentSnapshot(): SharedTreeContentSnapshot {
 		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
 		try {
@@ -322,29 +322,14 @@ export class SharedTree
 		);
 	}
 
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		// eslint-disable-next-line import/no-deprecated
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		const view = new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
-		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.compatibility.canInitialize === true) {
-			view.initialize(config.initialTree());
-		}
-		return view;
-	}
-
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): TreeView<TRoot> {
+	): SchematizingSimpleTreeView<TRoot> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
+			this.breaker,
 		);
 	}
 

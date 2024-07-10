@@ -23,6 +23,7 @@ import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
@@ -34,6 +35,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Manages the transmission of ops between the runtime and storage.
+ * @legacy
  * @alpha
  */
 export type IDeltaManagerErased =
@@ -42,6 +44,7 @@ export type IDeltaManagerErased =
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
+ * @legacy
  * @alpha
  */
 export interface IFluidDataStoreRuntime

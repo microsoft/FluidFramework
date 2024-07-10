@@ -26,7 +26,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager } from "../blobManager.js";
+import { blobManagerBasePath } from "../blobManager/index.js";
 import { InactiveResponseHeaderKey, TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
@@ -819,7 +819,9 @@ export class GarbageCollector implements IGarbageCollector {
 				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 				} else {
-					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+					// Non null asserting here because we are checking if it is undefined above.
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					gcDataSuperSet.gcNodes[sourceNodeId]!.push(...outboundRoutes);
 				}
 				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
 			},
@@ -1272,7 +1274,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
 		const getDeletedNodeType = (nodeId: string): GCNodeType => {
 			const pathParts = nodeId.split("/");
-			if (pathParts[1] === BlobManager.basePath) {
+			if (pathParts[1] === blobManagerBasePath) {
 				return GCNodeType.Blob;
 			}
 			if (pathParts.length === 2) {

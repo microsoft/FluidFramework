@@ -67,6 +67,7 @@ import {
 	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
+	Tree,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
@@ -1900,6 +1901,33 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Identifiers", () => {
+		it("Can use identifiers and the static Tree Apis", async () => {
+			const factory = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Compressed,
+			});
+			const provider = new TestTreeProviderLite(1, factory, true);
+			const tree1 = provider.trees[0];
+			const sf = new SchemaFactory("com.example");
+			class Widget extends sf.object("Widget", { id: sf.identifier }) {}
+
+			const view = tree1.viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(Widget),
+					enableSchemaValidation: true,
+				}),
+			);
+			const widget = new Widget({});
+			const fidget = new Widget({ id: "fidget" });
+			view.initialize([widget, fidget]);
+
+			// Checks that the shortId returns the correct types and values.
+			assert.equal(typeof Tree.shortId(widget), "number");
+			assert.equal(Tree.shortId(fidget), "fidget");
+		});
+	});
+
 	describe("Schema validation", () => {
 		it("can create tree with schema validation enabled", async () => {
 			const provider = new TestTreeProviderLite(1);
@@ -1935,6 +1963,36 @@ describe("SharedTree", () => {
 			validateUsageError(
 				/The provided data is incompatible with all of the types allowed by the schema/,
 			),
+		);
+	});
+
+	it("breaks on exceptions", () => {
+		const tree = treeTestFactory();
+		const sf = new SchemaFactory("test");
+		const schema = sf.object("myObject", {});
+		const config = new TreeViewConfiguration({ schema, enableSchemaValidation: true });
+		const view = tree.viewWith(config);
+
+		view.initialize({});
+		assert.equal(view.breaker, tree.breaker);
+		// Invalid second initialize
+		assert.throws(() => view.initialize({}), validateUsageError(/initialized more than once/));
+		// Access after exception should throw broken object error
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+		// Methods should throw
+		assert.throws(
+			() => view.initialize({}),
+			validateUsageError(/invalid state by another error/),
+		);
+		// Methods on tree should throw after view broke
+		assert.throws(
+			() => tree.viewWith(config),
+			validateUsageError(/invalid state by another error/),
+		);
+		// Inherited methods on tree should throw after view broke
+		assert.throws(
+			() => tree.getAttachSummary(),
+			validateUsageError(/invalid state by another error/),
 		);
 	});
 });

@@ -14,6 +14,10 @@ import {
 	IGCRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import {
+	blobsTreeName,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/internal/test/blobManager";
+import {
 	ISweepMessage,
 	disableDatastoreSweepKey,
 	// eslint-disable-next-line import/no-internal-modules
@@ -22,7 +26,6 @@ import {
 	ISummarizeEventProps,
 	ISummarizer,
 	RetriableSummaryError,
-	blobsTreeName,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
