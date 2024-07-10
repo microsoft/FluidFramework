@@ -133,6 +133,7 @@ parameters:
 # Indicates if tests should be run with code coverage analysis.
 - name: testCoverage
   type: boolean
+  default: false
 
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
