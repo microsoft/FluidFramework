@@ -101,5 +101,6 @@ variables:
 # Indicates if tests should be run with code coverage analysis.
 # We don't do it for PRs to make those runs faster.
 - name: testCoverage
-  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+  # Test coverage reports are not being actvely used as of today. Keeping the variable around but with value as false, in case we wish to re-enable the code coverage in future.
+  value: false
   readonly: true
