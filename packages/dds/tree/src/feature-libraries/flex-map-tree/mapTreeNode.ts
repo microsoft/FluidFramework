@@ -546,7 +546,7 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
 		return this.mapTrees.length > 0
-			? unboxedUnion(this.schema, this.mapTrees[0] ?? fail("Expected value to be in array"), {
+			? unboxedUnion(this.schema, this.mapTrees[0] ?? fail("This wont run due to the length check above"), {
 					parent: this,
 					index: 0,
 				})
@@ -572,7 +572,7 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		}
 		return unboxedUnion(
 			this.schema,
-			this.mapTrees[i] ?? fail("Expected value to be in array"),
+			this.mapTrees[i] ?? fail("This wont run because i is not undefined"),
 			{ parent: this, index: i },
 		);
 	}
@@ -584,10 +584,10 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 	}
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<T>> {
-		for (let i = 0; i < this.mapTrees.length; i++) {
+		for (const [i, mapTree] of this.mapTrees.entries()) {
 			yield unboxedUnion(
 				this.schema,
-				this.mapTrees[i] ?? fail("Expected value to be in array"),
+				mapTree,
 				{ parent: this, index: i },
 			);
 		}
@@ -833,7 +833,7 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 	if (fieldSchema.kind === FieldKinds.optional) {
 		return (
 			mapTrees.length > 0
-				? unboxedUnion(fieldSchema, mapTrees[0] ?? fail("Expected value to be in array"), {
+				? unboxedUnion(fieldSchema, mapTrees[0] ?? fail("This wont run due to the length check above"), {
 						parent: field,
 						index: 0,
 					})

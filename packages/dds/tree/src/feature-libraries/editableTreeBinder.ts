@@ -1000,7 +1000,7 @@ export function compileSyntaxTree(
 ): BindPolicy {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {
-		const [fieldName, childNode] = entries[0] ?? fail("Expected value to be in array");
+		const [fieldName, childNode] = entries[0] ?? fail("This wont run due to the length check above");
 		const fieldKey: FieldKey = brand(fieldName);
 		const bindTree = compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
 		return { matchPolicy: matchPolicy ?? "path", bindTree };

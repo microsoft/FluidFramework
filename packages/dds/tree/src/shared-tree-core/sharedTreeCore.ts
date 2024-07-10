@@ -198,7 +198,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					0x983 /* Unexpected number of commits when committing transaction */,
 				);
 				this.commitEnricher.prepareCommit(
-					change.newCommits[0] ?? fail("Expected value to be in array"),
+					change.newCommits[0] ?? fail("This wont run due to the length check above"),
 					true,
 				);
 			}

@@ -173,8 +173,8 @@ export class SharedTreeChangeFamily
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
-		const dataChangeIntention = change.change.changes[0] ?? fail("This wont run because of the length check above");
-		const dataChangeOver = over.change.changes[0] ?? fail("This wont run because of the length check above");;
+		const dataChangeIntention = change.change.changes[0] ?? fail("This wont run due to the length check above");
+		const dataChangeOver = over.change.changes[0] ?? fail("This wont run due to the length check above");;
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
 			0x885 /* Data change should be present. */,

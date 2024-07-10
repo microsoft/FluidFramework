@@ -172,7 +172,7 @@ export function sequenceFieldToDelta(
 	// Remove trailing no-op marks
 	while (local.length > 0) {
 		const lastMark =
-			local[local.length - 1] ?? fail("This wont run because of the length check above");
+			local[local.length - 1] ?? fail("This wont run due to the length check above");
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||

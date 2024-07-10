@@ -348,7 +348,7 @@ function makeModularChangeCodec(
 		const getChunk = (index: number): TreeChunk => {
 			assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
 			return chunkFieldSingle(
-				chunks[index] ?? fail("This wont run because of the length check above"),
+				chunks[index] ?? fail("This wont run due to the length check above"),
 				defaultChunkPolicy,
 			);
 		};

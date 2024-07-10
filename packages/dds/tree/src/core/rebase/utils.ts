@@ -238,7 +238,7 @@ export function rebaseBranch<TChange>(
 	}
 
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
-	const newBase = targetPath[newBaseIndex];
+	const newBase = targetPath[newBaseIndex] ?? fail("This will not run because newBaseIndex will always be within targetPath");
 	// Figure out how much of the trunk to start rebasing over.
 	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];
@@ -269,8 +269,7 @@ export function rebaseBranch<TChange>(
 			sourceCommits.push(
 				mintCommit(
 					sourceCommits[sourceCommits.length - 1] ??
-						newBase ??
-						fail("Expected value to be in array"),
+						newBase,
 					c,
 				),
 			);
@@ -278,8 +277,7 @@ export function rebaseBranch<TChange>(
 		return {
 			newSourceHead:
 				sourceCommits[sourceCommits.length - 1] ??
-				newBase ??
-				fail("Expected value to be in array"),
+				newBase,
 			sourceChange: undefined,
 			commits: {
 				deletedSourceCommits,
@@ -322,7 +320,7 @@ export function rebaseBranch<TChange>(
 
 	let netChange: TChange | undefined;
 	return {
-		newSourceHead: newHead ?? fail("Expected value to be in array"),
+		newSourceHead: newHead,
 		get sourceChange(): TChange | undefined {
 			if (netChange === undefined) {
 				netChange = changeRebaser.compose(editsToCompose);

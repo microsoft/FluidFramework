@@ -443,13 +443,13 @@ function buildTrees(
 	config: PassConfig,
 	visitor: DeltaVisitor,
 ): void {
-	for (let i = 0; i < trees.length; i += 1) {
+	for (const [i, tree] of trees.entries()) {
 		const offsettedId = offsetDetachId(id, i);
 		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = config.detachedFieldIndex.createEntry(offsettedId);
 		const field = config.detachedFieldIndex.toFieldKey(root);
-		visitor.create([trees[i] ?? fail("Expected value to be in array")], field);
+		visitor.create([tree], field);
 	}
 }
 
