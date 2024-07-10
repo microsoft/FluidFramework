@@ -86,9 +86,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			if (ApiItemUtilities.isDeprecated(apiItem)) {
 				alerts.push("Deprecated");
 			}
-
-			// TODO: Use `getModifierTag` helper once added to `@fluid-tools/api-markdown-documenter`
-			if (apiItem.tsdocComment?.modifierTagSet?.hasTagName("@legacy")) {
+			if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
 				alerts.push("Legacy");
 			}
 
