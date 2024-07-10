@@ -182,9 +182,7 @@ export function chunkFieldSingle(
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
 	if (chunks.length === 1) {
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return chunks[0]!;
+		return chunks[0] ?? fail("This wont run due to the length check above");
 	}
 	return new SequenceChunk(chunks);
 }
@@ -280,9 +278,7 @@ export function tryShapeFromFieldSchema(
 	if (type.types?.size !== 1) {
 		return undefined;
 	}
-	// TODO Why are we non null asserting here?
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const childType = [...type.types][0]!;
+	const childType = [...type.types][0] ?? fail("This wont run due to the length check above");
 	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;

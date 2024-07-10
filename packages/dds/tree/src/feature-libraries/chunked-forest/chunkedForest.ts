@@ -216,9 +216,8 @@ export class ChunkedForest implements IEditableForest {
 						fail("missing edited node");
 					}
 				}
-				// TODO Why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				let found = chunks[indexOfChunk]!;
+				let found =
+					chunks[indexOfChunk] ?? fail("This wont run due to the length check above");
 				if (!(found instanceof BasicChunk)) {
 					// TODO:Perf: support in place editing of other chunk formats when possible:
 					// 1. Support updating values in uniform chunks.
@@ -233,9 +232,7 @@ export class ChunkedForest implements IEditableForest {
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
-					// TODO Why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					found = newChunks[indexWithinChunk]!;
+					found = newChunks[indexWithinChunk] ?? fail("Expected value to be in array");
 				}
 				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {

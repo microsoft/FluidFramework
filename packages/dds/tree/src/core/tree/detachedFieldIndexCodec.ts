@@ -21,6 +21,7 @@ import {
 } from "./detachedFieldIndexFormat.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { fail } from "../../index.js";
 
 class MajorCodec implements IJsonCodec<Major> {
 	public constructor(
@@ -78,14 +79,12 @@ export function makeDetachedNodeToFieldCodec(
 				const encodedRevision = majorCodec.encode(major);
 				const rootRanges: RootRanges = [...innerMap];
 				if (rootRanges.length === 1) {
+					const firstRootRange =
+						rootRanges[0] ?? fail("This wont run because of the length check above");
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
-						// Non null asserting here because of the length check above
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						rootRanges[0]![0],
-						// Non null asserting here because of the length check above
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						rootRanges[0]![1],
+						firstRootRange[0],
+						firstRootRange[1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {
