@@ -125,10 +125,19 @@ export function jsonMorganLoggerMiddleware(
 			};
 			httpMetric.setProperties(properties);
 			const resolveMetric = () => {
-				if (properties.status?.startsWith("2")) {
-					httpMetric.success("Request successful");
+				const retry = req.query.retry;
+				if (retry) {
+					if (properties.status?.startsWith("2")) {
+						httpMetric.success(`Request successful in ${retry} retry`);
+					} else {
+						httpMetric.error(`Request failed ${retry} retry`);
+					}
 				} else {
-					httpMetric.error("Request failed");
+					if (properties.status?.startsWith("2")) {
+						httpMetric.success("Request successful");
+					} else {
+						httpMetric.error("Request failed");
+					}
 				}
 			};
 			if (enableLatencyMetric) {
