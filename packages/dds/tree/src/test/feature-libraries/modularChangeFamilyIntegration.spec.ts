@@ -60,7 +60,6 @@ import type {
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
-import { merge } from "../objMerge.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -186,7 +185,6 @@ describe("ModularChangeFamily integration", () => {
 				),
 			);
 
-			const diff = merge(rebased, expected);
 			assert.deepEqual(rebased, expected);
 		});
 
