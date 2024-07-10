@@ -70,13 +70,13 @@ async function waitForSignal(...signallers: { once(e: "signal", l: () => void): 
 async function waitForTargetedSignal(
 	targetedSignaller: { once(e: "signal", l: () => void): void },
 	otherSignallers: { once(e: "signal", l: () => void): void }[],
-) {
+): Promise<[void, ...string[]]> {
 	return Promise.all([
 		timeoutPromise(({ resolve }) => targetedSignaller.once("signal", () => resolve()), {
 			durationMs: 2000,
 			errorMsg: `Targeted Signaller Timeout`,
 		}),
-		otherSignallers.map(async (signaller, index) =>
+		...otherSignallers.map(async (signaller, index) =>
 			timeoutPromise(
 				({ reject }) =>
 					signaller.once("signal", () =>
@@ -85,6 +85,7 @@ async function waitForTargetedSignal(
 				{
 					durationMs: 100,
 					value: "No Signal Received",
+					reject: false,
 				},
 			),
 		),
@@ -295,10 +296,19 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 				"Test Signal Content",
 				targetClient.clientId,
 			);
-			await waitForTargetedSignal(
+			const targetedSignalPromise = await waitForTargetedSignal(
 				targetClient[runtime],
 				clients.filter((c) => c !== targetClient).map((c) => c[runtime]),
 			);
+
+			const [targetedSignalResult, ...otherResults] = targetedSignalPromise;
+			otherResults.forEach((result) => {
+				assert.equal(
+					result,
+					"No Signal Received",
+					"Non-targeted client should not receive signal",
+				);
+			});
 		}
 
 		clients.forEach((client, index) => {
@@ -321,10 +331,19 @@ describeCompat("Targeted Signals", "NoCompat", (getTestObjectProvider) => {
 
 		for (const client of clients) {
 			client[runtime].submitSignal("Test Signal Type", "Test Signal Content", client.clientId);
-			await waitForTargetedSignal(
+			const targetedSignalPromise = await waitForTargetedSignal(
 				client[runtime],
 				clients.filter((c) => c !== client).map((c) => c[runtime]),
 			);
+
+			const [targetedSignalResult, ...otherResults] = targetedSignalPromise;
+			otherResults.forEach((result) => {
+				assert.equal(
+					result,
+					"No Signal Received",
+					"Non-targeted client should not receive signal",
+				);
+			});
 		}
 
 		clients.forEach((client, index) => {
