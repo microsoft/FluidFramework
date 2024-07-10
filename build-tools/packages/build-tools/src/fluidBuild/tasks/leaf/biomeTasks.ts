@@ -33,6 +33,16 @@ interface BiomeConfig {
 	};
 }
 
+/**
+ * This task enables incremental build support for Biome formatting tasks. It reads Biome configuration files to load
+ * ignore settings, and will not consider ignored files when checking if the task needs to run.
+ *
+ * In addition, files that are ignored by git will be excluded. Internally the task uses git itself to enumerate files.
+ *
+ * IMPORTANT: While ignore settings are loaded and applied from the Biome configuration file, the "include" settings are
+ * not consulted. This means that files may not be properly excluded by the task when using "include" and "ignore"
+ * together.
+ */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// performance note: having individual tasks each acquire repo root and GitRepo
 	// is quite inefficient. recommend passing such common things in a context object
@@ -48,8 +58,8 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	}
 
 	/**
-	 * Includes all files in the the task's package directory that Biome would format and any Biome config files in the
-	 * directory tree.
+	 * Includes all files in the the task's package directory that Biome would format and any Biome config files that
+	 * apply to the directory.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
 		// Files that would be formatted by biome. Paths are relative to the package directory.
