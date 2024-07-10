@@ -114,7 +114,8 @@ start().catch((error) => console.error(error));
 
 ## Write the dice view
 
-The Fluid Framework is agnostic about view frameworks and it works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see examples of the previously mentioned frameworks in the [FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/multi-framework-diceroller).
+The Fluid Framework is agnostic about view frameworks and works well with React, Vue, Angular and web components.
+This example uses standard HTML/DOM methods to render a view.
 
 The `renderDiceRoller` function runs only when the container is created or loaded. It appends the `diceTemplate` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked on a client.
 

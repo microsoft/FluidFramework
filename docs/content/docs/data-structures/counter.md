@@ -158,7 +158,7 @@ For a comprehensive view of the `counter` package's API documentation, see [the 
 
 <!-- Links -->
 [increment]: {{< apiref "counter" "ISharedCounter" "interface" "v1" >}}#increment-methodsignature
-[incremented]: {{< apiref "counter" "ISharedCounterEvents" "interface" "v1" >}}#_call_-callsignature"
+[incremented]: {{< apiref "counter" "ISharedCounterEvents" "interface" "v1" >}}#_call_-callsignature
 [Optimistic DDS]: {{< relref "dds.md#optimistic-data-structures" >}}
 [SharedMap]: {{< relref "map.md" >}}
 [SharedMap creation]: {{< relref "map.md#creation" >}}

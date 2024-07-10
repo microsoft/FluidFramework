@@ -29,8 +29,6 @@ For more information on the related support guarantees, see [API Support Levels]
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/sequence` like normal.
 
-To access the `beta` APIs, import via `@fluidframework/sequence/beta`.
-
 To access the `legacy` APIs, import via `@fluidframework/sequence/legacy`.
 
 <!-- prettier-ignore-end -->
@@ -616,7 +614,6 @@ For further reading on attribution, see the [@fluid-experimental/attributor READ
 -   Rich Text Editor Implementations
 
     -   [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
-    -   [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/shared-text/src/client-ui-lib/controls/flowView.ts)
 
 -   Integrations with Open Source Rich Text Editors
 
