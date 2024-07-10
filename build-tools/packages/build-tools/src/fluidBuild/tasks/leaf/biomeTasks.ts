@@ -11,6 +11,19 @@ import { LeafWithFileStatDoneFileTask } from "./leafTask";
 // switch to regular import once building ESM
 const findUp = import("find-up");
 
+/**
+ * This task enables incremental build support for Biome formatting tasks. It has important limitations.
+ *
+ * @remarks
+ *
+ * - The task does not read Biome configuration files to determine what files would be formatted. Instead it naively
+ *   assumes all files would be formatted.
+ * - All Biome configuration files found when looking up from the package directory to the root of the repo are
+ *   considered used, whether the file is used.
+ *
+ * As of version 0.41.0, The task uses a content-based caching strategy, so it is less susceptible to invalidation,
+ * though the limitations above still apply.
+ */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// performance note: having individual tasks each acquire repo root and GitRepo
 	// is quite inefficient. recommend passing such common things in a context object
