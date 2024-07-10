@@ -20,7 +20,7 @@ export interface ICreateInfo {
     csn: number;
 }
 
-// @alpha
+// @public
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -41,7 +41,7 @@ export interface IDirectoryDataObject {
     subdirectories?: Record<string, IDirectoryDataObject>;
 }
 
-// @alpha
+// @public
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -56,7 +56,7 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-// @alpha
+// @public
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
@@ -95,7 +95,7 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed
+// @public @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;

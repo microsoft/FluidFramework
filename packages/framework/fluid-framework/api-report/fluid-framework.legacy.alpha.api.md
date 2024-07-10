@@ -148,7 +148,7 @@ export interface IConnection {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
-// @alpha
+// @public
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -162,7 +162,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
-// @alpha
+// @public
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -171,7 +171,7 @@ export interface IDirectoryEvents extends IEvent {
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha
+// @public
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
@@ -830,7 +830,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @alpha @sealed
+// @public @sealed
 export interface IValueChanged {
     readonly key: string;
     readonly previousValue: any;

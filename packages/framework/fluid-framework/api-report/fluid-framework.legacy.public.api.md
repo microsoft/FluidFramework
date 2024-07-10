@@ -138,6 +138,34 @@ export interface IConnection {
 // @public
 export type ICriticalContainerError = IErrorBase;
 
+// @public
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
+    readonly absolutePath: string;
+    countSubDirectory?(): number;
+    createSubDirectory(subdirName: string): IDirectory;
+    deleteSubDirectory(subdirName: string): boolean;
+    get<T = any>(key: string): T | undefined;
+    getSubDirectory(subdirName: string): IDirectory | undefined;
+    getWorkingDirectory(relativePath: string): IDirectory | undefined;
+    hasSubDirectory(subdirName: string): boolean;
+    set<T = unknown>(key: string, value: T): this;
+    subdirectories(): IterableIterator<[string, IDirectory]>;
+}
+
+// @public
+export interface IDirectoryEvents extends IEvent {
+    (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
+    (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
+}
+
+// @public
+export interface IDirectoryValueChanged extends IValueChanged {
+    path: string;
+}
+
 // @public @sealed
 export interface IDisposable {
     dispose(error?: Error): void;
@@ -522,6 +550,12 @@ export interface ITreeConfigurationOptions {
 export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     readonly enableSchemaValidation?: boolean;
     readonly schema: TSchema;
+}
+
+// @public @sealed
+export interface IValueChanged {
+    readonly key: string;
+    readonly previousValue: any;
 }
 
 // @public

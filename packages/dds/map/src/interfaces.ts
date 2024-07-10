@@ -18,7 +18,7 @@ import type {
  * Type of "valueChanged" event parameter.
  * @sealed
  * @legacy
- * @alpha
+ * @public
  */
 export interface IValueChanged {
 	/**
@@ -39,7 +39,7 @@ export interface IValueChanged {
  *
  * @remarks When used as a Map, operates on its keys.
  * @legacy
- * @alpha
+ * @public
  */
 export interface IDirectory
 	// TODO: Use `unknown` instead (breaking change).
@@ -198,7 +198,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 /**
  * Events emitted in response to changes to the directory data.
  * @legacy
- * @alpha
+ * @public
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
@@ -296,7 +296,7 @@ export interface ISharedDirectory
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
  * @legacy
- * @alpha
+ * @public
  */
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**
