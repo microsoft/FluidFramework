@@ -138,10 +138,6 @@ export class RemoteMessageProcessor {
 			};
 		}
 
-		//* TODO: Update all the types in OpLifecycle to be InboundSequencedContainerRuntimeMessage with clientId defined
-		//* Then remove this and the cast below
-		assertHasClientId(message);
-
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
 		unpackRuntimeMessage(message);
 
@@ -158,6 +154,8 @@ export class RemoteMessageProcessor {
 
 		return maybeCompletedBatch;
 	}
+
+	//* TODO: Review test coverage of batch metadata validation
 
 	/**
 	 * Add the given message to the current batch, and return the batch if it is now complete.
