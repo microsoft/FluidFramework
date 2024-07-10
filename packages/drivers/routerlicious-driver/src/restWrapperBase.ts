@@ -16,11 +16,10 @@ export abstract class RestWrapper {
 	) {}
 
 	/**
-	 * @param url Relative or absolute request url.(should not contain any query params)
-	 * @param queryString query params to be appended to the request url
-	 * @param headers
-	 * @param additionalOptions
-	 * @returns
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
 	 */
 	public async get<T>(
 		url: string,
@@ -47,12 +46,11 @@ export abstract class RestWrapper {
 	}
 
 	/**
-	 * @param url Relative or absolute request url.(should not contain any query params)
-	 * @param requestBody
-	 * @param queryString query params to be appended to the request url
-	 * @param headers
-	 * @param additionalOptions
-	 * @returns
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param requestBody - requestBody
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
 	 */
 	public async post<T>(
 		url: string,
@@ -81,11 +79,10 @@ export abstract class RestWrapper {
 	}
 
 	/**
-	 * @param url Relative or absolute request url.(should not contain any query params)
-	 * @param queryString query params to be appended to the request url
-	 * @param headers
-	 * @param additionalOptions
-	 * @returns
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
 	 */
 	public async delete<T>(
 		url: string,
@@ -112,12 +109,11 @@ export abstract class RestWrapper {
 	}
 
 	/**
-	 * @param url Relative or absolute request url.(should not contain any query params)
-	 * @param requestBody
-	 * @param queryString query params to be appended to the request url
-	 * @param headers
-	 * @param additionalOptions
-	 * @returns
+	 * @param url - Relative or absolute request url.(should not contain any query params)
+	 * @param requestBody - requestBody
+	 * @param queryString - query params to be appended to the request url
+	 * @param headers - headers
+	 * @param additionalOptions - additionalOptions
 	 */
 	public async patch<T>(
 		url: string,
