@@ -10019,6 +10019,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../test/test-utils
+      '@fluidframework/tree-previous':
+        specifier: npm:@fluidframework/tree@2.0.0
+        version: /@fluidframework/tree@2.0.0
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
@@ -24570,6 +24573,29 @@ packages:
       proper-lockfile: 4.1.2
     transitivePeerDependencies:
       - encoding
+      - supports-color
+    dev: true
+
+  /@fluidframework/tree@2.0.0:
+    resolution: {integrity: sha512-/JNwG0nZqnTUpaR5EKJofe4sc/DUxvH5FKI/2idGXSY/HqvfO7TdcxlFIpHAh58Jyf85ilByA5GXRFEwKqEAxg==}
+    dependencies:
+      '@fluid-internal/client-utils': 2.0.4
+      '@fluidframework/container-runtime': 2.0.4
+      '@fluidframework/core-interfaces': 2.0.4
+      '@fluidframework/core-utils': 2.0.4
+      '@fluidframework/datastore-definitions': 2.0.4
+      '@fluidframework/driver-definitions': 2.0.4
+      '@fluidframework/id-compressor': 2.0.4
+      '@fluidframework/runtime-definitions': 2.0.4
+      '@fluidframework/runtime-utils': 2.0.4
+      '@fluidframework/shared-object-base': 2.0.4
+      '@fluidframework/telemetry-utils': 2.0.4
+      '@sinclair/typebox': 0.32.29
+      '@tylerbu/sorted-btree-es6': 1.8.0
+      '@ungap/structured-clone': 1.2.0
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - debug
       - supports-color
     dev: true
 
