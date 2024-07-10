@@ -194,8 +194,8 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: options.forest === ForestType.Reference
-				? buildForest()
-				: buildForest(undefined, true);
+					? buildForest()
+					: buildForest(undefined, true);
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
