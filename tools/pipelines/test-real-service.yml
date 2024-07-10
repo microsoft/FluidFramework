@@ -221,3 +221,36 @@ stages:
             node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
             echo "Files created. Now running telemetry-generator"
             node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$BASE_OUTPUT_FOLDER/stageFiles"
+
+  # Check and Create/Update Work Items
+  - stage: check_and_create_work_items
+    displayName: Check for failing tests and create or update work items
+    dependsOn:
+      - e2e_local_server
+      - e2e_tinylicious
+      - e2e_routerlicious
+      - e2e_frs
+      - e2e_odsp
+    jobs:
+    - job: create_update_work_items
+      displayName: Create or update work items for failing tests
+      pool: Small
+      steps:
+        - checkout: ff_internal
+          displayName: 'Fluid Framework internal repository'
+          persistCredentials: true
+          repository: 'https://dev.azure.com/fluidframework/internal/_git/ff_internal'
+          clean: true
+
+      - task: Bash@3
+        displayName: Run bug creation script
+        env:
+            BUILD_ID: $(Build.BuildId)
+            ADO_API_TOKEN: $(System.AccessToken)
+            ORGANIZATION: 'fluidframework'
+            PROJECT: 'internal'
+        inputs:
+          targetType: 'inline'
+          script: |
+            echo "Running bug creation script"
+            node $(Build.SourcesDirectory)/ff_internal/scripts/bugCreation.mjs
