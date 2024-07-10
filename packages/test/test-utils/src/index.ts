@@ -51,8 +51,9 @@ export {
 	defaultTimeoutDurationMs,
 	timeoutAwait,
 	timeoutPromise,
-	TimeoutWithError,
-	TimeoutWithValue,
+	type TimeoutDurationOption,
+	type TimeoutWithError,
+	type TimeoutWithValue,
 } from "./timeoutUtils.js";
 export {
 	waitForContainerConnection,
