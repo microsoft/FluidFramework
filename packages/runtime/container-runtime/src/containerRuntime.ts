@@ -2628,20 +2628,22 @@ export class ContainerRuntime
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
 		if (modernRuntimeMessage) {
-			const processResult = this.remoteMessageProcessor.process(messageCopy);
-			if (processResult === undefined) {
+			//* FUTURE: Move PSM calls to RMP (renamed Inbox)?
+
+			const incomingBatch = this.remoteMessageProcessor.process(messageCopy);
+			if (incomingBatch === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
 				// and we need to process more messages before the rest of the system can understand it.
 				return;
 			}
-			const batchStartCsn = processResult.batchStartCsn;
-			const batch = processResult.messages;
+
+			//* TODO: If !local, call this.pendingStateManager.checkForMatchingBatchId
 			const messages: {
 				message: InboundSequencedContainerRuntimeMessage;
 				localOpMetadata: unknown;
 			}[] = local
-				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
-				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+				? this.pendingStateManager.processPendingLocalBatch(incomingBatch)
+				: incomingBatch.messages.map((message) => ({ message, localOpMetadata: undefined }));
 			messages.forEach(({ message, localOpMetadata }) => {
 				const msg: MessageWithContext = {
 					message,

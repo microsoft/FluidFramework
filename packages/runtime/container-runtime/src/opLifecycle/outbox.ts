@@ -302,6 +302,8 @@ export class Outbox {
 			);
 		}
 
+		//* CONSIDER: Compute the "future" batchId if !resubmittingBatchId, and pass batchId instead of CSN.
+		//* For symmetry with process flow where batchId is easily computed outside PSM
 		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);
 	}
 
