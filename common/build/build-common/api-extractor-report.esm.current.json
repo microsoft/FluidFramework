@@ -5,7 +5,8 @@
 	// or alpha.d.ts) rollup file.
 	"mainEntryPointFilePath": "set-mainEntryPointFilePath-directly-in-leaf-config-file",
 	"apiReport": {
-		// NOTE: "alpha" is temporarily not included to manage transition to direct legacy reporting.
+		// NOTE: "alpha" is temporarily not included to reduce noise while there are no uses.
+		//  Once any package with /legacy also uses /alpha, "alpha" should be added in.
 		"reportVariants": ["public", "beta"]
 	},
 	"docModel": {
