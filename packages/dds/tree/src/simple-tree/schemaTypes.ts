@@ -8,10 +8,10 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type InternalFlexListTypes,
 	type LazyItem,
 	type NodeKeyManager,
 	isLazy,
+	type FlexListToUnion,
 } from "../feature-libraries/index.js";
 import { type MakeNominal, brand, isReadonlyArray } from "../util/index.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -27,7 +27,7 @@ import type { InsertableContent } from "./proxies.js";
  * @typeParam Info - Data used when defining this schema.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
- * @public
+ * @sealed @public
  */
 export type TreeNodeSchema<
 	Name extends string = string,
@@ -46,7 +46,7 @@ export type TreeNodeSchema<
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
  * @privateRemarks
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @public
+ * @sealed @public
  */
 export interface TreeNodeSchemaNonClass<
 	out Name extends string = string,
@@ -67,7 +67,7 @@ export interface TreeNodeSchemaNonClass<
  *
  * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
  * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
- * @public
+ * @sealed @public
  */
 export interface TreeNodeSchemaClass<
 	out Name extends string = string,
@@ -89,7 +89,9 @@ export interface TreeNodeSchemaClass<
 
 /**
  * Data common to all tree node schema.
- * @public
+ * @remarks
+ * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
+ * @sealed @public
  */
 export interface TreeNodeSchemaCore<
 	out Name extends string,
@@ -124,12 +126,17 @@ export interface TreeNodeSchemaCore<
 
 /**
  * Types for use in fields.
+ * @remarks
+ * Type constraint used in schema declaration APIs.
+ * Not intended for direct use outside of package.
  * @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
  * Kind of a field on a node.
+ * @remarks
+ * More kinds may be added over time, so do not assume this is an exhaustive set.
  * @public
  */
 export enum FieldKind {
@@ -155,6 +162,8 @@ export enum FieldKind {
 
 /**
  * Kind of tree node.
+ * @remarks
+ * More kinds may be added over time, so do not assume this is an exhaustive set.
  * @public
  */
 export enum NodeKind {
@@ -266,7 +275,9 @@ export interface FieldProps {
 /**
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
-export type ContextualFieldProvider = (context: NodeKeyManager) => InsertableContent | undefined;
+export type ContextualFieldProvider = (
+	context: NodeKeyManager,
+) => InsertableContent | undefined;
 /**
  * A {@link FieldProvider} which can produce its content in a vacuum
  */
@@ -278,7 +289,9 @@ export type FieldProvider = ContextualFieldProvider | ConstantFieldProvider;
 /**
  * Returns true if the given {@link FieldProvider} is a {@link ConstantFieldProvider}
  */
-export function isConstant(fieldProvider: FieldProvider): fieldProvider is ConstantFieldProvider {
+export function isConstant(
+	fieldProvider: FieldProvider,
+): fieldProvider is ConstantFieldProvider {
 	return fieldProvider.length === 0;
 }
 
@@ -286,7 +299,7 @@ export function isConstant(fieldProvider: FieldProvider): fieldProvider is Const
  * Provides a default value for a field.
  * @remarks
  * If present in a `FieldSchema`, when constructing new tree content that field can be omitted, and a default will be provided.
- * @public
+ * @sealed @public
  */
 export interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {}
 
@@ -374,7 +387,9 @@ export class FieldSchema<
  * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
-	return schema instanceof FieldSchema ? schema : createFieldSchema(FieldKind.Required, schema);
+	return schema instanceof FieldSchema
+		? schema
+		: createFieldSchema(FieldKind.Required, schema);
 }
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
@@ -383,7 +398,9 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  */
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
+export function normalizeAllowedTypes(
+	types: ImplicitAllowedTypes,
+): ReadonlySet<TreeNodeSchema> {
 	const normalized = new Set<TreeNodeSchema>();
 	if (isReadonlyArray(types)) {
 		for (const lazyType of types) {
@@ -429,8 +446,8 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 	TSchema extends FieldSchema<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind, false>
 		: TSchema extends ImplicitAllowedTypes
-		? TreeNodeFromImplicitAllowedTypes<TSchema>
-		: unknown;
+			? TreeNodeFromImplicitAllowedTypes<TSchema>
+			: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a field of the given schema.
@@ -441,8 +458,8 @@ export type InsertableTreeFieldFromImplicitField<
 > = TSchema extends FieldSchema<infer Kind, infer Types>
 	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: TSchema extends ImplicitAllowedTypes
-	? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-	: unknown;
+		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		: unknown;
 
 /**
  * Suitable for output.
@@ -464,8 +481,8 @@ export type TreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
-	? NodeFromSchema<InternalFlexListTypes.FlexListToUnion<TSchema>>
-	: unknown;
+		? NodeFromSchema<FlexListToUnion<TSchema>>
+		: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
@@ -476,8 +493,8 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<
 > = TSchema extends TreeNodeSchema
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
-	? InsertableTypedNode<InternalFlexListTypes.FlexListToUnion<TSchema>>
-	: never;
+		? InsertableTypedNode<FlexListToUnion<TSchema>>
+		: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
@@ -527,7 +544,7 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 /**
  * The type of a {@link TreeNode}.
- * For moore information about the type, use `Tree.schema(theNode)` instead.
+ * For more information about the type, use `Tree.schema(theNode)` instead.
  * @remarks
  * This symbol mainly exists on nodes to allow TypeScript to provide more accurate type checking.
  * `Tree.is` and `Tree.schema` provide a superset of this information in more friendly ways.
@@ -538,15 +555,17 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
  * This prevents non-nodes from being accidentally used as nodes, as well as allows the type checker to distinguish different node types.
  * @public
  */
-export const type: unique symbol = Symbol("TreeNode Type");
+export const typeNameSymbol: unique symbol = Symbol("TreeNode Type");
 
 /**
- * Adds a {@link "type"} field.
- * @public
+ * Adds a type symbol to a type for stronger typing.
+ * @remarks
+ * An implementation detail of {@link TreeNode}'s strong typing setup: not intended for direct use outside of this package.
+ * @sealed @public
  */
 export interface WithType<TName extends string = string> {
 	/**
-	 * {@inheritdoc "type"}
+	 * Type symbol, marking a type in a way to increase type safety via strong type checking.
 	 */
-	get [type](): TName;
+	get [typeNameSymbol](): TName;
 }

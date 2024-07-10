@@ -55,7 +55,7 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  * @param encoding - output string's encoding
  * @returns the blob in string format
  *
- * @alpha
+ * @internal
  */
 export const bufferToString = (
 	blob: ArrayBufferLike,
@@ -117,7 +117,7 @@ export class IsoBuffer extends Uint8Array {
 	 * @privateRemarks TODO: Use actual types
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer {
+	public static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer {
 		if (typeof value === "string") {
 			return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
 			// Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
@@ -139,7 +139,7 @@ export class IsoBuffer extends Uint8Array {
 		}
 	}
 
-	static fromArrayBuffer(
+	public static fromArrayBuffer(
 		arrayBuffer: ArrayBuffer,
 		byteOffset?: number,
 		byteLength?: number,
@@ -158,7 +158,7 @@ export class IsoBuffer extends Uint8Array {
 		return new IsoBuffer(arrayBuffer, offset, validLength);
 	}
 
-	static fromString(str: string, encoding?: string): IsoBuffer {
+	public static fromString(str: string, encoding?: string): IsoBuffer {
 		switch (encoding) {
 			case "base64": {
 				const sanitizedString = this.sanitizeBase64(str);
@@ -178,7 +178,7 @@ export class IsoBuffer extends Uint8Array {
 		}
 	}
 
-	static isBuffer(obj: unknown): boolean {
+	public static isBuffer(obj: unknown): boolean {
 		throw new Error("unimplemented");
 	}
 

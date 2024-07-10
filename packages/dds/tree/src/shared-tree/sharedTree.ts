@@ -53,9 +53,6 @@ import {
 import type {
 	ITree,
 	ImplicitFieldSchema,
-	// eslint-disable-next-line import/no-deprecated
-	TreeConfiguration,
-	TreeView,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 
@@ -67,6 +64,7 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
+import { breakingClass, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -140,8 +138,18 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 }
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
-	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
-	[2, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 }],
+	[
+		1,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 },
+	],
+	[
+		2,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 2, message: 2, fieldBatch: 1 },
+	],
+	[
+		3,
+		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 3, message: 3, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -155,6 +163,7 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  *
  * TODO: detail compatibility requirements.
  */
+@breakingClass
 export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
@@ -205,6 +214,7 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
+			originatorId: runtime.idCompressor.localSessionId,
 			idCompressor: runtime.idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
@@ -277,10 +287,12 @@ export class SharedTree
 				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
+				logger: this.logger,
 			},
 		);
 	}
 
+	@throwIfBroken
 	public contentSnapshot(): SharedTreeContentSnapshot {
 		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
 		try {
@@ -312,29 +324,14 @@ export class SharedTree
 		);
 	}
 
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		// eslint-disable-next-line import/no-deprecated
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		const view = new SchematizingSimpleTreeView(
-			this.checkout,
-			config,
-			createNodeKeyManager(this.runtime.idCompressor),
-		);
-		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
-		if (view.compatibility.canInitialize === true) {
-			view.initialize(config.initialTree());
-		}
-		return view;
-	}
-
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
-	): TreeView<TRoot> {
+	): SchematizingSimpleTreeView<TRoot> {
 		return new SchematizingSimpleTreeView(
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
+			this.breaker,
 		);
 	}
 
@@ -363,6 +360,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v2: 2,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v3: 3,
 } as const;
 
 /**
@@ -433,7 +435,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	formatVersion: SharedTreeFormatVersion.v2,
+	formatVersion: SharedTreeFormatVersion.v3,
 };
 
 /**

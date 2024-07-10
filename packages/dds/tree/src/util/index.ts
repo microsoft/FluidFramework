@@ -11,7 +11,12 @@ export {
 	type ValueFromBranded,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
-export { brandOpaque, extractFromOpaque, type ExtractFromOpaque, type Opaque } from "./opaque.js";
+export {
+	brandOpaque,
+	extractFromOpaque,
+	type ExtractFromOpaque,
+	type Opaque,
+} from "./opaque.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
@@ -24,6 +29,7 @@ export {
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
 } from "./nestedMap.js";
@@ -91,6 +97,8 @@ export type {
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
 	Assume,
+	_InlineTrick,
+	FlattenKeys,
 } from "./typeUtils.js";
 
 export {
@@ -119,11 +127,10 @@ export {
 	fakeIdAllocator,
 } from "./idAllocator.js";
 
-import * as InternalUtilTypes from "./internalTypes.js";
 export {
-	/**
-	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
-	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
-	 */
-	InternalUtilTypes,
-};
+	Breakable,
+	type WithBreakable,
+	breakingMethod,
+	throwIfBroken,
+	breakingClass,
+} from "./breakable.js";

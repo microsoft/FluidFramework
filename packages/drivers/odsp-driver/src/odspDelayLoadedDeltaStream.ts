@@ -70,7 +70,7 @@ export class OdspDelayLoadedDeltaStream {
 	/**
 	 * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
 	 * @param policies - Document service policies.
-	 * @param getStorageToken - function that can provide the storage token. This is is also referred to as
+	 * @param getAuthHeader - function that can provide the Authentication header value. This is is also referred to as
 	 * the "Vroom" token in SPO.
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also referred
 	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
@@ -85,13 +85,13 @@ export class OdspDelayLoadedDeltaStream {
 	public constructor(
 		public readonly odspResolvedUrl: IOdspResolvedUrl,
 		public policies: IDocumentServicePolicies,
-		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
+		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
 		private readonly mc: MonitoringContext,
 		private readonly cache: IOdspCache,
-		private readonly hostPolicy: HostStoragePolicy,
+		_hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
 		private readonly metadataUpdateHandler: (metadata: Record<string, string>) => void,
@@ -145,15 +145,11 @@ export class OdspDelayLoadedDeltaStream {
 			const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
 				? // eslint-disable-next-line unicorn/no-null
-				  Promise.resolve(null)
+					Promise.resolve(null)
 				: this.getWebsocketToken(options);
 
 			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
-				throw this.annotateConnectionError(
-					error,
-					step,
-					!requestWebsocketTokenFromJoinSession,
-				);
+				throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
 			};
 
 			const joinSessionPromise = this.joinSession(
@@ -170,11 +166,9 @@ export class OdspDelayLoadedDeltaStream {
 			const finalWebsocketToken = websocketToken ?? websocketEndpoint.socketToken ?? null;
 			if (finalWebsocketToken === null) {
 				throw this.annotateConnectionError(
-					new NonRetryableError(
-						"Websocket token is null",
-						OdspErrorTypes.fetchTokenError,
-						{ driverVersion },
-					),
+					new NonRetryableError("Websocket token is null", OdspErrorTypes.fetchTokenError, {
+						driverVersion,
+					}),
 					"getWebsocketToken",
 					!requestWebsocketTokenFromJoinSession,
 				);
@@ -206,8 +200,7 @@ export class OdspDelayLoadedDeltaStream {
 					if (
 						typeof error === "object" &&
 						error !== null &&
-						(error as Partial<IOdspError>).errorType ===
-							OdspErrorTypes.authorizationError
+						(error as Partial<IOdspError>).errorType === OdspErrorTypes.authorizationError
 					) {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
@@ -398,13 +391,12 @@ export class OdspDelayLoadedDeltaStream {
 				"opStream/joinSession",
 				"POST",
 				this.mc.logger,
-				this.getStorageToken,
+				this.getAuthHeader,
 				this.epochTracker,
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
 				isRefreshingJoinSession,
-				this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {

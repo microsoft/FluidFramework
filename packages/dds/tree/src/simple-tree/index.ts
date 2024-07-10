@@ -7,7 +7,6 @@ export {
 	type ITree,
 	type TreeView,
 	type TreeViewEvents,
-	TreeConfiguration,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
 	type SchemaCompatibilityStatus,
@@ -26,7 +25,7 @@ export {
 	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
-	type,
+	typeNameSymbol,
 	type WithType,
 	type AllowedTypes,
 	FieldKind,
@@ -37,13 +36,12 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	type ApplyKind,
 } from "./schemaTypes.js";
-import * as InternalSimpleTreeTypes from "./internalTypes.js";
-export { InternalSimpleTreeTypes };
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
-export { toFlexConfig, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
+export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
 	ObjectFromSchemaRecordUnsafe,
@@ -61,7 +59,11 @@ export type {
 	NodeFromSchemaUnsafe,
 } from "./typesUnsafe.js";
 export type { ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
-export { getProxyForField, type InsertableContent } from "./proxies.js";
+export {
+	getProxyForField,
+	type InsertableContent,
+	prepareContentForHydration,
+} from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -81,7 +83,11 @@ export {
 // TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instancof.
 // See docs on TreeNode for more details.
 export type { TreeNode, Unhydrated, InternalTreeNode } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent, type TreeArrayNodeBase } from "./arrayNode.js";
+export {
+	TreeArrayNode,
+	IterableTreeArrayContent,
+	type TreeArrayNodeBase,
+} from "./arrayNode.js";
 export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
@@ -90,3 +96,4 @@ export {
 	setField,
 } from "./objectNode.js";
 export type { TreeMapNode } from "./mapNode.js";
+export { mapTreeFromNodeData } from "./toMapTree.js";

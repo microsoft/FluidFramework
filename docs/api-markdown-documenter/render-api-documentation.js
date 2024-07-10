@@ -5,6 +5,7 @@
 
 import {
 	ApiItemKind,
+	ApiItemUtilities,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
@@ -80,6 +81,23 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		includeBreadcrumb: false, // Hugo will now be used to generate the breadcrumb
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
 		createDefaultLayout: layoutContent,
+		getAlertsForItem: (apiItem) => {
+			const alerts = [];
+			if (ApiItemUtilities.isDeprecated(apiItem)) {
+				alerts.push("Deprecated");
+			}
+			if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+				alerts.push("Legacy");
+			}
+
+			const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+			if (releaseTag === ReleaseTag.Alpha) {
+				alerts.push("Alpha");
+			} else if (releaseTag === ReleaseTag.Beta) {
+				alerts.push("Beta");
+			}
+			return alerts;
+		},
 		skipPackage: (apiPackage) => {
 			const packageName = apiPackage.displayName;
 			const packageScope = PackageName.getScope(packageName);
@@ -88,7 +106,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
 			return ["@fluid-private"].includes(packageScope);
 		},
-		minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
 	logProgress("Generating API documentation...");

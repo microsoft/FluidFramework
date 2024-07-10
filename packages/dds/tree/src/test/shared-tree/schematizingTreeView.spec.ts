@@ -20,24 +20,45 @@ import {
 } from "../../shared-tree/schematizingTreeView.js";
 import {
 	SchemaFactory,
-	TreeConfiguration,
+	TreeViewConfiguration,
 	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toFlexConfig, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { cursorFromUnhydratedRoot, toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
 	insert,
 	validateUsageError,
 } from "../utils.js";
+import type { TreeContent, TreeCheckout } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
-const config = new TreeConfiguration(schema.number, () => 5);
-const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
-const configGeneralized2 = new TreeConfiguration([schema.number, schema.boolean], () => false);
-const flexConfig = toFlexConfig(config, new MockNodeKeyManager());
-const flexConfigGeneralized = toFlexConfig(configGeneralized, new MockNodeKeyManager());
+const config = new TreeViewConfiguration({ schema: schema.number });
+const configGeneralized = new TreeViewConfiguration({
+	schema: [schema.number, schema.string],
+});
+const configGeneralized2 = new TreeViewConfiguration({
+	schema: [schema.number, schema.boolean],
+});
+
+function checkoutWithInitialTree(
+	viewConfig: TreeViewConfiguration,
+	unhydratedInitialTree: InsertableTreeFieldFromImplicitField,
+	nodeKeyManager = new MockNodeKeyManager(),
+): TreeCheckout {
+	const initialTree = cursorFromUnhydratedRoot(
+		viewConfig.schema,
+		unhydratedInitialTree,
+		nodeKeyManager,
+	);
+	const treeContent: TreeContent = {
+		schema: toFlexSchema(viewConfig.schema),
+		initialTree,
+	};
+	return checkoutWithContent(treeContent);
+}
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -57,26 +78,42 @@ describe("SchematizingSimpleTreeView", () => {
 		const checkout = checkoutWithContent(emptyContent);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
-		assert.throws(() => view.root, validateUsageError(/compatibility/));
 		const { compatibility } = view;
 		assert.equal(compatibility.canView, false);
 		assert.equal(compatibility.canUpgrade, false);
 		assert.equal(compatibility.canInitialize, true);
 
-		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
 		view.initialize(5);
-
 		assert.equal(view.root, 5);
 	});
 
-	const getChangeData = <T extends ImplicitFieldSchema>(view: SchematizingSimpleTreeView<T>) => {
+	it("Initialize errors", () => {
+		const emptyContent = {
+			schema: emptySchema,
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(emptyContent);
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+
+		assert.throws(() => view.root, validateUsageError(/compatibility/));
+
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		assert.throws(
+			() => view.initialize(5),
+			validateUsageError(/invalid state by another error/),
+		);
+	});
+
+	const getChangeData = <T extends ImplicitFieldSchema>(
+		view: SchematizingSimpleTreeView<T>,
+	) => {
 		return view.compatibility.canView
 			? view.root
 			: `SchemaCompatibilityStatus canView: ${view.compatibility.canView} canUpgrade: ${view.compatibility.canUpgrade}`;
 	};
 
 	it("Open and close existing document", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		assert.equal(view.compatibility.isEquivalent, true);
 		const root = view.root;
@@ -85,8 +122,8 @@ describe("SchematizingSimpleTreeView", () => {
 		const unsubscribe = view.events.on("schemaChanged", () =>
 			log.push(["schemaChanged", getChangeData(view)]),
 		);
-		const unsubscribe2 = view.events.on("afterBatch", () =>
-			log.push(["afterBatch", view.root]),
+		const unsubscribe2 = view.events.on("rootChanged", () =>
+			log.push(["rootChanged", view.root]),
 		);
 
 		// Should be a no op since not in an error state;
@@ -105,26 +142,22 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Modify root", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
-		view.events.on("afterBatch", () => log.push(["afterBatch", view.root]));
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
 
 		view.root = 6;
 
-		assert.deepEqual(log, [
-			["rootChanged", 6],
-			["afterBatch", 6],
-		]);
+		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
 	// TODO: AB#8121: When adding support for additional optional fields, we may want a variant of this test which does the analogous flow using
 	// an intermediate state where canView is true but canUpgrade is false.
 	it("Schema becomes un-upgradeable then exact match again", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 		assert.equal(view.root, 5);
 		const log: [string, unknown][] = [];
@@ -145,7 +178,7 @@ describe("SchematizingSimpleTreeView", () => {
 			() => view.upgradeSchema(),
 			(e) => e instanceof UsageError,
 		);
-
+		view.breaker.clearError();
 		// Modify schema to be compatible again
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
 		assert.equal(view.compatibility.isEquivalent, true);
@@ -158,7 +191,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized,
@@ -184,7 +217,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Attempt to open document using view schema that is incompatible due to being too strict compared to the stored schema", () => {
-		const checkout = checkoutWithContent(flexConfigGeneralized);
+		const checkout = checkoutWithInitialTree(configGeneralized, 6);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
 		assert.equal(view.compatibility.canView, false);
@@ -202,7 +235,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open incompatible document", () => {
-		const checkout = checkoutWithContent(flexConfigGeneralized);
+		const checkout = checkoutWithInitialTree(configGeneralized, 6);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized2,
@@ -240,26 +273,5 @@ describe("SchematizingSimpleTreeView", () => {
 		undoStack.pop()?.revert();
 		assert.equal(undoStack.length, 0);
 		assert.equal(redoStack.length, 1);
-	});
-
-	it("handles proxies in the initial tree", () => {
-		// This is a regression test for a bug in which the initial tree contained a proxy and subsequent reads of the tree would mix up the proxy associations.
-		const sf = new SchemaFactory(undefined);
-		class TestObject extends sf.object("TestObject", { value: sf.number }) {}
-		const treeContent = new TreeConfiguration(TestObject, () => new TestObject({ value: 3 }));
-		const nodeKeyManager = new MockNodeKeyManager();
-		const view = new SchematizingSimpleTreeView(
-			checkoutWithContent(toFlexConfig(treeContent, nodeKeyManager)),
-			treeContent,
-			nodeKeyManager,
-		);
-
-		// We do not call `upgradeSchema()` and thus the initial tree remains unused.
-		// Therefore, the proxy for `new TestObject(...)` should not be bound.
-		assert.equal(view.root.value, 3);
-		// In the buggy case, the proxy for `new TestObject(...)` would get bound during this set, which is wrong...
-		view.root.value = 4;
-		// ...and would cause this read to return a proxy to the TestObject rather than the primitive value.
-		assert.equal(view.root.value, 4);
 	});
 });

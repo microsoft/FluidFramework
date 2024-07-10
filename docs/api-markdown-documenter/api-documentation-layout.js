@@ -5,8 +5,12 @@
 
 import {
 	ApiItemUtilities,
+	CodeSpanNode,
 	HeadingNode,
 	LayoutUtilities,
+	LineBreakNode,
+	LinkNode,
+	PlainTextNode,
 	ReleaseTag,
 	SectionNode,
 	SpanNode,
@@ -18,25 +22,80 @@ import { AlertNode } from "./alert-node.js";
 const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
 
-const alphaWarning = SpanNode.createFromPlainText(
-	"WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.",
-);
-const betaWarning = SpanNode.createFromPlainText(
-	"WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.",
-);
+const supportDocsLinkSpan = new SpanNode([
+	new PlainTextNode("For more information about our API support guarantees, see "),
+	LinkNode.createFromPlainText(
+		"here",
+		"https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
+	),
+	new PlainTextNode("."),
+]);
+
+/**
+ * Creates a special import notice for the provided API item, if one is appropriate.
+ *
+ * If the item is tagged as "@legacy", displays a legacy notice with import instructions.
+ * Otherwise, if the item is `@alpha` or `@beta`, displays the appropriate warning and import instructions.
+ *
+ * @privateRemarks
+ * If we later wish to differentiate between release tags of `@legacy` items, this function will need
+ * to be updated.
+ */
+function createImportNotice(apiItem) {
+	const packageName = apiItem.getAssociatedPackage().displayName;
+
+	function createImportAlert(importSubpath, alertTitle) {
+		return new AlertNode(
+			[
+				new SpanNode([
+					new PlainTextNode("To use, import via "),
+					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
+					new PlainTextNode("."),
+				]),
+				LineBreakNode.Singleton,
+				supportDocsLinkSpan,
+			],
+			/* alertKind: */ "warning",
+			alertTitle,
+		);
+	}
+
+	if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+		return createImportAlert(
+			"legacy",
+			"This API is provided for existing users, but is not recommended for new users.",
+		);
+	}
+
+	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+
+	if (releaseTag === ReleaseTag.Alpha) {
+		return createImportAlert(
+			"alpha",
+			"This API is provided as an alpha preview and may change without notice.",
+		);
+	}
+
+	if (releaseTag === ReleaseTag.Beta) {
+		return createImportAlert(
+			"beta",
+			"This API is provided as a beta preview and may change without notice.",
+		);
+	}
+
+	return undefined;
+}
 
 /**
  * Default content layout for all API items.
  *
  * @remarks Lays out the content in the following manner:
  *
- * 1. Heading (if not the document-root item, in which case headings are handled specially by document-level rendering)
- *
- * 1. Beta warning (if item annotated with `@beta`)
+ * 1. Summary (if any)
  *
  * 1. Deprecation notice (if any)
  *
- * 1. Summary (if any)
+ * 1. Alpha/Beta warning (if item annotated with `@alpha` or `@beta`)
  *
  * 1. Item Signature
  *
@@ -71,12 +130,10 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		sections.push(new SectionNode([deprecationNotice]));
 	}
 
-	// Render alpha/beta notice if applicable
-	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(new SectionNode([alphaWarning]));
-	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(new SectionNode([betaWarning]));
+	// Render the appropriate API notice (with import instructions), if applicable.
+	const importNotice = createImportNotice(apiItem);
+	if (importNotice !== undefined) {
+		sections.push(new SectionNode([importNotice]));
 	}
 
 	// Render signature (if any)

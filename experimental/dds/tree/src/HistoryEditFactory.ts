@@ -70,10 +70,7 @@ export function revert(
 			case ChangeTypeInternal.Build: {
 				// Save nodes added to the detached state for use in future changes
 				const { destination, source } = change;
-				assert(
-					!builtNodes.has(destination),
-					0x626 /* Cannot revert Build: destination is already used by a Build */
-				);
+				assert(!builtNodes.has(destination), 0x626 /* Cannot revert Build: destination is already used by a Build */);
 				assert(
 					!detachedNodes.has(destination),
 					0x627 /* Cannot revert Build: destination is already used by a Detach */

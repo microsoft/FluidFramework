@@ -17,7 +17,8 @@ import { type Brand, type Opaque, brand } from "../../util/index.js";
  * {@link LocalNodeKey}s may be compared or equated via {@link compareLocalNodeKeys}.
  * @internal
  */
-export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {}
+export interface LocalNodeKey
+	extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {}
 
 /**
  * A UUID which identifies a node in the tree.

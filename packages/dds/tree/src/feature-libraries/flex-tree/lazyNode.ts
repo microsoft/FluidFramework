@@ -70,7 +70,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
-import { type FlexTreeNodeEvents, onNodeChanged, onTreeChanged } from "./treeEvents.js";
+import type { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -284,16 +284,10 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				return unsubscribeFromSubtreeChange;
 			}
 			case "nodeChanged": {
-				return onNodeChanged(
-					this.anchorNode,
-					listener as FlexTreeNodeEvents["nodeChanged"],
-				);
+				return this.anchorNode.on("childrenChangedAfterBatch", listener);
 			}
 			case "treeChanged": {
-				return onTreeChanged(
-					this.anchorNode,
-					listener as FlexTreeNodeEvents["treeChanged"],
-				);
+				return this.anchorNode.on("subtreeChangedAfterBatch", listener);
 			}
 			default:
 				unreachableCase(eventName);
@@ -455,7 +449,9 @@ export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new S
 	reservedObjectNodeFieldPropertyNames,
 );
 
-export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+export function propertyNameFromFieldKey<T extends string>(
+	key: T,
+): PropertyNameFromFieldKey<T> {
 	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
 		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
 	}

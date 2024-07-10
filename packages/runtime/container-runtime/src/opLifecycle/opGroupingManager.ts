@@ -59,30 +59,29 @@ export class OpGroupingManager {
 	public groupBatch(batch: IBatch): IBatch<[BatchMessage]> {
 		assert(this.shouldGroup(batch), 0x946 /* cannot group the provided batch */);
 
-		if (batch.content.length >= 1000) {
+		if (batch.messages.length >= 1000) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
-				length: batch.content.length,
+				length: batch.messages.length,
 				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 			});
 		}
 
-		for (const message of batch.content) {
+		for (const message of batch.messages) {
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
-				assert(
-					keys.length === 0 || keys[0] === "batch",
-					0x5de /* unexpected op metadata */,
-				);
+				assert(keys.length === 0 || keys[0] === "batch", 0x5de /* unexpected op metadata */);
 			}
 		}
 
 		const serializedContent = JSON.stringify({
 			type: OpGroupingManager.groupedBatchOp,
-			contents: batch.content.map<IGroupedMessage>((message) => ({
+			contents: batch.messages.map<IGroupedMessage>((message) => ({
 				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
@@ -91,10 +90,12 @@ export class OpGroupingManager {
 
 		const groupedBatch: IBatch<[BatchMessage]> = {
 			...batch,
-			content: [
+			messages: [
 				{
 					metadata: undefined,
-					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+					// TODO why are we non null asserting here?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],
@@ -121,7 +122,7 @@ export class OpGroupingManager {
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&
 			// The number of ops in the batch must surpass the configured threshold
-			batch.content.length >= this.config.opCountThreshold &&
+			batch.messages.length >= this.config.opCountThreshold &&
 			// Support for reentrant batches must be explicitly enabled
 			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
 		);

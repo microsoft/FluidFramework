@@ -27,7 +27,6 @@ import {
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import type { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
 import type { InsertableContent } from "./proxies.js";
@@ -48,8 +47,6 @@ import {
 	getStoredKey,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
-// eslint-disable-next-line import/no-deprecated
-import { TreeConfiguration, type TreeViewConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -75,50 +72,6 @@ export function cursorFromUnhydratedRoot(
 			schemaValidationPolicy,
 		) ?? fail("failed to decode tree")
 	);
-}
-
-/* eslint-disable import/no-deprecated */
-function isTreeConfiguration(
-	config: TreeViewConfiguration | TreeConfiguration,
-): config is TreeConfiguration {
-	return config instanceof TreeConfiguration;
-}
-/* eslint-enable import/no-deprecated */
-
-/**
- * Generates a configuration object (schema + initial tree) for a FlexTree.
- * @param config - Configuration for how to {@link ITree.schematize|schematize} a tree.
- * @param nodeKeyManager - See {@link NodeKeyManager}.
- * @param schemaValidationPolicy - Stored schema and policy for the tree. If the policy specifies
- * `{@link SchemaPolicy.validateSchema} === true`, new content inserted into the tree will be validated using this
- * object.
- * @returns A configuration object for a FlexTree.
- *
- * @privateremarks
- * I wrote these docs without a ton of context, they can probably be improved.
- */
-export function toFlexConfig(
-	// eslint-disable-next-line import/no-deprecated
-	config: TreeViewConfiguration | TreeConfiguration,
-	nodeKeyManager: NodeKeyManager,
-	schemaValidationPolicy: SchemaAndPolicy | undefined = undefined,
-): TreeContent {
-	const unhydrated = isTreeConfiguration(config) ? config.initialTree() : undefined;
-	const initialTree =
-		unhydrated === undefined
-			? undefined
-			: [
-					cursorFromUnhydratedRoot(
-						config.schema,
-						unhydrated,
-						nodeKeyManager,
-						schemaValidationPolicy,
-					),
-			  ];
-	return {
-		schema: toFlexSchema(config.schema),
-		initialTree,
-	};
 }
 
 interface SchemaInfo {
@@ -174,7 +127,10 @@ export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema): FlexFieldSchema {
+export function convertField(
+	schemaMap: SchemaMap,
+	schema: ImplicitFieldSchema,
+): FlexFieldSchema {
 	let kind: FlexFieldKind;
 	let types: ImplicitAllowedTypes;
 	if (schema instanceof FieldSchema) {
@@ -240,8 +196,7 @@ export function convertNodeSchema(
 		switch (kind) {
 			case NodeKind.Leaf: {
 				const cached =
-					cachedFlexSchemaFromClassSchema(schema) ??
-					fail("leaf schema should be pre-cached");
+					cachedFlexSchemaFromClassSchema(schema) ?? fail("leaf schema should be pre-cached");
 				assert(schemaIsLeaf(cached), 0x840 /* expected leaf */);
 				return cached;
 			}
@@ -263,8 +218,7 @@ export function convertNodeSchema(
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
+				out = cached ?? FlexFieldNodeSchema.create(builder, brand(schema.identifier), field);
 				break;
 			}
 			case NodeKind.Object: {
@@ -284,9 +238,7 @@ export function convertNodeSchema(
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);
-				out =
-					cached ??
-					FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
+				out = cached ?? FlexObjectNodeSchema.create(builder, brand(schema.identifier), fields);
 				break;
 			}
 			default:

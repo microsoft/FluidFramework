@@ -3,19 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import http from "http";
-import { Socket } from "net";
+import http from "node:http";
+import type { Socket } from "node:net";
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-jsdoc
 export interface ITrackedHttpServer {
 	readonly server: http.Server;
 	readonly sockets: Set<Socket>;
 	fullyClose(): void;
 }
+
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-jsdoc
 export function createTrackedServer(
 	port: number,
 	requestListener: http.RequestListener,
 ): ITrackedHttpServer {
+	// eslint-disable-next-line jsdoc/require-jsdoc
 	const server = http.createServer(requestListener).listen(port);
+	// eslint-disable-next-line jsdoc/require-jsdoc
 	const sockets = new Set<Socket>();
 
 	server.on("connection", (socket) => {
@@ -26,25 +33,38 @@ export function createTrackedServer(
 	return {
 		server,
 		sockets,
-		fullyClose() {
+		fullyClose(): void {
 			server.close();
-			sockets.forEach((socket) => socket.destroy());
+			// eslint-disable-next-line jsdoc/require-jsdoc
+			for (const socket of sockets) {
+				socket.destroy();
+			}
 		},
 	};
 }
+
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-jsdoc
 export type OnceListenerHandler<T> = (
 	req: http.IncomingMessage,
 	res: http.ServerResponse,
 ) => Promise<T>;
+
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-jsdoc
 export type OnceListenerResult<T> = Promise<() => Promise<T>>;
+
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-jsdoc
 export const serverListenAndHandle = async <T>(
 	port: number,
 	handler: OnceListenerHandler<T>,
 ): OnceListenerResult<T> =>
 	// eslint-disable-next-line promise/param-names
 	new Promise((outerResolve, outerReject) => {
-		// eslint-disable-next-line promise/param-names
+		// eslint-disable-next-line promise/param-names, jsdoc/require-jsdoc
 		const innerP = new Promise<T>((innerResolve, innerReject) => {
+			// eslint-disable-next-line jsdoc/require-jsdoc
 			const httpServer = createTrackedServer(port, (req, res) => {
 				// ignore favicon
 				if (req.url === "/favicon.ico") {
@@ -63,6 +83,8 @@ export const serverListenAndHandle = async <T>(
 		});
 	});
 
+// TODO: Add documentation
+// eslint-disable-next-line jsdoc/require-jsdoc
 export const endResponse = async (response: http.ServerResponse): Promise<void> =>
 	new Promise((resolve, reject) => {
 		try {

@@ -94,7 +94,10 @@ function createAttributes(
 		isRootDataStore,
 	};
 }
-export function createAttributesBlob(pkg: readonly string[], isRootDataStore: boolean): ITreeEntry {
+export function createAttributesBlob(
+	pkg: readonly string[],
+	isRootDataStore: boolean,
+): ITreeEntry {
 	const attributes = createAttributes(pkg, isRootDataStore);
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
@@ -157,7 +160,8 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
  * Properties necessary for creating a local FluidDataStoreContext
  * @internal
  */
-export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
+export interface ILocalDetachedFluidDataStoreContextProps
+	extends ILocalFluidDataStoreContextProps {
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
@@ -431,7 +435,9 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	public abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	public abstract setAttachState(
+		attachState: AttachState.Attaching | AttachState.Attached,
+	): void;
 
 	private rejectDeferredRealize(
 		reason: string,
@@ -448,7 +454,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
-		assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
+		assert(
+			!this.detachedRuntimeCreation,
+			0x13d /* "Detached runtime creation on realize()" */,
+		);
 		if (!this.channelP) {
 			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
@@ -719,9 +728,10 @@ export abstract class FluidDataStoreContext
 	 *
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parentContext.addedGCOutboundRoute(fromPath, toPath);
+	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
 	/**
@@ -891,13 +901,17 @@ export abstract class FluidDataStoreContext
 	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
 	 */
-	public abstract getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+	public abstract getAttachSummary(
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats;
 
 	/**
 	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's
 	 * outbound routes.
 	 */
-	public abstract getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
+	public abstract getAttachGCData(
+		telemetryContext?: ITelemetryContext,
+	): IGarbageCollectionData;
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -1009,7 +1023,10 @@ export abstract class FluidDataStoreContext
 		this.localChangesTelemetryCount--;
 	}
 
-	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+	public getCreateChildSummarizerNodeFn(
+		id: string,
+		createParam: CreateChildSummarizerNodeParam,
+	) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -1041,6 +1058,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1051,8 +1069,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (isInstanceOfISnapshot(props.snapshot)) {
 			this.blobContents = props.snapshot.blobContents;
 			this._baseSnapshot = props.snapshot.snapshotTree;
+			this.isSnapshotInISnapshotFormat = true;
 		} else {
 			this._baseSnapshot = props.snapshot;
+			this.isSnapshotInISnapshotFormat = false;
 		}
 		if (this._baseSnapshot !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(this._baseSnapshot);
@@ -1074,8 +1094,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
-		// Check whether we need to fetch the snapshot first to load.
-		if (this.snapshotFetchRequired === undefined && this._baseSnapshot?.groupId !== undefined) {
+		// Check whether we need to fetch the snapshot first to load. The snapshot should be in new format to see
+		// whether we want to evaluate to fetch snapshot or not for loadingGroupId. Otherwise, the snapshot
+		// will contain all the blobs.
+		if (
+			this.snapshotFetchRequired === undefined &&
+			this._baseSnapshot?.groupId !== undefined &&
+			this.isSnapshotInISnapshotFormat
+		) {
 			assert(
 				this.blobContents !== undefined,
 				0x97a /* Blob contents should be present to evaluate */,
@@ -1143,7 +1169,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
-		assert(this.pkg !== undefined, 0x8f6 /* The datastore context package should be defined */);
+		assert(
+			this.pkg !== undefined,
+			0x8f6 /* The datastore context package should be defined */,
+		);
 		return {
 			pkg: this.pkg,
 			isRootDataStore,
@@ -1277,7 +1306,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(
 			this.channel !== undefined,
-			"There should be a channel when generating attach GC data",
+			0x9a6 /* There should be a channel when generating attach GC data */,
 		);
 		return this.channel.getAttachGCData(telemetryContext);
 	}

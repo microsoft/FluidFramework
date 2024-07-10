@@ -326,9 +326,10 @@ function makeModularChangeCodec(
 					trees: fieldsCodec.encode(treesToEncode, {
 						encodeType: chunkCompressionStrategy,
 						schema: context.schema,
+						originatorId: context.originatorId,
 						idCompressor: context.idCompressor,
 					}),
-			  };
+				};
 	}
 
 	function decodeDetachedNodes(
@@ -341,6 +342,7 @@ function makeModularChangeCodec(
 
 		const chunks = fieldsCodec.decode(encoded.trees, {
 			encodeType: chunkCompressionStrategy,
+			originatorId: context.originatorId,
 			idCompressor: context.idCompressor,
 		});
 		const getChunk = (index: number): TreeChunk => {
@@ -352,9 +354,7 @@ function makeModularChangeCodec(
 		encoded.builds.forEach((build) => {
 			// EncodedRevisionTag cannot be an array so this ensures that we can isolate the tuple
 			const revision =
-				build[1] === undefined
-					? context.revision
-					: revisionTagCodec.decode(build[1], context);
+				build[1] === undefined ? context.revision : revisionTagCodec.decode(build[1], context);
 			map.set(revision, new Map(build[0].map(([i, n]) => [i, getChunk(n)])));
 		});
 
@@ -426,13 +426,10 @@ function makeModularChangeCodec(
 					change.revisions === undefined
 						? undefined
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(
-					change.fieldChanges,
-					context,
-					change.nodeChanges,
-				),
+				changes: encodeFieldChangesForJson(change.fieldChanges, context, change.nodeChanges),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
+				violations: change.constraintViolationCount,
 			};
 		},
 
@@ -451,7 +448,11 @@ function makeModularChangeCodec(
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
 			}
 			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
+				decoded.refreshers = decodeDetachedNodes(encodedChange.refreshers, context);
+			}
+
+			if (encodedChange.violations !== undefined) {
+				decoded.constraintViolationCount = encodedChange.violations;
 			}
 
 			const decodedRevInfos = decodeRevisionInfos(encodedChange.revisions, context);

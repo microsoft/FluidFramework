@@ -67,11 +67,12 @@ import {
 	type SharedTree,
 	SharedTreeFactory,
 	runSynchronous,
+	Tree,
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	type ConnectionSetter,
@@ -92,6 +93,7 @@ import {
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
+	validateUsageError,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -193,14 +195,15 @@ describe("SharedTree", () => {
 			assert.equal(schematized.flexTree.content, undefined);
 		});
 
-		// TODO: ensure unhydrated initialTree input is correctly hydrated.
-		it.skip("unhydrated tree input", () => {
+		it("unhydrated tree input", () => {
 			const tree = DebugSharedTree.create(new MockSharedTreeRuntime());
 			const sb = new SchemaFactory("test-factory");
 			class Foo extends sb.object("Foo", {}) {}
 
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: Foo }));
 			const unhydratedInitialTree = new Foo({});
-			const view = tree.schematize(new TreeConfiguration(Foo, () => unhydratedInitialTree));
+			view.initialize(unhydratedInitialTree);
+
 			assert(view.root === unhydratedInitialTree);
 		});
 	});
@@ -434,10 +437,7 @@ describe("SharedTree", () => {
 					libraries: [leaf.library],
 				});
 				const node = b.objectRecursive("test node", {
-					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
-						() => node,
-						leaf.number,
-					]),
+					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 				});
 				const schema = b.intoSchema(node);
 
@@ -457,17 +457,14 @@ describe("SharedTree", () => {
 					"B",
 					{
 						deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-						objectStorage: MockStorage.createFromSummary(
-							(await tree1.summarize()).summary,
-						),
+						objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
 					},
 					factory.attributes,
 				);
 
 				containerRuntimeFactory.processAllMessages();
 				const incrementalSummaryContext = {
-					summarySequenceNumber:
-						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
+					summarySequenceNumber: dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
 
 					latestSummarySequenceNumber:
 						dataStoreRuntime1.deltaManagerInternal.lastSequenceNumber,
@@ -1628,7 +1625,9 @@ describe("SharedTree", () => {
 
 		assert.throws(() =>
 			// This change is a well-formed change object, but will attempt to do an operation that is illegal given the current (empty) state of the tree
-			tree1.editor.sequenceField({ parent: undefined, field: rootFieldKey }).remove(0, 99),
+			tree1.editor
+				.sequenceField({ parent: undefined, field: rootFieldKey })
+				.remove(0, 99),
 		);
 
 		provider.processMessages();
@@ -1917,51 +1916,99 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Identifiers", () => {
+		it("Can use identifiers and the static Tree Apis", async () => {
+			const factory = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Compressed,
+			});
+			const provider = new TestTreeProviderLite(1, factory, true);
+			const tree1 = provider.trees[0];
+			const sf = new SchemaFactory("com.example");
+			class Widget extends sf.object("Widget", { id: sf.identifier }) {}
+
+			const view = tree1.viewWith(
+				new TreeViewConfiguration({
+					schema: sf.array(Widget),
+					enableSchemaValidation: true,
+				}),
+			);
+			const widget = new Widget({});
+			const fidget = new Widget({ id: "fidget" });
+			view.initialize([widget, fidget]);
+
+			// Checks that the shortId returns the correct types and values.
+			assert.equal(typeof Tree.shortId(widget), "number");
+			assert.equal(Tree.shortId(fidget), "fidget");
+		});
+	});
+
 	describe("Schema validation", () => {
 		it("can create tree with schema validation enabled", async () => {
 			const provider = new TestTreeProviderLite(1);
 			const [sharedTree] = provider.trees;
 			const sf = new SchemaFactory("test");
 			const schema = sf.string;
-			assert.doesNotThrow(() =>
-				sharedTree.schematize(
-					new TreeConfiguration(schema, () => "42", {
-						enableSchemaValidation: true,
-					}),
-				),
-			);
-		});
-
-		it("schema validation throws as expected", async () => {
-			const provider = new TestTreeProviderLite(1);
-			const [sharedTree] = provider.trees;
-			const sf = new SchemaFactory("test");
-
-			// No validation failures when initializing the tree for the first time.
-			// Stored schema is set up so 'foo' is an array of strings.
-			const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
-			sharedTree.schematize(
-				new TreeConfiguration(schema, () => ({ foo: ["42"] }), {
-					enableSchemaValidation: true,
-				}),
-			);
-
-			// Trying to use the tree with a view schema that makes 'foo' an array of strings or numbers
-			// should not cause compile-time errors when inserting a number, but stored schema validation
-			// should kick in and throw an error.
-			const viewschema = sf.object("myObject", {
-				foo: sf.array("foo", [sf.string, sf.number]),
+			assert.doesNotThrow(() => {
+				const view = sharedTree.viewWith(
+					new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+				);
+				view.initialize("42");
 			});
-			const tree = sharedTree.schematize(
-				new TreeConfiguration(viewschema, () => ({ foo: ["42"] }), {
-					enableSchemaValidation: true,
-				}),
-			);
-
-			assert.throws(() => {
-				tree.root.foo.insertAtEnd(3);
-			}, "Tree does not conform to schema.");
 		});
+	});
+
+	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	it("throws when an invalid type is inserted at runtime", async () => {
+		const provider = new TestTreeProviderLite(1);
+		const [sharedTree] = provider.trees;
+		const sf = new SchemaFactory("test");
+
+		const schema = sf.object("myObject", { foo: sf.array("foo", sf.string) });
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({ schema, enableSchemaValidation: true }),
+		);
+		view.initialize({ foo: ["42"] });
+		assert.throws(
+			() => {
+				// The cast here is necessary as the API provided by `insertAtEnd` is typesafe with respect
+				// to the schema, so in order to insert invalid content we need to bypass the types.
+				view.root.foo.insertAtEnd(3 as unknown as string);
+			},
+			validateUsageError(
+				/The provided data is incompatible with all of the types allowed by the schema/,
+			),
+		);
+	});
+
+	it("breaks on exceptions", () => {
+		const tree = treeTestFactory();
+		const sf = new SchemaFactory("test");
+		const schema = sf.object("myObject", {});
+		const config = new TreeViewConfiguration({ schema, enableSchemaValidation: true });
+		const view = tree.viewWith(config);
+
+		view.initialize({});
+		assert.equal(view.breaker, tree.breaker);
+		// Invalid second initialize
+		assert.throws(() => view.initialize({}), validateUsageError(/initialized more than once/));
+		// Access after exception should throw broken object error
+		assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+		// Methods should throw
+		assert.throws(
+			() => view.initialize({}),
+			validateUsageError(/invalid state by another error/),
+		);
+		// Methods on tree should throw after view broke
+		assert.throws(
+			() => tree.viewWith(config),
+			validateUsageError(/invalid state by another error/),
+		);
+		// Inherited methods on tree should throw after view broke
+		assert.throws(
+			() => tree.getAttachSummary(),
+			validateUsageError(/invalid state by another error/),
+		);
 	});
 });
 

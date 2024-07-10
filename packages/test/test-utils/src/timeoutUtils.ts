@@ -107,26 +107,30 @@ if (globalThis.getMochaModule !== undefined) {
 /**
  * @internal
  */
-export interface TimeoutWithError {
+export interface TimeoutDurationOption {
 	/**
 	 * Timeout duration in milliseconds, if it is great than 0 and not Infinity
 	 * If it is undefined, then it will use test timeout if we are in side the test function
 	 * Otherwise, there is no timeout
 	 */
 	durationMs?: number;
-	reject?: true;
-	errorMsg?: string;
 }
+
 /**
  * @internal
  */
-export interface TimeoutWithValue<T = void> {
-	/**
-	 * Timeout duration in milliseconds, if it is great than 0 and not Infinity
-	 * If it is undefined, then it will use test timeout if we are in side the test function
-	 * Otherwise, there is no timeout
-	 */
-	durationMs?: number;
+export interface TimeoutWithError extends TimeoutDurationOption {
+	reject?: true;
+	errorMsg?: string;
+	// Since there are no required properties, this type explicitly
+	// rejects `value` to avoid confusion with TimeoutWithValue.
+	value?: never;
+}
+
+/**
+ * @internal
+ */
+export interface TimeoutWithValue<T = void> extends TimeoutDurationOption {
 	reject: false;
 	value: T;
 }
@@ -225,9 +229,7 @@ async function getTimeoutPromise<T = void>(
 		};
 		const timer = setTimeout(
 			() =>
-				timeoutOptions.reject === false
-					? resolve(timeoutOptions.value)
-					: timeoutRejections(),
+				timeoutOptions.reject === false ? resolve(timeoutOptions.value) : timeoutRejections(),
 			timeout,
 		);
 
