@@ -86,12 +86,13 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			if (ApiItemUtilities.isDeprecated(apiItem)) {
 				alerts.push("Deprecated");
 			}
+			if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+				alerts.push("Legacy");
+			}
 
 			const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
 			if (releaseTag === ReleaseTag.Alpha) {
-				// Temporary workaround for the current `@alpha` => "Legacy" state.
-				// This should be replaced with "Alpha" once that has been cleaned up.
-				alerts.push("Legacy");
+				alerts.push("Alpha");
 			} else if (releaseTag === ReleaseTag.Beta) {
 				alerts.push("Beta");
 			}
@@ -105,9 +106,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
 			return ["@fluid-private"].includes(packageScope);
 		},
-		// Temporary workaround to ensure APIs temporarily tagged as `@alpha` (to mean "legacy") are included in the API docs.
-		// This min level should be set back to Beta once legacy APIs have been cleaned up to not use `@alpha`.
-		minimumReleaseLevel: ReleaseTag.Alpha, // Don't include `@internal` items in docs published to the public website.
 	});
 
 	logProgress("Generating API documentation...");

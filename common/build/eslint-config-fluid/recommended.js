@@ -57,6 +57,13 @@ module.exports = {
 		"unicorn/no-nested-ternary": "off",
 
 		/**
+		 * Disabled due to false positives / disruptive behavior of auto-fix.
+		 * See {@link https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2018}.
+		 * We may consider re-enabling once the above issue has been resolved.
+		 */
+		"unicorn/no-useless-spread": "off",
+
+		/**
 		 * Disabled due to the sheer number of false positives it detects, and because it is sometimes valuable to
 		 * explicitly denote `undefined`.
 		 */
