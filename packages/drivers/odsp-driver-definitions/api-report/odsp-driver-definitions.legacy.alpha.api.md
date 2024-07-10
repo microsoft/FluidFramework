@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha (undocumented)
-export type CacheContentType = "snapshot" | "ops";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 // @alpha (undocumented)
 export interface HostStoragePolicy {
