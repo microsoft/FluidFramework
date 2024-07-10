@@ -165,7 +165,7 @@ function prepareArrayContentForHydration(
 	forest: IForestSubscription,
 ): void {
 	const proxies: RootedProxyPaths[] = [];
-	for (let i = 0; i < content.length; i++) {
+	for (const [i, item] of content.entries()) {
 		proxies.push({
 			rootPath: {
 				parent: undefined,
@@ -176,7 +176,7 @@ function prepareArrayContentForHydration(
 		});
 		// Non null asserting here because we are iterating over content and pushing into proxies for every content
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		walkMapTree(content[i]!, proxies[i]!.rootPath, (p, mapTreeNode, proxy) => {
+		walkMapTree(item, proxies[i]!.rootPath, (p, mapTreeNode, proxy) => {
 			// Non null asserting here because we are iterating over content and pushing into proxies for every content
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			proxies[i]!.proxyPaths.push({ path: p, mapTreeNode, proxy });
@@ -200,11 +200,9 @@ function walkMapTree(
 	}
 
 	for (const [key, field] of mapTree.fields) {
-		for (let i = 0; i < field.length; i++) {
+		for (const [i, item] of field.entries()) {
 			walkMapTree(
-				// Non null asserting here because we are iterating over field
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				field[i]!,
+				item,
 				{
 					parent: path,
 					parentField: key,
@@ -222,12 +220,9 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
-			// Non null asserting here because we are iterating over proxies
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			(proxies[i]!.rootPath as Mutable<UpPath>).parentField = fieldKey;
-			// Non null asserting here because we are iterating over proxies
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			for (const { path, mapTreeNode, proxy } of proxies[i]!.proxyPaths) {
+			const currentProxy = proxies[i] ?? fail("Expected value to be in array");
+			(currentProxy.rootPath as Mutable<UpPath>).parentField = fieldKey;
+			for (const { path, mapTreeNode, proxy } of currentProxy.proxyPaths) {
 				const anchorNode = anchorProxy(forest.anchors, path, proxy);
 				mapTreeNode.forwardEvents({
 					on<K extends keyof FlexTreeNodeEvents>(

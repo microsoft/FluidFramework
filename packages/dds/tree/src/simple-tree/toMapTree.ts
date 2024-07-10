@@ -476,9 +476,9 @@ function getObjectFieldSchema(schema: TreeNodeSchema, key: string): FieldSchema 
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
 	} else {
-		// Non null asserting here because of the undefined check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return normalizeFieldSchema(fields[key]!);
+		return normalizeFieldSchema(
+			fields[key] ?? fail("This wont run because of the undefined check above"),
+		);
 	}
 }
 
@@ -508,9 +508,7 @@ The set of possible types is ${JSON.stringify([
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
-	// Non null asserting here because of the length check above
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return possibleTypes[0]!;
+	return possibleTypes[0] ?? fail("This wont run because of the length check above");
 }
 
 /**

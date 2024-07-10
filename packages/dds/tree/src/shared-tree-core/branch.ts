@@ -26,6 +26,7 @@ import {
 import { EventEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
+import { fail } from "../index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
@@ -82,9 +83,9 @@ export function getChangeReplaceType(
 	// B' is removed and replaced by B because both have the same revision.
 	if (
 		change.removedCommits.length === 1 &&
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		change.removedCommits[0]!.revision === change.newCommits[0]!.revision
+		change.removedCommits[0] !== undefined &&
+		change.newCommits[0] !== undefined &&
+		change.removedCommits[0].revision === change.newCommits[0].revision
 	) {
 		return "rebase";
 	}
@@ -368,19 +369,14 @@ export class SharedTreeBranch<
 		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const revision = this.mintRevisionTag();
+			const commit = commits[i] ?? fail("Expected value to be in array");
 			const inverse = this.changeFamily.rebaser.changeRevision(
-				// Non null asserting here because we are iterating over commits
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.changeFamily.rebaser.invert(commits[i]!, false),
+				this.changeFamily.rebaser.invert(commit, false),
 				revision,
-				// Non null asserting here because we are iterating over commits
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				commits[i]!.revision,
+				commit.revision,
 			);
 
-			// Non null asserting here because we are iterating over commits
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			inverses.push(tagRollbackInverse(inverse, revision, commits[i]!.revision));
+			inverses.push(tagRollbackInverse(inverse, revision, commit.revision));
 		}
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
@@ -408,8 +404,9 @@ export class SharedTreeBranch<
 		const { startRevision: startRevisionOriginal } = this.transactions.pop();
 		let startRevision = startRevisionOriginal;
 		while (this.initialTransactionRevToRebasedRev.has(startRevision)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			startRevision = this.initialTransactionRevToRebasedRev.get(startRevision)!;
+			startRevision =
+				this.initialTransactionRevToRebasedRev.get(startRevision) ??
+				fail("This will never run because of the has check above");
 		}
 
 		if (!this.isTransacting()) {
@@ -472,12 +469,11 @@ export class SharedTreeBranch<
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
-			// TODO Why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const src = targetCommits[0]!.parent?.revision;
-			// TODO Why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const dst = targetCommits[targetCommits.length - 1]!.revision;
+			const firstCommit = targetCommits[0] ?? fail("Expected value to be in array");
+			const lastCommit =
+				targetCommits[targetCommits.length - 1] ?? fail("Expected value to be in array");
+			const src = firstCommit.parent?.revision;
+			const dst = lastCommit.revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}

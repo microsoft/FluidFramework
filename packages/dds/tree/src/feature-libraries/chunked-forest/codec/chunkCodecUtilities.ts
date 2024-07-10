@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { TreeValue } from "../../../core/index.js";
-import { assertValidIndex } from "../../../util/index.js";
+import { assertValidIndex, fail } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
 import type { TreeChunk } from "../chunk.js";
 
@@ -106,9 +106,7 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
 	assertValidIndex(index, data);
-	// Non null asserting here because of the assert above
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return data[index]!;
+	return data[index] ?? fail("This wont run because of the assert above");
 }
 
 /**

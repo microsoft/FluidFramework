@@ -105,9 +105,10 @@ export class ChunkedForest implements IEditableForest {
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
 				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
-				// Non null asserting here because of the assert above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				return this.mutableChunkStack[this.mutableChunkStack.length - 1]!;
+				return (
+					this.mutableChunkStack[this.mutableChunkStack.length - 1] ??
+					fail("Expected value to be in array")
+				);
 			},
 			free(): void {
 				this.mutableChunk = undefined;
@@ -206,12 +207,10 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
-				// TODO Why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				while (indexWithinChunk >= chunks[indexOfChunk]!.topLevelLength) {
-					// TODO Why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					indexWithinChunk -= chunks[indexOfChunk]!.topLevelLength;
+				let chunk = chunks[indexOfChunk] ?? fail("Expected value to be in array");
+				while (indexWithinChunk >= chunk.topLevelLength) {
+					chunk = chunks[indexOfChunk] ?? fail("Expected value to be in array");
+					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail("missing edited node");

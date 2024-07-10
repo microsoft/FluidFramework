@@ -1930,12 +1930,10 @@ function revisionFromTaggedChange(
 function revisionFromRevInfos(
 	revInfos: undefined | readonly RevisionInfo[],
 ): RevisionTag | undefined {
-	if (revInfos === undefined || revInfos.length !== 1) {
+	if (revInfos === undefined || revInfos.length !== 1 || revInfos[0] === undefined) {
 		return undefined;
 	}
-	// Non null asserting here because of the length check above
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return revInfos[0]!.revision;
+	return revInfos[0].revision;
 }
 
 function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {

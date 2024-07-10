@@ -14,6 +14,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
+import { fail } from "../../index.js";
 
 /**
  * Uses field cursors
@@ -40,10 +41,11 @@ export function makeForestSummarizerCodec(
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
 			const fields = inner.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
-			for (let index = 0; index < fields.length; index++) {
-				// Non null asserting here because we are iterating over fields and the size of data.keys and fields are the same
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				out.set(data.keys[index]!, fields[index]!);
+			for (const [index, field] of fields.entries()) {
+				out.set(
+					data.keys[index] ?? fail("This will never run because of the length assert above"),
+					field,
+				);
 			}
 			return out;
 		},

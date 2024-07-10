@@ -22,7 +22,7 @@ import {
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
-import { brand } from "../../util/index.js";
+import { brand, fail } from "../../util/index.js";
 import {
 	type EditDescription,
 	type FieldChangeset,
@@ -286,18 +286,16 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// in the composition performed by `submitChanges`.
 						attachAncestorIndex -= count;
 						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
+						const parentField =
+							attachPath[sharedDepth] ?? fail("Expected value to be in array");
 						parent = {
 							parent,
 							parentIndex: attachAncestorIndex,
-							// TODO Why are we non null asserting here?
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							parentField: attachPath[sharedDepth]!.parentField,
+							parentField: parentField.parentField,
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
-								// Non null asserting here because we are iterating over attachPath
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								...attachPath[i]!,
+								...(attachPath[i] ?? fail("We are looping through arrachPath")),
 								parent,
 							};
 						}
@@ -447,12 +445,8 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const detachStep = pathA[sharedDepth]!;
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const attachStep = pathB[sharedDepth]!;
+		const detachStep = pathA[sharedDepth] ?? fail("Expected value to be in array");
+		const attachStep = pathB[sharedDepth] ?? fail("Expected value to be in array");
 		if (detachStep !== attachStep) {
 			if (
 				detachStep.parentField !== attachStep.parentField ||

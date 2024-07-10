@@ -531,8 +531,7 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		fieldEditor.set(content[0]!);
+		fieldEditor.set(content[0] ?? fail("Expected value to be in array"));
 	}
 
 	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {

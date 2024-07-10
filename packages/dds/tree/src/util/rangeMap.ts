@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "./index.js";
+
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
  *
@@ -112,13 +114,9 @@ export function setInRangeMap<T>(
 	}
 
 	const iFirst = iBefore + 1;
-	// TODO Why are we non null asserting here?
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const firstEntry = map[iFirst]!;
+	const firstEntry = map[iFirst] ?? fail("Expected value to be in array");
 	const iLast = iAfter - 1;
-	// TODO Why are we non null asserting here?
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const lastEntry = map[iLast]!;
+	const lastEntry = map[iLast] ?? fail("Expected value to be in array");
 	const lengthBeforeFirst = start - firstEntry.start;
 	const lastEntryKey = lastEntry.start + lastEntry.length - 1;
 	const lengthAfterLast = lastEntryKey - end;
@@ -207,9 +205,8 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
-		// Non null asserting here because we are iterating over map
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const entry = map[i]!;
+		const entry =
+			map[i] ?? fail("This wont run because we are iterating over the overlapping entries");
 		const entryLastKey = entry.start + entry.length - 1;
 		let isDirty = false;
 

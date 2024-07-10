@@ -158,9 +158,7 @@ export class Chunker implements IChunker {
  * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
-	// TODO Why are we non null asserting here?
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return chunkRange(cursor, policy, 1, true)[0]!;
+	return chunkRange(cursor, policy, 1, true)[0] ?? fail("Expected value to be in array");
 }
 
 /**

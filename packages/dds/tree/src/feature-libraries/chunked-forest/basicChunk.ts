@@ -183,17 +183,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 0, 0x51f /* must field height */);
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.siblingStack[height]![this.indexStack[height]!] as FieldKey;
+		const siblingStack = this.siblingStack[height] ?? fail("Expected value to be in array");
+		const indexStack = this.indexStack[height] ?? fail("Expected value to be in array");
+		return siblingStack[indexStack] as FieldKey;
 	}
 
 	private getStackedNodeIndex(height: number): number {
 		assert(height % 2 === 1, 0x520 /* must be node height */);
 		assert(height >= 0, 0x521 /* must not be above root */);
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.indexStack[height]!;
+		return this.indexStack[height] ?? fail("Expected value to be in array");
 	}
 
 	private getStackedNode(height: number): BasicChunk {
@@ -371,14 +369,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		assert(this.indexOfChunk < this.siblings.length, 0x52a /* out of bounds indexOfChunk */);
 
 		this.indexWithinChunk += offset;
+		const chunks = this.siblings as TreeChunk[];
+		let chunk = chunks[this.indexOfChunk] ?? fail("Expected value to be in array");
 		if (offset >= 0) {
-			const chunks = this.siblings as TreeChunk[];
-			// TODO Why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			while (this.indexWithinChunk >= chunks[this.indexOfChunk]!.topLevelLength) {
-				// TODO Why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.indexWithinChunk -= chunks[this.indexOfChunk]!.topLevelLength;
+			while (this.indexWithinChunk >= chunk.topLevelLength) {
+				chunk = chunks[this.indexOfChunk] ?? fail("Expected value to be in array");
+				this.indexWithinChunk -= chunk.topLevelLength;
 				this.indexOfChunk++;
 				if (this.indexOfChunk === chunks.length) {
 					this.exitNode();
@@ -390,16 +386,14 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 				);
 			}
 		} else {
-			const chunks = this.siblings as TreeChunk[];
 			while (this.indexWithinChunk < 0) {
 				if (this.indexOfChunk === 0) {
 					this.exitNode();
 					return false;
 				}
 				this.indexOfChunk--;
-				// TODO Why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.indexWithinChunk += chunks[this.indexOfChunk]!.topLevelLength;
+				chunk = chunks[this.indexOfChunk] ?? fail("Expected value to be in array");
+				this.indexWithinChunk += chunk.topLevelLength;
 			}
 		}
 
@@ -443,13 +437,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x52c /* can only nextNode when in Nodes */,
 		);
+		const siblingChunk =
+			(this.siblings as TreeChunk[])[this.indexOfChunk] ??
+			fail("Expected value to be in array");
 		this.indexWithinChunk++;
-		if (
-			this.indexWithinChunk ===
-			// TODO Why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			(this.siblings as TreeChunk[])[this.indexOfChunk]!.topLevelLength
-		) {
+		if (this.indexWithinChunk === siblingChunk.topLevelLength) {
 			this.indexOfChunk++;
 			if (this.indexOfChunk === (this.siblings as TreeChunk[]).length) {
 				this.exitNode();
@@ -467,9 +459,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x55d /* can only initNestedCursor when in Nodes */,
 		);
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk]!;
+		const chunk =
+			(this.siblings as TreeChunk[])[this.indexOfChunk] ??
+			fail("Expected value to be in array");
 		this.nestedCursor = !(chunk instanceof BasicChunk) ? chunk.cursor() : undefined;
 		this.nestedCursor?.enterNode(this.indexWithinChunk);
 	}

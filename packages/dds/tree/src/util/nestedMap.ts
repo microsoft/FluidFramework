@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MapGetSet } from "./utils.js";
+import { fail, type MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -336,9 +336,10 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	}
 
 	public values(): IterableIterator<Value> {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0]!;
+		return (
+			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ??
+			fail("Expected value to be in array")
+		);
 	}
 
 	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {

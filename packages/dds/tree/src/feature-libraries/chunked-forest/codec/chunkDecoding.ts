@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
-import { assertValidIndex } from "../../../util/index.js";
+import { assertValidIndex, fail } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
 import type { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
@@ -169,9 +169,7 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 		case 0:
 			return emptyChunk;
 		case 1:
-			// Non null asserting here because we are switching between chunks.length
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return chunks[0]!;
+			return chunks[0] ?? fail("This will never run because of the length check above");
 		default:
 			return new SequenceChunk(chunks);
 	}
@@ -183,9 +181,7 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const decoder = decoders[this.shape]!;
+		const decoder = decoders[this.shape] ?? fail("Expected value to be in array");
 
 		// TODO: uniform chunk fast path
 		const chunks: TreeChunk[] = [];
@@ -219,9 +215,7 @@ export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArray) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const length = this.shape.length;
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const decoder = decoders[this.shape.shape]!;
+		const decoder = decoders[this.shape.shape] ?? fail("Expected value to be in array");
 		const chunks: TreeChunk[] = [];
 		for (let index = 0; index < length; index++) {
 			chunks.push(decoder.decode(decoders, stream));
@@ -258,9 +252,10 @@ function fieldDecoder(
 	shape: number,
 ): BasicFieldDecoder {
 	assertValidIndex(shape, cache.shapes);
-	// TODO Why are we non null asserting here?
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return (decoders, stream) => [key, decoders[shape]!.decode(decoders, stream)];
+	return (decoders, stream) => {
+		const decoder = decoders[shape] ?? fail("Expected value to be in array");
+		return [key, decoder.decode(decoders, stream)];
+	};
 }
 
 /**
@@ -307,9 +302,8 @@ export class TreeDecoder implements ChunkDecoder {
 		}
 
 		if (this.shape.extraFields !== undefined) {
-			// TODO Why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const decoder = decoders[this.shape.extraFields]!;
+			const decoder =
+				decoders[this.shape.extraFields] ?? fail("Expected value to be in array");
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
 				const key: FieldKey = readStreamIdentifier(inner, this.cache);

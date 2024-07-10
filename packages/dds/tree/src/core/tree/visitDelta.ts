@@ -5,7 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
+import {
+	fail,
+	type NestedMap,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
@@ -444,9 +449,7 @@ function buildTrees(
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = config.detachedFieldIndex.createEntry(offsettedId);
 		const field = config.detachedFieldIndex.toFieldKey(root);
-		// Non null asserting here because we are iterating over trees
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		visitor.create([trees[i]!], field);
+		visitor.create([trees[i] ?? fail("Expected value to be in array")], field);
 	}
 }
 

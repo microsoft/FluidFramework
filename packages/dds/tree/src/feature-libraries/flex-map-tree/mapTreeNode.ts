@@ -250,9 +250,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 			const field = getOrCreateField(this, key, mapTrees, this.schema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
-					// TODO Why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					mapTrees[index]!,
+					mapTrees[index] ?? fail("Expected value to be in array"),
 					this.schema.getFieldSchema(key).allowedTypes,
 					{ parent: field, index },
 				);
@@ -456,10 +454,8 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 
 		// When this field is created (which only happens one time, because it is cached), all the children become parented for the first time.
 		// "Adopt" each child by updating its parent information to point to this field.
-		for (let i = 0; i < mapTrees.length; i++) {
-			// Non null asserting here because we are iterating over mapTrees
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const mapTreeNodeChild = nodeCache.get(mapTrees[i]!);
+		for (const [i, mapTree] of mapTrees.entries()) {
+			const mapTreeNodeChild = nodeCache.get(mapTree);
 			if (mapTreeNodeChild !== undefined) {
 				assert(
 					mapTreeNodeChild.parentField.parent === rootMapTreeField,
@@ -529,9 +525,11 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 	implements FlexTreeRequiredField<T>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return unboxedUnion(this.schema, this.mapTrees[0]!, { parent: this, index: 0 });
+		return unboxedUnion(
+			this.schema,
+			this.mapTrees[0] ?? fail("Expected value to be in array"),
+			{ parent: this, index: 0 },
+		);
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T>) {
 		throw unsupportedUsageError("Setting an optional field");
@@ -548,9 +546,10 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> | undefined {
 		return this.mapTrees.length > 0
-			? // Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				unboxedUnion(this.schema, this.mapTrees[0]!, { parent: this, index: 0 })
+			? unboxedUnion(this.schema, this.mapTrees[0] ?? fail("Expected value to be in array"), {
+					parent: this,
+					index: 0,
+				})
 			: undefined;
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
@@ -571,9 +570,11 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 		if (i === undefined) {
 			return undefined;
 		}
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return unboxedUnion(this.schema, this.mapTrees[i]!, { parent: this, index: i });
+		return unboxedUnion(
+			this.schema,
+			this.mapTrees[i] ?? fail("Expected value to be in array"),
+			{ parent: this, index: i },
+		);
 	}
 	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<T>, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
@@ -584,9 +585,11 @@ class MapTreeSequenceField<T extends FlexAllowedTypes>
 
 	public *[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<T>> {
 		for (let i = 0; i < this.mapTrees.length; i++) {
-			// Non null asserting here because we are iterating over mapTrees
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			yield unboxedUnion(this.schema, this.mapTrees[i]!, { parent: this, index: i });
+			yield unboxedUnion(
+				this.schema,
+				this.mapTrees[i] ?? fail("Expected value to be in array"),
+				{ parent: this, index: i },
+			);
 		}
 	}
 
@@ -822,9 +825,7 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
 
 	if (fieldSchema.kind === FieldKinds.required) {
-		// Non null asserting here because of the check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return unboxedUnion(fieldSchema, mapTrees[0]!, {
+		return unboxedUnion(fieldSchema, mapTrees[0] ?? fail("Expected value to be in array"), {
 			parent: field,
 			index: 0,
 		}) as FlexTreeUnboxField<TFieldSchema>;
@@ -832,9 +833,10 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 	if (fieldSchema.kind === FieldKinds.optional) {
 		return (
 			mapTrees.length > 0
-				? // Non null asserting here because of the check above
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					unboxedUnion(fieldSchema, mapTrees[0]!, { parent: field, index: 0 })
+				? unboxedUnion(fieldSchema, mapTrees[0] ?? fail("Expected value to be in array"), {
+						parent: field,
+						index: 0,
+					})
 				: undefined
 		) as FlexTreeUnboxField<TFieldSchema>;
 	}

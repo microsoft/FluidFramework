@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { Mutable } from "../../util/index.js";
+import { fail, type Mutable } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,
@@ -228,10 +228,7 @@ export function rebaseBranch<TChange>(
 	const sourceSet = new Set(sourcePath.map((r) => r.revision));
 	let newBaseIndex = targetCommitIndex;
 
-	for (let i = 0; i < targetPath.length; i += 1) {
-		// Non null asserting here because we are iterating over targetPath
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const { revision } = targetPath[i]!;
+	for (const [i, { revision }] of targetPath.entries()) {
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
@@ -251,9 +248,11 @@ export function rebaseBranch<TChange>(
 	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		if (sourcePath[0]!.revision === targetRebasePath[0]!.revision) {
+		const firstSourcePath =
+			sourcePath[0] ?? fail("Expected sourcePath to have atleast one value");
+		const firstTargetRebasePath =
+			targetRebasePath[0] ?? fail("Expected targetRebasePath to have atleast one value");
+		if (firstSourcePath.revision === firstTargetRebasePath.revision) {
 			sourcePath.shift();
 			targetRebasePath.shift();
 		}
@@ -267,13 +266,20 @@ export function rebaseBranch<TChange>(
 	// base commit.
 	if (targetRebasePath.length === 0) {
 		for (const c of sourcePath) {
-			// TODO Why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1]! ?? newBase, c));
+			sourceCommits.push(
+				mintCommit(
+					sourceCommits[sourceCommits.length - 1] ??
+						newBase ??
+						fail("Expected value to be in array"),
+					c,
+				),
+			);
 		}
 		return {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			newSourceHead: sourceCommits[sourceCommits.length - 1]! ?? newBase,
+			newSourceHead:
+				sourceCommits[sourceCommits.length - 1] ??
+				newBase ??
+				fail("Expected value to be in array"),
 			sourceChange: undefined,
 			commits: {
 				deletedSourceCommits,
@@ -316,9 +322,7 @@ export function rebaseBranch<TChange>(
 
 	let netChange: TChange | undefined;
 	return {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		newSourceHead: newHead!,
+		newSourceHead: newHead ?? fail("Expected value to be in array"),
 		get sourceChange(): TChange | undefined {
 			if (netChange === undefined) {
 				netChange = changeRebaser.compose(editsToCompose);

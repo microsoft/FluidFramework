@@ -17,7 +17,7 @@ import {
 	topDownPath,
 } from "../core/index.js";
 import type { Listeners, Listenable } from "../events/index.js";
-import { brand, getOrCreate } from "../util/index.js";
+import { brand, fail, getOrCreate } from "../util/index.js";
 
 import type { FlexTreeNode } from "./flex-tree/index.js";
 
@@ -484,9 +484,8 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		contextType: BindingContextType,
 		downPath: DownPath,
 	): Set<Listener> | undefined {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const foundRoot = this.findRoot(contextType, downPath[0]!.field);
+		const firstDownPath = downPath[0] ?? fail("Expected value to be in array");
+		const foundRoot = this.findRoot(contextType, firstDownPath.field);
 		if (foundRoot === undefined) {
 			return undefined;
 		} else {
@@ -681,10 +680,7 @@ class BufferingPathVisitor
 		const batchEvents: CallableBindingContext[] = [];
 		const collected = new Set<Listener>();
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
-			for (let i = 0; i < sortedQueue.length; i++) {
-				// Non null asserting here because we are iterating over sortedQueue
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const event = sortedQueue[i]!;
+			for (const [i, event] of sortedQueue.entries()) {
 				const current = toDownPath(event.path);
 				const listeners = this.getListeners(BindingType.Batch, current);
 				if (listeners !== undefined && listeners.size > 0) {
@@ -702,13 +698,10 @@ class BufferingPathVisitor
 				events: batchEvents,
 			});
 		}
-		for (let i = 0; i < sortedQueue.length; i++) {
+		for (const [i, { listeners, ...context }] of sortedQueue.entries()) {
 			if (batchEventIndices.has(i)) {
 				continue;
 			}
-			// Non null asserting here because we are iterating over sortedQueue
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const { listeners, ...context } = sortedQueue[i]!;
 			for (const listener of listeners) {
 				listener({ ...context });
 			}
@@ -1007,9 +1000,7 @@ export function compileSyntaxTree(
 ): BindPolicy {
 	const entries = Object.entries(syntaxTree);
 	if (entries.length === 1) {
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const [fieldName, childNode] = entries[0]!;
+		const [fieldName, childNode] = entries[0] ?? fail("Expected value to be in array");
 		const fieldKey: FieldKey = brand(fieldName);
 		const bindTree = compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
 		return { matchPolicy: matchPolicy ?? "path", bindTree };

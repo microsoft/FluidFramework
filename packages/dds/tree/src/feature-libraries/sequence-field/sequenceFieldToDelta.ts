@@ -12,7 +12,7 @@ import {
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import type { Mutable } from "../../util/index.js";
+import { fail, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 
 import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
@@ -171,9 +171,8 @@ export function sequenceFieldToDelta(
 	}
 	// Remove trailing no-op marks
 	while (local.length > 0) {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const lastMark = local[local.length - 1]!;
+		const lastMark =
+			local[local.length - 1] ?? fail("This wont run because of the length check above");
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||
