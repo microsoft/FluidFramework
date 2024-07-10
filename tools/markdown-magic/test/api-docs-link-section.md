@@ -9,7 +9,7 @@ API documentation for **@test/test-package** is available at <https://fluidframe
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (API_DOCS_LINK_SECTION:includeHeading=TRUE&packageJsonPath=./package.json) -->
+<!-- AUTO-GENERATED-CONTENT:START (API_DOCS_LINK_SECTION:packageJsonPath=./package.json) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

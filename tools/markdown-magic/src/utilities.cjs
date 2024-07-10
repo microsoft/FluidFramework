@@ -8,6 +8,7 @@ const path = require("path");
 const { PackageName } = require("@rushstack/node-core-library");
 
 const {
+	defaultSectionHeadingLevel,
 	embeddedContentNotice,
 	generatedContentNotice,
 	templatesDirectoryPath,
@@ -29,11 +30,16 @@ const readTemplate = (templateFileName) => {
 /**
  * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
  *
- * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ * @param {string} templateName - The name of the template file to embed.
+ * @param {object} headingOptions - (optional) Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
+ * @param {string} headingOptions.headingText - Text to display in the section heading, if one was requested.
  */
-const createSectionFromTemplate = (templateName, maybeHeadingName) => {
+const createSectionFromTemplate = (templateName, headingOptions) => {
 	const sectionBody = readTemplate(templateName);
-	return formattedSectionText(sectionBody, maybeHeadingName);
+	return formattedSectionText(sectionBody, headingOptions);
 };
 
 /**
@@ -110,11 +116,25 @@ const getScopeKindFromPackage = (packageName) => {
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
  *
  * @param {string} sectionBody - Body text to include in the section.
- * @param {string | undefined} maybeHeaderText - (optional) header text to display.
- * If not provided, will not include header in output.
+ * @param {object} headingOptions - (optional) Heading generation options.
+ * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
+ * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
+ * Must be a positive integer.
+ * @param {string} headingOptions.headingText - Text to display in the section heading, if one was requested.
  */
-function formattedSectionText(sectionBody, maybeHeaderText) {
-	return `\n${maybeHeaderText === undefined ? "" : `## ${maybeHeaderText}\n\n`}${sectionBody}\n`;
+function formattedSectionText(sectionBody, headingOptions) {
+	let heading = "";
+	if (headingOptions?.includeHeading) {
+		const { headingLevel, headingText } = headingOptions;
+		if (!Number.isInteger(headingLevel) || headingLevel < 1) {
+			throw new TypeError(
+				`"headingLevel" must be a positive integer. Got "${headingLevel}".`,
+			);
+		}
+		heading = `${"#".repeat(headingLevel)} ${headingText}\n\n`;
+	}
+
+	return `\n${heading}${sectionBody}\n`;
 }
 
 /**
@@ -149,6 +169,34 @@ function formattedEmbeddedContentBody(contents) {
 	return bundlePrettierPragmas([embeddedContentNotice, contents].join("\n"));
 }
 
+/**
+ * Parses the provided MarkdownMagic transform options to generate the appropriate section heading options.
+ *
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} includeHeading - (optional) Whether or not to include a top-level heading in the generated section.
+ * default: `TRUE`.
+ * @param {number | undefined} options.headingLevel - (optional) Heading level for the section.
+ * Must be a positive integer.
+ * Default: {@link defaultSectionHeadingLevel}.
+ * @param {string} headingText - The text to display in the section heading.
+ *
+ * @typedef {Object} HeadingOptions
+ * @property {boolean} includeHeading - Whether or not to include a heading in the generated content.
+ * @property {number} headingLevel - The heading level for the section.
+ * @property {string} headingText - The text to display in the section heading.
+ *
+ * @returns {HeadingOptions} Heading generation options.
+ */
+function parseHeadingOptions(transformationOptions, headingText) {
+	return {
+		includeHeading: transformationOptions.includeHeading !== "FALSE",
+		headingLevel: transformationOptions.headingLevel
+			? Number.parseInt(transformationOptions.headingLevel) ?? defaultSectionHeadingLevel
+			: defaultSectionHeadingLevel,
+		headingText: headingText,
+	};
+}
+
 module.exports = {
 	createSectionFromTemplate,
 	formattedSectionText,
@@ -156,6 +204,7 @@ module.exports = {
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
 	getScopeKindFromPackage,
+	parseHeadingOptions,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,

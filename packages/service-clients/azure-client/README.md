@@ -31,8 +31,6 @@ For more information on the related support guarantees, see [API Support Levels]
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/azure-client` like normal.
 
-To access the `beta` APIs, import via `@fluidframework/azure-client/beta`.
-
 To access the `legacy` APIs, import via `@fluidframework/azure-client/legacy`.
 
 <!-- prettier-ignore-end -->
