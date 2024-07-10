@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IFluidHandle,
-	type IFluidHandleContext,
-} from "@fluidframework/core-interfaces/internal";
-import { FluidHandleBase, generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
+import type { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 /**
  * @internal
  */
-export class DDSFuzzHandle extends FluidHandleBase<string> {
+export class DDSFuzzHandle implements IFluidHandle<string> {
 	private attached: boolean = false;
+
+	public get IFluidHandle(): IFluidHandle {
+		return this;
+	}
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -25,7 +26,6 @@ export class DDSFuzzHandle extends FluidHandleBase<string> {
 		public readonly id: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
-		super();
 		this.absolutePath = generateHandleContextPath(id, this.routeContext);
 	}
 

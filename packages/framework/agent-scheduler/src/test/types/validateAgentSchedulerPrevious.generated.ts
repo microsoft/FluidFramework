@@ -81,7 +81,6 @@ declare function get_old_InterfaceDeclaration_IAgentScheduler():
 declare function use_current_InterfaceDeclaration_IAgentScheduler(
     use: TypeOnly<current.IAgentScheduler>): void;
 use_current_InterfaceDeclaration_IAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAgentScheduler());
 
 /*
@@ -94,7 +93,6 @@ declare function get_current_InterfaceDeclaration_IAgentScheduler():
 declare function use_old_InterfaceDeclaration_IAgentScheduler(
     use: TypeOnly<old.IAgentScheduler>): void;
 use_old_InterfaceDeclaration_IAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAgentScheduler());
 
 /*
@@ -131,7 +129,6 @@ declare function get_old_InterfaceDeclaration_IProvideAgentScheduler():
 declare function use_current_InterfaceDeclaration_IProvideAgentScheduler(
     use: TypeOnly<current.IProvideAgentScheduler>): void;
 use_current_InterfaceDeclaration_IProvideAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideAgentScheduler());
 
 /*
@@ -144,7 +141,6 @@ declare function get_current_InterfaceDeclaration_IProvideAgentScheduler():
 declare function use_old_InterfaceDeclaration_IProvideAgentScheduler(
     use: TypeOnly<old.IProvideAgentScheduler>): void;
 use_old_InterfaceDeclaration_IProvideAgentScheduler(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideAgentScheduler());
 
 /*

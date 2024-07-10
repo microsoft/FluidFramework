@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -17,16 +17,15 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { IDirectoryNewStorageFormat } from "../../directory.js";
 import {
 	IDirectory,
 	IDirectoryValueChanged,
 	type ISharedDirectory,
+	ISharedMap,
 	SharedDirectory,
 	SharedMap,
 } from "../../index.js";
-import { SharedMap as SharedMapInternal } from "../../map.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
@@ -45,9 +44,9 @@ export function createConnectedDirectory(
 	return directory;
 }
 
-function createLocalMap(id: string): SharedMapInternal {
+function createLocalMap(id: string): ISharedMap {
 	const factory = SharedMap.getFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMapInternal;
+	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
 async function populate(content: unknown): Promise<ISharedDirectory> {
@@ -482,7 +481,7 @@ describe("Directory", () => {
 					.createSubDirectory("nested3")
 					.set("deepKey2", "deepValue2");
 
-				const subMapHandleUrl = toFluidHandleInternal(subMap.handle).absolutePath;
+				const subMapHandleUrl = subMap.handle.absolutePath;
 				const serialized = serialize(directory);
 				const expected = `{"ci":{"csn":0,"ccIds":[]},"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}},"subdirectories":{"nested":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"subdirectories":{"nested3":{"ci":{"csn":0,"ccIds":["${dataStoreRuntime.clientId}"]},"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
 				assert.equal(serialized, expected);
@@ -1950,7 +1949,7 @@ describe("Directory", () => {
 				const subMapId1 = `subMap-${++this.subMapCount}`;
 				const subMap1 = createLocalMap(subMapId1);
 				this.directory1.set(subMapId1, subMap1.handle);
-				this._expectedRoutes.push(toFluidHandleInternal(subMap1.handle).absolutePath);
+				this._expectedRoutes.push(subMap1.handle.absolutePath);
 
 				const fooDirectory =
 					this.directory1.getSubDirectory("foo") ??
@@ -1958,7 +1957,7 @@ describe("Directory", () => {
 				const subMapId2 = `subMap-${++this.subMapCount}`;
 				const subMap2 = createLocalMap(subMapId2);
 				fooDirectory.set(subMapId2, subMap2.handle);
-				this._expectedRoutes.push(toFluidHandleInternal(subMap2.handle).absolutePath);
+				this._expectedRoutes.push(subMap2.handle.absolutePath);
 
 				this.containerRuntimeFactory.processAllMessages();
 			}
@@ -1973,7 +1972,7 @@ describe("Directory", () => {
 
 				const subMapId = `subMap-${this.subMapCount}`;
 
-				const deletedHandle = fooDirectory.get(subMapId) as IFluidHandleInternal;
+				const deletedHandle = fooDirectory.get(subMapId) as IFluidHandle;
 				assert(deletedHandle, "Route must be added before deleting");
 
 				fooDirectory.delete(subMapId);
@@ -2004,10 +2003,7 @@ describe("Directory", () => {
 				};
 				fooDirectory.set(subMapId2, containingObject);
 				this.containerRuntimeFactory.processAllMessages();
-				this._expectedRoutes.push(
-					toFluidHandleInternal(subMap.handle).absolutePath,
-					toFluidHandleInternal(subMap2.handle).absolutePath,
-				);
+				this._expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
 			}
 		}
 

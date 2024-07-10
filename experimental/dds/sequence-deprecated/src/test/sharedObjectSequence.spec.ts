@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -35,7 +35,7 @@ function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntim
 
 function createLocalSequence(id: string) {
 	const factory = new SharedObjectSequenceFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedObjectSequence<unknown>;
+	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
 describe("SharedObjectSequence", () => {
@@ -80,9 +80,7 @@ describe("SharedObjectSequence", () => {
 				assert(this.sequence1.getLength() > 0, "Route must be added before deleting");
 				const lastElementIndex = this.sequence1.getLength() - 1;
 				// Get the handles that were last added.
-				const deletedHandles = this.sequence1.getRange(
-					lastElementIndex,
-				) as IFluidHandleInternal[];
+				const deletedHandles = this.sequence1.getRange(lastElementIndex) as IFluidHandle[];
 				// Get the routes of the handles.
 				const deletedHandleRoutes = Array.from(
 					deletedHandles,

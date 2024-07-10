@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { BlobTreeEntry } from "@fluidframework/driver-utils/internal";
 import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
 import {
@@ -17,7 +17,6 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { ConsensusRegisterCollection } from "../consensusRegisterCollection.js";
 
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
 import { IConsensusRegisterCollection } from "../interfaces.js";
@@ -31,14 +30,14 @@ function createConnectedCollection(id: string, runtimeFactory: MockContainerRunt
 	};
 
 	const crcFactory = new ConsensusRegisterCollectionFactory();
-	const collection = crcFactory.create(dataStoreRuntime, id) as ConsensusRegisterCollection<any>;
+	const collection = crcFactory.create(dataStoreRuntime, id);
 	collection.connect(services);
 	return collection;
 }
 
 function createLocalCollection(id: string) {
 	const factory = new ConsensusRegisterCollectionFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusRegisterCollection<any>;
+	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
 function createCollectionForReconnection(
@@ -61,7 +60,7 @@ function createCollectionForReconnection(
 describe("ConsensusRegisterCollection", () => {
 	describe("Single connected client", () => {
 		const collectionId = "consensus-register-collection";
-		let crc: ConsensusRegisterCollection<any>;
+		let crc: IConsensusRegisterCollection;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(() => {
@@ -379,9 +378,7 @@ describe("ConsensusRegisterCollection", () => {
 
 			public async deleteOutboundRoutes() {
 				const subCollectionId = `subCollection-${this.subCollectionCount}`;
-				const deletedHandle = this.collection1.read(
-					subCollectionId,
-				) as IFluidHandleInternal;
+				const deletedHandle = this.collection1.read(subCollectionId) as IFluidHandle;
 				assert(deletedHandle, "Route must be added before deleting");
 
 				// Delete the last handle that was added.

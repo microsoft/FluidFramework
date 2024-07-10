@@ -147,10 +147,29 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_MockFluidDataStoreRuntime": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntime": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockContainerRuntimeFactory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockFluidDataStoreContext": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"ClassDeclaration_MockHandle": {
+			"InterfaceDeclaration_IMockContainerRuntimePendingMessage": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockDeltaConnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockDeltaManager": {
 				"forwardCompat": false
 			}
 		}

@@ -137,15 +137,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_SharedCounter": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISharedCounter": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

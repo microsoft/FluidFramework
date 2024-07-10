@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -94,10 +93,7 @@ describe("Garbage Collection", () => {
 
 			this.tree1View.handles.insertAtEnd(subtree1.handle, subtree2.handle);
 
-			this._expectedRoutes.push(
-				toFluidHandleInternal(subtree1.handle).absolutePath,
-				toFluidHandleInternal(subtree2.handle).absolutePath,
-			);
+			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();
 		}
 
@@ -107,10 +103,7 @@ describe("Garbage Collection", () => {
 			// Get the handles that were last added.
 			const deletedHandles = this.tree1View.handles;
 			// Get the routes of the handles.
-			const deletedHandleRoutes = Array.from(
-				deletedHandles,
-				(handle) => toFluidHandleInternal(handle).absolutePath,
-			);
+			const deletedHandleRoutes = Array.from(deletedHandles, (handle) => handle.absolutePath);
 
 			// Remove the last added handles.
 			this.tree1View.handles.removeRange(0, lastElementIndex + 1);
@@ -144,10 +137,7 @@ describe("Garbage Collection", () => {
 				nestedHandles: [subtree1.handle, subtree2.handle],
 			});
 
-			this._expectedRoutes.push(
-				toFluidHandleInternal(subtree1.handle).absolutePath,
-				toFluidHandleInternal(subtree2.handle).absolutePath,
-			);
+			this._expectedRoutes.push(subtree1.handle.absolutePath, subtree2.handle.absolutePath);
 			this.containerRuntimeFactory.processAllMessages();
 		}
 	}

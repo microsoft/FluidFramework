@@ -154,7 +154,23 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_TestFluidObject": {
+			"RemovedVariableDeclaration_mockConfigProvider": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_TestObjectProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TestObjectProviderWithVersionedLoad": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITestObjectProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITestContainerConfig": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

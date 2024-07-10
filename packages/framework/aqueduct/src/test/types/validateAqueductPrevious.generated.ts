@@ -81,7 +81,6 @@ declare function get_old_ClassDeclaration_DataObject():
 declare function use_current_ClassDeclaration_DataObject(
     use: TypeOnly<current.DataObject>): void;
 use_current_ClassDeclaration_DataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataObject());
 
 /*
@@ -181,7 +180,6 @@ declare function get_old_ClassDeclaration_PureDataObject():
 declare function use_current_ClassDeclaration_PureDataObject(
     use: TypeOnly<current.PureDataObject>): void;
 use_current_ClassDeclaration_PureDataObject(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PureDataObject());
 
 /*

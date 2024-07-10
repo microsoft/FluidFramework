@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
-import { FluidHandleBase, toFluidHandleInternal } from '@fluidframework/runtime-utils/internal';
+import { type IFluidHandle } from '@fluidframework/core-interfaces';
 
 import { type IShim } from './types.js';
 
@@ -16,24 +15,25 @@ import { type IShim } from './types.js';
  * Local handles such as the FluidObjectHandle and the SharedObjectHandle don't work as they do not properly bind the
  * Shim's underlying DDS.
  */
-export class ShimHandle<TShim extends IShim> extends FluidHandleBase<TShim> {
-	public constructor(private readonly shim: TShim) {
-		super();
-	}
+export class ShimHandle<TShim extends IShim> implements IFluidHandle<TShim> {
+	public constructor(private readonly shim: TShim) {}
 
 	public get absolutePath(): string {
-		return toFluidHandleInternal(this.shim.currentTree.handle).absolutePath;
+		return this.shim.currentTree.handle.absolutePath;
 	}
 	public get isAttached(): boolean {
 		return this.shim.currentTree.handle.isAttached;
 	}
 	public attachGraph(): void {
-		return toFluidHandleInternal(this.shim.currentTree.handle).attachGraph();
+		return this.shim.currentTree.handle.attachGraph();
 	}
 	public async get(): Promise<TShim> {
 		return this.shim;
 	}
-	public bind(handle: IFluidHandleInternal): void {
-		return toFluidHandleInternal(this.shim.currentTree.handle).bind(handle);
+	public bind(handle: IFluidHandle): void {
+		return this.shim.currentTree.handle.bind(handle);
+	}
+	public get IFluidHandle(): IFluidHandle<TShim> {
+		return this;
 	}
 }

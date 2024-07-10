@@ -29,9 +29,6 @@ export const FluidErrorTypes: {
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
 // @public
-export const fluidHandleSymbol: unique symbol;
-
-// @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
 };
@@ -243,8 +240,13 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 export const IFluidHandle: keyof IProvideFluidHandle;
 
 // @public
-export interface IFluidHandle<out T = unknown> {
-    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
+export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
+    // @deprecated (undocumented)
+    readonly absolutePath: string;
+    // @deprecated (undocumented)
+    attachGraph(): void;
+    // @deprecated (undocumented)
+    bind(handle: IFluidHandle): void;
     get(): Promise<T>;
     readonly isAttached: boolean;
 }
@@ -260,17 +262,6 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     readonly routeContext?: IFluidHandleContext;
-}
-
-// @public
-export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
-}
-
-// @alpha
-export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
-    readonly absolutePath: string;
-    attachGraph(): void;
-    bind(handle: IFluidHandleInternal): void;
 }
 
 // @public (undocumented)
@@ -305,10 +296,10 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @alpha @deprecated (undocumented)
+// @public (undocumented)
 export interface IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly [IFluidHandle]: IFluidHandleInternal;
+    // (undocumented)
+    readonly IFluidHandle: IFluidHandle;
 }
 
 // @public (undocumented)

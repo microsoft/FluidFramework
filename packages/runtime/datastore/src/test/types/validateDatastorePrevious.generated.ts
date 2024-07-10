@@ -82,7 +82,6 @@ declare function get_old_ClassDeclaration_FluidObjectHandle():
 declare function use_current_ClassDeclaration_FluidObjectHandle(
     use: TypeOnly<current.FluidObjectHandle>): void;
 use_current_ClassDeclaration_FluidObjectHandle(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_FluidObjectHandle());
 
 /*

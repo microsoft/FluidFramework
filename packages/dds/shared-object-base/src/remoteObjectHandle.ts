@@ -6,12 +6,12 @@
 import { RuntimeHeaders } from "@fluidframework/container-runtime/internal";
 import {
 	FluidObject,
+	IFluidHandle,
 	IFluidHandleContext,
-	type IFluidHandleInternal,
 	IRequest,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { FluidHandleBase, responseToException } from "@fluidframework/runtime-utils/internal";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
@@ -20,8 +20,11 @@ import { FluidHandleBase, responseToException } from "@fluidframework/runtime-ut
  * custom objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the
  * IFluidHandle can be retrieved by calling `get` on it.
  */
-export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
+export class RemoteFluidObjectHandle implements IFluidHandle {
 	public get IFluidHandleContext() {
+		return this;
+	}
+	public get IFluidHandle() {
 		return this;
 	}
 
@@ -37,14 +40,13 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 		public readonly absolutePath: string,
 		public readonly routeContext: IFluidHandleContext,
 	) {
-		super();
 		assert(
 			absolutePath.startsWith("/"),
 			0x19d /* "Handles should always have absolute paths" */,
 		);
 	}
 
-	public async get(): Promise<FluidObject> {
+	public async get(): Promise<any> {
 		if (this.objectP === undefined) {
 			// Add `viaHandle` header to distinguish from requests from non-handle paths.
 			const request: IRequest = {
@@ -68,7 +70,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 		return;
 	}
 
-	public bind(handle: IFluidHandleInternal): void {
+	public bind(handle: IFluidHandle): void {
 		handle.attachGraph();
 	}
 }

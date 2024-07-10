@@ -4,14 +4,14 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IEvent } from "@fluidframework/core-interfaces";
 import {
-	type IFluidHandleInternal,
+	type IEvent,
+	type IFluidHandle,
 	type IFluidLoadable,
 	type IProvideFluidHandle,
 	type IRequest,
 	type IResponse,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
@@ -69,19 +69,19 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
 	 */
-	public get IFluidHandle(): IFluidHandleInternal<this> {
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
 
 	/**
 	 * Handle to a data store
 	 */
-	public get handle(): IFluidHandleInternal<this> {
+	public get handle(): IFluidHandle<this> {
 		// PureDataObjectFactory already provides an entryPoint initialization function to the data store runtime,
 		// so this object should always have access to a non-null entryPoint. Need to cast because PureDataObject
 		// tried to be too smart with its typing for handles :).
 		assert(this.runtime.entryPoint !== undefined, 0x46b /* EntryPoint was undefined */);
-		return this.runtime.entryPoint as IFluidHandleInternal<this>;
+		return this.runtime.entryPoint as IFluidHandle<this>;
 	}
 
 	public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {

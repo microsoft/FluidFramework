@@ -28,7 +28,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
-import { IErrorBase } from "@fluidframework/core-interfaces/internal";
+import { IErrorBase } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
@@ -44,7 +44,6 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
@@ -210,7 +209,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 
 	const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 	const response = await containerRuntime.resolveHandle({
-		url: toFluidHandleInternal(testDataObject.handle).absolutePath,
+		url: testDataObject.handle.absolutePath,
 	});
 	const summarizerDataObject = response.value as ITestDataObject;
 	await delay(sweepTimeoutMs + 10);

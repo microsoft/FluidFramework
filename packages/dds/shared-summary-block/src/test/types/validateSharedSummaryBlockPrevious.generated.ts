@@ -33,7 +33,6 @@ declare function get_old_InterfaceDeclaration_ISharedSummaryBlock():
 declare function use_current_InterfaceDeclaration_ISharedSummaryBlock(
     use: TypeOnly<current.ISharedSummaryBlock>): void;
 use_current_InterfaceDeclaration_ISharedSummaryBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedSummaryBlock());
 
 /*
@@ -46,7 +45,6 @@ declare function get_current_InterfaceDeclaration_ISharedSummaryBlock():
 declare function use_old_InterfaceDeclaration_ISharedSummaryBlock(
     use: TypeOnly<old.ISharedSummaryBlock>): void;
 use_old_InterfaceDeclaration_ISharedSummaryBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedSummaryBlock());
 
 /*
@@ -59,7 +57,6 @@ declare function get_old_ClassDeclaration_SharedSummaryBlock():
 declare function use_current_ClassDeclaration_SharedSummaryBlock(
     use: TypeOnly<current.SharedSummaryBlock>): void;
 use_current_ClassDeclaration_SharedSummaryBlock(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSummaryBlock());
 
 /*

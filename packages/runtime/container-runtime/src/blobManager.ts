@@ -9,10 +9,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	IFluidHandleContext,
-	type IFluidHandleInternal,
-} from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
@@ -27,7 +24,6 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-	FluidHandleBase,
 	SummaryTreeBuilder,
 	createResponseError,
 	generateHandleContextPath,
@@ -52,8 +48,12 @@ import { IBlobMetadata } from "./metadata.js";
  * DataObject.request() recognizes requests in the form of `/blobs/<id>`
  * and loads blob.
  */
-export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
+export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 	private attached: boolean = false;
+
+	public get IFluidHandle(): IFluidHandle {
+		return this;
+	}
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -64,10 +64,9 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 	constructor(
 		public readonly path: string,
 		public readonly routeContext: IFluidHandleContext,
-		public get: () => Promise<ArrayBufferLike>,
+		public get: () => Promise<any>,
 		private readonly onAttachGraph?: () => void,
 	) {
-		super();
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
@@ -78,7 +77,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 		}
 	}
 
-	public bind(handle: IFluidHandleInternal) {
+	public bind(handle: IFluidHandle) {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
@@ -434,7 +433,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private async createBlobDetached(
 		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.getStorage().createBlob(blob);
@@ -445,7 +444,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return this.createBlobDetached(blob);
 		}

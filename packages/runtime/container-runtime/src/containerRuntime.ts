@@ -26,12 +26,11 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
-	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
@@ -3851,7 +3850,7 @@ export class ContainerRuntime
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
+	): Promise<IFluidHandle<ArrayBufferLike>> {
 		this.verifyNotClosed();
 		return this.blobManager.createBlob(blob, signal);
 	}

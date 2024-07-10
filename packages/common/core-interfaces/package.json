@@ -95,24 +95,73 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedVariableDeclaration_isFluidPackage": {
+			"RemovedInterfaceDeclaration_ITelemetryLogger": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryGenericEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryProperties": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
 				"backCompat": false,
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IFluidHandle": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IProvideFluidHandle": {
+			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IProvideFluidLoadable": {
-				"forwardCompat": false,
-				"backCompat": false
+			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IFluidLoadable": {
-				"forwardCompat": false,
-				"backCompat": false
+			"RemovedInterfaceDeclaration_IFluidCodeDetails": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_IFluidCodeDetailsComparer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidCodeDetailsComparer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidCodeDetailsConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidPackage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidPackageEnvironment": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IProvideFluidCodeDetailsComparer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_isFluidCodeDetails": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_isFluidPackage": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	AliasResult,
@@ -166,7 +166,7 @@ class DataStore implements IDataStore {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandleInternal<FluidObject> {
+	get entryPoint(): IFluidHandle<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 

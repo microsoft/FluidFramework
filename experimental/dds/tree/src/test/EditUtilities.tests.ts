@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import { FluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 
 import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
 import { noop } from '../Common.js';
@@ -455,12 +454,7 @@ describe('EditUtilities', () => {
 			new MockFluidDataStoreRuntime().IFluidHandleContext,
 			() => {}
 		);
-		const binder: IFluidHandle = {
-			bind: noop,
-			get [fluidHandleSymbol]() {
-				return binder;
-			},
-		} as unknown as IFluidHandle;
+		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,
@@ -620,14 +614,9 @@ describe('EditUtilities', () => {
 			// This is used instead of MockHandle so equal handles compare deeply equal.
 			function makeMockHandle(data: string): IFluidHandle {
 				// `/` prefix is needed to prevent serializing from modifying handle.
-				const handleObject = {
-					absolutePath: `/${data}`,
-					IFluidHandle: undefined as unknown,
-					[fluidHandleSymbol]: undefined as any,
-				};
+				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
 				handleObject.IFluidHandle = handleObject;
-				handleObject[fluidHandleSymbol] = handleObject;
-				return handleObject as unknown as IFluidHandleInternal;
+				return handleObject as IFluidHandle;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
 			// so use allEqualUnstable not allEqual.

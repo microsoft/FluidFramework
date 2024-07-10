@@ -5,8 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { FluidHandleBase } from '@fluidframework/runtime-utils/internal';
-import { FluidObject } from '@fluidframework/core-interfaces/internal';
+import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -17,15 +16,14 @@ import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions/inte
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces/internal';
-import { IResponse } from '@fluidframework/core-interfaces/internal';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
@@ -71,7 +69,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    readonly entryPoint: IFluidHandleInternal<FluidObject>;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -129,12 +128,13 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 }
 
 // @alpha
-export class FluidObjectHandle<T extends FluidObject = FluidObject> extends FluidHandleBase<T> {
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     readonly absolutePath: string;
     attachGraph(): void;
-    bind(handle: IFluidHandleInternal): void;
+    bind(handle: IFluidHandle): void;
     get(): Promise<any>;
+    get IFluidHandle(): IFluidHandle;
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;

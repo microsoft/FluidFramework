@@ -5,27 +5,26 @@
 ```ts
 
 import type { AttachState } from '@fluidframework/container-definitions';
-import type { FluidObject } from '@fluidframework/core-interfaces/internal';
+import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAudience } from '@fluidframework/container-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDeltaManager } from '@fluidframework/container-definitions';
-import type { IDisposable } from '@fluidframework/core-interfaces/internal';
+import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import type { IEvent } from '@fluidframework/core-interfaces/internal';
-import type { IEventProvider } from '@fluidframework/core-interfaces/internal';
-import type { IFluidHandle } from '@fluidframework/core-interfaces/internal';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
-import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
-import type { IRequest } from '@fluidframework/core-interfaces/internal';
-import type { IResponse } from '@fluidframework/core-interfaces/internal';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResponse } from '@fluidframework/core-interfaces';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISignalMessage } from '@fluidframework/protocol-definitions';
 import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import type { ISummaryTree } from '@fluidframework/protocol-definitions';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import type { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import type { SummaryTree } from '@fluidframework/protocol-definitions';
@@ -160,7 +159,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 
 // @alpha
 export interface IDataStore {
-    readonly entryPoint: IFluidHandleInternal<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -181,7 +180,7 @@ export interface IExperimentalIncrementalSummaryContext {
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    readonly entryPoint: IFluidHandleInternal<FluidObject>;
+    readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -285,7 +284,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public

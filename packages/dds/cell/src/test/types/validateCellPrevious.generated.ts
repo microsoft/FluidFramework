@@ -81,7 +81,6 @@ declare function get_old_InterfaceDeclaration_ISharedCell():
 declare function use_current_InterfaceDeclaration_ISharedCell(
     use: TypeOnly<current.ISharedCell>): void;
 use_current_InterfaceDeclaration_ISharedCell(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedCell());
 
 /*
@@ -94,7 +93,6 @@ declare function get_current_InterfaceDeclaration_ISharedCell():
 declare function use_old_InterfaceDeclaration_ISharedCell(
     use: TypeOnly<old.ISharedCell>): void;
 use_old_InterfaceDeclaration_ISharedCell(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedCell());
 
 /*

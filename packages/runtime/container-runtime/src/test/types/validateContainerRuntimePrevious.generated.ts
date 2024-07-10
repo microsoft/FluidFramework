@@ -72,70 +72,10 @@ use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
     get_current_VariableDeclaration_AllowTombstoneRequestHeaderKey());
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_ChannelCollection": {"forwardCompat": false}
- */
-declare function get_old_ClassDeclaration_ChannelCollection():
-    TypeOnly<old.ChannelCollection>;
-declare function use_current_ClassDeclaration_ChannelCollection(
-    use: TypeOnly<current.ChannelCollection>): void;
-use_current_ClassDeclaration_ChannelCollection(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_ChannelCollection());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_ChannelCollection": {"backCompat": false}
- */
-declare function get_current_ClassDeclaration_ChannelCollection():
-    TypeOnly<current.ChannelCollection>;
-declare function use_old_ClassDeclaration_ChannelCollection(
-    use: TypeOnly<old.ChannelCollection>): void;
-use_old_ClassDeclaration_ChannelCollection(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_ChannelCollection());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_ChannelCollectionFactory": {"forwardCompat": false}
- */
-declare function get_old_ClassDeclaration_ChannelCollectionFactory():
-    TypeOnly<old.ChannelCollectionFactory>;
-declare function use_current_ClassDeclaration_ChannelCollectionFactory(
-    use: TypeOnly<current.ChannelCollectionFactory>): void;
-use_current_ClassDeclaration_ChannelCollectionFactory(
-    get_old_ClassDeclaration_ChannelCollectionFactory());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassDeclaration_ChannelCollectionFactory": {"backCompat": false}
- */
-declare function get_current_ClassDeclaration_ChannelCollectionFactory():
-    TypeOnly<current.ChannelCollectionFactory>;
-declare function use_old_ClassDeclaration_ChannelCollectionFactory(
-    use: TypeOnly<old.ChannelCollectionFactory>): void;
-use_old_ClassDeclaration_ChannelCollectionFactory(
-    get_current_ClassDeclaration_ChannelCollectionFactory());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_CompatModeBehavior": {"forwardCompat": false}
- */
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompatModeBehavior": {"forwardCompat": false}
+*/
 declare function get_old_TypeAliasDeclaration_CompatModeBehavior():
     TypeOnly<old.CompatModeBehavior>;
 declare function use_current_TypeAliasDeclaration_CompatModeBehavior(

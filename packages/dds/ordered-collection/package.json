@@ -141,17 +141,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ConsensusOrderedCollection": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_ConsensusQueue": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IConsensusOrderedCollection": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

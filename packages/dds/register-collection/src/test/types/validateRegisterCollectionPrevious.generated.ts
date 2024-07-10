@@ -33,7 +33,6 @@ declare function get_old_ClassDeclaration_ConsensusRegisterCollection():
 declare function use_current_ClassDeclaration_ConsensusRegisterCollection(
     use: TypeOnly<current.ConsensusRegisterCollection<any>>): void;
 use_current_ClassDeclaration_ConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusRegisterCollection());
 
 /*
@@ -82,7 +81,6 @@ declare function get_old_InterfaceDeclaration_IConsensusRegisterCollection():
 declare function use_current_InterfaceDeclaration_IConsensusRegisterCollection(
     use: TypeOnly<current.IConsensusRegisterCollection>): void;
 use_current_InterfaceDeclaration_IConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConsensusRegisterCollection());
 
 /*
@@ -95,7 +93,6 @@ declare function get_current_InterfaceDeclaration_IConsensusRegisterCollection()
 declare function use_old_InterfaceDeclaration_IConsensusRegisterCollection(
     use: TypeOnly<old.IConsensusRegisterCollection>): void;
 use_old_InterfaceDeclaration_IConsensusRegisterCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusRegisterCollection());
 
 /*

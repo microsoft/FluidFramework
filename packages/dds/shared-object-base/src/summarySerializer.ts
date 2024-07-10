@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { FluidSerializer } from "./serializer.js";
 
@@ -17,7 +17,7 @@ export class SummarySerializer extends FluidSerializer {
 		return Array.from(this.serializedRoutes);
 	}
 
-	protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal) {
+	protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
 		this.serializedRoutes.add(handle.absolutePath);
 		return super.serializeHandle(handle, bind);
 	}

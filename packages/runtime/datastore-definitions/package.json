@@ -91,10 +91,6 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IFluidDataStoreRuntime": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IChannel": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

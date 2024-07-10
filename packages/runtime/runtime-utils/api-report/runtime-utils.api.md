@@ -4,15 +4,12 @@
 
 ```ts
 
-import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import type { IFluidHandleErased } from '@fluidframework/core-interfaces/internal';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -73,23 +70,6 @@ export function exceptionToResponse(err: any): IResponse;
 
 // @internal (undocumented)
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
-
-// @alpha
-export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
-    // (undocumented)
-    get [fluidHandleSymbol](): IFluidHandleErased<T>;
-    // (undocumented)
-    abstract absolutePath: string;
-    // (undocumented)
-    abstract attachGraph(): void;
-    // (undocumented)
-    abstract bind(handle: IFluidHandleInternal): void;
-    // (undocumented)
-    abstract get(): Promise<T>;
-    get IFluidHandle(): IFluidHandleInternal;
-    // (undocumented)
-    abstract readonly isAttached: boolean;
-}
 
 // @internal
 export class GCDataBuilder implements IGarbageCollectionData {
@@ -219,12 +199,6 @@ export class TelemetryContext implements ITelemetryContext {
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
-
-// @alpha
-export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
-
-// @alpha
-export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // @internal
 export function unpackChildNodesUsedRoutes(usedRoutes: readonly string[]): Map<string, string[]>;

@@ -309,7 +309,6 @@ declare function get_old_InterfaceDeclaration_ISharedDirectory():
 declare function use_current_InterfaceDeclaration_ISharedDirectory(
     use: TypeOnly<current.ISharedDirectory>): void;
 use_current_InterfaceDeclaration_ISharedDirectory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedDirectory());
 
 /*
@@ -322,7 +321,6 @@ declare function get_current_InterfaceDeclaration_ISharedDirectory():
 declare function use_old_InterfaceDeclaration_ISharedDirectory(
     use: TypeOnly<old.ISharedDirectory>): void;
 use_old_InterfaceDeclaration_ISharedDirectory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedDirectory());
 
 /*
@@ -359,7 +357,6 @@ declare function get_old_InterfaceDeclaration_ISharedMap():
 declare function use_current_InterfaceDeclaration_ISharedMap(
     use: TypeOnly<current.ISharedMap>): void;
 use_current_InterfaceDeclaration_ISharedMap(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedMap());
 
 /*
@@ -372,7 +369,6 @@ declare function get_current_InterfaceDeclaration_ISharedMap():
 declare function use_old_InterfaceDeclaration_ISharedMap(
     use: TypeOnly<old.ISharedMap>): void;
 use_old_InterfaceDeclaration_ISharedMap(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedMap());
 
 /*
@@ -468,24 +464,14 @@ declare function get_old_ClassDeclaration_SharedDirectory():
     TypeOnly<old.SharedDirectory>;
 declare function use_current_RemovedClassDeclaration_SharedDirectory(
     use: TypeOnly<current.SharedDirectory>): void;
-use_current_TypeAliasDeclaration_SharedDirectory(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_TypeAliasDeclaration_SharedDirectory());
+use_current_RemovedClassDeclaration_SharedDirectory(
+    get_old_ClassDeclaration_SharedDirectory());
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_SharedDirectory": {"backCompat": false}
- */
-declare function get_current_TypeAliasDeclaration_SharedDirectory():
-    TypeOnly<current.SharedDirectory>;
-declare function use_old_TypeAliasDeclaration_SharedDirectory(
-    use: TypeOnly<old.SharedDirectory>): void;
-use_old_TypeAliasDeclaration_SharedDirectory(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_TypeAliasDeclaration_SharedDirectory());
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_SharedDirectory": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -494,45 +480,7 @@ use_old_TypeAliasDeclaration_SharedDirectory(
 */
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "VariableDeclaration_SharedMap": {"backCompat": false}
- */
-declare function get_current_VariableDeclaration_SharedMap():
-    TypeOnly<typeof current.SharedMap>;
-declare function use_old_VariableDeclaration_SharedMap(
-    use: TypeOnly<typeof old.SharedMap>): void;
-use_old_VariableDeclaration_SharedMap(
-    get_current_VariableDeclaration_SharedMap());
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_SharedMap": {"forwardCompat": false}
- */
-declare function get_old_TypeAliasDeclaration_SharedMap():
-    TypeOnly<old.SharedMap>;
-declare function use_current_TypeAliasDeclaration_SharedMap(
-    use: TypeOnly<current.SharedMap>): void;
-use_current_TypeAliasDeclaration_SharedMap(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_TypeAliasDeclaration_SharedMap());
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAliasDeclaration_SharedMap": {"backCompat": false}
- */
-declare function get_current_TypeAliasDeclaration_SharedMap():
-    TypeOnly<current.SharedMap>;
-declare function use_old_TypeAliasDeclaration_SharedMap(
-    use: TypeOnly<old.SharedMap>): void;
-use_old_TypeAliasDeclaration_SharedMap(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_TypeAliasDeclaration_SharedMap());
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedClassDeclaration_SharedMap": {"backCompat": false}
+*/

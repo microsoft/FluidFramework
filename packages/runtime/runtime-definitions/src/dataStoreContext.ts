@@ -10,12 +10,11 @@ import type {
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
-	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -160,7 +159,7 @@ export interface IDataStore {
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
 	 * with it.
 	 */
-	readonly entryPoint: IFluidHandleInternal<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 }
 
 /**
@@ -363,7 +362,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
 	 * with the component.
 	 */
-	readonly entryPoint: IFluidHandleInternal<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
 
@@ -488,10 +487,7 @@ export interface IFluidParentContext
 
 	deleteChildSummarizerNode(id: string): void;
 
-	uploadBlob(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
