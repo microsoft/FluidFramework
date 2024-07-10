@@ -21,8 +21,8 @@ const findUp = import("find-up");
  * - All Biome configuration files found when looking up from the package directory to the root of the repo are
  *   considered used, whether the file is used.
  *
- * As of version 0.41.0, The task uses a content-based caching strategy, so it is less susceptible to invalidation,
- * though the limitations above still apply.
+ * As of version 0.41.0, The task uses a content-based caching strategy, so it is less susceptible to invalidation than
+ * earlier versions which were based on file modification times. However, the limitations above still apply.
  */
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// performance note: having individual tasks each acquire repo root and GitRepo
