@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import {
+	IChannelServices,
+	type IChannel,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -35,7 +38,7 @@ function createConnectedMatrix(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 	isSetCellPolicyFWW: boolean,
-) {
+): ISharedMatrix & IChannel {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const matrix = matrixFactory.create(dataStoreRuntime, id);
 	if (isSetCellPolicyFWW) {
@@ -50,7 +53,7 @@ function createConnectedMatrix(
 	return matrix;
 }
 
-function createLocalMatrix(id: string) {
+function createLocalMatrix(id: string): SharedMatrixClass {
 	const factory = new SharedMatrixFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrixClass;
 }
@@ -59,7 +62,10 @@ function createMatrixForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
 	isSetCellPolicyFWW: boolean,
-) {
+): {
+	matrix: ISharedMatrix & IChannel;
+	containerRuntime: MockContainerRuntimeForReconnection;
+} {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -76,7 +82,7 @@ function createMatrixForReconnection(
 }
 
 describe("Matrix1", () => {
-	[false, true].forEach((isSetCellPolicyFWW: boolean) => {
+	for (const isSetCellPolicyFWW of [false, true]) {
 		describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 			describe("local client", () => {
 				let matrix: SharedMatrix<number>;
@@ -613,7 +619,9 @@ describe("Matrix1", () => {
 						matrix1.insertRows(0, 4);
 						matrix1.insertCols(0, 4);
 
-						const v = Array.from({length: 16}).fill(0).map((_, index) => index);
+						const v = Array.from({ length: 16 })
+							.fill(0)
+							.map((_, index) => index);
 
 						matrix1.setCells(0, 0, 4, v);
 						await expect();
@@ -952,7 +960,7 @@ describe("Matrix1", () => {
 				function findVectorReferenceCount(vector: PermutationVector): number {
 					let count = 0;
 					vector.walkSegments((segment) => {
-						count += Array.from(segment.localRefs ?? []).length;
+						count += [...(segment.localRefs ?? [])].length;
 						return true;
 					});
 					return count;
@@ -1159,7 +1167,7 @@ describe("Matrix1", () => {
 				});
 			});
 		});
-	});
+	}
 
 	describe("Switch Policy Tests from LWW -> FWW", () => {
 		describe("Reconnection", () => {
@@ -1174,7 +1182,7 @@ describe("Matrix1", () => {
 			const expect = async (
 				expected?: readonly (readonly any[])[],
 				extraClient?: { matrix: SharedMatrix; consumer: TestConsumer }[],
-			) => {
+			): Promise<void> => {
 				containerRuntimeFactory.processAllMessages();
 
 				const actual1 = extract(matrix1);
@@ -1260,7 +1268,7 @@ describe("Matrix1", () => {
 				matrix2.closeMatrix(consumer2);
 			});
 
-			const switchPolicy = (matrix: SharedMatrix) => {
+			const switchPolicy = (matrix: SharedMatrix): void => {
 				matrix.switchSetCellPolicy();
 			};
 

@@ -30,11 +30,11 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return SharedMatrixFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return SharedMatrixFactory.Attributes;
 	}
 

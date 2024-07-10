@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockEmptyDeltaConnection,
@@ -13,13 +14,13 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { MatrixItem, SharedMatrix } from "../index.js";
+import { MatrixItem, SharedMatrix, type ISharedMatrix } from "../index.js";
 
 import { TestConsumer } from "./testconsumer.js";
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 import { expectSize, extract, matrixFactory } from "./utils.js";
 
-[false, true].forEach((isSetCellPolicyFWW: boolean) => {
+for (const isSetCellPolicyFWW of [false, true]) {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 		describe("undo/redo", () => {
 			let dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -29,7 +30,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 			let undo1: UndoRedoStackManager;
 			let expect: <T>(expected: readonly (readonly MatrixItem<T>[])[]) => Promise<void>;
 
-			function singleClientTests() {
+			function singleClientTests(): void {
 				it("undo/redo setCell", async () => {
 					matrix1.insertRows(/* start: */ 0, /* count: */ 1);
 					matrix1.insertCols(/* start: */ 0, /* count: */ 1);
@@ -397,7 +398,9 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 			describe("local client", () => {
 				// Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.
-				async function summarize<T>(matrix: SharedMatrix<T>) {
+				async function summarize<T>(
+					matrix: SharedMatrix<T>,
+				): Promise<ISharedMatrix & IChannel> {
 					// Create a summary
 					const objectStorage = MockStorage.createFromSummary(
 						matrix.getAttachSummary().summary,
@@ -434,7 +437,9 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 				}
 
 				before(() => {
-					expect = async <T>(expected: readonly (readonly MatrixItem<T>[])[]) => {
+					expect = async <T>(
+						expected: readonly (readonly MatrixItem<T>[])[],
+					): Promise<void> => {
 						const actual = extract(matrix1);
 						assert.deepEqual(actual, expected, "Matrix must match expected.");
 						assert.deepEqual(
@@ -488,7 +493,7 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 				let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 				before(() => {
-					expect = async (expected?: readonly (readonly any[])[]) => {
+					expect = async (expected?: readonly (readonly any[])[]): Promise<void> => {
 						containerRuntimeFactory.processAllMessages();
 
 						const actual1 = extract(matrix1);
@@ -786,4 +791,4 @@ import { expectSize, extract, matrixFactory } from "./utils.js";
 			});
 		});
 	});
-});
+}

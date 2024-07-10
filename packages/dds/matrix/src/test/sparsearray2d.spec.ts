@@ -16,7 +16,7 @@ function expectEqual<T>(
 	colStart: number,
 	rowCount: number,
 	colCount: number,
-) {
+): void {
 	assert.deepEqual(
 		extract(actual, rowStart, colStart, rowCount, colCount),
 		extract(expected, rowStart, colStart, rowCount, colCount),
@@ -60,7 +60,7 @@ describe("SparseArray2D", () => {
 				colCount: number,
 				clearStart: number,
 				clearCount: number,
-			) {
+			): IClearTestConfig {
 				return clearRows
 					? {
 							rowStart,
@@ -150,7 +150,7 @@ describe("SparseArray2D", () => {
 			rowClearCount,
 			colClearStart,
 			colClearCount,
-		}: IClearTestConfig) {
+		}: IClearTestConfig): void {
 			const fillRange = `(${rowStart},${colStart})-(${rowStart + rowCount},${
 				rowStart + colCount
 			})`;

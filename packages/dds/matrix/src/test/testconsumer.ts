@@ -43,12 +43,12 @@ export class TestConsumer<T = any>
 	}
 
 	private forEachCell(
-		callback: (row, col) => void,
+		callback: (row: number, col: number) => void,
 		rowStart = 0,
 		colStart = 0,
 		rowCount = this.rowCount,
 		colCount = this.colCount,
-	) {
+	): void {
 		const rowEnd = rowStart + rowCount;
 		const colEnd = colStart + colCount;
 
@@ -64,7 +64,7 @@ export class TestConsumer<T = any>
 		colStart = 0,
 		rowCount = this.rowCount,
 		colCount = this.colCount,
-	) {
+	): void {
 		this.forEachCell(
 			(row, col) => {
 				this.actual.setCell(row, col, this.expected.getCell(row, col));
@@ -76,10 +76,10 @@ export class TestConsumer<T = any>
 		);
 	}
 
-	public get rowCount() {
+	public get rowCount(): number {
 		return this.actual.rowCount;
 	}
-	public get colCount() {
+	public get colCount(): number {
 		return this.actual.colCount;
 	}
 

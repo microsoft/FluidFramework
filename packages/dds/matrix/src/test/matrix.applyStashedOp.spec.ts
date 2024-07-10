@@ -65,14 +65,14 @@ function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnect
 } {
 	const submittedContent: any[] = [];
 	const originalSubmit = runtime.submit.bind(runtime);
-	runtime.submit = (content: any, localMetadata) => {
+	runtime.submit = (content: any, localMetadata): number => {
 		submittedContent.push(content);
 		return originalSubmit(content, localMetadata);
 	};
 
 	const processedMessages: ISequencedDocumentMessage[] = [];
 	const originalProcess = runtime.process.bind(runtime);
-	runtime.process = (message: ISequencedDocumentMessage) => {
+	runtime.process = (message: ISequencedDocumentMessage): void => {
 		processedMessages.push(message);
 		return originalProcess(message);
 	};
