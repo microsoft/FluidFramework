@@ -72,7 +72,7 @@ export interface ReferencePosition {
 	 *
 	 * @see {@link @fluidframework/merge-tree#(SlidingPreference:type)} for additional context.
 	 *
-	 * @defaultValue {@link @fluidframework/merge-tree#(SlidingPreference:variable).Forward}
+	 * @defaultValue {@link @fluidframework/merge-tree#(SlidingPreference:variable).FORWARD}
 	 */
 	slidingPreference?: SlidingPreference;
 
