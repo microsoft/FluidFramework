@@ -227,9 +227,8 @@ export class SparseArray2D<T>
 		}
 	}
 
-	private getLevel<T>(parent: UA<UA<T>>, subKey: number) {
+	private getLevel<T>(parent: UA<UA<T>>, subKey: number): unknown[] {
 		const level = parent[subKey];
-
 		return level ?? (parent[subKey] = Array.from({ length: 256 }).fill(undefined));
 	}
 

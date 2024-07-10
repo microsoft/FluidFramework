@@ -60,12 +60,12 @@ async function createMatrixForReconnection(
 }
 
 function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnection): {
-	submittedContent: any[];
+	submittedContent: unknown[];
 	processedMessages: ISequencedDocumentMessage[];
 } {
-	const submittedContent: any[] = [];
+	const submittedContent: unknown[] = [];
 	const originalSubmit = runtime.submit.bind(runtime);
-	runtime.submit = (content: any, localMetadata): number => {
+	runtime.submit = (content: unknown, localMetadata): number => {
 		submittedContent.push(content);
 		return originalSubmit(content, localMetadata);
 	};

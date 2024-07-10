@@ -92,7 +92,9 @@ describe("Matrix1", () => {
 
 				// Summarizes the given `SharedMatrix`, loads the summarize into a 2nd SharedMatrix, vets that the two are
 				// equivalent, and then returns the 2nd matrix.
-				async function summarize<T>(matrix: SharedMatrix<T>) {
+				async function summarize<T>(
+					matrix: SharedMatrix<T>,
+				): Promise<ISharedMatrix & IChannel> {
 					// Create a summary
 					const objectStorage = MockStorage.createFromSummary(
 						matrix.getAttachSummary().summary,
@@ -122,7 +124,9 @@ describe("Matrix1", () => {
 					return matrix2;
 				}
 
-				async function expect<T>(expected: readonly (readonly MatrixItem<T>[])[]) {
+				async function expect<T>(
+					expected: readonly (readonly MatrixItem<T>[])[],
+				): Promise<ISharedMatrix & IChannel> {
 					const actual = extract(matrix);
 					assert.deepEqual(actual, expected, "Matrix must match expected.");
 					assert.deepEqual(
@@ -355,7 +359,9 @@ describe("Matrix1", () => {
 				let consumer2: TestConsumer; // Test IMatrixConsumer that builds a copy of `matrix` via observed events.
 				let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-				const expect = async (expected?: readonly (readonly any[])[]) => {
+				const expect = async (
+					expected?: readonly (readonly MatrixItem<unknown>[])[],
+				): Promise<void> => {
 					containerRuntimeFactory.processAllMessages();
 
 					const actual1 = extract(matrix1);
@@ -683,7 +689,9 @@ describe("Matrix1", () => {
 				let containerRuntime2: MockContainerRuntimeForReconnection;
 				let mockHandle: MockHandle<unknown>;
 
-				const expect = async (expected?: readonly (readonly any[])[]) => {
+				const expect = async (
+					expected?: readonly (readonly MatrixItem<unknown>[])[],
+				): Promise<void> => {
 					containerRuntimeFactory.processAllMessages();
 
 					const actual1 = extract(matrix1);
@@ -1075,16 +1083,16 @@ describe("Matrix1", () => {
 						this.matrix1.insertRows(0, 1);
 					}
 
-					public get sharedObject() {
+					public get sharedObject(): SharedMatrixClass {
 						// Return the remote SharedMatrix because we want to verify its summary data.
 						return this.matrix2;
 					}
 
-					public get expectedOutboundRoutes() {
+					public get expectedOutboundRoutes(): string[] {
 						return this._expectedRoutes;
 					}
 
-					public async addOutboundRoutes() {
+					public async addOutboundRoutes(): Promise<void> {
 						const newSubMatrixId = `subMatrix-${++this.subMatrixCount}`;
 						const subMatrix = createLocalMatrix(newSubMatrixId);
 
@@ -1095,7 +1103,7 @@ describe("Matrix1", () => {
 						this.containerRuntimeFactory.processAllMessages();
 					}
 
-					public async deleteOutboundRoutes() {
+					public async deleteOutboundRoutes(): Promise<void> {
 						// Delete the last handle that was added.
 						const lastAddedCol = this.colCount - 1;
 						const deletedHandle = this.matrix1.getCell(
@@ -1112,7 +1120,7 @@ describe("Matrix1", () => {
 						this.containerRuntimeFactory.processAllMessages();
 					}
 
-					public async addNestedHandles() {
+					public async addNestedHandles(): Promise<void> {
 						const subMatrix = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
 						const subMatrix2 = createLocalMatrix(`subMatrix-${++this.subMatrixCount}`);
 						const containingObject = {
@@ -1180,7 +1188,7 @@ describe("Matrix1", () => {
 			let containerRuntime2: MockContainerRuntimeForReconnection;
 
 			const expect = async (
-				expected?: readonly (readonly any[])[],
+				expected?: readonly (readonly MatrixItem<unknown>[])[],
 				extraClient?: { matrix: SharedMatrix; consumer: TestConsumer }[],
 			): Promise<void> => {
 				containerRuntimeFactory.processAllMessages();

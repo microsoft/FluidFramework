@@ -83,7 +83,7 @@ export class TestConsumer<T = any>
 		return this.actual.colCount;
 	}
 
-	public get matrixProducer() {
+	public get matrixProducer(): IMatrixProducer<MatrixItem<T>> {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return undefined as any;
 	}

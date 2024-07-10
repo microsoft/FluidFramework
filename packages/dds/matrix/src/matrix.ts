@@ -708,7 +708,7 @@ export class SharedMatrix<T = any>
 		return ++this.rows.getCollabWindow().localSeq;
 	}
 
-	protected submitLocalMessage(message: any, localOpMetadata?: any): void {
+	protected submitLocalMessage(message: unknown, localOpMetadata?: unknown): void {
 		// TODO: Recommend moving this assertion into SharedObject
 		//       (See https://github.com/microsoft/FluidFramework/issues/2559)
 		assert(
@@ -1089,7 +1089,11 @@ export class SharedMatrix<T = any>
 	 * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
 	 * with a different value as well as row/col removals that might recycled the given row/col handles.
 	 */
-	private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number): boolean {
+	private isLatestPendingWrite(
+		rowHandle: Handle,
+		colHandle: Handle,
+		localSeq: number,
+	): boolean {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
 

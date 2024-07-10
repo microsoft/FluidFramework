@@ -56,7 +56,7 @@ class Stack<T> {
 class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
 	public push(item: Stack<IRevertible> | undefined): void {
 		if (item !== undefined) {
-			item.itemPushedCallback = () => this.callItemPushedCallback;
+			item.itemPushedCallback = (): void => this.callItemPushedCallback();
 		}
 		super.push(item);
 	}

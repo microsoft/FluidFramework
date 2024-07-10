@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
 
-import { SharedMatrix } from "../index.js";
+import { SharedMatrix, type MatrixItem } from "../index.js";
 import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
@@ -189,8 +189,7 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 					const float64 = new Random(seed).float64;
 
 					// Returns a pseudorandom 32b integer in the range [0 .. max).
-					// eslint-disable-next-line no-bitwise
-					const int32 = (max = 0x7fffffff): number => (float64() * max) | 0;
+					const int32 = (max = 0x7fffffff): number => Math.trunc(float64() * max);
 
 					// Returns an array with 'n' random values, each in the range [0 .. 100).
 					const values = (n: number): number[] =>
@@ -204,7 +203,7 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 						row: number,
 						col: number,
 						colCount: number,
-						values: any[],
+						values: MatrixItem<unknown>[],
 					): void => {
 						const matrix = matrices[matrixIndex];
 						trace?.push(
@@ -291,8 +290,10 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 										`matrix${
 											matrixIndex + 1
 										}.removeRows(/* rowStart: */ ${row}, /* rowCount: */ ${numRemoved});    // rowCount: ${
-											matrix.rowCount - numRemoved
-										}, colCount: ${matrix.colCount}`,
+											// rowCount and colCount are destructured above and used to keep track of the initial
+											// row and column counts in the matrix.
+											rowCount - numRemoved
+										}, colCount: ${colCount}`,
 									);
 									matrix.removeRows(row, numRemoved);
 								}
@@ -308,9 +309,9 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 									trace?.push(
 										`matrix${
 											matrixIndex + 1
-										}.removeCols(/* colStart: */ ${col}, /* colCount: */ ${numRemoved});    // rowCount: ${
-											matrix.rowCount
-										}, colCount: ${matrix.colCount - numRemoved}`,
+										}.removeCols(/* colStart: */ ${col}, /* colCount: */ ${numRemoved});    // rowCount: ${rowCount}, colCount: ${
+											colCount - numRemoved
+										}`,
 									);
 									matrix.removeCols(col, numRemoved);
 								}
@@ -325,8 +326,8 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 									`matrix${
 										matrixIndex + 1
 									}.insertRows(/* rowStart: */ ${row}, /* rowCount: */ ${numInserted});    // rowCount: ${
-										matrix.rowCount + numInserted
-									}, colCount: ${matrix.colCount}`,
+										rowCount + numInserted
+									}, colCount: ${colCount}`,
 								);
 								matrix.insertRows(row, numInserted);
 
@@ -336,8 +337,8 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 										matrixIndex,
 										row,
 										/* col: */ 0,
-										matrix.colCount,
-										values(matrix.colCount * numInserted),
+										colCount,
+										values(colCount * numInserted),
 									);
 								}
 								break;
@@ -350,9 +351,9 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 								trace?.push(
 									`matrix${
 										matrixIndex + 1
-									}.insertCols(/* colStart: */ ${col}, /* colCount: */ ${numInserted});    // rowCount: ${
-										matrix.rowCount
-									}, colCount: ${matrix.colCount + numInserted}`,
+									}.insertCols(/* colStart: */ ${col}, /* colCount: */ ${numInserted});    // rowCount: ${rowCount}, colCount: ${
+										colCount + numInserted
+									}`,
 								);
 								matrix.insertCols(col, numInserted);
 
@@ -363,7 +364,7 @@ for (const isSetCellPolicyFWW of [0, 2]) {
 										/* row: */ 0,
 										col,
 										numInserted,
-										values(matrix.rowCount * numInserted),
+										values(rowCount * numInserted),
 									);
 								}
 								break;

@@ -108,7 +108,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		} else {
 			ensureRange(_position, this.vector.getLength());
 
-			this.handles = [...this.handles, ...this.getHandles(this.start + this.handles.length, _position + 1)];
+			this.handles = [
+				...this.handles,
+				...this.getHandles(this.start + this.handles.length, _position + 1),
+			];
 			return this.handles[this.handles.length - 1];
 		}
 	}

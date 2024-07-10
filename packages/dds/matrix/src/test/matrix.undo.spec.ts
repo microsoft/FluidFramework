@@ -493,7 +493,9 @@ for (const isSetCellPolicyFWW of [false, true]) {
 				let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 				before(() => {
-					expect = async (expected?: readonly (readonly any[])[]): Promise<void> => {
+					expect = async (
+						expected?: readonly (readonly MatrixItem<unknown>[])[],
+					): Promise<void> => {
 						containerRuntimeFactory.processAllMessages();
 
 						const actual1 = extract(matrix1);

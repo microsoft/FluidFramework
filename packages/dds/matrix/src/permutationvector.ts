@@ -47,7 +47,7 @@ export class PermutationSegment extends BaseSegment {
 	public static readonly typeString: string = "PermutationSegment";
 	private _start = Handle.unallocated;
 
-	public static fromJSONObject(spec: any): PermutationSegment {
+	public static fromJSONObject(spec: IJSONSegment): PermutationSegment {
 		const [length, start] = spec as PermutationSegmentSpec;
 		return new PermutationSegment(length, start);
 	}
@@ -396,7 +396,12 @@ export class PermutationVector extends Client {
 			for (const { segment } of args.deltaSegments) {
 				const asPerm = segment as PermutationSegment;
 				if (isHandleValid(asPerm.start)) {
-					freed = [...freed, ...Array.from({length: asPerm.cachedLength}).fill(0).map((value, index) => index + asPerm.start)];
+					freed = [
+						...freed,
+						...Array.from({ length: asPerm.cachedLength })
+							.fill(0)
+							.map((value, index) => index + asPerm.start),
+					];
 				}
 			}
 

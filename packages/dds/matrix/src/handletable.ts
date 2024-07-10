@@ -103,7 +103,7 @@ export class HandleTable<T> {
 		this.handles[0] = handle;
 	}
 
-	public getSummaryContent(): (Handle|T)[] {
+	public getSummaryContent(): (Handle | T)[] {
 		return this.handles;
 	}
 
