@@ -1400,7 +1400,7 @@
             "error"
         ],
         "unicorn/no-useless-spread": [
-            "error"
+            "off"
         ],
         "unicorn/no-useless-switch-case": [
             "error"
@@ -1493,7 +1493,7 @@
             "error"
         ],
         "unicorn/prefer-module": [
-            "error"
+            "off"
         ],
         "unicorn/prefer-native-coercion-functions": [
             "error"
