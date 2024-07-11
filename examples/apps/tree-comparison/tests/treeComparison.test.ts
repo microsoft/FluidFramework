@@ -5,8 +5,7 @@
 
 import { globals } from "../jest.config.cjs";
 
-// Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
-describe("inventoryList", () => {
+describe("tree-comparison", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
