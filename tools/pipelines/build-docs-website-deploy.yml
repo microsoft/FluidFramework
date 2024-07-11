@@ -4,9 +4,9 @@
 # build-docs-website-deploy pipeline
 # This pipeline triggers on the completion of the build-docs pipeline (main branch run).
 # After the build-docs pipeline completes, this pipeline downloads the generated fluidframework-docs
-# artifacts and deploys the content using AzureStaticWebApp. 
-# Note: this pipeline should be triggering on changes to "release/*" branches as well. However, we 
-# only want to trigger on changes to the latest release minor versions (since triggering on old 
+# artifacts and deploys the content using AzureStaticWebApp.
+# Note: this pipeline should be triggering on changes to "release/*" branches as well. However, we
+# only want to trigger on changes to the latest release minor versions (since triggering on old
 # minor release versions would update the website with old content).
 # Item for tracking minor release versions: ADO 6739. Until this item is complete, we will only deploy
 # on changes to main.
@@ -49,11 +49,11 @@ variables:
 # pipeline runs when a run of the build-docs pipeline completes
 resources:
   pipelines:
-  - pipeline: build-docs # "Local" name by which the resource is referenced inside this pipeline's definition  
+  - pipeline: build-docs # "Local" name by which the resource is referenced inside this pipeline's definition
     source: build-docs # The name of the pipeline referenced by this pipeline resource.
-    trigger: 
+    trigger:
       branches:
-        include: 
+        include:
         - main # Runs this deploy pipeline when build-docs main branch pipeline completes
 
 stages:
@@ -89,11 +89,11 @@ stages:
           inputs:
             ArtifactType: M365
 
-        - task: AssetRetention@3
+        - task: AssetRetention@5
           displayName: Guardian Asset Retention
           condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
           inputs:
-            ArrowServiceConnection: 'Arrow_FluidFramework_internal'
+            ArrowServiceConnection: 'ff-internal-arrow-sc'
             AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
             AssetNumber: '$(Build.BuildId)'
             IsShipped: false # based on value of arrow.releasedtoproduction variable
