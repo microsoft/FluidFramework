@@ -812,11 +812,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// loaded, as this client is playing the role of creating client,
 		// and creating clients always create realized data store contexts.
 		const channel = await dataStoreContext.realize();
-		await channel.entryPoint.get();
-
 		// add to the list of bound or remoted, as this context must be bound
 		// to had an attach message sent, and is the non-detached case is remoted.
 		this.contexts.addBoundOrRemoted(dataStoreContext);
+		await channel.entryPoint.get();
+
 		if (this.parentContext.attachState !== AttachState.Detached) {
 			// if the client is not detached put in the pending attach list
 			// so that on ack of the stashed op, the context is found.
@@ -930,6 +930,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			);
 		}
 
+		console.log("get context");
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
@@ -1449,7 +1450,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		await this.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
+		console.log("get Data Store");
 		const dataStoreContext = await this.getDataStore(internalId, headerData, request);
+		console.log("got Data Store");
 
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
@@ -1465,6 +1468,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			timestampMs: undefined, // This will be added by the parent context if needed.
 		});
 
+		console.log("realize Data Store");
 		const dataStore = await dataStoreContext.realize();
 
 		const subRequest = requestParser.createSubRequest(1);
@@ -1474,7 +1478,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			subRequest.url.startsWith("/"),
 			0x126 /* "Expected createSubRequest url to include a leading slash" */,
 		);
-
+		console.log("realize Data Store request");
 		return dataStore.request(subRequest);
 	}
 }
