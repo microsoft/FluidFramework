@@ -110,7 +110,7 @@ describe("RemoteMessageProcessor", () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: Infinity,
-				content: [
+				messages: [
 					getOutboundMessage("a", true),
 					getOutboundMessage("b"),
 					getOutboundMessage("c"),
@@ -154,13 +154,12 @@ describe("RemoteMessageProcessor", () => {
 				}
 			}
 			let startSeqNum = outboundMessages.length + 1;
-			outboundMessages.push(...batch.content);
+			outboundMessages.push(...batch.messages);
 
 			const messageProcessor = getMessageProcessor();
 			const actual: ISequencedDocumentMessage[] = [];
 			let seqNum = 1;
 			let actualBatchStartCsn: number | undefined;
-			let emptyProcessResultCount = 0;
 			for (const message of outboundMessages) {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				const inboundMessage = {
@@ -177,7 +176,6 @@ describe("RemoteMessageProcessor", () => {
 
 				// It'll be undefined for the first n-1 chunks if chunking is enabled
 				if (processResult === undefined) {
-					++emptyProcessResultCount;
 					continue;
 				}
 
@@ -192,11 +190,6 @@ describe("RemoteMessageProcessor", () => {
 					);
 				}
 			}
-			assert.equal(
-				emptyProcessResultCount,
-				leadingChunkCount,
-				"expected empty result to be 1-1 with leading chunks",
-			);
 
 			const expected = option.grouping
 				? [

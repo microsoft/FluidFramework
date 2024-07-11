@@ -9,9 +9,11 @@ The azure-client package provides a simple and powerful way to consume collabora
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
 <!-- prettier-ignore-end -->
 
@@ -28,8 +30,6 @@ This package leverages [package.json exports](https://nodejs.org/api/packages.ht
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/azure-client` like normal.
-
-To access the `beta` APIs, import via `@fluidframework/azure-client/beta`.
 
 To access the `legacy` APIs, import via `@fluidframework/azure-client/legacy`.
 

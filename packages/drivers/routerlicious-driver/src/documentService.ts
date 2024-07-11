@@ -143,7 +143,7 @@ export class DocumentService
 						this.logger,
 						rateLimiter,
 						this.driverPolicies.enableRestLess,
-						this.storageUrl,
+						this.storageUrl /* baseUrl */,
 					);
 				}
 				const historian = new Historian(true, false, this.storageRestWrapper);
@@ -327,10 +327,13 @@ export class DocumentService
 	private async refreshDiscoveryCore(): Promise<void> {
 		const fluidResolvedUrl = await this.discoverFluidResolvedUrl();
 		this._resolvedUrl = fluidResolvedUrl;
-		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
-		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
-		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || this.ordererUrl;
+		// TODO why are we non null asserting here?
+		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
+		// TODO why are we non null asserting here?
+		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl!;
+		// TODO why are we non null asserting here?
+		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl!;
+		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
 	}
 
 	/**

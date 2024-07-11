@@ -154,8 +154,11 @@ Arguments:
     -   Default: `./package.json`.
 -   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
     -   Default: `true`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `API_DOCS_LINK_SECTION`
 
@@ -168,8 +171,11 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_INSTALLATION_SECTION`
 
@@ -182,8 +188,26 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
+
+#### `README_IMPORT_INSTRUCTIONS`
+
+Generates a README section including instructions for how to import from Fluid Framework library packages.
+Accounts for our use of package.json exports.
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
+    -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_TRADEMARK_SECTION`
 
@@ -193,8 +217,11 @@ See the corresponding template [here](./src/templates/Trademark-Template.md).
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_CONTRIBUTION_GUIDELINES_SECTION`
 
@@ -204,8 +231,11 @@ See the corresponding template [here](./src/templates/Contribution-Guidelines-Te
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_HELP_SECTION`
 
@@ -215,8 +245,11 @@ See the corresponding template [here](./src/templates/Help-Template.md).
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_PACKAGE_SCRIPTS`
 
@@ -227,8 +260,11 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_PACKAGE_SCOPE_NOTICE`
 

@@ -448,7 +448,7 @@ function makeModularChangeCodec(
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
 			}
 			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
+				decoded.refreshers = decodeDetachedNodes(encodedChange.refreshers, context);
 			}
 
 			if (encodedChange.violations !== undefined) {
