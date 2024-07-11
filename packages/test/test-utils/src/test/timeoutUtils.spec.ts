@@ -119,7 +119,7 @@ describe("TimeoutPromise", () => {
 				// First call will resolve before test timeout.
 				await timeoutPromise(
 					(resolve) => {
-						setTimeout(resolve, 75);
+						setTimeout(resolve, 30);
 					},
 					{ errorMsg: "First call" },
 				);
@@ -127,15 +127,15 @@ describe("TimeoutPromise", () => {
 				// 75ms of the 100ms (total test timeout) so this one should get timed out by timeoutPromise.
 				await timeoutPromise(
 					(resolve) => {
-						setTimeout(resolve, 75);
+						setTimeout(resolve, 30);
 					},
 					{ errorMsg: "Second call" },
 				);
 				assert(false, "should have timed out");
 			} catch (e: any) {
-				assert.equal(e.message, "Second call (85ms)");
+				assert.equal(e.message, "Second call (35ms)");
 			}
-		}).timeout(100);
+		}).timeout(50);
 
 		let retryCount = -1;
 		it("timeoutPromise state is reset correctly if a mocha test times out", async () => {
@@ -166,15 +166,15 @@ describe("TimeoutPromise", () => {
 						// The timeout here should be higher than the original test timeout, but lower than the updated one (minus
 						// the buffer used in TestTimeout), so we're actually testing that the utility function doesn't trigger
 						// based on the original test timeout.
-						setTimeout(resolve, 50);
+						setTimeout(resolve, 30);
 					});
 				} catch (e: any) {
 					assert(false, `should not have timed out: ${e.message}`);
 				}
-			}).timeout(25);
+			}).timeout(15);
 
 			it("Times out if promise would take longer than new mocha test timeout", async function () {
-				const updatedTimeout = 100;
+				const updatedTimeout = 50;
 				this.timeout(updatedTimeout);
 				try {
 					await timeoutPromise((resolve) => {
@@ -184,9 +184,9 @@ describe("TimeoutPromise", () => {
 					});
 					assert(false, "should have timed out");
 				} catch (e: any) {
-					assert.equal(e.message, "Forcing timeout before test does (85ms)");
+					assert.equal(e.message, "Forcing timeout before test does (35ms)");
 				}
-			}).timeout(25);
+			}).timeout(15);
 
 			it("Times out with specific duration provided", async function () {
 				this.timeout(100);
