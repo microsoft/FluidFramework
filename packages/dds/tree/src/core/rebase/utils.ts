@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { fail, oob, type Mutable } from "../../util/index.js";
+import { oob, type Mutable } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,
