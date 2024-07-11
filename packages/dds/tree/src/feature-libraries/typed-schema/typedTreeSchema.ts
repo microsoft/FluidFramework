@@ -193,8 +193,7 @@ export class FlexObjectNodeSchema<
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
 	) {
 		const fields = mapIterable(objectNodeFields, ([k, v]) => [k, v.stored] as const);
-		const objectNodeStoredSchema = new ObjectNodeStoredSchema(new Map(fields));
-		super(builder, name, info, objectNodeStoredSchema);
+		super(builder, name, info, new ObjectNodeStoredSchema(new Map(fields)));
 		objectNodeFields.forEach((flexFieldSchema, fieldKey) => {
 			if (flexFieldSchema.kind.identifier === identifierFieldKindIdentifier) {
 				this.identifierFieldKeys.push(fieldKey);
