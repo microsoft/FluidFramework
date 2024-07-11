@@ -81,8 +81,14 @@ export function getChangeReplaceType(
 	// └─ B' (branch Y)                                └─ (branch Y)
 	//
 	// B' is removed and replaced by B because both have the same revision.
-	assert(change.removedCommits[0] !== undefined, "This wont run due to the length check above")
-	assert(change.newCommits[0] !== undefined, "This wont run because a replace operation always has new commits")
+	assert(
+		change.removedCommits[0] !== undefined,
+		"This wont run due to the length check above",
+	);
+	assert(
+		change.newCommits[0] !== undefined,
+		"This wont run because a replace operation always has new commits",
+	);
 	if (
 		change.removedCommits.length === 1 &&
 		change.removedCommits[0].revision === change.newCommits[0].revision

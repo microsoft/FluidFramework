@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { fail, type Mutable } from "../../util/index.js";
+import { fail, oob, type Mutable } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,
@@ -238,9 +238,7 @@ export function rebaseBranch<TChange>(
 	}
 
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
-	const newBase =
-		targetPath[newBaseIndex] ??
-		fail("This will not run because newBaseIndex will always be within targetPath");
+	const newBase = targetPath[newBaseIndex] ?? oob();
 	// Figure out how much of the trunk to start rebasing over.
 	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];

@@ -1933,7 +1933,10 @@ function revisionFromRevInfos(
 	if (revInfos === undefined || revInfos.length !== 1) {
 		return undefined;
 	}
-	assert(revInfos[0] !== undefined, "Revision info from revisionFromRevInfos should not be undefined")
+	assert(
+		revInfos[0] !== undefined,
+		"Revision info from revisionFromRevInfos should not be undefined",
+	);
 	return revInfos[0].revision;
 }
 
