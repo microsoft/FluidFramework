@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, StableId } from "./identifiers";
+import {
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./identifiers.js";
 import {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from "./persisted-types";
+} from "./persisted-types/index.js";
 
 /**
  * A distributed UUID generator and compressor.
@@ -70,16 +75,28 @@ import {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
+ * @legacy
  * @alpha
  */
 export interface IIdCompressorCore {
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
-	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time this method was called.
+	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time a
+	 * range was taken (via this method or `takeUnfinalizedCreationRange`).
 	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
 	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
 	 */
 	takeNextCreationRange(): IdCreationRange;
+
+	/**
+	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
+	 * The range will include all unfinalized IDs generated via calls to `generateCompressedId`.
+	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
+	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
+	 * Note: after finalizing the range returned by this method, finalizing any ranges that had been previously taken
+	 * will result in an error.
+	 */
+	takeUnfinalizedCreationRange(): IdCreationRange;
 
 	/**
 	 * Finalizes the supplied range of IDs (which may be from either a remote or local session).
@@ -107,7 +124,7 @@ export interface IIdCompressorCore {
 	 * @param ghostSessionId - The session id that minted ids generated within `ghostSessionCallback` should be attributed to.
 	 * @param ghostSessionCallback - Callback which mints ids attributed to the ghost session.
 	 */
-	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void);
+	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.

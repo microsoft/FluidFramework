@@ -4,25 +4,28 @@
  */
 
 import assert from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISegment, SegmentGroup } from "../mergeTreeNodes";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";
 import {
-	appendToMergeTreeDeltaRevertibles,
 	MergeTreeDeltaRevertible,
 	MergeTreeWithRevert,
+	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
-} from "../revertibles";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
+} from "../revertibles.js";
+
 import {
-	removeRange,
-	generateOperationMessagesForClients,
-	applyMessages,
 	annotateRange,
+	applyMessages,
 	doOverRanges,
-} from "./mergeTreeOperationRunner";
-import { createRevertDriver } from "./testClient";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
+	generateOperationMessagesForClients,
+	removeRange,
+} from "./mergeTreeOperationRunner.js";
+import { createRevertDriver } from "./testClient.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 const defaultOptions = {
 	initialOps: 5,
@@ -133,9 +136,7 @@ describe("MergeTree.Client", () => {
 							seq,
 							msgs.splice(
 								0,
-								ackAll
-									? msgs.length
-									: random.integer(0, Math.floor(msgs.length / 2)),
+								ackAll ? msgs.length : random.integer(0, Math.floor(msgs.length / 2)),
 							),
 							clients.all,
 							logger,
@@ -146,10 +147,7 @@ describe("MergeTree.Client", () => {
 					}
 
 					try {
-						revertMergeTreeDeltaRevertibles(
-							clientBDriver,
-							clientB_Revertibles.splice(0),
-						);
+						revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
 						seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
 					} catch (e) {
 						throw logger.addLogsToError(e);
@@ -164,10 +162,7 @@ describe("MergeTree.Client", () => {
 						// reset the callback before the final revert
 						// to avoid accruing any new detached references
 						clients.B.off("delta", deltaCallback);
-						revertMergeTreeDeltaRevertibles(
-							clientBDriver,
-							clientB_Revertibles.splice(0),
-						);
+						revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
 						seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
 
 						walkAllChildSegments(clients.B.mergeTree.root, (seg: ISegment) => {
@@ -186,11 +181,9 @@ describe("MergeTree.Client", () => {
 								);
 							}
 						});
-						const mergeTreeWithRevert: Partial<MergeTreeWithRevert> =
-							clients.B.mergeTree;
+						const mergeTreeWithRevert: Partial<MergeTreeWithRevert> = clients.B.mergeTree;
 						assert.notDeepStrictEqual(
-							mergeTreeWithRevert.__mergeTreeRevertible?.detachedReferences?.localRefs
-								?.empty,
+							mergeTreeWithRevert.__mergeTreeRevertible?.detachedReferences?.localRefs?.empty,
 							false,
 							"there should be no left over local references in detached references",
 						);

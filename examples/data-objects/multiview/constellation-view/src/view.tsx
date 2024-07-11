@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
+import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
@@ -108,7 +107,9 @@ export const ConstellationView: React.FC<IConstellationViewProps> = (
 				onPointerUp={pointerUpHandler}
 			/>,
 		);
-		sliderViews.push(<SliderCoordinateView key={index} model={star} label={`Star ${index}`} />);
+		sliderViews.push(
+			<SliderCoordinateView key={index} model={star} label={`Star ${index}`} />,
+		);
 	}
 
 	return (

@@ -8,26 +8,27 @@
 import { strict as assert } from "node:assert";
 
 import {
-	FieldAnchor,
-	ITreeSubscriptionCursor,
+	type FieldAnchor,
+	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
-import {
-	FlexAllowedTypes,
-	Any,
-	FlexFieldKind,
-	FieldKinds,
-	FlexFieldSchema,
-} from "../../../feature-libraries/index.js";
-import { Context } from "../../../feature-libraries/flex-tree/context.js";
+import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	unboxedField,
 	unboxedTree,
 	unboxedUnion,
 } from "../../../feature-libraries/flex-tree/unboxed.js";
-import { type TreeContent } from "../../../shared-tree/index.js";
+import {
+	Any,
+	FieldKinds,
+	type FlexAllowedTypes,
+	type FlexFieldKind,
+	FlexFieldSchema,
+} from "../../../feature-libraries/index.js";
+import type { TreeContent } from "../../../shared-tree/index.js";
+
 import { contextWithContentReadonly } from "./utils.js";
 
 const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey };
@@ -36,9 +37,12 @@ const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootFieldKey
  * Creates a cursor from the provided `context` and moves it to the provided `anchor`.
  */
 function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscriptionCursor {
-	const cursor = context.forest.allocateCursor();
+	const cursor = context.checkout.forest.allocateCursor();
 
-	assert.equal(context.forest.tryMoveCursorToField(anchor, cursor), TreeNavigationResult.Ok);
+	assert.equal(
+		context.checkout.forest.tryMoveCursorToField(anchor, cursor),
+		TreeNavigationResult.Ok,
+	);
 	return cursor;
 }
 

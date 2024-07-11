@@ -3,34 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
+import { IClient } from "@fluidframework/driver-definitions";
 import {
-	ITelemetryLoggerExt,
-	IFluidErrorBase,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import {
-	IClient,
+	IAnyDriverError,
 	IConnect,
 	IDocumentMessage,
 	INack,
 	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	IFluidErrorBase,
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
-import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
-import { EpochTracker } from "./epochTracker";
-import { errorObjectFromSocketError } from "./odspError";
-import { SocketIOClientStatic } from "./socketModule";
-import { pkgVersion } from "./packageVersion";
+
+import { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { errorObjectFromSocketError } from "./odspError.js";
+import { pkgVersion } from "./packageVersion.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -105,10 +106,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		if (this.references === 0 && this.delayDeleteTimeout === undefined) {
 			this.delayDeleteTimeout = setTimeout(() => {
 				// We should not get here with active users.
-				assert(
-					this.references === 0,
-					0x0a0 /* "Unexpected socketIO references on timeout" */,
-				);
+				assert(this.references === 0, 0x0a0 /* "Unexpected socketIO references on timeout" */);
 				this.closeSocket();
 			}, socketReferenceBufferTime);
 		}
@@ -360,8 +358,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Error raising for socket.io issues
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
+	protected createErrorObject(
+		handler: string,
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+		error?: any,
+		canRetry = true,
+	): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
@@ -519,7 +521,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return this.flushDeferred.promise;
 	}
 
-	protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string): void => {
+	protected disconnectHandler = (
+		error: IFluidErrorBase & OdspError,
+		clientId?: string,
+	): void => {
 		if (clientId === undefined || clientId === this.clientId) {
 			this.logger.sendTelemetryEvent(
 				{
@@ -586,8 +591,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				if (messages !== undefined && messages.length > 0) {
 					this.logger.sendPerformanceEvent({
 						...common,
-						first: messages[0].sequenceNumber,
-						last: messages[messages.length - 1].sequenceNumber,
+						// Non null asserting here because of the length check above
+						first: messages[0]!.sequenceNumber,
+						// Non null asserting here because of the length check above
+						last: messages[messages.length - 1]!.sequenceNumber,
 						length: messages.length,
 					});
 					this.emit("op", this.documentId, messages);
@@ -662,11 +669,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(
 					event,
 					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
-						if (
-							!this.enableMultiplexing ||
-							!documentId ||
-							documentId === this.documentId
-						) {
+						if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
 							listener(msg, documentId);
 						}
 					},
@@ -682,8 +685,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						clientIdOrDocumentId === this.documentId ||
 						clientIdOrDocumentId === this.clientId;
 					const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
-					const { clientSequenceNumber, referenceSequenceNumber } =
-						nacks[0]?.operation ?? {};
+					const { clientSequenceNumber, referenceSequenceNumber } = nacks[0]?.operation ?? {};
 					this.logger.sendTelemetryEvent({
 						eventName: "ServerNack",
 						code,
@@ -740,7 +742,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return !this.disposed && this.socket.connected;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]): void {
+	protected override emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected override emitMessages(
+		type: "submitSignal",
+		messages: string[][] | ISentSignalMessage[],
+	): void;
+	protected override emitMessages(type: string, messages: unknown): void {
 		// Only submit the op/signals if we are connected.
 		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
@@ -761,15 +768,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		const signal: ISentSignalMessage = {
 			content,
 			targetClientId,
 		};
 
-		// back-compat: the typing for this method and emitMessages is incorrect, will be fixed in a future PR
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-		this.emitMessages("submitSignal", [signal] as any);
+		this.emitMessages("submitSignal", [signal]);
 	}
 
 	/**

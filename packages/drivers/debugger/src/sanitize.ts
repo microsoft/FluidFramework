@@ -18,10 +18,12 @@
  * Messages must match known structures when scrubbing for Fluid Preview.
  */
 
-import fs from "fs";
-import process from "process";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Sanitizer } from "./sanitizer";
+import fs from "node:fs";
+import process from "node:process";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+
+import { Sanitizer } from "./sanitizer.js";
 
 function printUsage() {
 	console.log("Usage:");
@@ -50,14 +52,17 @@ function Sanitize(msgPath: string, fullScrub: boolean, noBail: boolean) {
 
 function main() {
 	if (process.argv.length === 3) {
-		return Sanitize(process.argv[2], false, false);
+		// Non null asserting here because of the length check above
+		return Sanitize(process.argv[2]!, false, false);
 	}
 	if (process.argv.length === 4) {
+		// Non null asserting here because of the length check above
 		if (process.argv[2] === "--full") {
-			return Sanitize(process.argv[3], true, false);
+			return Sanitize(process.argv[3]!, true, false);
 		}
 		if (process.argv[2] === "--noBail") {
-			return Sanitize(process.argv[3], false, true);
+			// Non null asserting here because of the length check above
+			return Sanitize(process.argv[3]!, false, true);
 		}
 	}
 	printUsage();

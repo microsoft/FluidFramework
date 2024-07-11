@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	LocalResolver,
 	LocalDocumentServiceFactory,
+	LocalResolver,
 	LocalSessionStorageDbFactory,
 	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
 

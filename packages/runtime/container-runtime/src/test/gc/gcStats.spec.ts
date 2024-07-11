@@ -4,30 +4,32 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import {
-	GarbageCollector,
 	GCNodeType,
+	GarbageCollector,
+	IGCMetadata,
+	IGCStats,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
-	IGCMetadata,
 	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
-	IGCStats,
-	defaultSweepGracePeriodMs,
-} from "../../gc";
-import { ContainerRuntimeGCMessage } from "../../messageTypes";
-import { pkgVersion } from "../../packageVersion";
+} from "../../gc/index.js";
+import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { pkgVersion } from "../../packageVersion.js";
 
 describe("Garbage Collection Stats", () => {
 	// Nodes in the reference graph.
@@ -74,12 +76,10 @@ describe("Garbage Collection Stats", () => {
 
 		// The runtime to be passed to the garbage collector.
 		const gcRuntime: IGarbageCollectionRuntime = {
-			updateStateBeforeGC: async () => {},
 			getGCData: async (fullGC?: boolean) => defaultGCData,
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes,
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
@@ -177,7 +177,7 @@ describe("Garbage Collection Stats", () => {
 		if (lastGCMessage === undefined) {
 			return;
 		}
-		garbageCollector.processMessage(lastGCMessage, true /* local */);
+		garbageCollector.processMessage(lastGCMessage, Date.now(), true /* local */);
 	}
 
 	describe("Mark phase stats", () => {

@@ -3,22 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
+
 import {
-	ChangeFamily,
-	ChangeRebaser,
-	ChangeFamilyEditor,
-	DeltaRoot,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type DeltaRoot,
+	type RevisionTag,
 	emptyDelta,
 } from "../../../core/index.js";
+import { type Commit, EditManager } from "../../../shared-tree-core/index.js";
+import { type RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
 import {
-	TestChangeFamily,
 	TestChange,
-	testChangeFamilyFactory,
+	type TestChangeFamily,
 	asDelta,
+	testChangeFamilyFactory,
 } from "../../testChange.js";
-import { Commit, EditManager } from "../../../shared-tree-core/index.js";
-import { RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
 import { mintRevisionTag, testIdCompressor } from "../../utils.js";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
@@ -33,20 +35,17 @@ export function testChangeEditManagerFactory(options: {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = editManagerFactory(family, {
 		sessionId: options.sessionId,
-		autoDiscardRevertibles: options.autoDiscardRevertibles,
 	});
 
 	return { manager, family };
 }
 
 export function editManagerFactory<TChange = TestChange>(
-	family: ChangeFamily<any, TChange>,
+	family: ChangeFamily<ChangeFamilyEditor, TChange>,
 	options: {
 		sessionId?: SessionId;
-		autoDiscardRevertibles?: boolean;
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
-	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const genId = () => testIdCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
@@ -54,12 +53,6 @@ export function editManagerFactory<TChange = TestChange>(
 		ChangeFamily<ChangeFamilyEditor, TChange>
 	>(family, options.sessionId ?? ("0" as SessionId), genId);
 
-	if (autoDiscardRevertibles === true) {
-		// by default, discard revertibles in the edit manager tests
-		manager.localBranch.on("newRevertible", (revertible) => {
-			revertible.discard();
-		});
-	}
 	return manager;
 }
 
@@ -88,7 +81,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 ): void;
 /**
  * Simulates the following inputs to the EditManager:
@@ -117,26 +110,29 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 ): () => void;
 export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	localEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
 	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
-		manager.localBranch.apply(mintChange(), mintRevisionTag());
+		manager.localBranch.apply(mintChange(undefined), mintRevisionTag());
 	}
-	const trunkEdits = makeArray(trunkEditCount, () => ({
-		change: mintChange(),
-		revision: mintRevisionTag(),
-		sessionId: "trunk" as SessionId,
-	}));
+	const trunkEdits = makeArray(trunkEditCount, () => {
+		const revision = mintRevisionTag();
+		return {
+			change: mintChange(revision),
+			revision,
+			sessionId: "trunk" as SessionId,
+		};
+	});
 	const run = () => {
 		for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 			manager.addSequencedChange(trunkEdits[iChange], brand(iChange + 1), brand(iChange));
@@ -198,34 +194,38 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 ): () => void;
 export function rebasePeerEditsOverTrunkEdits<TChange>(
 	peerEditCount: number,
 	trunkEditCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
 	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
+		const revision = mintRevisionTag();
 		manager.addSequencedChange(
 			{
-				change: mintChange(),
-				revision: mintRevisionTag(),
+				change: mintChange(revision),
+				revision,
 				sessionId: "trunk" as SessionId,
 			},
 			brand(iChange + 1),
 			brand(iChange),
 		);
 	}
-	const peerEdits = makeArray(peerEditCount, () => ({
-		change: mintChange(),
-		revision: mintRevisionTag(),
-		sessionId: "peer" as SessionId,
-	}));
+	const peerEdits = makeArray(peerEditCount, () => {
+		const revision = mintRevisionTag();
+		return {
+			change: mintChange(revision),
+			revision,
+			sessionId: "peer" as SessionId,
+		};
+	});
 	const run = () => {
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
 			manager.addSequencedChange(
@@ -293,33 +293,37 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 ): () => void;
 export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	editCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
 	manager.localBranch.on("afterChange", ({ change }) => {});
 	for (let iChange = 0; iChange < editCount; iChange++) {
+		const revision = mintRevisionTag();
 		manager.addSequencedChange(
 			{
-				change: mintChange(),
-				revision: mintRevisionTag(),
+				change: mintChange(revision),
+				revision,
 				sessionId: "trunk" as SessionId,
 			},
 			brand(iChange + 1),
 			brand(iChange),
 		);
 	}
-	const peerEdits = makeArray(editCount, () => ({
-		change: mintChange(),
-		revision: mintRevisionTag(),
-		sessionId: "peer" as SessionId,
-	}));
+	const peerEdits = makeArray(editCount, () => {
+		const revision = mintRevisionTag();
+		return {
+			change: mintChange(revision),
+			revision,
+			sessionId: "peer" as SessionId,
+		};
+	});
 	const run = () => {
 		for (let iChange = 0; iChange < editCount; iChange++) {
 			manager.addSequencedChange(
@@ -356,7 +360,7 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: true,
 ): () => void;
 /**
@@ -385,13 +389,13 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 ): void;
 export function rebaseConcurrentPeerEdits<TChange>(
 	peerCount: number,
 	editsPerPeerCount: number,
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
-	mintChange: () => TChange,
+	mintChange: (revision: RevisionTag | undefined) => TChange,
 	defer: boolean = false,
 ): void | (() => void) {
 	// Subscribe to the local branch to emulate the behavior of SharedTree
@@ -399,9 +403,10 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	const peerEdits: Commit<TChange>[] = [];
 	for (let iChange = 0; iChange < editsPerPeerCount; iChange++) {
 		for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+			const revision = mintRevisionTag();
 			peerEdits.push({
-				change: mintChange(),
-				revision: mintRevisionTag(),
+				change: mintChange(revision),
+				revision,
 				sessionId: `p${iPeer}` as SessionId,
 			});
 		}

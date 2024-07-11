@@ -4,8 +4,8 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObjectFactory } from "@fluidframework/aqueduct";
-import * as sequence from "@fluidframework/sequence";
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import * as sequence from "@fluidframework/sequence/internal";
 import React from "react";
 
 import { MonacoRunner } from "./dataObject.js";
@@ -26,4 +26,7 @@ const monacoViewCallback = (model: MonacoRunner): React.ReactElement =>
 /**
  * @internal
  */
-export const fluidExport = new ContainerViewRuntimeFactory(componentFactory, monacoViewCallback);
+export const fluidExport = new ContainerViewRuntimeFactory(
+	componentFactory,
+	monacoViewCallback,
+);

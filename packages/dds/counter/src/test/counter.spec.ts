@@ -4,20 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import { type ISharedCounter, SharedCounter } from "../index";
-import { CounterFactory } from "../counterFactory";
+} from "@fluidframework/test-runtime-utils/internal";
 
-class TestSharedCounter extends SharedCounter {
+import { SharedCounter as SharedCounterClass } from "../counter.js";
+import { CounterFactory } from "../counterFactory.js";
+import { type ISharedCounter, SharedCounter } from "../index.js";
+
+class TestSharedCounter extends SharedCounterClass {
 	public testApplyStashedOp(content: unknown): void {
 		this.applyStashedOp(content);
 	}
@@ -107,7 +110,10 @@ describe("SharedCounter", () => {
 				const services = MockSharedObjectServices.createFromSummary(
 					testCounter.getAttachSummary().summary,
 				);
-				const testCounter2 = factory.create(dataStoreRuntime, "counter2") as SharedCounter;
+				const testCounter2 = factory.create(
+					dataStoreRuntime,
+					"counter2",
+				) as SharedCounterClass;
 				await testCounter2.load(services);
 
 				// Verify that the new SharedCounter has the correct value.

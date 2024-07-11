@@ -3,33 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { createEmitter, ISubscribable } from "../../events/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { type Listenable, createEmitter } from "../../events/index.js";
 import {
-	brand,
-	Brand,
-	fail,
-	Opaque,
+	type Brand,
+	type BrandedKey,
+	type BrandedMapSubset,
+	type Opaque,
 	ReferenceCountedBase,
-	BrandedKey,
-	BrandedMapSubset,
+	brand,
 	brandedSlot,
+	fail,
 } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
-import {
+import type { FieldKey } from "../schema-stored/index.js";
+
+import type * as Delta from "./delta.js";
+import type {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	PlaceIndex,
-	UpPath,
-	Range,
 	PlaceUpPath,
+	Range,
 	RangeUpPath,
+	UpPath,
 } from "./pathTree.js";
-import { Value, EmptyKey } from "./types.js";
-import { PathVisitor } from "./visitPath.js";
-import { DeltaVisitor } from "./visitDelta.js";
-import * as Delta from "./delta.js";
-import { AnnouncedVisitor } from "./visitorUtils.js";
+import { EmptyKey, type Value } from "./types.js";
+import type { DeltaVisitor } from "./visitDelta.js";
+import type { PathVisitor } from "./visitPath.js";
+import type { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -86,48 +88,98 @@ export interface AnchorEvents {
 	 * @remarks
 	 * When this happens depends entirely on how the anchorSet is used.
 	 * It's possible nodes removed from the tree will be kept indefinitely, and thus never trigger this event, or they may be discarded immediately.
+	 *
+	 * @privateRemarks
+	 * The specifics of the delta visit algorithm can impact the behavior of these events.
+	 * Refer to the privateRemarks of specific events and/or the documentation of the delta visit algorithm (as of
+	 * 2024-04-02, src/core/tree/visitDelta.ts) for more information.
 	 */
 	afterDestroy(anchor: AnchorNode): void;
 
 	/**
-	 * One or more of the children of this node is just about to change.
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if one or more of this node's
+	 * direct children are about to change due to updates from the batch.
 	 *
 	 * @remarks
-	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
+	 * node's fields.
 	 */
 	childrenChanging(anchor: AnchorNode): void;
 
 	/**
-	 * One or more of the children of this node has just changed.
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if one or more of this node's
+	 * direct children just changed due to updates from the batch.
 	 *
 	 * @remarks
-	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this node's fields.
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
+	 * node's fields.
+	 *
+	 * Compare to {@link AnchorEvents.childrenChangedAfterBatch} which is emitted after the whole batch has been applied.
 	 */
 	childrenChanged(anchor: AnchorNode): void;
 
 	/**
-	 * Before a change in this subtree happens.
+	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if one or more of this node's
+	 * direct children changed due to updates from the batch.
 	 *
 	 * @remarks
-	 * Includes edits of child subtrees.
+	 * Does not include edits of child subtrees: instead only includes changes to nodes which are direct children in this
+	 * node's fields.
+	 *
+	 * This event is guaranteed to be emitted on a given node only once per batch.
+	 *
+	 * Compare to {@link AnchorEvents.childrenChanged} which is emitted in the middle of the batch/delta-visit.
 	 */
-	beforeChange(anchor: AnchorNode): void;
+	childrenChangedAfterBatch(anchor: AnchorNode): void;
 
 	/**
-	 * After a change in this subtree happened.
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
+	 * rooted at `anchor` _may_ be about to change due to updates from the batch.
 	 *
 	 * @remarks
-	 * Includes edits of child subtrees.
-	 */
-	afterChange(anchor: AnchorNode): void;
-
-	/**
-	 * Something in this tree is changing.
 	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
-	 * Includes changes to this node itself.
 	 */
 	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
+
+	/**
+	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
+	 * rooted at `anchor` _may_ have just changed due to updates from the batch.
+	 *
+	 * @remarks
+	 * While this event is always emitted in the presence of changes to the subtree,
+	 * it may also be emitted even though no changes have been made to the subtree.
+	 * It may be emitted multiple times within the application of a single edit or transaction.
+	 *
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, at
+	 * least once on each ancestor.
+	 *
+	 * Compare to {@link AnchorEvents.subtreeChangedAfterBatch} which is emitted after the whole batch has been applied.
+	 *
+	 * @privateRemarks
+	 * The delta visit algorithm is complicated and it may fire this event multiple times for the same change to a node.
+	 * The change to the tree may not be visible until the event fires for the last time.
+	 * Refer to the documentation of the delta visit algorithm for more details.
+	 */
+	subtreeChanged(anchor: AnchorNode): void;
+
+	/**
+	 * Emitted after a batch of changes has been applied (i.e. when a delta visit completes), if something in the subtree
+	 * rooted at `anchor` changed due to updates from the batch.
+	 *
+	 * @remarks
+	 * If this event is emitted by a node, it will later be emitted by all its ancestors up to the root as well, from bottom to top.
+	 *
+	 * This event is guaranteed to be emitted on a given node only once per batch.
+	 *
+	 * Compare to {@link AnchorEvents.subtreeChanged} which is emitted in the middle of the batch/delta-visit.
+	 *
+	 * @privateRemarks
+	 * Note that because this is fired after the full batch of changes is applied, it guarantees that something in the
+	 * subtree changed, compared to {@link AnchorEvents.subtreeChanged} or {@link AnchorEvents.subtreeChanging} which
+	 * fire when something _may_ have changed or _may_ be about to change.
+	 */
+	subtreeChangedAfterBatch(anchor: AnchorNode): void;
 
 	/**
 	 * Value on this node is changing.
@@ -163,12 +215,19 @@ export interface AnchorSetRootEvents {
  * Node in a tree of anchors.
  * @internal
  */
-export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
+export interface AnchorNode extends UpPath<AnchorNode>, Listenable<AnchorEvents> {
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
 	 */
+	// See note on BrandedKey
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
+
+	/**
+	 * The set this anchor node is part of.
+	 */
+	readonly anchorSet: AnchorSet;
 
 	/**
 	 * Gets a child of this node.
@@ -222,7 +281,7 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent> {
  * @sealed
  * @internal
  */
-export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLocator {
+export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator {
 	private readonly events = createEmitter<AnchorSetRootEvents>();
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
@@ -262,6 +321,19 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		});
 	}
 
+	/**
+	 * Allows access to data stored on the AnchorSet in "slots".
+	 * Use {@link anchorSlot} to create slots.
+	 *
+	 * @privateRemarks
+	 * This forwards to the slots of the special above root anchor which locate can't access.
+	 */
+	// See note on BrandedKey.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
+		return this.root.slots;
+	}
+
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
 		listener: AnchorSetRootEvents[K],
@@ -283,7 +355,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		}
 
 		const path = this.anchorToPath.get(anchor);
-		assert(path !== undefined, 0x3a6 /* Cannot locate anchor which is not in this AnchorSet */);
+		assert(
+			path !== undefined,
+			0x3a6 /* Cannot locate anchor which is not in this AnchorSet */,
+		);
 		return path.status === Status.Alive ? path : undefined;
 	}
 
@@ -573,7 +648,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		}
 	}
 
-	private removeChildren(path: UpPath, count: number) {
+	private removeChildren(path: UpPath, count: number): void {
 		const nodes = this.decoupleNodes(path, count);
 		this.deepDelete(nodes);
 	}
@@ -584,7 +659,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	 * @param offset - the offset to apply to the children.
 	 *
 	 */
-	private offsetChildren(firstSiblingToOffset: UpPath, offset: number) {
+	private offsetChildren(firstSiblingToOffset: UpPath, offset: number): void {
 		const nodePath = this.find(firstSiblingToOffset.parent ?? this.root);
 		const field = nodePath?.children.get(firstSiblingToOffset.parentField);
 		if (field !== undefined) {
@@ -609,6 +684,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			0x767 /* Must release existing visitor before acquiring another */,
 		);
 
+		const referencedPathNodes: PathNode[] = [];
 		const visitor = {
 			anchorSet: this,
 			// Run `withNode` on anchorNode for parent if there is such an anchorNode.
@@ -623,25 +699,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
 					this.parent = this.anchorSet.internalizePath(this.parent);
 					if (this.parent instanceof PathNode) {
+						this.parent.addRef();
+						referencedPathNodes.push(this.parent);
 						withNode(this.parent);
 					}
-				}
-			},
-			// Run `withNode` on every node from the current `this.parent` to the root.
-			// Should only be called when in a field.
-			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
-				assert(
-					this.parentField !== undefined,
-					0x7cd /* Must be in a field to call withNodeUpToRoot */,
-				);
-				// This function gets called when we attach a node to the root field, in which case there is no parent.
-				// It's expected this will do nothing in that case.
-				let currentParent: UpPath | undefined = this.parent;
-				while (currentParent !== undefined) {
-					if (currentParent instanceof PathNode) {
-						withNode(currentParent);
-					}
-					currentParent = currentParent.parent;
 				}
 			},
 			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
@@ -650,12 +711,50 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
+			bufferedEvents: [] as { node: PathNode; event: keyof AnchorEvents }[],
+
+			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
+			// subtreeChangedAfterBatch events.
+			// The algorithm works as follows:
+			// - Initialize both to 0.
+			// - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
+			// - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
+			//   Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
+			//   node at this depth you should emit a subtreeChangedAfterBatch event".
+			// - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
+			//   Then decrement currentDepth unconditionally.
+			// Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
+			// have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
+			// parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
+			// get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
+			// walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
+			// as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
+			// back up that path, until we get back to the depth where we were already emitting the event, and will continue
+			// emitting it on the way to the root.
+			currentDepth: 0,
+			depthThresholdForSubtreeChanged: 0,
+
 			free() {
 				assert(
 					this.anchorSet.activeVisitor !== undefined,
 					0x768 /* Multiple free calls for same visitor */,
 				);
+				for (const node of referencedPathNodes) {
+					node.removeRef();
+				}
 				this.anchorSet.activeVisitor = undefined;
+				const alreadyEmitted = new Map<PathNode, string[]>();
+				for (const { node, event } of this.bufferedEvents) {
+					if (!alreadyEmitted.has(node)) {
+						alreadyEmitted.set(node, []);
+					}
+					const emittedEvents = alreadyEmitted.get(node);
+					if (emittedEvents?.includes(event) ?? false) {
+						continue;
+					}
+					emittedEvents?.push(event);
+					node.events.emit(event, node);
+				}
 			},
 			notifyChildrenChanging(): void {
 				this.maybeWithNode(
@@ -665,7 +764,13 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			},
 			notifyChildrenChanged(): void {
 				this.maybeWithNode(
-					(p) => p.events.emit("childrenChanged", p),
+					(p) => {
+						p.events.emit("childrenChanged", p);
+						this.bufferedEvents.push({
+							node: p,
+							event: "childrenChangedAfterBatch",
+						});
+					},
 					() => {},
 				);
 			},
@@ -683,9 +788,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: source,
 					start: 0,
 					end: count,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -707,9 +809,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterAttach(sourcePath, destinationPath);
@@ -737,6 +836,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					parentIndex: destination,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
+				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
 			beforeDetach(source: Range, destination: FieldKey): void {
 				assert(
@@ -751,9 +851,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				const destinationPath: DetachedPlaceUpPath = brand({
 					field: destination,
 					index: 0,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -775,9 +872,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					start: 0,
 					end: count,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -806,6 +900,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					parentIndex: 0,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
+				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
 			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
 				assert(
@@ -826,9 +921,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeReplace(
@@ -839,11 +931,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 			},
-			afterReplace(
-				newContentSource: FieldKey,
-				newContent: Range,
-				oldContent: FieldKey,
-			): void {
+			afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a7 /* Must be in a field in order to replace */,
@@ -861,9 +949,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: oldContent,
 					start: 0,
 					end: newContent.end - newContent.start,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -924,10 +1009,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			enterNode(index: number): void {
-				assert(
-					this.parentField !== undefined,
-					0x3ab /* Must be in a field to enter node */,
-				);
+				assert(this.parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 
 				this.parent = {
 					parent: this.parent,
@@ -950,16 +1032,26 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 						}
 					}
 				});
+				this.currentDepth++;
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
+					p.events.emit("subtreeChanged", p);
+					if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+						this.bufferedEvents.push({
+							node: p,
+							event: "subtreeChangedAfterBatch",
+						});
+						this.depthThresholdForSubtreeChanged--;
+					}
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
+				this.currentDepth--;
 			},
 			enterField(key: FieldKey): void {
 				this.parentField = key;
@@ -1050,6 +1142,8 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	 */
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
 
+	// See note on BrandedKey.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
 
 	/**
@@ -1077,7 +1171,10 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		super(1);
 	}
 
-	public on<K extends keyof AnchorEvents>(eventName: K, listener: AnchorEvents[K]): () => void {
+	public on<K extends keyof AnchorEvents>(
+		eventName: K,
+		listener: AnchorEvents[K],
+	): () => void {
 		return this.events.on(eventName, listener);
 	}
 
@@ -1130,7 +1227,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 
 	// Called when refcount is set to 0.
 	// Node may be kept alive by children or events after this point.
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.considerDispose();
 	}
 

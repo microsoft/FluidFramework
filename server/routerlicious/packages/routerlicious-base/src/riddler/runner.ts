@@ -15,6 +15,7 @@ import {
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
+import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
 import * as app from "./app";
 import { ITenantRepository } from "./mongoTenantRepository";
 
@@ -38,6 +39,7 @@ export class RiddlerRunner implements IRunner {
 		private readonly secretManager: ISecretManager,
 		private readonly fetchTenantKeyMetricInterval: number,
 		private readonly riddlerStorageRequestMetricInterval: number,
+		private readonly tenantKeyGenerator: ITenantKeyGenerator,
 		private readonly cache?: ICache,
 		private readonly config?: Provider,
 	) {}
@@ -61,6 +63,7 @@ export class RiddlerRunner implements IRunner {
 				this.secretManager,
 				this.fetchTenantKeyMetricInterval,
 				this.riddlerStorageRequestMetricInterval,
+				this.tenantKeyGenerator,
 				this.cache,
 			);
 			riddler.set("port", this.port);

@@ -4,8 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
+
+import {
+	IMatrixConsumer,
+	IMatrixProducer,
+	IMatrixReader,
+	IMatrixWriter,
+} from "@tiny-calc/nano";
+
 import { SharedMatrix } from "../index.js";
+
+/**
+ * Convenience export of SharedMatrix's factory for usage in tests.
+ */
+export const matrixFactory = SharedMatrix.getFactory();
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
@@ -186,7 +198,7 @@ export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCoun
 			(r & 1) === 0
 				? matrix.rowCount
 				: // eslint-disable-next-line no-bitwise
-				  r >> 1,
+					r >> 1,
 			1,
 		);
 	}
@@ -197,7 +209,7 @@ export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCoun
 			(c & 1) === 0
 				? matrix.colCount
 				: // eslint-disable-next-line no-bitwise
-				  c >> 1,
+					c >> 1,
 			1,
 		);
 	}

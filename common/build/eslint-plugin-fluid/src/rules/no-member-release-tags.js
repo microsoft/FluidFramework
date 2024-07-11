@@ -44,7 +44,7 @@ function errorLoggerHelper(node, context) {
 			 */
 			context.report({
 				node: node,
-				message: `Including the release-tag for ${node.key.name} at line ${
+				message: `Including the release-tag for '${node.key.name}' at line ${
 					node.key.loc.start.line
 				} in ${
 					node.parent.parent.id

@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { render, screen } from "@testing-library/react";
 import React from "react";
 
-import { render, screen } from "@testing-library/react";
-
-import { Waiting, defaultWaitingLabel } from "../components";
+import { Waiting, defaultWaitingLabel } from "../components/index.js";
 
 describe("Waiting component tests", () => {
 	it("Displays default label when a label is not specified", async (): Promise<void> => {

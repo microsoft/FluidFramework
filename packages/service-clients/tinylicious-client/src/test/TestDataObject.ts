@@ -3,17 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory, type IDataObjectProps } from "@fluidframework/aqueduct";
+import {
+	DataObject,
+	DataObjectFactory,
+	createDataObjectKind,
+	type IDataObjectProps,
+} from "@fluidframework/aqueduct/internal";
 
 /**
  * Mock {@link @fluidframework/aqueduct#DataObject} for use in tests.
  */
-export class TestDataObject extends DataObject {
+class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
-		TestDataObject.Name,
-		TestDataObject,
+		TestDataObjectClass.Name,
+		TestDataObjectClass,
 		[],
 		{},
 	);
@@ -22,3 +27,12 @@ export class TestDataObject extends DataObject {
 		super(props);
 	}
 }
+
+/**
+ * {@inheritDoc TestDataObjectClass}
+ */
+export const TestDataObject = createDataObjectKind(TestDataObjectClass);
+/**
+ * {@inheritDoc TestDataObjectClass}
+ */
+export type TestDataObject = TestDataObjectClass;

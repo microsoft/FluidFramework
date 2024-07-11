@@ -2,22 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import type { EventEmitter } from "@fluid-internal/client-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	createChildLogger,
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import {
+	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
+	createChildLogger,
 	extractSafePropertiesFromMessage,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { DeltaScheduler } from "./deltaScheduler";
-import { pkgVersion } from "./packageVersion";
-import { IBatchMetadata } from "./metadata";
+} from "@fluidframework/telemetry-utils/internal";
+
+import { DeltaScheduler } from "./deltaScheduler.js";
+import { IBatchMetadata } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
 
 type IRuntimeMessageMetadata =
 	| undefined
@@ -119,7 +124,9 @@ class ScheduleManagerCore {
 			}
 
 			// First message will have the batch flag set to true if doing a batched send
-			const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
+			// Non null asserting because of the length check above
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const firstMessageMetadata = messages[0]!.metadata as IRuntimeMessageMetadata;
 			if (!firstMessageMetadata?.batch) {
 				return;
 			}
@@ -131,7 +138,9 @@ class ScheduleManagerCore {
 			}
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
-			const lastMessage = messages[messages.length - 1];
+			// Non null asserting here because of the length check at the start of the function
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const lastMessage = messages[messages.length - 1]!;
 			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };

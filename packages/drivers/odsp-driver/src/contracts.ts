@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluidframework/protocol-definitions";
-import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import {
+	ISnapshot,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
+
 // eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./odspPublicUtils.js";
 
 /**
  * Interface for error responses for the WebSocket connection
@@ -43,11 +46,11 @@ export interface IOdspSocketError {
  * Contains either SequencedDocumentMessages or SequencedDeltaOpMessage.
  */
 export interface IDeltaStorageGetResponse {
-	value: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
+	value: ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
 }
 
 export interface ISequencedDeltaOpMessage {
-	op: api.ISequencedDocumentMessage;
+	op: ISequencedDocumentMessage;
 	sequenceNumber: number;
 }
 
@@ -206,7 +209,7 @@ export interface IGetOpsResponse {
 	 * Time in seconds. Currently never set by PUSH
 	 */
 	retryAfter?: number;
-	messages?: api.ISequencedDocumentMessage[];
+	messages?: ISequencedDocumentMessage[];
 }
 
 export interface IFlushOpsResponse {

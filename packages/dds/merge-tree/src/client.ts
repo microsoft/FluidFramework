@@ -5,32 +5,50 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList, RedBlackTree } from "./collections";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferencePosition, SlidingPreference } from "./localReference";
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
+import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+import type {
+	IMergeTreeClientSequenceArgs,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+} from "./mergeTreeDeltaCallback.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
-	compareStrings,
 	IMoveInfo,
-	ISegmentLeaf,
 	ISegment,
 	ISegmentAction,
+	ISegmentLeaf,
 	Marker,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
-} from "./mergeTreeNodes";
+	compareStrings,
+} from "./mergeTreeNodes.js";
 import {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
@@ -39,7 +57,7 @@ import {
 	createInsertSegmentOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
-} from "./opBuilder";
+} from "./opBuilder.js";
 import {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -47,30 +65,22 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
+	// eslint-disable-next-line import/no-deprecated
+	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
+	IMergeTreeRemoveMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
-} from "./ops";
-import { PropertySet } from "./properties";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { SnapshotLoader } from "./snapshotLoader";
+} from "./ops.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeTextHelper } from "./textSegment";
-import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
-import { IMergeTreeOptions, MergeTree } from "./mergeTree";
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import {
-	IMergeTreeClientSequenceArgs,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-} from "./index";
+import { PropertySet, createMap } from "./properties.js";
+import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import { SnapshotLoader } from "./snapshotLoader.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+// eslint-disable-next-line import/no-deprecated
+import { IMergeTreeTextHelper } from "./textSegment.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -96,6 +106,7 @@ export interface IIntegerRange {
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
  * ordering them. Useful for DDS-like consumers built atop the merge-tree to compute any information
  * they need for rebasing their ops on reconnection.
+ * @legacy
  * @alpha
  */
 export interface IClientEvents {
@@ -120,6 +131,7 @@ export interface IClientEvents {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export class Client extends TypedEventEmitter<IClientEvents> {
@@ -182,8 +194,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public peekPendingSegmentGroups(): SegmentGroup | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
+	public peekPendingSegmentGroups(
+		count: number = 1,
+		// eslint-disable-next-line import/no-deprecated
+	): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
 		let node = pending?.last;
 		if (count === 1 || pending === undefined) {
@@ -204,7 +218,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @returns The annotate op if valid, otherwise undefined
 	 */
-	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
+	public annotateMarker(
+		marker: Marker,
+		props: PropertySet,
+	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateMarkerOp(marker, props)!;
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
@@ -262,10 +279,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			return undefined;
 		}
 		const insertOp = createInsertSegmentOp(pos, segment);
-		if (this.applyInsertOp({ op: insertOp })) {
-			return insertOp;
-		}
-		return undefined;
+		this.applyInsertOp({ op: insertOp });
+		return insertOp;
 	}
 
 	/**
@@ -283,13 +298,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 
 		if (pos === DetachedReferencePosition) {
-			return undefined;
+			throw new UsageError("Cannot insert at detached local reference.");
 		}
-		const op = createInsertSegmentOp(pos, segment);
-
-		if (this.applyInsertOp({ op })) {
-			return op;
-		}
+		return this.insertSegmentLocal(pos, segment);
 	}
 
 	public walkSegments<TClientData>(
@@ -429,6 +440,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	/**
 	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of {@link ReferenceType}. To handle this case specifically, one may wish
+	 * to look at the segment returned by {@link ReferencePosition.getSegment}.
 	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this._mergeTree.referencePositionToLocalPosition(lref);
@@ -528,7 +544,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 * @returns True if the insert was applied. False if it could not be.
 	 */
-	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.INSERT,
 			0x02f /* "Unexpected op type on range insert!" */,
@@ -537,14 +553,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		let segments: ISegment[] | undefined;
-		if (op.seg) {
-			segments = [this.specToSegment(op.seg)];
-		}
-
-		if (!segments || segments.length === 0) {
-			return false;
-		}
+		const segments = [this.specToSegment(op.seg)];
 
 		this._mergeTree.insertSegments(
 			range.start,
@@ -554,8 +563,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.sequenceNumber,
 			opArgs,
 		);
-
-		return true;
 	}
 
 	/**
@@ -703,7 +710,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	getLongClientId(shortClientId: number) {
-		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
+		// TODO why are we non null asserting here?
+		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId]! : "original";
 	}
 
 	addLongClientId(longClientId: string) {
@@ -778,7 +786,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			switch (resetOp.type) {
 				case MergeTreeDeltaType.ANNOTATE:
 					assert(
-						segment.propertyManager?.hasPendingProperties() === true,
+						segment.propertyManager?.hasPendingProperties(resetOp.props) === true,
 						0x036 /* "Segment has no pending properties" */,
 					);
 					// if the segment has been removed or obliterated, there's no need to send the annotate op
@@ -808,7 +816,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					let segInsertOp = segment;
 					if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
 						segInsertOp = segment.clone();
-						segInsertOp.properties = resetOp.seg.props;
+						// eslint-disable-next-line import/no-deprecated
+						segInsertOp.properties = createMap();
+						segInsertOp.addProperties(resetOp.seg.props);
 					}
 					if (segment.movedSeq !== UnassignedSequenceNumber) {
 						removeMoveInfo(segment);
@@ -1018,7 +1028,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					// eslint-disable-next-line import/no-deprecated
 					return createGroupOp();
 				}
-				firstGroup = segmentGroup[0];
+				// TODO Non null asserting, why is this not null?
+				firstGroup = segmentGroup[0]!;
 			} else {
 				firstGroup = segmentGroup;
 			}
@@ -1048,7 +1059,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				);
 
 				for (let i = 0; i < resetOp.ops.length; i++) {
-					opList.push(...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
+					// Non null asserting because resetOp and segmentGroup are arrays of same length and loop is length of resetOp
+					opList.push(...this.resetPendingDeltaToOps(resetOp.ops[i]!, segmentGroup[i]!));
 				}
 			} else {
 				// A group op containing a single op will pass a direct reference to 'segmentGroup'
@@ -1057,7 +1069,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					resetOp.ops.length === 1,
 					0x03b /* "Number of ops in 'resetOp' must match the number of segment groups provided." */,
 				);
-				opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
+				// Non null asserting because of length assert above
+				opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0]!, segmentGroup));
 			}
 		} else {
 			assert(
@@ -1070,8 +1083,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
+		// TODO why are we non null asserting here?
 		// eslint-disable-next-line import/no-deprecated
-		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
+		return opList.length === 1 ? opList[0]! : createGroupOp(...opList);
 	}
 
 	// eslint-disable-next-line import/no-deprecated
@@ -1085,7 +1099,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		serializer: IFluidSerializer,
 		catchUpMsgs: ISequencedDocumentMessage[],
 	): ISummaryTreeWithStats {
-		const deltaManager = runtime.deltaManager;
+		const deltaManager = toDeltaManagerInternal(runtime.deltaManager);
 		const minSeq = deltaManager.minimumSequenceNumber;
 
 		// Catch up to latest MSN, if we have not had a chance to do it.

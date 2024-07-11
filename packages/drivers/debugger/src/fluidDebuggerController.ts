@@ -3,28 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
+	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentStorageService,
-	IDocumentDeltaStorageService,
-} from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
 	IDocumentAttributes,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	FileSnapshotReader,
 	IFileSnapshot,
 	ReadDocumentStorageServiceBase,
 	ReplayController,
 	SnapshotStorage,
-} from "@fluidframework/replay-driver";
-import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
-import { Sanitizer } from "./sanitizer";
+} from "@fluidframework/replay-driver/internal";
+
+import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
+import { Sanitizer } from "./sanitizer.js";
 
 /**
  * @internal
@@ -59,7 +58,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
 			return 0;
 		}
 
-		const attributesHash = tree.trees[".protocol"].blobs.attributes;
+		// TODO Why are we non null asserting here
+		const attributesHash = tree.trees[".protocol"]!.blobs.attributes!;
 		const attrib = await readAndParse<IDocumentAttributes>(
 			documentStorageService,
 			attributesHash,
@@ -242,7 +242,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		for (let i = 0; i < buckets; i++) {
 			let prevRequest = Promise.resolve();
 			for (let index = i; index < this.versions.length; index += buckets) {
-				const version = this.versions[index];
+				// Non null asserting here because we are iterating though versions
+				const version = this.versions[index]!;
 				prevRequest = this.downloadVersionInfo(
 					this.documentStorageService,
 					prevRequest,

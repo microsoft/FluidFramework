@@ -69,11 +69,14 @@ webpackModuleRules.push(
 module.exports = {
 	entry: {
 		aqueduct: "./src/aqueduct",
+		azureClient: "./src/azureClient",
 		connectionState: "./src/connectionState",
 		containerRuntime: "./src/containerRuntime",
+		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
 		map: "./src/map",
 		matrix: "./src/matrix",
+		odspClient: "./src/odspClient",
 		odspDriver: "./src/odspDriver",
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",
@@ -96,7 +99,8 @@ module.exports = {
 			bannedModules: [
 				{
 					moduleName: "assert",
-					reason: "This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
+					reason:
+						"This module is very large when bundled in browser facing Javascript, instead use the assert API in @fluidframework/common-utils",
 				},
 			],
 		}),

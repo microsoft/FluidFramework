@@ -1,6 +1,6 @@
 ## simple-suite-test
 
-Test package
+<b>Test package</b>
 
 ### Remarks {#simple-suite-test-remarks}
 
@@ -22,7 +22,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (no alias): [TestClass](docs/simple-suite-test/testclass-class)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test/testfunction-function)
+- Good link (with alias): _function alias text_
 
 - Bad link (no alias): _InvalidItem_
 
@@ -71,14 +71,14 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
 | [testFunctionReturningInlineType()](docs/simple-suite-test/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/simple-suite-test/testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | `DEPRECATED` | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/simple-suite-test/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/simple-suite-test/testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ### Variables
 
-| Variable | Alerts | Modifiers | Description |
-| --- | --- | --- | --- |
-| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | `DEPRECATED` | `readonly` | I have a `@deprecated` tag with an empty comment block. |
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [testConstWithEmptyDeprecatedBlock](docs/simple-suite-test/testconstwithemptydeprecatedblock-variable) | `Deprecated` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 ### Namespaces
 

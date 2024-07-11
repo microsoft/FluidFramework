@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from '@tylerbu/sorted-btree-es6';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { assert, compareArrays } from '@fluidframework/core-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { assert, compareArrays } from '@fluidframework/core-utils/internal';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { BTree } from '@tylerbu/sorted-btree-es6';
+
+import type { ChangeCompressor } from './ChangeCompression.js';
 import { fail } from './Common.js';
 import type { EditId } from './Identifiers.js';
 import type { StringInterner } from './StringInterner.js';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types/index.js';
-import type { ChangeCompressor } from './ChangeCompression.js';
 
 /**
  * An ordered set of Edits associated with a SharedTree.
@@ -525,7 +526,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public addLocalEdit(edit: Edit<TChange>): void {
 		this.localEdits.push(edit);
-		const localEditId: LocalOrderedEditId = { localSequence: this.localEditSequence++, isLocal: true };
+		const localEditId: LocalOrderedEditId = {
+			localSequence: this.localEditSequence++,
+			isLocal: true,
+		};
 		this.allEditIds.set(edit.id, localEditId);
 		this.emitAdd(edit, true, false);
 	}
@@ -579,13 +583,12 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	/**
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
-	 * @internal
 	 */
 	public getEditLogSummary(): EditLogSummary<TChange, FluidEditHandle>;
+
 	/**
 	 * @param compressEdit - a function which compresses edits
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
-	 * @internal
 	 */
 	public getEditLogSummary<TCompressedChange>(
 		compressEdit: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
@@ -605,9 +608,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 										startRevision: 0,
 										chunk: this.sequencedEdits.map((edit) => compressEdit(edit)),
 									},
-							  ],
+								],
 					editIds,
-			  }
+				}
 			: {
 					editChunks:
 						this.sequencedEdits.length === 0
@@ -618,9 +621,9 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 										startRevision: 0,
 										chunk: this.sequencedEdits.map(({ changes }) => ({ changes })),
 									},
-							  ],
+								],
 					editIds,
-			  };
+				};
 	}
 
 	// APIS DEPRECATED DUE TO HISTORY'S PEACEFUL DEATH

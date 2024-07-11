@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import Axios from "axios";
 
 /**
@@ -51,10 +54,14 @@ export class InsecureUrlResolver implements IUrlResolver {
 		if (this.isForNodeTest) {
 			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
 			const relativePath = tmpRelativePath ?? "";
-			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return this.resolveHelper(documentId!, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {
 			const fullPath = parsedUrl.pathname.substr(1);
-			const documentId = fullPath.split("/")[0];
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const documentId = fullPath.split("/")[0]!;
 			const documentRelativePath = fullPath.slice(documentId.length);
 			return this.resolveHelper(documentId, documentRelativePath);
 		} else {
@@ -135,8 +142,11 @@ export class InsecureUrlResolver implements IUrlResolver {
 		return response;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-		const parsedUrl = parse(resolvedUrl.url);
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
+		const parsedUrl = new URL(resolvedUrl.url);
 		const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		assert(!!documentId, 0x273 /* "Invalid document id from parsed URL" */);

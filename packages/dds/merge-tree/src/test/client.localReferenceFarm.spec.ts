@@ -2,34 +2,38 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ReferencePosition } from "../referencePositions";
-import { ReferenceType } from "../ops";
-import { setValidateRefCount, SlidingPreference } from "../localReference";
+
+import { SlidingPreference, setValidateRefCount } from "../localReference.js";
+import { ReferenceType } from "../ops.js";
+import { ReferencePosition } from "../referencePositions.js";
+
 import {
+	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
+	doOverRanges,
+	generateClientNames,
 	removeRange,
 	runMergeTreeOperationRunner,
-	generateClientNames,
-	IConfigRange,
-	doOverRanges,
-} from "./mergeTreeOperationRunner";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
-import { validateRefCount } from "./testUtils";
+} from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
+import { validateRefCount } from "./testUtils.js";
 
-const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
-	{
-		initLen: { min: 2, max: 256 },
-		modLen: { min: 1, max: 256 },
-		opsPerRoundRange: { min: 10, max: 10 },
-		rounds: 10,
-		operations: [removeRange],
-		growthFunc: (input: number) => input * 2,
-	};
+const defaultOptions: Record<"initLen" | "modLen", IConfigRange> &
+	IMergeTreeOperationRunnerConfig = {
+	initLen: { min: 2, max: 256 },
+	modLen: { min: 1, max: 256 },
+	opsPerRoundRange: { min: 10, max: 10 },
+	rounds: 10,
+	operations: [removeRange],
+	growthFunc: (input: number) => input * 2,
+};
 
 describe("MergeTree.Client", () => {
 	beforeEach(() => {

@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
 
-import { IValueChanged } from "fluid-framework";
+import { IValueChanged } from "@fluidframework/map/internal";
+import events_pkg from "events_pkg";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
-export interface IDiceRollerController extends EventEmitter {
+export interface IDiceRollerController extends events_pkg.EventEmitter {
 	/**
 	 * Get the dice value as a number.
 	 */
@@ -30,8 +30,8 @@ export interface IDiceRollerController extends EventEmitter {
 const diceValueKey = "diceValue";
 
 export interface DiceRollerControllerProps {
-	get: (key: string) => any;
-	set: (key: string, value: any) => void;
+	get: (key: string) => unknown;
+	set: (key: string, value: unknown) => void;
 	on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
 	off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
 }
@@ -39,12 +39,15 @@ export interface DiceRollerControllerProps {
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRollerController extends EventEmitter implements IDiceRollerController {
+export class DiceRollerController
+	extends events_pkg.EventEmitter
+	implements IDiceRollerController
+{
 	/**
 	 * Initialize a new model for its first use with this controller.
 	 * The model must be initialized before trying to use it in a DiceRollerController instance.
 	 */
-	public static initializeModel(props: DiceRollerControllerProps) {
+	public static initializeModel(props: DiceRollerControllerProps): void {
 		props.set(diceValueKey, 1);
 	}
 
@@ -64,7 +67,7 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
 		});
 	}
 
-	public get value() {
+	public get value(): number {
 		const value = this.props.get(diceValueKey);
 		if (typeof value !== "number") {
 			throw new TypeError(
@@ -74,7 +77,7 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
 		return value;
 	}
 
-	public readonly roll = () => {
+	public readonly roll = (): void => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
 		this.props.set(diceValueKey, rollValue);
 	};

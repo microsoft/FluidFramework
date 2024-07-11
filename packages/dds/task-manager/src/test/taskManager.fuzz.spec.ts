@@ -3,20 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
+
 import {
+	AsyncGenerator as Generator,
+	AsyncReducer as Reducer,
 	combineReducersAsync as combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
-	AsyncGenerator as Generator,
 	makeRandom,
-	AsyncReducer as Reducer,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { TaskManagerFactory } from "../taskManagerFactory";
-import { ITaskManager } from "../interfaces";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
+import { ITaskManager } from "../interfaces.js";
+import { TaskManagerFactory } from "../taskManagerFactory.js";
+
+import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<TaskManagerFactory>;
 
@@ -118,7 +126,8 @@ function makeOperationGenerator(
 		};
 	}
 
-	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
+	const canVolunteer = ({ client }: OpSelectionState): boolean =>
+		client.channel.canVolunteer();
 	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
 		client.channel.queued(taskId);
 	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
@@ -228,7 +237,7 @@ describe("TaskManager fuzz testing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 
@@ -254,7 +263,7 @@ describe("TaskManager fuzz testing", () => {
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: defaultOptions.testCount,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
@@ -269,7 +278,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 
@@ -288,7 +297,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: defaultOptions.testCount,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
 		detachedStartOptions: {
 			numOpsBeforeAttach: 0,

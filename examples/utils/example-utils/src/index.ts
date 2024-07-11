@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+// Provide EventEmitter from example-utils to avoid examples all directly depending on
+// a @fluid-internal package while EventEmitter support is finalized.
+import { EventEmitter } from "@fluid-internal/client-utils";
+export {
+	/**
+	 * @public
+	 */
+	EventEmitter,
+};
+
 export {
 	ContainerViewRuntimeFactory,
 	ViewCallback,
@@ -11,9 +21,9 @@ export {
 } from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
+	IAcceptedMigrationDetails,
 	IImportExportModel,
 	IMigratableModel,
-	IMigratableModelEvents,
 	IMigrationTool,
 	IMigrationToolEvents,
 	IMigrator,
@@ -29,8 +39,7 @@ export type {
 	SameContainerMigrationState,
 } from "./migrationInterfaces/index.js";
 export {
-	MigrationTool,
-	MigrationToolInstantiationFactory,
+	MigrationToolFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
 } from "./migrationTool/index.js";
@@ -50,3 +59,15 @@ export {
 	type IProvideFluidMountableView,
 	MountableView,
 } from "./mountableView/index.js";
+export {
+	CollaborativeInput,
+	CollaborativeTextArea,
+	ICollaborativeInputProps,
+	ICollaborativeInputState,
+	ICollaborativeTextAreaProps,
+} from "./reactInputs/index.js";
+export {
+	ISharedStringHelperEvents,
+	ISharedStringHelperTextChangedEventArgs,
+	SharedStringHelper,
+} from "./SharedStringHelper.js";

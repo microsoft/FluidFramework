@@ -2,14 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, expect } from "chai";
-import { pathExistsSync } from "fs-extra";
-import path from "node:path";
 
-import { flattenChangesets, groupByPackage, loadChangesets } from "../../src/library/changesets";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { assert, expect } from "chai";
+
+import {
+	flattenChangesets,
+	groupByPackage,
+	loadChangesets,
+} from "../../src/library/changesets.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const changesetsPath = path.resolve(__dirname, "../data");
-assert.isTrue(pathExistsSync(changesetsPath));
+assert.isTrue(existsSync(changesetsPath));
 
 describe("changesets", async () => {
 	it("loadChangesets", async () => {

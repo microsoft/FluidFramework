@@ -2,10 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as semver from "semver";
 
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
+	DEFAULT_PRERELEASE_IDENTIFIER,
+	RC_PRERELEASE_IDENTIFER,
 	bumpInternalVersion,
 	detectInternalVersionConstraintType,
 	fromInternalScheme,
@@ -50,8 +53,8 @@ export function bumpRange(
 				bumpType === "current"
 					? originalNoPrerelease
 					: scheme === "virtualPatch"
-					? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
-					: semver.inc(originalNoPrerelease, bumpType);
+						? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
+						: semver.inc(originalNoPrerelease, bumpType);
 			if (newVersion === null) {
 				throw new Error(`Failed to increment ${original}.`);
 			}
@@ -60,6 +63,9 @@ export function bumpRange(
 
 		case "internal": {
 			const constraintType = detectInternalVersionConstraintType(range);
+			if (constraintType === "exact") {
+				throw new Error(`Can't bump exact specification from ${range}`);
+			}
 			const original = semver.minVersion(range);
 			if (original === null) {
 				throw new Error(`Couldn't determine minVersion from ${range}.`);
@@ -96,6 +102,7 @@ export function detectBumpType(
 	if (v2Parsed === null || v2 === null) {
 		throw new Error(`Invalid version: ${v2}`);
 	}
+	const v2Scheme = detectVersionScheme(v2Parsed);
 
 	const v1IsInternal = isInternalVersionScheme(v1, true, true);
 	const v2IsInternal = isInternalVersionScheme(v2, true, true);
@@ -115,15 +122,23 @@ export function detectBumpType(
 		v2PrereleaseId = prereleaseId;
 	}
 
-	if (v1PrereleaseId === "internal" && v2PrereleaseId === "rc") {
+	if (
 		// This is a special case for RC and internal builds. RC builds are always a
 		// major bump compared to an internal build.
+		(v1PrereleaseId === DEFAULT_PRERELEASE_IDENTIFIER &&
+			v2PrereleaseId === RC_PRERELEASE_IDENTIFER) ||
+		// This is a special case for RC and public semver builds. Semver releases with major >= 2
+		// are always major releases compared to RC builds.
+		(v1PrereleaseId === RC_PRERELEASE_IDENTIFER &&
+			v2Scheme === "semver" &&
+			v2Parsed.major >= 2)
+	) {
 		return "major";
 	}
 
 	if (v1PrereleaseId !== v2PrereleaseId) {
 		throw new Error(
-			`v1 prerelease ID: ${v1PrereleaseId} cannot be compared to v2 prerelease ID: ${v2PrereleaseId}`,
+			`v1 prerelease ID: '${v1PrereleaseId}' cannot be compared to v2 prerelease ID: '${v2PrereleaseId}'`,
 		);
 	}
 

@@ -28,6 +28,24 @@ npm i @fluid-tools/api-markdown-documenter -D
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
+<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-tools/api-markdown-documenter` like normal.
+
+To access the `beta` APIs, import via `@fluid-tools/api-markdown-documenter/beta`.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Usage
 
 ### Quick Start
@@ -123,12 +141,20 @@ But this is broken into the following internal sequences:
 graph LR
     A[ApiModel]
     B[Documentation AST]
-    C[Markdown]
+    C[raw Markdown]
+    D[raw HTML]
+    E[HTML AST]
 
-    A -- transformApiModel --> B
-    B -- renderDocumentAsMarkdown --> C
-    A -.- renderApiModelAsMarkdown -.-> C
+    A-->|transformApiModel|B
+    B-->|MarkdownRenderer.renderDocument|C
+    B-->|HtmlRenderer.renderDocument*|D
+    B-->|documentToHtml*|E
+
+    A-.->|MarkdownRenderer.renderApiModel|C
+    A-.->|HtmlRenderer.renderApiModel*|D
 ```
+
+**Note:** APIs above marked with an `*` are in preview, and may change without notice.
 
 For more details on the interior `Documentation AST` ([Abstract Syntax Tree][]) domain, see [Documentation Domain](#documentation-domain) below.
 
@@ -166,6 +192,11 @@ It will accept any `Documentation Domain` tree as input, and transform each node
 If you would like to add rendering support for a custom `Documentation Domain` node type, simply provide a rendering handler associated with that node's `type` value.
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
+
+## ToHtml Transformation
+
+This library now includes preview APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
+The main entry-point for this functionality is `documentToHtml`.
 
 ## HtmlRenderer
 
@@ -243,11 +274,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README? Check out our [GitHub
-Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an
-issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
 

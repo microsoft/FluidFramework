@@ -3,32 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	Serializable,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import {
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
-	type IChannelFactory,
-	type Serializable,
-} from "@fluidframework/datastore-definitions";
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import type {
+	ISummaryTreeWithStats,
+	AttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type AttributionKey,
-	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import {
-	createSingleBlobSummary,
-	type IFluidSerializer,
 	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { CellFactory } from "./cellFactory";
-import {
-	type ISharedCell,
-	type ISharedCellEvents,
-	type ICellLocalOpMetadata,
-	type ICellOptions,
-} from "./interfaces";
+	createSingleBlobSummary,
+} from "@fluidframework/shared-object-base/internal";
+
+import type {
+	ICellLocalOpMetadata,
+	ICellOptions,
+	ISharedCell,
+	ISharedCellEvents,
+} from "./interfaces.js";
 
 /**
  * Description of a cell delta operation
@@ -51,7 +53,6 @@ interface ICellValue {
 	value: unknown;
 	/**
 	 * The attribution key contained in the `Cell`.
-	 * @alpha
 	 */
 	attribution?: AttributionKey;
 }
@@ -60,7 +61,6 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCell}
- * @internal
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,27 +68,6 @@ export class SharedCell<T = any>
 	extends SharedObject<ISharedCellEvents<T>>
 	implements ISharedCell<T>
 {
-	/**
-	 * Create a new `SharedCell`.
-	 *
-	 * @param runtime - The data store runtime to which the `SharedCell` belongs.
-	 * @param id - Unique identifier for the `SharedCell`.
-	 *
-	 * @returns The newly create `SharedCell`. Note that it will not yet be attached.
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell {
-		return runtime.createChannel(id, CellFactory.Type) as SharedCell;
-	}
-
-	/**
-	 * Gets the factory for the `SharedCell` to register with the data store.
-	 *
-	 * @returns A factory that creates and loads `SharedCell`s.
-	 */
-	public static getFactory(): IChannelFactory {
-		return new CellFactory();
-	}
-
 	/**
 	 * The data held by this cell.
 	 */
@@ -199,8 +178,8 @@ export class SharedCell<T = any>
 			this.attribution = message
 				? { type: "op", seq: message.sequenceNumber }
 				: this.isAttached()
-				? { type: "local" }
-				: { type: "detached", id: 0 };
+					? { type: "local" }
+					: { type: "detached", id: 0 };
 		}
 	}
 

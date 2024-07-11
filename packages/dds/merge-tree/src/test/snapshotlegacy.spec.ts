@@ -2,20 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SnapshotLegacy } from "../snapshotlegacy";
+
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
-} from "../attributionPolicy";
-import { TestSerializer } from "./testSerializer";
-import { createClientsAtInitialState } from "./testClientLogger";
-import { TestClient } from "./testClient";
+} from "../attributionPolicy.js";
+import { SnapshotLegacy } from "../snapshotlegacy.js";
+
+import { TestClient } from "./testClient.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
+import { TestSerializer } from "./testSerializer.js";
 
 describe("snapshot", () => {
 	it("header only", async () => {
@@ -145,8 +149,7 @@ describe("snapshot", () => {
 				options: {
 					attribution: {
 						track: true,
-						policyFactory:
-							createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+						policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 					},
 				},
 			},
@@ -158,7 +161,9 @@ describe("snapshot", () => {
 		const applyAllOps = () =>
 			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
 
-		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
+		ops.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
+		);
 
 		applyAllOps();
 
@@ -204,7 +209,9 @@ describe("snapshot", () => {
 		const applyAllOps = () =>
 			ops.splice(0).forEach((op) => clients.all.map((client) => client.applyMsg(op)));
 
-		ops.push(clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1));
+		ops.push(
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "hello world"), /* seq */ 1),
+		);
 
 		applyAllOps();
 

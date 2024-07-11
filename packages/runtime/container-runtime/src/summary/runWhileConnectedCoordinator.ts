@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+
 import {
-	SummarizerStopReason,
 	IConnectableRuntime,
 	ISummaryCancellationToken,
-} from "./summarizerTypes";
+	SummarizerStopReason,
+} from "./summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events
+ * @legacy
  * @alpha
  */
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {

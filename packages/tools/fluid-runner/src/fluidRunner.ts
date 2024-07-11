@@ -3,29 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import * as yargs from "yargs";
-import { exportFile } from "./exportFile";
-import { IFluidFileConverter } from "./codeLoaderBundle";
-import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
+import yargs from "yargs";
 // eslint-disable-next-line import/no-internal-modules
-import { validateAndParseTelemetryOptions } from "./logger/loggerUtils";
-import { validateCommandLineArgs } from "./utils";
+import { hideBin } from "yargs/helpers";
+
+import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import { exportFile } from "./exportFile.js";
+// eslint-disable-next-line import/no-internal-modules
+import { validateAndParseTelemetryOptions } from "./logger/loggerUtils.js";
+import { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
+import { validateCommandLineArgs } from "./utils.js";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  * @internal
  */
-export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-	yargs
-		.strict()
-		.version(false)
+export async function fluidRunner(fluidFileConverter?: IFluidFileConverter): Promise<void> {
+	await yargs(hideBin(process.argv))
 		.command(
 			"exportFile",
 			"Generate an output for a local ODSP snapshot",
-			// eslint-disable-next-line @typescript-eslint/no-shadow
-			(yargs) =>
-				yargs
+			(argv) =>
+				argv
 					.option("codeLoader", {
 						describe:
 							'Path to code loader bundle. Required if this application is being called without modification.\nSee "README.md" for more details.',
@@ -55,8 +54,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 						demandOption: false,
 					})
 					.option("telemetryFormat", {
-						describe:
-							'Output format for telemetry. Current options are: ["JSON", "CSV"]',
+						describe: 'Output format for telemetry. Current options are: ["JSON", "CSV"]',
 						type: "string",
 						demandOption: false,
 						default: "JSON",
@@ -84,7 +82,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 						demandOption: false,
 						default: false,
 					}),
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+
 			async (argv) => {
 				const argsError = validateCommandLineArgs(argv.codeLoader, fluidFileConverter);
 				if (argsError) {
@@ -111,7 +109,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							telemetryOptionsResult.telemetryOptions,
 							argv.timeout,
 							argv.disableNetworkFetch,
-					  )
+						)
 					: exportFile(
 							fluidFileConverter!,
 							argv.inputFile,
@@ -121,7 +119,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							telemetryOptionsResult.telemetryOptions,
 							argv.timeout,
 							argv.disableNetworkFetch,
-					  ));
+						));
 
 				if (!result.success) {
 					console.error(`${result.eventName}: ${result.errorMessage}`);
@@ -131,5 +129,6 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 			},
 		)
 		.help()
-		.demandCommand().argv;
+		.demandCommand(1)
+		.parse();
 }

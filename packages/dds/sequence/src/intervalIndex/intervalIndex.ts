@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializableInterval } from "../intervals";
+import { ISerializableInterval } from "../intervals/index.js";
 
 /**
  * Collection of intervals.
@@ -13,6 +13,7 @@ import { ISerializableInterval } from "../intervals";
  * - "find all intervals with start endpoint between these two points"
  * - "find all intervals which overlap this range"
  * etc.
+ * @legacy
  * @alpha
  */
 export interface IntervalIndex<TInterval extends ISerializableInterval> {

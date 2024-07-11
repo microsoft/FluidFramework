@@ -4,17 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { UnassignedSequenceNumber } from "../constants";
-import { IMergeTreeOp } from "../ops";
-import { TextSegment } from "../textSegment";
-import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
-import { matchProperties, PropertySet } from "../properties";
-import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
-import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes";
-import { IMergeTreeOptions } from "..";
-import { TestClient } from "./testClient";
+
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
+import { UnassignedSequenceNumber } from "../constants.js";
+import { IMergeTreeOptions } from "../index.js";
+import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
+import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
+import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes.js";
+import { IMergeTreeOp } from "../ops.js";
+import { PropertySet, matchProperties } from "../properties.js";
+import { TextSegment } from "../textSegment.js";
+
+import { TestClient } from "./testClient.js";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
 	if (msg === undefined) {
@@ -26,7 +29,7 @@ function getOpString(msg: ISequencedDocumentMessage | undefined) {
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		op?.["pos1"] !== undefined
 			? // eslint-disable-next-line @typescript-eslint/dot-notation
-			  `@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}`
+				`@${op["pos1"]}${op["pos2"] !== undefined ? `,${op["pos2"]}` : ""}`
 			: "";
 
 	const seq =
@@ -60,10 +63,12 @@ export function createClientsAtInitialState<
 	...clientIds: TClientName[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {
 	const setup = (c: TestClient) => {
-		c.insertTextLocal(0, opts.initialState);
-		while (c.getText().includes("-")) {
-			const index = c.getText().indexOf("-");
-			c.removeRangeLocal(index, index + 1);
+		if (opts.initialState.length > 0) {
+			c.insertTextLocal(0, opts.initialState);
+			while (c.getText().includes("-")) {
+				const index = c.getText().indexOf("-");
+				c.removeRangeLocal(index, index + 1);
+			}
 		}
 	};
 	const all: TestClient[] = [];
@@ -143,7 +148,7 @@ export class TestClientLogger {
 								deltaArgs.sequencedMessage !== undefined
 									? { ...deltaArgs.sequencedMessage, contents: deltaArgs.op }
 									: c.makeOpMessage(deltaArgs.op),
-						  );
+							);
 				const segStrings = TestClientLogger.getSegString(c);
 				this.ackedLine[clientLogIndex + 1] = segStrings.acked;
 				this.localLine[clientLogIndex + 1] = segStrings.local;
@@ -254,9 +259,9 @@ export class TestClientLogger {
 								properties[pos + i],
 								`${errorPrefix}\n${this.toString()}\nClient ${
 									c.longClientId
-								} does not match client ${
-									this.clients[0].longClientId
-								} properties at pos ${pos + i}`,
+								} does not match client ${this.clients[0].longClientId} properties at pos ${
+									pos + i
+								}`,
 							);
 						}
 					}
@@ -328,11 +333,7 @@ export class TestClientLogger {
 						}
 						parent = node.parent;
 					}
-					const text = TextSegment.is(node)
-						? node.text
-						: Marker.is(node)
-						? "¶"
-						: undefined;
+					const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
 					if (text !== undefined) {
 						const removedNode = toRemovalInfo(node);
 						if (removedNode !== undefined) {

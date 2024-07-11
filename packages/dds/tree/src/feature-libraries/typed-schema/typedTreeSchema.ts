@@ -3,35 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
+
 import {
-	Adapters,
+	type Adapters,
 	EmptyKey,
-	FieldKey,
-	TreeNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeTypeSet,
-	ValueSchema,
-	TreeStoredSchema,
-	StoredSchemaCollection,
-	MapNodeStoredSchema,
+	type FieldKey,
 	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	type StoredSchemaCollection,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
+	type TreeTypeSet,
+	type ValueSchema,
 } from "../../core/index.js";
 import {
-	MakeNominal,
-	Named,
-	requireAssignableTo,
+	type Assume,
+	type MakeNominal,
+	type Named,
 	compareSets,
-	oneFromSet,
-	Assume,
 	mapIterable,
+	oneFromSet,
+	type requireAssignableTo,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
-import { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
-import { LazyItem } from "./flexList.js";
-import { ObjectToMap, objectToMapTyped } from "./typeUtils.js";
+import type { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
+
+import type { LazyItem } from "./flexList.js";
+import { type ObjectToMap, objectToMapTyped } from "./typeUtils.js";
 
 /**
  * @internal
@@ -48,12 +50,12 @@ export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
 };
 
 /**
- * A placeholder to use in extends constraints when using the real type breaks compilation of some recursive types due to [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ * A placeholder to use in {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints | extends constraints} when using the real type breaks compilation of some recursive types due to {@link https://github.com/microsoft/TypeScript/issues/55758 | a design limitation of TypeScript}.
  *
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
  * Therefore the type safety is the responsibility of the user of the API.
- * @internal
+ * @public
  */
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
@@ -93,7 +95,10 @@ export class FlexMapNodeSchema<
 	}
 
 	protected _typeCheck2?: MakeNominal;
-	public static create<const Name extends string, const Specification extends FlexMapFieldSchema>(
+	public static create<
+		const Name extends string,
+		const Specification extends FlexMapFieldSchema,
+	>(
 		builder: Named<string>,
 		name: TreeNodeSchemaIdentifier<Name>,
 		specification: Specification,
@@ -102,7 +107,7 @@ export class FlexMapNodeSchema<
 			builder,
 			name,
 			specification,
-			new MapNodeStoredSchema(specification),
+			new MapNodeStoredSchema(specification.stored),
 		);
 	}
 
@@ -185,7 +190,8 @@ export class FlexObjectNodeSchema<
 		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, FlexFieldSchema>,
 	) {
-		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
+		const fields = mapIterable(objectNodeFields, ([k, v]) => [k, v.stored] as const);
+		super(builder, name, info, new ObjectNodeStoredSchema(new Map(fields)));
 	}
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
@@ -215,7 +221,7 @@ export class FlexFieldNodeSchema<
 		name: TreeNodeSchemaIdentifier<Name>,
 		info: Specification,
 	) {
-		const objectNodeFields = new Map([[EmptyKey, info as FlexFieldSchema]]);
+		const objectNodeFields = new Map([[EmptyKey, (info as FlexFieldSchema).stored]]);
 		super(builder, name, info, new ObjectNodeStoredSchema(objectNodeFields));
 	}
 
@@ -328,8 +334,7 @@ export type FlexMapFieldSchema = FlexFieldSchema<
 export class FlexFieldSchema<
 	out TKind extends FlexFieldKind = FlexFieldKind,
 	const out TTypes extends Unenforced<FlexAllowedTypes> = FlexAllowedTypes,
-> implements TreeFieldStoredSchema
-{
+> {
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -392,7 +397,8 @@ export class FlexFieldSchema<
 				);
 			}
 		}
-		this.lazyTypes = new Lazy(() => {
+
+		const lazy = new Lazy(() => {
 			const input = this.allowedTypes as unknown as FlexAllowedTypes;
 			const schema = allowedTypesSchemaSet(input);
 			return {
@@ -401,7 +407,18 @@ export class FlexFieldSchema<
 				monomorphicChildType: schema !== Any ? oneFromSet(schema) : undefined,
 			};
 		});
+
+		this.lazyTypes = lazy;
+
+		this.stored = {
+			kind: this.kind.identifier,
+			get types() {
+				return lazy.value.names;
+			},
+		};
 	}
+
+	public readonly stored: TreeFieldStoredSchema;
 
 	/**
 	 * Types which are allowed in this field (by {@link TreeNodeSchemaIdentifier}), in a format optimized for stored schema.
@@ -533,7 +550,7 @@ export interface FlexTreeSchema<out T extends FlexFieldSchema = FlexFieldSchema>
  */
 export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 	return {
-		rootFieldSchema: treeSchema.rootFieldSchema,
+		rootFieldSchema: treeSchema.rootFieldSchema.stored,
 		...intoStoredSchemaCollection(treeSchema),
 	};
 }
@@ -541,7 +558,9 @@ export function intoStoredSchema(treeSchema: FlexTreeSchema): TreeStoredSchema {
 /**
  * Converts a {@link SchemaCollection} into a {@link StoredSchemaCollection}.
  */
-export function intoStoredSchemaCollection(treeSchema: SchemaCollection): StoredSchemaCollection {
+export function intoStoredSchemaCollection(
+	treeSchema: SchemaCollection,
+): StoredSchemaCollection {
 	return {
 		nodeSchema: new Map(
 			mapIterable(treeSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -594,6 +613,8 @@ export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFie
  * Checks if a {@link FlexTreeNodeSchema} is a {@link FlexObjectNodeSchema}.
  * @internal
  */
-export function schemaIsObjectNode(schema: FlexTreeNodeSchema): schema is FlexObjectNodeSchema {
+export function schemaIsObjectNode(
+	schema: FlexTreeNodeSchema,
+): schema is FlexObjectNodeSchema {
 	return schema instanceof FlexObjectNodeSchema;
 }

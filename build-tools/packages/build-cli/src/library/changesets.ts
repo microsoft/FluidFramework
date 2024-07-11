@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
-import path from "node:path";
 
-import { ReleasePackage } from "../releaseGroups";
-import { Repository } from "./git";
+import { ReleasePackage } from "../releaseGroups.js";
+import { Repository } from "./git.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
@@ -88,9 +88,7 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		changesets.push(newChangeset);
 		if (newChangeset.changeTypes.length > 1) {
 			log?.warning(
-				`Changeset ${path.basename(
-					file,
-				)} contains multiple change types. Is this expected?`,
+				`Changeset ${path.basename(file)} contains multiple change types. Is this expected?`,
 			);
 		}
 	}

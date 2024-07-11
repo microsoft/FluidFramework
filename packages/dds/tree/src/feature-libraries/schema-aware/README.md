@@ -6,7 +6,7 @@ TODO:
 
     - Generate the actual APIs we need for use with Tree:
         - Flexible should align with `ContextuallyTypedNodeData`
-        - Normalized should align with `EditableTree`. This will likely require an extra setter on editable fields and on `EditableTree` for extra fields to work around [lacking support for variant accessors for index signatures in TypeScript](https://github.com/microsoft/TypeScript/issues/43826).
+        - Normalized should align with `FlexTree`. This will likely require an extra setter on editable fields and on `FlexTree` for extra fields to work around [lacking support for variant accessors for index signatures in TypeScript](https://github.com/microsoft/TypeScript/issues/43826).
     - Allow use in libraries which don't have full schema information:
         - Make unrestricted field types include an extra type in the union that covers the other cases generically.
     - Support extra map fields.

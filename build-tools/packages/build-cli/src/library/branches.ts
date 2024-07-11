@@ -2,12 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
 
-import { Context } from "@fluidframework/build-tools";
+import { Context } from "./context.js";
 
 import {
+	DEFAULT_PRERELEASE_IDENTIFIER,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionChangeTypeExtended,
@@ -20,8 +22,13 @@ import {
 	toVirtualPatchScheme,
 } from "@fluid-tools/version-tools";
 
-import { ReleaseGroup, ReleasePackage, ReleaseSource, isReleaseGroup } from "../releaseGroups";
-import { DependencyUpdateType } from "./bump";
+import {
+	ReleaseGroup,
+	ReleasePackage,
+	ReleaseSource,
+	isReleaseGroup,
+} from "../releaseGroups.js";
+import { DependencyUpdateType } from "./bump.js";
 
 /**
  * Creates an appropriate branch for a release group and bump type. Does not commit!
@@ -131,7 +138,11 @@ export function generateReleaseBranchName(
 
 	let branchVersion: string;
 	if (schemeIsInternal === true) {
-		branchVersion = fromInternalScheme(version)[1].version;
+		const prereleaseId = fromInternalScheme(version, true)[2];
+		branchVersion =
+			prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER
+				? fromInternalScheme(version)[1].version
+				: version;
 	} else if (scheme === "virtualPatch") {
 		branchVersion = fromVirtualPatchScheme(version).version;
 	} else {
@@ -139,10 +150,12 @@ export function generateReleaseBranchName(
 	}
 
 	if (isReleaseGroup(releaseGroup)) {
-		if (releaseGroup === "client") {
-			if (schemeIsInternal) {
-				branchPath.push("v2int");
-			}
+		if (releaseGroup === "client" && schemeIsInternal) {
+			// Client versions using the internal version scheme
+			const prereleaseId = fromInternalScheme(version, true)[2];
+			// Checking the prerelease ID is necessary because we used "v2int" instead of "internal" in branch names. This
+			// was a bad decision in retrospect, but we're stuck with it for now.
+			branchPath.push(prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup);
 		} else {
 			branchPath.push(releaseGroup);
 		}
@@ -150,12 +163,23 @@ export function generateReleaseBranchName(
 		branchPath.push(PackageName.getUnscopedName(releaseGroup));
 	}
 
-	const releaseBranchVersion =
-		scheme === "virtualPatch"
-			? toVirtualPatchScheme(
-					`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
-			  ).version
-			: `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
+	let releaseBranchVersion: string;
+	if (schemeIsInternal) {
+		const [publicVersion, internalVersion, prereleaseId] = fromInternalScheme(version, true);
+		releaseBranchVersion =
+			prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER
+				? `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`
+				: `${publicVersion.version}-${prereleaseId}.${semver.major(
+						internalVersion,
+					)}.${semver.minor(internalVersion)}`;
+	} else if (scheme === "virtualPatch") {
+		releaseBranchVersion = toVirtualPatchScheme(
+			`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+		).version;
+	} else {
+		releaseBranchVersion = `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
+	}
+
 	branchPath.push(releaseBranchVersion);
 
 	const releaseBranch = branchPath.join("/");
@@ -210,8 +234,8 @@ export function generateBumpDepsCommitMessage(
 		bumpedDep === "prerelease"
 			? "released prerelease packages"
 			: isReleaseGroup(bumpedDep)
-			? `${bumpedDep} release group`
-			: PackageName.getUnscopedName(bumpedDep);
+				? `${bumpedDep} release group`
+				: PackageName.getUnscopedName(bumpedDep);
 
 	const releaseGroupSegment = isReleaseGroup(releaseGroup)
 		? ` in the ${releaseGroup} release group`

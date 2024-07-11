@@ -2,22 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
-	timeoutPromise,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
-import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+	timeoutPromise,
+} from "@fluidframework/test-utils/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;
@@ -30,9 +31,9 @@ const sharedPoints = [3, 4, 5];
 const ddsKey = "string";
 
 const testConfigs = generatePairwiseOptions({
-	containerAttachPoint: [ContainerCreated, DatastoreCreated, ...sharedPoints],
+	containerAttachPoint: [ContainerCreated, DatastoreCreated, DdsCreated, ...sharedPoints],
 	containerSaveAfterAttach: [true, false],
-	datastoreAttachPoint: [DatastoreCreated, ...sharedPoints],
+	datastoreAttachPoint: [DatastoreCreated, DdsCreated, ...sharedPoints],
 	datastoreSaveAfterAttach: [true, false],
 	ddsAttachPoint: [DdsCreated, ...sharedPoints],
 	ddsSaveAfterAttach: [true, false],
@@ -96,13 +97,10 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 						initContainer.isDirty &&
 						initContainer.attachState !== AttachState.Detached
 					) {
-						await timeoutPromise(
-							(resolve) => initContainer.once("saved", () => resolve()),
-							{
-								durationMs: timeoutDurationMs,
-								errorMsg: "datastoreSaveAfterAttach timeout",
-							},
-						);
+						await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+							durationMs: timeoutDurationMs,
+							errorMsg: "datastoreSaveAfterAttach timeout",
+						});
 					}
 				};
 				if (testConfig.datastoreAttachPoint === DatastoreCreated) {
@@ -122,18 +120,20 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 						initContainer.isDirty &&
 						initContainer.attachState !== AttachState.Detached
 					) {
-						await timeoutPromise(
-							(resolve) => initContainer.once("saved", () => resolve()),
-							{
-								durationMs: timeoutDurationMs,
-								errorMsg: "ddsSaveAfterAttach timeout",
-							},
-						);
+						await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+							durationMs: timeoutDurationMs,
+							errorMsg: "ddsSaveAfterAttach timeout",
+						});
 					}
 				};
-				if (testConfig.ddsAttachPoint === 2) {
-					// point 2 - at dds create
+				if (testConfig.ddsAttachPoint === DdsCreated) {
 					await attachDds();
+				}
+				if (testConfig.datastoreAttachPoint === DdsCreated) {
+					await attachDatastore();
+				}
+				if (testConfig.containerAttachPoint === DdsCreated) {
+					await attachContainer();
 				}
 
 				// all objects, container, datastore, and dds are created, at least in memory at this point
@@ -155,17 +155,17 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 				}
 
 				while (initContainer.attachState !== AttachState.Attached) {
-					await timeoutPromise(
-						(resolve) => initContainer.once("attached", () => resolve()),
-						{ durationMs: timeoutDurationMs, errorMsg: "container attach timeout" },
-					);
+					await timeoutPromise((resolve) => initContainer.once("attached", () => resolve()), {
+						durationMs: timeoutDurationMs,
+						errorMsg: "container attach timeout",
+					});
 				}
 
 				while (initContainer.isDirty) {
-					await timeoutPromise(
-						(resolve) => initContainer.once("saved", () => resolve()),
-						{ durationMs: timeoutDurationMs, errorMsg: "final save timeout" },
-					);
+					await timeoutPromise((resolve) => initContainer.once("saved", () => resolve()), {
+						durationMs: timeoutDurationMs,
+						errorMsg: "final save timeout",
+					});
 				}
 				containerUrl = initContainer.resolvedUrl;
 
@@ -176,10 +176,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 			{
 				const validationLoader = provider.makeTestLoader(containerConfig);
 				const validationContainer = await validationLoader.resolve({
-					url: await provider.driver.createContainerUrl(
-						provider.documentId,
-						containerUrl,
-					),
+					url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
 				});
 
 				const initDataObject =
@@ -242,7 +239,11 @@ async function waitChar(
 	);
 }
 
-async function waitKey<T>(map: ISharedMap, key: string, timeoutDurationMs: number): Promise<T> {
+async function waitKey<T>(
+	map: ISharedMap,
+	key: string,
+	timeoutDurationMs: number,
+): Promise<T> {
 	return timeoutPromise<T>(
 		(resolve) => {
 			if (map.has(key)) {

@@ -12,12 +12,14 @@ export {
 } from "./factory.js";
 export {
 	CacheContentType,
+	maximumCacheDurationMs,
 	getKeyForCacheEntry,
 	ICacheEntry,
 	IEntry,
 	IFileEntry,
 	IPersistedCache,
 	snapshotKey,
+	snapshotWithLoadingGroupIdKey,
 } from "./odspCache.js";
 export {
 	IOdspResolvedUrl,
@@ -31,10 +33,12 @@ export {
 export {
 	IdentityType,
 	InstrumentedStorageTokenFetcher,
+	InstrumentedTokenFetcher,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 	TokenFetchOptions,
+	authHeaderFromTokenResponse,
 	tokenFromResponse,
 	TokenResponse,
 } from "./tokenFetch.js";

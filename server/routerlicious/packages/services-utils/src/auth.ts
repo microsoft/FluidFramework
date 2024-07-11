@@ -347,7 +347,13 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		const claims = decode(token) as ITokenClaims;
+		let claims: ITokenClaims;
+		try {
+			claims = decode(token) as ITokenClaims;
+		} catch {
+			return respondWithNetworkError(response, new NetworkError(401, "Invalid token."));
+		}
+
 		if (!claims) {
 			return respondWithNetworkError(
 				response,

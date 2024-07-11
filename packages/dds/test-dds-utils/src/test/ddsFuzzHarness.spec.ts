@@ -2,42 +2,50 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "node:assert";
-import fs from "node:fs";
-import path from "node:path";
 
-import execa from "execa";
+import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
-import {
+} from "@fluidframework/test-runtime-utils/internal";
+import execa from "execa";
+
+import { type Client, hasStashData } from "../clientLoading.js";
+import type {
 	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
-	defaultDDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-	DDSFuzzSuiteOptions,
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+	Synchronize,
+	TriggerRebase,
+} from "../ddsFuzzHarness.js";
+import {
+	defaultDDSFuzzSuiteOptions,
+	mixinAttach,
 	mixinClientSelection,
 	mixinNewClient,
+	mixinRebase,
 	mixinReconnect,
+	mixinStashedClient,
 	mixinSynchronization,
 	runTestForSeed,
-	Synchronize,
-	DDSFuzzHarnessEvents,
-	mixinRebase,
-	TriggerRebase,
-	mixinAttach,
-	mixinStashedClient,
-} from "../ddsFuzzHarness";
-import { hasStashData, type Client } from "../clientLoading";
-import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing";
+} from "../ddsFuzzHarness.js";
+
+import { _dirname } from "./dirname.cjs";
+import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
+import { baseModel, isNoopOp } from "./sharedNothing.js";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
@@ -191,8 +199,7 @@ describe("DDS Fuzz Harness", () => {
 				);
 				await runTestForSeed(model, options, 0);
 				assert.equal(
-					generatedOperations.filter((op) => op !== done && op.type === "synchronize")
-						.length,
+					generatedOperations.filter((op) => op !== done && op.type === "synchronize").length,
 					2,
 				);
 				assert.deepEqual(generatedOperations[2], synchronize);
@@ -240,7 +247,7 @@ describe("DDS Fuzz Harness", () => {
 						...baseModel,
 						generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
 						validateConsistency: (a, b) => {
-							perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+							perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 						},
 					},
 					options,
@@ -284,7 +291,7 @@ describe("DDS Fuzz Harness", () => {
 									takeAsync(1, baseModel.generatorFactory()),
 								),
 							validateConsistency: (a, b) => {
-								perPairCallCounts.increment(`${a.id} vs ${b.id}`);
+								perPairCallCounts.increment(`${a.channel.id} vs ${b.channel.id}`);
 							},
 						},
 						options,
@@ -867,7 +874,7 @@ describe("DDS Fuzz Harness", () => {
 					"--silent",
 					"--",
 					"--reporter=json",
-					path.join(__dirname, `./ddsSuiteCases/${name}.js`),
+					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
@@ -909,10 +916,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[
-						"workload: 2: .only via options seed: 4",
-						"workload: 2: .only via options seed: 7",
-					],
+					["workload: 2: .only via options seed: 4", "workload: 2: .only via options seed: 7"],
 				);
 			});
 
@@ -951,9 +955,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map(
-						(i) => `workload: 1: .skip via function seed: ${i}`,
-					),
+					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `workload: 1: .skip via function seed: ${i}`),
 				);
 			});
 
@@ -963,9 +965,7 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map(
-						(i) => `workload: 2: .skip via options seed: ${i}`,
-					),
+					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `workload: 2: .skip via options seed: ${i}`),
 				);
 			});
 
@@ -991,7 +991,7 @@ describe("DDS Fuzz Harness", () => {
 
 		describe("failure", () => {
 			let runResults: MochaReport;
-			const jsonDir = path.join(__dirname, "./ddsSuiteCases/failing-configuration");
+			const jsonDir = path.join(_dirname, "./ddsSuiteCases/failing-configuration");
 			before(async function () {
 				this.timeout(5000);
 				fs.rmSync(jsonDir, { force: true, recursive: true });
@@ -1008,9 +1008,7 @@ describe("DDS Fuzz Harness", () => {
 					],
 				);
 				assert(
-					runResults.failures.every((test) =>
-						test.err.message.includes("Injected failure"),
-					),
+					runResults.failures.every((test) => test.err.message.includes("Injected failure")),
 				);
 			});
 

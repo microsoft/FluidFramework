@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type, TSchema, TAnySchema } from "@sinclair/typebox";
+import { type Static, type TAnySchema, type TSchema, Type } from "@sinclair/typebox";
+
+// Many of the return types in this module are intentionally derived, rather than explicitly specified.
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 /**
  * Note: TS doesn't easily support extracting a generic function's return type until 4.7:
@@ -23,7 +26,7 @@ class Wrapper<T extends TSchema> {
 
 export const EncodedGenericChange = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,
-) => Type.Tuple([Type.Number({ minimum: 0 }), tNodeChangeset]);
+) => Type.Tuple([Type.Number({ minimum: 0, multipleOf: 1 }), tNodeChangeset]);
 
 export type EncodedGenericChange<Schema extends TSchema = TAnySchema> = Static<
 	ReturnType<Wrapper<Schema>["encodedGenericChange"]>
@@ -36,3 +39,5 @@ export const EncodedGenericChangeset = <NodeChangesetSchema extends TSchema>(
 export type EncodedGenericChangeset<Schema extends TSchema = TAnySchema> = Static<
 	ReturnType<Wrapper<Schema>["encodedGenericChangeset"]>
 >;
+
+/* eslint-enable @typescript-eslint/explicit-function-return-type */

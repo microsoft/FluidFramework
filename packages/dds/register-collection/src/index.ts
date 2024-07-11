@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { ConsensusRegisterCollection } from "./consensusRegisterCollection";
-export { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
+export { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
+export {
+	ConsensusRegisterCollectionFactory,
+	ConsensusRegisterCollection,
+} from "./consensusRegisterCollectionFactory.js";
 export {
 	IConsensusRegisterCollection,
 	IConsensusRegisterCollectionEvents,
 	IConsensusRegisterCollectionFactory,
 	ReadPolicy,
-} from "./interfaces";
+} from "./interfaces.js";

@@ -5,20 +5,21 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { assert } from "@fluidframework/core-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { IdCompressor } from "../idCompressor.js";
 import {
 	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
 	OpSpaceCompressedId,
-	SessionSpaceCompressedId,
+	SerializedIdCompressorWithNoSession,
 	SessionId,
+	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
-import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon";
+} from "../index.js";
+import { createSessionId } from "../utilities.js";
+
 import {
 	Client,
 	DestinationClient,
@@ -27,7 +28,14 @@ import {
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
-} from "./idCompressorTestUtilities";
+} from "./idCompressorTestUtilities.js";
+import {
+	FinalCompressedId,
+	LocalCompressedId,
+	fail,
+	isFinalId,
+	isLocalId,
+} from "./testCommon.js";
 
 const initialClusterCapacity = 512;
 
@@ -151,6 +159,7 @@ describe("IdCompressor Perf", () => {
 						firstGenCount,
 						count: numIds,
 						requestedClusterSize: initialClusterCapacity,
+						localIdRanges: [], // no need to populate, as session is remote and compressor would ignore in production
 					},
 				};
 
@@ -295,11 +304,7 @@ describe("IdCompressor Perf", () => {
 			} client into a stable ID`,
 			before: () => {
 				const network = setupCompressors(initialClusterCapacity, true, true);
-				finalIdToDecompress = getIdMadeBy(
-					local ? localClient : remoteClient,
-					true,
-					network,
-				);
+				finalIdToDecompress = getIdMadeBy(local ? localClient : remoteClient, true, network);
 			},
 			benchmarkFn: () => {
 				perfCompressor!.decompress(finalIdToDecompress);
@@ -340,9 +345,7 @@ describe("IdCompressor Perf", () => {
 	benchmarkWithFlag((manySessions) => {
 		benchmark({
 			type,
-			title: `serialize an IdCompressor (${
-				manySessions ? "many sessions" : "many clusters"
-			})`,
+			title: `serialize an IdCompressor (${manySessions ? "many sessions" : "many clusters"})`,
 			before: () => {
 				if (manySessions) {
 					perfCompressor = buildHugeCompressor(undefined, initialClusterCapacity);

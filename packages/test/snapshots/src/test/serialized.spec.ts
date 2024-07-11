@@ -5,25 +5,33 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { Loader } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-	TestFluidObject,
-	LoaderContainerTracker,
-} from "@fluidframework/test-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedCounter } from "@fluidframework/counter";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
+import { SharedCell, ISharedCell } from "@fluidframework/cell/internal";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
+import { type ISharedMap, SharedMap, SharedDirectory } from "@fluidframework/map/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import {
+	ConsensusOrderedCollection,
+	ConsensusQueue,
+} from "@fluidframework/ordered-collection/internal";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils/internal";
+
+import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
@@ -58,12 +66,12 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
 				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+			const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 			const sharedCounter =
 				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 			const crc =
@@ -100,12 +108,12 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
 				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
-			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+			const sharedCell = await defaultDataStore.getSharedObject<ISharedCell>(sharedCellId);
 			const sharedCounter =
 				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
 			const crc =

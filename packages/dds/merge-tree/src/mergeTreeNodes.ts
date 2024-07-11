@@ -5,24 +5,34 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { IAttributionCollection } from "./attributionCollection";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferenceCollection } from "./localReference";
-import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
-import { TrackingGroupCollection } from "./mergeTreeTracking";
-import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
-import { computeHierarchicalOrdinal } from "./ordinal";
-import { PartialSequenceLengths } from "./partialLengths";
+import { assert } from "@fluidframework/core-utils/internal";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
+import { IAttributionCollection } from "./attributionCollection.js";
+import {
+	LocalClientId,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+} from "./constants.js";
+import { LocalReferenceCollection } from "./localReference.js";
+import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
+import { TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { computeHierarchicalOrdinal } from "./ordinal.js";
+import type { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { clone, createMap, MapLike, PropertySet } from "./properties";
-import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions";
-import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
+import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
+import {
+	ReferencePosition,
+	refGetTileLabels,
+	refTypeIncludesFlag,
+} from "./referencePositions.js";
+import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
 
 /**
  * Common properties for a node in a merge tree.
+ * @legacy
  * @alpha
  */
 export interface IMergeNodeCommon {
@@ -41,55 +51,12 @@ export interface IMergeNodeCommon {
  * someday we may split tree leaves from segments, but for now they are the same
  * this is just a convenience type that makes it clear that we need something that is both a segment and a leaf node
  */
-export type ISegmentLeaf = ISegment & { parent?: IMergeBlock };
-export type IMergeNode = IMergeBlock | ISegmentLeaf;
-/**
- * Internal (i.e. non-leaf) node in a merge tree.
- * @internal
- */
-export interface IMergeBlock extends IMergeNodeCommon {
-	parent?: IMergeBlock;
-
-	needsScour?: boolean;
-	/**
-	 * Number of direct children of this node
-	 */
-	childCount: number;
-	/**
-	 * Array of child nodes.
-	 *
-	 * @remarks To avoid reallocation, this is always initialized to have maximum length as deemed by
-	 * the merge tree's branching factor. Use `childCount` to determine how many children this node actually has.
-	 */
-	children: IMergeNode[];
-	/**
-	 * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
-	 * (clientId, seq) within the collab window.
-	 *
-	 * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
-	 * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
-	 * objects are always defined.
-	 */
-	partialLengths?: PartialSequenceLengths;
-	/**
-	 * The length of the contents of the node.
-	 */
-	cachedLength: number | undefined;
-	hierBlock(): IHierBlock | undefined;
-	assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-	setOrdinal(child: IMergeNode, index: number): void;
-}
-
-/**
- * @internal
- */
-export interface IHierBlock extends IMergeBlock {
-	rightmostTiles: MapLike<ReferencePosition>;
-	leftmostTiles: MapLike<ReferencePosition>;
-}
+export type ISegmentLeaf = ISegment & { parent?: MergeBlock };
+export type IMergeNode = MergeBlock | ISegmentLeaf;
 
 /**
  * Contains removal information associated to an {@link ISegment}.
+ * @legacy
  * @alpha
  */
 export interface IRemovalInfo {
@@ -113,7 +80,9 @@ export interface IRemovalInfo {
 /**
  * @internal
  */
-export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
+export function toRemovalInfo(
+	maybe: Partial<IRemovalInfo> | undefined,
+): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
 		return maybe as IRemovalInfo;
 	}
@@ -129,6 +98,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
+ * @legacy
  * @alpha
  */
 export interface IMoveInfo {
@@ -205,6 +175,7 @@ export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | u
 /**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
+ * @legacy
  * @alpha
  */
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
@@ -323,6 +294,7 @@ export interface IMarkerModifiedAction {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ISegmentAction<TClientData> {
@@ -350,7 +322,7 @@ export interface ISegmentChanges {
 export interface BlockAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		block: IMergeBlock,
+		block: MergeBlock,
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -366,7 +338,7 @@ export interface BlockAction<TClientData> {
 export interface NodeAction<TClientData> {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		node: IMergeNode,
+		node: MergeNode,
 		pos: number,
 		refSeq: number,
 		clientId: number,
@@ -382,7 +354,7 @@ export interface NodeAction<TClientData> {
 export interface InsertContext {
 	candidateSegment?: ISegment;
 	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
-	continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
+	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
 
 /**
@@ -398,6 +370,7 @@ export interface SegmentActions<TClientData> {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export interface SegmentGroup {
@@ -408,7 +381,9 @@ export interface SegmentGroup {
 }
 
 /**
+ * @legacy
  * @alpha
+ * @deprecated - unused and will be removed
  */
 export class MergeNode implements IMergeNodeCommon {
 	index: number = 0;
@@ -431,16 +406,47 @@ export const MaxNodesInBlock = 8;
 /**
  * @internal
  */
-export class MergeBlock extends MergeNode implements IMergeBlock {
-	parent?: IMergeBlock;
+export class MergeBlock implements IMergeNodeCommon {
 	public children: IMergeNode[];
-	public constructor(public childCount: number) {
-		super();
-		this.children = new Array<IMergeNode>(MaxNodesInBlock);
+	public needsScour?: boolean;
+	public parent?: MergeBlock;
+	public index: number = 0;
+	public ordinal: string = "";
+	public cachedLength: number | undefined = 0;
+
+	/**
+	 * Maps each tile label in this block to the rightmost (i.e. furthest) marker associated with that tile label.
+	 * When combined with the tree structure of MergeBlocks, this allows accelerated queries for nearest tile
+	 * with a certain label before a given position
+	 */
+	public rightmostTiles: Readonly<MapLike<Marker>>;
+	/**
+	 * Maps each tile label in this block to the leftmost (i.e. nearest) marker associated with that tile label.
+	 * When combined with the tree structure of MergeBlocks, this allows accelerated queries for nearest tile
+	 * with a certain label before a given position
+	 */
+	public leftmostTiles: Readonly<MapLike<Marker>>;
+
+	isLeaf(): this is ISegment {
+		return false;
 	}
 
-	public hierBlock(): IHierBlock | undefined {
-		return undefined;
+	/**
+	 * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
+	 * (clientId, seq) within the collab window.
+	 *
+	 * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
+	 * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
+	 * objects are always defined.
+	 */
+	partialLengths?: PartialSequenceLengths;
+
+	public constructor(public childCount: number) {
+		this.children = new Array<IMergeNode>(MaxNodesInBlock);
+		// eslint-disable-next-line import/no-deprecated
+		this.rightmostTiles = createMap<Marker>();
+		// eslint-disable-next-line import/no-deprecated
+		this.leftmostTiles = createMap<Marker>();
 	}
 
 	public setOrdinal(child: IMergeNode, index: number) {
@@ -472,9 +478,10 @@ export function seqLTE(seq: number, minOrRefSeq: number) {
 }
 
 /**
+ * @legacy
  * @alpha
  */
-export abstract class BaseSegment extends MergeNode implements ISegment {
+export abstract class BaseSegment implements ISegment {
 	public clientId: number = LocalClientId;
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;
@@ -483,8 +490,14 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public movedSeqs?: number[];
 	public movedClientIds?: number[];
 	public wasMovedOnInsert?: boolean | undefined;
+	public index: number = 0;
+	public ordinal: string = "";
+	public cachedLength: number = 0;
+
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
-	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
+	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(
+		this,
+	);
 	/***/
 	public attribution?: IAttributionCollection<AttributionKey>;
 	public propertyManager?: PropertiesManager;
@@ -543,7 +556,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	protected addSerializedProps(jseg: IJSONSegment) {
 		if (this.properties) {
-			jseg.props = this.properties;
+			jseg.props = { ...this.properties };
 		}
 	}
 
@@ -576,10 +589,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 			case MergeTreeDeltaType.REMOVE:
 				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
-				assert(
-					removalInfo !== undefined,
-					0x046 /* "On remove ack, missing removal info!" */,
-				);
+				assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
 				this.localRemovedSeq = undefined;
 				if (removalInfo.removedSeq === UnassignedSequenceNumber) {
 					removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
@@ -695,15 +705,18 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
  *
  * @remarks In general, marker ids should be accessed using the inherent method
  * {@link Marker.getId}. Marker ids should not be updated after creation.
- * @internal
+ * @legacy
+ * @alpha
  */
 export const reservedMarkerIdKey = "markerId";
+
 /**
  * @internal
  */
 export const reservedMarkerSimpleTypeKey = "markerSimpleType";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONMarkerSegment extends IJSONSegment {
@@ -719,6 +732,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
  * start of a paragraph to the end, assuming a paragraph is bound by markers at
  * the start and end.
  *
+ * @legacy
  * @alpha
  */
 export class Marker extends BaseSegment implements ReferencePosition, ISegment {
@@ -795,6 +809,7 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export class CollaborationWindow {

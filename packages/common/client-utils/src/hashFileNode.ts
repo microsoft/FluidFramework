@@ -5,7 +5,8 @@
 
 import { sha1, sha256 } from "sha.js";
 
-import type { IsoBuffer } from "./bufferNode";
+// Note: See 'Isomorphic Code' section in the package README.md
+import type { IsoBuffer } from "./bufferNode.js";
 
 /**
  * Hash a file. Consistent within a session, but should not be persisted and

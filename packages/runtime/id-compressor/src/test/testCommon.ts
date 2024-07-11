@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { SessionSpaceCompressedId, StableId, OpSpaceCompressedId } from "../";
-import { numericUuidFromStableId, offsetNumericUuid, stableIdFromNumericUuid } from "../utilities";
-import { IdCompressor } from "../idCompressor";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { IdCompressor } from "../idCompressor.js";
+import { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
+import {
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+} from "../utilities.js";
 
 /**
  * An identifier (v4 UUID) that has been shortened by a distributed compression algorithm.
  * Lacks a space (session/op), meaning its scope is the same as the space-specific ID from which it was derived.
- * @alpha
  */
 export type CompressedId =
 	| SessionSpaceCompressedId
@@ -22,7 +26,6 @@ export type CompressedId =
 /**
  * A compressed ID that is stable and unique within the scope of network of compressors (i.e. a document).
  * It can only be used/decompressed in the context of the originating document.
- * @alpha
  */
 export type FinalCompressedId = number & {
 	readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
@@ -35,7 +38,6 @@ export type FinalCompressedId = number & {
  * A compressed ID that is local to a session (can only be decompressed when paired with a SessionId).
  * Internally, it should not be persisted outside a scope annotated with the originating SessionId in order to be unambiguous.
  * If external persistence is needed (e.g. by a client), a StableId should be used instead.
- * @alpha
  */
 export type LocalCompressedId = number & {
 	readonly LocalCompressedId: "6fccb42f-e2a4-4243-bd29-f13d12b9c6d1";

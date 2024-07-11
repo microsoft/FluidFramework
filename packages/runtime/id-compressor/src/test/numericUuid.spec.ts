@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { StableId } from "../";
+
+import { StableId } from "../index.js";
+import { readNumericUuid, writeNumericUuid } from "../persistanceUtilities.js";
 import {
 	addNumericUuids,
 	assertIsSessionId,
@@ -12,8 +14,7 @@ import {
 	offsetNumericUuid,
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
-} from "../utilities";
-import { readNumericUuid, writeNumericUuid } from "../persistanceUtilities";
+} from "../utilities.js";
 
 describe("NumericUuid", () => {
 	it("can roundtrip a uuid string", () => {
@@ -22,7 +23,9 @@ describe("NumericUuid", () => {
 	});
 
 	it("can add to a uuid", () => {
-		const numeric = numericUuidFromStableId("00000000-0000-4000-8000-000000000000" as StableId);
+		const numeric = numericUuidFromStableId(
+			"00000000-0000-4000-8000-000000000000" as StableId,
+		);
 		assert.equal(
 			stableIdFromNumericUuid(offsetNumericUuid(numeric, 1)),
 			"00000000-0000-4000-8000-000000000001",
@@ -30,7 +33,9 @@ describe("NumericUuid", () => {
 	});
 
 	it("can add to a uuid that would spill over the version and variant bits", () => {
-		const numeric = numericUuidFromStableId("e507602d-b150-4fcc-bfff-ffffffffffff" as StableId);
+		const numeric = numericUuidFromStableId(
+			"e507602d-b150-4fcc-bfff-ffffffffffff" as StableId,
+		);
 		const uuidString = stableIdFromNumericUuid(offsetNumericUuid(numeric, 1));
 		assertIsSessionId(uuidString);
 		assert.equal(uuidString, "e507602d-b150-4fcd-8000-000000000000");

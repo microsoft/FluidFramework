@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AppendOnlySortedMap } from "./appendOnlySortedMap";
-import { LocalCompressedId } from "./identifiers";
-import { compareFiniteNumbers, genCountFromLocalId } from "./utilities";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { AppendOnlySortedMap } from "./appendOnlySortedMap.js";
+import { LocalCompressedId } from "./identifiers.js";
+import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
 
 /**
  * The `SessionSpaceNormalizer` tracks the form of the IDs created by the local session.
@@ -42,10 +44,83 @@ import { compareFiniteNumbers, genCountFromLocalId } from "./utilities";
 export class SessionSpaceNormalizer {
 	// Run-length encoding of IDs that were generated as local IDs. They are stored as a list of tuples (genCount, count)
 	// that are sorted on the genCount so that contains checks can use a binary search.
-	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(compareFiniteNumbers);
+	private readonly localIdRanges = new AppendOnlySortedMap<number, number>(
+		compareFiniteNumbers,
+	);
 
 	public get idRanges(): Pick<AppendOnlySortedMap<number, number>, "size" | "entries"> {
 		return this.localIdRanges;
+	}
+
+	public getRangesBetween(
+		firstGenCount: number,
+		lastGenCount: number,
+	): [genCount: number, count: number][] {
+		const ranges: [genCount: number, count: number][] = [];
+		// we need to find the first range that either contains firstGenCount or is after it,
+		// since this method must find ranges between firstGenCount and lastGenCount
+		let firstRange = this.localIdRanges.getPairOrNextLower(firstGenCount);
+		// if the first range does not contain the first ID, next higher range is between but non-containing
+		if (firstRange === undefined || !this.rangeContains(firstRange, firstGenCount)) {
+			firstRange = this.localIdRanges.getPairOrNextHigher(firstGenCount);
+			if (firstRange === undefined) {
+				return ranges;
+			}
+		}
+
+		for (const [genCount, count] of this.localIdRanges.getRange(firstRange[0], lastGenCount)) {
+			ranges.push([genCount, count]);
+		}
+
+		if (ranges.length === 0) {
+			return ranges;
+		}
+		assert(
+			ranges[0] !== undefined,
+			"ranges[0] is undefined in SessionSpaceNormalizer.getRangesBetween",
+		);
+
+		// now we touch up the first and last ranges to ensure that if they contain the
+		// queried IDs they are trimmed to start/end with the queried IDs
+		const [baseGenCount, baseCount] = ranges[0];
+		if (this.rangeContains(ranges[0], firstGenCount)) {
+			ranges[0] = [firstGenCount, baseCount - (firstGenCount - baseGenCount)];
+			assert(
+				this.rangeContains(ranges[0], firstGenCount),
+				0x952 /* Expected the touched up range to contain the queried ID */,
+			);
+		} else {
+			assert(
+				baseGenCount > firstGenCount,
+				0x953 /* Expected the first range to start after the queried ID */,
+			);
+		}
+
+		const lastRangeIndex = ranges.length - 1;
+		const lastRange = ranges[lastRangeIndex];
+		assert(
+			lastRange !== undefined,
+			"lastRange is undefined in SessionSpaceNormalizer.getRangesBetween",
+		);
+		const [limitGenCount, limitCount] = lastRange;
+		if (this.rangeContains(lastRange, lastGenCount)) {
+			ranges[lastRangeIndex] = [limitGenCount, lastGenCount - limitGenCount + 1];
+			assert(
+				this.rangeContains(lastRange, lastGenCount),
+				0x954 /* Expected the touched up range to contain the queried ID */,
+			);
+		} else {
+			assert(
+				limitGenCount + limitCount - 1 < lastGenCount,
+				0x955 /* Expected the last range to end before the queried ID */,
+			);
+		}
+		return ranges;
+	}
+
+	private rangeContains(range: readonly [number, number], genCount: number): boolean {
+		const [baseGenCount, count] = range;
+		return genCount >= baseGenCount && genCount < baseGenCount + count;
 	}
 
 	public addLocalRange(baseGenCount: number, count: number): void {

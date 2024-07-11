@@ -6,89 +6,80 @@
 import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
-import {
-	type ITree,
-	type TreeView,
-	SharedTree,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
-import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import {
+	type ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
-const newSharedTreeFactory = SharedTree.getFactory();
-const builder = new SchemaFactory("test");
-// For now this is the schema of the view.root
-class HandleType extends builder.object("handleObj", {
-	handle: builder.optional(builder.handle),
-}) {}
+describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
-function getNewTreeView(tree: ITree): TreeView<HandleType> {
-	return tree.schematize(
-		new TreeConfiguration(HandleType, () => ({
-			handle: undefined,
-		})),
-	);
-}
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
+	const newSharedTreeFactory = SharedTree.getFactory();
+	const builder = new SchemaFactory("test");
+	// For now this is the schema of the view.root
+	class HandleType extends builder.object("handleObj", {
+		handle: builder.optional(builder.handle),
+	}) {}
 
-	public get _root() {
-		return this.root;
+	const handleTreeConfig = new TreeViewConfiguration({ schema: HandleType });
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		public get containerRuntime(): ContainerRuntime {
+			return this.context.containerRuntime as ContainerRuntime;
+		}
+
+		public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
+			const buffer = stringToBuffer(content, "utf8");
+			return this.runtime.uploadBlob(buffer);
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const tree = this.runtime.createChannel("tree", newSharedTreeFactory.type);
+
+			this.root.set("tree", tree.handle);
+			this.channel = tree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			// TODO: handle tests
+			const tree = await this.runtime.getChannel("tree");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
 	}
 
-	public get containerRuntime(): ContainerRuntime {
-		return this.context.containerRuntime as ContainerRuntime;
+	class ChildDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
 	}
 
-	public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
-		const buffer = stringToBuffer(content, "utf8");
-		return this.runtime.uploadBlob(buffer);
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const tree = this.runtime.createChannel("tree", newSharedTreeFactory.type);
-
-		this.root.set("tree", tree.handle);
-		this.channel = tree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
-}
-
-class ChildDataObject extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-}
-
-describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -96,7 +87,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
@@ -128,7 +119,9 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<SharedTreeShim>();
 		const tree1 = shim1.currentTree;
-		const node1 = getNewTreeView(tree1).root;
+		const view1 = tree1.viewWith(handleTreeConfig);
+		view1.initialize({ handle: undefined });
+		const node1 = view1.root;
 
 		const childObject1 = await childObjectFactory.createInstance(testObj1.containerRuntime);
 		node1.handle = childObject1.handle;
@@ -145,7 +138,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const tree2 = shim2.currentTree;
-		const node2 = getNewTreeView(tree2).root;
+		const node2 = tree2.viewWith(handleTreeConfig).root;
 
 		const handle1 = node1.handle;
 		const handle2 = node2.handle;

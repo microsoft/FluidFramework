@@ -4,16 +4,17 @@
  */
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	BlobCore,
-	codeToBytesMap,
-	getValueSafely,
 	MarkerCodes,
 	MarkerCodesEnd,
 	MarkerCodesStart,
 	NodeCore,
-} from "./zipItDataRepresentationUtils";
+	codeToBytesMap,
+	getValueSafely,
+} from "./zipItDataRepresentationUtils.js";
 
 /**
  * Buffer class, used to sequentially writ data.
@@ -31,7 +32,8 @@ export class WriteBuffer {
 			let index = 0;
 			const oldData = this.data;
 			while (index < length) {
-				newData[index] = oldData[index];
+				// TODO Why are we non null asserting here?
+				newData[index] = oldData[index]!;
 				index++;
 			}
 			this.data = newData;
@@ -251,7 +253,8 @@ function serializeNodeCore(
 				buffer.write(child, len);
 			}
 		} else if (typeof child === "boolean") {
-			buffer.write(boolToCodeMap[child ? 1 : 0]);
+			// TODO Why are we non null asserting here?
+			buffer.write(boolToCodeMap[child ? 1 : 0]!);
 		} else {
 			assert(child._stringElement, 0x3dd /* Unsupported node type */);
 			if (child.dictionary) {

@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import { Ink } from "../ink";
-import { InkFactory } from "../inkFactory";
-import { IPen } from "../interfaces";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { Ink } from "../ink.js";
+import { InkFactory } from "../inkFactory.js";
+import { IPen } from "../interfaces.js";
 
 describe("Ink", () => {
 	let ink: Ink;

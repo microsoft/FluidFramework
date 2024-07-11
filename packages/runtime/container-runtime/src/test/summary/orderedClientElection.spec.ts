@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+
+import { ISequencedClient } from "@fluidframework/driver-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	IOrderedClientCollection,
 	IOrderedClientElection,
@@ -13,8 +15,9 @@ import {
 	ITrackedClient,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "../../summary";
-import { TestQuorumClients } from "./testQuorumClients";
+} from "../../summary/index.js";
+
+import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Ordered Client Collection", () => {
 	let orderedClients: IOrderedClientCollection;
@@ -78,7 +81,7 @@ describe("Ordered Client Collection", () => {
 	}
 
 	afterEach(() => {
-		mockLogger.events = [];
+		mockLogger.clear();
 		testQuorum.reset();
 		currentSequenceNumber = 0;
 	});
@@ -313,9 +316,7 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
 				);
 				assertElectionState(4, 3, undefined, 4321);
-				mockLogger.matchEvents([
-					{ eventName: "InitialElectedClientNotFound", clientId: "x" },
-				]);
+				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 		});

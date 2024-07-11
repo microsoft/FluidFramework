@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IValueChanged } from "@fluidframework/map";
+import type { EventEmitter } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { IValueChanged } from "@fluidframework/map/internal";
 import React from "react";
 
 const diceValueKey = "diceValue";
@@ -34,7 +34,9 @@ export interface IDiceRollerViewProps {
 	model: IDiceRoller;
 }
 
-export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
+export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
+	props: IDiceRollerViewProps,
+) => {
 	const [diceValue, setDiceValue] = React.useState(props.model.value);
 
 	React.useEffect(() => {

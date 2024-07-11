@@ -2,43 +2,48 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert, fail } from "assert";
-import Table from "easy-table";
+
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+} from "@fluidframework/test-runtime-utils/internal";
+import Table from "easy-table";
+
+import {
+	AllowedUpdateType,
+	type FieldKey,
+	type JsonableTree,
+	type Value,
+	forEachNode,
+	moveToDetachedField,
+	rootFieldKey,
+} from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
-import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree/index.js";
-import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
-import {
-	AllowedUpdateType,
-	FieldKey,
-	forEachNode,
-	JsonableTree,
-	moveToDetachedField,
-	rootFieldKey,
-	Value,
-} from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import { SchemaBuilder, leaf } from "../../domains/index.js";
+import type { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
+import { type JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
+import { schematizeFlexTree, treeTestFactory } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
 // While it would be useful and interesting to have some distribution of op sizes and measure some percentile from that distribution,
 // that does not appear to be what these tests are doing.
-// 2. Data from these tests are just printed: no other data collection is done. If a comparison is desire, manually run the tests before and after.
+// 2. Data from these tests are just printed: no other data collection is done. If a comparison is desired, manually run the tests before and after.
 // 3. Major changes in these sizes (regressions, optimizations or the tests not collecting what they should) do not make these tests fail.
 // 4. These tests are currently implemented as integration tests, meaning they use lots of dependencies and high level APIs.
 // They could be reimplemented targeted the lower level APIs if desired.
 // 5. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
+// TODO: fix above issues.
 
 const builder = new SchemaBuilder({ scope: "opSize" });
 
@@ -60,16 +65,19 @@ const childrenFieldKey: FieldKey = brand("children");
 /**
  * Create a default attached tree for op submission
  */
-function createConnectedTree(): ISharedTree {
+function createConnectedTree(): SharedTree {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"test",
-	);
+	const tree = treeTestFactory({
+		runtime: dataStoreRuntime,
+		options: {
+			jsonValidator: typeboxValidator,
+			treeEncodeType: TreeCompressionStrategy.Uncompressed,
+		},
+	});
 	tree.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
@@ -81,12 +89,12 @@ function createConnectedTree(): ISharedTree {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTree,
+	tree: SharedTree,
 	state: JsonableTree = initialTestJsonTree,
 ): ITreeCheckout {
 	const writeCursor = cursorForJsonableTreeNode(state);
-	return tree.schematizeInternal({
-		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+	return schematizeFlexTree(tree, {
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,
 	}).checkout;
@@ -380,25 +388,28 @@ const styles = [
 		extraDescription: `1 transaction`,
 	},
 ];
-// TODO: ADO#7111 schemas in this file should be updated/fixed to enable compressed encoding.
-const factory = new SharedTreeFactory({
-	jsonValidator: typeboxValidator,
-	treeEncodeType: TreeCompressionStrategy.Uncompressed,
-});
 
 describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
-	function registerOpListener(tree: ISharedTree, resultArray: ISequencedDocumentMessage[]): void {
+	function registerOpListener(
+		tree: ISharedTree,
+		resultArray: ISequencedDocumentMessage[],
+	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+		function submitLocalMessage(
+			content: ISequencedDocumentMessage,
+			localOpMetadata: unknown = undefined,
+		): void {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
 		(tree as any).submitLocalMessage = submitLocalMessage;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
 	}
 
 	const getOperationsStats = (operations: ISequencedDocumentMessage[]) => {
@@ -446,7 +457,7 @@ describe("Op Size", () => {
 	});
 
 	after(() => {
-		const allBenchmarkOpStats: any[] = [];
+		const allBenchmarkOpStats: Record<string, unknown>[] = [];
 		for (const [benchmarkName, ops] of opsByBenchmarkName) {
 			allBenchmarkOpStats.push({
 				"Test name": benchmarkName,
@@ -549,9 +560,7 @@ describe("Op Size", () => {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
 					it(`${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
-						style === TransactionStyle.Individual
-							? "1 edit"
-							: `${BENCHMARK_NODE_COUNT} edits`
+						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
 					}`, () => {
 						benchmarkOps(style, percentile);
 					});
@@ -622,11 +631,7 @@ describe("Op Size", () => {
 
 				// insert
 				const insertChildNode = createTreeWithSize(
-					getSuccessfulOpByteSize(
-						Operation.Insert,
-						TransactionStyle.Individual,
-						percentile,
-					),
+					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Individual, percentile),
 				);
 				insertNodesWithIndividualTransactions(view, insertChildNode, insertNodeCount);
 				assertChildNodeCount(view, insertNodeCount);
@@ -644,11 +649,7 @@ describe("Op Size", () => {
 					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
 				}
 				const editPayload = createStringFromLength(
-					getSuccessfulOpByteSize(
-						Operation.Edit,
-						TransactionStyle.Individual,
-						percentile,
-					),
+					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Individual, percentile),
 				);
 				editNodesWithIndividualTransactions(view, editNodeCount, editPayload);
 				expectChildrenValues(view, editPayload, editNodeCount);
@@ -659,10 +660,7 @@ describe("Op Size", () => {
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithInvidiualTxs(
-								percentile,
-								distribution,
-							);
+							benchmarkInsertRemoveEditNodesWithInvidiualTxs(percentile, distribution);
 						});
 					}
 				});

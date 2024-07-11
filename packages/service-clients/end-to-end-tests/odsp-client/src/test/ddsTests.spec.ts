@@ -2,36 +2,37 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
-import { OdspClient } from "@fluid-experimental/odsp-client";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { SharedMap } from "@fluidframework/map/internal";
+import { OdspClient } from "@fluidframework/odsp-client/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { ConnectionState } from "@fluidframework/container-loader";
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory";
-import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
-import { mapWait } from "./utils";
-
-const clientCreds: IOdspLoginCredentials = {
-	username: process.env.odsp__client__login__username as string,
-	password: process.env.odsp__client__login__password as string,
-};
+import { createOdspClient, getCredentials } from "./OdspClientFactory.js";
+import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
+import { mapWait } from "./utils.js";
 
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
-	let schema: ContainerSchema;
+	const schema = {
+		initialObjects: {
+			map1: SharedMap,
+		},
+	} satisfies ContainerSchema;
+
+	const [clientCreds] = getCredentials();
+
+	if (clientCreds === undefined) {
+		throw new Error("Couldn't get login credentials");
+	}
 
 	beforeEach(() => {
 		client = createOdspClient(clientCreds);
-		schema = {
-			initialObjects: {
-				map1: SharedMap,
-			},
-		};
 	});
 
 	/**
@@ -84,12 +85,12 @@ describe("Fluid data updates", () => {
 		}
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as SharedMap;
+		const map1Create = initialObjectsCreate.map1;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
 		const { container: containerGet } = await client.getContainer(itemId, schema);
-		const map1Get = containerGet.initialObjects.map1 as SharedMap;
+		const map1Get = containerGet.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
 	});
@@ -199,15 +200,15 @@ describe("Fluid data updates", () => {
 	 * Expected behavior: DataObject changes are correctly reflected on original and loaded containers
 	 */
 	it("can change DataObjects within initialObjects value", async () => {
-		const doSchema: ContainerSchema = {
+		const doSchema = {
 			initialObjects: {
 				mdo1: TestDataObject,
 				mdo2: CounterTestDataObject,
 			},
-		};
+		} satisfies ContainerSchema;
 		const { container } = await client.createContainer(doSchema);
 		const initialObjectsCreate = container.initialObjects;
-		const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
+		const mdo2: CounterTestDataObject = initialObjectsCreate.mdo2;
 		mdo2.increment();
 		mdo2.increment();
 		mdo2.increment();
@@ -225,7 +226,7 @@ describe("Fluid data updates", () => {
 
 		const { container: containerGet } = await client.getContainer(itemId, doSchema);
 		const initialObjectsGet = containerGet.initialObjects;
-		const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
+		const mdo2get: CounterTestDataObject = initialObjectsGet.mdo2;
 
 		assert.strictEqual(mdo2get.value, 3);
 
@@ -243,12 +244,12 @@ describe("Fluid data updates", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [TestDataObject],
-		};
+		} satisfies ContainerSchema;
 
 		const { container } = await client.createContainer(dynamicSchema);
 		await container.attach();
@@ -256,7 +257,7 @@ describe("Fluid data updates", () => {
 		const newDo = await container.create(TestDataObject);
 		assert.ok(newDo?.handle);
 
-		const map1 = container.initialObjects.map1 as SharedMap;
+		const map1 = container.initialObjects.map1;
 		map1.set("new-pair-id", newDo.handle);
 		const handle: IFluidHandle | undefined = await map1.get("new-pair-id");
 		const obj: unknown = await handle?.get();

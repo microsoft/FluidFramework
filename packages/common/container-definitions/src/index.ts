@@ -9,9 +9,12 @@
  * @packageDocumentation
  */
 
-export type { IAudience, IAudienceOwner } from "./audience";
-export type { IFluidBrowserPackage, IFluidBrowserPackageEnvironment } from "./browserPackage";
-export { isFluidBrowserPackage } from "./browserPackage";
+export type { IAudience, IAudienceOwner, IAudienceEvents, ISelf } from "./audience.js";
+export type {
+	IFluidBrowserPackage,
+	IFluidBrowserPackageEnvironment,
+} from "./browserPackage.js";
+export { isFluidBrowserPackage } from "./browserPackage.js";
 export type {
 	IConnectionDetails,
 	IDeltaManager,
@@ -20,9 +23,9 @@ export type {
 	IDeltaQueueEvents,
 	IDeltaSender,
 	ReadOnlyInfo,
-} from "./deltas";
-export type { ContainerWarning, ICriticalContainerError } from "./error";
-export { ContainerErrorTypes } from "./error";
+} from "./deltas.js";
+export type { ContainerWarning, ICriticalContainerError } from "./error.js";
+export { ContainerErrorTypes } from "./error.js";
 export type {
 	ConnectionState,
 	ICodeDetailsLoader,
@@ -38,25 +41,29 @@ export type {
 	IProvideLoader,
 	IResolvedFluidCodeDetails,
 	ISnapshotTreeWithBlobContents,
-} from "./loader";
-export { LoaderHeader } from "./loader";
-export type { IFluidModule } from "./fluidModule";
+} from "./loader.js";
+export { LoaderHeader } from "./loader.js";
+export type { IFluidModule } from "./fluidModule.js";
 export type {
 	IFluidPackage,
 	IFluidPackageEnvironment,
 	IFluidCodeDetails,
 	IFluidCodeDetailsConfig,
 	IProvideFluidCodeDetailsComparer,
-} from "./fluidPackage";
-export { IFluidCodeDetailsComparer, isFluidPackage, isFluidCodeDetails } from "./fluidPackage";
+} from "./fluidPackage.js";
+export {
+	IFluidCodeDetailsComparer,
+	isFluidPackage,
+	isFluidCodeDetails,
+} from "./fluidPackage.js";
 export type {
 	IBatchMessage,
 	IContainerContext,
 	IProvideRuntimeFactory,
 	IRuntime,
 	IGetPendingLocalStateProps,
-} from "./runtime";
-export { AttachState, IRuntimeFactory } from "./runtime";
+} from "./runtime.js";
+export { AttachState, IRuntimeFactory } from "./runtime.js";
 
 export type {
 	/**
@@ -64,15 +71,7 @@ export type {
 	 */
 	IErrorBase,
 	/**
-	 * @deprecated IGenericError is being deprecated as a public export is moving to "core-interfaces".
-	 */
-	IGenericError,
-	/**
 	 * @deprecated IThrottlingWarning is being deprecated as a public export is moving to "core-interfaces".
 	 */
 	IThrottlingWarning,
-	/**
-	 * @deprecated IUsageError is being deprecated as a public export is moving to "core-interfaces".
-	 */
-	IUsageError,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";

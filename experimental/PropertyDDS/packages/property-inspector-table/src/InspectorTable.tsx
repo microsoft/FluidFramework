@@ -2,41 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // eslint-disable-next-line import/no-unassigned-import
 import "@hig/fonts/build/ArtifaktElement.css";
 import Button from "@material-ui/core/Button";
-import { createStyles, Theme, withStyles } from "@material-ui/core/styles";
-import Skeleton from "react-loading-skeleton";
-
+import { type Theme, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import debounce from "lodash.debounce";
 import React, { createRef } from "react";
-import BaseTable, { SortOrder } from "react-base-table";
-import { ModalConsumer } from "./ModalManager";
+import BaseTable, { type SortOrder } from "react-base-table";
+import Skeleton from "react-loading-skeleton";
+
 // eslint-disable-next-line import/no-unassigned-import
 import "react-base-table/styles.css";
-import { InspectorMessages, minRows } from "./constants";
-import { computeIconSize, Empty } from "./Empty";
-import { ExpiryModal } from "./ExpiryModal";
-import { InspectorTableFooter } from "./InspectorTableFooter";
-import { InspectorTableHeader } from "./InspectorTableHeader";
-import {
+import { Empty, computeIconSize } from "./Empty.js";
+import { ExpiryModal } from "./ExpiryModal.js";
+import { InspectorTableFooter } from "./InspectorTableFooter.js";
+import { InspectorTableHeader } from "./InspectorTableHeader.js";
+import type {
 	IColumns,
 	IDataGetterParameter,
 	IInspectorSearchCallback,
+	IInspectorSearchControls,
 	IInspectorSearchMatch,
 	IInspectorSearchMatchMap,
 	IInspectorTableProps,
 	IInspectorTableState,
-	SearchResult,
-	IToTableRowsOptions,
-	IInspectorSearchControls,
 	IRowData,
-} from "./InspectorTableTypes";
-import { search, showNextResult } from "./utils";
-import { getReferenceValue, getDefaultPropertyTableProps } from "./propertyInspectorUtils";
-import { ThemedSkeleton as themedSkeleton } from "./ThemedSkeleton";
-import { NewDataRow } from "./NewDataRow";
+	IToTableRowsOptions,
+	SearchResult,
+} from "./InspectorTableTypes.js";
+import { ModalConsumer } from "./ModalManager.js";
+import { NewDataRow } from "./NewDataRow.js";
+import { ThemedSkeleton as themedSkeleton } from "./ThemedSkeleton.js";
+import { InspectorMessages, minRows } from "./constants.js";
+import { getDefaultPropertyTableProps, getReferenceValue } from "./propertyInspectorUtils.js";
+import { search, showNextResult } from "./utils.js";
 
 // @TODO Figure out why SortOrder is not resolved as value after updating the table version
 enum TableSortOrder {
@@ -202,7 +203,10 @@ export const defaultInspectorTableDataGetter = (
 class InspectorTable<
 	T extends IRowData<T> = IRowData,
 	ITableProps = IInspectorTableProps<IRowData<T>>,
-> extends React.Component<ITableProps & IInspectorTableProps<IRowData<T>>, IInspectorTableState> {
+> extends React.Component<
+	ITableProps & IInspectorTableProps<IRowData<T>>,
+	IInspectorTableState
+> {
 	public static defaultProps: Partial<IInspectorTableProps> = {
 		childGetter: defaultInspectorTableChildGetter,
 		expandColumnKey: "name",
@@ -225,8 +229,7 @@ class InspectorTable<
 			return {
 				...newState,
 				expanded:
-					props.activeRepositoryGuid &&
-					props.activeRepositoryGuid in state.expandedRepoMap
+					props.activeRepositoryGuid && props.activeRepositoryGuid in state.expandedRepoMap
 						? { ...state.expandedRepoMap[props.activeRepositoryGuid] }
 						: {},
 				expandedRepoGuid: props.activeRepositoryGuid,
@@ -302,9 +305,7 @@ class InspectorTable<
 					this.updateSearchState,
 					false,
 				);
-				newState.searchAbortHandler = searchControls
-					? searchControls.abortHandler
-					: undefined;
+				newState.searchAbortHandler = searchControls ? searchControls.abortHandler : undefined;
 				newState.searchState = searchControls ? searchControls.state : undefined;
 				newState.currentResult = -1;
 				newState.searchInProgress = true;
@@ -397,9 +398,7 @@ class InspectorTable<
 					this.updateSearchState,
 					false,
 				);
-				newState.searchAbortHandler = searchControls
-					? searchControls.abortHandler
-					: undefined;
+				newState.searchAbortHandler = searchControls ? searchControls.abortHandler : undefined;
 				newState.searchState = searchControls ? searchControls.state : undefined;
 				newState.searchDone = false;
 				newState.searchInProgress = true;
@@ -535,11 +534,10 @@ class InspectorTable<
 									<span>
 										<br />
 										<br />
-										Undeleting expired repositories is only possible with v2
-										urns.
+										Undeleting expired repositories is only possible with v2 urns.
 										<br />
-										Please change your v1 urn ({this.props.currentUrn}) into a
-										v2 urn manually and reload.
+										Please change your v1 urn ({this.props.currentUrn}) into a v2 urn manually
+										and reload.
 									</span>
 								)}
 							</span>
@@ -601,10 +599,7 @@ class InspectorTable<
 					headerClassName={classes.header}
 					headerRenderer={getHeader}
 					rowClassName={({ rowIndex }) =>
-						classNames(
-							classes.row,
-							rowIndex % 2 === 0 ? classes.evenRow : classes.oddRow,
-						)
+						classNames(classes.row, rowIndex % 2 === 0 ? classes.evenRow : classes.oddRow)
 					}
 					gridStyle={{ outline: "none" }}
 					onRowExpand={this.handleRowExpanded}
@@ -703,14 +698,13 @@ class InspectorTable<
 			<div className={classes.dataFormContainer}>
 				{showFormRowID !== "0" && rowData.isNewDataRow && showFormRowID === rowData.id
 					? generateForm.call(this, rowData, this.handleCreateData) &&
-					  this.props.addDataForm({
+						this.props.addDataForm({
 							handleCancelCreate: this.handleCancelCreate,
 							handleCreateData: this.handleCreateData,
-							options: this.props.dataCreationOptionGenerationHandler!(rowData, false)
-								.options,
+							options: this.props.dataCreationOptionGenerationHandler!(rowData, false).options,
 							rowData,
 							styleClass: classes.dataForm,
-					  })
+						})
 					: (rowData.isNewDataRow = true) && <NewDataRow dataType={result.name} />}
 			</div>
 		);
@@ -960,5 +954,7 @@ class InspectorTable<
 /**
  * @internal
  */
-const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(InspectorTable as any);
+const StyledInspectorTable = withStyles(styles, { name: "InspectorTable" })(
+	InspectorTable as any,
+);
 export { StyledInspectorTable as InspectorTable };

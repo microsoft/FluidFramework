@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
-import {
-	IClientConfig,
+import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	IPublicClientConfig,
 	TokenRequestCredentials,
-	getFetchTokenUrl,
-	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspTokenProvider } from "../token";
-import { OdspTestCredentials } from "./odspClient.spec";
+import { getFetchTokenUrl, unauthPostAsync } from "@fluidframework/odsp-doclib-utils/internal";
+
+import type { TokenResponse } from "../interfaces.js";
+import type { IOdspTokenProvider } from "../token.js";
+
+import type { OdspTestCredentials } from "./odspClient.spec.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.
@@ -20,7 +21,7 @@ import { OdspTestCredentials } from "./odspClient.spec";
 export class OdspTestTokenProvider implements IOdspTokenProvider {
 	private readonly creds: OdspTestCredentials;
 
-	constructor(credentials: OdspTestCredentials) {
+	public constructor(credentials: OdspTestCredentials) {
 		this.creds = credentials;
 	}
 
@@ -50,9 +51,8 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		refreshToken?: string;
 	}> {
 		const server = new URL(siteUrl).host;
-		const clientConfig: IClientConfig = {
+		const clientConfig: IPublicClientConfig = {
 			clientId: this.creds.clientId,
-			clientSecret: this.creds.clientSecret,
 		};
 		const credentials: TokenRequestCredentials = {
 			grant_type: "password",
@@ -62,16 +62,21 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const body = {
 			scope,
 			client_id: clientConfig.clientId,
-			client_secret: clientConfig.clientSecret,
 			...credentials,
 		};
-		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
+		const response = await unauthPostAsync(
+			getFetchTokenUrl(server),
+			new URLSearchParams(body),
+		);
 
 		const parsedResponse = (await response.json()) as Record<string, unknown>;
 
 		const accessToken = parsedResponse.access_token;
 		assert(accessToken !== undefined, 'Response did not include "access_token".');
-		assert(typeof accessToken === "string", '"access_token" was malformed. Expected a string.');
+		assert(
+			typeof accessToken === "string",
+			'"access_token" was malformed. Expected a string.',
+		);
 
 		const refreshToken = parsedResponse.refresh_token;
 		if (refreshToken !== undefined) {

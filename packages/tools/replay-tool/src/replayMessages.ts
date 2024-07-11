@@ -6,16 +6,19 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert, Lazy } from "@fluidframework/core-utils";
-import {
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
+	ITree,
+	ITreeEntry,
+	MessageType,
+	TreeEntry,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -23,27 +26,30 @@ import {
 	FileStorageDocumentName,
 	FluidFetchReaderFileSnapshotWriter,
 	ISnapshotWriterStorage,
-	Replayer,
 	ReplayFileDeltaConnection,
-} from "@fluidframework/file-driver";
+	Replayer,
+} from "@fluidframework/file-driver/internal";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import {
-	ISequencedDocumentMessage,
-	ITree,
-	TreeEntry,
-	MessageType,
-	ITreeEntry,
-	ISummaryTree,
-} from "@fluidframework/protocol-definitions";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
-import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 import stringify from "json-stable-stringify";
+
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "./helpers";
-import { ReplayArgs } from "./replayArgs";
+} from "./helpers.js";
+import { ReplayArgs } from "./replayArgs.js";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
@@ -484,14 +490,10 @@ export class ReplayTool {
 					doc.appendToFileName(`_storage_${node.name}`);
 
 					if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
-						console.log(
-							`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`,
-						);
+						console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
 					} else {
 						if (this.args.verbose) {
-							console.log(
-								`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`,
-							);
+							console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
 						}
 						this.documents.push(doc);
 					}
@@ -532,23 +534,16 @@ export class ReplayTool {
 					continue;
 				}
 
-				const storage = new FluidFetchReaderFileSnapshotWriter(
-					this.args.inDirName,
-					node.name,
-				);
+				const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, node.name);
 				const doc = new Document(this.args, storage, node.name);
 				try {
 					await this.loadDoc(doc);
 					doc.appendToFileName(`_storage_${node.name}`);
 
 					if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
-						console.log(
-							`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`,
-						);
+						console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
 					} else {
-						console.log(
-							`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`,
-						);
+						console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
 						this.documentsFromStorageSnapshots.push(doc);
 					}
 				} catch (error) {
@@ -572,9 +567,7 @@ export class ReplayTool {
 			if (nextSnapPoint <= currentOp) {
 				nextSnapPoint =
 					originalSummaries.shift() ??
-					(this.args.snapFreq !== undefined
-						? currentOp + this.args.snapFreq
-						: this.args.to);
+					(this.args.snapFreq !== undefined ? currentOp + this.args.snapFreq : this.args.to);
 			}
 			let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -595,8 +588,7 @@ export class ReplayTool {
 			}
 
 			const final =
-				this.mainDocument.currentOp < replayTo ||
-				this.args.to <= this.mainDocument.currentOp;
+				this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
 			await this.generateSummary(final);
 			if (final) {
 				break;
@@ -642,7 +634,11 @@ export class ReplayTool {
 		return content;
 	}
 
-	private async validateSlidingSnapshots(content: ContainerContent, dir: string, final: boolean) {
+	private async validateSlidingSnapshots(
+		content: ContainerContent,
+		dir: string,
+		final: boolean,
+	) {
 		const op = content.op;
 
 		// Add extra container
@@ -669,7 +665,11 @@ export class ReplayTool {
 		}
 	}
 
-	private async validateStorageSnapshots(content: ContainerContent, dir: string, final: boolean) {
+	private async validateStorageSnapshots(
+		content: ContainerContent,
+		dir: string,
+		final: boolean,
+	) {
 		const op = content.op;
 
 		const processVersionedSnapshot =
@@ -710,7 +710,11 @@ export class ReplayTool {
 		// Load it back to prove it's correct
 		const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
 		const storage = new storageClass(content.snapshot);
-		this.documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+		this.documentPriorWindow = new Document(
+			this.args,
+			storage,
+			`Saved & loaded at seq# ${op}`,
+		);
 		await this.loadDoc(this.documentPriorWindow);
 		await this.saveAndVerify(this.documentPriorWindow, dir, content, final);
 	}
@@ -902,20 +906,23 @@ async function assertDdsEqual(
 		return;
 	}
 
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		attachState: AttachState.Detached,
+	});
 	const deltaConnection = new MockEmptyDeltaConnection();
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
 		const objectStorage = MockStorage.createFromSummary(summary);
-		const matrix = new SharedMatrix(
-			dataStoreRuntime as any,
+		const matrixFactory = SharedMatrix.getFactory();
+		const matrix = await matrixFactory.load(
+			dataStoreRuntime,
 			"1",
-			SharedMatrixFactory.Attributes,
+			{
+				deltaConnection,
+				objectStorage,
+			},
+			matrixFactory.attributes,
 		);
-		await matrix.load({
-			deltaConnection,
-			objectStorage,
-		});
 		return matrix;
 	}
 

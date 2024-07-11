@@ -4,22 +4,32 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
-	MockStorage,
+	MockFluidDataStoreRuntime,
 	MockHandle,
-} from "@fluidframework/test-runtime-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
-import { fill, check, insertFragmented, extract, expectSize } from "./utils.js";
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import {
+	type ISharedMatrix,
+	MatrixItem,
+	SharedMatrix,
+	SharedMatrixFactory,
+} from "../index.js";
+import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
+import type { PermutationVector } from "../permutationvector.js";
+
 import { TestConsumer } from "./testconsumer.js";
+import { check, expectSize, extract, fill, insertFragmented, matrixFactory } from "./utils.js";
 
 function createConnectedMatrix(
 	id: string,
@@ -27,12 +37,11 @@ function createConnectedMatrix(
 	isSetCellPolicyFWW: boolean,
 ) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const matrix = new SharedMatrix(
-		dataStoreRuntime,
-		id,
-		SharedMatrixFactory.Attributes,
-		isSetCellPolicyFWW,
-	);
+	const matrix = matrixFactory.create(dataStoreRuntime, id);
+	if (isSetCellPolicyFWW) {
+		matrix.switchSetCellPolicy();
+	}
+
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	matrix.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -43,7 +52,7 @@ function createConnectedMatrix(
 
 function createLocalMatrix(id: string) {
 	const factory = new SharedMatrixFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id);
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMatrixClass;
 }
 
 function createMatrixForReconnection(
@@ -58,12 +67,10 @@ function createMatrixForReconnection(
 		objectStorage: new MockStorage(),
 	};
 
-	const matrix = new SharedMatrix(
-		dataStoreRuntime,
-		id,
-		SharedMatrixFactory.Attributes,
-		isSetCellPolicyFWW,
-	);
+	const matrix = matrixFactory.create(dataStoreRuntime, id);
+	if (isSetCellPolicyFWW) {
+		matrix.switchSetCellPolicy();
+	}
 	matrix.connect(services);
 	return { matrix, containerRuntime };
 }
@@ -91,16 +98,12 @@ describe("Matrix1", () => {
 					});
 
 					// Load the summary into a newly created 2nd SharedMatrix.
-					const matrix2 = new SharedMatrix<T>(
+					const matrix2 = await matrixFactory.load(
 						dataStoreRuntime,
 						`load(${matrix.id})`,
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
+						{ deltaConnection: new MockEmptyDeltaConnection(), objectStorage },
+						matrixFactory.attributes,
 					);
-					await matrix2.load({
-						deltaConnection: new MockEmptyDeltaConnection(),
-						objectStorage,
-					});
 
 					// Vet that the 2nd matrix is equivalent to the original.
 					expectSize(matrix2, matrix.rowCount, matrix.colCount);
@@ -125,12 +128,10 @@ describe("Matrix1", () => {
 				}
 
 				beforeEach("createMatrix", async () => {
-					matrix = new SharedMatrix(
-						new MockFluidDataStoreRuntime(),
-						"matrix1",
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
-					);
+					matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "matrix1");
+					if (isSetCellPolicyFWW) {
+						matrix.switchSetCellPolicy();
+					}
 
 					// Attach a new IMatrixConsumer
 					consumer = new TestConsumer(matrix);
@@ -280,13 +281,7 @@ describe("Matrix1", () => {
 					it("read/write 256x256", () => {
 						matrix.insertRows(0, 256);
 						matrix.insertCols(0, 256);
-						fill(
-							matrix,
-							/* row: */ 0,
-							/* col: */ 0,
-							/* rowCount: */ 256,
-							/* colCount: */ 256,
-						);
+						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -300,13 +295,7 @@ describe("Matrix1", () => {
 				describe("fragmented", () => {
 					it("read/write 256x256", () => {
 						insertFragmented(matrix, 256, 256);
-						fill(
-							matrix,
-							/* row: */ 0,
-							/* col: */ 0,
-							/* rowCount: */ 256,
-							/* colCount: */ 256,
-						);
+						fill(matrix, /* row: */ 0, /* col: */ 0, /* rowCount: */ 256, /* colCount: */ 256);
 						check(
 							matrix,
 							/* row: */ 0,
@@ -654,11 +643,7 @@ describe("Matrix1", () => {
 						await expect();
 
 						matrix1.removeRows(1, 1);
-						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, [
-							"A",
-							"B",
-							"C",
-						]);
+						matrix2.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["A", "B", "C"]);
 						await expect();
 					});
 
@@ -667,12 +652,7 @@ describe("Matrix1", () => {
 					it("overlapping insert/set vs. remove/insert/set", async () => {
 						matrix1.insertRows(0, 1); // rowCount: 0, colCount: 0
 						matrix1.insertCols(0, 4); // rowCount: 1, colCount: 0
-						matrix1.setCells(
-							/* row: */ 0,
-							/* col: */ 0,
-							/* colCount: */ 4,
-							[0, 1, 2, 3],
-						);
+						matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [0, 1, 2, 3]);
 						await expect([[0, 1, 2, 3]]);
 
 						matrix2.insertCols(1, 1); // rowCount: 1, colCount: 5
@@ -879,13 +859,10 @@ describe("Matrix1", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const handle1 = matrix1.getCell(0, 0) as IFluidHandle;
-					const handle2 = matrix2.getCell(0, 0) as IFluidHandle;
+					const handle1 = matrix1.getCell(0, 0) as IFluidHandleInternal;
+					const handle2 = matrix2.getCell(0, 0) as IFluidHandleInternal;
 
-					assert.equal(
-						handle1.IFluidHandle.absolutePath,
-						handle2.IFluidHandle.absolutePath,
-					);
+					assert.equal(handle1.absolutePath, handle2.absolutePath);
 
 					// Remove handle from matrix to prevent the convergence sanity checks in 'afterEach()'
 					// from performing a 'deepEquals' on the matrix contents.
@@ -922,12 +899,7 @@ describe("Matrix1", () => {
 					);
 
 					matrix1.insertRows(/* rowStart: */ 0, /* rowCount: */ 1);
-					matrix1.setCells(
-						/* row: */ 0,
-						/* col: */ 0,
-						/* colCount: */ 4,
-						[61, 57, 7, 62],
-					);
+					matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 4, [61, 57, 7, 62]);
 
 					containerRuntime1.connected = false;
 					containerRuntime1.connected = true;
@@ -971,27 +943,126 @@ describe("Matrix1", () => {
 				});
 			});
 
+			describe("Doesn't leave dangling row/col reference positions", () => {
+				type MatrixWithDimensions = Omit<SharedMatrix, "rows" | "cols"> & {
+					rows: PermutationVector;
+					cols: PermutationVector;
+				};
+
+				function findVectorReferenceCount(vector: PermutationVector): number {
+					let count = 0;
+					vector.walkSegments((segment) => {
+						count += Array.from(segment.localRefs ?? []).length;
+						return true;
+					});
+					return count;
+				}
+
+				function findTotalReferenceCount(matrix: ISharedMatrix): {
+					rows: number;
+					cols: number;
+				} {
+					const matrixWithDimensions = matrix as unknown as MatrixWithDimensions;
+					assert(
+						matrixWithDimensions.rows !== undefined,
+						"Expected matrix to have rows property",
+					);
+					assert(
+						matrixWithDimensions.cols !== undefined,
+						"Expected matrix to have cols property",
+					);
+
+					return {
+						rows: findVectorReferenceCount(matrixWithDimensions.rows),
+						cols: findVectorReferenceCount(matrixWithDimensions.cols),
+					};
+				}
+
+				it("made while detached", () => {
+					const matrix = createLocalMatrix("A");
+					matrix.insertRows(0, 2);
+					matrix.insertCols(0, 2);
+					matrix.setCell(0, 0, "val");
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+				});
+
+				it("after first submission ack", () => {
+					const containerRuntimeFactory = new MockContainerRuntimeFactory();
+					const matrix = createConnectedMatrix(
+						"A",
+						containerRuntimeFactory,
+						isSetCellPolicyFWW,
+					);
+
+					matrix.insertRows(0, 2);
+					matrix.insertCols(0, 2);
+					containerRuntimeFactory.processAllMessages();
+					matrix.setCell(0, 0, "val");
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+				});
+
+				it("after resubmitted ack", () => {
+					const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+					const dataStoreRuntime = new MockFluidDataStoreRuntime();
+					const matrix = matrixFactory.create(dataStoreRuntime, "A");
+					if (isSetCellPolicyFWW) {
+						matrix.switchSetCellPolicy();
+					}
+					const containerRuntime =
+						containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+					matrix.connect({
+						deltaConnection: dataStoreRuntime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					});
+
+					matrix.insertRows(0, 2);
+					matrix.insertCols(0, 2);
+					containerRuntimeFactory.processAllMessages();
+
+					containerRuntime.connected = false;
+					matrix.setCell(0, 0, "val");
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+					containerRuntime.connected = true;
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+				});
+			});
+
 			describe("Garbage Collection", () => {
 				class GCSharedMatrixProvider implements IGCTestProvider {
 					private colCount = 0;
 					private subMatrixCount = 0;
 					private _expectedRoutes: string[] = [];
-					private readonly matrix1: SharedMatrix;
-					private readonly matrix2: SharedMatrix;
+					// The GC test harness requires a SharedObject, not just ISharedObject.
+					private readonly matrix1: SharedMatrixClass;
+					private readonly matrix2: SharedMatrixClass;
 					private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
 
 					constructor() {
 						this.containerRuntimeFactory = new MockContainerRuntimeFactory();
-						this.matrix1 = createConnectedMatrix(
+						const matrix1 = createConnectedMatrix(
 							"matrix1",
 							this.containerRuntimeFactory,
 							isSetCellPolicyFWW,
 						);
-						this.matrix2 = createConnectedMatrix(
+						assert(matrix1 instanceof SharedMatrixClass);
+						this.matrix1 = matrix1;
+						const matrix2 = createConnectedMatrix(
 							"matrix2",
 							this.containerRuntimeFactory,
 							isSetCellPolicyFWW,
 						);
+						assert(matrix2 instanceof SharedMatrixClass);
+						this.matrix2 = matrix2;
 						// Insert a row into the matrix where we will set cells.
 						this.matrix1.insertRows(0, 1);
 					}
@@ -1019,7 +1090,10 @@ describe("Matrix1", () => {
 					public async deleteOutboundRoutes() {
 						// Delete the last handle that was added.
 						const lastAddedCol = this.colCount - 1;
-						const deletedHandle = this.matrix1.getCell(0, lastAddedCol) as IFluidHandle;
+						const deletedHandle = this.matrix1.getCell(
+							0,
+							lastAddedCol,
+						) as IFluidHandleInternal;
 						assert(deletedHandle, "Route must be added before deleting");
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);
@@ -1071,12 +1145,10 @@ describe("Matrix1", () => {
 				});
 
 				it("is disconnected", () => {
-					const matrix = new SharedMatrix(
-						new MockFluidDataStoreRuntime(),
-						"matrix1",
-						SharedMatrixFactory.Attributes,
-						isSetCellPolicyFWW,
-					);
+					const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "matrix1");
+					if (isSetCellPolicyFWW) {
+						matrix.switchSetCellPolicy();
+					}
 
 					for (let i = 0; i <= 10_000; i++) {
 						matrix.insertCols(0, 1);
@@ -1135,27 +1207,24 @@ describe("Matrix1", () => {
 				consumer: TestConsumer;
 			}> {
 				// Create a summary
-				const objectStorage = MockStorage.createFromSummary(
-					matrix.getAttachSummary().summary,
-				);
+				const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				const containerRuntime =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
 				// Load the summary into a newly created 2nd SharedMatrix.
-				const matrix2 = new SharedMatrix<T>(
-					dataStoreRuntime,
-					`load(${matrix.id})`,
-					SharedMatrixFactory.Attributes,
-				);
 				const services: IChannelServices = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
 					objectStorage,
 				};
-				await matrix2.load(services);
+				const matrix2 = await matrixFactory.load(
+					dataStoreRuntime,
+					`load(${matrix.id})`,
+					services,
+					matrixFactory.attributes,
+				);
 
-				matrix2.connect(services);
 				const consumer = new TestConsumer(matrix2);
 				return { matrix: matrix2, containerRuntime, consumer };
 			}
@@ -1209,7 +1278,7 @@ describe("Matrix1", () => {
 					assert(col === 0, "col should be correct");
 					assert(currentVal === "A", "currentVal should be correct");
 					assert(rejectedVal === "B", "rejectedVal should be correct");
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaised = true;
 				});
 
@@ -1280,7 +1349,7 @@ describe("Matrix1", () => {
 					assert(col === 0, "col should be correct");
 					assert(currentVal === "A", "currentVal should be correct");
 					assert(rejectedVal === "B", "rejectedVal should be correct");
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaised = true;
 				});
 
@@ -1400,7 +1469,7 @@ describe("Matrix1", () => {
 						rejectedVal === (eventRaisedCount === 0 ? "4th" : "1st"),
 						"rejectedVal should be correct",
 					);
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaisedCount++;
 				});
 
@@ -1436,7 +1505,7 @@ describe("Matrix1", () => {
 				matrix2.on("conflict", (row, col, currentVal, rejectedVal, instance) => {
 					assert(row === 0, "row should be correct");
 					assert(col === 0, "col should be correct");
-					assert((instance.id = "matrix2"), "matrix should be correct");
+					assert(instance.id === "matrix2", "matrix should be correct");
 					eventRaisedCount++;
 				});
 

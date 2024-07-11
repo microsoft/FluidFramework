@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-core",
-	"version": "3.1.0",
+	"version": "6.0.0",
 	"description": "Fluid server services core definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,26 +31,26 @@
 	"dependencies": {
 		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^18.17.1",
+		"@types/node": "^18.19.39",
 		"debug": "^4.3.4",
 		"events": "^3.1.0",
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@2.0.0",
+		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@5.0.0",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~4.5.5"
+		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -62,40 +62,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedInterfaceDeclaration_IPartitionConfig": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"VariableDeclaration_DefaultServiceConfiguration": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IServerConfiguration": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IServiceConfiguration": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IDeliServerConfiguration": {
-				"forwardCompat": false,
-				"backCompat": true
-			},
-			"InterfaceDeclaration_IOrdererConnection": {
-				"forwardCompat": false,
-				"backCompat": true
-			},
-			"ClassDeclaration_CheckpointService": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_ICheckpointService": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IWebSocketTracker": {
+			"InterfaceDeclaration_IOrdererManager": {
 				"forwardCompat": false
 			}
 		}

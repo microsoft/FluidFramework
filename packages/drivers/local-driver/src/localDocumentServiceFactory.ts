@@ -3,23 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
+	NackErrorType,
+} from "@fluidframework/driver-definitions/internal";
+import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
-import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
-import { createLocalDocumentService } from "./localDocumentService";
-import { createDocument } from "./localCreateDocument";
+
+import { createDocument } from "./localCreateDocument.js";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+import { createLocalDocumentService } from "./localDocumentService.js";
 
 /**
  * Implementation of document service factory for local use.
+ * @legacy
  * @alpha
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
@@ -29,7 +31,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
-	 * @alpha
 	 */
 	constructor(
 		private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
@@ -62,8 +63,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		const parsedUrl = parse(resolvedUrl.url);
-		const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
+		const parsedUrl = new URL(resolvedUrl.url);
+		const [, tenantId, documentId] = parsedUrl.pathname ? parsedUrl.pathname.split("/") : [];
 		if (!documentId || !tenantId) {
 			throw new Error(
 				`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`,

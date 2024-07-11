@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
-import { NodeId, TraitLabel, UuidString } from './Identifiers.js';
+import { assert } from '@fluidframework/core-utils/internal';
+
 import { assertNotUndefined } from './Common.js';
-import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types/index.js';
-import { TraitLocation } from './TreeView.js';
+import { NodeId, TraitLabel, UuidString } from './Identifiers.js';
 import { getNodeId } from './NodeIdUtilities.js';
+import { TraitLocation } from './TreeView.js';
+import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types/index.js';
 
 /**
  * An object which may have traits with children of the given type underneath it
@@ -356,15 +357,24 @@ export const StablePlace = {
 	/**
 	 * @returns The location directly after `node`.
 	 */
-	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({ side: Side.After, referenceSibling: getNodeId(node) }),
+	after: (node: NodeData<NodeId> | NodeId): StablePlace => ({
+		side: Side.After,
+		referenceSibling: getNodeId(node),
+	}),
 	/**
 	 * @returns The location at the start of `trait`.
 	 */
-	atStartOf: (trait: TraitLocation): StablePlace => ({ side: Side.After, referenceTrait: trait }),
+	atStartOf: (trait: TraitLocation): StablePlace => ({
+		side: Side.After,
+		referenceTrait: trait,
+	}),
 	/**
 	 * @returns The location at the end of `trait`.
 	 */
-	atEndOf: (trait: TraitLocation): StablePlace => ({ side: Side.Before, referenceTrait: trait }),
+	atEndOf: (trait: TraitLocation): StablePlace => ({
+		side: Side.Before,
+		referenceTrait: trait,
+	}),
 };
 
 // Note: Documentation of this constant is merged with documentation of the `StableRange` interface.

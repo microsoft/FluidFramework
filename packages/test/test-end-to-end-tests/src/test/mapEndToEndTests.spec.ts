@@ -4,26 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -47,15 +47,15 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	beforeEach("createContainers", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
+		sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+		sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 		const container3 = await provider.loadTestContainer(testContainerConfig);
 		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-		sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
+		sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 
 		sharedMap1.set("testKey1", "testValue");
 
@@ -135,31 +135,19 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		let user3ValueChangedCount: number = 0;
 		sharedMap1.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(
-					changed.key,
-					"testKey1",
-					"Incorrect value for testKey1 in container 1",
-				);
+				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 1");
 				user1ValueChangedCount = user1ValueChangedCount + 1;
 			}
 		});
 		sharedMap2.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(
-					changed.key,
-					"testKey1",
-					"Incorrect value for testKey1 in container 2",
-				);
+				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 2");
 				user2ValueChangedCount = user2ValueChangedCount + 1;
 			}
 		});
 		sharedMap3.on("valueChanged", (changed, local) => {
 			if (!local) {
-				assert.equal(
-					changed.key,
-					"testKey1",
-					"Incorrect value for testKey1 in container 3",
-				);
+				assert.equal(changed.key, "testKey1", "Incorrect value for testKey1 in container 3");
 				user3ValueChangedCount = user3ValueChangedCount + 1;
 			}
 		});
@@ -337,7 +325,9 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 
 		// The new map should be available in the remote client and it should contain that key that was
 		// set in local state.
-		const newSharedMap2 = await sharedMap2.get<IFluidHandle<SharedMap>>("newSharedMap")?.get();
+		const newSharedMap2 = await sharedMap2
+			.get<IFluidHandle<ISharedMap>>("newSharedMap")
+			?.get();
 		assert(newSharedMap2);
 		assert.equal(
 			newSharedMap2.get("newKey"),
@@ -398,7 +388,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 
 	let containerRuntime: ContainerRuntime;
 	let clearEventCount: number;
@@ -421,7 +411,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		clearEventCount = 0;
 		changedEventData = [];
@@ -572,27 +562,26 @@ describeCompat(
 		let container1: IContainer;
 		let dataObject1: ITestFluidObject;
 		let dataObject2: ITestFluidObject;
-		let sharedMap1: SharedMap;
-		let sharedMap2: SharedMap;
+		let sharedMap1: ISharedMap;
+		let sharedMap2: ISharedMap;
 		let containerRuntime: ContainerRuntime;
 
 		beforeEach("setup", async () => {
 			container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 			containerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 		});
 
 		it("addChannel should add the channel successfully to the runtime", async () => {
 			// Create a new map in local (detached) state.
-			const newSharedMap1 = new SharedMap(
-				"newSharedMapId",
+			const newSharedMap1 = SharedMap.getFactory().create(
 				dataObject1.runtime,
-				SharedMap.getFactory().attributes,
+				"newSharedMapId",
 			);
 
 			// Set a value while in local state.
@@ -607,7 +596,7 @@ describeCompat(
 			// The new map should be available in the remote client and it should contain that key that was
 			// set in local state.
 			const newSharedMap2 = await sharedMap2
-				.get<IFluidHandle<SharedMap>>("newSharedMap")
+				.get<IFluidHandle<ISharedMap>>("newSharedMap")
 				?.get();
 			assert(newSharedMap2);
 			assert(newSharedMap2.get("newKey") === newSharedMap1.get("newKey"));
@@ -615,10 +604,9 @@ describeCompat(
 
 		it("should create error when channel created with different runtime is added to different runtime", async () => {
 			// Create a new map in local (detached) state.
-			const newSharedMap1 = new SharedMap(
-				"newSharedMapId",
+			const newSharedMap1 = SharedMap.getFactory().create(
 				dataObject1.runtime,
-				SharedMap.getFactory().attributes,
+				"newSharedMapId",
 			);
 
 			// Set a value while in local state.

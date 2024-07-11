@@ -3,32 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IdCreationRange,
-	IIdCompressor,
-	IIdCompressorCore,
-	OpSpaceCompressedId,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-} from "./types";
-import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
+	ITelemetryLoggerExt,
+	LoggingError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { FinalSpace } from "./finalSpace.js";
 import {
-	createSessionId,
-	localIdFromGenCount,
-	genCountFromLocalId,
-	numericUuidFromStableId,
-	offsetNumericUuid,
-	stableIdFromNumericUuid,
-	subtractNumericUuids,
-} from "./utilities";
+	FinalCompressedId,
+	LocalCompressedId,
+	NumericUuid,
+	isFinalId,
+} from "./identifiers.js";
 import {
 	Index,
 	readBoolean,
@@ -37,24 +27,51 @@ import {
 	writeBoolean,
 	writeNumber,
 	writeNumericUuid,
-} from "./persistanceUtilities";
+} from "./persistanceUtilities.js";
+import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
 import {
-	getAlignedLocal,
-	getAlignedFinal,
 	IdCluster,
-	lastFinalizedLocal,
 	Session,
 	Sessions,
+	getAlignedFinal,
+	getAlignedLocal,
 	lastFinalizedFinal,
-} from "./sessions";
-import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
-import { FinalSpace } from "./finalSpace";
+	lastFinalizedLocal,
+} from "./sessions.js";
+import {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	OpSpaceCompressedId,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./types/index.js";
+import {
+	createSessionId,
+	genCountFromLocalId,
+	localIdFromGenCount,
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+	subtractNumericUuids,
+} from "./utilities.js";
 
 /**
  * The version of IdCompressor that is currently persisted.
  * This should not be changed without careful consideration to compatibility.
  */
 const currentWrittenVersion = 2.0;
+
+function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
+	return new LoggingError("Ranges finalized out of order", {
+		expectedStart,
+		actualStart,
+	});
+}
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
@@ -166,7 +183,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	public generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId {
+	public generateDocumentUniqueId():
+		| (SessionSpaceCompressedId & OpSpaceCompressedId)
+		| StableId {
 		const id = this.generateCompressedId();
 		return isFinalId(id) ? id : this.decompress(id);
 	}
@@ -176,7 +195,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * @param ghostSessionId - The session ID to start the ghost session with.
 	 */
 	public startGhostSession(ghostSessionId: SessionId): void {
-		assert(!this.ongoingGhostSession, "Ghost session already in progress.");
+		assert(!this.ongoingGhostSession, 0x8fe /* Ghost session already in progress. */);
 		this.ongoingGhostSession = { ghostSessionId };
 	}
 
@@ -215,16 +234,55 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				firstGenCount: this.nextRangeBaseGenCount,
 				count,
 				requestedClusterSize: this.nextRequestedClusterSize,
+				localIdRanges: this.normalizer.getRangesBetween(
+					this.nextRangeBaseGenCount,
+					this.localGenCount,
+				),
 			},
 		};
-		this.nextRangeBaseGenCount = this.localGenCount + 1;
-		IdCompressor.assertValidRange(range);
-		return range;
+		return this.updateToRange(range);
 	}
 
-	private static assertValidRange(range: IdCreationRange): void {
+	public takeUnfinalizedCreationRange(): IdCreationRange {
+		const lastLocalCluster = this.localSession.getLastCluster();
+		let count: number;
+		let firstGenCount: number;
+		if (lastLocalCluster === undefined) {
+			firstGenCount = 1;
+			count = this.localGenCount;
+		} else {
+			firstGenCount = genCountFromLocalId(
+				(lastLocalCluster.baseLocalId - lastLocalCluster.count) as LocalCompressedId,
+			);
+			count = this.localGenCount - firstGenCount + 1;
+		}
+
+		if (count === 0) {
+			return {
+				sessionId: this.localSessionId,
+			};
+		}
+
+		const range: IdCreationRange = {
+			ids: {
+				count,
+				firstGenCount,
+				localIdRanges: this.normalizer.getRangesBetween(firstGenCount, this.localGenCount),
+				requestedClusterSize: this.nextRequestedClusterSize,
+			},
+			sessionId: this.localSessionId,
+		};
+		return this.updateToRange(range);
+	}
+
+	private updateToRange(range: IdCreationRange): IdCreationRange {
+		this.nextRangeBaseGenCount = this.localGenCount + 1;
+		return IdCompressor.assertValidRange(range);
+	}
+
+	private static assertValidRange(range: IdCreationRange): IdCreationRange {
 		if (range.ids === undefined) {
-			return;
+			return range;
 		}
 		const { count, requestedClusterSize } = range.ids;
 		assert(count > 0, 0x755 /* Malformed ID Range. */);
@@ -233,6 +291,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			requestedClusterSize <= IdCompressor.maxClusterSize,
 			0x877 /* Clusters must not exceed max cluster size. */,
 		);
+		return range;
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
@@ -255,7 +314,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (lastCluster === undefined) {
 			// This is the first cluster in the session space
 			if (rangeBaseLocal !== -1) {
-				throw new Error("Ranges finalized out of order.");
+				throw rangeFinalizationError(-1, rangeBaseLocal);
 			}
 			lastCluster = this.addEmptyCluster(session, requestedClusterSize + count);
 			if (isLocal) {
@@ -268,7 +327,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		const remainingCapacity = lastCluster.capacity - lastCluster.count;
 		if (lastCluster.baseLocalId - lastCluster.count !== rangeBaseLocal) {
-			throw new Error("Ranges finalized out of order.");
+			throw rangeFinalizationError(
+				lastCluster.baseLocalId - lastCluster.count,
+				rangeBaseLocal,
+			);
 		}
 
 		if (remainingCapacity >= count) {
@@ -332,7 +394,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			capacity,
 			0,
 		);
-		assert(!this.sessions.clusterCollides(newCluster), 0x758 /* Cluster collision detected. */);
+		assert(
+			!this.sessions.clusterCollides(newCluster),
+			0x758 /* Cluster collision detected. */,
+		);
 		this.finalSpace.addCluster(newCluster);
 		return newCluster;
 	}
@@ -407,16 +472,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 			const alignedLocal = getAlignedLocal(containingCluster, id);
 			const alignedGenCount = genCountFromLocalId(alignedLocal);
-			const lastFinalizedGenCount = genCountFromLocalId(
-				lastFinalizedLocal(containingCluster),
-			);
+			const lastFinalizedGenCount = genCountFromLocalId(lastFinalizedLocal(containingCluster));
 			if (alignedGenCount > lastFinalizedGenCount) {
 				// should be an eager final id generated by the local session
 				if (containingCluster.session === this.localSession) {
-					assert(
-						!this.normalizer.contains(alignedLocal),
-						0x759 /* Normalizer out of sync. */,
-					);
+					assert(!this.normalizer.contains(alignedLocal), 0x759 /* Normalizer out of sync. */);
 				} else {
 					throw new Error("Unknown ID");
 				}
@@ -506,9 +566,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 		const localStateSize = hasLocalState
 			? 1 + // generated ID count
-			  1 + // next range base genCount
-			  1 + // count of normalizer pairs
-			  this.normalizer.idRanges.size * 2 // pairs
+				1 + // next range base genCount
+				1 + // count of normalizer pairs
+				this.normalizer.idRanges.size * 2 // pairs
 			: 0;
 		// Layout size, in 8 byte increments
 		const totalSize =
@@ -637,14 +697,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		let baseFinalId = 0;
 		for (let i = 0; i < clusterCount; i++) {
 			const sessionIndex = readNumber(index);
-			const session = sessions[sessionIndex + sessionOffset][1];
+			const sessionArray = sessions[sessionIndex + sessionOffset];
+			assert(
+				sessionArray !== undefined,
+				"sessionArray is undefined in IdCompressor.deserialize2_0",
+			);
+			const session = sessionArray[1];
 			const capacity = readNumber(index);
 			const count = readNumber(index);
-			const cluster = session.addNewCluster(
-				baseFinalId as FinalCompressedId,
-				capacity,
-				count,
-			);
+			const cluster = session.addNewCluster(baseFinalId as FinalCompressedId, capacity, count);
 			compressor.finalSpace.addCluster(cluster);
 			baseFinalId += capacity;
 		}
@@ -686,6 +747,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 /**
  * Create a new {@link IIdCompressor}.
+ * @legacy
  * @alpha
  */
 export function createIdCompressor(
@@ -694,6 +756,7 @@ export function createIdCompressor(
 /**
  * Create a new {@link IIdCompressor}.
  * @param sessionId - The seed ID for the compressor.
+ * @legacy
  * @alpha
  */
 export function createIdCompressor(
@@ -726,6 +789,7 @@ export function createIdCompressor(
 
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @legacy
  * @alpha
  */
 export function deserializeIdCompressor(
@@ -734,6 +798,7 @@ export function deserializeIdCompressor(
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
+ * @legacy
  * @alpha
  */
 export function deserializeIdCompressor(
@@ -754,5 +819,8 @@ export function deserializeIdCompressor(
 		);
 	}
 
-	return IdCompressor.deserialize(serialized as SerializedIdCompressorWithOngoingSession, logger);
+	return IdCompressor.deserialize(
+		serialized as SerializedIdCompressorWithOngoingSession,
+		logger,
+	);
 }

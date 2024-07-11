@@ -3,30 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
-import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	SchemaLibraryData,
-	SchemaLintConfiguration,
+	type Assume,
+	type RestrictiveReadonlyRecord,
+	transformObjectMap,
+} from "../util/index.js";
+
+import { defaultSchemaPolicy } from "./default-schema/index.js";
+import type { FlexFieldKind } from "./modular-schema/index.js";
+import {
+	Any,
+	type FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	type FlexList,
+	type FlexMapFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	type FlexTreeSchema,
+	type SchemaCollection,
+	type SchemaLibraryData,
+	type SchemaLintConfiguration,
+	TreeNodeSchemaBase,
+	type Unenforced,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
-	FlexAllowedTypes,
-	FlexTreeNodeSchema,
-	FlexFieldSchema,
-	FlexTreeSchema,
-	FlexList,
-	Unenforced,
-	Any,
-	FlexMapFieldSchema,
-	SchemaCollection,
-	FlexObjectNodeSchema,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	TreeNodeSchemaBase,
 } from "./typed-schema/index.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
-import { defaultSchemaPolicy } from "./default-schema/index.js";
 
 /**
  * Configuration for a SchemaBuilder.
@@ -83,7 +89,8 @@ export class SchemaBuilderBase<
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
-	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
+	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> =
+		new Map();
 	private readonly adapters: Adapters = {};
 	/**
 	 * Prefix appended to the identifiers of all {@link FlexTreeNodeSchema} produced by this builder.
@@ -125,7 +132,7 @@ export class SchemaBuilderBase<
 	 * Contents within the added libraries can still conflict however.
 	 * Such errors will be reported when finalizing this builder into a library of document schema.
 	 */
-	private addLibraries(...libraries: SchemaLibrary[]) {
+	private addLibraries(...libraries: SchemaLibrary[]): void {
 		for (const libs of libraries) {
 			for (const lib of libs.libraries) {
 				this.libraries.add(lib);
@@ -134,7 +141,10 @@ export class SchemaBuilderBase<
 	}
 
 	protected addNodeSchema<T extends FlexTreeNodeSchema>(schema: T): void {
-		assert(!this.treeNodeSchema.has(schema.name), 0x799 /* Conflicting TreeNodeSchema names */);
+		assert(
+			!this.treeNodeSchema.has(schema.name),
+			0x799 /* Conflicting TreeNodeSchema names */,
+		);
 		this.treeNodeSchema.set(schema.name, schema);
 	}
 
@@ -253,7 +263,10 @@ export class SchemaBuilderBase<
 		name: Name,
 		t: T,
 	): FlexMapNodeSchema<`${TScope}.${Name}`, T> {
-		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<`${TScope}.${Name}`, T>;
+		return this.map(name, t as FlexMapFieldSchema) as FlexMapNodeSchema<
+			`${TScope}.${Name}`,
+			T
+		>;
 	}
 
 	/**
@@ -371,8 +384,8 @@ export type NormalizeAllowedTypes<TSchema extends FlexImplicitAllowedTypes> =
 	TSchema extends FlexTreeNodeSchema
 		? readonly [TSchema]
 		: TSchema extends Any
-		? readonly [Any]
-		: TSchema;
+			? readonly [Any]
+			: TSchema;
 
 /**
  * Normalizes an {@link FlexImplicitAllowedTypes} into  {@link FlexAllowedTypes}.
@@ -399,7 +412,10 @@ export type NormalizeField<
 	TDefault extends FlexFieldKind,
 > = TSchema extends FlexFieldSchema
 	? TSchema
-	: FlexFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>>;
+	: FlexFieldSchema<
+			TDefault,
+			NormalizeAllowedTypes<Assume<TSchema, FlexImplicitAllowedTypes>>
+		>;
 
 /**
  * Normalizes an {@link FlexImplicitFieldSchema} into a {@link FlexFieldSchema}.

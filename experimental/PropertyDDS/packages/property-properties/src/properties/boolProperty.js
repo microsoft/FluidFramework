@@ -7,8 +7,8 @@
  * @fileoverview Definition of the BooleanProperty class
  */
 
-const { ValueProperty } = require("./valueProperty");
 const { _castFunctors } = require("./primitiveTypeCasts");
+const { ValueProperty } = require("./valueProperty");
 
 /**
  * A primitive property for a boolean value

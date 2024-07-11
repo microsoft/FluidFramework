@@ -14,9 +14,9 @@ import {
 	IShowNextResultResult,
 	IToTableRowsOptions,
 	IToTableRowsProps,
-} from "./InspectorTableTypes";
+} from "./InspectorTableTypes.js";
 // @TODO remove this default behavior when making the table fully generic.
-import { fillExpanded as defaultFillExpanded } from "./propertyInspectorUtils";
+import { fillExpanded as defaultFillExpanded } from "./propertyInspectorUtils.js";
 
 /**
  * Generates:
@@ -159,7 +159,11 @@ export const search = (
 	handleUpdate: IInspectorSearchCallback,
 	toTableRowsProps: IToTableRowsProps,
 	toTableRowsOptions: IToTableRowsOptions,
-	searchState: IInspectorSearchState = { foundMatches: [], matchesMap: {}, childToParentMap: {} },
+	searchState: IInspectorSearchState = {
+		foundMatches: [],
+		matchesMap: {},
+		childToParentMap: {},
+	},
 	chunkSize = 1000,
 	recursive = false,
 	entryPoint = true,
@@ -347,5 +351,5 @@ export const search = (
 		: {
 				abortHandler: abortSearch.bind(null, searchState),
 				state: searchState,
-		  };
+			};
 };

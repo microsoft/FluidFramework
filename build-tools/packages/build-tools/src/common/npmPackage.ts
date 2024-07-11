@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import * as fs from "fs";
-import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import * as path from "path";
+import { readFileSync, readJsonSync, writeJson, writeJsonSync } from "fs-extra";
 import sortPackageJson from "sort-package-json";
 
-import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest";
+import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
@@ -50,6 +51,13 @@ export type FluidPackageJson = {
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
 	 */
 	fluidBuild?: IFluidBuildConfig;
+
+	/**
+	 * pnpm config
+	 */
+	pnpm?: {
+		overrides?: Record<string, string>;
+	};
 };
 
 /**
@@ -61,6 +69,15 @@ export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
 	"name" | "scripts" | "version"
 >;
+
+/**
+ * Information about a package dependency.
+ */
+interface PackageDependency {
+	name: string;
+	version: string;
+	depClass: "prod" | "dev" | "peer";
+}
 
 export class Package {
 	private static packageCount: number = 0;
@@ -113,8 +130,8 @@ export class Package {
 		this.packageManager = existsSync(pnpmWorkspacePath)
 			? "pnpm"
 			: existsSync(yarnLockPath)
-			? "yarn"
-			: "npm";
+				? "yarn"
+				: "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
@@ -182,22 +199,31 @@ export class Package {
 		return Object.keys(this.packageJson.dependencies ?? {});
 	}
 
-	public get combinedDependencies(): Generator<
-		{
-			name: string;
-			version: string;
-			dev: boolean;
-		},
-		void
-	> {
+	public get combinedDependencies(): Generator<PackageDependency, void> {
 		const it = function* (packageJson: PackageJson) {
 			for (const item in packageJson.dependencies) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				yield { name: item, version: packageJson.dependencies[item]!, dev: false };
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.dependencies[item]!,
+					depClass: "prod",
+				} as const;
 			}
 			for (const item in packageJson.devDependencies) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				yield { name: item, version: packageJson.devDependencies[item]!, dev: true };
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.devDependencies[item]!,
+					depClass: "dev",
+				} as const;
+			}
+			for (const item in packageJson.peerDependencies) {
+				yield {
+					name: item,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					version: packageJson.peerDependencies[item]!,
+					depClass: "peer",
+				} as const;
 			}
 		};
 		return it(this.packageJson);
@@ -227,8 +253,8 @@ export class Package {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			? "npm run install-strict"
-			: "npm i";
+				? "npm run install-strict"
+				: "npm i";
 	}
 
 	private get color() {
@@ -259,7 +285,7 @@ export class Package {
 
 		if (!existsSync(path.join(this.directory, "node_modules"))) {
 			if (print) {
-				error(`${this.nameColored}: node_modules not installed`);
+				error(`${this.nameColored}: node_modules not installed in ${this.directory}`);
 			}
 			return false;
 		}
@@ -358,12 +384,10 @@ async function queueExec<TItem, TResult>(
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
 				log(
-					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
-						3,
-					)}s`,
+					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`,
 				);
 				return result;
-		  }
+			}
 		: exec;
 	const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
 		try {
@@ -402,9 +426,7 @@ export class Packages {
 					ignoredDirFullPaths === undefined ||
 					!ignoredDirFullPaths.some((name) => isSameFileOrDir(name, fullPath))
 				) {
-					packages.push(
-						...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo),
-					);
+					packages.push(...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo));
 				}
 			}
 		});
@@ -526,7 +548,9 @@ export function updatePackageJsonFile(
  *
  * @internal
  */
-export function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, indent: string] {
+export function readPackageJsonAndIndent(
+	pathToJson: string,
+): [json: PackageJson, indent: string] {
 	const contents = readFileSync(pathToJson).toString();
 	const indentation = detectIndent(contents).indent || "\t";
 	const pkgJson: PackageJson = JSON.parse(contents);
@@ -538,4 +562,47 @@ export function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson
  */
 function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
 	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+}
+
+/**
+ * Reads the contents of package.json, applies a transform function to it, then writes
+ * the results back to the source file.
+ *
+ * @param packagePath - A path to a package.json file or a folder containing one. If the
+ * path is a directory, the package.json from that directory will be used.
+ * @param packageTransformer - A function that will be executed on the package.json
+ * contents before writing it back to the file.
+ *
+ * @remarks
+ * The package.json is always sorted using sort-package-json.
+ *
+ * @internal
+ */
+export async function updatePackageJsonFileAsync(
+	packagePath: string,
+	packageTransformer: (json: PackageJson) => Promise<void>,
+): Promise<void> {
+	packagePath = packagePath.endsWith("package.json")
+		? packagePath
+		: path.join(packagePath, "package.json");
+	const [pkgJson, indent] = await readPackageJsonAndIndentAsync(packagePath);
+
+	// Transform the package.json
+	await packageTransformer(pkgJson);
+
+	await writeJson(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+}
+
+/**
+ * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
+ * indentation.
+ */
+async function readPackageJsonAndIndentAsync(
+	pathToJson: string,
+): Promise<[json: PackageJson, indent: string]> {
+	return fs.promises.readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
+		const indentation = detectIndent(contents).indent || "\t";
+		const pkgJson: PackageJson = JSON.parse(contents);
+		return [pkgJson, indentation];
+	});
 }

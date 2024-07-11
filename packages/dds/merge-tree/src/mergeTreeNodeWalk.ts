@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes";
+import { type MergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes.js";
 
 export const LeafAction = {
 	Exit: false,
@@ -19,7 +19,9 @@ export const NodeAction = {
 } as const;
 
 // we exclude true from, as we only want one continue value, undefined
-export type NodeAction = (typeof NodeAction)[keyof typeof NodeAction] | Exclude<LeafAction, true>;
+export type NodeAction =
+	| (typeof NodeAction)[keyof typeof NodeAction]
+	| Exclude<LeafAction, true>;
 
 /**
  * Does a depth first walk of the tree from the specific start.
@@ -33,11 +35,11 @@ export type NodeAction = (typeof NodeAction)[keyof typeof NodeAction] | Exclude<
  * @returns true if we naturally exit, false if exiting due to Exit action result
  */
 export function depthFirstNodeWalk(
-	startBlock: IMergeBlock,
+	startBlock: MergeBlock,
 	startChild: IMergeNode | undefined,
 	downAction?: (node: IMergeNode) => NodeAction,
 	leafActionOverride?: (seg: ISegment) => LeafAction,
-	upAction?: (block: IMergeBlock) => void,
+	upAction?: (block: MergeBlock) => void,
 	forward: boolean = true,
 ): boolean {
 	const increment = forward ? 1 : -1;
@@ -56,7 +58,7 @@ export function depthFirstNodeWalk(
 		let blockResult: NodeAction;
 		while (start?.isLeaf() === false) {
 			// cast is safe due to isLeaf === false in while above
-			block = start as IMergeBlock;
+			block = start as MergeBlock;
 			childCount = block.childCount;
 			blockResult = downAction?.(block);
 			// setting start undefined will skip the leaf walk
@@ -168,7 +170,7 @@ export function backwardExcursion(
  * @returns true if we naturally exit, false if exiting due to leaf action result
  */
 export function walkAllChildSegments(
-	startBlock: IMergeBlock,
+	startBlock: MergeBlock,
 	leafAction: (segment: ISegment) => boolean | undefined | void,
 ): boolean {
 	if (startBlock.childCount === 0) {
@@ -177,7 +179,7 @@ export function walkAllChildSegments(
 
 	// undefined shouldn't actually be added, but this allows subsequent check for `node.parent` to typecheck
 	// without further runtime work.
-	const ancestors = new Set<IMergeBlock | undefined>();
+	const ancestors = new Set<MergeBlock | undefined>();
 	for (let cur = startBlock.parent; cur !== undefined; cur = cur.parent) {
 		ancestors.add(cur);
 	}

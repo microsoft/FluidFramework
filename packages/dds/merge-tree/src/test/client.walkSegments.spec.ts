@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TestClient } from "./testClient";
+
+import { TestClient } from "./testClient.js";
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";

@@ -49,7 +49,10 @@ export type Reducer<TOp, TState> = (state: TState, operation: TOp) => TState | v
  *
  * @internal
  */
-export type AsyncReducer<TOp, TState> = (state: TState, operation: TOp) => Promise<TState | void>;
+export type AsyncReducer<TOp, TState> = (
+	state: TState,
+	operation: TOp,
+) => Promise<TState | void>;
 
 /**
  * @internal
@@ -89,11 +92,17 @@ export type AsyncWeights<TOp, TState> = [
 /**
  * @internal
  */
-export interface SaveInfo {
-	saveOnFailure: boolean;
-	saveOnSuccess?: boolean;
+export interface SaveDestination {
 	/** Filepath to dump the history file. Containing folder is created if it doesn't exist. */
-	filepath: string;
+	readonly path: string;
+}
+
+/**
+ * @internal
+ */
+export interface SaveInfo {
+	saveOnFailure: false | SaveDestination;
+	saveOnSuccess: false | SaveDestination;
 }
 
 /**

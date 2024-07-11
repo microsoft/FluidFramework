@@ -4,21 +4,22 @@
  */
 
 import {
-	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
+	createWeightedAsyncGenerator as createWeightedGenerator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import {
-	Operation,
 	FuzzTestState,
-	defaultIntervalOperationGenerationConfig,
-	createSharedStringGeneratorOperations,
+	Operation,
 	SharedStringOperationGenerationConfig,
 	baseModel,
+	createSharedStringGeneratorOperations,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
+	defaultIntervalOperationGenerationConfig,
+} from "./fuzzUtils.js";
 
 type ClientOpState = FuzzTestState;
 export function makeSharedStringOperationGenerator(
@@ -28,13 +29,15 @@ export function makeSharedStringOperationGenerator(
 	const {
 		addText,
 		removeRange,
+		annotateRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
 		hasNonzeroLength,
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
 
-	const usableWeights = optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	const usableWeights =
+		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
 	return createWeightedGenerator<Operation, ClientOpState>([
 		[addText, usableWeights.addText, isShorterThanMaxLength],
 		[
@@ -43,9 +46,10 @@ export function makeSharedStringOperationGenerator(
 			alwaysLeaveChar
 				? lengthSatisfies((length) => {
 						return length > 1;
-				  })
+					})
 				: hasNonzeroLength,
 		],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 	]);
 }
 

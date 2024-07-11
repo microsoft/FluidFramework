@@ -3,21 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList } from "./collections";
-import { EndOfTreeSegment } from "./endOfTreeSegment";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
-import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { ISegmentLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
-import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
-import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
-import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
-import { matchProperties, PropertySet } from "./properties";
-import { DetachedReferencePosition } from "./referencePositions";
-import { MergeTree, findRootMergeBlock } from "./mergeTree";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { DoublyLinkedList } from "./collections/index.js";
+import { EndOfTreeSegment } from "./endOfTreeSegment.js";
+import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
+import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
+import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
+import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
+import { ISegment, ISegmentLeaf, toRemovalInfo } from "./mergeTreeNodes.js";
+import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
+import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { PropertySet, matchProperties } from "./properties.js";
+import { DetachedReferencePosition } from "./referencePositions.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type MergeTreeDeltaRevertible =
@@ -43,9 +45,10 @@ export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRever
 	return !!x && typeof x === "object" && "operation" in x && "trackingGroup" in x;
 }
 
-type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> = MergeTreeDeltaRevertible & {
-	operation: T;
-};
+type TypedRevertible<T extends MergeTreeDeltaRevertible["operation"]> =
+	MergeTreeDeltaRevertible & {
+		operation: T;
+	};
 
 interface RemoveSegmentRefProperties {
 	/**
@@ -59,6 +62,7 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface MergeTreeRevertibleDriver {
@@ -117,7 +121,9 @@ function appendLocalInsertToRevertibles(
 			trackingGroup: new UnorderedTrackingGroup(),
 		});
 	}
-	const last = revertibles[revertibles.length - 1];
+	// TODO Non null asserting, why is this not null?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const last = revertibles[revertibles.length - 1]!;
 	deltaArgs.deltaSegments.forEach((t) => last.trackingGroup.link(t.segment));
 
 	return revertibles;
@@ -133,9 +139,13 @@ function appendLocalRemoveToRevertibles(
 			trackingGroup: new UnorderedTrackingGroup(),
 		});
 	}
-	const last = revertibles[revertibles.length - 1];
+	// TODO Non null asserting, why is this not null?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const last = revertibles[revertibles.length - 1]!;
 
-	const mergeTreeWithRevert = findMergeTreeWithRevert(deltaArgs.deltaSegments[0].segment);
+	// TODO Non null asserting, why is this not null?
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const mergeTreeWithRevert = findMergeTreeWithRevert(deltaArgs.deltaSegments[0]!.segment);
 
 	deltaArgs.deltaSegments.forEach((t) => {
 		const props: RemoveSegmentRefProperties = {
@@ -187,6 +197,7 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
@@ -217,6 +228,7 @@ export function appendToMergeTreeDeltaRevertibles(
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
@@ -237,7 +249,9 @@ function revertLocalInsert(
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.INSERT>,
 ) {
 	while (revertible.trackingGroup.size > 0) {
-		const tracked = revertible.trackingGroup.tracked[0];
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const tracked = revertible.trackingGroup.tracked[0]!;
 		assert(
 			tracked.trackingCollection.unlink(revertible.trackingGroup),
 			0x3f1 /* tracking group removed */,
@@ -256,7 +270,9 @@ function revertLocalRemove(
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.REMOVE>,
 ) {
 	while (revertible.trackingGroup.size > 0) {
-		const tracked = revertible.trackingGroup.tracked[0];
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const tracked = revertible.trackingGroup.tracked[0]!;
 
 		assert(
 			tracked.trackingCollection.unlink(revertible.trackingGroup),
@@ -360,7 +376,9 @@ function revertLocalAnnotate(
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.ANNOTATE>,
 ) {
 	while (revertible.trackingGroup.size > 0) {
-		const tracked = revertible.trackingGroup.tracked[0];
+		// TODO Non null asserting, why is this not null?
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const tracked = revertible.trackingGroup.tracked[0]!;
 		const unlinked = tracked.trackingCollection.unlink(revertible.trackingGroup);
 		assert(unlinked && tracked.isLeaf(), 0x3f7 /* annotates must track segments */);
 		if (toRemovalInfo(tracked) === undefined) {
@@ -379,6 +397,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(
@@ -392,7 +411,9 @@ export function revertMergeTreeDeltaRevertibles(
 		const r = revertibles.pop()!;
 		const operation = r.operation;
 		if (r.trackingGroup.size > 0) {
-			mergeTreeWithRevert ??= findMergeTreeWithRevert(r.trackingGroup.tracked[0]);
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			mergeTreeWithRevert ??= findMergeTreeWithRevert(r.trackingGroup.tracked[0]!);
 			switch (operation) {
 				case MergeTreeDeltaType.INSERT:
 					revertLocalInsert(driver, mergeTreeWithRevert, r);

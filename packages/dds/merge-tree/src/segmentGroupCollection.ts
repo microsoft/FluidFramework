@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections/index.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISegment, SegmentGroup } from "./mergeTreeNodes";
+import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export class SegmentGroupCollection {
@@ -66,7 +67,9 @@ export class SegmentGroupCollection {
 			// duplicate the previousProps for this segment
 			const index = segmentGroup.segments.indexOf(sourceSegment);
 			if (index !== -1) {
-				segmentGroup.previousProps.push(segmentGroup.previousProps[index]);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segmentGroup.previousProps.push(segmentGroup.previousProps[index]!);
 			}
 		}
 	}

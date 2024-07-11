@@ -3,47 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import {
+	LocationRedirectionError,
+	NonRetryableError,
+	RateLimiter,
+	ThrottlingError,
+} from "@fluidframework/driver-utils/internal";
+import {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IOdspError,
+	IOdspErrorAugmentations,
+	IOdspResolvedUrl,
+	IPersistedCache,
+	OdspErrorTypes,
+	maximumCacheDurationMs,
+	snapshotKey,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
-	normalizeError,
 	loggerToMonitoringContext,
+	normalizeError,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	ThrottlingError,
-	RateLimiter,
-	NonRetryableError,
-	LocationRedirectionError,
-} from "@fluidframework/driver-utils";
-import {
-	OdspErrorTypes,
-	snapshotKey,
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IPersistedCache,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-} from "@fluidframework/odsp-driver-definitions";
-import {
+	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
 	getOdspResolvedUrl,
-	IOdspResponse,
-} from "./odspUtils";
-import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
-import { ClpCompliantAppHeader } from "./contractsPublic";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { patchOdspResolvedUrl } from "./odspLocationRedirection";
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type FetchType =
@@ -60,14 +63,12 @@ export type FetchType =
 	| "versions";
 
 /**
+ * @legacy
  * @alpha
  */
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
-
-// Must be less than policy of 5 days
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
  * In ODSP, the concept of "epoch" refers to binary updates to files. For example, this might include using
@@ -83,6 +84,7 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
+ * @legacy
  * @alpha
  */
 export class EpochTracker implements IPersistedFileCache {
@@ -107,7 +109,7 @@ export class EpochTracker implements IPersistedFileCache {
 			"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache",
 		)
 			? 0
-			: defaultCacheExpiryTimeoutMs;
+			: maximumCacheDurationMs;
 	}
 
 	// public for UT purposes only!
@@ -313,9 +315,7 @@ export class EpochTracker implements IPersistedFileCache {
 							redirectUrl,
 							{ driverVersion, redirectLocation },
 						);
-						locationRedirectionError.addTelemetryProperties(
-							error.getTelemetryProperties(),
-						);
+						locationRedirectionError.addTelemetryProperties(error.getTelemetryProperties());
 						throw locationRedirectionError;
 					}
 				}
@@ -476,11 +476,11 @@ export class EpochTracker implements IPersistedFileCache {
 		if (this.fluidEpoch && epochFromResponse && this.fluidEpoch !== epochFromResponse) {
 			// This is similar in nature to how fluidEpochMismatchError (409) is handled.
 			// Difference - client detected mismatch, instead of server detecting it.
-			return new NonRetryableError(
-				"Epoch mismatch",
-				OdspErrorTypes.fileOverwrittenInStorage,
-				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
-			);
+			return new NonRetryableError("Epoch mismatch", OdspErrorTypes.fileOverwrittenInStorage, {
+				driverVersion,
+				serverEpoch: epochFromResponse,
+				clientEpoch: this.fluidEpoch,
+			});
 		}
 	}
 
@@ -616,6 +616,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface ICacheAndTracker {

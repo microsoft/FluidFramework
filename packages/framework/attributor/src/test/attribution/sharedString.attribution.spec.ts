@@ -3,50 +3,61 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import * as path from "node:path";
+
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
+	type Generator,
+	type IRandom,
+	type Reducer,
 	chain,
 	createWeightedGenerator,
 	done,
-	type Generator,
 	generatorFromArray,
 	interleave,
-	type IRandom,
 	makeRandom,
 	performFuzzActions,
-	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
+	type Jsonable,
+	type IFluidDataStoreRuntime,
+	type IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	type ISummaryTree,
+	SummaryType,
+	type IQuorumClients,
+	type ISequencedClient,
+} from "@fluidframework/driver-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
-} from "@fluidframework/test-runtime-utils";
-import {
-	type IChannelServices,
-	type IFluidDataStoreRuntime,
-	type Jsonable,
-} from "@fluidframework/datastore-definitions";
-import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { type IAudience } from "@fluidframework/container-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { type IAttributor, OpStreamAttributor } from "../../attributor";
+	MockFluidDataStoreRuntime,
+	MockStorage,
+	MockQuorumClients,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
+	type Encoder,
 	chain as chainEncoders,
 	deltaEncoder,
-	type Encoder,
-} from "../../encoders";
-import { makeLZ4Encoder } from "../../lz4Encoder";
+} from "../../encoders.js";
+import { makeLZ4Encoder } from "../../lz4Encoder.js";
 
-function makeMockAudience(clientIds: string[]): IAudience {
-	const clients = new Map<string, IClient>();
+import { _dirname } from "./dirname.cjs";
+
+function makeMockQuorum(clientIds: string[]): IQuorumClients {
+	const clients = new Map<string, ISequencedClient>();
 	for (const [index, clientId] of clientIds.entries()) {
 		// eslint-disable-next-line unicorn/prefer-code-point
 		const stringId = String.fromCharCode(index + 65);
@@ -59,19 +70,17 @@ function makeMockAudience(clientIds: string[]): IAudience {
 			email,
 		};
 		clients.set(clientId, {
-			mode: "write",
-			details: { capabilities: { interactive: true } },
-			permission: [],
-			user,
-			scopes: [],
+			client: {
+				mode: "write",
+				details: { capabilities: { interactive: true } },
+				permission: [],
+				user,
+				scopes: [],
+			},
+			sequenceNumber: 0,
 		});
 	}
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	return {
-		getMember: (clientId: string): IClient | undefined => {
-			return clients.get(clientId);
-		},
-	} as IAudience;
+	return new MockQuorumClients(...clients.entries());
 }
 
 type PropertySet = Record<string, unknown>;
@@ -235,39 +244,40 @@ function createSharedString(
 ): FuzzTestState {
 	const numClients = 3;
 	const clientIds = Array.from({ length: numClients }, () => random.uuid4());
-	const audience = makeMockAudience(clientIds);
+	const quorum = makeMockQuorum(clientIds);
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 	let attributor: IAttributor | undefined;
 	let serializer: Encoder<IAttributor, string> | undefined;
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				clientId,
+				registry: [SharedString.getFactory()],
+			});
 			dataStoreRuntime.options = {
 				attribution: {
 					track: makeSerializer !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
 			};
-			const { deltaManager } = dataStoreRuntime;
-			const sharedString = new SharedString(
-				dataStoreRuntime,
-				// eslint-disable-next-line unicorn/prefer-code-point
+			const deltaManager = dataStoreRuntime.deltaManagerInternal;
+			const sharedString = SharedString.create(
+				dataStoreRuntime, // eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
-				SharedStringFactory.Attributes,
 			);
 
 			if (index === 0 && makeSerializer !== undefined) {
-				attributor = new OpStreamAttributor(deltaManager, audience);
+				attributor = new OpStreamAttributor(deltaManager, quorum);
 				serializer = makeSerializer(dataStoreRuntime);
 				// DeltaManager mock doesn't have high fidelity but attribution requires DataStoreRuntime implements
-				// audience / op emission.
+				// quorum / op emission.
 				let opIndex = 0;
 				sharedString.on("op", (message) => {
 					opIndex++;
 					message.timestamp = getTimestamp(opIndex);
 					deltaManager.emit("op", message);
 				});
-				dataStoreRuntime.getAudience = (): IAudience => audience;
+				dataStoreRuntime.getQuorum = (): IQuorumClients => quorum;
 			}
 
 			const containerRuntime =
@@ -324,7 +334,7 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(__dirname, "../../../src/test/attribution/documents");
+const directory = path.join(_dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
 	directory: string;
@@ -344,7 +354,8 @@ function getDocuments(): string[] {
 }
 
 // Format a number separating 3 digits by comma
-const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const formatNumber = (num: number): string =>
+	num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	generator: Generator<Operation, FuzzTestState>;
@@ -390,6 +401,9 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
 	undefined | symbol
 >;
 
+/* eslint-disable @rushstack/no-new-null, @typescript-eslint/ban-types -- the type below needs to accept null and
+  Function; the lint disable is here so as not to interfere with the inline comments explaining what the type does and
+  how it works. */
 /**
  * Used to constrain a type `T` to types that are deserializable from JSON.
  *
@@ -403,36 +417,42 @@ type NonSymbolWithUndefinedNonFunctionPropertyOf<T extends object> = Exclude<
  * Similarly, function valued properties are removed.
  */
 type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean extends (
-	T extends never ? true : false
+	T extends never
+		? true
+		: false
 )
 	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
-	? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
-	: // eslint-disable-next-line @rushstack/no-new-null
-	/* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
-	? /* primitive types => */ T
-	: // eslint-disable-next-line @typescript-eslint/ban-types
-	/* test for not a function */ Extract<T, Function> extends never
-	? /* not a function => test for object */ T extends object
-		? /* object => test for array */ T extends (infer E)[]
-			? /* array => */ JsonDeserialized<E, TReplaced>[]
-			: /* property bag => */
-			  /* properties with symbol keys or function values are removed */
-			  {
-					/* properties with defined values are recursed */
-					[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
-						T[K],
-						TReplaced
-					>;
-			  } & {
-					/* properties that may have undefined values are optional */
-					[K in NonSymbolWithUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
-						T[K],
-						TReplaced
-					>;
-			  }
-		: /* not an object => */ never
-	: /* function => */ never;
+		? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
+		: /* test for Jsonable primitive types */ T extends
+					| null
+					| boolean
+					| number
+					| string
+					| TReplaced
+			? /* primitive types => */ T
+			: /* test for not a function */ Extract<T, Function> extends never
+				? /* not a function => test for object */ T extends object
+					? /* object => test for array */ T extends (infer E)[]
+						? /* array => */ JsonDeserialized<E, TReplaced>[]
+						: /* property bag => */
+							/* properties with symbol keys or function values are removed */
+							{
+								/* properties with defined values are recursed */
+								[K in NonSymbolWithDefinedNonFunctionPropertyOf<T>]: JsonDeserialized<
+									T[K],
+									TReplaced
+								>;
+							} & {
+								/* properties that may have undefined values are optional */
+								[K in NonSymbolWithUndefinedNonFunctionPropertyOf<T>]?: JsonDeserialized<
+									T[K],
+									TReplaced
+								>;
+							}
+					: /* not an object => */ never
+				: /* function => */ never;
+/* eslint-enable @rushstack/no-new-null, @typescript-eslint/ban-types */
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
 	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;
@@ -506,6 +526,18 @@ function assertSerializableSummary(
 			}
 		}
 	}
+}
+
+interface ISummaryTreeWithCatchupOps {
+	tree: {
+		content: {
+			tree: {
+				catchupOps: {
+					content: string | ISequencedDocumentMessage[];
+				};
+			};
+		};
+	};
 }
 
 const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
@@ -611,8 +643,8 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
-										runtime.getAudience(),
+										toDeltaManagerInternal(runtime.deltaManager),
+										runtime.getQuorum(),
 										entries,
 									),
 								noopEncoder,
@@ -630,8 +662,8 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
-										runtime.getAudience(),
+										toDeltaManagerInternal(runtime.deltaManager),
+										runtime.getQuorum(),
 										entries,
 									),
 								noopEncoder,
@@ -649,8 +681,8 @@ describe("SharedString Attribution", () => {
 							new AttributorSerializer(
 								(entries) =>
 									new OpStreamAttributor(
-										runtime.deltaManager,
-										runtime.getAudience(),
+										toDeltaManagerInternal(runtime.deltaManager),
+										runtime.getQuorum(),
 										entries,
 									),
 								deltaEncoder,
@@ -694,8 +726,27 @@ describe("SharedString Attribution", () => {
 
 				for (const { filename, factory } of dataGenerators) {
 					it(`snapshot at ${filename}`, async () => {
-						const expected = readJson(path.join(paths.directory, filename));
-						const actual = await summaryFromState(factory(operations));
+						const expected = readJson(
+							path.join(paths.directory, filename),
+						) as ISummaryTreeWithCatchupOps;
+						const actual = (await summaryFromState(
+							factory(operations),
+						)) as unknown as ISummaryTreeWithCatchupOps;
+
+						assert.strictEqual(
+							typeof actual.tree.content?.tree?.catchupOps?.content,
+							"string",
+							"invalid catchupOps in produced summary",
+						);
+
+						// Parse the stringified op array into the actual op array so we can deep compare better
+						actual.tree.content.tree.catchupOps.content = JSON.parse(
+							actual.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+						expected.tree.content.tree.catchupOps.content = JSON.parse(
+							expected.tree.content.tree.catchupOps.content as string,
+						) as ISequencedDocumentMessage[];
+
 						assert.deepEqual(actual, expected);
 					});
 				}
@@ -710,9 +761,7 @@ describe("SharedString Attribution", () => {
 				const paths = getDocumentPaths(docName);
 				const operations: Operation[] = readJson(paths.operations);
 				const data = await Promise.all(
-					dataGenerators.map(async ({ factory }) =>
-						summaryFromState(factory(operations)),
-					),
+					dataGenerators.map(async ({ factory }) => summaryFromState(factory(operations))),
 				);
 				table.addRow(docName, data);
 			}

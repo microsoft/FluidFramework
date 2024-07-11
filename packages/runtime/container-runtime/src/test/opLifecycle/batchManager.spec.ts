@@ -4,13 +4,24 @@
  */
 
 import { strict as assert } from "assert";
-import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle";
-import { ContainerMessageType } from "../../messageTypes";
+
+import { ContainerMessageType } from "../../messageTypes.js";
+import type { IBatchMetadata } from "../../metadata.js";
+import {
+	BatchManager,
+	BatchMessage,
+	IBatchManagerOptions,
+	estimateSocketSize,
+	generateBatchId,
+} from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
-	const softLimit = 1024;
 	const hardLimit = 950 * 1024;
 	const smallMessageSize = 10;
+	const defaultOptions: IBatchManagerOptions = {
+		hardLimit,
+		canRebase: true,
+	};
 
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
@@ -21,120 +32,9 @@ describe("BatchManager", () => {
 			type: ContainerMessageType.FluidDataStoreOp,
 		}) as any as BatchMessage;
 
-	it("BatchManager's soft limit: a bunch of small messages", () => {
-		const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit, softLimit });
-
-		// Can push one large message
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		// Can't push another large message
-		assert.equal(batchManager.push(message, /* reentrant */ false), false);
-		assert.equal(batchManager.length, 1);
-
-		// But can push one small message
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.length, 2);
-
-		// Pop and check batch
-		const batch = batchManager.popBatch();
-		assert.equal(batch.content.length, 2);
-		assert.equal(batch.contentSizeInBytes, softLimit / 2 + smallMessageSize);
-
-		// Validate that can push large message again
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		assert.equal(batchManager.push(message, /* reentrant */ false), false);
-		assert.equal(batchManager.length, 1);
-	});
-
-	it("BatchManager's soft limit: single large message", () => {
-		const message = { contents: generateStringOfSize(softLimit * 2) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit, softLimit });
-
-		// Can push one large message, even above soft limit
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		// Can't push another small message
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), false);
-		assert.equal(batchManager.length, 1);
-
-		// Pop and check batch
-		const batch = batchManager.popBatch();
-		assert.equal(batch.content.length, 1);
-		assert.equal(batch.contentSizeInBytes, softLimit * 2);
-
-		// Validate that we can't push large message above soft limit if we have already at least one message.
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		assert.equal(batchManager.push(message, /* reentrant */ false), false);
-		assert.equal(batchManager.length, 1);
-	});
-
-	it("BatchManager: no soft limit", () => {
-		const batchManager = new BatchManager({ hardLimit });
-		const third = Math.floor(hardLimit / 3) + 1;
-		const message = { contents: generateStringOfSize(third) } as any as BatchMessage;
-
-		// Can push one large message, even above soft limit
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		// Can push second large message, even above soft limit
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 2);
-
-		// Can't push another message
-		assert.equal(batchManager.push(message, /* reentrant */ false), false);
-		assert.equal(batchManager.length, 2);
-
-		// Pop and check batch
-		const batch = batchManager.popBatch();
-		assert.equal(batch.content.length, 2);
-
-		// Can push messages again
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 2);
-
-		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
-		assert.equal(batchManager.length, 3);
-	});
-
-	it("BatchManager: soft limit is higher than hard limit", () => {
-		const batchManager = new BatchManager({ hardLimit, softLimit: hardLimit * 2 });
-		const twoThird = Math.floor((hardLimit * 2) / 3);
-		const message = { contents: generateStringOfSize(twoThird) } as any as BatchMessage;
-		const largeMessage = {
-			contents: generateStringOfSize(hardLimit + 1),
-		} as any as BatchMessage;
-
-		// Can't push very large message, above hard limit
-		assert.equal(batchManager.push(largeMessage, /* reentrant */ false), false);
-		assert.equal(batchManager.length, 0);
-
-		// Can push one message
-		assert.equal(batchManager.push(message, /* reentrant */ false), true);
-		assert.equal(batchManager.length, 1);
-
-		// Can't push second message
-		assert.equal(batchManager.push(message, /* reentrant */ false), false);
-		assert.equal(batchManager.length, 1);
-
-		// Pop and check batch
-		const batch = batchManager.popBatch();
-		assert.equal(batch.content.length, 1);
-	});
-
 	it("BatchManager: 'infinity' hard limit allows everything", () => {
-		const message = { contents: generateStringOfSize(softLimit) } as any as BatchMessage;
-		const batchManager = new BatchManager({ hardLimit: Infinity });
+		const message = { contents: generateStringOfSize(1024) } as any as BatchMessage;
+		const batchManager = new BatchManager({ ...defaultOptions, hardLimit: Infinity });
 
 		for (let i = 1; i <= 10; i++) {
 			assert.equal(batchManager.push(message, /* reentrant */ false), true);
@@ -142,48 +42,69 @@ describe("BatchManager", () => {
 		}
 	});
 
-	it("Batch metadata is set correctly", () => {
-		const batchManager = new BatchManager({ hardLimit });
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
-		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 1 },
-				/* reentrant */ false,
-			),
-			true,
-		);
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 2 },
-				/* reentrant */ false,
-			),
-			true,
-		);
+	[true, false].forEach((includeBatchId) =>
+		it(`Batch metadata is set correctly [with${includeBatchId ? "" : "out"} batchId]`, () => {
+			const batchManager = new BatchManager(defaultOptions);
+			const batchId = includeBatchId ? "BATCH_ID" : undefined;
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 0 },
+					/* reentrant */ false,
+				),
+				true,
+			);
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 1 },
+					/* reentrant */ false,
+				),
+				true,
+			);
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 2 },
+					/* reentrant */ false,
+				),
+				true,
+			);
 
-		const batch = batchManager.popBatch();
-		assert.equal(batch.content[0].metadata?.batch, true);
-		assert.equal(batch.content[1].metadata?.batch, undefined);
-		assert.equal(batch.content[2].metadata?.batch, false);
+			const batch = batchManager.popBatch(batchId);
+			assert.deepEqual(
+				batch.messages.map((m) => m.metadata as IBatchMetadata),
+				[
+					{ batch: true, ...(includeBatchId ? { batchId } : undefined) }, // batchId propertly should be omitted (v. set to undefined) if not provided
+					undefined, // metadata not touched for intermediate messages
+					{ batch: false },
+				],
+			);
 
-		assert.equal(
-			batchManager.push(
-				{ ...smallMessage(), referenceSequenceNumber: 0 },
-				/* reentrant */ false,
-			),
-			true,
-		);
-		const singleOpBatch = batchManager.popBatch();
-		assert.equal(singleOpBatch.content[0].metadata?.batch, undefined);
+			assert.equal(
+				batchManager.push(
+					{ ...smallMessage(), referenceSequenceNumber: 0 },
+					/* reentrant */ false,
+				),
+				true,
+			);
+			const singleOpBatch = batchManager.popBatch(batchId);
+			assert.deepEqual(
+				singleOpBatch.messages.map((m) => m.metadata as IBatchMetadata),
+				[
+					includeBatchId ? { batchId } : undefined, // batchId propertly should be omitted (v. set to undefined) if not provided
+				],
+			);
+		}),
+	);
+
+	it("BatchId Format", () => {
+		const clientId = "3627a2a9-963f-4e3b-a4d2-a31b1267ef29";
+		const batchStartCsn = 123;
+		const batchId = generateBatchId(clientId, batchStartCsn);
+		const serialized = JSON.stringify({ batchId });
+		assert.equal(serialized, `{"batchId":"3627a2a9-963f-4e3b-a4d2-a31b1267ef29_[123]"}`);
 	});
 
 	it("Batch content size is tracked correctly", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager(defaultOptions);
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
 		assert.equal(batchManager.contentSizeInBytes, smallMessageSize * batchManager.length);
 		assert.equal(batchManager.push(smallMessage(), /* reentrant */ false), true);
@@ -193,7 +114,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch reference sequence number maps to the last message", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager(defaultOptions);
 		assert.equal(
 			batchManager.push(
 				{ ...smallMessage(), referenceSequenceNumber: 0 },
@@ -220,7 +141,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch size estimates", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager(defaultOptions);
 		batchManager.push(smallMessage(), /* reentrant */ false);
 		// 10 bytes of content + 200 bytes overhead
 		assert.equal(estimateSocketSize(batchManager.popBatch()), 210);
@@ -248,7 +169,7 @@ describe("BatchManager", () => {
 	});
 
 	it("Batch op reentry state preserved during its lifetime", () => {
-		const batchManager = new BatchManager({ hardLimit });
+		const batchManager = new BatchManager(defaultOptions);
 		assert.equal(
 			batchManager.push(
 				{ ...smallMessage(), referenceSequenceNumber: 0 },

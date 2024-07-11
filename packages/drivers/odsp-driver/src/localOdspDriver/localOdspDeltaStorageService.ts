@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
-import { Queue, emptyMessageStream } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { validateMessages } from "@fluidframework/driver-base";
+import { validateMessages } from "@fluidframework/driver-base/internal";
+import {
+	IDocumentDeltaStorageService,
+	IStream,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages
@@ -35,7 +38,8 @@ export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageServic
 		);
 		validateMessages("cached", messages, from, this.logger);
 
-		if (messages.length === 0 || messages[0].sequenceNumber !== from) {
+		// Non null asserting here because of the length check
+		if (messages.length === 0 || messages[0]!.sequenceNumber !== from) {
 			this.snapshotOps = [];
 		}
 		this.snapshotOps = this.snapshotOps.filter(

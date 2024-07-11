@@ -15,6 +15,7 @@ module.exports = {
 			},
 		],
 	],
+	// Only CJS is tested per use of `rewire` in gitHash.spec.ts.
 	testMatch: ["**/dist/test/jest/?(*.)+(spec|test).*js"],
 	testPathIgnorePatterns: ["/node_modules/"],
 };

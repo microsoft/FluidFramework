@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import type { IMigratableModel, IMigratableModelEvents } from "@fluid-example/example-utils";
-import type { IEventProvider } from "@fluidframework/core-interfaces";
-import { SharedString } from "@fluidframework/sequence";
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IInventoryListAppModelEvents extends IMigratableModelEvents {}
+import { EventEmitter } from "@fluid-example/example-utils";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
  * for the application to run.
  */
-export interface IInventoryListAppModel
-	extends IMigratableModel,
-		IEventProvider<IInventoryListAppModelEvents> {
+export interface IInventoryListAppModel {
 	/**
 	 * An inventory tracker list.
 	 */

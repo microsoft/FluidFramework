@@ -4,35 +4,36 @@
  */
 
 import {
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-	IChannelServices,
 	IChannelAttributes,
-} from "@fluidframework/datastore-definitions";
-import { Client } from "@fluidframework/merge-tree";
-import { DefaultMap } from "../defaultMap";
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { Client } from "@fluidframework/merge-tree/internal";
+
 import {
-	IValueFactory,
-	IValueOpEmitter,
-	IValueType,
-	IValueOperation,
-} from "../defaultMapInterfaces";
-import {
-	IntervalCollection,
 	ISerializedIntervalCollectionV2,
-	makeOpsMap,
+	IntervalCollection,
 	LocalIntervalCollection,
-} from "../intervalCollection";
+	makeOpsMap,
+} from "../intervalCollection.js";
+import { IntervalCollectionMap } from "../intervalCollectionMap.js";
 import {
+	IIntervalCollectionFactory,
+	IIntervalCollectionOperation,
+	IIntervalCollectionType,
+	IValueOpEmitter,
+} from "../intervalCollectionMapInterfaces.js";
+import {
+	IIntervalHelpers,
 	ISerializableInterval,
 	ISerializedInterval,
-	SequenceInterval,
-	IIntervalHelpers,
-	createSequenceInterval,
 	IntervalOpType,
-} from "../intervals";
-import { pkgVersion } from "../packageVersion";
-import { SharedString } from "../sharedString";
+	SequenceInterval,
+	createSequenceInterval,
+} from "../intervals/index.js";
+import { pkgVersion } from "../packageVersion.js";
+import { SharedStringClass } from "../sharedString.js";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
 	client: Client;
@@ -48,7 +49,7 @@ export class V1IntervalCollection<
 }
 
 class V1SequenceIntervalCollectionFactory
-	implements IValueFactory<V1IntervalCollection<SequenceInterval>>
+	implements IIntervalCollectionFactory<SequenceInterval>
 {
 	public load(
 		emitter: IValueOpEmitter,
@@ -62,15 +63,14 @@ class V1SequenceIntervalCollectionFactory
 	public store(
 		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-		return Array.from(
-			value,
-			(interval) => interval?.serialize(),
+		return Array.from(value, (interval) =>
+			interval?.serialize(),
 		) as unknown as ISerializedIntervalCollectionV2;
 	}
 }
 
 export class V1SequenceIntervalCollectionValueType
-	implements IValueType<V1IntervalCollection<SequenceInterval>>
+	implements IIntervalCollectionType<SequenceInterval>
 {
 	public static Name = "sharedStringIntervalCollection";
 
@@ -78,25 +78,25 @@ export class V1SequenceIntervalCollectionValueType
 		return V1SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<V1IntervalCollection<SequenceInterval>> {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return V1SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<V1IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return V1SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<V1IntervalCollection<SequenceInterval>> =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new V1SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
 interface SharedStringInternals {
-	intervalCollections: DefaultMap<V1IntervalCollection<SequenceInterval>>;
+	intervalCollections: IntervalCollectionMap<SequenceInterval>;
 }
 
-export class SharedStringWithV1IntervalCollection extends SharedString {
+export class SharedStringWithV1IntervalCollection extends SharedStringClass {
 	/**
 	 * Create a new shared string.
 	 * @param runtime - data store runtime the new shared string belongs to
@@ -124,7 +124,7 @@ export class SharedStringWithV1IntervalCollection extends SharedString {
 		attributes: IChannelAttributes,
 	) {
 		super(document, id, attributes);
-		(this as unknown as SharedStringInternals).intervalCollections = new DefaultMap(
+		(this as unknown as SharedStringInternals).intervalCollections = new IntervalCollectionMap(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),

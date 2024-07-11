@@ -2,45 +2,52 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { v4 as uuid } from "uuid";
-import {
-	AttachState,
+
+import { AttachState } from "@fluidframework/container-definitions";
+import type {
 	IContainer,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	type ContainerSchema,
-	createDOProviderContainerRuntimeFactory,
-	IFluidContainer,
-	createFluidContainer,
-	IRootDataObject,
-	createServiceAudience,
+	type FluidObject,
+	type IConfigProviderBase,
+	type IRequest,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
 	ContainerAttachProps,
+	ContainerSchema,
+	IFluidContainer,
 } from "@fluidframework/fluid-static";
+import type { IRootDataObject } from "@fluidframework/fluid-static/internal";
+import {
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
+} from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 	isOdspResolvedUrl,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-driver/internal";
+import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
+
+import type { TokenResponse } from "./interfaces.js";
 import type {
-	OdspResourceTokenFetchOptions,
-	TokenResponse,
-} from "@fluidframework/odsp-driver-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
-import {
 	OdspClientProps,
-	OdspContainerServices,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-} from "./interfaces";
-import { createOdspAudienceMember } from "./odspAudience";
-import { type IOdspTokenProvider } from "./token";
+	OdspContainerServices,
+} from "./interfaces.js";
+import { createOdspAudienceMember } from "./odspAudience.js";
+import { type IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
@@ -65,6 +72,23 @@ async function getWebsocketToken(
 }
 
 /**
+ * Default feature gates.
+ * These values will only be used if the feature gate is not already set by the supplied config provider.
+ */
+const odspClientFeatureGates = {
+	// None yet
+};
+
+/**
+ * Wrap the config provider to fall back on the appropriate defaults for ODSP Client.
+ * @param baseConfigProvider - The base config provider to wrap
+ * @returns A new config provider with the appropriate defaults applied underneath the given provider
+ */
+function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
+	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
+}
+
+/**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
  * @sealed
  * @beta
@@ -72,6 +96,7 @@ async function getWebsocketToken(
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;
+	private readonly configProvider: IConfigProviderBase | undefined;
 
 	public constructor(private readonly properties: OdspClientProps) {
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
@@ -80,10 +105,13 @@ export class OdspClient {
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
+		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -100,14 +128,14 @@ export class OdspClient {
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	public async getContainer(
+	public async getContainer<T extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -124,11 +152,14 @@ export class OdspClient {
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			compatibilityMode: "2",
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -153,6 +184,7 @@ export class OdspClient {
 			codeLoader,
 			logger: this.properties.logger,
 			options: { client },
+			configProvider: this.configProvider,
 		});
 	}
 
@@ -186,7 +218,7 @@ export class OdspClient {
 			}
 
 			/**
-			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * A unique identifier for the file within the provided SharePoint Embedded container ID. When you attach a container,
 			 * a new `itemId` is created in the user's drive, which developers can use for various operations
 			 * like updating, renaming, moving the Fluid file, changing permissions, and more. `itemId` is used to load the container.
 			 */

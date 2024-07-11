@@ -3,29 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { UnassignedSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { matchProperties, PropertySet } from "./properties";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import {
+	ISummaryTreeWithStats,
+	AttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { IAttributionCollection } from "./attributionCollection.js";
+import { UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { PropertySet, matchProperties } from "./properties.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
-	MergeTreeHeaderMetadata,
 	MergeTreeChunkV1,
-	toLatestVersion,
+	MergeTreeHeaderMetadata,
 	serializeAsMaxSupportedVersion,
-} from "./snapshotChunks";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { IAttributionCollection } from "./attributionCollection";
+	toLatestVersion,
+} from "./snapshotChunks.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -83,14 +90,22 @@ export class SnapshotV1 {
 		let segmentCount = 0;
 		let hasAttribution = false;
 		while (length < approxSequenceLength && startIndex + segmentCount < allSegments.length) {
-			const pseg = allSegments[startIndex + segmentCount];
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const pseg = allSegments[startIndex + segmentCount]!;
 			segments.push(pseg);
-			length += allLengths[startIndex + segmentCount];
+			// TODO Non null asserting, why is this not null?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			length += allLengths[startIndex + segmentCount]!;
 			if (attributionCollections[startIndex + segmentCount]) {
 				hasAttribution = true;
 				collections.push({
-					attribution: attributionCollections[startIndex + segmentCount],
-					cachedLength: allLengths[startIndex + segmentCount],
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					attribution: attributionCollections[startIndex + segmentCount]!,
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					cachedLength: allLengths[startIndex + segmentCount]!,
 				});
 			}
 			segmentCount++;
@@ -201,10 +216,7 @@ export class SnapshotV1 {
 		// Helper to serialize the given `segment` and add it to the snapshot (if a segment is provided).
 		const pushSeg = (segment?: ISegment) => {
 			if (segment) {
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
@@ -270,10 +282,7 @@ export class SnapshotV1 {
 				pushSeg(prev);
 				prev = undefined;
 
-				if (
-					segment.properties !== undefined &&
-					Object.keys(segment.properties).length === 0
-				) {
+				if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
 					segment.properties = undefined;
 					segment.propertyManager = undefined;
 				}
@@ -290,8 +299,7 @@ export class SnapshotV1 {
 				// sequence numbers.  Any remaining removal info should be preserved.
 				if (segment.removedSeq !== undefined) {
 					assert(
-						segment.removedSeq !== UnassignedSequenceNumber &&
-							segment.removedSeq > minSeq,
+						segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq > minSeq,
 						0x065 /* "On removal info preservation, segment has invalid removed sequence number!" */,
 					);
 					raw.removedSeq = segment.removedSeq;
@@ -299,7 +307,9 @@ export class SnapshotV1 {
 					// back compat for when we split overlap and removed client
 					raw.removedClient =
 						segment.removedClientIds !== undefined
-							? this.getLongClientId(segment.removedClientIds[0])
+							? // TODO Non null asserting, why is this not null?
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								this.getLongClientId(segment.removedClientIds[0]!)
 							: undefined;
 
 					raw.removedClientIds = segment.removedClientIds?.map((id) =>
@@ -314,9 +324,7 @@ export class SnapshotV1 {
 					);
 					raw.movedSeq = segment.movedSeq;
 					raw.movedSeqs = segment.movedSeqs;
-					raw.movedClientIds = segment.movedClientIds?.map((id) =>
-						this.getLongClientId(id),
-					);
+					raw.movedClientIds = segment.movedClientIds?.map((id) => this.getLongClientId(id));
 				}
 
 				// Sanity check that we are preserving either the seq > minSeq or a (re)moved segment's info.

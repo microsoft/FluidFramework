@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
-import { UndoRedoStackManager } from "../undoRedoStackManager";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler.js";
+import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 const text =
 	"The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";
@@ -48,7 +50,9 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 	let undoRedoStack: UndoRedoStackManager;
 
 	beforeEach(() => {
-		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime = new MockFluidDataStoreRuntime({
+			registry: [SharedString.getFactory()],
+		});
 
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -57,11 +61,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 			objectStorage: new MockStorage(undefined),
 		};
 
-		sharedString = new SharedString(
-			dataStoreRuntime,
-			documentId,
-			SharedStringFactory.Attributes,
-		);
+		sharedString = SharedString.create(dataStoreRuntime, documentId);
 		sharedString.initializeLocal();
 		sharedString.bindToContext();
 		sharedString.connect(services);
@@ -121,7 +121,7 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 		while (undoRedoStack.redoOperation()) {}
 
 		assert.equal(sharedString.getText(), finalText, sharedString.getText());
-	});
+	}).timeout(4000); // double the default timeout. This test is a bit slow.
 
 	it("Undo and redo insert of split segment", () => {
 		const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);

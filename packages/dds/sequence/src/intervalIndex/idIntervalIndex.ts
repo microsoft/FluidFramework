@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISerializableInterval } from "../intervals";
-import { reservedIntervalIdKey } from "../intervalCollection";
-import { IntervalIndex } from "./intervalIndex";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { reservedIntervalIdKey } from "../intervalCollection.js";
+import { ISerializableInterval } from "../intervals/index.js";
+
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal

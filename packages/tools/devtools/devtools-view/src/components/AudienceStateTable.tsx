@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
-	tokens,
+	Table,
 	TableBody,
 	TableCell,
-	TableRow,
-	Table,
 	TableHeader,
-	TableHeaderCell,
+	TableRow,
 	makeStyles,
+	tokens,
 } from "@fluentui/react-components";
-import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
+import { EditRegular, Person12Regular, Search12Regular } from "@fluentui/react-icons";
+import React from "react";
 
-import { ThemeContext, ThemeOption } from "../ThemeHelper";
+import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+
+import type { TransformedAudienceStateData } from "./AudienceView.js";
 import {
 	clientIdTooltipText,
-	userIdTooltipText,
 	clientModeTooltipText,
 	clientScopesTooltipText,
-} from "./TooltipTexts";
-import { type TransformedAudienceStateData } from "./AudienceView";
-import { LabelCellLayout } from "./utility-components";
+	userIdTooltipText,
+} from "./TooltipTexts.js";
+import { LabelCellLayout } from "./utility-components/index.js";
 
 const audienceStateStyle = makeStyles({
 	currentUser: {
@@ -75,10 +75,12 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
-						<TableHeaderCell key={columnIndex}>
+						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
+						<TableCell key={columnIndex}>
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="Client ID"
 									infoTooltipContent={clientIdTooltipText}
 								>
 									{column.label}
@@ -87,6 +89,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "userId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
+									aria-label="User ID"
 									infoTooltipContent={userIdTooltipText}
 								>
 									{column.label}
@@ -95,6 +98,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "mode" && (
 								<LabelCellLayout
 									icon={<EditRegular />}
+									aria-label="Mode"
 									infoTooltipContent={clientModeTooltipText}
 								>
 									{column.label}
@@ -103,12 +107,13 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "scopes" && (
 								<LabelCellLayout
 									icon={<Search12Regular />}
+									aria-label="Scopes"
 									infoTooltipContent={clientScopesTooltipText}
 								>
 									{column.label}
 								</LabelCellLayout>
 							)}
-						</TableHeaderCell>
+						</TableCell>
 					))}
 				</TableRow>
 			</TableHeader>

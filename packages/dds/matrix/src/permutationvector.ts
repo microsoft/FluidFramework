@@ -3,32 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	BaseSegment,
-	ISegment,
-	// eslint-disable-next-line import/no-deprecated
+	BaseSegment, // eslint-disable-next-line import/no-deprecated
 	Client,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeDeltaCallbackArgs,
-	MergeTreeDeltaType,
-	IMergeTreeMaintenanceCallbackArgs,
-	MergeTreeMaintenanceType,
 	IJSONSegment,
-} from "@fluidframework/merge-tree";
-import { ITelemetryBaseLogger, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { HandleTable, Handle, isHandleValid } from "./handletable.js";
-import { deserializeBlob } from "./serialization.js";
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+	ISegment,
+	MergeTreeDeltaType,
+	MergeTreeMaintenanceType,
+} from "@fluidframework/merge-tree/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { HandleCache } from "./handlecache.js";
+import { Handle, HandleTable, isHandleValid } from "./handletable.js";
+import { deserializeBlob } from "./serialization.js";
 import { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
@@ -191,7 +194,10 @@ export class PermutationVector extends Client {
 		return handle;
 	}
 
-	public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+	public adjustPosition(
+		pos: number,
+		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
+	) {
 		const { segment, offset } = this.getContainingSegment(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
@@ -386,9 +392,7 @@ export class PermutationVector extends Client {
 				if (isHandleValid(asPerm.start)) {
 					// Note: Using the spread operator with `.splice()` can exhaust the stack.
 					freed = freed.concat(
-						new Array(asPerm.cachedLength)
-							.fill(0)
-							.map((value, index) => index + asPerm.start),
+						new Array(asPerm.cachedLength).fill(0).map((value, index) => index + asPerm.start),
 					);
 				}
 			}

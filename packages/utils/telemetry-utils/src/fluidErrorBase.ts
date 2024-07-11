@@ -5,6 +5,8 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
+import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
+
 /**
  * An error emitted by the Fluid Framework.
  *
@@ -66,7 +68,7 @@ export interface IFluidErrorBase extends Error {
 	/**
 	 * Add telemetry properties to this error which will be logged with the error
 	 */
-	addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
+	addTelemetryProperties: (props: ITelemetryPropertiesExt) => void;
 }
 
 const hasTelemetryPropFunctions = (x: unknown): boolean =>
@@ -91,21 +93,6 @@ export function isFluidError(error: unknown): error is IFluidErrorBase {
 		typeof (error as Partial<IFluidErrorBase>)?.errorType === "string" &&
 		typeof (error as Partial<IFluidErrorBase>)?.message === "string" &&
 		hasErrorInstanceId(error) &&
-		hasTelemetryPropFunctions(error)
-	);
-}
-
-/**
- * Type guard for old standard of valid/known errors.
- *
- * @internal
- */
-export function isValidLegacyError(
-	error: unknown,
-): error is Omit<IFluidErrorBase, "errorInstanceId"> {
-	return (
-		typeof (error as Partial<IFluidErrorBase>)?.errorType === "string" &&
-		typeof (error as Partial<IFluidErrorBase>)?.message === "string" &&
 		hasTelemetryPropFunctions(error)
 	);
 }

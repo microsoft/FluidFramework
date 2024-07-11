@@ -10,7 +10,11 @@ export {
 } from "./DriverWrappers.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
-export { fluidEntryPoint, LocalCodeLoader, SupportedExportInterfaces } from "./localCodeLoader.js";
+export {
+	fluidEntryPoint,
+	LocalCodeLoader,
+	SupportedExportInterfaces,
+} from "./localCodeLoader.js";
 export { createAndAttachContainer, createLoader } from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
 export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
@@ -27,6 +31,7 @@ export {
 	createDocumentId,
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
+	type IEventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
 	IDocumentIdStrategy,
 	IOpProcessingController,
@@ -37,6 +42,7 @@ export {
 } from "./testObjectProvider.js";
 export {
 	createSummarizer,
+	createSummarizerCore,
 	createSummarizerFromFactory,
 	summarizeNow,
 	SummaryInfo,
@@ -45,8 +51,9 @@ export {
 	defaultTimeoutDurationMs,
 	timeoutAwait,
 	timeoutPromise,
-	TimeoutWithError,
-	TimeoutWithValue,
+	type TimeoutDurationOption,
+	type TimeoutWithError,
+	type TimeoutWithValue,
 } from "./timeoutUtils.js";
 export {
 	waitForContainerConnection,

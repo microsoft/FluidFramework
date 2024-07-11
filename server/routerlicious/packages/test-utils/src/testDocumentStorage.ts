@@ -125,7 +125,6 @@ export class TestDocumentStorage implements IDocumentStorage {
 			signalClientConnectionNumber: 0,
 			lastSentMSN: 0,
 			nackMessages: undefined,
-			successfullyStartedLambdas: [],
 			checkpointTimestamp: Date.now(),
 		};
 
@@ -144,6 +143,8 @@ export class TestDocumentStorage implements IDocumentStorage {
 			lastSummarySequenceNumber: 0,
 			validParentSummaries: undefined,
 			isCorrupt: false,
+			protocolHead: undefined,
+			checkpointTimestamp: Date.now(),
 		};
 
 		const collection = await this.databaseManager.getDocumentCollection();

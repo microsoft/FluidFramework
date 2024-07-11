@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import * as childProcess from "node:child_process";
+
 import * as fs from "node:fs";
+import { Flags } from "@oclif/core";
 
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 
-import { BaseCommand } from "../../base";
+import { BaseCommand } from "../../library/index.js";
 
 /**
  * This command class is used to compute the version number of Fluid packages. The release version number is based on
@@ -18,7 +18,8 @@ import { BaseCommand } from "../../base";
 export default class GenerateBuildVersionCommand extends BaseCommand<
 	typeof GenerateBuildVersionCommand
 > {
-	static readonly description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
+	static readonly description =
+		`This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
 
 	static readonly examples = ["<%= config.bin %> <%= command.id %>"];
 
@@ -99,10 +100,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 			this.error("Test build shouldn't be released");
 		}
 
+		const context = await this.getContext();
+		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
+
 		if (!useSimplePatchVersion && flags.tag !== undefined) {
 			const tagName = `${flags.tag}_v${fileVersion}`;
-			const out = childProcess.execSync(`git tag -l ${tagName}`, { encoding: "utf8" });
-			if (out.trim() === tagName) {
+			if (tags.includes(tagName)) {
 				if (isRelease) {
 					this.error(`Tag ${tagName} already exists.`);
 				}
@@ -152,8 +155,6 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		this.log(`version=${version}`);
 		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
-		const context = await this.getContext();
-		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
 		if (flags.tag !== undefined) {
 			const isLatest = getIsLatest(
 				flags.tag,
@@ -171,15 +172,17 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 	private getFileVersion(): string {
 		if (fs.existsSync("./lerna.json")) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" }))
-				.version as string;
+			return (
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version as string
+			);
 		}
 
 		if (fs.existsSync("./package.json")) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
-				.version as string;
+			return (
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version as string
+			);
 		}
 
 		this.error(`lerna.json or package.json not found`);

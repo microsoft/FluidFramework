@@ -6,28 +6,33 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import {
-	createChildLogger,
-	ITelemetryLoggerExt,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	UsageError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
 // eslint-disable-next-line import/no-deprecated
-import { Client } from "./client";
-import { NonCollabClient, UniversalSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
-import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks";
-import { SnapshotV1 } from "./snapshotV1";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
+import { Client } from "./client.js";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { IJSONSegment } from "./ops.js";
+import {
+	IJSONSegmentWithMergeInfo,
+	MergeTreeChunkV1,
+	hasMergeInfo,
+} from "./snapshotChunks.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;
@@ -83,7 +88,8 @@ export class SnapshotLoader {
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
 			//       (See https://github.com/microsoft/FluidFramework/issues/84)
 
-			return this.loadCatchupOps(services.readBlob(blobs[0]), this.serializer);
+			// TODO Non null asserting, why is this not null?
+			return this.loadCatchupOps(services.readBlob(blobs[0]!), this.serializer);
 		} else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
 			throw new Error("Unexpected blobs in snapshot");
 		}
@@ -210,7 +216,8 @@ export class SnapshotLoader {
 		) {
 			const chunk = await SnapshotV1.loadChunk(
 				services,
-				headerMetadata.orderedChunkMetadata[chunkIndex].id,
+				// TODO Non null asserting, why is this not null?
+				headerMetadata.orderedChunkMetadata[chunkIndex]!.id,
 				this.logger,
 				this.mergeTree.options,
 				this.serializer,
@@ -275,8 +282,6 @@ export class SnapshotLoader {
 	}
 
 	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
-		this.mergeTree.options ??= {};
-		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

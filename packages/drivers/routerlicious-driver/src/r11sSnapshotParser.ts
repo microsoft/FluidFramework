@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot, IWholeFlatSnapshotTree } from "./contracts";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+
+import {
+	INormalizedWholeSnapshot,
+	IWholeFlatSnapshot,
+	IWholeFlatSnapshotTree,
+} from "./contracts.js";
 
 /**
  * Build a tree hierarchy from a flat tree.
@@ -31,7 +36,8 @@ function buildHierarchy(
 		const entryPathBase = entryPath.slice(lastIndex + 1);
 
 		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-		const node = lookup[entryPathDir];
+		// TODO why are we non null asserting here?
+		const node = lookup[entryPathDir]!;
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
@@ -70,8 +76,9 @@ export function convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
 			blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
 		});
 	}
-	const flatSnapshotTree = flatSnapshot.trees?.[0];
-	const sequenceNumber = flatSnapshotTree?.sequenceNumber;
+	// TODO why are we non null asserting here?
+	const flatSnapshotTree = flatSnapshot.trees[0]!;
+	const sequenceNumber = flatSnapshotTree.sequenceNumber;
 	const snapshotTree = buildHierarchy(flatSnapshotTree, treePrefixToRemove);
 
 	return {

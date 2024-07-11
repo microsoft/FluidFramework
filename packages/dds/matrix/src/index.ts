@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedMatrixEvents, SharedMatrix, MatrixItem } from "./matrix.js";
-export { SharedMatrixFactory } from "./runtime.js";
+export { ISharedMatrixEvents, ISharedMatrix } from "./matrix.js";
+export { MatrixItem } from "./ops.js";
+export { SharedMatrixFactory, SharedMatrix } from "./runtime.js";
 
 // TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development
 //       of SharedMatrix undo while we decide on the correct layering for undo.

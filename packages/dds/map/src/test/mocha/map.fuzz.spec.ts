@@ -3,20 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
 import { strict as assert } from "node:assert";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
+import * as path from "node:path";
+
 import {
+	type AsyncGenerator,
+	type Generator,
 	combineReducers,
 	createWeightedGenerator,
-	AsyncGenerator,
-	Generator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory } from "../../map";
-import { ISharedMap } from "../../interfaces";
+import {
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isObject } from "@fluidframework/core-utils/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+
+import { type ISharedMap, MapFactory } from "../../index.js";
+
+import { _dirname } from "./dirname.cjs";
 
 interface Clear {
 	type: "clear";
@@ -25,7 +35,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable<unknown>;
+	value: Serializable<unknown>;
 }
 
 interface DeleteKey {
@@ -38,12 +48,28 @@ type Operation = SetKey | DeleteKey | Clear;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
+async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
-		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
+		if (isObject(aVal) === true) {
+			assert(
+				isObject(bVal),
+				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
+			);
+			const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
+			const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
+			assert.equal(
+				aHandle,
+				bHandle,
+				`${a.id} and ${b.id} differ at ${key}: ${JSON.stringify(aHandle)} vs ${JSON.stringify(
+					bHandle,
+				)}`,
+			);
+		} else {
+			assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
+		}
 	}
 }
 
@@ -71,7 +97,9 @@ const defaultOptions: GeneratorOptions = {
 	keyPoolSize: 20,
 };
 
-function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
+function makeGenerator(
+	optionsParam?: Partial<GeneratorOptions>,
+): AsyncGenerator<Operation, State> {
 	const { setWeight, deleteWeight, clearWeight, keyPoolSize } = {
 		...defaultOptions,
 		...optionsParam,
@@ -82,7 +110,11 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	const setKey: Generator<SetKey, State> = ({ random }) => ({
 		type: "setKey",
 		key: random.pick(keyNames),
-		value: random.bool() ? random.integer(1, 50) : random.string(random.integer(3, 7)),
+		value: random.pick([
+			(): number => random.integer(1, 50),
+			(): string => random.string(random.integer(3, 7)),
+			(): IFluidHandle => random.handle(),
+		])(),
 	});
 	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
 		type: "deleteKey",
@@ -104,7 +136,7 @@ describe("Map fuzz tests", () => {
 		factory: new MapFactory(),
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: assertMapsAreEquivalent,
+		validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 	};
 
 	createDDSFuzzSuite(model, {
@@ -118,7 +150,7 @@ describe("Map fuzz tests", () => {
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../../src/test/mocha/results/map") },
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/map") },
 	});
 
 	createDDSFuzzSuite(
@@ -135,7 +167,7 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+				directory: path.join(_dirname, "../../../src/test/mocha/results/map-reconnect"),
 			},
 		},
 	);
@@ -158,7 +190,7 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
+				directory: path.join(_dirname, "../../../src/test/mocha/results/map-rebase"),
 			},
 		},
 	);

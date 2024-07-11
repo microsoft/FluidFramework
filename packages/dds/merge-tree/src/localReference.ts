@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList, ListNode, walkList } from "./collections";
-import { ISegment } from "./mergeTreeNodes";
-import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
-import { ReferenceType } from "./ops";
+import { assert } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { ReferenceType } from "./ops.js";
 // eslint-disable-next-line import/no-deprecated
-import { addProperties, PropertySet } from "./properties";
-import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
+import { PropertySet, addProperties } from "./properties.js";
+import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @legacy
  * @alpha
  */
 export const SlidingPreference = {
@@ -32,6 +34,7 @@ export const SlidingPreference = {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
+ * @legacy
  * @alpha
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
@@ -55,6 +58,7 @@ function _validateReferenceType(refType: ReferenceType) {
 }
 /**
  * @sealed
+ * @legacy
  * @alpha
  */
 export interface LocalReferencePosition extends ReferencePosition {
@@ -152,9 +156,10 @@ class LocalReference implements LocalReferencePosition {
  * @internal
  */
 export function createDetachedLocalReferencePosition(
+	slidingPreference: SlidingPreference | undefined,
 	refType?: ReferenceType,
 ): LocalReferencePosition {
-	return new LocalReference(refType, undefined);
+	return new LocalReference(refType, undefined, slidingPreference);
 }
 
 interface IRefsAtOffset {
@@ -214,6 +219,7 @@ export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection)
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
  * @sealed
  *
+ * @legacy
  * @alpha
  */
 export class LocalReferenceCollection {
@@ -277,7 +283,9 @@ export class LocalReferenceCollection {
 		const iterator = {
 			next(): IteratorResult<LocalReferencePosition> {
 				while (subiterators.length > 0) {
-					const next = subiterators[0].next();
+					// TODO Non null asserting, why is this not null?
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const next = subiterators[0]!.next();
 					if (next.done === true) {
 						subiterators.shift();
 					} else {
@@ -382,11 +390,7 @@ export class LocalReferenceCollection {
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
-			lref.link(
-				this.segment,
-				lref.getOffset() + this.refsByOffset.length,
-				lref.getListNode(),
-			);
+			lref.link(this.segment, lref.getOffset() + this.refsByOffset.length, lref.getListNode());
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);

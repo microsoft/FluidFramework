@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import * as fs from "fs";
 import * as path from "path";
 import * as ts from "typescript";
 import { sha256 } from "./hash";
@@ -146,9 +148,7 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
 		: (x: string) =>
-				fileNameLowerCaseRegExp.test(x)
-					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
-					: x;
+				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
 function createGetSourceFileVersion(tsLib: typeof ts) {
@@ -195,10 +195,25 @@ function createTscUtil(tsLib: typeof ts) {
 				console.warn("Warning: '&&' is not supported in tsc command.");
 			}
 
-			const parsedCommand = tsLib.parseCommandLine(args.slice(1));
+			let slicedArgs = args.slice(1);
+			// workaround for https://github.com/microsoft/TypeScript/issues/59095
+			// TODO: This breaks --force (by removing it). Find a way to fix --force.
+			// See code in leaf/tscTask.ts which adds --force.
+			if (slicedArgs.at(-1) === "--force") {
+				slicedArgs = slicedArgs.slice(0, slicedArgs.length - 1);
+			}
+			const parsedCommand = tsLib.parseCommandLine(slicedArgs);
+
 			if (parsedCommand.errors.length) {
+				console.error(
+					`Error parsing tsc command: ${command} (split into ${JSON.stringify(slicedArgs)}.`,
+				);
+				for (const error of parsedCommand.errors) {
+					console.error(error);
+				}
 				return undefined;
 			}
+
 			return parsedCommand;
 		},
 
@@ -207,7 +222,11 @@ function createTscUtil(tsLib: typeof ts) {
 			const project = parsedCommand?.options.project;
 			if (project !== undefined) {
 				tsConfigFullPath = path.resolve(directory, project);
+				if (fs.existsSync(tsConfigFullPath) && fs.statSync(tsConfigFullPath).isDirectory()) {
+					tsConfigFullPath = path.join(tsConfigFullPath, "tsconfig.json");
+				}
 			} else {
+				// Does a search from given directory and up to find tsconfig.json.
 				const foundConfigFile = tsLib.findConfigFile(
 					directory,
 					tsLib.sys.fileExists,
@@ -216,7 +235,9 @@ function createTscUtil(tsLib: typeof ts) {
 				if (foundConfigFile) {
 					tsConfigFullPath = foundConfigFile;
 				} else {
+					// Assume there will be a local tsconfig.json and it is just currently missing.
 					tsConfigFullPath = path.join(directory, "tsconfig.json");
+					console.warn(`Warning: no config file found; assuming ${tsConfigFullPath}`);
 				}
 			}
 			return tsConfigFullPath;
@@ -260,4 +281,10 @@ export function getTscUtils(path: string): TscUtil {
 	tscUtilPathCache.set(path, tscUtil);
 	tscUtilLibPathCache.set(tsPath, tscUtil);
 	return tscUtil;
+}
+
+// Any paths given by typescript will be normalized to forward slashes.
+// Local paths should be normalized to make any comparisons.
+export function normalizeSlashes(path: string): string {
+	return path.replace(/\\/g, "/");
 }

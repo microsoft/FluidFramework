@@ -4,15 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
-import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext";
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";
 
 describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;
@@ -45,10 +47,9 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
-				dataStoreContext.logger,
+				dataStoreContext.baseLogger,
 				() => {},
 				(s: string) => {},
-				(s) => {},
 			);
 		assert.throws(
 			codeBlock,
@@ -67,10 +68,9 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
-				dataStoreContext.logger,
+				dataStoreContext.baseLogger,
 				(content, localOpMetadata) => {},
 				(s: string) => {},
-				(s, o) => {},
 				null as unknown as ISnapshotTree,
 			);
 		assert.throws(

@@ -3,54 +3,92 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import type { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
-import type { SharedCell } from "@fluidframework/cell";
-import type { SharedCounter } from "@fluidframework/counter";
-import {
-	ReferenceType,
-	reservedMarkerIdKey,
-	reservedMarkerSimpleTypeKey,
-	reservedTileLabelsKey,
-} from "@fluidframework/merge-tree";
-import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	DataObjectFactoryType,
-	createAndAttachContainer,
-	createDocumentId,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { strict as assert } from "assert";
+
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	describeCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
-import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { Deferred } from "@fluidframework/core-utils";
+import type { ISharedCell } from "@fluidframework/cell/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	type RecentlyAddedContainerRuntimeMessageDetails,
+} from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
+import type { SharedCounter } from "@fluidframework/counter/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISharedDirectory,
+	SharedDirectory,
+	ISharedMap,
+} from "@fluidframework/map/internal";
 import {
-	ContainerRuntime,
-	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
-} from "@fluidframework/container-runtime";
+	ReferenceType,
+	reservedMarkerIdKey,
+	reservedMarkerSimpleTypeKey,
+	reservedTileLabelsKey,
+} from "@fluidframework/merge-tree/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
+	createDocumentId,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+import { SchemaFactory } from "@fluidframework/tree";
+import { TreeViewConfiguration } from "@fluidframework/tree";
+import { ISharedTree, SharedTree } from "@fluidframework/tree/internal";
+
+import { wrapObjectAndOverride } from "../mocking.js";
+
+/** For a negative test, takes in the ideal expectation (which should NOT be met), and the current wrong one, and asserts on them both */
+function assertCurrentAndIdealExpectations(
+	actual: any,
+	expected: { ideal: any; currentButWrong: any },
+	message?: string,
+) {
+	assert.equal(
+		actual,
+		expected.currentButWrong,
+		`Current (wrong) behavior is not as expected. ${message}`,
+	);
+	assert.notEqual(actual, expected.ideal, `Ideal behavior is unexpectedly met. ${message}`);
+}
+
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
 const directoryId = "directoryKey";
 const collectionId = "collectionKey";
+const treeId = "treeKey";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -69,6 +107,144 @@ type SharedObjCallback = (
 	dataStore: ITestFluidObject,
 ) => void | Promise<void>;
 
+/**
+ * load container, pause, create (local) ops from callback, then optionally send ops before closing container
+ */
+const getPendingOps = async (
+	testContainerConfig: ITestContainerConfig,
+	testObjectProvider: ITestObjectProvider,
+	send: boolean,
+	cb: SharedObjCallback = () => undefined,
+) => {
+	const container: IContainerExperimental =
+		await testObjectProvider.loadTestContainer(testContainerConfig);
+	await waitForContainerConnection(container);
+	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+
+	[...Array(lots).keys()].map((i) =>
+		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
+	);
+
+	await testObjectProvider.ensureSynchronized();
+	await testObjectProvider.opProcessingController.pauseProcessing(container);
+	assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
+
+	await cb(container, dataStore);
+
+	let pendingState: string | undefined;
+	if (send) {
+		pendingState = await container.getPendingLocalState?.();
+		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
+		container.close();
+	} else {
+		pendingState = await container.closeAndGetPendingLocalState?.();
+	}
+
+	testObjectProvider.opProcessingController.resumeProcessing();
+
+	assert.ok(pendingState);
+	return pendingState;
+};
+
+/**
+ * Load a Container using testContainerConfig and the given testObjectProvider,
+ * Deferring connection to the service until the returned connect function is called
+ * (simulating returning from offline)
+ *
+ * @param testObjectProvider - For accessing Loader/Driver
+ * @param request - Request to use when loading
+ * @param pendingLocalState - (Optional) custom PendingLocalState to load from. Defaults to using getPendingOps helper if omitted.
+ * @returns A container instance with a connect function to unblock the Driver (simulating coming back from offline)
+ */
+async function loadOffline(
+	testContainerConfig: ITestContainerConfig,
+	testObjectProvider: ITestObjectProvider,
+	request: IRequest,
+	pendingLocalState?: string,
+): Promise<{ container: IContainerExperimental; connect: () => void }> {
+	const p = new Deferred();
+	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
+	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+		testObjectProvider.documentServiceFactory,
+		{
+			createDocumentService: {
+				connectToDeltaStream: (ds) => async (client) => {
+					await p.promise;
+					return ds.connectToDeltaStream(client);
+				},
+				connectToDeltaStorage: (ds) => async () => {
+					await p.promise;
+					return ds.connectToDeltaStorage();
+				},
+				connectToStorage: (ds) => async () => {
+					await p.promise;
+					return ds.connectToStorage();
+				},
+			},
+		},
+	);
+
+	const loader = testObjectProvider.createLoader(
+		[
+			[
+				testObjectProvider.defaultCodeDetails,
+				testObjectProvider.createFluidEntryPoint(testContainerConfig),
+			],
+		],
+		{ ...testContainerConfig.loaderProps, documentServiceFactory },
+	);
+	const container = await loader.resolve(
+		request,
+		pendingLocalState ??
+			(await getPendingOps(testContainerConfig, testObjectProvider, false /* send */)),
+	);
+	return { container, connect: () => p.resolve(undefined) };
+}
+
+const assertIntervals = (
+	sharedString: SharedString,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
+) => {
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = intervalCollection.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+	}
+	assert.strictEqual(
+		actual.length,
+		expected.length,
+		`findOverlappingIntervals() must return the expected number of intervals`,
+	);
+
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
+};
+
+/** Returns a new promise that will resolve once we process a summary op followed by a summary ack */
+const waitForSummary = async (container: IContainer) =>
+	new Promise<void>((resolve, reject) => {
+		let summarized = false;
+		container.on("op", (op) => {
+			if (op.type === "summarize") {
+				summarized = true;
+			} else if (summarized && op.type === "summaryAck") {
+				resolve();
+			} else if (op.type === "summaryNack") {
+				reject(new Error("summaryNack"));
+			}
+		});
+	});
+
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
@@ -81,12 +257,18 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[cellId, SharedCell.getFactory()],
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
+		[treeId, SharedTree.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		runtimeOptions: {
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+			compressionOptions: {
+				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
 			summaryOptions: {
 				summaryConfigOverrides: {
 					...DefaultSummaryConfiguration,
@@ -98,137 +280,61 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({
 				"Fluid.Container.enableOfflineLoad": true,
+				"Fluid.Sequence.intervalStickinessEnabled": true,
 			}),
 		},
 	};
 
-	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
-	const getPendingOps = async (
-		args: ITestObjectProvider,
-		send: boolean,
-		cb: SharedObjCallback = () => undefined,
-	) => {
-		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
-		await waitForContainerConnection(container);
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+	const sf = new SchemaFactory("stashedTests");
 
-		[...Array(lots).keys()].map((i) =>
-			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-		);
+	class Root extends sf.object("Root", {
+		map: sf.map(sf.string),
+	}) {}
 
-		await args.ensureSynchronized();
-		await args.opProcessingController.pauseProcessing(container);
-		assert(dataStore.runtime.deltaManager.outbound.paused);
+	const treeConfig = new TreeViewConfiguration({ schema: Root });
 
-		await cb(container, dataStore);
+	interface MinimalMap {
+		get(key: string): string | undefined;
+		set(key: string, value: string): void;
+		has(key: string): boolean;
+		delete(key: string): void;
+	}
 
-		let pendingState: string | undefined;
-		if (send) {
-			pendingState = await container.getPendingLocalState?.();
-			await args.ensureSynchronized();
-			container.close();
-		} else {
-			pendingState = await container.closeAndGetPendingLocalState?.();
+	async function getMapBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+		return d.getSharedObject<ISharedMap>(mapId);
+	}
+
+	async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+		const tree = await d.getSharedObject<ISharedTree>(treeId);
+		const view = tree.viewWith(treeConfig);
+		if (view.compatibility.canInitialize) {
+			view.initialize({ map: new Map<string, string>() });
 		}
+		return view.root.map;
+	}
 
-		args.opProcessingController.resumeProcessing();
-
-		assert.ok(pendingState);
-		return pendingState;
-	};
-
-	const assertIntervals = (
-		sharedString: SharedString,
-		intervalCollection: IIntervalCollection<SequenceInterval>,
-		expected: readonly { start: number; end: number }[],
-		validateOverlapping: boolean = true,
-	) => {
-		const actual = Array.from(intervalCollection);
-		if (validateOverlapping && sharedString.getLength() > 0) {
-			const overlapping = intervalCollection.findOverlappingIntervals(
-				0,
-				sharedString.getLength() - 1,
-			);
-			assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
-		}
-		assert.strictEqual(
-			actual.length,
-			expected.length,
-			`findOverlappingIntervals() must return the expected number of intervals`,
-		);
-
-		const actualPos = actual.map((interval) => {
-			assert(interval);
-			const start = sharedString.localReferencePositionToPosition(interval.start);
-			const end = sharedString.localReferencePositionToPosition(interval.end);
-			return { start, end };
-		});
-		assert.deepEqual(actualPos, expected, "intervals are not as expected");
-	};
-
-	async function loadOffline(
-		testObjectProvider: ITestObjectProvider,
-		request: IRequest,
-		pendingLocalState?: string,
-	): Promise<{ container: IContainerExperimental; connect: () => void }> {
-		const p = new Deferred();
-		const documentServiceFactory = testObjectProvider.driver.createDocumentServiceFactory();
-
-		// patch document service methods to simulate offline by not resolving until we choose to
-		const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
-		documentServiceFactory.createDocumentService = async (...args) => {
-			const docServ = await boundFn(...args);
-			const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
-			docServ.connectToDeltaStream = async (...args2) => {
-				await p.promise;
-				return boundCTDStream(...args2);
-			};
-			const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
-			docServ.connectToDeltaStorage = async (...args2) => {
-				await p.promise;
-				return boundCTDStorage(...args2);
-			};
-			const boundCTStorage = docServ.connectToStorage.bind(docServ);
-			docServ.connectToStorage = async (...args2) => {
-				await p.promise;
-				return boundCTStorage(...args2);
-			};
-
-			return docServ;
-		};
-		// eslint-disable-next-line @typescript-eslint/no-shadow
-		const loader = testObjectProvider.createLoader(
-			[
-				[
-					testObjectProvider.defaultCodeDetails,
-					testObjectProvider.createFluidEntryPoint(testContainerConfig),
-				],
-			],
-			{ ...testContainerConfig.loaderProps, documentServiceFactory },
-		);
-		const container = await loader.resolve(
-			request,
-			pendingLocalState ?? (await getPendingOps(testObjectProvider, false)),
-		);
-		return { container, connect: () => p.resolve(undefined) };
+	async function getMapFromProvider(
+		getMap: (t: ITestFluidObject) => Promise<MinimalMap>,
+	): Promise<MinimalMap> {
+		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+		return getMap(dataStore);
 	}
 
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
 	let container1: IContainerExperimental;
-	let map1: SharedMap;
+	let map1: ISharedMap;
 	let string1: SharedString;
-	let cell1: SharedCell;
+	let cell1: ISharedCell;
 	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
 	let collection1: IIntervalCollection<SequenceInterval>;
-	let waitForSummary: () => Promise<void>;
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
@@ -241,70 +347,59 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		provider.updateDocumentId(container1.resolvedUrl);
 		url = await container1.getAbsoluteUrl("");
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
-		cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
+		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
+		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
 		collection1 = string1.getIntervalCollection(collectionId);
 		string1.insertText(0, "hello");
-
-		waitForSummary = async () => {
-			await new Promise<void>((resolve, reject) => {
-				let summarized = false;
-				container1.on("op", (op) => {
-					if (op.type === "summarize") {
-						summarized = true;
-					} else if (summarized && op.type === "summaryAck") {
-						resolve();
-					} else if (op.type === "summaryNack") {
-						reject(new Error("summaryNack"));
-					}
-				});
-			});
-		};
 	});
 
 	it("resends op", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.set(testKey, testValue);
-			const cell = await d.getSharedObject<SharedCell>(cellId);
-			cell.set(testValue);
-			const counter = await d.getSharedObject<SharedCounter>(counterId);
-			counter.increment(testIncrementValue);
-			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			directory.set(testKey, testValue);
-			const string = await d.getSharedObject<SharedString>(stringId);
-			// todo re-enable after AB#7145
-			// const collection = string.getIntervalCollection(collectionId);
-			// collection.add({ start: testStart, end: testEnd });
-			// Submit a message with an unrecognized type
-			// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
-			(
-				d.context.containerRuntime as unknown as {
-					submit: (
-						containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
-							Record<string, any>,
-					) => void;
-				}
-			).submit({
-				type: "FROM_THE_FUTURE",
-				contents: "Hello",
-				compatDetails: { behavior: "Ignore" },
-			});
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.set(testKey, testValue);
+				const cell = await d.getSharedObject<ISharedCell>(cellId);
+				cell.set(testValue);
+				const counter = await d.getSharedObject<SharedCounter>(counterId);
+				counter.increment(testIncrementValue);
+				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+				directory.set(testKey, testValue);
+				const string = await d.getSharedObject<SharedString>(stringId);
+				const collection = string.getIntervalCollection(collectionId);
+				collection.add({ start: testStart, end: testEnd });
+				// [DEPRECATED]
+				// Submit a message with an unrecognized type
+				// Super rare corner case where you stash an op and then roll back to a previous runtime version that doesn't recognize it
+				(
+					d.context.containerRuntime as unknown as {
+						submit: (
+							containerRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
+								Record<string, any>,
+						) => void;
+					}
+				).submit({
+					type: "FROM_THE_FUTURE",
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" },
+				});
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-		// todo re-enable after AB#7145
-		// const collection2 = string2.getIntervalCollection(collectionId);
+		const collection2 = string2.getIntervalCollection(collectionId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -315,8 +410,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(counter2.value, testIncrementValue);
 		assert.strictEqual(directory1.get(testKey), testValue);
 		assert.strictEqual(directory2.get(testKey), testValue);
-		// asertIntervals(string1, collection1, [{ start: testStart, end: testEnd }]);
-		// assertIntervals(string2, collection2, [{ start: testStart, end: testEnd }]);
+		assertIntervals(string1, collection1, [{ start: testStart, end: testEnd }]);
+		assertIntervals(string2, collection2, [{ start: testStart, end: testEnd }]);
 	});
 
 	it("resends compressed Ids and correctly assumes session", async function () {
@@ -330,35 +425,40 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		let sessionId;
 
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			assert((map as any).runtime.idCompressor !== undefined);
-			mapCompressedId = (map as any).runtime.idCompressor.generateCompressedId();
-			mapDecompressedId = (map as any).runtime.idCompressor.decompress(mapCompressedId);
-			map.set(mapDecompressedId, testValue);
-			const cell = await d.getSharedObject<SharedCell>(cellId);
-			assert((cell as any).runtime.idCompressor !== undefined);
-			cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
-			cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
-			cell.set(cellDecompressedId);
-			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			assert((directory as any).runtime.idCompressor !== undefined);
-			directoryCompressedId = (directory as any).runtime.idCompressor.generateCompressedId();
-			directoryDecompressedId = (directory as any).runtime.idCompressor.decompress(
-				directoryCompressedId,
-			);
-			directory.set(directoryDecompressedId, testValue);
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				assert((map as any).runtime.idCompressor !== undefined);
+				mapCompressedId = (map as any).runtime.idCompressor.generateCompressedId();
+				mapDecompressedId = (map as any).runtime.idCompressor.decompress(mapCompressedId);
+				map.set(mapDecompressedId, testValue);
+				const cell = await d.getSharedObject<ISharedCell>(cellId);
+				assert((cell as any).runtime.idCompressor !== undefined);
+				cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
+				cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
+				cell.set(cellDecompressedId);
+				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+				assert((directory as any).runtime.idCompressor !== undefined);
+				directoryCompressedId = (directory as any).runtime.idCompressor.generateCompressedId();
+				directoryDecompressedId = (directory as any).runtime.idCompressor.decompress(
+					directoryCompressedId,
+				);
+				directory.set(directoryDecompressedId, testValue);
 
-			// All will have the same sessionId, it doesn't matter which DDS I use
-			sessionId = (map as any).runtime.idCompressor.localSessionId;
-		});
+				// All will have the same sessionId, it doesn't matter which DDS I use
+				sessionId = (map as any).runtime.idCompressor.localSessionId;
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
-		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
+		const directory2 = await dataStore2.getSharedObject<ISharedDirectory>(directoryId);
 		assert((map2 as any).runtime.idCompressor !== undefined);
 		assert((cell2 as any).runtime.idCompressor !== undefined);
 		assert((directory2 as any).runtime.idCompressor !== undefined);
@@ -397,24 +497,29 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("connects in write mode and resends op when loaded with no delta connection", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.set(testKey, testValue);
-			const cell = await d.getSharedObject<SharedCell>(cellId);
-			cell.set(testValue);
-			const counter = await d.getSharedObject<SharedCounter>(counterId);
-			counter.increment(testIncrementValue);
-			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			directory.set(testKey, testValue);
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.set(testKey, testValue);
+				const cell = await d.getSharedObject<ISharedCell>(cellId);
+				cell.set(testValue);
+				const counter = await d.getSharedObject<SharedCounter>(counterId);
+				counter.increment(testIncrementValue);
+				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+				directory.set(testKey, testValue);
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
 		const container2 = await loader.resolve({ url, headers }, pendingOps);
 		container2.connect();
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		await waitForContainerConnection(container2);
@@ -429,121 +534,157 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
-	it("doesn't resend successful op", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.set(testKey, "something unimportant");
-			const cell = await d.getSharedObject<SharedCell>(cellId);
-			cell.set("something unimportant");
-			const counter = await d.getSharedObject<SharedCounter>(counterId);
-			counter.increment(3);
-			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			directory.set(testKey, "I will be erased");
+	[
+		{ name: "tree map", getMap: getTreeBackedMap },
+		{ name: "map", getMap: getMapBackedMap },
+	].forEach(({ name, getMap }) => {
+		it(`doesn't resend successful op (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(
+				testContainerConfig,
+				provider,
+				true, // Do send ops from first container instance before closing
+				async (c, d) => {
+					const mapPre = await getMap(d);
+					mapPre.set(testKey, "something unimportant");
+					const cell = await d.getSharedObject<ISharedCell>(cellId);
+					cell.set("something unimportant");
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(3);
+					const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+					directory.set(testKey, "I will be erased");
+				},
+			);
+
+			map.set(testKey, testValue);
+			cell1.set(testValue);
+			counter1.increment(testIncrementValue);
+			directory1.set(testKey, testValue);
+			await provider.ensureSynchronized();
+
+			// load with pending ops, which it should not resend because they were already sent successfully
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+			const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.get(testKey), testValue);
+			assert.strictEqual(map2.get(testKey), testValue);
+			assert.strictEqual(cell1.get(), testValue);
+			assert.strictEqual(cell2.get(), testValue);
+			assert.strictEqual(counter1.value, testIncrementValue + 3);
+			assert.strictEqual(counter2.value, testIncrementValue + 3);
+			assert.strictEqual(directory1.get(testKey), testValue);
+			assert.strictEqual(directory2.get(testKey), testValue);
 		});
 
-		map1.set(testKey, testValue);
-		cell1.set(testValue);
-		counter1.increment(testIncrementValue);
-		directory1.set(testKey, testValue);
-		await provider.ensureSynchronized();
+		it(`resends delete op and can set after (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const mapPre = await getMap(d);
+					mapPre.delete("clear");
+				},
+			);
 
-		// load with pending ops, which it should not resend because they were already sent successfully
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
-		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
-
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.get(testKey), testValue);
-		assert.strictEqual(map2.get(testKey), testValue);
-		assert.strictEqual(cell1.get(), testValue);
-		assert.strictEqual(cell2.get(), testValue);
-		assert.strictEqual(counter1.value, testIncrementValue + 3);
-		assert.strictEqual(counter2.value, testIncrementValue + 3);
-		assert.strictEqual(directory1.get(testKey), testValue);
-		assert.strictEqual(directory2.get(testKey), testValue);
-	});
-
-	it("resends delete op and can set after", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.delete("clear");
+			// load container with pending ops, which should resend the op not sent by previous container
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.has("clear"), false);
+			assert.strictEqual(map2.has("clear"), false);
+			map.set("clear", "test1");
+			await provider.ensureSynchronized();
+			assert.strictEqual(map.get("clear"), "test1");
+			assert.strictEqual(map2.get("clear"), "test1");
 		});
 
-		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.has("clear"), false);
-		assert.strictEqual(map2.has("clear"), false);
-		map1.set("clear", "test1");
-		await provider.ensureSynchronized();
-		assert.strictEqual(map1.get("clear"), "test1");
-		assert.strictEqual(map2.get("clear"), "test1");
-	});
+		it(`resends a lot of ops (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const mapPre = await getMap(d);
+					[...Array(lots).keys()].map((i) => mapPre.set(i.toString(), i.toString()));
+				},
+			);
 
-	it("resends a lot of ops", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			// load container with pending ops, which should resend the ops not sent by previous container
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(
+					map.get(i.toString()),
+					i.toString(),
+					`map 1 ${map.get(i.toString())} !== ${i}`,
+				),
+			);
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(
+					map2.get(i.toString()),
+					i.toString(),
+					`map 2 ${map2.get(i.toString())} !== ${i}`,
+				),
+			);
 		});
 
-		// load container with pending ops, which should resend the ops not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		[...Array(lots).keys()].map((i) =>
-			assert.strictEqual(
-				map1.get(i.toString()),
-				i,
-				`map 1 ${map1.get(i.toString())} !== ${i}`,
-			),
-		);
-		[...Array(lots).keys()].map((i) =>
-			assert.strictEqual(
-				map2.get(i.toString()),
-				i,
-				`map 2 ${map2.get(i.toString())} !== ${i}`,
-			),
-		);
-	});
+		it(`doesn't resend a lot of successful ops (${name})`, async function () {
+			const map = await getMapFromProvider(getMap);
+			const pendingOps = await getPendingOps(
+				testContainerConfig,
+				provider,
+				true, // Do send ops from first container instance before closing
+				async (c, d) => {
+					const mapPre = await getMap(d);
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
+				},
+			);
 
-	it("doesn't resend a lot of successful ops", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			// send a bunch from first container that should not be overwritten
+			[...Array(lots).keys()].map((i) => map.set(i.toString(), testValue));
+			await provider.ensureSynchronized();
+
+			// load container with pending ops, which should not resend the ops sent by previous container
+			const container2 = await loader.resolve({ url }, pendingOps);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const map2 = await getMap(dataStore2);
+			await waitForContainerConnection(container2);
+			await provider.ensureSynchronized();
+			[...Array(lots).keys()].map((i) => assert.strictEqual(map.get(i.toString()), testValue));
+			[...Array(lots).keys()].map((i) =>
+				assert.strictEqual(map2.get(i.toString()), testValue),
+			);
 		});
-
-		// send a bunch from first container that should not be overwritten
-		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
-		await provider.ensureSynchronized();
-
-		// load container with pending ops, which should not resend the ops sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		[...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
-		[...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
 	});
 
 	it("resends all shared directory ops", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			directory.set("key1", "value1");
-			directory.set("key2", "value2");
-			directory.createSubDirectory("subdir1");
-			directory.createSubDirectory("subdir2");
-			directory.delete("key2");
-			directory.deleteSubDirectory("subdir2");
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+				directory.set("key1", "value1");
+				directory.set("key2", "value2");
+				directory.createSubDirectory("subdir1");
+				directory.createSubDirectory("subdir2");
+				directory.delete("key2");
+				directory.deleteSubDirectory("subdir2");
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -562,17 +703,22 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends batched ops", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			(c as any).runtime.orderSequentially(() => {
-				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-			});
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				(c as any).runtime.orderSequentially(() => {
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+				});
+			},
+		);
 
 		// load container with pending ops, which should resend the ops not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		[...Array(lots).keys()].map((i) =>
@@ -592,12 +738,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful batched ops", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			(c as any).runtime.orderSequentially(() => {
-				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-			});
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				(c as any).runtime.orderSequentially(() => {
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+				});
+			},
+		);
 
 		// send a bunch from first container that should not be overwritten
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
@@ -605,7 +756,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// load container with pending ops, which should not resend the ops sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		[...Array(lots).keys()].map((i) => assert.strictEqual(map1.get(i.toString()), testValue));
 		[...Array(lots).keys()].map((i) => assert.strictEqual(map2.get(i.toString()), testValue));
@@ -614,15 +765,20 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("resends chunked op", async function () {
 		const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.set(testKey, bigString);
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.set(testKey, bigString);
+			},
+		);
 
 		// load container with pending ops, which should resend the ops not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(
@@ -640,11 +796,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("doesn't resend successful chunked op", async function () {
 		const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.set(testKey, bigString);
-			map.set(testKey2, bigString);
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.set(testKey, bigString);
+				map.set(testKey2, bigString);
+			},
+		);
 
 		// set on first container which should not be overwritten
 		map1.set(testKey, testValue);
@@ -653,7 +814,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// load container with pending ops, which should resend the ops not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
@@ -665,14 +826,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
 		await provider.ensureSynchronized();
 
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.clear();
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.clear();
+			},
+		);
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		[...Array(lots).keys()].map(async (i) =>
@@ -684,17 +850,22 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("successful map clear no resend", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.clear();
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.clear();
+			},
+		);
 
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
 		await provider.ensureSynchronized();
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		await Promise.all(
@@ -710,10 +881,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends string insert op", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.insertText(s.getLength(), " world!");
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.insertText(s.getLength(), " world!");
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -726,10 +902,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful string insert op", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.insertText(s.getLength(), " world!");
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.insertText(s.getLength(), " world!");
+			},
+		);
 
 		// load with pending ops, which it should not resend because they were already sent successfully
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -742,10 +923,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends string remove op", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.removeText(0, s.getLength());
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.removeText(0, s.getLength());
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -758,10 +944,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful string remove op", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.removeText(0, s.getLength());
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.removeText(0, s.getLength());
+			},
+		);
 
 		string1.insertText(0, "goodbye cruel world");
 
@@ -776,10 +967,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends string annotate op", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.annotateRange(0, s.getLength(), { bold: true });
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.annotateRange(0, s.getLength(), { bold: true });
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -792,10 +988,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful string annotate op", async function () {
-		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.annotateRange(0, s.getLength(), { bold: true });
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.annotateRange(0, s.getLength(), { bold: true });
+			},
+		);
 
 		// change annotation, which should not be overwritten by successful stashed ops
 		string1.annotateRange(0, string1.getLength(), { bold: false });
@@ -810,18 +1011,23 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends marker ops", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const s = await d.getSharedObject<SharedString>(stringId);
-			s.insertMarker(s.getLength(), ReferenceType.Simple, {
-				[reservedMarkerIdKey]: "markerId",
-				[reservedMarkerSimpleTypeKey]: "markerKeyValue",
-			});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const s = await d.getSharedObject<SharedString>(stringId);
+				s.insertMarker(s.getLength(), ReferenceType.Simple, {
+					[reservedMarkerIdKey]: "markerId",
+					[reservedMarkerSimpleTypeKey]: "markerKeyValue",
+				});
 
-			s.insertMarker(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: ["tileLabel"],
-				[reservedMarkerIdKey]: "tileMarkerId",
-			});
-		});
+				s.insertMarker(0, ReferenceType.Tile, {
+					[reservedTileLabelsKey]: ["tileLabel"],
+					[reservedMarkerIdKey]: "tileMarkerId",
+				});
+			},
+		);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
@@ -869,24 +1075,29 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("resends attach op", async function () {
 		const newMapId = "newMap";
 		let id;
-		const pendingOps = await getPendingOps(provider, false, async (container, d) => {
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
-			const runtime = defaultDataStore.context.containerRuntime;
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (container, d) => {
+				const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+				const runtime = defaultDataStore.context.containerRuntime;
 
-			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
-			id = dataStore.context.id;
+				const createdDataStore = await runtime.createDataStore(["default"]);
+				const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+				id = dataStore.context.id;
 
-			const channel = dataStore.runtime.createChannel(
-				newMapId,
-				"https://graph.microsoft.com/types/map",
-			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+				const channel = dataStore.runtime.createChannel(
+					newMapId,
+					"https://graph.microsoft.com/types/map",
+				);
+				assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-			((await channel.handle.get()) as SharedObject).bindToContext();
-			defaultDataStore.root.set("someDataStore", dataStore.handle);
-			(channel as SharedMap).set(testKey, testValue);
-		});
+				((await channel.handle.get()) as SharedObject).bindToContext();
+				defaultDataStore.root.set("someDataStore", dataStore.handle);
+				(channel as ISharedMap).set(testKey, testValue);
+			},
+		);
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		await waitForContainerConnection(container2);
@@ -897,30 +1108,35 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
-		const map2 = response.value as SharedMap;
+		const map2 = response.value as ISharedMap;
 		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
 	it("doesn't resend successful attach op", async function () {
 		const newMapId = "newMap";
-		const pendingOps = await getPendingOps(provider, true, async (container, d) => {
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
-			const runtime = defaultDataStore.context.containerRuntime;
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			true, // Do send ops from first container instance before closing
+			async (container, d) => {
+				const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+				const runtime = defaultDataStore.context.containerRuntime;
 
-			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+				const createdDataStore = await runtime.createDataStore(["default"]);
+				const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
 
-			const channel = dataStore.runtime.createChannel(
-				newMapId,
-				"https://graph.microsoft.com/types/map",
-			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+				const channel = dataStore.runtime.createChannel(
+					newMapId,
+					"https://graph.microsoft.com/types/map",
+				);
+				assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-			((await channel.handle.get()) as SharedObject).bindToContext();
-			defaultDataStore.root.set("someDataStore", dataStore.handle);
-			(channel as SharedMap).set(testKey, testValue);
-		});
+				((await channel.handle.get()) as SharedObject).bindToContext();
+				defaultDataStore.root.set("someDataStore", dataStore.handle);
+				(channel as ISharedMap).set(testKey, testValue);
+			},
+		);
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		await waitForContainerConnection(container2);
@@ -928,17 +1144,22 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("resends DDS attach op", async function () {
 		const newMapId = "newMap";
-		const pendingOps = await getPendingOps(provider, false, async (_, dataStore) => {
-			const channel = dataStore.runtime.createChannel(
-				newMapId,
-				"https://graph.microsoft.com/types/map",
-			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (_, dataStore) => {
+				const channel = dataStore.runtime.createChannel(
+					newMapId,
+					"https://graph.microsoft.com/types/map",
+				);
+				assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-			((await channel.handle.get()) as SharedObject).bindToContext();
-			assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
-			(channel as SharedMap).set(testKey, testValue);
-		});
+				((await channel.handle.get()) as SharedObject).bindToContext();
+				assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
+				(channel as ISharedMap).set(testKey, testValue);
+			},
+		);
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		await waitForContainerConnection(container2);
@@ -950,7 +1171,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/default/${newMapId}` });
-		const map2 = response.value as SharedMap;
+		const map2 = response.value as ISharedMap;
 		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
@@ -1011,15 +1232,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate local op
 		assert.strictEqual(string.getText(), "hello");
-		string.insertText(5, "; long amount of text that will produce a high index");
+		string.insertText(5, " / First op");
 
 		// op is submitted on top of first op at some later time (not in the same JS turn, so not batched)
 		await Promise.resolve();
-		string.insertText(string.getLength(), ", for testing purposes");
-		assert.strictEqual(
-			string.getText(),
-			"hello; long amount of text that will produce a high index, for testing purposes",
-		);
+		string.insertText(string.getLength(), " / Second op");
+		assert.strictEqual(string.getText(), "hello / First op / Second op");
 
 		const stashP = new Promise<string>((resolve) => {
 			container.on("op", (op) => {
@@ -1036,29 +1254,32 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 		});
 		provider.opProcessingController.resumeProcessing(container);
-		const stashedOps = await stashP;
+		const pendingLocalState = await stashP;
 
-		// when this container tries to apply the second op, it will not have replayed the first
-		// op yet, because the reference sequence number of the second op is lower than the sequence number
-		// of the first op
-		const container2 = await loader.resolve({ url }, stashedOps);
+		// Op stream [client ID] at this point -- These are in "savedOps" in the pendingLocalState
+		// 1: Join op [A]
+		// 2: "hello" (from test setup) [A]
+		// 3: Join op [B]
+		// 4: " / First op" [B]
+		//
+		// Stashed Ops (ref seq num is 3) -- These are in ContainerRuntime's PendingStateManager.initialMessages
+		// 4: "First op" [B]
+		// _: " / Second op" [B]
+
+		// This container will have to replay the first op even though it was already sequenced,
+		// since both ops' reference sequence number is lower than the first op's sequence number.
+		const container2 = await loader.resolve({ url }, pendingLocalState);
 		const defaultDataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const string2 = await defaultDataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
-		assert.strictEqual(
-			string2.getText(),
-			"hello; long amount of text that will produce a high index, for testing purposes",
-		);
+		assert.strictEqual(string2.getText(), "hello / First op / Second op");
 		await provider.ensureSynchronized();
 		assert.strictEqual(string2.getText(), string1.getText());
 	});
 
 	itExpects(
 		"waits for previous container's leave message",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
 			const container: IContainerExperimental =
 				await provider.loadTestContainer(testContainerConfig);
@@ -1071,7 +1292,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert.ok(serializedClientId);
 
 			await provider.opProcessingController.pauseProcessing(container);
-			assert(dataStore.runtime.deltaManager.outbound.paused);
+			assert(toDeltaManagerInternal(dataStore.runtime.deltaManager).outbound.paused);
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
@@ -1100,14 +1321,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	it("can make changes offline and resubmit them", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			},
+		);
 
-		const container2 = await loadOffline(provider, { url }, pendingOps);
+		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes should be applied
 		[...Array(lots).keys()].map((i) =>
@@ -1140,10 +1366,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("fails when session time expires using stashed time", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			},
+		);
 		const pendingState = JSON.parse(pendingOps);
 		assert.ok(pendingState.pendingRuntimeState.sessionExpiryTimerStarted);
 		pendingState.pendingRuntimeState.sessionExpiryTimerStarted = 1;
@@ -1155,14 +1386,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("can make changes offline and stash them", async function () {
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+			},
+		);
 
-		const container2 = await loadOffline(provider, { url }, pendingOps);
+		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes should be applied
 		[...Array(lots).keys()].map((i) =>
@@ -1178,9 +1414,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get stashed ops from this container without connecting
 		const morePendingOps = await container2.container.closeAndGetPendingLocalState?.();
 
-		const container3 = await loadOffline(provider, { url }, morePendingOps);
+		const container3 = await loadOffline(
+			testContainerConfig,
+			provider,
+			{ url },
+			morePendingOps,
+		);
 		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		// pending changes from both containers should be applied
 		[...Array(lots * 2).keys()].map((i) =>
@@ -1214,19 +1455,21 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	itExpects(
 		"waits for previous container's leave message after rehydration",
-		[
-			{ eventName: "fluid:telemetry:Container:connectedStateRejected" },
-			{ eventName: "fluid:telemetry:Container:WaitBeforeClientLeave_end" },
-		],
+		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
-			const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-				const map = await d.getSharedObject<SharedMap>(mapId);
-				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-			});
+			const pendingOps = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const map = await d.getSharedObject<ISharedMap>(mapId);
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+				},
+			);
 
 			const container2: IContainerExperimental = await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			await waitForContainerConnection(container2);
 			const serializedClientId = container2.clientId;
 			assert.ok(serializedClientId);
@@ -1247,7 +1490,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			);
 
 			await provider.opProcessingController.pauseProcessing(container2);
-			assert(dataStore2.runtime.deltaManager.outbound.paused);
+			assert(toDeltaManagerInternal(dataStore2.runtime.deltaManager).outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 			const morePendingOps = await container2.getPendingLocalState?.();
@@ -1276,9 +1519,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	it("offline blob upload", async function () {
-		const container = await loadOffline(provider, { url });
+		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		container.connect();
@@ -1289,7 +1532,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map.set("blob handle", handle);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
 		assert.strictEqual(
@@ -1300,7 +1543,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("close while uploading blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
 		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
@@ -1311,7 +1554,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
 		assert.strictEqual(
@@ -1326,7 +1569,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("abort while stashing blobs", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		const ac = new AbortController();
 		await provider.ensureSynchronized();
 
@@ -1340,7 +1583,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		assert.strictEqual(
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
@@ -1350,7 +1593,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("close while uploading multiple blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
 		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
@@ -1364,7 +1607,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		for (let i = 1; i <= 3; i++) {
 			assert.strictEqual(
@@ -1385,9 +1628,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		["local"],
 		async function () {
 			// upload blob offline so an entry is added to redirect table
-			const container = await loadOffline(provider, { url });
+			const container = await loadOffline(testContainerConfig, provider, { url });
 			const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 			container.connect();
@@ -1397,18 +1640,18 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			// wait for summary with redirect table
 			await provider.ensureSynchronized();
-			await waitForSummary();
+			await waitForSummary(container1);
 
 			// should be able to load entirely offline
-			const stashBlob = await getPendingOps(provider, true);
-			await loadOffline(provider, { url }, stashBlob);
+			const stashBlob = await getPendingOps(testContainerConfig, provider, true);
+			await loadOffline(testContainerConfig, provider, { url }, stashBlob);
 		},
 	);
 
 	it("load offline from stashed ops with pending blob", async function () {
-		const container = await loadOffline(provider, { url });
+		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
@@ -1418,9 +1661,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const stashedChanges = await stashedChangesP;
 
-		const container3 = await loadOffline(provider, { url }, stashedChanges);
+		const container3 = await loadOffline(
+			testContainerConfig,
+			provider,
+			{ url },
+			stashedChanges,
+		);
 		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		// blob is accessible offline
 		assert.strictEqual(
@@ -1442,9 +1690,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("stashed changes with blobs", async function () {
-		const container = await loadOffline(provider, { url });
+		const container = await loadOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
@@ -1456,7 +1704,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const container3 = await loader.resolve({ url }, stashedChanges);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
 
@@ -1475,33 +1723,38 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const newMapId = "newMap";
 		let id;
 		// stash attach op
-		const pendingOps = await getPendingOps(provider, false, async (container, d) => {
-			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
-			const runtime = defaultDataStore.context.containerRuntime;
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (container, d) => {
+				const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
+				const runtime = defaultDataStore.context.containerRuntime;
 
-			const createdDataStore = await runtime.createDataStore(["default"]);
-			const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
-			id = dataStore.context.id;
+				const createdDataStore = await runtime.createDataStore(["default"]);
+				const dataStore = (await createdDataStore.entryPoint.get()) as ITestFluidObject;
+				id = dataStore.context.id;
 
-			const channel = dataStore.runtime.createChannel(
-				newMapId,
-				"https://graph.microsoft.com/types/map",
-			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+				const channel = dataStore.runtime.createChannel(
+					newMapId,
+					"https://graph.microsoft.com/types/map",
+				);
+				assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-			((await channel.handle.get()) as SharedObject).bindToContext();
-			defaultDataStore.root.set("someDataStore", dataStore.handle);
-			(channel as SharedMap).set(testKey, testValue);
-		});
+				((await channel.handle.get()) as SharedObject).bindToContext();
+				defaultDataStore.root.set("someDataStore", dataStore.handle);
+				(channel as ISharedMap).set(testKey, testValue);
+			},
+		);
 
 		// load offline; new datastore should be accessible
-		const container2 = await loadOffline(provider, { url }, pendingOps);
+		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
 		{
 			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
-			const map2 = response.value as SharedMap;
+			const map2 = response.value as ISharedMap;
 			assert.strictEqual(map2.get(testKey), testValue);
 			map2.set(testKey2, testValue);
 		}
@@ -1515,7 +1768,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
-			const map3 = response.value as SharedMap;
+			const map3 = response.value as ISharedMap;
 			await provider.ensureSynchronized();
 			assert.strictEqual(map3.get(testKey), testValue);
 			assert.strictEqual(map3.get(testKey2), testValue);
@@ -1528,17 +1781,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.defaultCodeDetails,
 		);
 		const dataStore = (await detachedContainer.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 
-		await detachedContainer.attach(provider.driver.createCreateNewRequest(provider.documentId));
+		await detachedContainer.attach(
+			provider.driver.createCreateNewRequest(provider.documentId),
+		);
 		const pendingOps = await detachedContainer.closeAndGetPendingLocalState?.();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
 		const container2 = await loader2.resolve({ url: url2 }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
@@ -1548,7 +1803,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.defaultCodeDetails,
 		);
 		const dataStore = (await detachedContainer.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 
 		const summary = detachedContainer.serialize();
@@ -1556,7 +1811,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const rehydratedContainer: IContainerExperimental =
 			await loader2.rehydrateDetachedContainerFromSnapshot(summary);
 		const dataStore2 = (await rehydratedContainer.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		map2.set(testKey2, testValue);
 
 		await rehydratedContainer.attach(
@@ -1569,7 +1824,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const container3 = await loader2.resolve({ url: url2 }, pendingOps);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 		assert.strictEqual(map3.get(testKey), testValue);
 		assert.strictEqual(map3.get(testKey2), testValue);
 	});
@@ -1577,20 +1832,25 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	// TODO: https://github.com/microsoft/FluidFramework/issues/10729
 	it("works with summary while offline", async function () {
 		map1.set("test op 1", "test op 1");
-		await waitForSummary();
+		await waitForSummary(container1);
 
-		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-			const map = await d.getSharedObject<SharedMap>(mapId);
-			map.set(testKey, testValue);
-		});
+		const pendingOps = await getPendingOps(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const map = await d.getSharedObject<ISharedMap>(mapId);
+				map.set(testKey, testValue);
+			},
+		);
 
 		map1.set("test op 2", "test op 2");
-		await waitForSummary();
+		await waitForSummary(container1);
 
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -1626,7 +1886,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let pendingState: string | undefined;
 		let pendingStateP;
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		for (let i = 5; i--; ) {
 			map.set(`${i}`, `${i}`);
 			container.disconnect();
@@ -1653,7 +1913,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const container2 = await loader.resolve({ url }, pendingState);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 		for (let i = 5; i--; ) {
 			// local value is what we expect
@@ -1663,7 +1923,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	it("get pending state without close doesn't duplicate ops", async () => {
+	it("repeated getPendingLocalState across multiple connections doesn't duplicate ops", async () => {
 		const container = (await provider.loadTestContainer(
 			testContainerConfig,
 		)) as IContainerExperimental;
@@ -1706,6 +1966,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("applies stashed ops with no saved ops", async function () {
+		// TODO: This test is consistently failing when ran against FRS. See ADO:7968
+		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
+			this.skip();
+		}
 		// wait for summary
 		await new Promise<void>((resolve) =>
 			container1.on("op", (op) => {
@@ -1719,7 +1983,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
 		const container: IContainerExperimental = await loader.resolve({ url, headers });
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		// generate ops with RSN === summary SN
 		map.set(testKey, testValue);
 		const stashBlob = await container.closeAndGetPendingLocalState?.();
@@ -1734,11 +1998,143 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, stashBlob);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
 		assert.strictEqual(map2.get(testKey), testValue);
+	});
+
+	describe("Negative tests for Offline Phase 3 - serializing without closing", () => {
+		it(`WRONGLY duplicates ops when submitted with different clientId from pendingLocalState (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				true, // Do send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
+
+			// The real scenario where the clientId would differ from the original container and pendingLocalState is this:
+			// 1. container1 - getPendingLocalState (local ops have clientId A), reconnect, submitOp on new clientId B
+			// 2. container2 - load with pendingLocalState. There's no way to correlate the local ops from container1 (clientId A) with the remote ops from container1 (clientId B).
+			//
+			// For simplicity (as opposed to coding up reconnect like that), just tweak the clientId in pendingLocalState.
+			const obj = JSON.parse(pendingLocalState);
+			obj.clientId = "00000000-0e85-4ea1-983d-3cb72f280701"; // Bogus GUID to simulate reconnect after getPendingLocalState
+			const pendingLocalStateAdjusted = JSON.stringify(obj);
+
+			// load with pending ops with bogus clientId, which makes it impossible (today) to correlate the local ops and they're resent
+			const container2 = await loader.resolve({ url }, pendingLocalStateAdjusted);
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+
+			await provider.ensureSynchronized();
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+		});
+
+		it(`WRONGLY duplicates ops when hydrating twice and submitting in parallel (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
+
+			// Rehydrate twice and block incoming for both, submitting the stashed ops in parallel
+			const container2 = await loader.resolve({ url }, pendingLocalState);
+			await container2.deltaManager.inbound.pause();
+			await container2.deltaManager.outbound.pause(); // To protect against container2 submitting the op before container3 pauses inbound.
+			const container3 = await loader.resolve({ url }, pendingLocalState);
+			await container3.deltaManager.inbound.pause();
+			container2.deltaManager.outbound.resume(); // Now that container3 is paused, container2 can submit the op.
+
+			container2.deltaManager.flush();
+			container3.deltaManager.flush();
+			await delay(0); // Yield to allow the ops to be submitted before resuming
+			container2.deltaManager.inbound.resume();
+			container3.deltaManager.inbound.resume();
+
+			// At this point, both rehydrated containers should have submitted the same Counter op.
+			// Each receiving client (or the service) would have to recognize and ignore the duplicate on receipt,
+			// but that is not yet implemented.
+			await provider.ensureSynchronized();
+
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter3.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+		});
+
+		it(`WRONGLY duplicates ops when hydrating twice and submitting in serial (via Counter DDS)`, async function () {
+			const incrementValue = 3;
+			const pendingLocalState = await getPendingOps(
+				testContainerConfig,
+				provider,
+				false, // Don't send ops from first container instance before closing
+				async (c, d) => {
+					const counter = await d.getSharedObject<SharedCounter>(counterId);
+					counter.increment(incrementValue);
+				},
+			);
+
+			// Rehydrate the first time - counter increment will be resubmitted on container2's new clientId
+			const container2 = await loader.resolve({ url }, pendingLocalState);
+			await provider.ensureSynchronized();
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+
+			assert.strictEqual(counter1.value, incrementValue);
+			assert.strictEqual(counter2.value, incrementValue);
+
+			// Rehydrate the second time - first counter increment is unrecognizable,
+			// so it will be resubmitted again here on container3's new clientId
+			const container3 = await loader.resolve({ url }, pendingLocalState);
+			await provider.ensureSynchronized();
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const counter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+
+			assertCurrentAndIdealExpectations(counter1.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter2.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+			assertCurrentAndIdealExpectations(counter3.value, {
+				ideal: incrementValue,
+				currentButWrong: 2 * incrementValue,
+			});
+		});
 	});
 });
 
@@ -1767,7 +2163,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({
@@ -1791,7 +2187,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		container.disconnect();
 
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		const pendingOps = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingOps);
@@ -1801,7 +2197,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader2.resolve({ url }, pendingOps);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2, true);
 		await provider2.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);

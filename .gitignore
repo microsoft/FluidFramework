@@ -7,6 +7,12 @@ nyc
 *.log
 .DS_Store
 
+# Generated Node10 module resolution compatibility files
+alpha.d.ts
+beta.d.ts
+internal.d.ts
+legacy.d.ts
+
 # TypeScript incremental build cache
 *.tsbuildinfo
 

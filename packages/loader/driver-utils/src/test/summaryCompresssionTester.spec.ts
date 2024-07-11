@@ -2,21 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 /* eslint-disable @typescript-eslint/dot-notation */
+
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IClient,
-	ICreateBlobResponse,
-	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
-	IVersion,
 	SummaryType,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
 	IDocumentDeltaConnection,
@@ -29,16 +32,20 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+	ICreateBlobResponse,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/driver-definitions/internal";
+
 import {
-	applyStorageCompression,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	applyStorageCompression,
 	blobHeadersBlobName,
-} from "../adapters";
-import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
-import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
+} from "../adapters/index.js";
+import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
+
+import { snapshotTree, summaryTemplate } from "./summaryCompressionData.js";
 
 /**
  * This function clones the imported summary and returns a new summary with the same content.
@@ -516,7 +523,7 @@ async function checkUploadDownloadSummary(
 	assert(
 		originBlobContent === downloadedBlobContent,
 		`The origin and the downloaded blob are not the same
-		\norigin     : ${originBlobContent} 
+		\norigin     : ${originBlobContent}
 		\ndownloaded : ${downloadedBlobContent}`,
 	);
 	return downloadedSummary;
@@ -586,7 +593,7 @@ async function checkEncDecConfigurable(
 	} else {
 		assert(
 			compareTwoBlobs(blob, originBlob),
-			`The origin and the downloaded blob are not the same \n\n\n${blob.byteLength}\n\n${originBlob.byteLength}. 
+			`The origin and the downloaded blob are not the same \n\n\n${blob.byteLength}\n\n${originBlob.byteLength}.
 			The first bytes are ${blob[0]} and ${originBlob[0]}`,
 		);
 	}

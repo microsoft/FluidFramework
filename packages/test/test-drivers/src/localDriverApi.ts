@@ -7,9 +7,10 @@ import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { pkgVersion } from "./packageVersion";
+
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * @internal

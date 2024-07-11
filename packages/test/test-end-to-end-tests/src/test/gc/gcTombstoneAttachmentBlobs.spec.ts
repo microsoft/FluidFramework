@@ -5,24 +5,30 @@
 
 import { strict as assert } from "assert";
 
-import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
+	ContainerRuntime,
+	IGCRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
+import { delay } from "@fluidframework/core-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-	ITestContainerConfig,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+} from "@fluidframework/test-utils/internal";
+
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
+
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
@@ -63,6 +69,9 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+		if (!driverSupportsBlobs(provider.driver)) {
+			this.skip();
+		}
 		configProvider.set(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
 			tombstoneTimeoutMs,
@@ -91,12 +100,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return { dataStore, summarizer };
 		}
 
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"fails retrieval of tombstones attachment blobs",
 			[
@@ -112,13 +115,12 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Reference and then unreference the blob so that it's unreferenced in the next summary.
@@ -188,8 +190,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -226,7 +227,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response1 = await containerRuntime2.resolveHandle({
-					url: blobHandle1.absolutePath,
+					url: toFluidHandleInternal(blobHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					response1?.status,
@@ -239,7 +240,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const response2 = await containerRuntime2.resolveHandle({
-					url: blobHandle2.absolutePath,
+					url: toFluidHandleInternal(blobHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					response2?.status,
@@ -263,8 +264,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -296,7 +296,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response1 = await containerRuntime2.resolveHandle({
-					url: blobHandle1.absolutePath,
+					url: toFluidHandleInternal(blobHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					response1?.status,
@@ -323,7 +323,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const containerRuntime3 = entryPoint3._context.containerRuntime as ContainerRuntime;
 				const response2 = await containerRuntime3.resolveHandle({
-					url: blobHandle1.absolutePath,
+					url: toFluidHandleInternal(blobHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					response2?.status,
@@ -346,8 +346,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				// Override ThrowOnTombstoneLoad setting to off.
 				configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride", false);
 
-				const { dataStore: mainDataStore, summarizer } =
-					await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
@@ -379,7 +378,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime2.resolveHandle({
-					url: blobHandle.absolutePath,
+					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 200, `Expecting a 200 response`);
 				assert(container2.closed !== true, "Container should not have closed");
@@ -469,12 +468,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			return { mainContainer, mainDataStore };
 		}
 
-		beforeEach("conditionalSkip", async function () {
-			if (!driverSupportsBlobs(provider.driver)) {
-				this.skip();
-			}
-		});
-
 		itExpects(
 			"tombstones blobs uploaded in detached container",
 			[
@@ -485,8 +478,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { mainContainer, mainDataStore } =
-					await createDetachedContainerAndDataStore();
+				const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
 				// Upload an attachment blob and mark it referenced by storing its handle in a DDS.
 				const blobContents = "Blob contents";
@@ -539,13 +531,10 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime2.resolveHandle({
-					url: blobHandle.absolutePath,
+					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(
-					response.value.startsWith("Blob was tombstoned:"),
-					`Unexpected response value`,
-				);
+				assert(response.value.startsWith("Blob was tombstoned:"), `Unexpected response value`);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -565,8 +554,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { mainContainer, mainDataStore } =
-					await createDetachedContainerAndDataStore();
+				const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
 				// Upload an attachment blob. We should get a handle with a localId for the blob. Mark it referenced by
 				// storing its handle in a DDS.
@@ -591,8 +579,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle2.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle2).absolutePath,
 					"The two local ids should be different",
 				);
 
@@ -633,7 +621,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -646,7 +634,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -680,8 +668,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				},
 			],
 			async () => {
-				const { mainContainer, mainDataStore } =
-					await createDetachedContainerAndDataStore();
+				const { mainContainer, mainDataStore } = await createDetachedContainerAndDataStore();
 
 				// Upload couple of attachment blobs with the same content. When these blobs are uploaded to the server,
 				// they will be de-duped and redirect to the same storageId.
@@ -718,8 +705,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle3.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle3).absolutePath,
 					"local handles should be different",
 				);
 				mainDataStore._root.set("local3", localHandle3);
@@ -755,7 +742,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -768,7 +755,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -781,7 +768,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse3 = await containerRuntime2.resolveHandle({
-					url: localHandle3.absolutePath,
+					url: toFluidHandleInternal(localHandle3).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse3?.status,
@@ -822,12 +809,6 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 			await summarizeNow(summarizer);
 			return summarizer;
 		}
-
-		beforeEach("skipNonLocal", async function () {
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
-		});
 
 		itExpects(
 			"tombstones blobs uploaded in disconnected container",
@@ -883,13 +864,10 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime2.resolveHandle({
-					url: blobHandle.absolutePath,
+					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(
-					response.value.startsWith("Blob was tombstoned:"),
-					`Unexpected response value`,
-				);
+				assert(response.value.startsWith("Blob was tombstoned:"), `Unexpected response value`);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -934,8 +912,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle2.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle2).absolutePath,
 					"local handles should be different",
 				);
 
@@ -966,7 +944,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -979,7 +957,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -1045,8 +1023,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle3.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle3).absolutePath,
 					"local handles should be different",
 				);
 
@@ -1078,7 +1056,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -1091,7 +1069,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -1104,7 +1082,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse3 = await containerRuntime2.resolveHandle({
-					url: localHandle3.absolutePath,
+					url: toFluidHandleInternal(localHandle3).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse3?.status,

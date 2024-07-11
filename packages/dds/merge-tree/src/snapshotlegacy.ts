@@ -5,22 +5,26 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { matchProperties } from "./properties";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
+import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
-} from "./snapshotChunks";
-import { MergeTree } from "./mergeTree";
+} from "./snapshotChunks.js";
 
 interface SnapshotHeader {
 	chunkCount?: number;
@@ -79,7 +83,8 @@ export class SnapshotLegacy {
 			sequenceLength < approxSequenceLength &&
 			startIndex + segCount < allSegments.length
 		) {
-			const pseg = allSegments[startIndex + segCount];
+			// TODO Non null asserting, why is this not null?
+			const pseg = allSegments[startIndex + segCount]!;
 			segs.push(pseg);
 			if (pseg.attribution) {
 				segsWithAttribution++;
@@ -217,10 +222,7 @@ export class SnapshotLegacy {
 					segment.removedSeq > this.seq!)
 			) {
 				originalSegments += 1;
-				if (
-					prev?.canAppend(segment) &&
-					matchProperties(prev.properties, segment.properties)
-				) {
+				if (prev?.canAppend(segment) && matchProperties(prev.properties, segment.properties)) {
 					prev = prev.clone();
 					prev.append(segment.clone());
 				} else {

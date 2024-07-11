@@ -5,24 +5,26 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
+	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/runtime-definitions/internal";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ContainerRuntimeGCMessage } from "../messageTypes.js";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
-} from "../summary";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ContainerRuntimeGCMessage } from "../messageTypes";
+} from "../summary/index.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export type GCVersion = number;
@@ -59,10 +61,6 @@ export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC on / off. */
-export const runGCKey = "Fluid.GarbageCollection.RunGC";
-/** Config key to turn GC sweep on / off. */
-export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 /** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 /** Config key to expire a session after a set period of time. Defaults to true. */
@@ -78,8 +76,6 @@ export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombston
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 /** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
-export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 /** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
 export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
@@ -100,6 +96,7 @@ export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
  * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
+ * @legacy
  * @alpha
  */
 export type GCFeatureMatrix =
@@ -137,6 +134,7 @@ export interface IGCMetadata_Deprecated {
 /**
  * GC-specific metadata to be written into the summary.
  *
+ * @legacy
  * @alpha
  */
 export interface IGCMetadata {
@@ -184,6 +182,7 @@ export interface IGCMetadata {
 
 /**
  * The statistics of the system state after a garbage collection mark phase run.
+ * @legacy
  * @alpha
  */
 export interface IMarkPhaseStats {
@@ -209,6 +208,7 @@ export interface IMarkPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection sweep phase run.
+ * @legacy
  * @alpha
  */
 export interface ISweepPhaseStats {
@@ -228,12 +228,14 @@ export interface ISweepPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection run.
+ * @legacy
  * @alpha
  */
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 
 /**
  * The types of GC nodes in the GC reference graph.
+ * @legacy
  * @alpha
  */
 export const GCNodeType = {
@@ -245,9 +247,10 @@ export const GCNodeType = {
 	Blob: "Blob",
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
-};
+} as const;
 
 /**
+ * @legacy
  * @alpha
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
@@ -301,14 +304,10 @@ export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
-	/** Before GC runs, called to notify the runtime to update any pending GC state. */
-	updateStateBeforeGC(): Promise<void>;
 	/** Returns the garbage collection data of the runtime. */
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 	/** After GC has run, called to notify the runtime of routes that are used in it. */
 	updateUsedRoutes(usedRoutes: readonly string[]): void;
-	/** After GC has run, called to notify the runtime of routes that are unused in it. */
-	updateUnusedRoutes(unusedRoutes: readonly string[]): void;
 	/**
 	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
 	 * should return the routes of nodes that were deleted.
@@ -335,8 +334,6 @@ export interface IGarbageCollector {
 	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
-	/** Tells whether the GC state in summary needs to be reset in the next summary. */
-	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
 	/** Tells whether tombstone feature is enabled and enforced. */
@@ -372,22 +369,46 @@ export interface IGarbageCollector {
 	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
 	 */
-	nodeUpdated(
-		nodePath: string,
-		reason: "Loaded" | "Changed",
-		timestampMs?: number,
-		packagePath?: readonly string[],
-		request?: IRequest,
-		headerData?: RuntimeHeaderData,
-	): void;
+	nodeUpdated(props: IGCNodeUpdatedProps): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
+	addedOutboundReference(
+		fromNodePath: string,
+		toNodePath: string,
+		timestampMs: number,
+		autorecovery?: true,
+	): void;
 	/** Called to process a garbage collection message. */
-	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
+	processMessage(
+		message: ContainerRuntimeGCMessage,
+		messageTimestampMs: number,
+		local: boolean,
+	): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
 	dispose(): void;
+}
+
+/**
+ * Info needed by GC when notified that a node was updated (loaded or changed)
+ * @internal
+ */
+export interface IGCNodeUpdatedProps {
+	/** Type and path of the updated node */
+	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
+	/** Whether the node (or a subpath) was loaded or changed. */
+	reason: "Loaded" | "Changed";
+	/**
+	 * The op-based timestamp when the node changed. If the update is from receiving an op, this should
+	 * be the timestamp of the op. If not, this should be the timestamp of the last op processed.
+	 */
+	timestampMs: number | undefined;
+	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
+	packagePath?: readonly string[];
+	/** The original request for loads to preserve it in telemetry */
+	request?: IRequest;
+	/** If the node was loaded via request path, the header data. May be modified from the original request */
+	headerData?: RuntimeHeaderData;
 }
 
 /** Parameters necessary for creating a GarbageCollector. */
@@ -408,27 +429,10 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IGCRuntimeOptions {
-	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled using the "enableGCSweep" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
 	/**
 	 * Flag that if true, will enable the full Sweep Phase of garbage collection for this session,
 	 * where Tombstoned objects are permanently deleted from the container.
@@ -471,8 +475,7 @@ export interface IGCRuntimeOptions {
  */
 export interface IGarbageCollectorConfigs {
 	/**
-	 * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
-	 * throughout its lifetime.
+	 * Tracks if GC is enabled for this document. GC may not be enabled for old documents created pre-GC.
 	 */
 	readonly gcEnabled: boolean;
 	/**
@@ -480,11 +483,8 @@ export interface IGarbageCollectorConfigs {
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
-	/**
-	 * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
-	 * disabled via runtime options or feature flags.
-	 */
-	readonly shouldRunGC: boolean;
+	/** Is Tombstone AutoRecovery enabled? Useful for preventing the GC "TombstoneLoaded" op, for compatibility reasons */
+	readonly tombstoneAutorecoveryEnabled: boolean;
 	/**
 	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled

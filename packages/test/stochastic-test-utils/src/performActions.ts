@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, writeFileSync, mkdirSync } from "fs";
+import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
+
+import { combineReducers, combineReducersAsync } from "./combineReducers.js";
 import {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Reducer,
 	SaveInfo,
-} from "./types";
-import { combineReducers, combineReducersAsync } from "./combineReducers";
+	done,
+} from "./types.js";
 
 /**
  * Performs random actions on a set of clients.
@@ -96,7 +97,7 @@ export async function performFuzzActionsAsync<
 		| AsyncReducer<TOperation, TState>
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo?: SaveInfo,
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
 ): Promise<TState> {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
@@ -117,14 +118,14 @@ export async function performFuzzActionsAsync<
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {
-		if (saveInfo?.saveOnFailure === true) {
-			await saveOpsToFile(saveInfo.filepath, operations);
+		if (saveInfo.saveOnFailure !== false) {
+			await saveOpsToFile(saveInfo.saveOnFailure.path, operations);
 		}
 		throw err;
 	}
 
-	if (saveInfo?.saveOnSuccess === true) {
-		await saveOpsToFile(saveInfo.filepath, operations);
+	if (saveInfo.saveOnSuccess !== false) {
+		await saveOpsToFile(saveInfo.saveOnSuccess.path, operations);
 	}
 
 	return state;
@@ -138,7 +139,10 @@ export async function performFuzzActionsAsync<
  *
  * @internal
  */
-export async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
+export async function saveOpsToFile(
+	filepath: string,
+	operations: { type: string | number }[],
+) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -221,7 +225,7 @@ export function performFuzzActions<
 		| Reducer<TOperation, TState>
 		| { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo?: SaveInfo,
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
@@ -229,7 +233,8 @@ export function performFuzzActions<
 		typeof reducerOrMap === "function"
 			? reducerOrMap
 			: combineReducers<TOperation, TState>(reducerOrMap);
-	const applyOperation: (operation: TOperation) => TState = (op) => reducer(state, op) ?? state;
+	const applyOperation: (operation: TOperation) => TState = (op) =>
+		reducer(state, op) ?? state;
 
 	try {
 		for (let operation = generator(state); operation !== done; operation = generator(state)) {
@@ -237,14 +242,14 @@ export function performFuzzActions<
 			state = applyOperation(operation);
 		}
 	} catch (err) {
-		if (saveInfo?.saveOnFailure === true) {
-			saveOpsToFileSync(saveInfo.filepath, operations);
+		if (saveInfo.saveOnFailure !== false) {
+			saveOpsToFileSync(saveInfo.saveOnFailure.path, operations);
 		}
 		throw err;
 	}
 
-	if (saveInfo?.saveOnSuccess === true) {
-		saveOpsToFileSync(saveInfo.filepath, operations);
+	if (saveInfo.saveOnSuccess !== false) {
+		saveOpsToFileSync(saveInfo.saveOnSuccess.path, operations);
 	}
 
 	return state;

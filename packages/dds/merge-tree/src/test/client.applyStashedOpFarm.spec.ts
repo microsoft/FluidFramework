@@ -4,21 +4,23 @@
  */
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
-import { SegmentGroup } from "../mergeTreeNodes";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+
+import { SegmentGroup } from "../mergeTreeNodes.js";
+import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+
 import {
-	generateClientNames,
-	doOverRange,
-	runMergeTreeOperationRunner,
-	annotateRange,
-	removeRange,
-	IMergeTreeOperationRunnerConfig,
 	IConfigRange,
+	IMergeTreeOperationRunnerConfig,
+	annotateRange,
+	doOverRange,
+	generateClientNames,
 	insert,
-} from "./mergeTreeOperationRunner";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
+	removeRange,
+	runMergeTreeOperationRunner,
+} from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
 
 function applyMessagesWithReconnect(
 	startingSeq: number,
@@ -152,7 +154,10 @@ export const defaultOptions: IApplyStashedOpFarmConfig = {
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
 
-function runApplyStashedOpFarmTests(opts: IApplyStashedOpFarmConfig, extraSeed?: number): void {
+function runApplyStashedOpFarmTests(
+	opts: IApplyStashedOpFarmConfig,
+	extraSeed?: number,
+): void {
 	doOverRange(opts.clients, opts.growthFunc.bind(opts), (clientCount) => {
 		it(`applyStashedOpFarm_${clientCount}`, async () => {
 			const random = makeRandom(0xdeadbeef, 0xfeedbed, clientCount, extraSeed ?? 0);

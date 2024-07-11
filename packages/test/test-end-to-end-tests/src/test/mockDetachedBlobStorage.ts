@@ -4,15 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { IDetachedBlobStorage } from "@fluidframework/container-loader";
-import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
+
+import { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 export class MockDetachedBlobStorage implements IDetachedBlobStorage {
-	public readonly blobs = new Map<string, ArrayBufferLike>();
+	private readonly blobs = new Map<string, ArrayBufferLike>();
 
 	public get size() {
 		return this.blobs.size;
@@ -32,6 +33,10 @@ export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 		const blob = this.blobs.get(blobId);
 		assert(blob);
 		return blob;
+	}
+
+	dispose(): void {
+		this.blobs.clear();
 	}
 }
 

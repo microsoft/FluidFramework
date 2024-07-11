@@ -8,4 +8,4 @@ export {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from "./0.0.1";
+} from "./0.0.1.js";

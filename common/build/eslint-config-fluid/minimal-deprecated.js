@@ -4,6 +4,22 @@
  */
 
 /**
+ * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
+ */
+const permittedImports = [
+	// Within Fluid Framework allow import of '/internal' from other FF packages.
+	"@fluidframework/*/internal",
+
+	// Experimental package APIs and exports are unknown, so allow any imports from them.
+	"@fluid-experimental/**",
+
+	// Allow imports from sibling and ancestral sibling directories,
+	// but not from cousin directories. Parent is allowed but only
+	// because there isn't a known way to deny it.
+	"*/index.js",
+];
+
+/**
  * "Minimal" eslint configuration.
  *
  * This configuration is primarily intended for use in packages during prototyping / initial setup.
@@ -62,6 +78,8 @@ module.exports = {
 		"unused-imports",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
+		// Custom ESLint rules
+		"@fluid-internal/eslint-plugin-fluid",
 	],
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
@@ -69,6 +87,14 @@ module.exports = {
 		"**/packageVersion.ts",
 	],
 	rules: {
+		/**
+		 * Restricts including release tags inside the member class / interface.
+		 *
+		 * Refer to the rule by the unprefixed plugin name in the consumed package.
+		 * {@link https://eslint.org/docs/latest/extend/plugins#rules-in-plugins}
+		 */
+		"@fluid-internal/fluid/no-member-release-tags": "error",
+
 		/**
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
@@ -223,13 +249,8 @@ module.exports = {
 
 		// #region FORMATTING RULES
 
-		"@typescript-eslint/brace-style": [
-			"error",
-			"1tbs",
-			{
-				allowSingleLine: true,
-			},
-		],
+		// Disabled because it conflicts with formatter rules
+		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-spacing": "error",
 		"@typescript-eslint/func-call-spacing": "error",
 		"@typescript-eslint/keyword-spacing": "error",
@@ -359,13 +380,8 @@ module.exports = {
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
 		 * This rule can be disabled at the project level for libraries that are intended to be used only in node.
-		 *
-		 * @remarks
-		 *
-		 * Note: "events" has been allow-listed here due to the sheer number of uses across the codebase.
-		 * We may wish to address this in the future.
 		 */
-		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
+		"import/no-nodejs-modules": ["error"],
 
 		/**
 		 * Allow Fluid Framework to import from its own internal packages.
@@ -374,16 +390,7 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				allow: [
-					// Within Fluid Framework, allow import of '/internal' and '/beta' exports.
-					"@fluidframework/*/beta",
-					"@fluidframework/*/internal",
-
-					// Allow imports from sibling and ancestral sibling directories,
-					// but not from cousin directories. Parent is allowed but only
-					// because there isn't a known way to deny it.
-					"*/index.js",
-				],
+				allow: permittedImports,
 			},
 		],
 	},
@@ -430,6 +437,16 @@ module.exports = {
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
+
+				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
+				"import/no-internal-modules": [
+					"error",
+					{
+						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
+							permittedImports,
+						),
+					},
+				],
 			},
 		},
 	],
@@ -439,8 +456,36 @@ module.exports = {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
 		"import/resolver": {
-			node: {
+			/**
+			 * Note: the key order of import/resolver is relevant in the completely resolved eslint config (see ./printed-configs).
+			 * Resolvers are tried in key order, and the first one to successfully resolve the import wins. See:
+			 * https://github.com/import-js/eslint-plugin-import/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js#L196
+			 *
+			 * It's important that the typescript resolver is first, as the node resolver legitimately resolves some imports to modules
+			 * with stripped type information, which can cause silent negatives in lint rules. For example, import/no-deprecated fails
+			 * to lint against import and usage of deprecated types when the import is resolvable and resolved using the node resolver.
+			 */
+			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+				conditionNames: [
+					// This supports the test-only conditional export pattern used in merge-tree and id-compressor.
+					"allow-ff-test-exports",
+
+					// Default condition names below, see https://www.npmjs.com/package/eslint-import-resolver-typescript#conditionnames
+					"types",
+					"import",
+
+					// APF: https://angular.io/guide/angular-package-format
+					"esm2020",
+					"es2020",
+					"es2015",
+
+					"require",
+					"node",
+					"node-addons",
+					"browser",
+					"default",
+				],
 			},
 		},
 		"jsdoc": {

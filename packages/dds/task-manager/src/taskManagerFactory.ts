@@ -5,18 +5,20 @@
 
 import {
 	IChannelAttributes,
+	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { TaskManager } from "./taskManager";
-import { ITaskManager } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { ITaskManager } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
+import { TaskManagerClass } from "./taskManager.js";
 
 /**
  * The factory that defines the task queue
  */
-export class TaskManagerFactory implements IChannelFactory {
+export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 	public static readonly Type = "https://graph.microsoft.com/types/task-manager";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -42,14 +44,28 @@ export class TaskManagerFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ITaskManager> {
-		const taskQueue = new TaskManager(id, runtime, attributes);
+		const taskQueue = new TaskManagerClass(id, runtime, attributes);
 		await taskQueue.load(services);
 		return taskQueue;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): ITaskManager {
-		const taskQueue = new TaskManager(id, document, this.attributes);
+		const taskQueue = new TaskManagerClass(id, document, this.attributes);
 		taskQueue.initializeLocal();
 		return taskQueue;
 	}
 }
+
+/**
+ * {@inheritDoc ITaskManager}
+ * @legacy
+ * @alpha
+ */
+export const TaskManager = createSharedObjectKind(TaskManagerFactory);
+
+/**
+ * {@inheritDoc ITaskManager}
+ * @legacy
+ * @alpha
+ */
+export type TaskManager = ITaskManager;

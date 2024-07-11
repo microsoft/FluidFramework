@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+
+import { IsoBuffer, Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
-	SummaryObject,
-	ISummaryTree,
 	ISummaryBlob,
 	ISummaryHandle,
+	ISummaryTree,
+	SummaryObject,
 	SummaryType,
-	ISnapshotTree,
-	ITree,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions";
+import { ISnapshotTree, ITree } from "@fluidframework/driver-definitions/internal";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
+
 import {
+	TelemetryContext,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
-	TelemetryContext,
 	utf8ByteLength,
-} from "../summaryUtils";
+} from "../summaryUtils.js";
 
 describe("Summary Utils", () => {
 	function assertSummaryTree(obj: SummaryObject): ISummaryTree {

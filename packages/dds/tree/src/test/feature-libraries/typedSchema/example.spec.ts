@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { leaf, SchemaBuilder } from "../../../domains/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import { FieldKinds, FlexFieldSchema } from "../../../feature-libraries/index.js";
 
 const builder = new SchemaBuilder({ scope: "example" });
@@ -16,7 +16,10 @@ const ballSchema = builder.object("Ball", {
 
 // Declare an recursive aggregate type via object fields.
 const diagramSchema = builder.objectRecursive("Diagram", {
-	children: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
+	children: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
+		() => diagramSchema,
+		ballSchema,
+	]),
 });
 
 const rootField = builder.optional(diagramSchema);

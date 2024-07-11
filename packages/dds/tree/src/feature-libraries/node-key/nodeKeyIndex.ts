@@ -3,16 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { FieldKey, ValueSchema } from "../../core/index.js";
-import {
-	FlexTreeObjectNode,
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { type FieldKey, ValueSchema } from "../../core/index.js";
+import type {
 	FlexTreeContext,
 	FlexTreeField,
 	FlexTreeNode,
+	FlexTreeObjectNode,
 } from "../flex-tree/index.js";
-import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
-import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
+import {
+	type FlexTreeSchema,
+	LeafNodeSchema,
+	schemaIsObjectNode,
+} from "../typed-schema/index.js";
+
+import { type LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
 
 /**
  * The node key index records nodes with {@link LocalNodeKey}s and allows them to be looked up by key.
@@ -43,7 +49,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	/**
 	 * Search the tree for all nodes with keys, and record them in this index for lookup.
 	 * This should be called each time the tree changes; each call to scan forgets all existing keys.
-	 * @param context - the editable tree context in which to search for node keys
+	 * @param context - the flex tree context in which to search for node keys
 	 */
 	// TODO: This can be optimized by responding to deltas/changes to the tree, rather than rescanning the whole tree every time
 	public scanKeys(context: FlexTreeContext): void {
@@ -75,7 +81,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 			key: LocalNodeKey,
 			map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>,
 		) => void,
-		thisArg?: any,
+		thisArg?: unknown,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}
@@ -102,7 +108,9 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	}
 	// #endregion ReadonlyMap interface
 
-	private *findKeys(node: FlexTreeNode): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
+	private *findKeys(
+		node: FlexTreeNode,
+	): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
 		if (schemaIsObjectNode(node.schema)) {
 			const key = (node as FlexTreeObjectNode).localNodeKey;
 			if (key !== undefined) {

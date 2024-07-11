@@ -2,22 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ExpiryTimeType } from "@fluid-experimental/property-properties";
+
+import type { ExpiryTimeType } from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import FormControl from "@material-ui/core/FormControl";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
-import { makeStyles, Theme } from "@material-ui/core/styles";
+import { type Theme, makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 
-import { IExpiryInfo, IExpiryState, IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
-import { LoadingButton } from "./LoadingButton";
-import { CustomChip } from "./CustomChip";
-import { ErrorPopup } from "./ErrorPopup";
-import { backGroundGrayColor, textDarkColor } from "./constants";
-import { InspectorModal } from "./InspectorModal";
+import type {
+	IExpiryInfo,
+	IExpiryState,
+	IRepoExpiryGetter,
+	IRepoExpirySetter,
+} from "./CommonTypes.js";
+import { CustomChip } from "./CustomChip.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { InspectorModal } from "./InspectorModal.js";
+import { LoadingButton } from "./LoadingButton.js";
+import { backGroundGrayColor, textDarkColor } from "./constants.js";
 
 const useStyles = makeStyles(
 	(theme: Theme) => ({
@@ -172,7 +178,9 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 	const expiryInfoToState = (expiryInfo: IExpiryInfo): IModalExpiryState => {
 		const newState = {} as IModalExpiryState;
 		newState.expiryState = expiryInfo.state;
-		newState.expiresIn = expiryInfo.when ? new Date(expiryInfo.when).toLocaleString() : "never";
+		newState.expiresIn = expiryInfo.when
+			? new Date(expiryInfo.when).toLocaleString()
+			: "never";
 		return newState;
 	};
 
@@ -238,8 +246,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 		return modalState.mode === "default"
 			? "Repository Expiry"
 			: modalState.mode === "expirySelection"
-			? "Set a new retention policy"
-			: "Delete Repository";
+				? "Set a new retention policy"
+				: "Delete Repository";
 	};
 
 	// Renders the life cycle state chip or placeholder
@@ -387,8 +395,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 				{isV1Urn && (
 					<span>
 						<br />
-						Note: You are using a v1 branch urn. You will need to convert it into a v2
-						urn in order to undelete this repository in the inspector app.
+						Note: You are using a v1 branch urn. You will need to convert it into a v2 urn in
+						order to undelete this repository in the inspector app.
 						<br />
 						<br />
 					</span>
@@ -422,8 +430,8 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
 			{modalState.mode === "default"
 				? renderExpiryOverview()
 				: modalState.mode === "expirySelection"
-				? renderNewExpirySelection()
-				: renderDeletionConfirmation()}
+					? renderNewExpirySelection()
+					: renderDeletionConfirmation()}
 		</InspectorModal>
 	);
 };

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SlidingPreference } from "./localReference";
-import { ISegment } from "./mergeTreeNodes";
-import { ReferenceType } from "./ops";
-import { PropertySet } from "./properties";
+import { SlidingPreference } from "./localReference.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { ReferenceType } from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 /**
  * @internal
@@ -30,7 +30,8 @@ export function refTypeIncludesFlag(
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefined =>
 	refTypeIncludesFlag(refPos, ReferenceType.Tile) && refPos.properties
@@ -38,7 +39,8 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		: undefined;
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
@@ -56,6 +58,7 @@ export function refHasTileLabels(refPos: ReferencePosition): boolean {
  * Represents a reference to a place within a merge tree. This place conceptually remains stable over time
  * by referring to a particular segment and offset within that segment.
  * Thus, this reference's character position changes as the tree is edited.
+ * @legacy
  * @alpha
  */
 export interface ReferencePosition {

@@ -9,11 +9,10 @@
  * @packageDocumentation
  */
 
-export { SharedCell } from "./cell";
-export { CellFactory } from "./cellFactory";
+export { CellFactory, SharedCell } from "./cellFactory.js";
 export type {
 	ISharedCell,
 	ISharedCellEvents,
 	ICellOptions,
 	ICellAttributionOptions,
-} from "./interfaces";
+} from "./interfaces.js";

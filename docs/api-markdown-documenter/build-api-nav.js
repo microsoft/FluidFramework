@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-const { ApiItemKind, ApiItemUtilities } = require("@fluid-tools/api-markdown-documenter");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+
+import { ApiItemKind, ApiItemUtilities } from "@fluid-tools/api-markdown-documenter";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Processes documents and generates data required for the nav bar.
  * @param {Array<Object>} documents - List of {@link @fluid-tools/api-markdown-documenter#Document}s with associated API items.
  * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
  */
-async function buildNavBar(documents, version) {
+export async function buildNavBar(documents, version) {
 	const navKinds = new Set([
 		ApiItemKind.Class,
 		ApiItemKind.Interface,
@@ -63,11 +67,11 @@ async function buildNavBar(documents, version) {
 }
 
 const saveToFile = async (filename, version, data) => {
-	if (!fs.existsSync(path.join(__dirname, "..", "data", version))) {
-		fs.mkdirSync(path.join(__dirname, "..", "data", version), { recursive: true });
+	if (!fs.existsSync(path.join(dirname, "..", "data", version))) {
+		fs.mkdirSync(path.join(dirname, "..", "data", version), { recursive: true });
 	}
 	fs.writeFile(
-		path.join(__dirname, "..", "data", `${version}/${filename}`),
+		path.join(dirname, "..", "data", version, filename),
 		JSON.stringify(data, null, 2),
 		"utf8",
 	);
@@ -80,7 +84,3 @@ const invertMap = (obj) =>
 		}
 		return { ...acc, [value]: key };
 	}, {});
-
-module.exports = {
-	buildNavBar,
-};

@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionPolicy } from "./mergeTree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
+import { AttributionCollection } from "./attributionCollection.js";
 // eslint-disable-next-line import/no-deprecated
-import { Client } from "./client";
+import { Client } from "./client.js";
+import { AttributionPolicy } from "./mergeTree.js";
 import {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	IMergeTreeSegmentDelta,
 	MergeTreeMaintenanceType,
-} from "./mergeTreeDeltaCallback";
-import { MergeTreeDeltaType } from "./ops";
-import { AttributionCollection } from "./attributionCollection";
+} from "./mergeTreeDeltaCallback.js";
+import { MergeTreeDeltaType } from "./ops.js";
 
 // Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
 // This is because the base callbacks don't always have enough information to infer whether the op being
@@ -45,10 +46,7 @@ function createAttributionPolicyFromCallbacks({
 	return {
 		// eslint-disable-next-line import/no-deprecated
 		attach: (client: Client) => {
-			assert(
-				unsubscribe === undefined,
-				0x557 /* cannot attach to multiple clients at once */,
-			);
+			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
 			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
 				delta(opArgs, deltaArgs, client);
@@ -133,7 +131,9 @@ const insertOnlyAttributionPolicyCallbacks: AttributionCallbacks = {
 	},
 };
 
-function createPropertyTrackingMergeTreeCallbacks(...propNames: string[]): AttributionCallbacks {
+function createPropertyTrackingMergeTreeCallbacks(
+	...propNames: string[]
+): AttributionCallbacks {
 	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
 	const attributeAnnotateOnSegments = (
 		deltaSegments: IMergeTreeSegmentDelta[],
@@ -223,7 +223,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
  * const lastBoldedAttributionKey = segment.attribution?.getAtOffset(0, "bold");
  * const lastItalicizedAttributionKey = segment.attribution?.getAtOffset(0, "italic");
  * ```
- * @alpha
+ * @internal
  */
 export function createPropertyTrackingAttributionPolicyFactory(
 	...propNames: string[]
@@ -241,7 +241,7 @@ export function createPropertyTrackingAttributionPolicyFactory(
  * Creates an attribution policy which tracks insertion as well as annotation of certain property names.
  * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
  * {@link createInsertOnlyAttributionPolicy}: see there for more details.
- * @alpha
+ * @internal
  */
 export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
 	...propNames: string[]

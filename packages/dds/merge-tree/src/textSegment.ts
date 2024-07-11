@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { BaseSegment, ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
-import { PropertySet } from "./properties";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
+import { IJSONSegment } from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
@@ -20,6 +21,7 @@ import { PropertySet } from "./properties";
 export const TextSegmentGranularity = 256;
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONTextSegment extends IJSONSegment {
@@ -27,6 +29,7 @@ export interface IJSONTextSegment extends IJSONSegment {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export class TextSegment extends BaseSegment {
@@ -63,7 +66,7 @@ export class TextSegment extends BaseSegment {
 	public toJSONObject(): IJSONTextSegment | string {
 		// To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
 		// not annotated.
-		return this.properties ? { text: this.text, props: this.properties } : this.text;
+		return this.properties ? { text: this.text, props: { ...this.properties } } : this.text;
 	}
 
 	public clone(start = 0, end?: number) {
@@ -105,6 +108,7 @@ export class TextSegment extends BaseSegment {
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeTextHelper {

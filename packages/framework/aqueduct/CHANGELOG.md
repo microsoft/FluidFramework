@@ -1,5 +1,70 @@
 # @fluidframework/aqueduct
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+## 2.0.0-rc.4.0.0
+
+Dependency updates only.
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   aqueduct: Deprecated PureDataObjectFactory.createRootInstance and replaced with PureDataObjectFactory.createInstanceWithDataStore ([#19471](https://github.com/microsoft/FluidFramework/issues/19471)) [0a79375ccb](https://github.com/microsoft/FluidFramework/commits/0a79375ccb523658a2565b8796fa06ec45a69394)
+
+    ### Deprecated: PureDataObjectFactory.createRootInstance
+
+    This was deprecated because `PureDataObjectFactory.createRootInstance` has an issue at scale.
+    `PureDataObjectFactory.createRootInstance` used the old method of creating `PureDataObject`s with names. The issue was
+    that simultaneous creations could happen, and the old api had no good way of dealing with those types of collisions.
+    This version slightly improved it by resolving those collisions by assuming whatever datastore was created with the
+    alias or `rootDataStoreId` would just return that datastore. This will work for developers who expect the same type of
+    `PureDataObject` to be returned from the `createRootInstance` api, but if a potentially different `PureDataObject`
+    would be returned, then this api would give you the wrong typing.
+
+    For a replacement api see `PureDataObjectFactory.createInstanceWithDataStore`.
+
+    ### New method PureDataObjectFactory.createInstanceWithDataStore
+
+    This was done as a replacement of `PureDataObjectFactory.createRootInstance`. This exposes the `IDataStore` interface
+    in the form of `[PureDataObject, IDataStore]`. `IDataStore` provides the opportunity for developers to use the
+    `IDataStore.trySetAlias` method. This can return 3 different scenarios `Success`, `Conflict`, or `AlreadyAliased`.
+    These scenarios can allow the developer to handle conflicts as they wish.
+
+-   aqueduct: PureDataObjectFactory.instantiateDataStore now returns IFluidDataStoreChannel ([#19353](https://github.com/microsoft/FluidFramework/issues/19353)) [3aad53da1e](https://github.com/microsoft/FluidFramework/commits/3aad53da1ee8c4079d4f3b4a096361d23e0725ab)
+
+    The return type of `PureDataObjectFactory.instantiateDataStore` was changed from `FluidDataStoreRuntime` to
+    `IFluidDataStoreChannel`.
+
 ## 2.0.0-rc.1.0.0
 
 Dependency updates only.

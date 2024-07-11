@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export { mochaGlobalSetup } from "./compatConfig.js";
 export {
 	getDataStoreFactory,
@@ -21,6 +22,7 @@ export {
 	DescribeCompatSuite,
 	describeCompat,
 	ITestObjectProviderOptions,
+	type CompatType,
 } from "./describeCompat.js";
 export {
 	DescribeE2EDocSuite,
@@ -63,3 +65,4 @@ export {
 	SkippedTestWithDriverType,
 	SkippedErrorExpectingTestWithDriverType,
 } from "./itSkipsOnFailure.js";
+export { getRequestedVersion } from "./versionUtils.js";

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { XSadd } from "..";
+
+import { XSadd } from "../index.js";
 
 describe("XSadd (PRNG)", () => {
 	it("produces expected values", () => {
@@ -30,9 +31,12 @@ describe("XSadd (PRNG)", () => {
 	});
 
 	it("Unspecified seed numbers default to zero", () => {
-		const same = [new XSadd(0), new XSadd(0, 0), new XSadd(0, 0, 0), new XSadd(0, 0, 0, 0)].map(
-			(src) => src.uint53(),
-		);
+		const same = [
+			new XSadd(0),
+			new XSadd(0, 0),
+			new XSadd(0, 0, 0),
+			new XSadd(0, 0, 0, 0),
+		].map((src) => src.uint53());
 
 		for (let i = 1; i < same.length; i++) {
 			assert.equal(same[0], same[i]);

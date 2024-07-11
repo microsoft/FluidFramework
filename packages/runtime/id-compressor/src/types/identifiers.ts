@@ -24,7 +24,7 @@ export type OpSpaceCompressedId = number & {
 };
 
 /**
- * A version 4, variant 1 uuid (https://datatracker.ietf.org/doc/html/rfc4122).
+ * A {@link https://datatracker.ietf.org/doc/html/rfc4122 | version 4, variant 1 uuid}.
  * A 128-bit Universally Unique IDentifier. Represented here
  * with a string of the form xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,
  * where x is a lowercase hex digit.
@@ -36,4 +36,6 @@ export type StableId = string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b4
  * A StableId which is suitable for use as a session identifier
  * @public
  */
-export type SessionId = StableId & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58" };
+export type SessionId = StableId & {
+	readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";
+};

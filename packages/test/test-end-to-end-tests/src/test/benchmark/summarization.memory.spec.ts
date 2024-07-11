@@ -4,14 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+
 import { bufferToString } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+} from "@fluidframework/container-runtime/internal";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
@@ -53,8 +60,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 
 				const { stats, summary } = await containerRuntime.summarize({
 					runGC: false,
-					fullTree: false,
-					trackState: false,
+					fullTree: true,
 				});
 
 				// Validate stats
@@ -101,10 +107,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 					defaultDataStoreNode?.type === SummaryType.Tree,
 					"Expected default data store tree in summary.",
 				);
-				assert(
-					!defaultDataStoreNode.unreferenced,
-					"Default data store should be referenced.",
-				);
+				assert(!defaultDataStoreNode.unreferenced, "Default data store should be referenced.");
 				assert(
 					defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
 					"Expected .component blob in default data store summary tree.",

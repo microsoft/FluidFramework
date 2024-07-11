@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type ApiCallSignature,
 	type ApiClass,
@@ -23,9 +24,9 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain";
-import * as DefaultTransformationImplementations from "../default-implementations";
-import { type ApiItemTransformationConfiguration } from "./Configuration";
+import { type SectionNode } from "../../documentation-domain/index.js";
+import * as DefaultTransformationImplementations from "../default-implementations/index.js";
+import { type ApiItemTransformationConfiguration } from "./Configuration.js";
 
 /**
  * Signature for a function which generates one or more {@link SectionNode}s describing an

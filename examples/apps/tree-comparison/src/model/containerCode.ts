@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import {
+	ModelContainerRuntimeFactory,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+
 import { InventoryListAppModel } from "./appModel.js";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList.js";
 import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
@@ -25,7 +29,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 				LegacyTreeInventoryListFactory.registryEntry,
 				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
-			{ enableRuntimeIdCompressor: true },
+			{ enableRuntimeIdCompressor: "on" },
 		);
 	}
 

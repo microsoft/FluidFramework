@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CallbackOptions } from "./dataBinding";
+import { CallbackOptions } from "./dataBinding.js";
 
 /**
  * Options to be used with {@link DataBinding.registerOnProperty}

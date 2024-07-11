@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { devtoolsMessageSource } from "./Constants";
-import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages";
+import { devtoolsMessageSource } from "./Constants.js";
+import type { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages.js";
 
 /**
  * Posts the provided message to the window (globalThis).
@@ -126,10 +126,7 @@ export function handleIncomingMessage(
 			}
 		},
 		(error) => {
-			console.error(
-				`${loggingPreamble} Message could not be handled due to an error:`,
-				error,
-			);
+			console.error(`${loggingPreamble} Message could not be handled due to an error:`, error);
 		},
 	);
 }

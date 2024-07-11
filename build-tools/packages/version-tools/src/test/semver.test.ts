@@ -2,9 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "chai";
 
-import { bumpRange, detectBumpType, getPreviousVersions, isPrereleaseVersion } from "../semver";
+import {
+	bumpRange,
+	detectBumpType,
+	getPreviousVersions,
+	isPrereleaseVersion,
+} from "../semver";
 
 describe("semver", () => {
 	describe("detectBumpType semver", () => {
@@ -18,6 +24,22 @@ describe("semver", () => {
 
 		it("patch", () => {
 			assert.equal(detectBumpType("0.0.1", "0.0.2"), "patch");
+		});
+
+		it("RC patch", () => {
+			assert.equal(detectBumpType("2.0.0-rc.5.0.2", "2.0.0-rc.5.0.3"), "patch");
+		});
+
+		it("internal version scheme patch", () => {
+			assert.equal(detectBumpType("2.0.0-internal.4.0.7", "2.0.0-internal.4.0.8"), "patch");
+		});
+
+		it("internal -> RC is major", () => {
+			assert.equal(detectBumpType("2.0.0-internal.1.0.7", "2.0.0-rc.2.0.8"), "major");
+		});
+
+		it("RC -> internal throws", () => {
+			assert.throws(() => detectBumpType("2.0.0-rc.4.0.7", "2.0.0-internal.5.0.0"));
 		});
 
 		it("premajor", () => {
@@ -122,6 +144,18 @@ describe("semver", () => {
 
 		it("v1 is rc, v2 is rc", () => {
 			assert.equal(detectBumpType("2.0.0-rc.1.0.0", "2.0.0-rc.1.0.1"), "patch");
+		});
+
+		it("v1 is rc, v2 is semver with major < 1", () => {
+			assert.throws(() => detectBumpType("2.0.0-rc.5.0.0", "1.6.0"));
+		});
+
+		it("v1 is rc, v2 is semver with major === 2", () => {
+			assert.equal(detectBumpType("1.0.0-rc.5.0.0", "2.0.0"), "major");
+		});
+
+		it("v1 is rc, v2 is semver with major > 2", () => {
+			assert.equal(detectBumpType("1.0.0-rc.5.0.0", "3.0.0"), "major");
 		});
 	});
 

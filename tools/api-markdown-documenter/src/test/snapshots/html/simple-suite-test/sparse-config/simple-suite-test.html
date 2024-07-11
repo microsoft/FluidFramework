@@ -10,7 +10,7 @@
       </h2>
       <section>
         <p>
-          Test package
+          <b>Test package</b>
         </p>
       </section>
       <section>
@@ -46,7 +46,7 @@
             - Good link (no alias): <a href='docs/simple-suite-test/testclass-class'>TestClass</a>
           </p>
           <p>
-            - Good link (with alias): <a href='docs/simple-suite-test/testfunction-function'>function alias text</a>
+            - Good link (with alias): <span><i>function alias text</i></span>
           </p>
           <p>
             - Bad link (no alias): <span><i>InvalidItem</i></span>
@@ -67,8 +67,6 @@
           <code>
             const foo = bar;
           </code>
-          <p>
-          </p>
         </p>
       </section>
       <section>
@@ -267,7 +265,7 @@
                 <a href='docs/simple-suite-test/testfunctionreturningintersectiontype-function'>testFunctionReturningIntersectionType()</a>
               </td>
               <td>
-                <code>DEPRECATED</code>
+                <code>Deprecated</code>
               </td>
               <td>
                 <span><a href='docs/simple-suite-test/testemptyinterface-interface'>TestEmptyInterface</a> &amp; <a href='docs/simple-suite-test/testinterfacewithtypeparameter-interface'>TestInterfaceWithTypeParameter</a>&lt;number&gt;</span>
@@ -309,6 +307,9 @@
                 Modifiers
               </th>
               <th>
+                Type
+              </th>
+              <th>
                 Description
               </th>
             </tr>
@@ -319,10 +320,13 @@
                 <a href='docs/simple-suite-test/testconstwithemptydeprecatedblock-variable'>testConstWithEmptyDeprecatedBlock</a>
               </td>
               <td>
-                <code>DEPRECATED</code>
+                <code>Deprecated</code>
               </td>
               <td>
                 <code>readonly</code>
+              </td>
+              <td>
+                <span>string</span>
               </td>
               <td>
                 I have a <code>@deprecated</code> tag with an empty comment block.

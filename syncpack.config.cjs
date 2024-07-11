@@ -30,7 +30,8 @@ module.exports = {
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
 		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["@oclif/core"],
 			dependencyTypes: ["pnpmOverrides"],
 			packages: ["**"],
@@ -124,9 +125,6 @@ module.exports = {
 				"vue",
 				"webpack-dev-server",
 
-				// Required due to use of "unstable" tree component APIs
-				"@fluentui/react-components",
-
 				// pinned since newer versions (2.3 through 2.6) refuse to work on NodeJS other than 10 || 12 || 14 due to https://github.com/cerner/terra-toolkit/issues/828
 				"@cerner/duplicate-package-checker-webpack-plugin",
 			],
@@ -155,7 +153,8 @@ module.exports = {
 		// Ideally this section would be empty (and removed).
 		// Items should be removed from here when possible.
 		{
-			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
+			label:
+				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
 			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
 			packages: ["**"],
 			isIgnored: true,
@@ -197,7 +196,8 @@ module.exports = {
 		},
 
 		{
-			label: "Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
+			label:
+				"Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
 			isIgnored: true,
 			packages: [
 				"@fluid-example/**",

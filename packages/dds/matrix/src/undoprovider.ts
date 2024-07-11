@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	MergeTreeDeltaType,
-	MergeTreeDeltaRevertible,
 	IMergeTreeDeltaCallbackArgs,
-	appendToMergeTreeDeltaRevertibles,
-	revertMergeTreeDeltaRevertibles,
-	MergeTreeRevertibleDriver,
-	discardMergeTreeDeltaRevertible,
-	TrackingGroup,
 	ITrackingGroup,
-} from "@fluidframework/merge-tree";
-import { MatrixItem, SharedMatrix } from "./matrix.js";
+	MergeTreeDeltaRevertible,
+	MergeTreeDeltaType,
+	MergeTreeRevertibleDriver,
+	TrackingGroup,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	revertMergeTreeDeltaRevertibles,
+} from "@fluidframework/merge-tree/internal";
+
 import { Handle, isHandleValid } from "./handletable.js";
+import { SharedMatrix } from "./matrix.js";
+import { MatrixItem } from "./ops.js";
 import { PermutationSegment, PermutationVector } from "./permutationvector.js";
 import { IUndoConsumer } from "./types.js";
 

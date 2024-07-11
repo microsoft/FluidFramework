@@ -10,9 +10,9 @@
 export {
 	renderApiModelAsMarkdown as renderApiModel,
 	renderDocumentsAsMarkdown as renderDocuments,
-} from "./RenderMarkdown";
+} from "./RenderMarkdown.js";
 export {
 	renderDocumentAsMarkdown as renderDocument,
 	renderNodeAsMarkdown as renderNode,
 	renderNodesAsMarkdown as renderNodes,
-} from "./renderers";
+} from "./renderers/index.js";

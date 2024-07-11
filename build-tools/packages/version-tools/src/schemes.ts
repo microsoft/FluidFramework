@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
+import { strict as assert } from "node:assert";
+
 import * as semver from "semver";
 
 import { VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
@@ -60,7 +62,10 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 		}
 
 		return "semver";
-	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
+	} else if (
+		typeof rangeOrVersion === "string" &&
+		semver.validRange(rangeOrVersion) !== null
+	) {
 		// Must be a range string
 		if (isInternalVersionRange(rangeOrVersion)) {
 			return "internal";
@@ -85,12 +90,6 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 	return "semver";
 }
 
-function fatal(error: string): never {
-	const e = new Error(error);
-	(e as any).fatal = true;
-	throw e;
-}
-
 /**
  * Bumps the provided version according to the bump type and version scheme. Returns the bumped version.
  *
@@ -113,15 +112,19 @@ export function bumpVersionScheme(
 	switch (scheme) {
 		case "semver": {
 			switch (bumpType) {
-				case "current":
+				case "current": {
 					return sv;
+				}
 				case "major":
 				case "minor":
-				case "patch":
+				case "patch": {
+					// eslint-disable-next-line unicorn/no-null
 					return sv?.inc(bumpType) ?? null;
-				default:
+				}
+				default: {
 					// If the bump type is an explicit version, just use it.
 					return bumpType;
+				}
 			}
 		}
 		case "internal": {
@@ -133,19 +136,18 @@ export function bumpVersionScheme(
 		case "virtualPatch": {
 			if (isVersionBumpType(bumpType)) {
 				const translatedVersion = bumpVirtualPatchVersion(bumpType, sv);
-				if (!isVersionBumpType(translatedVersion)) {
-					return translatedVersion;
-				} else {
+				if (isVersionBumpType(translatedVersion)) {
 					throw new Error(
 						`Applying virtual patch failed. The version returned was: ${translatedVersion}`,
 					);
 				}
+				return translatedVersion;
 			} else {
 				return sv;
 			}
 		}
 		default: {
-			fatal(`Unexpected version scheme: ${scheme}`);
+			throw new Error(`Unexpected version scheme: ${scheme}`);
 		}
 	}
 }
@@ -158,7 +160,10 @@ export function bumpVersionScheme(
  * only released versions will be returned.
  * @returns The highest version number in the list.
  */
-export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
+export function getLatestReleaseFromList(
+	versionList: string[],
+	allowPrereleases = false,
+): string {
 	const list = sortVersions(versionList, allowPrereleases);
 	const latest = list[0];
 
@@ -200,8 +205,10 @@ export function sortVersions(versionList: string[], allowPrereleases = false): s
  * Parses a version from a git tag.
  * @param tag - The tag.
  * @returns A version parsed from the tag.
+ *
+ * TODO: Need up reconcile slightly different version in build-cli/src/library/context.ts
  */
-export function getVersionFromTag(tag: string): string | undefined {
+function getVersionFromTag(tag: string): string | undefined {
 	const tagSplit = tag.split("_v");
 	if (tagSplit.length !== 2) {
 		return undefined;

@@ -2,10 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
+import type {
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IOdspTokenProvider } from "./token";
+
+import type { IOdspTokenProvider } from "./token.js";
 
 /**
  * Defines the necessary properties that will be applied to all containers
@@ -25,7 +29,7 @@ export interface OdspConnectionConfig {
 	siteUrl: string;
 
 	/**
-	 * RaaS Drive Id of the tenant where Fluid containers are created
+	 * SharePoint Embedded Container Id of the tenant where Fluid containers are created
 	 */
 	driveId: string;
 
@@ -55,6 +59,7 @@ export interface OdspClientProps {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface OdspContainerAttachProps {
@@ -94,7 +99,7 @@ export interface OdspMember extends IMember {
 	/**
 	 * The object ID (oid) for the user, unique among each individual user connecting to the session.
 	 */
-	userId: string;
+	id: string;
 	/**
 	 * The user's name
 	 */
@@ -110,3 +115,20 @@ export interface OdspMember extends IMember {
  * @beta
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;
+
+/**
+ * Represents token response
+ * @beta
+ */
+export interface TokenResponse {
+	/**
+	 * Token value
+	 */
+	token: string;
+
+	/**
+	 * Whether or not the token was obtained from local cache.
+	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
+	 */
+	fromCache?: boolean;
+}

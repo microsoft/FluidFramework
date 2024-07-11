@@ -4,10 +4,12 @@
  */
 
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import type { IProvideFluidCodeDetailsComparer } from "./fluidPackage";
-import type { IRuntimeFactory } from "./runtime";
+
+import type { IProvideFluidCodeDetailsComparer } from "./fluidPackage.js";
+import type { IRuntimeFactory } from "./runtime.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IFluidModule {

@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable max-nested-callbacks */
 /* globals should, expect */
 /* eslint-disable require-jsdoc */
 
-import { registerTestTemplates } from "./testTemplates";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { DataBinder, UpgradeType } from "../index";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { registerTestTemplates } from "./testTemplates";
 class VersionedRepresentation100 {}
 class VersionedRepresentation101 {}
 class VersionedRepresentation120 {}
@@ -43,18 +44,12 @@ describe("DataBinder runtime representations", () => {
 			);
 
 			// Get a workspace and insert a new property
-			workspace.root.insert(
-				"Older",
-				PropertyFactory.create("Test:Versioned-1.0.0", "single"),
-			);
+			workspace.root.insert("Older", PropertyFactory.create("Test:Versioned-1.0.0", "single"));
 			workspace.root.insert(
 				"Patched",
 				PropertyFactory.create("Test:Versioned-1.0.1", "single"),
 			);
-			workspace.root.insert(
-				"Newer",
-				PropertyFactory.create("Test:Versioned-1.1.0", "single"),
-			);
+			workspace.root.insert("Newer", PropertyFactory.create("Test:Versioned-1.1.0", "single"));
 			workspace.root.insert(
 				"Newest",
 				PropertyFactory.create("Test:Versioned-2.0.0", "single"),
@@ -105,18 +100,12 @@ describe("DataBinder runtime representations", () => {
 			);
 
 			// Get a workspace and insert a new property
-			workspace.root.insert(
-				"Older",
-				PropertyFactory.create("Test:Versioned-1.0.0", "single"),
-			);
+			workspace.root.insert("Older", PropertyFactory.create("Test:Versioned-1.0.0", "single"));
 			workspace.root.insert(
 				"Patched",
 				PropertyFactory.create("Test:Versioned-1.0.1", "single"),
 			);
-			workspace.root.insert(
-				"Newer",
-				PropertyFactory.create("Test:Versioned-1.1.0", "single"),
-			);
+			workspace.root.insert("Newer", PropertyFactory.create("Test:Versioned-1.1.0", "single"));
 			workspace.root.insert(
 				"Newest",
 				PropertyFactory.create("Test:Versioned-2.0.0", "single"),

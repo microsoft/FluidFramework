@@ -3,17 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { type FiveDaysMs, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+
+/**
+ * Must be less than IDocumentStorageServicePolicies.maximumCacheDurationMs policy of 5 days.
+ * That policy is the outward expression and this value is the implementation - using a larger value
+ * would violate that statement of the driver's behavior.
+ * Other parts of the system (such as Garbage Collection) depend on that policy being properly implemented.
+ *
+ * @internal
+ */
+export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
 /**
  * Describes what kind of content is stored in cache entry.
  * @internal
  */
 export const snapshotKey = "snapshot";
+
 /**
+ * Describes key for partial snapshot with loading GroupId in cache entry.
+ * @internal
+ */
+export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
+
+/**
+ * @legacy
  * @alpha
  */
-export type CacheContentType = "snapshot" | "ops";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 /*
  * File / container identifier.
@@ -21,6 +39,7 @@ export type CacheContentType = "snapshot" | "ops";
  * to implement storage / identify files.
  */
 /**
+ * @legacy
  * @alpha
  */
 export interface IFileEntry {
@@ -40,6 +59,7 @@ export interface IFileEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ * @legacy
  * @alpha
  */
 export interface IEntry {
@@ -63,6 +83,7 @@ export interface IEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
+ * @legacy
  * @alpha
  */
 export interface ICacheEntry extends IEntry {
@@ -78,6 +99,7 @@ export interface ICacheEntry extends IEntry {
  * cache implementation that does not survive across sessions. Snapshot entires stored in the
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
+ * @legacy
  * @alpha
  */
 export interface IPersistedCache {

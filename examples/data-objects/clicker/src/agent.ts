@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidRunnable } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import { IFluidRunnable } from "@fluidframework/core-interfaces/internal";
+import { SharedCounter } from "@fluidframework/counter/internal";
 
 // Sample agent to run.
 export class ClickerAgent implements IFluidRunnable {

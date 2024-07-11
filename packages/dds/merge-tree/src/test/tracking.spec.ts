@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { TrackingGroup } from "../mergeTreeTracking";
-import { ReferenceType } from "../ops";
-import { TestClient } from "./testClient";
+
+import { TrackingGroup } from "../mergeTreeTracking.js";
+import { ReferenceType } from "../ops.js";
+
+import { TestClient } from "./testClient.js";
 
 describe("MergeTree.tracking", () => {
 	let testClient: TestClient;
@@ -166,7 +168,11 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
 
-		assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+		assert.equal(
+			trackingGroup.unlink(segment),
+			false,
+			"repeat unlink segment should be false",
+		);
 		assert.equal(
 			segment.trackingCollection.unlink(trackingGroup),
 			false,
@@ -190,7 +196,11 @@ describe("MergeTree.tracking", () => {
 		);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 0);
-		assert.equal(trackingGroup.unlink(segment), false, "repeat unlink segment should be false");
+		assert.equal(
+			trackingGroup.unlink(segment),
+			false,
+			"repeat unlink segment should be false",
+		);
 		assert.equal(
 			segment.trackingCollection.unlink(trackingGroup),
 			false,

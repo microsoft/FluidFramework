@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
+
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 	createPropertyTrackingAttributionPolicyFactory,
-} from "../attributionPolicy";
-import { TestClient } from "./testClient";
+} from "../attributionPolicy.js";
+
+import { TestClient } from "./testClient.js";
 
 const local: AttributionKey = { type: "local" };
 
@@ -162,17 +165,9 @@ describe("Attribution Policy", () => {
 
 		it("ignores segments inserted locally", () => {
 			const mergeTreeOp = client.insertTextLocal(0, "123");
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 			client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
-			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
-				undefined,
-				undefined,
-				undefined,
-			]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, undefined, undefined]);
 		});
 
 		it("ignores segments inserted remotely", () => {
@@ -207,8 +202,7 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory:
-						createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
+					policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
