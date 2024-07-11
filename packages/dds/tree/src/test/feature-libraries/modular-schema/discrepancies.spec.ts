@@ -12,6 +12,7 @@ import {
 	ValueSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 } from "../../../core/index.js";
 import {
 	FieldKinds,
@@ -25,7 +26,7 @@ describe("Schema Discrepancies", () => {
 		fields: [string, TreeFieldStoredSchema][],
 		treeName: string,
 		root: TreeFieldStoredSchema,
-	) => {
+	): TreeStoredSchema => {
 		const objectNodeSchema = new ObjectNodeStoredSchema(
 			new Map(fields.map(([key, schema]) => [brand(key), schema])),
 		);
@@ -39,7 +40,7 @@ describe("Schema Discrepancies", () => {
 		field: TreeFieldStoredSchema,
 		treeName: string,
 		root: TreeFieldStoredSchema,
-	) => ({
+	): TreeStoredSchema => ({
 		rootFieldSchema: root,
 		nodeSchema: new Map([
 			[brand<TreeNodeSchemaIdentifier>(treeName), new MapNodeStoredSchema(field)],
@@ -50,7 +51,7 @@ describe("Schema Discrepancies", () => {
 		leafValue: ValueSchema,
 		treeName: string,
 		root: TreeFieldStoredSchema,
-	) => ({
+	): TreeStoredSchema => ({
 		rootFieldSchema: root,
 		nodeSchema: new Map([
 			[brand<TreeNodeSchemaIdentifier>(treeName), new LeafNodeStoredSchema(leafValue)],

@@ -16,6 +16,50 @@ import {
 	type ValueSchema,
 } from "../../core/index.js";
 
+/**
+ * @remarks
+ *
+ * 1. FieldIncompatibility
+ *
+ * `FieldIncompatibility` represents the differences between two `TreeFieldStoredSchema` objects. It consists of
+ * three types of incompatibilities:
+ *
+ * - FieldKindIncompatibility: Indicates the differences in `FieldKindIdentifier` between two `TreeFieldStoredSchema`
+ * objects (e.g., optional, required, sequence, etc.).
+ * - AllowedTypesIncompatibility: Indicates the differences in the allowed child types between the two schemas.
+ * - ValueSchemaIncompatibility: Specifically indicates the differences in the `ValueSchema` of two
+ * `LeafNodeStoredSchema` objects.
+ *
+ * When comparing two `TreeFieldStoredSchema` objects, the `trackFieldDiscrepancies` function first identifies
+ * `AllowedTypesIncompatibility`, followed by `FieldKindIncompatibility`.
+ *
+ * 2. NodeIncompatibility
+ *
+ * `NodeIncompatibility` represents the differences between two `TreeNodeStoredSchema` objects and includes:
+ *
+ * - NodeKindIncompatibility: Indicates the differences in the types of `TreeNodeStoredSchema` (currently supports
+ * `ObjectNodeStoredSchema`, `MapNodeStoredSchema`, and `LeafNodeStoredSchema`).
+ * - NodeFieldsIncompatibility: Indicates the `FieldIncompatibility` of `TreeFieldStoredSchema` within two
+ * `TreeNodeStoredSchema`. It includes an array of `FieldIncompatibility` instances in the `differences` field.
+ *
+ * In the `getAllowedContentIncompatibilities` function, `NodeKindIncompatibility` is identified first. If the
+ * node kinds are consistent, the function then proceeds to find `NodeFieldsIncompatibility`.
+ *
+ * 3. Incompatibility
+ *
+ * Incompatibility consists of both `NodeIncompatibility` and `FieldIncompatibility`, representing any kind of
+ * schema differences. See {@link getAllowedContentIncompatibilities} for more details about how we process it
+ * and the ordering.
+ */
+type Incompatibility = FieldIncompatibility | NodeIncompatibility;
+
+type NodeIncompatibility = NodeKindIncompatibility | NodeFieldsIncompatibility;
+
+type FieldIncompatibility =
+	| AllowedTypeIncompatibility
+	| FieldKindIncompatibility
+	| ValueSchemaIncompatibility;
+
 interface AllowedTypeIncompatibility {
 	identifier: string | undefined; // undefined indicates root field schema
 	mismatch: "allowedTypes";
@@ -43,11 +87,6 @@ interface ValueSchemaIncompatibility {
 	stored: ValueSchema | undefined;
 }
 
-type FieldIncompatibility =
-	| AllowedTypeIncompatibility
-	| FieldKindIncompatibility
-	| ValueSchemaIncompatibility;
-
 type SchemaFactoryNodeKind = "object" | "leaf" | "map";
 
 interface NodeKindIncompatibility {
@@ -63,18 +102,20 @@ interface NodeFieldsIncompatibility {
 	differences: FieldIncompatibility[];
 }
 
-type NodeIncompatibility = NodeKindIncompatibility | NodeFieldsIncompatibility;
-
-type Incompatibility = FieldIncompatibility | NodeIncompatibility;
-
 /**
+ * @remarks
+ *
  * The workflow for finding schema incompatibilities:
- * 1. Identify discrepancies in the root schema.
+ * 1. Compare the two root schemas to identify any `FieldIncompatibility`.
+ *
  * 2. For each node schema in the `view`:
- * - Check if the node schema exists in the `stored`.
- * - If it exists in the `stored`, perform exhaustive validation to identify all discrepancies.
- * 3. For each node schema in the `stored`, check if it exists in the `view`. The overlapping parts
- * were already tracked in the previous step.
+ * - Verify if the node schema exists in the stored. If it does, ensure that the `SchemaFactoryNodeKind` are
+ * consistent. Otherwise this difference is treated as `NodeKindIncompatibility`
+ * - If a node schema with the same identifier exists in both view and stored, and their `SchemaFactoryNodeKind`
+ * are consistent, perform a exhaustive validation to identify all `FieldIncompatibility`.
+ *
+ * 3. For each node schema in the stored, verify if it exists in the view. The overlapping parts were already
+ * addressed in the previous step.
  *
  * @returns the discrepancies between two TreeStoredSchema objects
  */
@@ -91,9 +132,9 @@ export function getAllowedContentIncompatibilities(
 
 	// Verify the existence and type of a node schema given its identifier (key), then determine if
 	// an exhaustive search is necessary.
-	const nodeKeySet = new Set<TreeNodeSchemaIdentifier>();
+	const viewNodeKeys = new Set<TreeNodeSchemaIdentifier>();
 	for (const [key, viewNodeSchema] of view.nodeSchema) {
-		nodeKeySet.add(key);
+		viewNodeKeys.add(key);
 
 		if (viewNodeSchema instanceof ObjectNodeStoredSchema) {
 			if (!stored.nodeSchema.has(key)) {
@@ -129,7 +170,7 @@ export function getAllowedContentIncompatibilities(
 						} satisfies NodeFieldsIncompatibility);
 					}
 				} else {
-					throw new TypeError("This type of Node Stored Schema is not yet supported");
+					throwUnsupportedNodeType(typeof storedNodeSchema);
 				}
 			}
 		} else if (viewNodeSchema instanceof MapNodeStoredSchema) {
@@ -165,7 +206,7 @@ export function getAllowedContentIncompatibilities(
 						),
 					);
 				} else {
-					throw new TypeError("This type of Node Stored Schema is not yet supported");
+					throwUnsupportedNodeType(typeof storedNodeSchema);
 				}
 			}
 		} else if (viewNodeSchema instanceof LeafNodeStoredSchema) {
@@ -202,16 +243,16 @@ export function getAllowedContentIncompatibilities(
 						} satisfies ValueSchemaIncompatibility);
 					}
 				} else {
-					throw new TypeError("This type of Node Stored Schema is not yet supported");
+					throwUnsupportedNodeType(typeof storedNodeSchema);
 				}
 			}
 		} else {
-			throw new TypeError("This type of Node Stored Schema is not yet supported");
+			throwUnsupportedNodeType(typeof viewNodeSchema);
 		}
 	}
 
 	for (const [key, storedNodeSchema] of stored.nodeSchema) {
-		if (!nodeKeySet.has(key)) {
+		if (!viewNodeKeys.has(key)) {
 			incompatibilities.push({
 				identifier: key,
 				mismatch: "nodeKind",
@@ -291,7 +332,7 @@ function trackObjectNodeDiscrepancies(
 	stored: ObjectNodeStoredSchema,
 ): FieldIncompatibility[] {
 	const differences: FieldIncompatibility[] = [];
-	const fieldKeySet = new Set<FieldKey>();
+	const viewFieldKeys = new Set<FieldKey>();
 	/**
 	 * Similar to the logic used for tracking discrepancies between two node schemas, we will identify
 	 * three types of differences:
@@ -304,7 +345,7 @@ function trackObjectNodeDiscrepancies(
 	 */
 
 	for (const [fieldKey, fieldStoredSchema] of view.objectNodeFields) {
-		fieldKeySet.add(fieldKey);
+		viewFieldKeys.add(fieldKey);
 		if (!stored.objectNodeFields.has(fieldKey)) {
 			differences.push({
 				identifier: fieldKey,
@@ -324,7 +365,7 @@ function trackObjectNodeDiscrepancies(
 	}
 
 	for (const [fieldKey, fieldStoredSchema] of stored.objectNodeFields) {
-		if (fieldKeySet.has(fieldKey)) {
+		if (viewFieldKeys.has(fieldKey)) {
 			continue;
 		}
 		differences.push({
@@ -336,4 +377,8 @@ function trackObjectNodeDiscrepancies(
 	}
 
 	return differences;
+}
+
+function throwUnsupportedNodeType(type: string): never {
+	throw new TypeError(`Unsupported node stored schema type: ${type}`);
 }
