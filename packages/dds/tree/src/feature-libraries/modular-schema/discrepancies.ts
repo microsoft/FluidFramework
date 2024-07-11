@@ -11,6 +11,7 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
@@ -30,9 +31,6 @@ import {
  * - ValueSchemaIncompatibility: Specifically indicates the differences in the `ValueSchema` of two
  * `LeafNodeStoredSchema` objects.
  *
- * When comparing two `TreeFieldStoredSchema` objects, the `trackFieldDiscrepancies` function first identifies
- * `AllowedTypesIncompatibility`, followed by `FieldKindIncompatibility`.
- *
  * 2. NodeIncompatibility
  *
  * `NodeIncompatibility` represents the differences between two `TreeNodeStoredSchema` objects and includes:
@@ -42,8 +40,8 @@ import {
  * - NodeFieldsIncompatibility: Indicates the `FieldIncompatibility` of `TreeFieldStoredSchema` within two
  * `TreeNodeStoredSchema`. It includes an array of `FieldIncompatibility` instances in the `differences` field.
  *
- * In the `getAllowedContentIncompatibilities` function, `NodeKindIncompatibility` is identified first. If the
- * node kinds are consistent, the function then proceeds to find `NodeFieldsIncompatibility`.
+ * When comparing two nodes for compatibility, it only makes sense to compare their fields if the nodes are of
+ * the same kind (map, object, leaf).
  *
  * 3. Incompatibility
  *
@@ -51,16 +49,16 @@ import {
  * schema differences. See {@link getAllowedContentIncompatibilities} for more details about how we process it
  * and the ordering.
  */
-type Incompatibility = FieldIncompatibility | NodeIncompatibility;
+export type Incompatibility = FieldIncompatibility | NodeIncompatibility;
 
-type NodeIncompatibility = NodeKindIncompatibility | NodeFieldsIncompatibility;
+export type NodeIncompatibility = NodeKindIncompatibility | NodeFieldsIncompatibility;
 
-type FieldIncompatibility =
+export type FieldIncompatibility =
 	| AllowedTypeIncompatibility
 	| FieldKindIncompatibility
 	| ValueSchemaIncompatibility;
 
-interface AllowedTypeIncompatibility {
+export interface AllowedTypeIncompatibility {
 	identifier: string | undefined; // undefined indicates root field schema
 	mismatch: "allowedTypes";
 	/**
@@ -73,34 +71,34 @@ interface AllowedTypeIncompatibility {
 	stored: string[];
 }
 
-interface FieldKindIncompatibility {
+export interface FieldKindIncompatibility {
 	identifier: string | undefined; // undefined indicates root field schema
 	mismatch: "fieldKind";
 	view: FieldKindIdentifier | undefined;
 	stored: FieldKindIdentifier | undefined;
 }
 
-interface ValueSchemaIncompatibility {
+export interface ValueSchemaIncompatibility {
 	identifier: string;
 	mismatch: "valueSchema";
 	view: ValueSchema | undefined;
 	stored: ValueSchema | undefined;
 }
 
-type SchemaFactoryNodeKind = "object" | "leaf" | "map";
-
-interface NodeKindIncompatibility {
+export interface NodeKindIncompatibility {
 	identifier: string;
 	mismatch: "nodeKind";
 	view: SchemaFactoryNodeKind | undefined;
 	stored: SchemaFactoryNodeKind | undefined;
 }
 
-interface NodeFieldsIncompatibility {
+export interface NodeFieldsIncompatibility {
 	identifier: string;
 	mismatch: "fields";
 	differences: FieldIncompatibility[];
 }
+
+type SchemaFactoryNodeKind = "object" | "leaf" | "map";
 
 /**
  * @remarks
@@ -145,7 +143,7 @@ export function getAllowedContentIncompatibilities(
 					stored: undefined,
 				});
 			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key);
+				const storedNodeSchema = stored.nodeSchema.get(key) as TreeNodeStoredSchema;
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					incompatibilities.push({
 						identifier: key,
@@ -170,7 +168,7 @@ export function getAllowedContentIncompatibilities(
 						} satisfies NodeFieldsIncompatibility);
 					}
 				} else {
-					throwUnsupportedNodeType(typeof storedNodeSchema);
+					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
 				}
 			}
 		} else if (viewNodeSchema instanceof MapNodeStoredSchema) {
@@ -182,7 +180,7 @@ export function getAllowedContentIncompatibilities(
 					stored: undefined,
 				} satisfies NodeKindIncompatibility);
 			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key);
+				const storedNodeSchema = stored.nodeSchema.get(key) as TreeNodeStoredSchema;
 				if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
 					incompatibilities.push({
 						identifier: key,
@@ -206,7 +204,7 @@ export function getAllowedContentIncompatibilities(
 						),
 					);
 				} else {
-					throwUnsupportedNodeType(typeof storedNodeSchema);
+					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
 				}
 			}
 		} else if (viewNodeSchema instanceof LeafNodeStoredSchema) {
@@ -218,7 +216,7 @@ export function getAllowedContentIncompatibilities(
 					stored: undefined,
 				});
 			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key);
+				const storedNodeSchema = stored.nodeSchema.get(key) as TreeNodeStoredSchema;
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					incompatibilities.push({
 						identifier: key,
@@ -243,11 +241,11 @@ export function getAllowedContentIncompatibilities(
 						} satisfies ValueSchemaIncompatibility);
 					}
 				} else {
-					throwUnsupportedNodeType(typeof storedNodeSchema);
+					throwUnsupportedNodeType(storedNodeSchema.constructor.name);
 				}
 			}
 		} else {
-			throwUnsupportedNodeType(typeof viewNodeSchema);
+			throwUnsupportedNodeType(viewNodeSchema.constructor.name);
 		}
 	}
 
