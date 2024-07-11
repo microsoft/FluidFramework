@@ -214,6 +214,7 @@ export const getPackageName = (
 	codeDetails: IFluidCodeDetails | undefined,
 ): IContainerPackageInfo => {
 	// TODO: use a real type
+	// This is the normal path that any modern customer would hit
 	const containerPackageName: string | undefined = isFluidPackage(codeDetails?.package)
 		? codeDetails?.package.name
 		: codeDetails?.package;
