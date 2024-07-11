@@ -69,9 +69,10 @@ Arguments:
 -   `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 -   `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 
-#### `LIBRARY_PACKAGE_README`
+#### `LIBRARY_PACKAGE_README_HEADER`
 
-Generates a complete starter `README.md` file for a libary package.
+Generates simple "header" contents for a library package README.
+Generally recommended for inclusion after a brief package introduction, but before more detailed sections.
 
 Notes:
 
@@ -91,6 +92,24 @@ Arguments:
 -   `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
     -   Default: `false`.
     -   Only observed if `installation` is `true`.
+
+#### `LIBRARY_PACKAGE_README_FOOTER`
+
+Generates simple "footer" contents for a library package README.
+Generally recommended for inclusion at the end of the README.
+
+Notes:
+
+-   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+    You will still need to fill in semantic and usage information.
+-   This is effectively just a wrapper around lower-level templates.
+    If you want more fine-grained control over the content structure, we recommend using other templates.
+
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
     -   Default: `true`.
     -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
