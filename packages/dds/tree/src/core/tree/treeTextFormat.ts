@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../util/index.js";
+import { oob } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { NodeData } from "./types.js";
