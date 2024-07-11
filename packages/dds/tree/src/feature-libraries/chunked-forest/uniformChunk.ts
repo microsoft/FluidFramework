@@ -419,7 +419,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		}
 		const f =
 			shape.fieldsOffsetArray[this.indexOfField] ??
-			fail("This wont run due to the length check above");
+			oob();
 		if (childIndex >= f.topLevelLength) {
 			return false;
 		}
