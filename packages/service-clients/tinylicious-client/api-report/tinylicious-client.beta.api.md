@@ -6,7 +6,7 @@
 
 export { CompatibilityMode }
 
-// @public
+// @public @sealed
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
 // @public @sealed
@@ -22,30 +22,30 @@ export class TinyliciousClient {
     }>;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousClientProps {
     readonly connection?: TinyliciousConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousConnectionConfig {
     readonly domain?: string;
     readonly port?: number;
     readonly tokenProvider?: ITokenProvider;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousContainerServices {
     readonly audience: ITinyliciousAudience;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousMember extends IMember {
     readonly name: string;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousUser extends IUser {
     readonly name: string;
 }
