@@ -930,7 +930,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			);
 		}
 
-		console.log("get context");
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
@@ -1450,9 +1449,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		await this.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
-		console.log("get Data Store");
 		const dataStoreContext = await this.getDataStore(internalId, headerData, request);
-		console.log("got Data Store");
 
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
@@ -1468,7 +1465,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			timestampMs: undefined, // This will be added by the parent context if needed.
 		});
 
-		console.log("realize Data Store");
 		const dataStore = await dataStoreContext.realize();
 
 		const subRequest = requestParser.createSubRequest(1);
@@ -1478,7 +1474,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			subRequest.url.startsWith("/"),
 			0x126 /* "Expected createSubRequest url to include a leading slash" */,
 		);
-		console.log("realize Data Store request");
 		return dataStore.request(subRequest);
 	}
 }
