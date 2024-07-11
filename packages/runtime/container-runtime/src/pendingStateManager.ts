@@ -309,10 +309,19 @@ export class PendingStateManager implements IDisposable {
 		if (batch.length === 0) {
 			const pendingMessage = this.pendingMessages.peekFront();
 			assert(pendingMessage !== undefined, "No pending message found for this remote message");
-			assert(
-				pendingMessage.batchIdContext.batchStartCsn === batchStartCsn,
-				"The pending batch state indicates we are already processing a batch",
-			);
+			if (pendingMessage.batchIdContext.batchStartCsn !== batchStartCsn) {
+				this.stateHandler.close(
+					DataProcessingError.create(
+						"batchStartCsn mismatch on empty batch",
+						"unexpectedAckReceived",
+						undefined,
+						{
+							expectedMessageType: JSON.parse(pendingMessage.content).type,
+						},
+					),
+				);
+				return [];
+			}
 			this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
 
 			this.pendingMessages.shift();
