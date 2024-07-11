@@ -21,7 +21,7 @@ import {
 	mapCursorFields,
 	Multiplicity,
 } from "../../core/index.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { fail, getOrCreate, oob } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -158,7 +158,7 @@ export class Chunker implements IChunker {
  * @param cursor - cursor in nodes mode
  */
 export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
-	return chunkRange(cursor, policy, 1, true)[0] ?? fail("Expected value to be in array");
+	return chunkRange(cursor, policy, 1, true)[0] ?? oob();
 }
 
 /**

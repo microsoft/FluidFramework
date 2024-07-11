@@ -14,7 +14,7 @@ import {
 	type TreeValue,
 	type Value,
 } from "../../core/index.js";
-import { brand, fail, getOrCreate, mapIterable } from "../../util/index.js";
+import { brand, fail, getOrCreate, mapIterable, oob } from "../../util/index.js";
 import {
 	type FlexTreeContext,
 	FlexTreeEntityKind,
@@ -250,7 +250,7 @@ export class EagerMapTreeNode<TSchema extends FlexTreeNodeSchema> implements Map
 			const field = getOrCreateField(this, key, mapTrees, this.schema.getFieldSchema(key));
 			for (let index = 0; index < field.length; index++) {
 				const child = getOrCreateChild(
-					mapTrees[index] ?? fail("Expected value to be in array"),
+					mapTrees[index] ?? oob(),
 					this.schema.getFieldSchema(key).allowedTypes,
 					{ parent: field, index },
 				);
@@ -525,11 +525,7 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 	implements FlexTreeRequiredField<T>
 {
 	public get content(): FlexTreeUnboxNodeUnion<T> {
-		return unboxedUnion(
-			this.schema,
-			this.mapTrees[0] ?? fail("Expected value to be in array"),
-			{ parent: this, index: 0 },
-		);
+		return unboxedUnion(this.schema, this.mapTrees[0] ?? oob(), { parent: this, index: 0 });
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T>) {
 		throw unsupportedUsageError("Setting an optional field");
@@ -825,7 +821,7 @@ function unboxedField<TFieldSchema extends FlexFieldSchema>(
 		mapTree.fields.get(key) ?? fail("Key does not exist in unhydrated map tree");
 
 	if (fieldSchema.kind === FieldKinds.required) {
-		return unboxedUnion(fieldSchema, mapTrees[0] ?? fail("Expected value to be in array"), {
+		return unboxedUnion(fieldSchema, mapTrees[0] ?? oob(), {
 			parent: field,
 			index: 0,
 		}) as FlexTreeUnboxField<TFieldSchema>;

@@ -55,6 +55,20 @@ export function fail(message: string): never {
 }
 
 /**
+ *
+ * Use this function to assert that an array index is not out-of-bounds.
+ * @example
+ * ```ts
+ * // We know that `numberArray` has four elements in it, so this is safe.
+ * const n: number = numberArray[3] ?? oob();
+ * ```
+ * @internal
+ */
+export function oob(): never {
+	return fail("Array index is out of bounds");
+}
+
+/**
  * Checks whether or not the given object is a `readonly` array.
  *
  * Note that this does NOT indicate if a given array should be treated as readonly.

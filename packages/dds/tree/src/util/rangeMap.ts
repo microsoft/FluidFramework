@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "./utils.js";
+import { fail, oob } from "./utils.js";
 
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
@@ -114,9 +114,9 @@ export function setInRangeMap<T>(
 	}
 
 	const iFirst = iBefore + 1;
-	const firstEntry = map[iFirst] ?? fail("Expected value to be in array");
+	const firstEntry = map[iFirst] ?? oob();
 	const iLast = iAfter - 1;
-	const lastEntry = map[iLast] ?? fail("Expected value to be in array");
+	const lastEntry = map[iLast] ?? oob();
 	const lengthBeforeFirst = start - firstEntry.start;
 	const lastEntryKey = lastEntry.start + lastEntry.length - 1;
 	const lengthAfterLast = lastEntryKey - end;

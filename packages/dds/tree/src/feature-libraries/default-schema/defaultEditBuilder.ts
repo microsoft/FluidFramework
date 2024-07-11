@@ -22,7 +22,7 @@ import {
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
+import { brand, fail, oob } from "../../util/index.js";
 import {
 	type EditDescription,
 	type FieldChangeset,
@@ -286,8 +286,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// in the composition performed by `submitChanges`.
 						attachAncestorIndex -= count;
 						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
-						const parentField =
-							attachPath[sharedDepth] ?? fail("Expected value to be in array");
+						const parentField = attachPath[sharedDepth] ?? oob();
 						parent = {
 							parent,
 							parentIndex: attachAncestorIndex,
@@ -445,8 +444,8 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {
-		const detachStep = pathA[sharedDepth] ?? fail("Expected value to be in array");
-		const attachStep = pathB[sharedDepth] ?? fail("Expected value to be in array");
+		const detachStep = pathA[sharedDepth] ?? oob();
+		const attachStep = pathB[sharedDepth] ?? oob();
 		if (detachStep !== attachStep) {
 			if (
 				detachStep.parentField !== attachStep.parentField ||

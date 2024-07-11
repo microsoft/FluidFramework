@@ -16,7 +16,7 @@ import {
 	type UpPath,
 	type Value,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { ReferenceCountedBase, fail, oob } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 
 import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
@@ -183,15 +183,15 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 	private getStackedFieldKey(height: number): FieldKey {
 		assert(height % 2 === 0, 0x51f /* must field height */);
-		const siblingStack = this.siblingStack[height] ?? fail("Expected value to be in array");
-		const indexStack = this.indexStack[height] ?? fail("Expected value to be in array");
+		const siblingStack = this.siblingStack[height] ?? oob();
+		const indexStack = this.indexStack[height] ?? oob();
 		return siblingStack[indexStack] as FieldKey;
 	}
 
 	private getStackedNodeIndex(height: number): number {
 		assert(height % 2 === 1, 0x520 /* must be node height */);
 		assert(height >= 0, 0x521 /* must not be above root */);
-		return this.indexStack[height] ?? fail("Expected value to be in array");
+		return this.indexStack[height] ?? oob();
 	}
 
 	private getStackedNode(height: number): BasicChunk {
@@ -370,10 +370,10 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 		this.indexWithinChunk += offset;
 		const chunks = this.siblings as TreeChunk[];
-		let chunk = chunks[this.indexOfChunk] ?? fail("Expected value to be in array");
+		let chunk = chunks[this.indexOfChunk] ?? oob();
 		if (offset >= 0) {
 			while (this.indexWithinChunk >= chunk.topLevelLength) {
-				chunk = chunks[this.indexOfChunk] ?? fail("Expected value to be in array");
+				chunk = chunks[this.indexOfChunk] ?? oob();
 				this.indexWithinChunk -= chunk.topLevelLength;
 				this.indexOfChunk++;
 				if (this.indexOfChunk === chunks.length) {
@@ -392,7 +392,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 					return false;
 				}
 				this.indexOfChunk--;
-				chunk = chunks[this.indexOfChunk] ?? fail("Expected value to be in array");
+				chunk = chunks[this.indexOfChunk] ?? oob();
 				this.indexWithinChunk += chunk.topLevelLength;
 			}
 		}

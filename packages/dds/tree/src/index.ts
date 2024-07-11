@@ -108,6 +108,7 @@ export {
 	type JsonCompatibleObject,
 	type NestedMap,
 	fail,
+	oob,
 	type IdAllocator,
 	TransactionResult,
 	type BrandedKey,

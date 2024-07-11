@@ -17,7 +17,7 @@ import {
 	topDownPath,
 } from "../core/index.js";
 import type { Listeners, Listenable } from "../events/index.js";
-import { brand, fail, getOrCreate } from "../util/index.js";
+import { brand, fail, getOrCreate, oob } from "../util/index.js";
 
 import type { FlexTreeNode } from "./flex-tree/index.js";
 
@@ -484,7 +484,7 @@ abstract class AbstractPathVisitor implements PathVisitor {
 		contextType: BindingContextType,
 		downPath: DownPath,
 	): Set<Listener> | undefined {
-		const firstDownPath = downPath[0] ?? fail("Expected value to be in array");
+		const firstDownPath = downPath[0] ?? oob();
 		const foundRoot = this.findRoot(contextType, firstDownPath.field);
 		if (foundRoot === undefined) {
 			return undefined;

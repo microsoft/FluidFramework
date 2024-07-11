@@ -26,7 +26,7 @@ import {
 import { EventEmitter, type Listenable } from "../events/index.js";
 
 import { TransactionStack } from "./transactionStack.js";
-import { fail } from "../util/index.js";
+import { fail, oob } from "../util/index.js";
 
 /**
  * Describes a change to a `SharedTreeBranch`. Various operations can mutate the head of the branch;
@@ -470,9 +470,8 @@ export class SharedTreeBranch<
 
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
-			const firstCommit = targetCommits[0] ?? fail("Expected value to be in array");
-			const lastCommit =
-				targetCommits[targetCommits.length - 1] ?? fail("Expected value to be in array");
+			const firstCommit = targetCommits[0] ?? oob();
+			const lastCommit = targetCommits[targetCommits.length - 1] ?? oob();
 			const src = firstCommit.parent?.revision;
 			const dst = lastCommit.revision;
 			if (src !== undefined && dst !== undefined) {

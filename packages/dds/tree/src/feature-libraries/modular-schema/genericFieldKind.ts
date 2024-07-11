@@ -12,7 +12,7 @@ import {
 	type RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";
-import { type IdAllocator, fail } from "../../util/index.js";
+import { type IdAllocator, fail, oob } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
@@ -44,8 +44,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			let listIndex2 = 0;
 
 			while (listIndex1 < change1.length || listIndex2 < change2.length) {
-				const next1 = change1[listIndex1] ?? fail("Expected value to be in array");
-				const next2 = change2[listIndex2] ?? fail("Expected value to be in array");
+				const next1 = change1[listIndex1] ?? oob();
+				const next2 = change2[listIndex2] ?? oob();
 				const nodeIndex1 = next1?.index ?? Infinity;
 				const nodeIndex2 = next2?.index ?? Infinity;
 				if (nodeIndex1 < nodeIndex2) {
@@ -118,8 +118,8 @@ function rebaseGenericChange(
 	let iChange = 0;
 	let iOver = 0;
 	while (iChange < change.length || iOver < over.length) {
-		const a = change[iChange] ?? fail("Expected value to be in array");
-		const b = over[iOver] ?? fail("Expected value to be in array");
+		const a = change[iChange] ?? oob();
+		const b = over[iOver] ?? oob();
 		const aIndex = a?.index ?? Infinity;
 		const bIndex = b?.index ?? Infinity;
 		let nodeChangeA: NodeId | undefined;

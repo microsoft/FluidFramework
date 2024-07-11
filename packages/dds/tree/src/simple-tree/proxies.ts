@@ -27,7 +27,7 @@ import {
 	typeNameSymbol,
 	isFlexTreeNode,
 } from "../feature-libraries/index.js";
-import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
+import { type Mutable, fail, isReadonlyArray, oob } from "../util/index.js";
 
 import { anchorProxy, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
@@ -220,7 +220,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
-			const currentProxy = proxies[i] ?? fail("Expected value to be in array");
+			const currentProxy = proxies[i] ?? oob();
 			(currentProxy.rootPath as Mutable<UpPath>).parentField = fieldKey;
 			for (const { path, mapTreeNode, proxy } of currentProxy.proxyPaths) {
 				const anchorNode = anchorProxy(forest.anchors, path, proxy);

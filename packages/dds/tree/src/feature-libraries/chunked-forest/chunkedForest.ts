@@ -29,7 +29,7 @@ import {
 	rootFieldKey,
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap, oob } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
 import type { ChunkedCursor, TreeChunk } from "./chunk.js";
@@ -207,9 +207,9 @@ export class ChunkedForest implements IEditableForest {
 					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
-				let chunk = chunks[indexOfChunk] ?? fail("Expected value to be in array");
+				let chunk = chunks[indexOfChunk] ?? oob();
 				while (indexWithinChunk >= chunk.topLevelLength) {
-					chunk = chunks[indexOfChunk] ?? fail("Expected value to be in array");
+					chunk = chunks[indexOfChunk] ?? oob();
 					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
@@ -232,7 +232,7 @@ export class ChunkedForest implements IEditableForest {
 					chunks.splice(indexOfChunk, 1, ...newChunks);
 					found.referenceRemoved();
 
-					found = newChunks[indexWithinChunk] ?? fail("Expected value to be in array");
+					found = newChunks[indexWithinChunk] ?? oob();
 				}
 				assert(found instanceof BasicChunk, 0x536 /* chunk should have been normalized */);
 				if (found.isShared()) {

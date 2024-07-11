@@ -53,7 +53,13 @@ import {
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
-import { type IDisposable, TransactionResult, disposeSymbol, fail } from "../util/index.js";
+import {
+	type IDisposable,
+	TransactionResult,
+	disposeSymbol,
+	fail,
+	oob,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -450,7 +456,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				this.events.emit("afterBatch");
 			}
 			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
-				const firstCommit = event.newCommits[0] ?? fail("Expected value to be in array");
+				const firstCommit = event.newCommits[0] ?? oob();
 				const transactionRevision = firstCommit.revision;
 				for (const transactionStep of event.removedCommits) {
 					this.removedRoots.updateMajor(transactionStep.revision, transactionRevision);
