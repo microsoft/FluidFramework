@@ -251,7 +251,7 @@ export function rebaseBranch<TChange>(
 		const firstSourcePath =
 			sourcePath[0] ?? fail("Expected sourcePath to have atleast one value");
 		const firstTargetRebasePath =
-			targetRebasePath[0] ?? fail("Expected targetRebasePath to have atleast one value");
+			targetRebasePath[0] ?? oob();
 		if (firstSourcePath.revision === firstTargetRebasePath.revision) {
 			sourcePath.shift();
 			targetRebasePath.shift();
