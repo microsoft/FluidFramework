@@ -37,7 +37,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	 * the result with 'isValidHandle(..)' to see if a handle has been allocated for
 	 * the given position.
 	 *
-	 * Throws a 'RangeError' if the provided 'position' is out-of-bounds wrt. the
+	 * @throws A 'RangeError' if the provided 'position' is out-of-bounds with regards to the
 	 * PermutationVector's length.
 	 */
 	public getHandle(position: number): Handle {
@@ -70,7 +70,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	}
 
 	/**
-	 * Used by 'CacheMiss()' to retrieve handles for a range of positions.
+	 * Used by {@link HandleCache.cacheMiss} to retrieve handles for a range of positions.
 	 */
 	private getHandles(start: number, end: number): Handle[] {
 		// TODO: This can be accelerated substantially using 'walkSegments()'.  The only catch
