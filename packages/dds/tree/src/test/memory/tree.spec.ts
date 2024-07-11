@@ -131,7 +131,8 @@ describe("SharedTree memory usage", () => {
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				public readonly title = `Set an optional integer property ${x} times in a local SharedTree, then clear it`;
+				public readonly title =
+					`Set an optional integer property ${x} times in a local SharedTree, then clear it`;
 				private sharedTree: TreeView<typeof RootNodeSchema> =
 					createLocalSharedTree("testSharedTree");
 
