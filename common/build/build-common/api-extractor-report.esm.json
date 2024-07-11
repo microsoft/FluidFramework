@@ -1,0 +1,28 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "./api-extractor-base.esm.json",
+	// Use dummy value, forcing all uses to specify the appropriate (broadest of public.d.ts, beta.d.ts,
+	// or alpha.d.ts) rollup file.
+	"mainEntryPointFilePath": "set-mainEntryPointFilePath-directly-in-leaf-config-file",
+	"bundledPackages": ["@fluidframework/*"],
+	"docModel": {
+		"enabled": false
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			// Reported when an exported API refers to another declaration that is not exported.
+			// Disabled since we are using `bundledPackages` above to bundle re-exports in the reports.
+			// We don't currently require cross-package export completeness.
+			"ae-forgotten-export": {
+				"logLevel": "none"
+			},
+
+			// Links with implicit (unanotated) package name specifiers don't currently resolve correctly
+			// when their members are bundled.
+			// See https://github.com/microsoft/rushstack/issues/3521
+			"ae-unresolved-link": {
+				"logLevel": "none"
+			}
+		}
+	}
+}
