@@ -61,6 +61,7 @@ export class TinyliciousClient {
 	 * @param properties - Optional. Properties for initializing a new TinyliciousClient instance
 	 */
 	public constructor(properties?: TinyliciousClientProps) {
+		this.logger = properties?.logger;
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
 		this.urlResolver = new InsecureTinyliciousUrlResolver(
 			properties?.connection?.port,
@@ -69,7 +70,6 @@ export class TinyliciousClient {
 		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
 			properties?.connection?.tokenProvider ?? tokenProvider,
 		);
-		this.logger = properties?.logger;
 	}
 
 	/**

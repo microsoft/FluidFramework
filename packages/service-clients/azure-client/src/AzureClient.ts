@@ -96,10 +96,11 @@ export class AzureClient {
 	 * @param properties - Properties for initializing a new AzureClient instance
 	 */
 	public constructor(properties: AzureClientProps) {
-		// remove trailing slash from URL if any
-		properties.connection.endpoint = properties.connection.endpoint.replace(/\/$/, "");
-		this.urlResolver = new AzureUrlResolver();
 		this.connectionConfig = properties.connection;
+		this.logger = properties.logger;
+		// remove trailing slash from URL if any
+		this.connectionConfig.endpoint = this.connectionConfig.endpoint.replace(/\/$/, "");
+		this.urlResolver = new AzureUrlResolver();
 		// The local service implementation differs from the Azure Fluid Relay in blob
 		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
 		const isRemoteConnection = isAzureRemoteConnectionConfig(this.connectionConfig);
