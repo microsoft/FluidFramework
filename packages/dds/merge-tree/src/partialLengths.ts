@@ -542,7 +542,7 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * Tracks which clients have made concurring obliterates.
+	 * Tracks which clients have made concurrent obliterates.
 	 *
 	 * @param obliterateOverlapLen - Length of segment with overlap
 	 * @param clientIds - Ids of clients that have concurrently obliterated this
