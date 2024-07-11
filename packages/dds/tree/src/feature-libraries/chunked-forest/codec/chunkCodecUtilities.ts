@@ -106,7 +106,7 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
 	assertValidIndex(index, data);
-	return data[index] ?? fail("This wont run because of the assert above");
+	return data[index] ?? oob();
 }
 
 /**
