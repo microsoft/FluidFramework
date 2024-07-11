@@ -1930,9 +1930,10 @@ function revisionFromTaggedChange(
 function revisionFromRevInfos(
 	revInfos: undefined | readonly RevisionInfo[],
 ): RevisionTag | undefined {
-	if (revInfos === undefined || revInfos.length !== 1 || revInfos[0] === undefined) {
+	if (revInfos === undefined || revInfos.length !== 1) {
 		return undefined;
 	}
+	assert(revInfos[0] !== undefined, "Revision info from revisionFromRevInfos should not be undefined")
 	return revInfos[0].revision;
 }
 
