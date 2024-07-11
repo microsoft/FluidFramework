@@ -191,6 +191,7 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 
 /**
  * Generates simple "header" contents for a library package README.
+ * Contains instructions for installing the package and importing its contents.
  *
  * @remarks Generally recommended for inclusion after a brief package introduction, but before more detailed sections.
  *
@@ -201,16 +202,6 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  * - Installation instructions
  *
  * - Import instructions
- *
- * - Link to API documentation for the package on <fluidframework.com>
- *
- * - Package script documentation (only if specified)
- *
- * - Fluid Framework contribution guidelines
- *
- * - Help section
- *
- * - Microsoft trademark info
  *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.

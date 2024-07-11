@@ -72,6 +72,8 @@ Arguments:
 #### `LIBRARY_PACKAGE_README_HEADER`
 
 Generates simple "header" contents for a library package README.
+Contains instructions for installing the package and importing its contents.
+
 Generally recommended for inclusion after a brief package introduction, but before more detailed sections.
 
 Notes:
@@ -96,6 +98,7 @@ Arguments:
 #### `LIBRARY_PACKAGE_README_FOOTER`
 
 Generates simple "footer" contents for a library package README.
+
 Generally recommended for inclusion at the end of the README.
 
 Notes:
