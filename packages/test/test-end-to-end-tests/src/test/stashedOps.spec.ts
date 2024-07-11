@@ -528,7 +528,7 @@ describeCompat.only("stashed ops", "NoCompat", (getTestObjectProvider, apis) => 
 		{ name: "map", getMap: getMapBackedMap },
 	].forEach(({ name, getMap }) => {
 		// tree map: 276178
-		// map: 278715, 277269
+		// map: 278715 (Timeout on waiting for containers with pending incoming ops up to sequence number 24: 1,2 (1985ms)), 277269
 		it(`doesn't resend successful op (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(
