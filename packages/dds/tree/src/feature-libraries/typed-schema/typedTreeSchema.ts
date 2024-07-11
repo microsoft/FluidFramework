@@ -19,6 +19,7 @@ import {
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
+	identifierFieldKindIdentifier,
 } from "../../core/index.js";
 import {
 	type Assume,
@@ -195,7 +196,7 @@ export class FlexObjectNodeSchema<
 		const objectNodeStoredSchema = new ObjectNodeStoredSchema(new Map(fields));
 		super(builder, name, info, objectNodeStoredSchema);
 		objectNodeFields.forEach((flexFieldSchema, fieldKey) => {
-			if (flexFieldSchema.kind.identifier === "Identifier") {
+			if (flexFieldSchema.kind.identifier === identifierFieldKindIdentifier) {
 				this.identifierFieldKeys.push(fieldKey);
 			}
 		});
