@@ -1474,6 +1474,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			subRequest.url.startsWith("/"),
 			0x126 /* "Expected createSubRequest url to include a leading slash" */,
 		);
+
 		return dataStore.request(subRequest);
 	}
 }
