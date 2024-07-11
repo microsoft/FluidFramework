@@ -72,7 +72,8 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
-		const summaryObject = summary.tree[key];
+		// Non null asserting for now this should change to Object.entries
+		const summaryObject = summary.tree[key]!;
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {

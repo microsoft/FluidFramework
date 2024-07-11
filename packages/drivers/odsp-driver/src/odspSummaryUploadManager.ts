@@ -177,11 +177,8 @@ export class OdspSummaryUploadManager {
 		};
 
 		let blobs = 0;
-		const keys = Object.keys(tree.tree);
-		for (const key of keys) {
+		for (const [key, summaryObject] of  Object.entries(tree.tree)) {
 			assert(!key.includes("/"), 0x9cd /* id should not include slashes */);
-			const summaryObject = tree.tree[key];
-
 			let id: string | undefined;
 			let value: OdspSummaryTreeValue | undefined;
 
