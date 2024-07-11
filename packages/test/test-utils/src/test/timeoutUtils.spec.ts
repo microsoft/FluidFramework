@@ -117,10 +117,20 @@ describe("TimeoutPromise", () => {
 		it("Times out as expected if called multiple times inside a test with no specific durations", async () => {
 			try {
 				// First call will resolve before test timeout.
-				await timeoutPromise((resolve) => { setTimeout(resolve, 75); }, { errorMsg: "First call" });
+				await timeoutPromise(
+					(resolve) => {
+						setTimeout(resolve, 75);
+					},
+					{ errorMsg: "First call" },
+				);
 				// Second call on its own would resolve before test timeout, but the first call already "consumed"
 				// 75ms of the 100ms (total test timeout) so this one should get timed out by timeoutPromise.
-				await timeoutPromise((resolve) => { setTimeout(resolve, 75); }, { errorMsg: "Second call" });
+				await timeoutPromise(
+					(resolve) => {
+						setTimeout(resolve, 75);
+					},
+					{ errorMsg: "Second call" },
+				);
 				assert(false, "should have timed out");
 			} catch (e: any) {
 				assert.equal(e.message, "Second call (85ms)");
@@ -192,6 +202,31 @@ describe("TimeoutPromise", () => {
 					assert.equal(e.message, "Timed out (1ms)");
 				}
 			}).timeout(25);
+		});
+
+		describe("Validate hooks", () => {
+			// This suite makes sure that timeoutPromise works as expected inside mocha hooks.
+
+			async function hookValidationFunction(this: Mocha.Context): Promise<void> {
+				this.timeout(25);
+				try {
+					await timeoutPromise((resolve) => {
+						setTimeout(resolve, 50);
+					});
+					assert(false, "should have timed out");
+				} catch (e: any) {
+					assert.equal(e.message, "Forcing timeout before test does (10ms)");
+				}
+			}
+			before(hookValidationFunction);
+			beforeEach(hookValidationFunction);
+			afterEach(hookValidationFunction);
+			after(hookValidationFunction);
+
+			it("Validate hooks", () => {
+				// This test doesn't need to do anything, it only exists so the beforEach and afterEach hooks trigger
+				assert(true);
+			});
 		});
 	});
 });
