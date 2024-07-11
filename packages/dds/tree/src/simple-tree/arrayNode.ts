@@ -217,6 +217,9 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 		source: TMoveFrom,
 	): void;
 
+	/**
+	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
+	 */
 	values(): IterableIterator<T>;
 }
 
