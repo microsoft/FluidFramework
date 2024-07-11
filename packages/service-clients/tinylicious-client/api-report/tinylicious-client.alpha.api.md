@@ -6,10 +6,10 @@
 
 export { CompatibilityMode }
 
-// @beta
+// @public @sealed
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
-// @beta @sealed
+// @public @sealed
 export class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
     createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
@@ -22,30 +22,30 @@ export class TinyliciousClient {
     }>;
 }
 
-// @beta
+// @public @sealed
 export interface TinyliciousClientProps {
     readonly connection?: TinyliciousConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
-// @beta
+// @public @sealed
 export interface TinyliciousConnectionConfig {
     readonly domain?: string;
     readonly port?: number;
     readonly tokenProvider?: ITokenProvider;
 }
 
-// @beta
+// @public @sealed
 export interface TinyliciousContainerServices {
     readonly audience: ITinyliciousAudience;
 }
 
-// @beta
+// @public @sealed
 export interface TinyliciousMember extends IMember {
     readonly name: string;
 }
 
-// @beta
+// @public @sealed
 export interface TinyliciousUser extends IUser {
     readonly name: string;
 }

@@ -452,6 +452,4 @@ export type ReadOnlyInfo = {
     readonly storageOnlyReason?: string;
 };
 
-// (No @packageDocumentation comment for this package)
-
 ```

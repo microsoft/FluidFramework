@@ -9,6 +9,14 @@ The following rules have been disabled in all configs because they conflict with
 -   [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
 -   [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
 
+The following rules have been disabled for test code:
+
+-   [unicorn/prefer-module](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/prefer-module.md)
+
+The following rules have been disabled due to frequency of false-positives reported:
+
+-   [unicorn/no-useless-spread](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/no-useless-spread.md)
+
 ### @typescript-eslint/explicit-function-return-type changes
 
 The [allowExpressions](https://typescript-eslint.io/rules/explicit-function-return-type/#allowexpressions) option for

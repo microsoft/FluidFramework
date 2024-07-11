@@ -1398,7 +1398,7 @@
             "error"
         ],
         "unicorn/no-useless-spread": [
-            "error"
+            "off"
         ],
         "unicorn/no-useless-switch-case": [
             "error"
