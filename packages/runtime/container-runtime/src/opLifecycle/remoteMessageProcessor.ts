@@ -9,11 +9,15 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
+import { fromJson } from "../index.js";
 import {
 	ContainerMessageType,
+	type ContentsParsed,
+	type InboundContainerRuntimeEnvelope,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
+	type Sequenced,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
 
@@ -28,7 +32,7 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
  */
 export function isModernRuntimeMessage(
 	message: ISequencedDocumentMessage,
-): message is InboundSequencedContainerRuntimeMessage {
+): message is InboundContainerRuntimeEnvelope {
 	if (message.type === MessageType.Operation) {
 		assert(message.clientId !== null, "clientId must be set for runtime messages");
 		return true;
@@ -85,15 +89,13 @@ export class RemoteMessageProcessor {
 	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
 	 * or undefined if the batch is not yet complete.
 	 */
-	public process(remoteMessageCopy: InboundSequencedContainerRuntimeMessage):
+	public process(remoteMessageCopy: InboundContainerRuntimeEnvelope):
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
 		  }
 		| undefined {
-		let message = remoteMessageCopy;
-
-		ensureContentsDeserialized(message);
+		let message = ensureContentsDeserialized(remoteMessageCopy);
 
 		if (isChunkedMessage(message)) {
 			const chunkProcessingResult = this.opSplitter.processChunk(message);
@@ -188,34 +190,39 @@ export class RemoteMessageProcessor {
 }
 
 /** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
-function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): void {
+function ensureContentsDeserialized(
+	mutableMessage: InboundContainerRuntimeEnvelope,
+): ContentsParsed<InboundContainerRuntimeEnvelope> {
+	// We declare this variable with the new type that can hold the version with deserialized contents
+	const modernRuntimeMessage =
+		mutableMessage as ISequencedDocumentMessage as ContentsParsed<InboundContainerRuntimeEnvelope>;
+
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
 	if (typeof mutableMessage.contents === "string" && mutableMessage.contents !== "") {
-		mutableMessage.contents = JSON.parse(mutableMessage.contents);
+		modernRuntimeMessage.contents = fromJson(mutableMessage.contents);
 	}
+
+	// Same object as was passed in
+	return modernRuntimeMessage;
 }
 
 /**
  * For a given message, it moves the nested InboundContainerRuntimeMessage props one level up.
- *
- * The return type illustrates the assumption that the message param
- * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
- * (but there is no runtime validation of the 'type' or 'compatDetails' values).
  */
-function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
-	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
-	const contents = message.contents as InboundContainerRuntimeMessage;
-
+function unpack(
+	message: ContentsParsed<InboundContainerRuntimeEnvelope>,
+): Sequenced<InboundContainerRuntimeMessage> {
 	// We're going to unpack message in-place (promoting those properties of contents up to message itself)
-	const messageUnpacked = message as InboundSequencedContainerRuntimeMessage;
+	const messageUnpacked =
+		message as ISequencedDocumentMessage as Sequenced<InboundContainerRuntimeMessage>;
+	messageUnpacked.type = message.contents.type;
+	messageUnpacked.contents = message.contents.contents;
 
-	messageUnpacked.type = contents.type;
-	messageUnpacked.contents = contents.contents;
-	if ("compatDetails" in contents) {
+	if ("compatDetails" in message.contents) {
 		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
-			contents.compatDetails;
+			message.contents.compatDetails;
 	}
 	return messageUnpacked;
 }
@@ -226,10 +233,8 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
  * @remarks This API makes no promises regarding backward-compatibility. This is internal API.
  * @param message - message (as it observed in storage / service)
  * @returns whether the given message was unpacked
- *
- * @internal
  */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
 		// i.e. message.type is actually ContainerMessageType.
@@ -239,7 +244,8 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 	}
 
 	// legacy op format?
-	// TODO: Unsure if this is a real format we should be concerned with. There doesn't appear to be anything prepared to handle the address member.
+	// TODO: Unsure if this is a real format we should be concerned with.
+	// There doesn't appear to be anything prepared to handle the address member.
 	if (
 		(message.contents as { address?: unknown }).address !== undefined &&
 		(message.contents as { type?: unknown }).type === undefined

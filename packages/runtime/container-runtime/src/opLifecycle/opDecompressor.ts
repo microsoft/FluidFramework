@@ -6,6 +6,7 @@
 import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
@@ -38,7 +39,7 @@ export class OpDecompressor {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
 	}
 
-	public isCompressedMessage(message: InboundSequencedContainerRuntimeMessage): boolean {
+	public isCompressedMessage(message: ISequencedDocumentMessage): boolean {
 		if (message.compression === CompressionAlgorithms.lz4) {
 			return true;
 		}

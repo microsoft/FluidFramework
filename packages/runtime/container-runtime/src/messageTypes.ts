@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	ISequencedDocumentMessage,
+	type MessageType,
+} from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	IAttachMessage,
@@ -15,6 +18,8 @@ import { IDataStoreAliasMessage } from "./dataStore.js";
 import { GarbageCollectionMessage } from "./gc/index.js";
 import { IChunkedOp } from "./opLifecycle/index.js";
 import { IDocumentSchemaChangeMessage } from "./summary/index.js";
+
+import type { Json } from "./index.js";
 
 /**
  * @legacy
@@ -164,6 +169,22 @@ export interface UnknownContainerRuntimeMessage
 	contents: unknown;
 }
 
+//* TODO: Needed for now?
+//* TODO: Explain why it's ok to say clientId won't be null
+export type Sequenced<T> = Patch<ISequencedDocumentMessage, T> & { clientId: string };
+
+export interface InboundContainerRuntimeEnvelope extends ISequencedDocumentMessage {
+	type: MessageType.Operation;
+	contents: Json<InboundContainerRuntimeMessage>;
+	clientId: string; // We know this is not null because it came from another client not the service
+}
+
+type Patch<T, U> = U & Omit<T, keyof U>;
+
+export type ContentsParsed<T extends { contents: unknown }> = [
+	T extends { contents: Json<infer V> } ? Patch<T, { contents: V }> : never,
+][0]; //* TODO: Use "Trick" const type
+
 /**
  * A {@link TypedContainerRuntimeMessage} that is received from the server and will be processed by the container runtime.
  */
@@ -213,11 +234,10 @@ export type OutboundContainerRuntimeMessage =
  * promoted up to the outer object
  * We also know clientId will not be null - this came from another client, not the server.
  */
-export type InboundSequencedContainerRuntimeMessage = Omit<
+export type InboundSequencedContainerRuntimeMessage = Patch<
 	ISequencedDocumentMessage,
-	"type" | "contents"
-> &
-	InboundContainerRuntimeMessage & { clientId: string };
+	InboundContainerRuntimeMessage
+> & { clientId: string };
 
 /** Essentially ISequencedDocumentMessage except that `type` is not `string` to enable narrowing
  * as `Exclude<string, InboundContainerRuntimeMessage['type']>` is not supported.

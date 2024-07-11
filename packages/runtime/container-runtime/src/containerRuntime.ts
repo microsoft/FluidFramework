@@ -122,6 +122,7 @@ import {
 	raiseConnectedEvent,
 	wrapError,
 	tagCodeArtifacts,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -2628,7 +2629,20 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
+		const jsonContents =
+			typeof messageCopy.contents === "string" && messageCopy.contents !== "";
+
 		if (isModernRuntimeMessage(messageCopy)) {
+			if (!jsonContents) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "UnexpectedRuntimeMessageContents",
+					details: {
+						...extractSafePropertiesFromMessage(messageCopy),
+						messageType: (messageCopy.contents as any)?.type,
+					},
+				});
+			}
+
 			const processResult = this.remoteMessageProcessor.process(messageCopy);
 			if (processResult === undefined) {
 				// This means the incoming message is an incomplete part of a message or batch
@@ -2651,6 +2665,10 @@ export class ContainerRuntime
 				this.ensureNoDataModelChanges(() => this.processCore(msg));
 			});
 		} else {
+			//* TODO
+			if (jsonContents) {
+				messageCopy.contents = JSON.parse(messageCopy.contents);
+			}
 			const msg: MessageWithContext = {
 				//* This is either System Message or "Legacy" CR message (no virtualization and no envelope). Is this the best type to use?
 				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,

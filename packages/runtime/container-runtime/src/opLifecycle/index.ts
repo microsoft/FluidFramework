@@ -19,7 +19,6 @@ export { OpSplitter, splitOp, isChunkedMessage } from "./opSplitter.js";
 export {
 	isModernRuntimeMessage,
 	RemoteMessageProcessor,
-	unpackRuntimeMessage,
 } from "./remoteMessageProcessor.js";
 export {
 	OpGroupingManager,

@@ -112,7 +112,7 @@ export {
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
 } from "./summary/index.js";
-export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export { IChunkedOp } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";
 export {
 	IFluidDataStoreContextInternal,
@@ -126,3 +126,17 @@ export {
 	IFluidDataStoreContextEvents,
 } from "./dataStoreContext.js";
 export { DataStoreContexts } from "./dataStoreContexts.js";
+
+//* MOVE to core-utils
+
+export type Json<T> = undefined extends T
+	? (string & { __json: T }) | undefined
+	: string & { __json: T };
+
+export function toJson<T>(value: T): Json<T> {
+	return JSON.stringify(value) as Json<T>;
+}
+
+export function fromJson<T>(value: Json<T>): T {
+	return value && (JSON.parse(value) as T);
+}
