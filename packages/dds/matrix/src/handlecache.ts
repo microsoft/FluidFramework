@@ -51,7 +51,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       ~40% speedup when the position is in the cache (node v12 x64).
 
 		const handle = this.handles[index];
-		if (index < this.handles.length && handle !== undefined) {
+		if (handle !== undefined) {
 			return handle;
 		}
 		return this.cacheMiss(position);
