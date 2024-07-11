@@ -18,7 +18,7 @@ do
 	export FLUID_TEST_LOGGER_PKG_PATH='/home/alex/code/FluidFramework/packages/test/test-end-to-end-tests/node_modules/@ff-internal/aria-logger'; \
 	export logger__colorize="false"; \
 	export logger__morganFormat=tiny; \
-	npm run test:realsvc:local:report:full > ./testRuns/$OUTPUT_FILE 2>&1
+	npm run test:realsvc:local:report > ./testRuns/$OUTPUT_FILE 2>&1
 	STATUS=$?
 done
 
