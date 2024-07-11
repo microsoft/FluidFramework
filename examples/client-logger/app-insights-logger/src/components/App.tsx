@@ -76,7 +76,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	const counter1 = await container.create(SharedCounter);
 	rootMap.set("counterField1", counter1.handle);
 
-	const metadataMap = container.initialObjects.rootMap as ISharedMap;
+	const metadataMap = container.initialObjects.metadata as ISharedMap;
 	if (metadataMap === undefined) {
 		throw new Error('"metadataMap" not found in initialObjects tree.');
 	}
