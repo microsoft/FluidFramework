@@ -340,7 +340,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
 		if (this.indexOfField < fields.length) {
 			const fieldArr =
-				fields[this.indexOfField] ?? fail("This wont run due to the length check above");
+				fields[this.indexOfField] ?? oob();
 			this.fieldKey = fieldArr[0];
 			return true;
 		}
