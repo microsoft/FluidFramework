@@ -397,12 +397,13 @@ export class PermutationVector extends Client {
 			for (const { segment } of args.deltaSegments) {
 				const asPerm = segment as PermutationSegment;
 				if (isHandleValid(asPerm.start)) {
-					freed = [
-						...freed,
-						...Array.from({ length: asPerm.cachedLength })
+					// Note: Using the spread operator with `.splice()` can exhaust the stack.
+					// eslint-disable-next-line unicorn/prefer-spread
+					freed = freed.concat(
+						Array.from({ length: asPerm.cachedLength })
 							.fill(0)
 							.map((value, index) => index + asPerm.start),
-					];
+					);
 				}
 			}
 
