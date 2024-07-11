@@ -136,7 +136,7 @@ describe("TimeoutPromise", () => {
 					{ errorMsg: "First call" },
 				);
 				// Second call on its own would resolve before test timeout, but the first call already "consumed"
-				// 75ms of the 100ms (total test timeout) so this one should get timed out by timeoutPromise.
+				// 30ms of the 50ms (total test timeout) so this one should get timed out by timeoutPromise.
 				await timeoutPromise(
 					(resolve) => {
 						setTimeout(resolve, 30);
