@@ -57,9 +57,7 @@ function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
 	}
 
 	// And then close the shape
-	// Non null asserting, this must exist because the length is not 0
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	context.lineTo(points[0]!.x, points[0]!.y);
+	context.lineTo(firstPoint.x, firstPoint.y);
 	context.closePath();
 	context.fill();
 }
