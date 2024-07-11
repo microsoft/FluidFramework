@@ -117,12 +117,12 @@ flowchart TD
     classDef blob fill:#538135,color:#fff
     classDef others fill:#d636bb,stroke:#4672c4,stroke-width:1px,color:#fff,stroke-dasharray: 5 5
     A["/"]:::tree --> B[".protocol"]:::tree
-        B --> D[attributes]:::blob
-        B --> E["quorum members"]:::blob
-        B --> F["quorum proposals"]:::blob
-        B --> G["quorum values"]:::blob
-        B --> H["other nodes"]:::others
-    A --> C[".app (described below)"]:::tree
+        B --> C[attributes]:::blob
+        B --> D["quorum members"]:::blob
+        B --> E["quorum proposals"]:::blob
+        B --> F["quorum values"]:::blob
+        B --> G["other nodes"]:::others
+    A --> H[".app (described below)"]:::tree
 ```
 
 `Protocol tree` - This is the tree named `.protocol` and contains protocol level information for the container. These are used by the container to initialize.
@@ -208,14 +208,14 @@ flowchart TD
     classDef handle fill:#cc4343,color:#fff
     A[".app"]:::tree --> B["other nodes"]:::others
     A --> C[.channels]:::tree
-    A --> D["handle: '/gc'"]:::handle
-    C --> E["handle: '/data store 1'"]:::handle
-    C --> F["data store 2"]:::tree
-    C --> G["data store N"]:::tree
-    F --> H[".channels"]:::tree
-    F --> I["other nodes"]:::others
-    H --> J["handle: '/data store 2/DDS 1'"]:::handle
-    H --> K["DDS 2"]:::tree
-    H --> L["DDS N"]:::tree
-    K --> M["handle: '/data store 2/DDS 2/sub node'"]:::handle
+        C --> D["handle: '/data store 1'"]:::handle
+        C --> E["data store 2"]:::tree
+            E --> F[".channels"]:::tree
+                F --> G["handle: '/data store 2/DDS 1'"]:::handle
+                F --> H["DDS 2"]:::tree
+                    H --> I["handle: '/data store 2/DDS 2/sub node'"]:::handle
+                F --> J["DDS N"]:::tree
+            E --> K["other nodes"]:::others
+        C --> L["data store N"]:::tree
+    A --> M["handle: '/gc'"]:::handle
 ```
