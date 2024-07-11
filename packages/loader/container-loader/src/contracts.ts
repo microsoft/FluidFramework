@@ -217,7 +217,7 @@ export const getPackageName = (
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let containerPackageName: any;
 	if (codeDetails && "name" in codeDetails) {
-		containerPackageName = codeDetails;
+		containerPackageName = codeDetails.name;
 	} else if (isFluidPackage(codeDetails?.package)) {
 		containerPackageName = codeDetails?.package.name;
 	} else {
