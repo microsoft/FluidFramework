@@ -15,12 +15,9 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
-	DefaultSummaryConfiguration,
 	ISummarizeResults,
-	ISummarizer,
-	ISummaryRuntimeOptions,
+	type ISummarizer,
 } from "@fluidframework/container-runtime/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import {
@@ -51,56 +48,10 @@ const flushPromises = async () => new Promise((resolve) => process.nextTick(reso
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
 		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{ maxOps: 10, initialSummarizerDelayMs: 0, minIdleTime: 10, maxIdleTime: 10 },
-			},
+			summaryConfigOverrides: { state: "disabled" },
 		},
 	},
 };
-
-async function createContainer(
-	provider: ITestObjectProvider,
-	summaryOpt: ISummaryRuntimeOptions,
-	logger?: ITelemetryBaseLogger,
-): Promise<IContainer> {
-	// Force generateSummaries to false.
-	const summaryOptions: ISummaryRuntimeOptions = {
-		...summaryOpt,
-		summaryConfigOverrides: {
-			...summaryOpt.summaryConfigOverrides,
-			state: "disabled",
-		},
-	};
-
-	return provider.makeTestContainer({
-		runtimeOptions: { summaryOptions },
-		loaderProps: { logger },
-	});
-}
-
-async function createMainContainerAndSummarizer(
-	provider: ITestObjectProvider,
-	containerConfig?: ITestContainerConfig,
-): Promise<{ mainContainer: IContainer; summarizer: ISummarizer }> {
-	const loader = provider.makeTestLoader(containerConfig ?? testContainerConfig);
-	const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-	await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-	const absoluteUrl = await container.getAbsoluteUrl("");
-	if (absoluteUrl === undefined) {
-		throw new Error("URL could not be resolved");
-	}
-	const { summarizer } = await createSummarizer(
-		provider,
-		container,
-		containerConfig ?? testContainerConfig,
-	);
-	return {
-		mainContainer: container,
-		summarizer,
-	};
-}
-
 function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	const json = typeof content === "string" ? content : bufferToString(content, "utf8");
 	return JSON.parse(json);
@@ -136,8 +87,20 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		sandbox.restore();
 	});
 
+	async function createMainContainerAndSummarizer(): Promise<{
+		mainContainer: IContainer;
+		summarizer: ISummarizer;
+	}> {
+		const container = await provider.makeTestContainer(testContainerConfig);
+		const { summarizer } = await createSummarizer(provider, container);
+		return {
+			mainContainer: container,
+			summarizer,
+		};
+	}
+
 	it("On demand summaries", async () => {
-		const { summarizer } = await createMainContainerAndSummarizer(provider);
+		const { summarizer } = await createMainContainerAndSummarizer();
 
 		let result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
 		let negResult: ISummarizeResults | undefined = summarizer.summarizeOnDemand({
@@ -195,7 +158,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("should fail on demand summary on stopped summarizer", async () => {
-		const { summarizer } = await createMainContainerAndSummarizer(provider);
+		const { summarizer } = await createMainContainerAndSummarizer();
 		let result: ISummarizeResults | undefined = summarizer.summarizeOnDemand({
 			reason: "test",
 		});
@@ -228,18 +191,18 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("summarizer client should be read-only", async () => {
-		const container1 = await createContainer(provider, {});
-		const dsContainer1 = (await container1.getEntryPoint()) as ITestDataObject;
+		const { mainContainer, summarizer } = await createMainContainerAndSummarizer();
+		const dsContainer1 = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		const readOnlyContainer1 = dsContainer1._context.deltaManager.readOnlyInfo.readonly;
 		assert(readOnlyContainer1 !== true, "Non-summarizer container 1 should not be readonly");
 
-		const { summarizer } = await createSummarizer(provider, container1);
 		const readOnlySummarizer = (summarizer as any).runtime.deltaManager.readOnlyInfo.readonly;
 		assert(readOnlySummarizer === true, "Summarizer should be readonly");
 	});
+
 	it("should generate summary tree", async () => {
-		const container = await createContainer(provider, {});
-		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
+		const mainContainer = await provider.makeTestContainer(testContainerConfig);
+		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
 		await provider.ensureSynchronized();
@@ -421,7 +384,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		// Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
-		await summarizeNow(summarizer);
+		await assert.doesNotReject(summarizeNow(summarizer), "Summarize failed");
 	});
 
 	async function getNackPromise(container: IContainer) {
@@ -527,8 +490,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		],
 		async function () {
-			const container = await createContainer(provider, {});
-			const { summarizer } = await createSummarizer(provider, container, {
+			const mainContainer = await provider.makeTestContainer(testContainerConfig);
+			const { summarizer } = await createSummarizer(provider, mainContainer, {
 				runtimeOptions: {
 					summaryOptions: {
 						summaryConfigOverrides: {
@@ -551,7 +514,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 			const submitSumarySpy = sandbox.spy(containerRuntime, "submitSummary");
 
 			const defaultDataStore =
-				await getContainerEntryPointBackCompat<ITestDataObject>(container);
+				await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
 
 			const directory1 = defaultDataStore._root;
 			directory1.set("key", "value");
@@ -567,7 +530,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 });
 
-describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Summaries 2", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -577,7 +540,9 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 		(injectFailure: boolean = false) =>
 		async () => {
 			const mockLogger = new MockLogger();
-			const container = await createContainer(provider, {}, mockLogger);
+			const container = await provider.makeTestContainer({
+				loaderProps: { logger: mockLogger },
+			});
 			const defaultDataStore =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
@@ -626,17 +591,16 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 
 describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let configForSingleCommitSummary: ITestContainerConfig;
+	let mainContainer: IContainer;
+	const configForSingleCommitSummary: ITestContainerConfig = {
+		loaderProps: {
+			options: { summarizeProtocolTree: true },
+		},
+	};
 	const testCache = new TestSnapshotCache();
-	beforeEach("setup", () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ persistedCache: testCache });
-		configForSingleCommitSummary = {
-			...testContainerConfig,
-			loaderProps: {
-				...testContainerConfig.loaderProps,
-				options: { summarizeProtocolTree: true },
-			},
-		};
+		mainContainer = await provider.makeTestContainer(testContainerConfig);
 	});
 
 	afterEach("cleanup", async () => {
@@ -647,7 +611,11 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
-		const { summarizer } = await createMainContainerAndSummarizer(provider);
+		const { summarizer } = await createSummarizer(
+			provider,
+			mainContainer,
+			configForSingleCommitSummary,
+		);
 
 		// Summarize
 		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
@@ -693,8 +661,12 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			if (provider.driver.type === "odsp") {
 				this.skip();
 			}
-			const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
+			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+			const { summarizer } = await createSummarizer(provider, mainContainer);
+			mainDataStore.root.set("1", "2");
+			await provider.ensureSynchronized();
 
+			console.log(`Summarizer 1: ${(summarizer as any).runtime.clientId}`);
 			// Summarize
 			const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
 			const submitResult = await result.summarySubmitted;
@@ -709,11 +681,8 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			await flushPromises();
 
 			// Create new summarizer
-			const { summarizer: summarizer2 } = await createSummarizer(
-				provider,
-				mainContainer,
-				testContainerConfig,
-			);
+			const { summarizer: summarizer2 } = await createSummarizer(provider, mainContainer);
+			console.log(`Summarizer 2: ${(summarizer2 as any).runtime.clientId}`);
 
 			// Second summary should be discarded
 			const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
@@ -727,16 +696,19 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			};
 			containerRuntime.storage.uploadSummaryWithContext = func;
 
+			mainDataStore.root.set("2", "3");
+			await provider.ensureSynchronized();
+
 			const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
 			assert((await result2.summarySubmitted).success === false, "Summary should fail");
 			await flushPromises();
 
 			// Create new summarizer
-			const { summarizer: summarizer3 } = await createSummarizer(
-				provider,
-				mainContainer,
-				testContainerConfig,
-			);
+			const { summarizer: summarizer3 } = await createSummarizer(provider, mainContainer);
+			console.log(`Summarizer 3: ${(summarizer3 as any).runtime.clientId}`);
+
+			mainDataStore.root.set("3", "4");
+			await provider.ensureSynchronized();
 
 			// Summarize third time
 			const result3: ISummarizeResults = summarizer3.summarizeOnDemand({ reason: "test3" });
@@ -762,8 +734,9 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			this.skip();
 		}
 
-		const { mainContainer, summarizer } = await createMainContainerAndSummarizer(
+		const { summarizer } = await createSummarizer(
 			provider,
+			mainContainer,
 			configForSingleCommitSummary,
 		);
 
@@ -827,8 +800,9 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			if (provider.driver.type !== "odsp") {
 				this.skip();
 			}
-			const { mainContainer, summarizer } = await createMainContainerAndSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
+				mainContainer,
 				configForSingleCommitSummary,
 			);
 

@@ -1,5 +1,10 @@
 # Platform Requirements for Fluid Framework Client Packages
 
+<!-- AUTO-GENERATED-CONTENT:START (README_CLIENT_REQUIREMENTS_SECTION:includeHeading=FALSE&headingLevel=1) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
 These are the platform requirements for the current version of Fluid Framework Client Packages.
 These requirements err on the side of being too strict since within a major version they can be relaxed over time, but not made stricter.
 For Long Term Support (LTS) versions this can require supporting these platforms for several years.
@@ -41,3 +46,7 @@ Node10 resolution is not supported as it does not support Fluid Framework's API 
     Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
 
     -   Testing with Jest (which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
