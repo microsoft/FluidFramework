@@ -20,7 +20,7 @@ export interface ICreateInfo {
     csn: number;
 }
 
-// @public
+// @public @sealed
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -41,7 +41,7 @@ export interface IDirectoryDataObject {
     subdirectories?: Record<string, IDirectoryDataObject>;
 }
 
-// @public
+// @public @sealed
 export interface IDirectoryEvents extends IEvent {
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -56,7 +56,7 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
-// @public
+// @public @sealed
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
@@ -67,7 +67,7 @@ export interface ISerializableValue {
     value: any;
 }
 
-// @alpha
+// @alpha @sealed
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -75,7 +75,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @alpha
+// @alpha @sealed
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;

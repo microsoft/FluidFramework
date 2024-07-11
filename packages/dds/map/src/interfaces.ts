@@ -38,6 +38,7 @@ export interface IValueChanged {
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
+ * @sealed
  * @legacy
  * @public
  */
@@ -123,6 +124,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
+ * @sealed
  * @legacy
  * @alpha
  */
@@ -197,6 +199,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
+ * @sealed
  * @legacy
  * @public
  */
@@ -279,6 +282,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
+ * @sealed
  * @legacy
  * @alpha
  */
@@ -295,6 +299,7 @@ export interface ISharedDirectory
 
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
+ * @sealed
  * @legacy
  * @public
  */
