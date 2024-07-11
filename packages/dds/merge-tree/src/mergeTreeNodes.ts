@@ -223,7 +223,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
 	 * Once the segment is acked, this field is cleared.
 	 *
-	 * @see {@link @fluidframework/merge-tree#CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localSeq?: number;
 	/**
@@ -232,7 +232,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * will be updated to the seq at which that client removed this segment.
 	 *
 	 * Like {@link ISegment.localSeq}, this field is cleared once the local removal of the segment is acked.
-	 * @see {@link @fluidframework/merge-tree#CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
 	 */
 	localRemovedSeq?: number;
 	/**
