@@ -107,7 +107,7 @@ describe("SharedTree memory usage", () => {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
 				}
 			})(),
-		).timeout(60000);
+		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
@@ -127,7 +127,7 @@ describe("SharedTree memory usage", () => {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
 				}
 			})(),
-		).timeout(60000);
+		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
@@ -148,6 +148,6 @@ describe("SharedTree memory usage", () => {
 					this.sharedTree = createLocalSharedTree("testSharedTree");
 				}
 			})(),
-		).timeout(60000);
+		).timeout(40000); // Set relatively higher threshold as 100_000 iterations can take a while.
 	}
 });
