@@ -7,8 +7,7 @@ import { IMigrator } from "@fluid-example/example-utils";
 import { globals } from "../jest.config.cjs";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 
-// Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
-describe("inventoryList", () => {
+describe("same-container migration", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
@@ -42,6 +41,7 @@ describe("inventoryList", () => {
 			await expect(containsOne).toEqual(true);
 		});
 
+		// Test skipped, not functioning currently
 		it.skip("migrates and shows the correct code version after migration", async () => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
@@ -92,6 +92,7 @@ describe("inventoryList", () => {
 		});
 	});
 
+	// Test skipped, not functioning currently
 	describe.skip("With summarizer connected", () => {
 		beforeEach(async () => {
 			await page.goto(`${globals.PATH}`, { waitUntil: "load" });

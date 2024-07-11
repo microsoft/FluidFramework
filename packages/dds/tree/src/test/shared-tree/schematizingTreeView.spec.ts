@@ -78,16 +78,30 @@ describe("SchematizingSimpleTreeView", () => {
 		const checkout = checkoutWithContent(emptyContent);
 		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
 
-		assert.throws(() => view.root, validateUsageError(/compatibility/));
 		const { compatibility } = view;
 		assert.equal(compatibility.canView, false);
 		assert.equal(compatibility.canUpgrade, false);
 		assert.equal(compatibility.canInitialize, true);
 
-		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
 		view.initialize(5);
-
 		assert.equal(view.root, 5);
+	});
+
+	it("Initialize errors", () => {
+		const emptyContent = {
+			schema: emptySchema,
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(emptyContent);
+		const view = new SchematizingSimpleTreeView(checkout, config, new MockNodeKeyManager());
+
+		assert.throws(() => view.root, validateUsageError(/compatibility/));
+
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		assert.throws(
+			() => view.initialize(5),
+			validateUsageError(/invalid state by another error/),
+		);
 	});
 
 	const getChangeData = <T extends ImplicitFieldSchema>(
@@ -164,7 +178,7 @@ describe("SchematizingSimpleTreeView", () => {
 			() => view.upgradeSchema(),
 			(e) => e instanceof UsageError,
 		);
-
+		view.breaker.clearError();
 		// Modify schema to be compatible again
 		checkout.updateSchema(intoStoredSchema(toFlexSchema([schema.number])));
 		assert.equal(view.compatibility.isEquivalent, true);
