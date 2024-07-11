@@ -682,6 +682,7 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
+    is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
 // @public

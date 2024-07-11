@@ -157,6 +157,10 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"VariableDeclaration_TaskManager": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

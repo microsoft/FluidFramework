@@ -874,7 +874,7 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 	extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
 	/**
 	 * Check whether an {@link @fluidframework/core-interfaces#IFluidLoadable} is an instance of this shared object kind.
-	 * This should be used in place of `instanceof` checks for shared objects, as their actual classes are not exported in Fluid's public API.
+	 * @remarks This should be used in place of `instanceof` checks for shared objects, as their actual classes are not exported in Fluid's public API.
 	 */
 	is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }

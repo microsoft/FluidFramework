@@ -76,6 +76,7 @@ declare type current_as_old_for_TypeAliasDeclaration_TaskEventListener = require
  * typeValidation.broken:
  * "VariableDeclaration_TaskManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_VariableDeclaration_TaskManager = requireAssignableTo<TypeOnly<typeof old.TaskManager>, TypeOnly<typeof current.TaskManager>>
 
 /*

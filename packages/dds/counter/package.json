@@ -152,6 +152,10 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"VariableDeclaration_SharedCounter": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
