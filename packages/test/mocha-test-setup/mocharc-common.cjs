@@ -41,7 +41,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		return mod;
 	});
 
+	console.log("checking FLUID_TEST_LOGGER_PKG_PATH");
 	if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+		console.log(`Using ${process.env.FLUID_TEST_LOGGER_PKG_PATH}`);
 		// Inject implementation of getTestLogger, put it first before mocha-test-setup
 		requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
 	}
