@@ -725,14 +725,43 @@ describe("ArrayNode", () => {
 	describe("Iteration", () => {
 		it("Concurrently iterating and editing should throw an error.", () => {
 			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values = array.values();
+			values.next();
+			array.removeRange(1, 3);
 			assert.throws(
 				() => {
-					for (const nodeChild of array[Symbol.iterator]()) {
-						array.removeRange(1, 3);
-					}
+					values.next();
 				},
-				(error: Error) =>
-					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+		});
+
+		it("Concurrently iterating and editing after inserting into an unhydrated array node errors.", () => {
+			class TestLeaf extends schemaFactory.object("Leaf Object", {
+				value: schemaFactory.number,
+			}) {}
+			class TestArray extends schemaFactory.array("Array", TestLeaf) {}
+
+			// Create unhydrated nodes
+			const leaf1 = new TestLeaf({ value: 1 });
+			const leaf2 = new TestLeaf({ value: 2 });
+			const leaf3 = new TestLeaf({ value: 3 });
+
+			// Create an unhydrated array node
+			const array = new TestArray([leaf1, leaf2, leaf3]);
+
+			// Hydrate the array node in a separate step.
+			const hydratedArray = hydrate(TestArray, array);
+
+			const values = hydratedArray.values();
+			values.next();
+			hydratedArray.removeRange(1, 3);
+
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
 			);
 		});
 
@@ -753,14 +782,15 @@ describe("ArrayNode", () => {
 			array.insertAt(1, leaf2);
 			array.insertAt(2, leaf3);
 
+			const values = array.values();
+			values.next();
+			array.removeRange(1, 3);
+
 			assert.throws(
 				() => {
-					for (const nodeChild of array[Symbol.iterator]()) {
-						array.removeRange(1, 3);
-					}
+					values.next();
 				},
-				(error: Error) =>
-					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
 			);
 		});
 
@@ -770,21 +800,28 @@ describe("ArrayNode", () => {
 			array.removeRange();
 			assert.throws(
 				() => {
-					for (const v of values) {
-					}
+					values.next();
 				},
-				(error: Error) =>
-					validateAssertionError(error, /Concurrent editing and iteration is not allowed./),
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
 			);
 		});
 
 		it("Iterates through the values of the array", () => {
 			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 			const result = [];
-			for (const nodeChild of array[Symbol.iterator]()) {
+			for (const nodeChild of array) {
 				result.push(nodeChild);
 			}
 			assert.deepEqual(result, [1, 2, 3]);
+		});
+
+		it("Iterates through the values of an empty array", () => {
+			const array = hydrate(CustomizableNumberArray, []);
+			const result = [];
+			for (const nodeChild of array) {
+				result.push(nodeChild);
+			}
+			assert.deepEqual(result, []);
 		});
 	});
 });

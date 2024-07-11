@@ -40,7 +40,7 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid } from "./types.js";
+import { type TreeNode, TreeNodeValid, type InternalTreeNode } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -673,13 +673,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	 */
 	#generationNumber: number = 0;
 
-	/**
-	 * This function is only created to initialize the event listener to increment the generationNumber.
-	 * However, it should not be called anywhere else, as it will unregister generation number updates.
-	 */
-	#initializeGenerationNumberEvent = getFlexNode(this).on("nodeChanged", () => {
-		this.#generationNumber += 1;
-	});
+	public constructor(
+		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+	) {
+		super(input);
+		getFlexNode(this).on("nodeChanged", () => {
+			this.#generationNumber += 1;
+		});
+	}
 
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		if (isMapTreeNode(getFlexNode(this))) {
@@ -871,13 +872,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	private *generateValues(
 		initialLastUpdatedStamp: number,
 	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
-		if (initialLastUpdatedStamp < this.#generationNumber) {
+		if (initialLastUpdatedStamp !== this.#generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
 		for (
-			let i = 0, value = this.at(0);
-			i < this.length && value !== undefined;
-			i++, value = this.at(i)
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let i = 0, value = this.at(0)!;
+			i < this.length;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			value = this.at(++i)!
 		) {
 			yield value;
 			if (initialLastUpdatedStamp < this.#generationNumber) {
