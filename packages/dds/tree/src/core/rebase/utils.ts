@@ -248,10 +248,8 @@ export function rebaseBranch<TChange>(
 	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
-		const firstSourcePath =
-			sourcePath[0] ?? oob();
-		const firstTargetRebasePath =
-			targetRebasePath[0] ?? oob();
+		const firstSourcePath = sourcePath[0] ?? oob();
+		const firstTargetRebasePath = targetRebasePath[0] ?? oob();
 		if (firstSourcePath.revision === firstTargetRebasePath.revision) {
 			sourcePath.shift();
 			targetRebasePath.shift();
