@@ -13,6 +13,18 @@ import { timeoutPromise } from "../timeoutUtils.js";
  * Keep that in mind as you read/update the tests below.
  */
 describe("TimeoutPromise", () => {
+	beforeEach(async () => {
+		// Make sure there are no setTimeouts left behind from previous tests,
+		// by waiting longer than the timeout we use for tests.
+		await timeoutPromise((resolve) => setTimeout(resolve, 50));
+	});
+
+	afterEach(async () => {
+		// Make sure there are no setTimeouts left behind from the test that just ran,
+		// by waiting longer than the timeout we use for tests.
+		await timeoutPromise((resolve) => setTimeout(resolve, 50));
+	});
+
 	describe("Tests unrelated to mocha timeouts", () => {
 		it("Doesn't time out and provides return value", async () => {
 			const value = await timeoutPromise<number>((resolve) => {
