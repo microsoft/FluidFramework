@@ -60,6 +60,7 @@ import {
 	tryGetFromNestedMap,
 	type NestedMap,
 	type RangeQueryResult,
+	type Brand,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -337,7 +338,7 @@ export class ModularChangeFamily
 			nodeChanges: composedNodeChanges,
 			nodeToParent: composedNodeToParent,
 			nodeAliases: composedNodeAliases,
-			crossFieldKeys: mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys),
+			crossFieldKeys: brand(mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys)),
 		};
 	}
 
@@ -830,7 +831,7 @@ export class ModularChangeFamily
 			baseToRebasedNodeId: new Map(),
 			rebasedFields: new Set(),
 			rebasedNodeToParent: cloneNestedMap(change.nodeToParent),
-			rebasedCrossFieldKeys: change.crossFieldKeys.clone(),
+			rebasedCrossFieldKeys: brand(change.crossFieldKeys.clone()),
 			nodeIdPairs: [],
 			affectedNewFields: newBTree(),
 			affectedBaseFields: newBTree(),
@@ -2080,8 +2081,8 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 */
 	readonly nodeIdPairs: [NodeId, NodeId, NodeAttachState | undefined][];
 
-	readonly affectedNewFields: BTree<FieldIdKey, boolean>;
-	readonly affectedBaseFields: BTree<FieldIdKey, boolean>;
+	readonly affectedNewFields: TupleBTree<FieldIdKey, boolean>;
+	readonly affectedBaseFields: TupleBTree<FieldIdKey, boolean>;
 }
 
 type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
@@ -2812,8 +2813,6 @@ function mergeNestedMaps<K1, K2, V>(
 ): NestedMap<K1, K2, V> {
 	const merged: NestedMap<K1, K2, V> = new Map();
 	populateNestedMap(map1, merged, true);
-
-	// XXX: Should assert there are no collisions?
 	populateNestedMap(map2, merged, true);
 	return merged;
 }
@@ -3009,9 +3008,11 @@ export function newCrossFieldKeyTable(): CrossFieldKeyTable {
 	return newBTree();
 }
 
+export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
+
 // XXX: Can we use branding to ensure that we never create changesets with B trees with a default comparator?
-function newBTree<K extends unknown[], V>(): BTree<K, V> {
-	return new BTree<K, V>(undefined, compareTuples);
+function newBTree<K extends unknown[], V>(): TupleBTree<K, V> {
+	return brand(new BTree<K, V>(undefined, compareTuples));
 }
 
 // This assumes that the arrays are the same length.

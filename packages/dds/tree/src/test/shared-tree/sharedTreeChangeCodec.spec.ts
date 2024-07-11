@@ -78,7 +78,7 @@ describe("sharedTreeChangeCodec", () => {
 			]),
 			nodeToParent: new Map(),
 			nodeAliases: new Map(),
-			crossFieldKeys: new BTree(),
+			crossFieldKeys: brand(new BTree()),
 		};
 		sharedTreeChangeCodec.encode(
 			{ changes: [{ type: "data", innerChange: dummyModularChangeSet }] },
