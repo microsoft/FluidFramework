@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import {
@@ -112,12 +112,15 @@ describe("SimpleTree benchmarks", () => {
 						assert.equal(readNumber, expectedValue);
 					},
 				});
-				const flexTree = flexNodeInitFunction();
+				let flexTree: RootNode | undefined;
 				benchmark({
 					type: BenchmarkType.Measurement,
 					title: `${title} (flex node)`,
+					before: () => {
+						flexTree = flexNodeInitFunction();
+					},
 					benchmarkFn: () => {
-						readNumber = treeReadingFunction(flexTree);
+						readNumber = treeReadingFunction(flexTree ?? fail("Expected flexTree to be set"));
 					},
 					after: () => {
 						assert.equal(readNumber, expectedValue);
