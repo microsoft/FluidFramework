@@ -169,6 +169,7 @@ import {
 } from "./messageTypes.js";
 import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
+	BatchId,
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
@@ -693,7 +694,7 @@ export const makeLegacySendBatchFn =
 type MessageWithContext = {
 	local: boolean;
 	savedOp?: boolean;
-	batchStartCsn: number;
+	localOpMetadata?: unknown;
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
@@ -2626,34 +2627,38 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		const processResult = this.remoteMessageProcessor.process(messageCopy);
-		if (processResult === undefined) {
-			// This means the incoming message is an incomplete part of a message or batch
-			// and we need to process more messages before the rest of the system can understand it.
-			return;
-		}
-		for (const message of processResult.messages) {
-			const msg: MessageWithContext = modernRuntimeMessage
-				? {
-						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-						// There is nothing really ensuring that anytime original message.type is Operation that
-						// the result messages will be so. In the end modern bool being true only directs to
-						// throw error if ultimately unrecognized without compat details saying otherwise.
-						message: message as InboundSequencedContainerRuntimeMessage,
-						local,
-						modernRuntimeMessage,
-						batchStartCsn: processResult.batchStartCsn,
-					}
-				: // Unrecognized message will be ignored.
-					{
-						message,
-						local,
-						modernRuntimeMessage,
-						batchStartCsn: processResult.batchStartCsn,
-					};
-			msg.savedOp = savedOp;
-
-			// ensure that we observe any re-entrancy, and if needed, rebase ops
+		if (modernRuntimeMessage) {
+			const processResult = this.remoteMessageProcessor.process(messageCopy);
+			if (processResult === undefined) {
+				// This means the incoming message is an incomplete part of a message or batch
+				// and we need to process more messages before the rest of the system can understand it.
+				return;
+			}
+			const batchStartCsn = processResult.batchStartCsn;
+			const batch = processResult.messages;
+			const messages: {
+				message: InboundSequencedContainerRuntimeMessage;
+				localOpMetadata: unknown;
+			}[] = local
+				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
+				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+			messages.forEach(({ message, localOpMetadata }) => {
+				const msg: MessageWithContext = {
+					message,
+					local,
+					modernRuntimeMessage,
+					savedOp,
+					localOpMetadata,
+				};
+				this.ensureNoDataModelChanges(() => this.processCore(msg));
+			});
+		} else {
+			const msg: MessageWithContext = {
+				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+				local,
+				modernRuntimeMessage,
+				savedOp,
+			};
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
@@ -2664,7 +2669,7 @@ export class ContainerRuntime
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
-		const { message, local } = messageWithContext;
+		const { message, local, localOpMetadata } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
@@ -2684,22 +2689,11 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
-			// See commit that added this assert for more details.
-			// These calls should be made for all but chunked ops:
-			// 1) this.pendingStateManager.processPendingLocalMessage() below
-			// 2) this.resetReconnectCount() below
+			// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
 			);
-
-			let localOpMetadata: unknown;
-			if (local && messageWithContext.modernRuntimeMessage) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					messageWithContext.message,
-					messageWithContext.batchStartCsn,
-				);
-			}
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.
@@ -2896,14 +2890,16 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
 	 */
-	private flush(): void {
+	private flush(resubmittingBatchId?: BatchId): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(resubmittingBatchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4125,13 +4121,19 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		});
-		this.flush();
+
+		// Only include Batch ID if "Offline Load" feature is enabled
+		// It's only needed to identify batches across container forks arising from misuse of offline load.
+		const includeBatchId =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		this.flush(includeBatchId ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {

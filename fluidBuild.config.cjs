@@ -21,7 +21,14 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: [
+				"compile",
+				"lint",
+				"ci:build:api-reports",
+				"ci:build:docs",
+				"build:manifest",
+				"build:readme",
+			],
 			script: false,
 		},
 		"full": {
@@ -29,7 +36,14 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs", "build:manifest", "build:readme"],
+			dependsOn: [
+				"compile",
+				"lint",
+				"build:api-reports",
+				"build:docs",
+				"build:manifest",
+				"build:readme",
+			],
 			script: false,
 		},
 		"compile": {
@@ -81,16 +95,22 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
+		// build:api-reports may be handled in one step with build:docs when a
+		// package only uses api-extractor supported exports, which is a single
+		// export/entrypoint. For packages with /legacy exports, we need to
+		// generate reports from legacy entrypoint as well as the "current" one.
+		// The "current" entrypoint should be the broadest of "public.d.ts",
+		// "beta.d.ts", and "alpha.d.ts".
+		"build:api-reports:current": ["api-extractor:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
 		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor. For packages with /legacy
 		// exports, we need the export rollups too and in those cases we only use ESM.
 		"build:docs": ["tsc", "build:esnext"],
-		"build:docs:current": ["api-extractor:esnext"],
-		"build:docs:legacy": ["api-extractor:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
-		"ci:build:docs:current": ["api-extractor:esnext"],
-		"ci:build:docs:legacy": ["api-extractor:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
@@ -318,8 +338,6 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
-				// AB#8288 api-extractor Internal Error: symbol has a ts.SyntaxKind.SourceFile declaration
-				"^packages/framework/fluid-framework/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -501,7 +519,7 @@ module.exports = {
 				// },
 				{
 					name: "build:docs",
-					body: "fluid-build . --task api",
+					body: "api-extractor run --local",
 				},
 				{
 					name: "ci:build:docs",

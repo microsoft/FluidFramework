@@ -157,8 +157,8 @@ describe("Runtime", () => {
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
 			getLoadedFromVersion: () => undefined,
-			submitFn: (_type: MessageType, contents: any, _batch: boolean, appData?: any) => {
-				submittedOps.push(contents);
+			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
+				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
 			clientId: mockClientId,
@@ -215,7 +215,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("flushMode setting", () => {
+		describe("Flushing and Replaying", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
@@ -242,44 +242,57 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
-			it("Replaying ops should resend in correct order", async () => {
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
+			[true, undefined].forEach((enableOfflineLoad) =>
+				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
+					const containerRuntime = await ContainerRuntime.loadRuntime({
+						context: getMockContext({
+							"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+						}) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.TurnBased,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
 
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} as ChannelCollection;
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					(containerRuntime as any).channelCollection = {
+						setConnectionState: (_connected: boolean, _clientId?: string) => {},
+						// Pass data store op right back to ContainerRuntime
+						reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+							submitDataStoreOp(
+								containerRuntime,
+								envelope.address,
+								envelope.contents,
+								localOpMetadata,
+							);
+						},
+					} as ChannelCollection;
 
-				changeConnectionState(containerRuntime, false, mockClientId);
+					changeConnectionState(containerRuntime, false, mockClientId);
 
-				submitDataStoreOp(containerRuntime, "1", "test");
-				(containerRuntime as any).flush();
+					// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
+					submitDataStoreOp(containerRuntime, "1", "test");
+					(containerRuntime as any).flush();
 
-				submitDataStoreOp(containerRuntime, "2", "test");
-				changeConnectionState(containerRuntime, true, mockClientId);
-				(containerRuntime as any).flush();
+					submitDataStoreOp(containerRuntime, "2", "test");
+					changeConnectionState(containerRuntime, true, mockClientId);
+					(containerRuntime as any).flush();
 
-				assert.strictEqual(submittedOps.length, 2);
-				assert.strictEqual(submittedOps[0].contents.address, "1");
-				assert.strictEqual(submittedOps[1].contents.address, "2");
-			});
+					assert.strictEqual(submittedOps.length, 2);
+					assert.strictEqual(submittedOps[0].contents.address, "1");
+					assert.strictEqual(submittedOps[1].contents.address, "2");
+					assert.strictEqual(
+						submittedOps[0].metadata?.batchId,
+						enableOfflineLoad ? "mockClientId_[-1]" : undefined,
+					);
+					assert.strictEqual(
+						submittedOps[1].metadata?.batchId,
+						enableOfflineLoad ? "mockClientId_[-2]" : undefined,
+					);
+				}),
+			);
 		});
 
 		describe("orderSequentially", () =>
@@ -721,8 +734,11 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
-						return undefined;
+					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
+						return _messages.map((message) => ({
+							message,
+							localOpMetadata: undefined,
+						}));
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;
@@ -899,6 +915,7 @@ describe("Runtime", () => {
 								contents: {
 									address: "address",
 								},
+								clientSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							true /* local */,
 						);
@@ -1741,6 +1758,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1782,6 +1800,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1850,6 +1869,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {

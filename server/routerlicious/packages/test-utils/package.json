@@ -76,7 +76,7 @@
 		"@fluidframework/server-test-utils-previous": "npm:@fluidframework/server-test-utils@5.0.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^18.17.1",
+		"@types/node": "^18.19.39",
 		"@types/sinon": "^9.0.9",
 		"@types/string-hash": "^1.1.1",
 		"@types/uuid": "^9.0.2",
