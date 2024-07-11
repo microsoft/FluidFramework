@@ -14057,6 +14057,9 @@ importers:
 
   packages/test/test-end-to-end-tests:
     dependencies:
+      '@ff-internal/aria-logger':
+        specifier: ^0.0.20
+        version: 0.0.20(tslib@1.14.1)
       '@fluid-experimental/attributor':
         specifier: workspace:~
         version: link:../../framework/attributor
@@ -17454,6 +17457,24 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0, npm: '>=6.14.13'}
     dev: true
 
+  /@ff-internal/aria-logger@0.0.20(tslib@1.14.1):
+    resolution: {integrity: sha1-YVKBqTPEez1QYbBunvfM+h1LOAg=}
+    engines: {node: '>=18.17.1', pnpm: '8'}
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/telemetry-utils': 0.36.1
+      '@fluidframework/test-driver-definitions': 0.36.1
+      '@microsoft/1ds-post-js': 3.2.15(tslib@1.14.1)
+      '@microsoft/oteljs': 4.20.7
+      '@microsoft/oteljs-1ds': 4.20.7
+      axios: 0.21.4
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+      - tslib
+    dev: false
+
   /@floating-ui/core@1.6.0:
     resolution: {integrity: sha512-PcF++MykgmTj3CIyOQbKA/hDzOAiqI3mhuoN44WRCopIs1sgoDoU4oty4Jtqaj/y3oDU6fnVSm4QG0a3t5i0+g==}
     dependencies:
@@ -19457,12 +19478,28 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/common-definitions@0.19.1:
+    resolution: {integrity: sha512-H+wEaxuIHODVNqyY8XSMY6ww7ndrRfht9CXKUAUzdQjUN1Oi++YonKcD3CXWZod6afxZ6abDmltIO9wLrjOJzg==}
+    dev: false
+
   /@fluidframework/common-definitions@0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: false
 
   /@fluidframework/common-definitions@1.1.0:
     resolution: {integrity: sha512-WQYtG9tkx2j7i1JSXPvwLnQsqCOZAghMj0aGciqjZVNppUly/XBpAjb4V6FEUCEjxCScPKhyE+1rhV1ep52NgA==}
+
+  /@fluidframework/common-utils@0.28.0:
+    resolution: {integrity: sha512-15bJziOHNejiChO8Yug1GT3ev4CI1XW73oNxgx3BG2bQvnqaOcQ3JuceSY1z2DH0Bm6lF8hzWdku+C2Bxl84jg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+      '@types/events': 3.0.3
+      assert: 2.1.0
+      base64-js: 1.5.1
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: false
 
   /@fluidframework/common-utils@0.32.2:
     resolution: {integrity: sha512-PoGX7/l0vWKt5JaAxcgFOdGje30Q6qSE06YzFIKh9Ba3oq7B60+TFqu7c2ErQt6sNddmvcAcAiLVNaTGAip3vw==}
@@ -19668,6 +19705,10 @@ packages:
       - supports-color
     dev: false
 
+  /@fluidframework/core-interfaces@0.36.1:
+    resolution: {integrity: sha512-WYNKAUYgZ1OVGLprI3O6//TPRwcFuX753J8d4TaG5pKktIqJ5d1NHTORKAmAY01V48/ftOFaSqPIREiEkrAJFg==}
+    dev: false
+
   /@fluidframework/core-interfaces@1.4.0:
     resolution: {integrity: sha512-PDIglmsa9BgFh7Xhfs32KA3Q34/arTVHF4m3M0IuAByP4z8Oi2lVuNENZnBEk+IJMcrUhUDk5Q9LH8KGfoAw+Q==}
     dev: false
@@ -19870,6 +19911,14 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/driver-definitions@0.36.1:
+    resolution: {integrity: sha512-xPMq20iOvR0KIiAlPDob18PLwAyXXcXXvNOwNxnRnprpxWfepkKQb5jTzQ0g/u8wajt6gvt3jGn2ksZMN5mshw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/core-interfaces': 0.36.1
+      '@fluidframework/protocol-definitions': 0.1021.0
+    dev: false
 
   /@fluidframework/driver-definitions@1.4.0:
     resolution: {integrity: sha512-ay6Wwl8zGS64fjDsdh2iOeKiVVxT57Opeqjp6DqSglnnJi6AkSfYVoOVlMZ5+vJTfYJN3N4ptjrP/i3Mao9zPA==}
@@ -20365,6 +20414,12 @@ packages:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: /events@3.3.0
+
+  /@fluidframework/protocol-definitions@0.1021.0:
+    resolution: {integrity: sha512-qJ0/kyxmQOCLjb0gvWHKQdjNUVQdso5N5lWiqv6SZIvVtWTE+3k8Z4gN3d365A1jGdpn5qAnOaV9au3aAtWARQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+    dev: false
 
   /@fluidframework/protocol-definitions@0.1028.2000:
     resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
@@ -21019,6 +21074,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/telemetry-utils@0.36.1:
+    resolution: {integrity: sha512-OeZgAI8SYuQ0epXTD5W1yGG4keeLcyASwPQSMDhbngsbM/PoQogvKI1kXJIFe2axmO7CM8y5iyDX6a/y2HaWrw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/common-utils': 0.28.0
+      debug: 4.3.6(supports-color@8.1.1)
+      events: 3.3.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/telemetry-utils@1.4.0:
     resolution: {integrity: sha512-WXG1ThL+WJLGdBtUGlCPPlIrHxqnc+zy+YHrYtqFnlIp+75W3W+YApR5dyP1uCfvapISoBPo0htK3WNIiyj8Rw==}
     dependencies:
@@ -21043,6 +21109,16 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/test-driver-definitions@0.36.1:
+    resolution: {integrity: sha512-T1n4oDM6FRbGr1qjynpFmRRoQbYMcHPep3FpWzXGGOODfkW77zBObvgPhTI4F66g8JZHn1MRneOCjTfxFnL+Sw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/core-interfaces': 0.36.1
+      '@fluidframework/driver-definitions': 0.36.1
+      '@fluidframework/protocol-definitions': 0.1021.0
+      uuid: 8.3.2
+    dev: false
 
   /@fluidframework/test-runtime-utils@2.2.0:
     resolution: {integrity: sha512-Y/5CvcnAKjHQcuJH2Lvaxe0E5RNIiFnd0zTGDDqbze8xZyu7IblQACYpXrtYUISkG8WovSa/81Y3DTbdclkA9Q==}
@@ -22023,6 +22099,21 @@ packages:
 
   /@microsoft/load-themed-styles@1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
+    dev: false
+
+  /@microsoft/oteljs-1ds@4.20.7:
+    resolution: {integrity: sha1-NbqMG3fsxQtGgVPPwTGVzBAXS6A=}
+    dependencies:
+      '@microsoft/1ds-core-js': 3.2.15(tslib@1.14.1)
+      '@microsoft/1ds-post-js': 3.2.15(tslib@1.14.1)
+      '@microsoft/oteljs': 4.20.7
+      tslib: 1.14.1
+    dev: false
+
+  /@microsoft/oteljs@4.20.7:
+    resolution: {integrity: sha1-OxZdsdAQqA5OKAHhL+x3M51d02I=}
+    dependencies:
+      tslib: 1.14.1
     dev: false
 
   /@microsoft/tsdoc-config@0.16.2:
@@ -25110,6 +25201,14 @@ packages:
   /axe-core@4.9.1:
     resolution: {integrity: sha512-QbUdXJVTpvUTHU7871ppZkdOLBeGUKBQWHkHrvN2V9IQWGMt61zf3B45BtzjxEJzYuj0JBjBZP/hmYS/R9pmAw==}
     engines: {node: '>=4'}
+    dev: false
+
+  /axios@0.21.4:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
+    dependencies:
+      follow-redirects: 1.15.6(debug@4.3.4)
+    transitivePeerDependencies:
+      - debug
     dev: false
 
   /axios@0.28.1:
