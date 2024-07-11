@@ -10,7 +10,6 @@ import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 /**
  * Properties for initializing a {@link TinyliciousClient}
- * @sealed
  * @public
  */
 export interface TinyliciousClientProps {
@@ -28,7 +27,6 @@ export interface TinyliciousClientProps {
 
 /**
  * Parameters for establishing a connection with the a Tinylicious service.
- * @sealed
  * @public
  */
 export interface TinyliciousConnectionConfig {
@@ -66,7 +64,6 @@ export interface TinyliciousConnectionConfig {
  *
  * Returned by {@link TinyliciousClient.createContainer} and {@link TinyliciousClient.getContainer} alongside the FluidContainer.
  *
- * @sealed
  * @public
  */
 export interface TinyliciousContainerServices {
@@ -79,7 +76,6 @@ export interface TinyliciousContainerServices {
 
 /**
  * Tinylicious {@link @fluidframework/fluid-static#IUser}.
- * @sealed
  * @public
  */
 export interface TinyliciousUser extends IUser {
@@ -91,7 +87,6 @@ export interface TinyliciousUser extends IUser {
 
 /**
  * Tinylicious {@link @fluidframework/fluid-static#IMember}.
- * @sealed
  * @public
  */
 export interface TinyliciousMember extends IMember {
@@ -103,7 +98,6 @@ export interface TinyliciousMember extends IMember {
 
 /**
  * Tinylicious {@link @fluidframework/fluid-static#IServiceAudience}.
- * @sealed
  * @public
  */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

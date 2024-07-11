@@ -10,7 +10,11 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader, loadContainerPaused } from "@fluidframework/container-loader/internal";
-import type { FluidObject, IConfigProviderBase, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IConfigProviderBase,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
@@ -161,10 +165,7 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
-		url.searchParams.append(
-			"storage",
-			encodeURIComponent(this.connectionConfig.endpoint),
-		);
+		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.connectionConfig)),
@@ -200,10 +201,7 @@ export class AzureClient {
 	}> {
 		const loader = this.createLoader(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
-		url.searchParams.append(
-			"storage",
-			encodeURIComponent(this.connectionConfig.endpoint),
-		);
+		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.connectionConfig)),
@@ -233,10 +231,7 @@ export class AzureClient {
 		options?: AzureGetVersionsOptions,
 	): Promise<AzureContainerVersion[]> {
 		const url = new URL(this.connectionConfig.endpoint);
-		url.searchParams.append(
-			"storage",
-			encodeURIComponent(this.connectionConfig.endpoint),
-		);
+		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
 		url.searchParams.append(
 			"tenantId",
 			encodeURIComponent(getTenantId(this.connectionConfig)),

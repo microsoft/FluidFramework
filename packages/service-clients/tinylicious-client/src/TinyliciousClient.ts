@@ -10,7 +10,11 @@ import type {
 	IHostLoader,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import type { ConfigTypes, FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	FluidObject,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
