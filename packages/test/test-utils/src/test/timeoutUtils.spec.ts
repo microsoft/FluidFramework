@@ -114,11 +114,23 @@ describe("TimeoutPromise", () => {
 			}
 		}).timeout(25);
 
+		it("Times out as expected if called multiple times inside a test with no specific durations", async () => {
+			try {
+				// First call will resolve before test timeout.
+				await timeoutPromise((resolve) => { setTimeout(resolve, 75); }, { errorMsg: "First call" });
+				// Second call on its own would resolve before test timeout, but the first call already "consumed"
+				// 75ms of the 100ms (total test timeout) so this one should get timed out by timeoutPromise.
+				await timeoutPromise((resolve) => { setTimeout(resolve, 75); }, { errorMsg: "Second call" });
+				assert(false, "should have timed out");
+			} catch (e: any) {
+				assert.equal(e.message, "Second call (85ms)");
+			}
+		}).timeout(100);
+
 		let retryCount = -1;
 		it("timeoutPromise state is reset correctly if a mocha test times out", async () => {
 			// Cause a timeout the first time but pass on retry, to ensure that if a test is timed out by mocha
 			// we reset the state used by timeoutPromise.
-
 			retryCount++;
 			if (retryCount === 0) {
 				await new Promise(() => {});
