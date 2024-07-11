@@ -305,6 +305,10 @@ export abstract class FluidDataStoreContext
 		return this._isInMemoryRoot;
 	}
 
+	public get pendingCount(): number {
+		return this.pending?.length ?? 0;
+	}
+
 	protected registry: IFluidDataStoreRegistry | undefined;
 
 	protected detachedRuntimeCreation = false;
@@ -961,7 +965,12 @@ export abstract class FluidDataStoreContext
 	) {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "GC_Deleted_DataStore_Changed",
@@ -979,7 +988,12 @@ export abstract class FluidDataStoreContext
 
 		if (checkTombstone && this.tombstoned) {
 			const messageString = `Context is tombstoned! Call site [${callSite}]`;
-			const error = new DataCorruptionError(messageString, safeTelemetryProps);
+			const error = DataProcessingError.create(
+				messageString,
+				callSite,
+				undefined /* sequencedMessage */,
+				safeTelemetryProps,
+			);
 
 			sendGCUnexpectedUsageEvent(
 				this.mc,

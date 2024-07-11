@@ -1214,7 +1214,23 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const summaryBuilder = new SummaryTreeBuilder();
 		await this.visitContextsDuringSummary(
 			async (contextId: string, context: FluidDataStoreContext) => {
+				// If summarize results in this data store's realization, let GC know so that it can log in case
+				// the data store is not referenced. This will help identifying scenarios that we see today where
+				// unreferenced data stores are being loaded.
+				const contextLoadedBefore = context.isLoaded;
+				const pendingCount = context.pendingCount;
+
 				const contextSummary = await context.summarize(fullTree, trackState, telemetryContext);
+
+				if (!contextLoadedBefore && context.isLoaded) {
+					this.gcNodeUpdated({
+						node: { type: "DataStore", path: `/${context.id}` },
+						reason: "Loaded",
+						packagePath: context.packagePath,
+						timestampMs: undefined, // This will be added by the parent context if needed.
+						additionalProps: { opCount: pendingCount, fullTree, duringSummarize: true },
+					});
+				}
 				summaryBuilder.addWithStats(contextId, contextSummary);
 			},
 		);
@@ -1280,9 +1296,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "GC_DeletingLoadedDataStore",
 				...tagCodeArtifacts({
-					id: dataStoreId,
+					id: `/${dataStoreId}`,
 					pkg: dataStoreContext.packagePath.join("/"),
 				}),
+				details: {
+					aliased: this.aliasedDataStores.has(dataStoreId),
+				},
 			});
 		}
 

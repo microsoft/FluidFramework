@@ -13,7 +13,10 @@ import {
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	ITelemetryLoggerExt,
+	type ITelemetryPropertiesExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ContainerRuntimeGCMessage } from "../messageTypes.js";
@@ -409,6 +412,8 @@ export interface IGCNodeUpdatedProps {
 	request?: IRequest;
 	/** If the node was loaded via request path, the header data. May be modified from the original request */
 	headerData?: RuntimeHeaderData;
+	/** Any other properties to be logged. */
+	additionalProps?: ITelemetryPropertiesExt;
 }
 
 /** Parameters necessary for creating a GarbageCollector. */
