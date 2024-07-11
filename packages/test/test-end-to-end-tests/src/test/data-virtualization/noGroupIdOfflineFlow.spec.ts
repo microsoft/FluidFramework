@@ -24,7 +24,6 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject {
-		private readonly _childObject?: TestDataObject;
 		public get _root() {
 			return this.root;
 		}
@@ -33,11 +32,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 			return this.context.containerRuntime as ContainerRuntime;
 		}
 
-		public get childObject() {
-			return this._childObject;
-		}
-
-		protected async initializingFirstTime(props?: boolean): Promise<void> {
+		protected async initializingFirstTime(): Promise<void> {
 			const sharedCounter = SharedCounter.create(this.runtime);
 			this.root.set("counter", sharedCounter.handle);
 		}
