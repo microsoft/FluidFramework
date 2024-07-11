@@ -50,6 +50,10 @@ export type CrossFieldKeyRange = [
 	CrossFieldTarget,
 	RevisionTag | undefined,
 	ChangesetLocalId,
+	/**
+	 * The length of this range.
+	 * TODO: This does not need to be part of the key and could be part of the value instead.
+	 */
 	number,
 ];
 

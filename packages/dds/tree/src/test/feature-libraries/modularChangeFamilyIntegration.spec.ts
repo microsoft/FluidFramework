@@ -60,6 +60,7 @@ import type {
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change, removeAliases } from "./modular-schema/modularChangesetUtil.js";
+import { merge } from "../objMerge.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
@@ -271,7 +272,7 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 1);
+			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 2, 2);
 			const [move1, move2] = getChanges();
 			const rebased = family.rebase(
 				makeAnonChange(move2),
@@ -280,16 +281,18 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const expected = Change.build(
-				{ family, maxId: 3 },
+				{ family, maxId: 5 },
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.tomb(tag1, brand(0)),
-					MarkMaker.moveIn(1, { localId: brand(2) }),
+					MarkMaker.moveOut(1, { localId: brand(3) }),
+					MarkMaker.moveIn(2, { localId: brand(2) }),
 				]),
 				Change.field(fieldB, sequence.identifier, [
 					MarkMaker.moveOut(1, { localId: brand(2) }),
 				]),
 			);
 
+			const diff = merge(rebased, expected);
 			assert.deepEqual(rebased, expected);
 		});
 

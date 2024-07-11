@@ -2339,8 +2339,14 @@ class RebaseManager extends CrossFieldManagerI<FieldChange> {
 		id: ChangesetLocalId,
 		count: number,
 	): void {
-		// XXX: Need custom setter which handles key ranges
-		this.table.rebasedCrossFieldKeys.set([target, revision, id, count], this.fieldId);
+		setInCrossFieldKeyTable(
+			this.table.rebasedCrossFieldKeys,
+			target,
+			revision,
+			id,
+			count,
+			this.fieldId,
+		);
 	}
 
 	private get table(): RebaseTable {
@@ -2892,42 +2898,96 @@ export function getFieldsForCrossFieldKey(
 	[target, revision, id, count]: CrossFieldKeyRange,
 ): FieldId[] {
 	let firstLocalId: number = id;
-	const lastLocalId = firstLocalId + count - 1;
+	const lastLocalId = id + count - 1;
 
 	const fields: FieldId[] = [];
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		const entry = changeset.crossFieldKeys.getPairOrNextLower([
+		const entry = getFirstIntersectingCrossFieldEntry(changeset.crossFieldKeys, [
 			target,
 			revision,
-			id,
-			Infinity,
+			brand(firstLocalId),
+			count,
 		]);
+
 		if (entry === undefined) {
 			return fields;
 		}
 
-		const [entryKey, fieldId] = entry;
-		const [entryTarget, entryRevision, entryId, entryCount] = entryKey;
-		if (entryTarget !== target || entryRevision !== revision) {
-			return fields;
-		}
+		const [[_target, _revision, entryId, entryCount], fieldId] = entry;
+		fields.push(normalizeFieldId(fieldId, changeset.nodeAliases));
 
 		const entryLastId = entryId + entryCount - 1;
-
-		if (entryId > firstLocalId || entryLastId < firstLocalId) {
-			// TODO: We should probably assert that the ID ranges have no overlap.
-			return fields;
-		}
-
-		fields.push(normalizeFieldId(fieldId, changeset.nodeAliases));
 		if (entryLastId >= lastLocalId) {
 			return fields;
 		}
 
 		firstLocalId = entryLastId + 1;
 	}
+}
+
+function getFirstIntersectingCrossFieldEntry(
+	table: CrossFieldKeyTable,
+	[target, revision, id, count]: CrossFieldKeyRange,
+): [CrossFieldKeyRange, FieldId] | undefined {
+	const entry = table.nextLowerPair([target, revision, id, Infinity]);
+	if (entry === undefined) {
+		return undefined;
+	}
+
+	const [entryTarget, entryRevision, entryId, entryCount] = entry[0];
+	if (entryTarget !== target || entryRevision !== revision) {
+		return undefined;
+	}
+
+	const lastQueryId = id + count - 1;
+	const entryLastId = entryId + entryCount - 1;
+	if (entryId > lastQueryId || entryLastId < id) {
+		return undefined;
+	}
+
+	return entry;
+}
+
+function setInCrossFieldKeyTable(
+	table: CrossFieldKeyTable,
+	target: CrossFieldTarget,
+	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
+	count: number,
+	value: FieldId,
+): void {
+	let entry = getFirstIntersectingCrossFieldEntry(table, [target, revision, id, count]);
+	const lastQueryId = id + count - 1;
+	while (entry !== undefined) {
+		const [entryKey, entryValue] = entry;
+		table.delete(entryKey);
+
+		const [_target, _revision, entryId, entryCount] = entryKey;
+		if (entryId < id) {
+			table.set([target, revision, entryId, id - entryId], entryValue);
+		}
+
+		const lastEntryId = entryId + entryCount - 1;
+		if (lastEntryId > lastQueryId) {
+			table.set(
+				[target, revision, brand(lastQueryId + 1), lastEntryId - lastQueryId],
+				entryValue,
+			);
+			break;
+		}
+
+		const nextId: ChangesetLocalId = brand(lastEntryId + 1);
+		entry = getFirstIntersectingCrossFieldEntry(table, [
+			target,
+			revision,
+			nextId,
+			lastQueryId - nextId + 1,
+		]);
+	}
+
+	table.set([target, revision, id, count], value);
 }
 
 function normalizeFieldId(fieldId: FieldId, nodeAliases: ChangeAtomIdMap<NodeId>): FieldId {
