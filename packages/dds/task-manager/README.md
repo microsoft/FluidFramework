@@ -1,6 +1,6 @@
 # @fluidframework/task-manager
 
-TODO: what is this?
+A distributed data structure for queueing exclusive tasks.
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
 
