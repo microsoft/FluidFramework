@@ -88,10 +88,9 @@ export class SparseArray2D<T>
 	}
 
 	public get matrixProducer(): IMatrixProducer<T> {
-		// Suppression needed to satisfy the interface declaration while also not returning
+		// Cast is needed to satisfy the interface declaration while also not returning
 		// an IMatrixProducer for this class.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-		return undefined as any;
+		return undefined as unknown as IMatrixProducer<T>;
 	}
 
 	public setCell(row: number, col: number, value: T | undefined): void {
