@@ -40,12 +40,12 @@ export interface TinyliciousContainerServices {
     readonly audience: ITinyliciousAudience;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousMember extends IMember {
     readonly name: string;
 }
 
-// @public
+// @public @sealed
 export interface TinyliciousUser extends IUser {
     readonly name: string;
 }

@@ -79,6 +79,7 @@ export interface TinyliciousContainerServices {
 
 /**
  * Tinylicious {@link @fluidframework/fluid-static#IUser}.
+ * @sealed
  * @public
  */
 export interface TinyliciousUser extends IUser {
@@ -90,6 +91,7 @@ export interface TinyliciousUser extends IUser {
 
 /**
  * Tinylicious {@link @fluidframework/fluid-static#IMember}.
+ * @sealed
  * @public
  */
 export interface TinyliciousMember extends IMember {
