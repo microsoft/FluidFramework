@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
-import { validateUsageError } from "../utils.js";
+import { TestTreeProviderLite, validateUsageError } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -739,56 +739,25 @@ describe("ArrayNode", () => {
 			values2.next();
 		});
 
-		it("Concurrently iterating and editing after inserting into an unhydrated array node errors.", () => {
-			class TestLeaf extends schemaFactory.object("Leaf Object", {
-				value: schemaFactory.number,
-			}) {}
-			class TestArray extends schemaFactory.array("Array", TestLeaf) {}
+		it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
+			class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
 
-			// Create unhydrated nodes
-			const leaf1 = new TestLeaf({ value: 1 });
-			const leaf2 = new TestLeaf({ value: 2 });
-			const leaf3 = new TestLeaf({ value: 3 });
+			// Create unhydrated array node
+			const array = new TestArray([1, 2]);
 
-			// Create an unhydrated array node
-			const array = new TestArray([leaf1, leaf2, leaf3]);
-
-			// Hydrate the array node in a separate step.
-			const hydratedArray = hydrate(TestArray, array);
-
-			const values = hydratedArray.values();
-			values.next();
-			hydratedArray.removeRange(1, 3);
-
-			assert.throws(
-				() => {
-					values.next();
-				},
-				validateUsageError(/Concurrent editing and iteration is not allowed./),
-			);
-		});
-
-		it("Concurrently iterating and editing after inserting unhydrated nodes should throw an error.", () => {
-			class TestLeaf extends schemaFactory.object("Leaf Object", {
-				value: schemaFactory.number,
-			}) {}
-			class TestArray extends schemaFactory.array("Array", TestLeaf) {}
-
-			const array = hydrate(TestArray, []);
-
-			// Create unhydrated nodes
-			const leaf1 = new TestLeaf({ value: 1 });
-			const leaf2 = new TestLeaf({ value: 2 });
-			const leaf3 = new TestLeaf({ value: 3 });
-
-			array.insertAt(0, leaf1);
-			array.insertAt(1, leaf2);
-			array.insertAt(2, leaf3);
-
+			const provider = new TestTreeProviderLite();
+			const tree = provider.trees[0];
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
 			const values = array.values();
-			values.next();
-			array.removeRange(1, 3);
 
+			// Initialize the tree with unhydrated array node
+			view.initialize(array);
+
+			// Checks that the iterator works after hydrating the node.
+			values.next();
+			array.removeRange(1, 2);
+
+			// Checks that the iterator throws after
 			assert.throws(
 				() => {
 					values.next();
@@ -827,7 +796,7 @@ describe("ArrayNode", () => {
 			assert.deepEqual(result, []);
 		});
 
-		it("Iterates through the values of two different iterators", () => {
+		it("Iterates through the values of two concurrent iterators", () => {
 			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
 			const values1 = array.values();
 			const values2 = array.values();

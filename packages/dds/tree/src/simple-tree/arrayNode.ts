@@ -877,7 +877,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 		for (let i = 0; i < this.length; i++) {
 			yield this.at(i) ?? fail("Index is out of bounds");
-			if (initialLastUpdatedStamp < this.#generationNumber) {
+			if (initialLastUpdatedStamp !== this.#generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}
 		}
