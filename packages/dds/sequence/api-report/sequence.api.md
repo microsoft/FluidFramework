@@ -628,7 +628,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 }
 
 // @alpha
-export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
+class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
@@ -651,6 +651,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     protected rollback(content: any, localOpMetadata: unknown): void;
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
+export { SharedString }
+export { SharedString as SharedStringClass }
 
 // @alpha (undocumented)
 export class SharedStringFactory implements IChannelFactory {

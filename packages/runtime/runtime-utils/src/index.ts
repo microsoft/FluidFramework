@@ -12,6 +12,7 @@ export {
 	Factory,
 	responseToException,
 } from "./dataStoreHelpers.js";
+export { toFluidHandleInternal } from "./handles.js";
 export { ISerializedHandle, isSerializedHandle } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils.js";
@@ -35,3 +36,4 @@ export {
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils.js";
+export { toDeltaManagerInternal } from "./deltaManager.js";

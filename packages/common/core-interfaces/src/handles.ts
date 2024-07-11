@@ -100,3 +100,9 @@ export interface IFluidHandle<
 	 */
 	bind(handle: IFluidHandle): void;
 }
+
+/**
+ * Handle to a shared {@link FluidObject}.
+ * @alpha
+ */
+export type IFluidHandleInternal<T = FluidObject & IFluidLoadable> = IFluidHandle<T>;

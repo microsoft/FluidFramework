@@ -264,6 +264,9 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
+// @alpha
+export type IFluidHandleInternal<T = FluidObject & IFluidLoadable> = IFluidHandle<T>;
+
 // @public (undocumented)
 export const IFluidLoadable: keyof IProvideFluidLoadable;
 

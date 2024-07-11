@@ -81,6 +81,7 @@ export {
 	getTextAndMarkers,
 	ISharedString,
 	SharedString,
+	SharedString as SharedStringClass,
 	SharedStringSegment,
 } from "./sharedString.js";
 export {
