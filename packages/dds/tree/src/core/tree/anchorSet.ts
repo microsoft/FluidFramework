@@ -15,6 +15,7 @@ import {
 	brand,
 	brandedSlot,
 	fail,
+	oob,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -516,28 +517,21 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 			let index = 0;
 			while (
 				index < sourceChildren.length &&
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				sourceChildren[index]!.parentIndex < startPath.parentIndex
+				this.getParentIndex(sourceChildren, index) < startPath.parentIndex
 			) {
 				numberBeforeDecouple++;
 				index++;
 			}
 			while (
 				index < sourceChildren.length &&
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				sourceChildren[index]!.parentIndex < startPath.parentIndex + count
+				this.getParentIndex(sourceChildren, index) < startPath.parentIndex + count
 			) {
 				numberToDecouple++;
 				index++;
 			}
 			while (index < sourceChildren.length) {
-				// Fix indexes in source after moved items (subtract count).
-				// Non null asserting here because we are iterating over sourceChildren
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				sourceChildren[index]!.parentIndex -= count;
-				index++;
+				const sourceChild = sourceChildren[index++] ?? oob();
+				sourceChild.parentIndex -= count;
 			}
 			// Sever the parent -> child connections
 			nodes = sourceChildren.splice(numberBeforeDecouple, numberToDecouple);
@@ -1073,6 +1067,9 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		this.events.emit("treeChanging", this);
 		this.activeVisitor = visitor;
 		return visitor;
+	}
+	private getParentIndex(nodes: PathNode[], index: number): number {
+		return (nodes[index] ?? oob()).parentIndex;
 	}
 }
 

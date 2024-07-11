@@ -54,6 +54,7 @@ import {
 	nestedMapFromFlatList,
 	nestedMapToFlatList,
 	nestedSetContains,
+	oob,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
@@ -1930,14 +1931,9 @@ function revisionFromTaggedChange(
 function revisionFromRevInfos(
 	revInfos: undefined | readonly RevisionInfo[],
 ): RevisionTag | undefined {
-	if (revInfos === undefined || revInfos.length !== 1) {
-		return undefined;
+	if (revInfos?.length === 1) {
+		return (revInfos[0] ?? oob()).revision;
 	}
-	assert(
-		revInfos[0] !== undefined,
-		"Revision info from revisionFromRevInfos should not be undefined",
-	);
-	return revInfos[0].revision;
 }
 
 function getActiveFieldChanges(changes: ModularChangeset): FieldChangeMap {
