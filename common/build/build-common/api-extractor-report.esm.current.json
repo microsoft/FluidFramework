@@ -18,8 +18,14 @@
 			// Disabled since we are using `bundledPackages` above to bundle re-exports in the reports.
 			// We don't currently require cross-package export completeness.
 			"ae-forgotten-export": {
-				"logLevel": "none",
-				"addToApiReportFile": false
+				"logLevel": "none"
+			},
+
+			// Links with implicit (unanotated) package name specifiers don't currently resolve correctly
+			// when their members are bundled.
+			// See https://github.com/microsoft/rushstack/issues/3521
+			"ae-unresolved-link": {
+				"logLevel": "none"
 			}
 		}
 	}
