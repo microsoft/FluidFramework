@@ -100,13 +100,18 @@ describe("SimpleTree benchmarks", () => {
 				treeReadingFunction: (tree: RootNode) => number | undefined,
 				expectedValue: number | undefined,
 			) {
-				const unhydratedTree = unhydratedNodeInitFunction();
+				let unhydratedTree: RootNode | undefined;
 				let readNumber: number | undefined;
 				benchmark({
 					type: BenchmarkType.Measurement,
 					title: `${title} (unhydrated node)`,
+					before: () => {
+						unhydratedTree = unhydratedNodeInitFunction();
+					},
 					benchmarkFn: () => {
-						readNumber = treeReadingFunction(unhydratedTree);
+						readNumber = treeReadingFunction(
+							unhydratedTree ?? fail("Expected unhydratedTree to be set"),
+						);
 					},
 					after: () => {
 						assert.equal(readNumber, expectedValue);
