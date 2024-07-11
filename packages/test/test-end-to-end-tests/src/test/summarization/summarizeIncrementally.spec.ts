@@ -133,7 +133,8 @@ describeCompat(
 			summarizer = (await createSummarizer(provider, container)).summarizer;
 		});
 
-		it("can do incremental data store summary", async function () {
+		// 278456
+		it.only("can do incremental data store summary", async function () {
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
 			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
 			dataObject1._root.set("dataObject2", dataObject2.handle);
@@ -183,7 +184,8 @@ describeCompat(
 			);
 		});
 
-		it("can do incremental dds summary", async () => {
+		// 278813, 276975
+		it.only("can do incremental dds summary", async () => {
 			const directory2 = SharedDirectory.create(dataObject1._runtime);
 			dataObject1._root.set("directory2", directory2.handle);
 

@@ -414,7 +414,8 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 		},
 	);
 
-	itExpects(
+	// 276481, 277550, 277863, 276970, 277331, 277338, 276676, 276574
+	itExpects.only(
 		"Heuristic based summaries should pass on retry when NodeDidNotRunGC is hit",
 		[
 			{
