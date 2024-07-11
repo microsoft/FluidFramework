@@ -29,10 +29,9 @@ export type { IUser } from "@fluidframework/driver-definitions";
 export { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 
 // Re-export so developers can build loggers without pulling in core-interfaces
-export {
-	type ITelemetryBaseEvent,
-	type ITelemetryBaseLogger,
-	LogLevel,
+export type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
 // Re-export so developers have access to parameter types for createContainer/getContainer without pulling in fluid-static
