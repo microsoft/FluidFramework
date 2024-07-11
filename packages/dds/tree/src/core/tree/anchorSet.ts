@@ -605,9 +605,7 @@ export class AnchorSet implements Listenable<AnchorSetRootEvents>, AnchorLocator
 		count: number,
 	): number {
 		let index = 0;
-		// Non null asserting here because we are iterating over field
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		while (index < field.length && field[index]!.parentIndex < fromParentIndex) {
+		while (index < field.length && this.getParentIndex(field, index) < fromParentIndex) {
 			index++;
 		}
 		const numberBeforeIncrease = index;
