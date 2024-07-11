@@ -23,6 +23,8 @@ export async function deserializeBlob(
 	storage: IChannelStorageService,
 	path: string,
 	serializer: IFluidSerializer,
+	// Allowing parsed content to remain in its original (any) form.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
 	const blob = await storage.readBlob(path);
 	const utf8 = bufferToString(blob, "utf8");

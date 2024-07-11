@@ -43,7 +43,7 @@ const r0c0ToMorton2x16 = (row: number, col: number): number =>
 	(r0ToMorton16(row) | c0ToMorton16(col)) >>> 0;
 
 type RecurArrayHelper<T> = RecurArray<T> | T;
-type RecurArray<T> = RecurArrayHelper<T>[];
+export type RecurArray<T> = RecurArrayHelper<T>[];
 
 /**
  * Undo JSON serialization's coercion of 'undefined' to null.

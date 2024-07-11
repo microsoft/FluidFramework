@@ -301,11 +301,12 @@ export class PermutationVector extends Client {
 	): Promise<{
 		catchupOpsP: Promise<ISequencedDocumentMessage[]>;
 	}> {
-		const handleTableData = await deserializeBlob(
+		const handleTableData = (await deserializeBlob(
 			storage,
 			SnapshotPath.handleTable,
 			serializer,
-		);
+			// Cast is needed since the (de)serializer returns content of type `any`.
+		)) as Handle[];
 
 		this.handleTable = HandleTable.load<never>(handleTableData);
 

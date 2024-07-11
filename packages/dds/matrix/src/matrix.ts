@@ -59,7 +59,7 @@ import {
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 import { deserializeBlob } from "./serialization.js";
-import { SparseArray2D } from "./sparsearray2d.js";
+import { SparseArray2D, type RecurArray } from "./sparsearray2d.js";
 import { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
 
@@ -865,7 +865,13 @@ export class SharedMatrix<T = any>
 				_pendingCliSeqData,
 				setCellLwwToFwwPolicySwitchOpSeqNumber,
 				cellLastWriteTracker,
-			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
+				// Cast is needed since the (de)serializer returns content of type `any`.
+			] = (await deserializeBlob(storage, SnapshotPath.cells, this.serializer)) as [
+				RecurArray<MatrixItem<T>>,
+				unknown,
+				number,
+				RecurArray<CellLastWriteTrackerItem>,
+			];
 
 			this.cells = SparseArray2D.load(cellData);
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber =

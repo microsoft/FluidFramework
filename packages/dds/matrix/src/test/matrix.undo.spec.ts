@@ -555,6 +555,8 @@ for (const isSetCellPolicyFWW of [false, true]) {
 
 				afterEach(async () => {
 					// Paranoid check that the matrices are have converged on the same state.
+					// Supressed to allow checking that the matrices are not undefined at the end of the test.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 					await expect(undefined as any);
 
 					matrix1.closeMatrix(consumer1);
@@ -662,6 +664,8 @@ for (const isSetCellPolicyFWW of [false, true]) {
 					undo1.redoOperation();
 
 					// Only check for convergence due to GitHub issue #3964...  (See below.)
+					// Supressed to allow checking that the matrices are not undefined at the end of the test.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 					await expect(undefined as any);
 
 					// A known weakness of our current undo implementation is that undoing a
