@@ -18,28 +18,28 @@ const {
  * Reads and returns the contents from the specified template file.
  *
  * @param {string} templateFileName - Name of the file to read, under {@link templatesDirectoryPath} (e.g. "Trademark-Template.md").
+ * @param {number} headingOffset - (optional) Level offset for all headings in the target template.
+ * Must be a non-negative integer.
  */
-const readTemplate = (templateFileName) => {
-	return fs
+const readTemplate = (templateFileName, headingOffset = 0) => {
+	if (!Number.isInteger(headingOffset) || headingOffset < 0) {
+		throw new TypeError(
+			`"headingOffset" must be a non-negative integer. Got "${headingOffset}".`,
+		);
+	}
+
+	const unmodifiedContents = fs
 		.readFileSync(path.resolve(templatesDirectoryPath, templateFileName), {
 			encoding: "utf-8",
 		})
 		.trim();
-};
 
-/**
- * Generates a simple block of Markdown contents by embedding the specified template and (optionally) including a header.
- *
- * @param {string} templateName - The name of the template file to embed.
- * @param {object} headingOptions - (optional) Heading generation options.
- * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
- * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
- * Must be a positive integer.
- * @param {string} headingOptions.headingText - Text to display in the section heading, if one was requested.
- */
-const createSectionFromTemplate = (templateName, headingOptions) => {
-	const sectionBody = readTemplate(templateName);
-	return formattedSectionText(sectionBody, headingOptions);
+	if (headingOffset === 0) {
+		return unmodifiedContents;
+	}
+
+	const headingOffsetString = "#".repeat(headingOffset);
+	return unmodifiedContents.replace(/(^#)/gm, `$1${headingOffsetString}`);
 };
 
 /**
@@ -198,7 +198,6 @@ function parseHeadingOptions(transformationOptions, headingText) {
 }
 
 module.exports = {
-	createSectionFromTemplate,
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
