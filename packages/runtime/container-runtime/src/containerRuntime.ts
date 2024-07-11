@@ -169,6 +169,7 @@ import {
 } from "./messageTypes.js";
 import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
+	BatchId,
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
@@ -2889,14 +2890,16 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
 	 */
-	private flush(): void {
+	private flush(resubmittingBatchId?: BatchId): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(resubmittingBatchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -4118,13 +4121,19 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		});
-		this.flush();
+
+		// Only include Batch ID if "Offline Load" feature is enabled
+		// It's only needed to identify batches across container forks arising from misuse of offline load.
+		const includeBatchId =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		this.flush(includeBatchId ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {

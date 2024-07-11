@@ -137,7 +137,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
-			resolvedUrl.endpoints.ordererUrl,
+			resolvedUrl.endpoints.ordererUrl /* baseUrl */,
 		);
 
 		const createAsEphemeral = isRouterliciousResolvedUrl(resolvedUrl)
@@ -339,7 +339,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			logger2,
 			new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests),
 			this.driverPolicies.enableRestLess,
-			storageUrl,
+			storageUrl /* baseUrl */,
 			storageTokenP,
 		);
 

@@ -18,8 +18,9 @@ import {
 } from "@fluidframework/server-services-client";
 
 import { IWholeFlatSnapshot } from "./contracts.js";
+import { type QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
-import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { RestWrapper } from "./restWrapperBase.js";
 import { IHistorian } from "./storageContracts.js";
 
 export interface ICredentials {
