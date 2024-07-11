@@ -50,6 +50,29 @@ export class OpGroupingManager {
 	}
 
 	/**
+	 * Creates a new batch with a single message of type "groupedBatch" and empty contents.
+	 * @param referenceSequenceNumber - reference sequence number
+	 * @returns - IBatch with empty content
+	 */
+	public createEmptyGroupedBatch(referenceSequenceNumber: number): IBatch<[BatchMessage]> {
+		const serializedContent = JSON.stringify({
+			type: OpGroupingManager.groupedBatchOp,
+			contents: [],
+		});
+
+		return {
+			contentSizeInBytes: 0,
+			messages: [
+				{
+					referenceSequenceNumber,
+					contents: serializedContent,
+				},
+			],
+			referenceSequenceNumber,
+		};
+	}
+
+	/**
 	 * Converts the given batch into a "grouped batch" - a batch with a single message of type "groupedBatch",
 	 * with contents being an array of the original batch's messages.
 	 *

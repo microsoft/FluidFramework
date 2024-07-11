@@ -259,11 +259,38 @@ export class Outbox {
 			true /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
-		this.flushInternal(
+		this.flushInternalMainBatch(
 			this.mainBatch,
 			false /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
+	}
+
+	/**
+	 * Flushes the main batch to the ordering service. If the batch is empty, it will create an empty grouped batch
+	 * if BatchId is present (resubmit flow) and the runtime should send.
+	 */
+	private flushInternalMainBatch(
+		mainBatch: BatchManager,
+		disableGroupedBatching: boolean = false,
+		resubmittingBatchId?: BatchId,
+	) {
+		let clientSequenceNumber: number | undefined;
+		if (mainBatch.empty) {
+			if (resubmittingBatchId && this.params.shouldSend()) {
+				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+					this.params.getCurrentSequenceNumbers().referenceSequenceNumber ?? 0,
+				);
+				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+				this.params.pendingStateManager.onFlushBatch(
+					emptyGroupedBatch.messages,
+					clientSequenceNumber,
+				);
+				return;
+			}
+			return;
+		}
+		this.flushInternal(mainBatch, disableGroupedBatching, resubmittingBatchId);
 	}
 
 	private flushInternal(
