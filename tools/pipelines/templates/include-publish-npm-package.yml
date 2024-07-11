@@ -15,6 +15,18 @@ parameters:
   type: boolean
   default: false
 
+- name: buildDirectory
+  type: string
+
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
+# The path to the pnpm store.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
 stages:
 
 # This stage only runs for test-branch builds
@@ -31,6 +43,9 @@ stages:
       feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
+      buildDirectory: ${{ parameters.buildDirectory }}
+      buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+      pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
 # This stage and the following stage both run for non-test builds. The build feed is equivalent to the public npmjs.org
 # feed except it contains builds for every main- or next-branch build.
@@ -49,6 +64,9 @@ stages:
       # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
+      buildDirectory: ${{ parameters.buildDirectory }}
+      buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+      pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.
@@ -68,6 +86,9 @@ stages:
         # Environment should match the condition for publish_npm_internal_build
         environment: package-build-feed
         pool: ${{ parameters.pool }}
+        buildDirectory: ${{ parameters.buildDirectory }}
+        buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+        pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
 - stage: publish_npm_public
   dependsOn: build
@@ -85,3 +106,6 @@ stages:
       customEndPoint: npmjs
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
+      buildDirectory: ${{ parameters.buildDirectory }}
+      buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+      pnpmStorePath: ${{ parameters.pnpmStorePath }}
