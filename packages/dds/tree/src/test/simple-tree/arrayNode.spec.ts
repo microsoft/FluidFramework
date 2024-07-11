@@ -755,7 +755,9 @@ describe("ArrayNode", () => {
 
 			// Checks that the iterator works after hydrating the node.
 			values.next();
-			array.removeRange(1, 2);
+
+			// Make an edit
+			array.insertAtEnd(3);
 
 			// Checks that the iterator throws after
 			assert.throws(
