@@ -45,7 +45,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		protected async hasInitialized(): Promise<void> {
 			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>("counter");
 			assert(counterHandle !== undefined, "counter handle must be defined");
-			// This is what was hanging, as this is a remote fluid object handle when applyStashedOp is called
+			// This is what was hanging, as this is a RemoteFluidObjectHandle when applyStashedOp is called
 			await counterHandle.get();
 		}
 	}
