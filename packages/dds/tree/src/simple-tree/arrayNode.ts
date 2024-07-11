@@ -875,14 +875,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (initialLastUpdatedStamp !== this.#generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 		}
-		for (
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let i = 0, value = this.at(0)!;
-			i < this.length;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			value = this.at(++i)!
-		) {
-			yield value;
+		for (let i = 0; i < this.length; i++) {
+			yield this.at(i) ?? fail("Index is out of bounds");
 			if (initialLastUpdatedStamp < this.#generationNumber) {
 				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
 			}

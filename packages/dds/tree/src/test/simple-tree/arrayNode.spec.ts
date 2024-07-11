@@ -734,6 +734,9 @@ describe("ArrayNode", () => {
 				},
 				validateUsageError(/Concurrent editing and iteration is not allowed./),
 			);
+			// Checks that new iterator still works
+			const values2 = array.values();
+			values2.next();
 		});
 
 		it("Concurrently iterating and editing after inserting into an unhydrated array node errors.", () => {
@@ -822,6 +825,20 @@ describe("ArrayNode", () => {
 				result.push(nodeChild);
 			}
 			assert.deepEqual(result, []);
+		});
+
+		it("Iterates through the values of two different iterators", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values1 = array.values();
+			const values2 = array.values();
+			const result1 = [];
+			const result2 = [];
+			for (const value of values1) {
+				result1.push(value);
+				result2.push(values2.next().value);
+			}
+			assert.deepEqual(result1, [1, 2, 3]);
+			assert.deepEqual(result2, [1, 2, 3]);
 		});
 	});
 });
