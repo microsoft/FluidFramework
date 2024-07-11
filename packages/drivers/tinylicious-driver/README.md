@@ -1,6 +1,6 @@
 # @fluidframework/tinylicious-driver
 
-TODO: what is this?
+Driver for the `tinylicious` Fluid service.
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
 
