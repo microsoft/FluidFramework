@@ -249,7 +249,7 @@ export function rebaseBranch<TChange>(
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
 		const firstSourcePath =
-			sourcePath[0] ?? fail("Expected sourcePath to have atleast one value");
+			sourcePath[0] ?? oob();
 		const firstTargetRebasePath =
 			targetRebasePath[0] ?? oob();
 		if (firstSourcePath.revision === firstTargetRebasePath.revision) {
