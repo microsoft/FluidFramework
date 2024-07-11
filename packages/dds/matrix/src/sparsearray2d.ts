@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import { IMatrixReader, IMatrixWriter, type IMatrixProducer } from "@tiny-calc/nano";
 
 // Build a lookup table that maps a uint8 to the corresponding uint16 where 0s
 // are interleaved between the original bits. (e.g., 1111... -> 01010101...).
@@ -87,9 +87,9 @@ export class SparseArray2D<T>
 		return undefined;
 	}
 
-	//
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public get matrixProducer(): any {
+	public get matrixProducer(): IMatrixProducer<T> {
+		// Suppression needed to satisfy the interface declaration while also not returning
+		// an IMatrixProducer for this class.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
 		return undefined as any;
 	}
@@ -235,9 +235,12 @@ export class SparseArray2D<T>
 		}
 	}
 
-	private getLevel<T>(parent: UA<UA<T>>, subKey: number): unknown[] {
+	private getLevel<T>(parent: UA<UA<T>>, subKey: number): UA<T> {
 		const level = parent[subKey];
-		return level ?? (parent[subKey] = Array.from({ length: 256 }).fill(undefined));
+		// Using new Array is needed because the array created with Array.from does not
+		// satisfy (T|undefined)[].
+		// eslint-disable-next-line unicorn/no-new-array
+		return level ?? (parent[subKey] = new Array<T|undefined>(256).fill(undefined));
 	}
 
 	public snapshot(): UA<UA<UA<UA<UA<T>>>>> {
