@@ -170,7 +170,7 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 		sections.push(generatePackageScriptsSection(scriptsTable, sectionHeadingOptions));
 	}
 
-	if (options.contributionGuidelines !== "FALSE") {
+	if (options.clientRequirements !== "FALSE") {
 		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
 	}
 
