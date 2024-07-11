@@ -22,6 +22,7 @@ import {
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	sequenceNumbersMatch,
+	type BatchId,
 } from "./batchManager.js";
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
@@ -233,28 +234,48 @@ export class Outbox {
 		}
 	}
 
-	public flush() {
+	/**
+	 * Flush all the batches to the ordering service.
+	 * This method is expected to be called at the end of a batch.
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
+	 */
+	public flush(resubmittingBatchId?: BatchId) {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
 			throw error;
 		}
 
-		this.flushAll();
+		this.flushAll(resubmittingBatchId);
 	}
 
-	private flushAll() {
+	private flushAll(resubmittingBatchId?: BatchId) {
+		// Don't use resubmittingBatchId for idAllocationBatch.
+		// ID Allocation messages are not directly resubmitted so we don't want to reuse the batch ID.
 		this.flushInternal(this.idAllocationBatch);
-		this.flushInternal(this.blobAttachBatch, true /* disableGroupedBatching */);
-		this.flushInternal(this.mainBatch);
+		this.flushInternal(
+			this.blobAttachBatch,
+			true /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
+		this.flushInternal(
+			this.mainBatch,
+			false /* disableGroupedBatching */,
+			resubmittingBatchId,
+		);
 	}
 
-	private flushInternal(batchManager: BatchManager, disableGroupedBatching: boolean = false) {
+	private flushInternal(
+		batchManager: BatchManager,
+		disableGroupedBatching: boolean = false,
+		resubmittingBatchId?: BatchId,
+	) {
 		if (batchManager.empty) {
 			return;
 		}
 
-		const rawBatch = batchManager.popBatch();
+		const rawBatch = batchManager.popBatch(resubmittingBatchId);
 		const shouldGroup =
 			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
@@ -275,6 +296,10 @@ export class Outbox {
 				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
 			clientSequenceNumber = this.sendBatch(processedBatch);
+			assert(
+				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
+				"unexpected negative clientSequenceNumber (empty batch should yield undefined)",
+			);
 		}
 
 		this.params.pendingStateManager.onFlushBatch(rawBatch.messages, clientSequenceNumber);

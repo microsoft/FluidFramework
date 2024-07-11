@@ -39,8 +39,8 @@ import {
 	brand,
 	Breakable,
 	type WithBreakable,
-	breakingMethod,
 	throwIfBroken,
+	breakingClass,
 } from "../util/index.js";
 
 import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
@@ -69,11 +69,9 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 }
 
 /**
- * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
- *
- * TODO: actually implement
- * TODO: is history policy a detail of what indexes are used, or is there something else to it?
+ * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
  */
+@breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	extends SharedObject
 	implements WithBreakable
@@ -300,7 +298,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return builder.getSummaryTree();
 	}
 
-	@breakingMethod
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
@@ -318,7 +315,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
-	@breakingMethod
+
 	private submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
@@ -366,7 +363,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(commit);
 	}
 
-	@breakingMethod
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -402,7 +398,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
-	@breakingMethod
 	protected override reSubmitCore(
 		content: JsonCompatibleReadOnly,
 		localOpMetadata: unknown,
@@ -435,7 +430,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
-	@breakingMethod
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
 		assert(
 			!this.getLocalBranch().isTransacting(),

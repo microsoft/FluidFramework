@@ -45,7 +45,7 @@ import type { TinyliciousClientProps, TinyliciousContainerServices } from "./int
  * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
  *
  * @sealed
- * @beta
+ * @public
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
