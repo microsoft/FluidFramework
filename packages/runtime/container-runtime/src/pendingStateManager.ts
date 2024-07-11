@@ -306,6 +306,18 @@ export class PendingStateManager implements IDisposable {
 		message: InboundSequencedContainerRuntimeMessage;
 		localOpMetadata: unknown;
 	}[] {
+		if (batch.length === 0) {
+			const pendingMessage = this.pendingMessages.peekFront();
+			assert(pendingMessage !== undefined, "No pending message found for this remote message");
+			assert(
+				pendingMessage.batchIdContext.batchStartCsn === batchStartCsn,
+				"The pending batch state indicates we are already processing a batch",
+			);
+			this.savedOps.push(withoutLocalOpMetadata(pendingMessage));
+
+			this.pendingMessages.shift();
+			return [];
+		}
 		return batch.map((message) => ({
 			message,
 			localOpMetadata: this.processPendingLocalMessage(message, batchStartCsn),

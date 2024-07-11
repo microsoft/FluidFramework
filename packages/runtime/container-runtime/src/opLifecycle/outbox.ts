@@ -258,11 +258,34 @@ export class Outbox {
 			true /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
-		this.flushInternal(
+		this.flushInternalMainBatch(
 			this.mainBatch,
 			false /* disableGroupedBatching */,
 			resubmittingBatchId,
 		);
+	}
+
+	private flushInternalMainBatch(
+		batchManager: BatchManager,
+		disableGroupedBatching: boolean = false,
+		resubmittingBatchId?: BatchId,
+	) {
+		let clientSequenceNumber: number | undefined;
+		if (batchManager.empty) {
+			if (resubmittingBatchId && this.params.shouldSend()) {
+				const emptyGroupedBatch = this.params.groupingManager.createEmptyGroupedBatch(
+					this.params.getCurrentSequenceNumbers().referenceSequenceNumber ?? 0,
+				);
+				clientSequenceNumber = this.sendBatch(emptyGroupedBatch);
+				this.params.pendingStateManager.onFlushBatch(
+					emptyGroupedBatch.messages,
+					clientSequenceNumber,
+				);
+				return;
+			}
+			return;
+		}
+		this.flushInternal(batchManager, disableGroupedBatching, resubmittingBatchId);
 	}
 
 	private flushInternal(
@@ -270,6 +293,7 @@ export class Outbox {
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
 	) {
+		let clientSequenceNumber: number | undefined;
 		if (batchManager.empty) {
 			return;
 		}
@@ -286,7 +310,6 @@ export class Outbox {
 			return;
 		}
 
-		let clientSequenceNumber: number | undefined;
 		// Did we disconnect? (i.e. is shouldSend false?)
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.

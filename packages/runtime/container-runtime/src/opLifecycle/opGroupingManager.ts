@@ -102,6 +102,24 @@ export class OpGroupingManager {
 		return groupedBatch;
 	}
 
+	public createEmptyGroupedBatch(referenceSequenceNumber: number): IBatch<[BatchMessage]> {
+		const serializedContent = JSON.stringify({
+			type: OpGroupingManager.groupedBatchOp,
+			contents: [],
+		});
+
+		return {
+			contentSizeInBytes: 0,
+			messages: [
+				{
+					referenceSequenceNumber,
+					contents: serializedContent,
+				},
+			],
+			referenceSequenceNumber,
+		};
+	}
+
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
 		const contents: IGroupedBatchMessageContents = op.contents;
