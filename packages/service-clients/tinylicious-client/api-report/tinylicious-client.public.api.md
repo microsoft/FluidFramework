@@ -6,4 +6,48 @@
 
 export { CompatibilityMode }
 
+// @public
+export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
+
+// @public @sealed
+export class TinyliciousClient {
+    constructor(props?: TinyliciousClientProps | undefined);
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: TinyliciousContainerServices;
+    }>;
+}
+
+// @public
+export interface TinyliciousClientProps {
+    readonly connection?: TinyliciousConnectionConfig;
+    readonly logger?: ITelemetryBaseLogger;
+}
+
+// @public
+export interface TinyliciousConnectionConfig {
+    readonly domain?: string;
+    readonly port?: number;
+    readonly tokenProvider?: ITokenProvider;
+}
+
+// @public
+export interface TinyliciousContainerServices {
+    readonly audience: ITinyliciousAudience;
+}
+
+// @public
+export interface TinyliciousMember extends IMember {
+    readonly name: string;
+}
+
+// @public
+export interface TinyliciousUser extends IUser {
+    readonly name: string;
+}
+
 ```
