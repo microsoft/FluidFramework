@@ -123,6 +123,7 @@ export {
 	type LeafNodeJsonSchema,
 	type JsonDefinitionRef,
 	type NodeJsonSchema,
+	type NodeJsonSchemaBase,
 	type TreeJsonSchema,
 	type FieldJsonSchema,
 } from "./jsonSchema.js";

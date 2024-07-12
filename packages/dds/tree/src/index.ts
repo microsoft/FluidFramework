@@ -334,6 +334,19 @@ export {
 	type SimpleNodeSchema,
 	type SimpleFieldSchema,
 	type SimpleTreeSchema,
+	// Prototype
+	getJsonSchema,
+	type TreeJsonSchema,
+	type JsonSchemaId,
+	type NodeJsonSchema,
+	type NodeJsonSchemaBase,
+	type LeafNodeJsonSchema,
+	type MapNodeJsonSchema,
+	type ArrayNodeJsonSchema,
+	type ObjectNodeJsonSchema,
+	type FieldJsonSchema,
+	type JsonDefinitionRef,
+	type JsonSchemaType,
 } from "./simple-tree/index.js";
 export { SharedTree, configuredSharedTree } from "./treeFactory.js";
 
