@@ -201,8 +201,8 @@ export const treeNodeApi: TreeNodeApi = {
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getFlexNode(node);
-		let shortId: number | string | undefined;
 		const identifierFieldKeys = (flexNode.schema as FlexObjectNodeSchema).identifierFieldKeys;
+
 		switch (identifierFieldKeys.length) {
 			case 0:
 				return undefined;
@@ -212,9 +212,7 @@ export const treeNodeApi: TreeNodeApi = {
 				const identifierValue = identifier.value as string;
 				const localNodeKey =
 					identifier.context.nodeKeyManager.tryLocalizeNodeKey(identifierValue);
-				shortId =
-					localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
-				return shortId;
+				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
 			}
 			default:
 				throw new UsageError(

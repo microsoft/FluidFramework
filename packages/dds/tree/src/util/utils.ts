@@ -174,6 +174,17 @@ export function* mapIterable<T, U>(
 	}
 }
 
+export function* filterIterable<T>(
+	iterable: Iterable<T>,
+	filter: (t: T) => boolean,
+): IterableIterator<T> {
+	for (const t of iterable) {
+		if (filter(t)) {
+			yield t;
+		}
+	}
+}
+
 /**
  * Finds the first element in the given iterable that satisfies a predicate.
  * @param iterable - The iterable to search for an eligible element

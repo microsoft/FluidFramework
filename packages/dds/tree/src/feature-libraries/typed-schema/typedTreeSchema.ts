@@ -29,6 +29,7 @@ import {
 	mapIterable,
 	oneFromSet,
 	type requireAssignableTo,
+	filterIterable,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import type { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
@@ -155,7 +156,7 @@ export class FlexObjectNodeSchema<
 	const out Specification extends Unenforced<FlexObjectNodeFields> = FlexObjectNodeFields,
 > extends TreeNodeSchemaBase<Name, Specification> {
 	protected _typeCheck2?: MakeNominal;
-	public identifierFieldKeys: FieldKey[] = [];
+	public readonly identifierFieldKeys: FieldKey[] = [];
 
 	public static create<
 		const Name extends string,
@@ -194,11 +195,13 @@ export class FlexObjectNodeSchema<
 	) {
 		const fields = mapIterable(objectNodeFields, ([k, v]) => [k, v.stored] as const);
 		super(builder, name, info, new ObjectNodeStoredSchema(new Map(fields)));
-		objectNodeFields.forEach((flexFieldSchema, fieldKey) => {
-			if (flexFieldSchema.kind.identifier === identifierFieldKindIdentifier) {
-				this.identifierFieldKeys.push(fieldKey);
-			}
-		});
+		this.identifierFieldKeys = Array.from(
+			filterIterable(
+				objectNodeFields.entries(),
+				([k, f]) => f.kind.identifier === identifierFieldKindIdentifier,
+			),
+			([k]) => k,
+		);
 	}
 
 	public override getFieldSchema(field: FieldKey): FlexFieldSchema {
