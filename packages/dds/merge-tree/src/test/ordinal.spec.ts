@@ -11,8 +11,8 @@ import { doOverRange } from "./mergeTreeOperationRunner.js";
 
 function computeNumericOrdinal(index: number): string {
 	const prefixLen = Math.floor(index / 0xffff);
-	// Since ordinals don't deal with user input and would require minor behavior changes,
-	// disable the rule to use code points when dealing with ordinals.
+	// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+	// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
 	// eslint-disable-next-line unicorn/prefer-code-point
 	const prefix = String.fromCharCode(0xffff).repeat(prefixLen);
 	// eslint-disable-next-line unicorn/prefer-code-point
