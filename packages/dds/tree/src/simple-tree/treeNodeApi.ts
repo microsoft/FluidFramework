@@ -11,7 +11,7 @@ import {
 	type TreeStatus,
 	isLazy,
 	isTreeValue,
-	type FlexObjectNodeSchema,
+	FlexObjectNodeSchema,
 } from "../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../util/index.js";
 
@@ -201,7 +201,9 @@ export const treeNodeApi: TreeNodeApi = {
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const flexNode = getFlexNode(node);
-		const identifierFieldKeys = (flexNode.schema as FlexObjectNodeSchema).identifierFieldKeys;
+		const flexSchema = flexNode.schema;
+		const identifierFieldKeys =
+			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
 
 		switch (identifierFieldKeys.length) {
 			case 0:

@@ -156,7 +156,7 @@ export class FlexObjectNodeSchema<
 	const out Specification extends Unenforced<FlexObjectNodeFields> = FlexObjectNodeFields,
 > extends TreeNodeSchemaBase<Name, Specification> {
 	protected _typeCheck2?: MakeNominal;
-	public readonly identifierFieldKeys: FieldKey[] = [];
+	public readonly identifierFieldKeys: readonly FieldKey[] = [];
 
 	public static create<
 		const Name extends string,
