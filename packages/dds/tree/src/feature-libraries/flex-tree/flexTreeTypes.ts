@@ -14,7 +14,6 @@ import {
 import type { Assume, FlattenKeys } from "../../util/index.js";
 import type { FieldKinds, SequenceFieldEditBuilder } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import type {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
@@ -495,11 +494,6 @@ export interface FlexTreeFieldNode<in out TSchema extends FlexFieldNodeSchema>
  */
 export interface FlexTreeObjectNode extends FlexTreeNode {
 	readonly schema: FlexObjectNodeSchema;
-
-	/**
-	 * {@link LocalNodeKey} that identifies this node.
-	 */
-	readonly localNodeKey?: LocalNodeKey;
 }
 
 /**
@@ -999,15 +993,6 @@ export interface FlexTreeOptionalField<in out TTypes extends FlexAllowedTypes>
 	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
 
 	readonly boxedContent?: FlexTreeTypedNodeUnion<TTypes>;
-}
-
-/**
- * Field that contains an immutable {@link StableNodeKey} identifying this node.
- * @internal
- */
-export interface FlexTreeNodeKeyField extends FlexTreeField {
-	readonly localNodeKey: LocalNodeKey;
-	readonly stableNodeKey: StableNodeKey;
 }
 
 // #endregion
