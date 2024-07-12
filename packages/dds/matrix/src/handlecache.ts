@@ -116,7 +116,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		} else {
 			ensureRange(_position, this.vector.getLength());
 
-			this.handles = [...this.handles, ...this.getHandles(this.start + this.handles.length, _position + 1)];
+			this.handles = [
+				...this.handles,
+				...this.getHandles(this.start + this.handles.length, _position + 1),
+			];
 			// TODO why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return this.handles[this.handles.length - 1]!;
