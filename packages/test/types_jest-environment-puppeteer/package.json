@@ -15,16 +15,16 @@
 	"types": "index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
-		"check:biome": "biome check . --formatter-enabled=true",
+		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob \"*.tsbuildinfo\" \"*.build.log\"",
 		"format": "npm run format:biome",
-		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "~1.8.3",
 		"@fluidframework/build-tools": "^0.40.0",
 		"jest-environment-puppeteer": "^9.0.2",
 		"prettier": "~3.0.3",

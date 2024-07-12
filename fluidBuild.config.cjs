@@ -460,6 +460,7 @@ module.exports = {
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
 				["attw", "@arethetypeswrong/cli"],
+				["biome", "@biomejs/biome"],
 				["c8", "c8"],
 				["concurrently", "concurrently"],
 				["copyfiles", "copyfiles"],
