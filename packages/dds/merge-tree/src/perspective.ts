@@ -49,7 +49,7 @@ export class PerspectiveImpl implements Perspective {
 	 */
 	public nextSegment(segment: ISegment, forward: boolean = true): ISegment {
 		let next: ISegment | undefined;
-		const action = (seg: ISegment) => {
+		const action = (seg: ISegment): boolean | undefined => {
 			if (isSegmentPresent(seg, this._seqTime)) {
 				next = seg;
 				return LeafAction.Exit;
@@ -60,6 +60,7 @@ export class PerspectiveImpl implements Perspective {
 	}
 
 	/**
+	 * Finds the segment prior to the given segment.
 	 * @param segment - The segment to start from.
 	 * @returns the previous segment, or the start of the tree if there is no previous segment.
 	 * @remarks This is a convenient equivalent to calling `nextSegment(segment, false)`.
@@ -70,6 +71,7 @@ export class PerspectiveImpl implements Perspective {
 }
 
 /**
+ * Determines if the given segment was removed before the given perspective.
  * @param seg - The segment to check.
  * @param seq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
@@ -87,6 +89,7 @@ export function wasRemovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): 
 }
 
 /**
+ * Determines if the given segment was moved before the given perspective.
  * @param seg - The segment to check.
  * @param refSeq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
@@ -111,7 +114,7 @@ export function wasRemovedOrMovedBefore(seg: ISegment, seqTime: SeqTime): boolea
 }
 
 /**
- *
+ * Determines if the given segment is present in the given perspective.
  * @param seg - The segment to check.
  * @param seqTime - The latest sequence number and local sequence number to consider.
  * @returns true iff this segment was inserted before the given perspective,
@@ -126,13 +129,13 @@ export function isSegmentPresent(seg: ISegment, seqTime: SeqTime): boolean {
 			if (!seqLTE(seg.seq, refSeq)) {
 				return false;
 			}
-		} else if (seg.localSeq !== undefined) {
-			// seg.seq === UnassignedSequenceNumber
+		} else if (
+			seg.localSeq !== undefined && // seg.seq === UnassignedSequenceNumber
 			// If the current perspective does not include local sequence numbers,
 			// then this segment does not exist yet.
-			if (localSeq === undefined || seg.localSeq > localSeq) {
-				return false;
-			}
+			(localSeq === undefined || seg.localSeq > localSeq)
+		) {
+			return false;
 		}
 	}
 	if (wasRemovedOrMovedBefore(seg, seqTime)) {
