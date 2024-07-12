@@ -306,6 +306,9 @@ export interface ISharedDirectory
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**
 	 * The absolute path to the IDirectory storing the key which changed.
+	 * @readonly
+	 * @privateRemarks
+	 * When breaking changes can be made, `readonly` should be added.
 	 */
 	path: string;
 }
