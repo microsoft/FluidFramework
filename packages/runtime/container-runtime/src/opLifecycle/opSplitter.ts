@@ -6,28 +6,33 @@
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+import {
+	ContainerMessageType,
+	ContainerRuntimeChunkedOpMessage,
+	type ContentsParsed,
+	type InboundContainerRuntimeEnvelope,
+	type InboundContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessage,
+} from "../messageTypes.js";
 
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
 
-export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
+export function isChunkedMessage(
+	message: ContentsParsed<InboundContainerRuntimeEnvelope>,
+): boolean {
 	return isChunkedContents(message.contents);
 }
 
-interface IChunkedContents {
-	type: typeof ContainerMessageType.ChunkedOp;
-	contents: IChunkedOp;
-}
-
-function isChunkedContents(contents: any): contents is IChunkedContents {
+function isChunkedContents(
+	contents: InboundContainerRuntimeMessage,
+): contents is ContainerRuntimeChunkedOpMessage {
 	return contents?.type === ContainerMessageType.ChunkedOp;
 }
 
@@ -71,7 +76,7 @@ export class OpSplitter {
 	private addChunk(
 		clientId: string,
 		chunkedContent: IChunkedOp,
-		originalMessage: ISequencedDocumentMessage,
+		originalMessage: ContentsParsed<InboundContainerRuntimeEnvelope>,
 	) {
 		let map = this.chunkMap.get(clientId);
 		if (map === undefined) {
@@ -189,13 +194,13 @@ export class OpSplitter {
 		};
 	}
 
-	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
+	public processChunk(
+		message: ContentsParsed<InboundContainerRuntimeEnvelope>,
+	): ProcessChunkResult {
 		assert(isChunkedContents(message.contents), 0x948 /* message not of type ChunkedOp */);
-		const contents: IChunkedContents = message.contents;
+		const contents: ContainerRuntimeChunkedOpMessage = message.contents;
 
-		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		const clientId = message.clientId as string;
+		const clientId = message.clientId;
 		const chunkedContent = contents.contents;
 		this.addChunk(clientId, chunkedContent, message);
 
@@ -235,7 +240,7 @@ type ProcessChunkResult =
 	  }
 	| {
 			readonly isFinalChunk: true;
-			readonly message: ISequencedDocumentMessage;
+			readonly message: InboundSequencedContainerRuntimeMessage;
 	  };
 
 const chunkToBatchMessage = (
