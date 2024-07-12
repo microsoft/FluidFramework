@@ -114,8 +114,6 @@ export {
 	type SimpleFieldSchema,
 	type SimpleTreeSchema,
 } from "./simpleSchema.js";
-// TODO: probably move this into `shared-tree` dir next to consumer
-export { toSimpleTreeSchema } from "./storedSchemaToSimpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,

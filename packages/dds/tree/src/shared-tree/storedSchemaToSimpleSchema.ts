@@ -25,7 +25,7 @@ import type {
 	SimpleNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
-} from "./simpleSchema.js";
+} from "../simple-tree/index.js";
 
 export function toSimpleTreeSchema(
 	schemaMap: ReadonlyMap<string, TreeNodeStoredSchema>,

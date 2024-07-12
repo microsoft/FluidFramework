@@ -50,12 +50,11 @@ import {
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
-import {
-	type ITree,
-	type ImplicitFieldSchema,
-	type TreeViewConfiguration,
-	toSimpleTreeSchema,
-	type SimpleTreeSchema,
+import type {
+	ITree,
+	ImplicitFieldSchema,
+	TreeViewConfiguration,
+	SimpleTreeSchema,
 } from "../simple-tree/index.js";
 
 import { type InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
@@ -67,6 +66,7 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type CheckoutEvents, type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 import type { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 import { breakingClass, throwIfBroken } from "../util/index.js";
+import { toSimpleTreeSchema } from "./storedSchemaToSimpleSchema.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -319,6 +319,7 @@ export class SharedTree
 	}
 
 	public getStoredSchema(): SimpleTreeSchema {
+		// TODO: Cache result somewhere?
 		return toSimpleTreeSchema(
 			this.storedSchema.nodeSchema,
 			this.storedSchema.rootFieldSchema,
