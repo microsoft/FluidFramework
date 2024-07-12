@@ -22,7 +22,7 @@ const Ajv =
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
-describe.only("JsonSchema", () => {
+describe("JsonSchema", () => {
 	function getValidator(schema: TreeJsonSchema) {
 		const ajv = new Ajv({
 			strict: false,
