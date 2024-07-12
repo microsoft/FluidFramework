@@ -108,6 +108,9 @@ export interface FieldJsonSchema {
  * @internal
  */
 export interface TreeJsonSchema extends FieldJsonSchema {
+	// TODO
+	// json schema
+	// $schema: "http://json-schema.org/draft-07/schema#",
 	// json schema
 	readonly definitions: Record<JsonSchemaId, NodeJsonSchema>;
 }

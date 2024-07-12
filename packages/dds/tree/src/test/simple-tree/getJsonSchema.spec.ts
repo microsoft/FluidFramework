@@ -37,7 +37,6 @@ describe.only("getJsonSchema", () => {
 		const actual = getJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
 			definitions: {
 				"com.fluidframework.leaf.string": {
 					type: "string",

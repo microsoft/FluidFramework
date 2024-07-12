@@ -45,7 +45,6 @@ describe("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
 			definitions: {
 				"test.string": {
 					type: "string",
@@ -81,7 +80,6 @@ describe("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
 			definitions: {
 				"test.array": {
 					type: "array",
@@ -127,7 +125,6 @@ describe("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
 			definitions: {
 				"test.map": {
 					type: "object",
@@ -193,7 +190,6 @@ describe("simpleSchemaToJsonSchema", () => {
 		const actual = toJsonSchema(input);
 
 		const expected: TreeJsonSchema = {
-			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
 			definitions: {
 				"test.object": {
 					type: "object",
