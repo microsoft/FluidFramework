@@ -1,3 +1,7 @@
+---
+title: Summary Formats
+---
+
 # Summary and snapshot formats
 
 ## Table of contents
