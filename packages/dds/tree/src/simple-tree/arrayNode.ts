@@ -40,7 +40,7 @@ import {
 	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { mapTreeFromNodeData } from "./toMapTree.js";
-import { type TreeNode, TreeNodeValid } from "./types.js";
+import { type TreeNode, TreeNodeValid, type InternalTreeNode } from "./types.js";
 import { fail } from "../util/index.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -216,6 +216,11 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom>
 		sourceEnd: number,
 		source: TMoveFrom,
 	): void;
+
+	/**
+	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
+	 */
+	values(): IterableIterator<T>;
 }
 
 /**
@@ -316,7 +321,6 @@ const arrayPrototypeKeys = [
 	"some",
 	"toLocaleString",
 	"toString",
-	"values",
 
 	// "copyWithin",
 	// "fill",
@@ -490,7 +494,6 @@ declare abstract class NodeWithArrayFeatures<Input, T>
 	): boolean;
 	toLocaleString(): string;
 	toString(): string;
-	values(): IterableIterator<T>;
 }
 /* eslint-enable @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-explicit-any */
 
@@ -667,6 +670,21 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	protected abstract get simpleSchema(): T;
 
+	/**
+	 * Generation number which is incremented any time we have an edit on the node.
+	 * Used during iteration to make sure there has been no edits that were concurrently made.
+	 */
+	#generationNumber: number = 0;
+
+	public constructor(
+		input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+	) {
+		super(input);
+		getFlexNode(this).on("nodeChanged", () => {
+			this.#generationNumber += 1;
+		});
+	}
+
 	#cursorFromFieldData(value: Insertable<T>): ITreeCursorSynchronous {
 		if (isMapTreeNode(getFlexNode(this))) {
 			throw new UsageError(`An array cannot be mutated before being inserted into the tree`);
@@ -822,13 +840,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const destinationField = getSequenceField(this);
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
-		const sourceField =
-			source !== undefined
-				? destinationField.isSameAs(getSequenceField(source))
-					? destinationField
-					: getSequenceField(source)
-				: destinationField;
-
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
@@ -849,6 +861,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			destinationFieldPath,
 			destinationIndex,
 		);
+	}
+
+	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+		return this.generateValues(this.#generationNumber);
+	}
+	private *generateValues(
+		initialLastUpdatedStamp: number,
+	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+		if (initialLastUpdatedStamp !== this.#generationNumber) {
+			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+		}
+		for (let i = 0; i < this.length; i++) {
+			yield this.at(i) ?? fail("Index is out of bounds");
+			if (initialLastUpdatedStamp !== this.#generationNumber) {
+				throw new UsageError(`Concurrent editing and iteration is not allowed.`);
+			}
+		}
 	}
 }
 

@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { hydrate } from "./utils.js";
 import type { Mutable } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../simple-tree/arrayNode.js";
-import { validateUsageError } from "../utils.js";
+import { TestTreeProviderLite, validateUsageError } from "../utils.js";
 
 const schemaFactory = new SchemaFactory("ArrayNodeTest");
 const PojoEmulationNumberArray = schemaFactory.array(schemaFactory.number);
@@ -719,6 +719,97 @@ describe("ArrayNode", () => {
 				(error: Error) =>
 					validateAssertionError(error, /Shadowing of array indices is not permitted/),
 			);
+		});
+	});
+
+	describe("Iteration", () => {
+		it("Concurrently iterating and editing should throw an error.", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values = array.values();
+			values.next();
+			array.removeRange(1, 3);
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+			// Checks that new iterator still works
+			const values2 = array.values();
+			values2.next();
+		});
+
+		it("Iterator of an unhydrated node works after it's been inserted, and throws during iteration once a concurrent edit is made.", () => {
+			class TestArray extends schemaFactory.array("Array", schemaFactory.number) {}
+
+			// Create unhydrated array node
+			const array = new TestArray([1, 2]);
+
+			const provider = new TestTreeProviderLite();
+			const tree = provider.trees[0];
+			const view = tree.viewWith(new TreeViewConfiguration({ schema: TestArray }));
+			const values = array.values();
+
+			// Initialize the tree with unhydrated array node
+			view.initialize(array);
+
+			// Checks that the iterator works after hydrating the node.
+			values.next();
+
+			// Make an edit
+			array.insertAtEnd(3);
+
+			// Checks that the iterator throws after
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+		});
+
+		it("Iterating when edits were made after the iterator was returned from ArrayNode.values should throw an error.  ", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values = array.values();
+			array.removeRange();
+			assert.throws(
+				() => {
+					values.next();
+				},
+				validateUsageError(/Concurrent editing and iteration is not allowed./),
+			);
+		});
+
+		it("Iterates through the values of the array", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const result = [];
+			for (const nodeChild of array) {
+				result.push(nodeChild);
+			}
+			assert.deepEqual(result, [1, 2, 3]);
+		});
+
+		it("Iterates through the values of an empty array", () => {
+			const array = hydrate(CustomizableNumberArray, []);
+			const result = [];
+			for (const nodeChild of array) {
+				result.push(nodeChild);
+			}
+			assert.deepEqual(result, []);
+		});
+
+		it("Iterates through the values of two concurrent iterators", () => {
+			const array = hydrate(CustomizableNumberArray, [1, 2, 3]);
+			const values1 = array.values();
+			const values2 = array.values();
+			const result1 = [];
+			const result2 = [];
+			for (const value of values1) {
+				result1.push(value);
+				result2.push(values2.next().value);
+			}
+			assert.deepEqual(result1, [1, 2, 3]);
+			assert.deepEqual(result2, [1, 2, 3]);
 		});
 	});
 });

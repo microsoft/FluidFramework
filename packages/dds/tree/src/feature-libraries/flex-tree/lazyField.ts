@@ -190,14 +190,6 @@ export abstract class LazyField<
 		return this.schema.equals(schema);
 	}
 
-	public isSameAs(other: FlexTreeField): boolean {
-		assert(
-			other.context === this.context,
-			0x77d /* Content from different flex trees should not be used together */,
-		);
-		return this.key === other.key && this.parent === other.parent;
-	}
-
 	public get parent(): FlexTreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
@@ -444,7 +436,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		sourceEnd: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
-		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		const sourceField = source ?? this;
 
 		// TODO: determine support for move across different sequence types
 		assert(
