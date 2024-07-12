@@ -30,7 +30,7 @@
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format-and-compile": "npm run format && npm run build:compile",
-		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:biome": "biome check . --formatter-enabled=true --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"good-fences": "gf",
 		"lint": "fluid-build . --task lint",
@@ -89,7 +89,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "^1.8.3",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

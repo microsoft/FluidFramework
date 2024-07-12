@@ -23,7 +23,7 @@
 		"eslint": "eslint --format stylish src tests",
 		"eslint:fix": "eslint --format stylish src tests --fix",
 		"format": "npm run format:biome",
-		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:biome": "biome check . --formatter-enabled=true --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"good-fences": "gf",
 		"lint": "fluid-build . --task lint",
@@ -81,7 +81,7 @@
 		"valid-url": "^1.0.9"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "^1.8.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.40.0",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",

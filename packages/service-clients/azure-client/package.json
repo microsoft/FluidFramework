@@ -79,7 +79,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
-		"format:biome": "biome check . --formatter-enabled=true --apply",
+		"format:biome": "biome check . --formatter-enabled=true --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
@@ -108,7 +108,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "^1.8.3",
 		"@fluid-tools/build-cli": "^0.40.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0",
