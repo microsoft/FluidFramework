@@ -282,16 +282,6 @@ export class EagerMapTreeFieldNode<TSchema extends FlexFieldNodeSchema>
 		return unboxedField(field, EmptyKey, this.mapTree, this);
 	}
 
-	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		const field = this.mapTree.fields.get(EmptyKey) ?? [];
-		return getOrCreateField(
-			this,
-			EmptyKey,
-			field,
-			this.schema.info,
-		) as unknown as FlexTreeTypedField<TSchema["info"]>;
-	}
-
 	public override getBoxed(key: string): FlexTreeTypedField<TSchema["info"]> {
 		return super.getBoxed(key) as FlexTreeTypedField<TSchema["info"]>;
 	}
@@ -518,10 +508,6 @@ class MapTreeRequiredField<T extends FlexAllowedTypes>
 	public set content(_: FlexTreeUnboxNodeUnion<T>) {
 		throw unsupportedUsageError("Setting an optional field");
 	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<T> {
-		return this.boxedAt(0) ?? fail("Required field must have exactly one node");
-	}
 }
 
 class MapTreeOptionalField<T extends FlexAllowedTypes>
@@ -535,10 +521,6 @@ class MapTreeOptionalField<T extends FlexAllowedTypes>
 	}
 	public set content(_: FlexTreeUnboxNodeUnion<T> | undefined) {
 		throw unsupportedUsageError("Setting an optional field");
-	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<T> | undefined {
-		return this.boxedAt(0);
 	}
 }
 
