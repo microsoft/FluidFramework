@@ -137,7 +137,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"RemovedClassDeclaration_AzureFunctionTokenProvider": {
+			"RemovedClass_AzureFunctionTokenProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassStatics_AzureFunctionTokenProvider": {
 				"backCompat": false,
 				"forwardCompat": false
 			}

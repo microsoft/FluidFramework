@@ -109,13 +109,13 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAliasDeclaration_CacheContentType": {
+			"TypeAlias_CacheContentType": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_ICacheEntry": {
+			"Interface_ICacheEntry": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IEntry": {
+			"Interface_IEntry": {
 				"backCompat": false
 			}
 		}

@@ -14,6 +14,10 @@ overrides:
   simplemde>marked: ^4.3.0
   sharp: ^0.33.2
   '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
+  '@fluid-tools/build-cli': file:./build-tools/packages/build-cli
+  '@fluidframework/build-tools': file:./build-tools/packages/build-tools
+  '@fluid-tools/version-tools': file:./build-tools/packages/version-tools
+  '@fluidframework/bundle-size-tools': file:./build-tools/packages/bundle-size-tools
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
@@ -34,8 +38,8 @@ importers:
         specifier: workspace:~
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -43,8 +47,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -125,8 +129,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -171,8 +175,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/azure-service-utils-previous':
         specifier: npm:@fluidframework/azure-service-utils@2.0.0
         version: /@fluidframework/azure-service-utils@2.0.0
@@ -180,8 +184,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -301,14 +305,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -389,14 +393,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -477,14 +481,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -607,14 +611,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -770,14 +774,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -921,14 +925,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1042,14 +1046,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1193,14 +1197,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1326,8 +1330,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1435,14 +1439,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1508,8 +1512,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1626,8 +1630,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1735,8 +1739,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1859,8 +1863,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1974,14 +1978,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2086,8 +2090,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2195,8 +2199,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2319,8 +2323,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2440,8 +2444,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2576,8 +2580,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2652,8 +2656,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2764,8 +2768,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2876,8 +2880,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2964,8 +2968,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3001,8 +3005,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3083,8 +3087,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3186,8 +3190,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3214,14 +3218,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3257,8 +3261,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3297,8 +3301,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3337,8 +3341,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3452,8 +3456,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3573,8 +3577,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3664,14 +3668,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3773,8 +3777,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3915,8 +3919,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4117,8 +4121,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4274,8 +4278,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -4416,14 +4420,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4519,17 +4523,17 @@ importers:
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.89.0)
       '@fluid-tools/version-tools':
-        specifier: ^0.40.0
-        version: 0.40.0
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/version-tools
+        version: file:build-tools/packages/version-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/bundle-size-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/bundle-size-tools
+        version: file:build-tools/packages/bundle-size-tools(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4664,14 +4668,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4794,14 +4798,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4915,14 +4919,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5072,14 +5076,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5247,14 +5251,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5416,14 +5420,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5552,14 +5556,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5667,14 +5671,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5788,14 +5792,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5996,8 +6000,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -6092,8 +6096,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -6147,8 +6151,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -6244,8 +6248,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.14.202
@@ -6344,8 +6348,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6485,14 +6489,14 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/test-drivers
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../../packages/loader/container-loader
@@ -6645,8 +6649,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@storybook/addon-actions':
         specifier: ^6.4.22
         version: 6.5.16(react-dom@17.0.2)(react@17.0.2)
@@ -6808,8 +6812,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -6878,8 +6882,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6969,8 +6973,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -7036,8 +7040,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -7130,14 +7134,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -7233,14 +7237,14 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7333,14 +7337,14 @@ importers:
         specifier: workspace:~
         version: link:../../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7430,14 +7434,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7572,8 +7576,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -7690,14 +7694,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7760,14 +7764,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7833,14 +7837,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7936,14 +7940,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -8057,14 +8061,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions-previous':
         specifier: npm:@fluidframework/container-definitions@2.0.0
         version: /@fluidframework/container-definitions@2.0.0
@@ -8105,14 +8109,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/core-interfaces-previous':
         specifier: npm:@fluidframework/core-interfaces@2.0.0
         version: /@fluidframework/core-interfaces@2.0.0
@@ -8159,14 +8163,14 @@ importers:
         specifier: ^0.47.0
         version: 0.47.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/core-utils-previous':
         specifier: npm:@fluidframework/core-utils@2.0.0
         version: /@fluidframework/core-utils@2.0.0
@@ -8241,14 +8245,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/driver-definitions-previous':
         specifier: npm:@fluidframework/driver-definitions@2.0.0
         version: /@fluidframework/driver-definitions@2.0.0
@@ -8314,14 +8318,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/cell-previous':
         specifier: npm:@fluidframework/cell@2.0.0
         version: /@fluidframework/cell@2.0.0
@@ -8417,14 +8421,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8520,14 +8524,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8647,14 +8651,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8783,14 +8787,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8919,14 +8923,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9037,14 +9041,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9146,14 +9150,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9252,14 +9256,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9376,14 +9380,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9512,14 +9516,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9621,14 +9625,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9745,14 +9749,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9866,14 +9870,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9996,14 +10000,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -10123,14 +10127,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/debugger-previous':
         specifier: npm:@fluidframework/debugger@2.0.0
         version: /@fluidframework/debugger@2.0.0
@@ -10193,14 +10197,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.0.0
         version: /@fluidframework/driver-base@2.0.0
@@ -10281,14 +10285,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/driver-web-cache-previous':
         specifier: npm:@fluidframework/driver-web-cache@2.0.0
         version: /@fluidframework/driver-web-cache@2.0.0
@@ -10357,14 +10361,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10454,14 +10458,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10572,14 +10576,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10657,14 +10661,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10727,14 +10731,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10812,14 +10816,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10906,14 +10910,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11009,14 +11013,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11103,14 +11107,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11203,8 +11207,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/agent-scheduler-previous':
         specifier: npm:@fluidframework/agent-scheduler@2.0.0
         version: /@fluidframework/agent-scheduler@2.0.0
@@ -11212,8 +11216,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11300,8 +11304,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/aqueduct-previous':
         specifier: npm:@fluidframework/aqueduct@2.0.0
         version: /@fluidframework/aqueduct@2.0.0
@@ -11309,8 +11313,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11412,14 +11416,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11500,14 +11504,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
@@ -11597,11 +11601,11 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
@@ -11709,14 +11713,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11773,14 +11777,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11876,14 +11880,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11967,14 +11971,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12061,14 +12065,14 @@ importers:
         specifier: workspace:~
         version: link:../../dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12128,14 +12132,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12210,14 +12214,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -12307,14 +12311,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12431,14 +12435,14 @@ importers:
         specifier: workspace:~
         version: link:../test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-loader-previous':
         specifier: npm:@fluidframework/container-loader@2.0.0
         version: /@fluidframework/container-loader@2.0.0
@@ -12546,14 +12550,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.0.0
         version: /@fluidframework/driver-utils@2.0.0
@@ -12637,14 +12641,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12740,14 +12744,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.0.0
         version: /@fluidframework/container-runtime@2.0.0
@@ -12837,14 +12841,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-runtime-definitions-previous':
         specifier: npm:@fluidframework/container-runtime-definitions@2.0.0
         version: /@fluidframework/container-runtime-definitions@2.0.0
@@ -12922,14 +12926,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.0.0
         version: /@fluidframework/datastore@2.0.0
@@ -13016,14 +13020,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/datastore-definitions-previous':
         specifier: npm:@fluidframework/datastore-definitions@2.0.0
         version: /@fluidframework/datastore-definitions@2.0.0
@@ -13089,14 +13093,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13177,14 +13181,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13259,14 +13263,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13383,14 +13387,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13492,8 +13496,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -13507,8 +13511,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13670,8 +13674,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13785,8 +13789,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13873,14 +13877,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13973,8 +13977,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -13982,8 +13986,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -14054,14 +14058,14 @@ importers:
         specifier: workspace:~
         version: link:../../loader/test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
@@ -14189,8 +14193,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
@@ -14361,14 +14365,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14476,14 +14480,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14546,14 +14550,14 @@ importers:
         specifier: ^0.48.0
         version: 0.48.0
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14625,14 +14629,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14674,14 +14678,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14777,14 +14781,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14976,14 +14980,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15043,14 +15047,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15179,14 +15183,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15303,14 +15307,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15387,8 +15391,8 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/version-tools':
-        specifier: ^0.40.0
-        version: 0.40.0
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/version-tools
+        version: file:build-tools/packages/version-tools
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -15478,14 +15482,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15565,8 +15569,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       jest-environment-puppeteer:
         specifier: ^9.0.2
         version: 9.0.2(typescript@5.4.5)
@@ -15636,14 +15640,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/devtools-previous':
         specifier: npm:@fluidframework/devtools@2.0.0
         version: /@fluidframework/devtools@2.0.0
@@ -15760,8 +15764,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -15974,14 +15978,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/devtools-core-previous':
         specifier: npm:@fluidframework/devtools-core@2.0.0
         version: /@fluidframework/devtools-core@2.0.0
@@ -16140,8 +16144,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16309,14 +16313,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16505,8 +16509,8 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluid-tools/fetch-tool-previous':
         specifier: npm:@fluid-tools/fetch-tool@2.0.0
         version: /@fluid-tools/fetch-tool@2.0.0
@@ -16514,8 +16518,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16581,14 +16585,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16735,14 +16739,14 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16805,14 +16809,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16896,14 +16900,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -17005,14 +17009,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-cli
+        version: file:build-tools/packages/build-cli(@types/node@18.19.1)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.40.0
-        version: 0.40.0(@types/node@18.19.1)
+        specifier: file:/home/craig/Work/FluidFramework.git/1/build-tools/packages/build-tools
+        version: file:build-tools/packages/build-tools(@types/node@18.19.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.55.0)(typescript@5.4.5)
@@ -21893,132 +21897,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluid-tools/build-cli@0.40.0(@types/node@18.19.1):
-    resolution: {integrity: sha512-RMGe8MvngnAElSWyJXnAyjAYiIKxCXHdDMpYzHmYb9LL7JJRgA+VrYEAJdetO2kkF8jJxocVtnpfSPrWd3tDug==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/build-tools': 0.40.0(@types/node@18.19.1)
-      '@fluidframework/bundle-size-tools': 0.40.0(webpack-cli@4.10.0)
-      '@microsoft/api-extractor': 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
-      '@oclif/core': 3.27.0
-      '@oclif/plugin-autocomplete': 3.0.17
-      '@oclif/plugin-commands': 3.3.2
-      '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-not-found': 3.1.8
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
-      async: 3.2.5
-      chalk: 5.3.0
-      change-case: 3.1.0
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.5(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.2.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.0
-      inquirer: 8.2.6
-      json5: 2.2.3
-      jssm: 5.98.2
-      latest-version: 5.1.0
-      minimatch: 7.4.6
-      node-fetch: 2.7.0
-      npm-check-updates: 16.14.20
-      oclif: 4.10.4
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      replace-in-file: 7.1.0
-      resolve.exports: 2.0.2
-      semver: 7.6.0
-      semver-utils: 1.1.4
-      simple-git: 3.21.0
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.1
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - aws-crt
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluid-tools/build-cli@0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-RMGe8MvngnAElSWyJXnAyjAYiIKxCXHdDMpYzHmYb9LL7JJRgA+VrYEAJdetO2kkF8jJxocVtnpfSPrWd3tDug==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/build-tools': 0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0)
-      '@fluidframework/bundle-size-tools': 0.40.0(webpack-cli@4.10.0)
-      '@microsoft/api-extractor': 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
-      '@oclif/core': 3.27.0
-      '@oclif/plugin-autocomplete': 3.0.17
-      '@oclif/plugin-commands': 3.3.2
-      '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-not-found': 3.1.8
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
-      async: 3.2.5
-      chalk: 5.3.0
-      change-case: 3.1.0
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.5(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.2.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.0
-      inquirer: 8.2.6
-      json5: 2.2.3
-      jssm: 5.98.2
-      latest-version: 5.1.0
-      minimatch: 7.4.6
-      node-fetch: 2.7.0
-      npm-check-updates: 16.14.20
-      oclif: 4.10.4
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      replace-in-file: 7.1.0
-      resolve.exports: 2.0.2
-      semver: 7.6.0
-      semver-utils: 1.1.4
-      simple-git: 3.21.0
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.1
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - aws-crt
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
   /@fluid-tools/fetch-tool@2.0.0:
     resolution: {integrity: sha512-e5sEN9jf8W0BJ8KeWXGkxeoNKi6tRIYBXc8nToqdccuvJfZOqhQP/uYlpDIQ4e9UhY5X4XIr803ey9JPpAVoAw==}
     hasBin: true
@@ -22044,22 +21922,6 @@ packages:
       - supports-color
       - utf-8-validate
     dev: true
-
-  /@fluid-tools/version-tools@0.40.0:
-    resolution: {integrity: sha512-cwgU16+buDe3hf0EotxCzy4GPFXBmaNpECGPTZ4FHkyP8ciGTbei+d7J+3NfP731tdInm5EVS5+e5DEawFykBQ==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@oclif/core': 3.27.0
-      '@oclif/plugin-autocomplete': 3.0.17
-      '@oclif/plugin-commands': 3.3.2
-      '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-not-found': 3.1.8
-      chalk: 2.4.2
-      semver: 7.6.0
-      table: 6.8.1
-    transitivePeerDependencies:
-      - supports-color
 
   /@fluidframework/agent-scheduler@2.0.0:
     resolution: {integrity: sha512-Y5w9ih25Htx1puBXR4/73bfecxF5RP4biQSrKSsZhmbm4FUWhH7YXtQ8K3D5DLYHqWZiPBD3SM3SDjyY/pmYgA==}
@@ -22236,106 +22098,6 @@ packages:
   /@fluidframework/build-common@2.0.3:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
-    dev: true
-
-  /@fluidframework/build-tools@0.40.0(@types/node@18.19.1):
-    resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/bundle-size-tools': 0.40.0(webpack-cli@4.10.0)
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
-      async: 3.2.5
-      chalk: 2.4.2
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.5(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.2.0
-      glob: 7.2.3
-      ignore: 5.3.0
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.0
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.3.4
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/build-tools@0.40.0(@types/node@18.19.1)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
-    engines: {node: '>=18.17.1'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.40.0
-      '@fluidframework/bundle-size-tools': 0.40.0(webpack-cli@4.10.0)
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
-      async: 3.2.5
-      chalk: 2.4.2
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      danger: 11.3.0
-      date-fns: 2.30.0
-      debug: 4.3.5(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.2.0
-      glob: 7.2.3
-      ignore: 5.3.0
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.0
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.3.4
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
-  /@fluidframework/bundle-size-tools@0.40.0(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-80fG4pECvaey0GkEc/F2kNQ2Y/g70OYUbtKMp9vXtdNlZeRFoX6Z2B9vji+V+qw5u6FoYe5qErPCn1KqFCKkXQ==}
-    dependencies:
-      azure-devops-node-api: 11.2.0
-      jszip: 3.10.1
-      msgpack-lite: 0.1.26
-      pako: 2.1.0
-      typescript: 5.4.5
-      webpack: 5.89.0(webpack-cli@4.10.0)
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-      - webpack-cli
     dev: true
 
   /@fluidframework/cell@2.0.0:
@@ -49496,3 +49258,256 @@ packages:
 
   /zwitch@1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
+
+  file:build-tools/packages/build-cli(@types/node@18.19.1):
+    resolution: {directory: build-tools/packages/build-cli, type: directory}
+    id: file:build-tools/packages/build-cli
+    name: '@fluid-tools/build-cli'
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/version-tools': file:build-tools/packages/version-tools
+      '@fluidframework/build-tools': file:build-tools/packages/build-tools(@types/node@18.19.1)
+      '@fluidframework/bundle-size-tools': file:build-tools/packages/bundle-size-tools(webpack-cli@4.10.0)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+      '@oclif/core': 3.27.0
+      '@oclif/plugin-autocomplete': 3.0.17
+      '@oclif/plugin-commands': 3.3.2
+      '@oclif/plugin-help': 6.0.21
+      '@oclif/plugin-not-found': 3.1.8
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
+      async: 3.2.5
+      chalk: 5.3.0
+      change-case: 3.1.0
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.5(supports-color@8.1.1)
+      execa: 5.1.1
+      fflate: 0.8.2
+      fs-extra: 11.2.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.0
+      inquirer: 8.2.6
+      json5: 2.2.3
+      jssm: 5.98.2
+      latest-version: 5.1.0
+      minimatch: 7.4.6
+      node-fetch: 2.7.0
+      npm-check-updates: 16.14.20
+      oclif: 4.10.4
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      replace-in-file: 7.1.0
+      resolve.exports: 2.0.2
+      semver: 7.6.0
+      semver-utils: 1.1.4
+      simple-git: 3.21.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - aws-crt
+      - bluebird
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  file:build-tools/packages/build-cli(@types/node@18.19.1)(webpack-cli@4.10.0):
+    resolution: {directory: build-tools/packages/build-cli, type: directory}
+    id: file:build-tools/packages/build-cli
+    name: '@fluid-tools/build-cli'
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/version-tools': file:build-tools/packages/version-tools
+      '@fluidframework/build-tools': file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0)
+      '@fluidframework/bundle-size-tools': file:build-tools/packages/bundle-size-tools(webpack-cli@4.10.0)
+      '@microsoft/api-extractor': 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.1)
+      '@oclif/core': 3.27.0
+      '@oclif/plugin-autocomplete': 3.0.17
+      '@oclif/plugin-commands': 3.3.2
+      '@oclif/plugin-help': 6.0.21
+      '@oclif/plugin-not-found': 3.1.8
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
+      async: 3.2.5
+      chalk: 5.3.0
+      change-case: 3.1.0
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.5(supports-color@8.1.1)
+      execa: 5.1.1
+      fflate: 0.8.2
+      fs-extra: 11.2.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.0
+      inquirer: 8.2.6
+      json5: 2.2.3
+      jssm: 5.98.2
+      latest-version: 5.1.0
+      minimatch: 7.4.6
+      node-fetch: 2.7.0
+      npm-check-updates: 16.14.20
+      oclif: 4.10.4
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      replace-in-file: 7.1.0
+      resolve.exports: 2.0.2
+      semver: 7.6.0
+      semver-utils: 1.1.4
+      simple-git: 3.21.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - aws-crt
+      - bluebird
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  file:build-tools/packages/build-tools(@types/node@18.19.1):
+    resolution: {directory: build-tools/packages/build-tools, type: directory}
+    id: file:build-tools/packages/build-tools
+    name: '@fluidframework/build-tools'
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': file:build-tools/packages/version-tools
+      '@fluidframework/bundle-size-tools': file:build-tools/packages/bundle-size-tools(webpack-cli@4.10.0)
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
+      async: 3.2.5
+      chalk: 2.4.2
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.5(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 11.2.0
+      glob: 7.2.3
+      ignore: 5.3.0
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      picomatch: 2.3.1
+      rimraf: 4.4.1
+      semver: 7.6.0
+      sort-package-json: 1.57.0
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      typescript: 5.4.5
+      yaml: 2.3.4
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  file:build-tools/packages/build-tools(@types/node@18.19.1)(webpack-cli@4.10.0):
+    resolution: {directory: build-tools/packages/build-tools, type: directory}
+    id: file:build-tools/packages/build-tools
+    name: '@fluidframework/build-tools'
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': file:build-tools/packages/version-tools
+      '@fluidframework/bundle-size-tools': file:build-tools/packages/bundle-size-tools(webpack-cli@4.10.0)
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.1)
+      async: 3.2.5
+      chalk: 2.4.2
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.5(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 11.2.0
+      glob: 7.2.3
+      ignore: 5.3.0
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      picomatch: 2.3.1
+      rimraf: 4.4.1
+      semver: 7.6.0
+      sort-package-json: 1.57.0
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      typescript: 5.4.5
+      yaml: 2.3.4
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  file:build-tools/packages/bundle-size-tools(webpack-cli@4.10.0):
+    resolution: {directory: build-tools/packages/bundle-size-tools, type: directory}
+    id: file:build-tools/packages/bundle-size-tools
+    name: '@fluidframework/bundle-size-tools'
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 5.4.5
+      webpack: 5.89.0(webpack-cli@4.10.0)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  file:build-tools/packages/version-tools:
+    resolution: {directory: build-tools/packages/version-tools, type: directory}
+    name: '@fluid-tools/version-tools'
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+    dependencies:
+      '@oclif/core': 3.27.0
+      '@oclif/plugin-autocomplete': 3.0.17
+      '@oclif/plugin-commands': 3.3.2
+      '@oclif/plugin-help': 6.0.21
+      '@oclif/plugin-not-found': 3.1.8
+      chalk: 2.4.2
+      semver: 7.6.0
+      table: 6.8.1
+    transitivePeerDependencies:
+      - supports-color
