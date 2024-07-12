@@ -263,6 +263,9 @@ importers:
       object-sizeof:
         specifier: ^1.6.3
         version: 1.6.3
+      pako:
+        specifier: ~2.1.0
+        version: 2.1.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -312,6 +315,9 @@ importers:
       '@types/node':
         specifier: ^18.17.1
         version: 18.17.7
+      '@types/pako':
+        specifier: ~2.0.3
+        version: 2.0.3
       '@types/rimraf':
         specifier: ^3.0.2
         version: 3.0.2
@@ -3405,6 +3411,10 @@ packages:
 
   /@types/normalize-package-data@2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
+    dev: true
+
+  /@types/pako@2.0.3:
+    resolution: {integrity: sha512-bq0hMV9opAcrmE0Byyo0fY3Ew4tgOevJmQ9grUhpXQhYfyLJ1Kqg3P33JT5fdbT2AjeAjR51zqqVjAL/HMkx7Q==}
     dev: true
 
   /@types/qs@6.9.7:
@@ -8718,7 +8728,6 @@ packages:
 
   /pako@2.1.0:
     resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
-    dev: true
 
   /param-case@2.1.1:
     resolution: {integrity: sha512-eQE845L6ot89sk2N8liD8HAuH4ca6Vvr7VWAWwt7+kvvG5aBcPmmphQ68JsEG2qa9n1TykS2DLeMt363AAH8/w==}
