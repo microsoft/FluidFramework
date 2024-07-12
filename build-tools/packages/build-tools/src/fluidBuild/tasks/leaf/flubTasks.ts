@@ -5,9 +5,10 @@
 
 import { existsSync } from "fs";
 import path from "path";
+import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { readFileAsync } from "../../../common/utils";
-import { LeafWithDoneFileTask } from "./leafTask";
+import { LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
 	private getResourceGroup() {
@@ -83,5 +84,28 @@ export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
 			commit: await gitRepo.getCurrentSha(),
 			modifiedFiles: await fileHashP,
 		});
+	}
+}
+
+export class FlubGenerateChangesetConfigTask extends LeafWithFileStatDoneFileTask {
+	private readonly changesetConfigPath = ".changeset/config.json";
+	private readonly fluidBuildConfig = "fluidBuild.config.cjs";
+
+	/**
+	 * Only the fluidBuild config is used as input for this task.
+	 */
+	protected async getInputFiles(): Promise<string[]> {
+		const repoRoot = await getResolvedFluidRoot(true);
+		const configPath = path.join(repoRoot, this.fluidBuildConfig);
+		return [configPath];
+	}
+
+	/**
+	 * The only file that is output by this task is the changeset config.
+	 */
+	protected async getOutputFiles(): Promise<string[]> {
+		const repoRoot = await getResolvedFluidRoot(true);
+		const configPath = path.join(repoRoot, this.changesetConfigPath);
+		return [configPath];
 	}
 }
