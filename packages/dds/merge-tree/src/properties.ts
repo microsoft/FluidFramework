@@ -65,8 +65,6 @@ export function matchProperties(
 /**
  * Adds properties from one PropertySet to another.
  *
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
  * @internal
  */
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T> {
@@ -91,8 +89,6 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): 
 /**
  * Clones properties in a given PropertySet into a new PropertySet.
  *
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
  * @internal
  */
 export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined {
@@ -116,8 +112,6 @@ export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefi
  * Add properties in one PropertySet to another PropertySet. If the PropertySet we are adding
  * to does not exist, create one.
  *
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
  * @internal
  */
 export function addProperties(
@@ -133,8 +127,6 @@ export function addProperties(
 /**
  * Replace values of undefined in one PropertySet with values for the same key from another PropertySet.
  *
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
  * @internal
  */
 export function extendIfUndefined<T>(
@@ -157,8 +149,6 @@ export function extendIfUndefined<T>(
 /**
  * Create a MapLike with good performance.
  *
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
  * @internal
  */
 export function createMap<T>(): MapLike<T> {
