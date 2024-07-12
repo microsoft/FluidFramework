@@ -418,9 +418,6 @@ export const rootMapTreeField: MapTreeField<FlexAllowedTypes> = {
 	is<TSchema extends FlexFieldSchema>(schema: TSchema) {
 		return schema === (FlexFieldSchema.empty as FlexFieldSchema);
 	},
-	isSameAs(other: FlexTreeField): boolean {
-		return other === this;
-	},
 	boxedIterator(): IterableIterator<FlexTreeNode> {
 		return [].values();
 	},
@@ -474,15 +471,6 @@ class MapTreeField<T extends FlexAllowedTypes> implements FlexTreeField {
 		schema: TSchemaInner,
 	): this is FlexTreeTypedField<TSchemaInner> {
 		return this.schema.equals(schema);
-	}
-
-	public isSameAs(other: FlexTreeField): boolean {
-		if (other.parent === this.parent && other.key === this.key) {
-			assert(other === this, 0x992 /* Expected field to be cached */);
-			return true;
-		}
-
-		return false;
 	}
 
 	public boxedIterator(): IterableIterator<FlexTreeTypedNodeUnion<T>> {

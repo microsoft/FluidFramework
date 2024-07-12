@@ -614,7 +614,7 @@ export interface FieldPathWithCount {
 function isField1UnderField2(field1: FlexTreeField, field2: FlexTreeField): boolean {
 	let parentField = field1.parent?.parentField?.parent;
 	while (parentField !== undefined) {
-		if (parentField.isSameAs(field2)) {
+		if (parentField.key === field2.key && parentField.parent === field2.parent) {
 			return true;
 		}
 		parentField = parentField.parent?.parentField?.parent;

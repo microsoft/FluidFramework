@@ -56,7 +56,6 @@ export type {
 	FlexTreeObjectNodeFields,
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
-	FlexTreeNodeKeyField,
 	IsArrayOfOne,
 	FlexibleNodeSubSequence,
 } from "./flexTreeTypes.js";
