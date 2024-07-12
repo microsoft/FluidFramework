@@ -423,6 +423,9 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -490,6 +493,9 @@ importers:
         specifier: ^5.88.1
         version: 5.88.1
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -536,6 +542,9 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -618,6 +627,9 @@ importers:
         specifier: ^6.8.1
         version: 6.8.1
     devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.8.3
+        version: 1.8.3
       '@fluid-private/readme-command':
         specifier: workspace:~
         version: link:../readme-command
