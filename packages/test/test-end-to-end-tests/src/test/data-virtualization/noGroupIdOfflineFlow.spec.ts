@@ -77,9 +77,9 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	it("Can create loadingGroupId", async () => {
-		const container = (await provider.createContainer(runtimeFactory, {
+		const container: IContainerExperimental = await provider.createContainer(runtimeFactory, {
 			configProvider,
-		})) as IContainerExperimental;
+		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		// Disconnect and create child object attached stashed ops
