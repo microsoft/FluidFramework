@@ -56,6 +56,7 @@ describe.only("getJsonSchema", () => {
 		const validator = getValidator(actual);
 
 		// Verify expected data validation behavior.
+		assert(validator(input) === true);
 		assert(validator("Hello world") === true);
 		assert(validator({}) === false);
 		assert(validator([]) === false);
@@ -97,69 +98,72 @@ describe.only("getJsonSchema", () => {
 		const validator = getValidator(actual);
 
 		// Verify expected data validation behavior.
+		// assert(validator(input) === true); // TODO: this should succeed
+		assert(validator([]) === true);
+		assert(validator(["Hello", "world"]) === true);
 		assert(validator("Hello world") === false);
 		assert(validator({}) === false);
-		assert(validator([]) === true);
 		assert(validator([42]) === false);
-		assert(validator(["Hello", "world"]) === true);
 		assert(validator(["Hello", 42, "world"]) === false);
 	});
 
-	// it("Map schema", () => {
-	// 	const input: SimpleTreeSchema = {
-	// 		definitions: new Map<string, SimpleNodeSchema>([
-	// 			["test.map", { kind: "map", allowedTypes: new Set<string>(["test.string"]) }],
-	// 			["test.string", { type: "string", kind: "leaf" }],
-	// 		]),
-	// 		allowedTypes: new Set<string>(["test.map"]),
-	// 	};
+	it("Map schema", () => {
+		const schemaFactory = new SchemaFactory("test");
+		const input = hydrate(
+			schemaFactory.map("map", schemaFactory.string),
+			new Map([
+				["foo", "Hello"],
+				["bar", "World"],
+			]),
+		);
 
-	// 	const actual = toJsonSchema(input);
+		const actual = getJsonSchema(input);
 
-	// 	const expected: TreeJsonSchema = {
-	// 		// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
-	// 		definitions: {
-	// 			"test.map": {
-	// 				type: "object",
-	// 				kind: "map",
-	// 				patternProperties: {
-	// 					"^(.*)+$": { anyOf: [{ $ref: "#/definitions/test.string" }] },
-	// 				},
-	// 			},
-	// 			"test.string": {
-	// 				type: "string",
-	// 				kind: "leaf",
-	// 			},
-	// 		},
-	// 		anyOf: [
-	// 			{
-	// 				$ref: "#/definitions/test.map",
-	// 			},
-	// 		],
-	// 	};
-	// 	assert.deepEqual(actual, expected);
+		const expected: TreeJsonSchema = {
+			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
+			definitions: {
+				"test.map": {
+					type: "object",
+					kind: "map",
+					patternProperties: {
+						"^(.*)+$": { anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }] },
+					},
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/definitions/test.map",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
 
-	// 	// Verify that the generated schema is valid.
-	// 	const validator = getValidator(actual);
+		// Verify that the generated schema is valid.
+		const validator = getValidator(actual);
 
-	// 	// Verify expected data validation behavior.
-	// 	assert(validator("Hello world") === false);
-	// 	assert(validator([]) === false);
-	// 	assert(validator({}) === true);
-	// 	assert(
-	// 		validator({
-	// 			foo: "Hello",
-	// 			bar: "World",
-	// 		}) === true,
-	// 	);
-	// 	assert(
-	// 		validator({
-	// 			foo: "Hello",
-	// 			bar: "World",
-	// 			baz: 42,
-	// 		}) === false,
-	// 	);
-	// });
+		// Verify expected data validation behavior.
+		assert(validator(input) === true);
+		assert(validator({}) === true);
+		assert(
+			validator({
+				foo: "Hello",
+				bar: "World",
+			}) === true,
+		);
+		assert(validator("Hello world") === false);
+		assert(validator([]) === false);
+		assert(
+			validator({
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			}) === false,
+		);
+	});
 
 	// it("Object schema", () => {
 	// 	const input: SimpleTreeSchema = {
