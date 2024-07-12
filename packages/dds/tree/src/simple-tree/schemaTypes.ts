@@ -67,6 +67,16 @@ export interface TreeNodeSchemaNonClass<
  *
  * Using classes in this way allows introducing a named type and a named value at the same time, helping keep the runtime and compile time information together and easy to refer to un a uniform way.
  * Additionally, this works around https://github.com/microsoft/TypeScript/issues/55832 which causes similar patterns with less explicit types to infer "any" in the d.ts file.
+ *
+ * When sub-classing a a `TreeNodeSchemaClass`, some extra rules must be followed:
+ *
+ * - Only ever use a single class from the schema's class hierarchy within a document and its schema.
+ * For example, if using {@link SchemaFactory.object} for can do:
+ * ```typescript
+ * class Foo extends schemaFactory.object("Foo", {}) {}
+ * class Foo extends schemaFactory.object()
+ * ```
+ *
  * @sealed @public
  */
 export interface TreeNodeSchemaClass<
@@ -81,7 +91,7 @@ export interface TreeNodeSchemaClass<
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
 	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
-	 * Therefor overriding this constructor is not type-safe and is not supported.
+	 * Therefor overriding this constructor with different argument types is not type-safe and is not supported.
 	 * @sealed
 	 */
 	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;

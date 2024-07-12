@@ -9,11 +9,20 @@ import type { CommitMetadata } from "../core/index.js";
 import type { Listenable } from "../events/index.js";
 import type { RevertibleFactory } from "../shared-tree/index.js";
 
-import type {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	TreeFieldFromImplicitField,
+import {
+	type ImplicitAllowedTypes,
+	NodeKind,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type TreeNodeSchema,
 } from "./schemaTypes.js";
+import { toFlexSchema } from "./toFlexSchema.js";
+import { LeafNodeSchema } from "./leafNodeSchema.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import { isObjectNodeSchema } from "./objectNode.js";
+import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
  * Channel for a Fluid Tree DDS.
@@ -130,6 +139,42 @@ export class TreeViewConfiguration<TSchema extends ImplicitFieldSchema = Implici
 		const config = { ...defaultTreeConfigurationOptions, ...props };
 		this.schema = config.schema;
 		this.enableSchemaValidation = config.enableSchemaValidation;
+
+		// Ensure all reachable schema are marked as most derived.
+		// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
+		// an error is reported.
+		walkFieldSchema(config.schema, markSchemaMostDerived);
+		// Eagerly perform this conversion to surface errors sooner.
+		toFlexSchema(config.schema);
+	}
+}
+
+export function walkNodeSchema(
+	schema: TreeNodeSchema,
+	visitor: (schema: TreeNodeSchema) => void,
+): void {
+	if (schema instanceof LeafNodeSchema) {
+		// nothing to do
+	} else if (isObjectNodeSchema(schema)) {
+		for (const field of schema.fields.values()) {
+			for (const childType of field.allowedTypeSet) {
+				walkNodeSchema(childType, visitor);
+			}
+		}
+	} else {
+		assert(schema.kind === NodeKind.Array || schema.kind === NodeKind.Map, "invalid schema");
+		const childTypes = schema.info as ImplicitAllowedTypes;
+		walkFieldSchema(childTypes, visitor);
+	}
+	visitor(schema);
+}
+
+export function walkFieldSchema(
+	schema: ImplicitFieldSchema,
+	visitor: (schema: TreeNodeSchema) => void,
+): void {
+	for (const childType of normalizeFieldSchema(schema).allowedTypeSet) {
+		walkNodeSchema(childType, visitor);
 	}
 }
 

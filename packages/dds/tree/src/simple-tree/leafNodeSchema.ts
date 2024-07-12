@@ -32,7 +32,7 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
  * @privateRemarks
  * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
-class LeafNodeSchema<T extends FlexLeafNodeSchema>
+export class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	implements TreeNodeSchemaNonClass<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>>
 {
 	public readonly identifier: UnbrandedName<T>;

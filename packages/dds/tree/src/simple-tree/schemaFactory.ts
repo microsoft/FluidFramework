@@ -20,6 +20,7 @@ import {
 import {
 	booleanSchema,
 	handleSchema,
+	LeafNodeSchema,
 	nullSchema,
 	numberSchema,
 	stringSchema,
@@ -64,6 +65,8 @@ import type {
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
+import { inPrototypeChain, TreeNodeValid } from "./types.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -161,6 +164,13 @@ export class SchemaFactory<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > {
+	/**
+	 * TODO:
+	 * If users of this generate the same name because two different schema with the same identifier were used,
+	 * the second use can get a cache hit, and reference the wrong schema.
+	 * Such usage should probably return a distinct type or error but currently does not.
+	 * The use of markSchemaMostDerived in structuralName at least ensure an error in the case where the collision is from two types extending the same schema factor class.
+	 */
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
@@ -236,7 +246,7 @@ export class SchemaFactory<
 	public readonly handle = handleSchema;
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
@@ -729,6 +739,7 @@ export function structuralName<const T extends string>(
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
 			assert(!isLazy(t), 0x83d /* invalid type provided */);
+			markSchemaMostDerived(t);
 			return t.identifier;
 		});
 		// Ensure name is order independent
@@ -739,4 +750,21 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
+}
+
+export function markSchemaMostDerived(schema: TreeNodeSchema): void {
+	if (schema instanceof LeafNodeSchema) {
+		return;
+	}
+
+	if (!inPrototypeChain(schema, TreeNodeValid)) {
+		// Use JSON.stringify to quote and escape identifier string.
+		throw new UsageError(
+			`Schema for ${JSON.stringify(
+				schema.identifier,
+			)} does not extend a SchemaFactory generated class. This is invalid.`,
+		);
+	}
+
+	(schema as typeof TreeNodeValid & TreeNodeSchema).markMostDerived();
 }

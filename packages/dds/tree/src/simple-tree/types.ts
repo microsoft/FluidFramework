@@ -208,51 +208,65 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * Also used to detect if oneTimeSetup has run.
 	 *
 	 * @privateRemarks
-	 * This defaults to TreeNodeValid, which is used to trigger an error if not overridden in the derived class.
+	 * This defaults to "default", which is used to trigger an error if not overridden in the derived class.
 	 *
 	 * The value of this on TreeNodeValid must only be overridden by base classes and never modified.
 	 * Ways to enforce this immutability prevent it from being overridden,
 	 * so code modifying constructorCached should be extra careful to avoid accidentally modifying the base/inherited value.
 	 */
-	protected static constructorCached: typeof TreeNodeValid | undefined = TreeNodeValid;
+	protected static constructorCached: MostDerivedData | "default" | undefined = "default";
+
+	/**
+	 * Indicate that `this` is the most derived version of a schema, and thus the only one allowed to be used (other than by being subclassed a single time).
+	 */
+	public static markMostDerived(this: typeof TreeNodeValid & TreeNodeSchema): MostDerivedData {
+		assert(this.constructorCached !== "default", 0x95f /* invalid schema class */);
+
+		if (this.constructorCached === undefined) {
+			// Set the constructorCached on the layer of the prototype chain that declared it.
+			// This is necessary to ensure there is only one subclass of that type used:
+			// if constructorCached was simply set on `schema`,
+			// then a base classes between `schema` (exclusive) and where `constructorCached` is set (inclusive) and other subclasses of them
+			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
+
+			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
+			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			let schemaBase: typeof TreeNodeValid = this;
+			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
+				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
+			}
+			assert(schemaBase.constructorCached === undefined, 0x962 /* overwriting wrong cache */);
+			schemaBase.constructorCached = { constructor: this, oneTimeInitialized: false };
+			assert(
+				this.constructorCached === schemaBase.constructorCached,
+				"Inheritance should work",
+			);
+			return this.constructorCached;
+		} else if (this.constructorCached.constructor === this) {
+			return this.constructorCached;
+		}
+
+		throw new UsageError(
+			`Two schema classes were used (${this.name} and ${
+				this.constructorCached.constructor.name
+			}) which derived from the same SchemaFactory generated class (${JSON.stringify(
+				this.identifier,
+			)}). This is invalid.`,
+		);
+	}
 
 	public constructor(input: TInput | InternalTreeNode) {
 		super();
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		assert("constructorCached" in schema, 0x95f /* invalid schema class */);
-		if (schema.constructorCached !== schema) {
-			if (schema.constructorCached !== undefined) {
-				assert(
-					schema.constructorCached !== TreeNodeValid,
-					0x960 /* Schema class schema must override static constructorCached member */,
-				);
-				throw new UsageError(
-					`Two schema classes were instantiated (${schema.name} and ${schema.constructorCached.name}) which derived from the same SchemaFactory generated class. This is invalid`,
-				);
-			}
-
+		const cache = schema.markMostDerived();
+		if (!cache.oneTimeInitialized) {
 			const flexSchema = getFlexSchema(schema);
 			assert(
 				tryGetSimpleNodeSchema(flexSchema) === schema,
 				0x961 /* Schema class not properly configured */,
 			);
 			schema.oneTimeSetup();
-			// Set the constructorCached on the layer of the prototype chain that declared it.
-			// This is necessary to ensure there is only one subclass of that type used:
-			// if constructorCached was simply set on `schema`,
-			// then a base classes between `schema` (exclusive) and where `constructorCached` is set (inclusive) and other subclasses of them
-			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
-			{
-				let schemaBase: typeof TreeNodeValid = schema;
-				while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
-					schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
-				}
-				assert(
-					schemaBase.constructorCached === undefined,
-					0x962 /* overwriting wrong cache */,
-				);
-				schemaBase.constructorCached = schema;
-			}
+			cache.oneTimeInitialized = true;
 		}
 
 		if (isTreeNode(input)) {
@@ -277,6 +291,11 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 }
 // Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
 markEager(TreeNodeValid);
+
+export interface MostDerivedData {
+	readonly constructor: typeof TreeNodeValid & TreeNodeSchema;
+	oneTimeInitialized: boolean;
+}
 
 /**
  * A node type internal to `@fluidframework/tree`.
