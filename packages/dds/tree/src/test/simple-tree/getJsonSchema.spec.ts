@@ -165,90 +165,83 @@ describe.only("getJsonSchema", () => {
 		);
 	});
 
-	// it("Object schema", () => {
-	// 	const input: SimpleTreeSchema = {
-	// 		definitions: new Map<string, SimpleNodeSchema>([
-	// 			[
-	// 				"test.object",
-	// 				{
-	// 					kind: "object",
-	// 					fields: {
-	// 						"foo": { kind: "optional", allowedTypes: new Set<string>(["test.number"]) },
-	// 						"bar": { kind: "required", allowedTypes: new Set<string>(["test.string"]) },
-	// 					},
-	// 				},
-	// 			],
-	// 			["test.string", { type: "string", kind: "leaf" }],
-	// 			["test.number", { type: "number", kind: "leaf" }],
-	// 		]),
-	// 		allowedTypes: new Set<string>(["test.object"]),
-	// 	};
+	it("Object schema", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class ObjectSchema extends schemaFactory.object("object", {
+			foo: schemaFactory.optional(schemaFactory.number),
+			bar: schemaFactory.required(schemaFactory.string),
+		}) {}
+		const input = hydrate(ObjectSchema, {
+			foo: 42,
+			bar: "Hello World",
+		});
 
-	// 	const actual = toJsonSchema(input);
+		const actual = getJsonSchema(input);
 
-	// 	const expected: TreeJsonSchema = {
-	// 		// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
-	// 		definitions: {
-	// 			"test.object": {
-	// 				type: "object",
-	// 				kind: "object",
-	// 				properties: {
-	// 					foo: {
-	// 						anyOf: [{ $ref: "#/definitions/test.number" }],
-	// 					},
-	// 					bar: {
-	// 						anyOf: [{ $ref: "#/definitions/test.string" }],
-	// 					},
-	// 				},
-	// 				required: ["bar"],
-	// 				additionalProperties: false,
-	// 			},
-	// 			"test.number": {
-	// 				type: "number",
-	// 				kind: "leaf",
-	// 			},
-	// 			"test.string": {
-	// 				type: "string",
-	// 				kind: "leaf",
-	// 			},
-	// 		},
-	// 		anyOf: [
-	// 			{
-	// 				$ref: "#/definitions/test.object",
-	// 			},
-	// 		],
-	// 	};
-	// 	assert.deepEqual(actual, expected);
+		const expected: TreeJsonSchema = {
+			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
+			definitions: {
+				"test.object": {
+					type: "object",
+					kind: "object",
+					properties: {
+						foo: {
+							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.number" }],
+						},
+						bar: {
+							anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
+						},
+					},
+					required: ["bar"],
+					additionalProperties: false,
+				},
+				"com.fluidframework.leaf.number": {
+					type: "number",
+					kind: "leaf",
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/definitions/test.object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
 
-	// 	// Verify that the generated schema is valid.
-	// 	const validator = getValidator(actual);
+		// Verify that the generated schema is valid.
+		const validator = getValidator(actual);
 
-	// 	// Verify expected data validation behavior.
-	// 	assert(validator("Hello world") === false);
-	// 	assert(validator([]) === false);
-	// 	assert(validator({}) === false);
-	// 	assert(
-	// 		validator({
-	// 			foo: 42,
-	// 		}) === false,
-	// 	);
-	// 	assert(
-	// 		validator({
-	// 			bar: "Hello World",
-	// 		}) === true,
-	// 	);
-	// 	assert(
-	// 		validator({
-	// 			foo: 42,
-	// 			bar: "Hello World",
-	// 		}) === true,
-	// 	);
-	// 	assert(
-	// 		validator({
-	// 			foo: 42,
-	// 			bar: "Hello World",
-	// 			baz: true,
-	// 		}) === false,
-	// 	);
-	// });
+		// Verify expected data validation behavior.
+		assert(validator(input) === true);
+		assert(
+			validator({
+				bar: "Hello World",
+			}) === true,
+		);
+		assert(
+			validator({
+				foo: 42,
+				bar: "Hello World",
+			}) === true,
+		);
+		assert(validator("Hello world") === false);
+		assert(validator([]) === false);
+		assert(validator({}) === false);
+		assert(
+			validator({
+				foo: 42,
+			}) === false,
+		);
+		assert(
+			validator({
+				foo: 42,
+				bar: "Hello World",
+				baz: true,
+			}) === false,
+		);
+	});
 });
