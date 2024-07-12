@@ -59,7 +59,6 @@ import {
 	isSnapshotFetchRequiredForLoadingGroupId,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
@@ -305,6 +304,9 @@ export abstract class FluidDataStoreContext
 		return this._isInMemoryRoot;
 	}
 
+	/**
+	 * Returns the count of pending messages that are stored until the data store is realized.
+	 */
 	public get pendingCount(): number {
 		return this.pending?.length ?? 0;
 	}
@@ -571,8 +573,10 @@ export abstract class FluidDataStoreContext
 		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
 		if (this.tombstoned && this.gcThrowOnTombstoneUsage) {
-			throw new DataCorruptionError(
+			throw DataProcessingError.create(
 				"Context is tombstoned! Call site [process]",
+				"process",
+				undefined /* sequencedMessage */,
 				safeTelemetryProps,
 			);
 		}

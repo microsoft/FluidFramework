@@ -33,7 +33,11 @@ import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import { MockLogger, tagCodeArtifacts } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	tagCodeArtifacts,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -152,7 +156,11 @@ async function loadContainer(
 	});
 }
 
-const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+const loadSummarizer = async (
+	container: IContainer,
+	summaryVersion?: string,
+	logger?: MockLogger,
+) => {
 	return createSummarizer(
 		provider,
 		container,
@@ -162,6 +170,7 @@ const loadSummarizer = async (container: IContainer, summaryVersion?: string) =>
 			forceUseCreateVersion: true, // To simulate the summarizer running on the created container
 		},
 		summaryVersion,
+		logger,
 	);
 };
 const ensureSynchronizedAndSummarize = async (
@@ -618,6 +627,57 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				);
 			},
 		);
+
+		it("trailing ops cause sweep ready data store to be realized by summarizer", async () => {
+			const container = await provider.makeTestContainer(testContainerConfig);
+			const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container);
+
+			// Create a data store and make it unreferenced.
+			const ds2key = "ds2";
+			const dataStore =
+				await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+			const testDataObject =
+				await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+			assert(
+				testDataObject !== undefined,
+				"Should have been able to retrieve testDataObject from entryPoint",
+			);
+			const unreferencedId = testDataObject._context.id;
+			defaultDataObject._root.set(ds2key, testDataObject.handle);
+			defaultDataObject._root.delete(ds2key);
+
+			// Summarize so that the above data store is unreferenced.
+			const { summarizer: summarizer1 } = await loadSummarizer(container);
+			const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer1);
+
+			// Send a trailing op and close the summarizer.
+			testDataObject._root.set("key", "value");
+			summarizer1.close();
+			await delay(sweepTimeoutMs + 10);
+
+			const mockLogger = new MockLogger();
+			// Close the container because in real scenarios, session expiry will close it. Not closing it
+			// will cause GC_Deleted_DataStore_Unexpected_Delete error.
+			container.close();
+			// Summarize. The tombstone ready data store should get realized because it has a
+			// trailing op.
+			const { summarizer: summarizer2 } = await loadSummarizer(
+				container,
+				summaryVersion,
+				mockLogger,
+			);
+			await assert.doesNotReject(
+				ensureSynchronizedAndSummarize(summarizer2),
+				"summarize failed",
+			);
+			mockLogger.assertMatch([
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Realized",
+					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
+				},
+			]);
+		});
 	});
 
 	describe("Deleted data stores in summary", () => {

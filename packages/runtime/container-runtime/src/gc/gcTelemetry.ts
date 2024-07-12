@@ -29,7 +29,7 @@ import {
 import { getGCVersionInEffect } from "./gcHelpers.js";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
-type NodeUsageType = "Changed" | "Loaded" | "Revived";
+type NodeUsageType = "Changed" | "Loaded" | "Revived" | "Realized";
 
 /** Properties that are common to IUnreferencedEventProps and INodeUsageProps */
 interface ICommonProps {

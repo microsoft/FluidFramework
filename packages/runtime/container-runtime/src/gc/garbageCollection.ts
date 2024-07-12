@@ -404,11 +404,7 @@ export class GarbageCollector implements IGarbageCollector {
 			{
 				eventName: "InitializeOrUpdateGCState",
 			},
-			async (perfEvent: {
-				end: (arg0: {
-					details: { initialized: boolean; unrefNodeCount: number };
-				}) => void;
-			}) => {
+			async (event) => {
 				// If the GC state hasn't been initialized yet, initialize it and return.
 				if (!initialized) {
 					await this.initializeGCStateFromBaseSnapshotP;
@@ -419,7 +415,7 @@ export class GarbageCollector implements IGarbageCollector {
 						nodeStateTracker.updateTracking(currentReferenceTimestampMs);
 					}
 				}
-				perfEvent.end({
+				event.end({
 					details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
 				});
 			},
