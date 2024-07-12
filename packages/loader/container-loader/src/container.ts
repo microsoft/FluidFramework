@@ -2142,7 +2142,7 @@ export class Container
 				processSignal: (message) => {
 					this.processSignal(message);
 				},
-			} /* handler to process incoming delta messages*/,
+			} /* handler to process incoming delta messages */,
 			prefetchType,
 			lastProcessedSequenceNumber,
 		);
@@ -2337,7 +2337,7 @@ export class Container
 
 	/**
 	 * Processes incoming delta messages
-	 * @param message delta message received from the server
+	 * @param message - delta message received from the server
 	 */
 	private processRemoteMessage(message: ISequencedDocumentMessage): void {
 		const local = this.clientId === message.clientId;
