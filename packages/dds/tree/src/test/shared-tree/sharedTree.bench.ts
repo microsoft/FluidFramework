@@ -13,10 +13,13 @@ import {
 } from "@fluid-tools/benchmark";
 
 import { rootFieldKey } from "../../core/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
+import { leaf, singleJsonCursor } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
+	Any,
+	FieldKinds,
+	SchemaBuilderBase,
 	TreeCompressionStrategy,
 	cursorForTypedData,
 	cursorForTypedTreeData,
@@ -49,6 +52,7 @@ import {
 	insert,
 	toJsonableTree,
 } from "../utils.js";
+import { assertSchema, updateSchema } from "./sharedTree.spec.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -66,7 +70,7 @@ const nodesCountDeep = [
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Compressed,
 });
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
@@ -341,6 +345,12 @@ describe("SharedTree benchmarks", () => {
 
 	describe("acking local commits", () => {
 		const localCommitSize = [1, 25, 100, 500, 1000];
+		const builder = new SchemaBuilderBase(FieldKinds.optional, {
+			scope: "test",
+			libraries: [leaf.library],
+		});
+		const schemaGeneralized = builder.intoSchema(Any);
+
 		for (const size of localCommitSize) {
 			benchmark({
 				type: BenchmarkType.Measurement,
@@ -355,6 +365,10 @@ describe("SharedTree benchmarks", () => {
 						const provider = new TestTreeProviderLite(1, factory);
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
+
+						updateSchema(tree, schemaGeneralized);
+						assertSchema(tree, schemaGeneralized);
+
 						for (let i = 0; i < size; i++) {
 							insert(tree.checkout, i, "test");
 						}
@@ -388,6 +402,11 @@ describe("SharedTree benchmarks", () => {
 		// - generating 10 edits per second with a 1000ms round-trip time
 		// - generating 100 edits per second with a 100ms round-trip time
 		const commitCounts = [1, 5, 10];
+		const builder = new SchemaBuilderBase(FieldKinds.optional, {
+			scope: "test",
+			libraries: [leaf.library],
+		});
+		const schemaGeneralized = builder.intoSchema(Any);
 		for (const peerCount of peerCounts) {
 			for (const commitCount of commitCounts) {
 				const test = benchmark({
@@ -400,11 +419,17 @@ describe("SharedTree benchmarks", () => {
 							assert.equal(state.iterationsPerBatch, 1);
 							const provider = new TestTreeProviderLite(peerCount, factory);
 
-							// This is the start of the stream of commits.
-							// Earlier commits are less out of date and therefore not representative.
-							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
-								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									const peer = provider.trees[iPeer];
+							for (let iPeer = 0; iPeer < peerCount; iPeer++) {
+								const peer = provider.trees[iPeer];
+								updateSchema(peer, schemaGeneralized);
+								// Can't use assertSchema() because it sets an event listener that fails when we're rebasing
+								// the changes that move from one schema to another, because we try to go from an optional rootField
+								// to a forbidden one.
+								// assertSchema(peer, schemaGeneralized);
+
+								// This is the start of the stream of commits.
+								// Earlier commits are less out of date and therefore not representative.
+								for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
