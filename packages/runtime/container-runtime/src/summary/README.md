@@ -1,7 +1,3 @@
----
-title: Summarization
----
-
 ## Table of contents
 
 -   [Introduction](#introduction)
@@ -84,4 +80,4 @@ The summarization process is designed to be resilient - Basically, a document wi
 
 ## What does a summary look like?
 
-The format of a summary is described in [summary formats](./summaryFormats.md).
+The format of summaries (and snapshots) is described in [summary and snapshot formats](./summaryFormats.md).
