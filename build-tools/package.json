@@ -27,7 +27,7 @@
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
 		"format": "npm run format:biome",
-		"format:biome": "biome check --apply .",
+		"format:biome": "biome check --write .",
 		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list --no-private -g build-tools --feed internal-dev --outFile feeds/internal-dev.txt",
@@ -69,7 +69,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.7.3",
+		"@biomejs/biome": "~1.8.3",
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	IMatrixConsumer,
@@ -21,25 +21,25 @@ export const matrixFactory = SharedMatrix.getFactory();
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;
 
-class NullMatrixConsumer implements IMatrixConsumer<any> {
+class NullMatrixConsumer implements IMatrixConsumer<unknown> {
 	rowsChanged(
 		rowStart: number,
 		removedCount: number,
 		insertedCount: number,
-		producer: IMatrixProducer<any>,
+		producer: IMatrixProducer<unknown>,
 	): void {}
 	colsChanged(
 		colStart: number,
 		removedCount: number,
 		insertedCount: number,
-		producer: IMatrixProducer<any>,
+		producer: IMatrixProducer<unknown>,
 	): void {}
 	cellsChanged(
 		rowStart: number,
 		colStart: number,
 		rowCount: number,
 		colCount: number,
-		producer: IMatrixProducer<any>,
+		producer: IMatrixProducer<unknown>,
 	): void {}
 }
 
@@ -54,14 +54,14 @@ export function fill<T extends IMatrix<U>, U>(
 	colStart = 0,
 	rowCount = matrix.rowCount - rowStart,
 	colCount = matrix.colCount - colStart,
-	value = (row: number, col: number) => row * rowCount + col,
+	value = (row: number, col: number): number => row * rowCount + col,
 ): T {
 	const rowEnd = rowStart + rowCount;
 	const colEnd = colStart + colCount;
 
 	for (let r = rowStart; r < rowEnd; r++) {
 		for (let c = colStart; c < colEnd; c++) {
-			matrix.setCell(r, c, value(r, c) as any);
+			matrix.setCell(r, c, value(r, c) as U);
 		}
 	}
 
@@ -71,17 +71,17 @@ export function fill<T extends IMatrix<U>, U>(
 /**
  * Sets the corners of the given matrix.
  */
-export function setCorners<T extends IMatrix<U>, U>(matrix: T) {
-	matrix.setCell(0, 0, "TopLeft" as any);
-	matrix.setCell(0, matrix.colCount - 1, "TopRight" as any);
-	matrix.setCell(matrix.rowCount - 1, matrix.colCount - 1, "BottomRight" as any);
-	matrix.setCell(matrix.rowCount - 1, 0, "BottomLeft" as any);
+export function setCorners<T extends IMatrix<U>, U>(matrix: T): void {
+	matrix.setCell(0, 0, "TopLeft" as U);
+	matrix.setCell(0, matrix.colCount - 1, "TopRight" as U);
+	matrix.setCell(matrix.rowCount - 1, matrix.colCount - 1, "BottomRight" as U);
+	matrix.setCell(matrix.rowCount - 1, 0, "BottomLeft" as U);
 }
 
 /**
  * Checks the corners of the given matrix.
  */
-export function checkCorners<T extends IMatrix<U>, U>(matrix: T) {
+export function checkCorners<T extends IMatrix<U>, U>(matrix: T): void {
 	assert.equal(matrix.getCell(0, 0), "TopLeft");
 	assert.equal(matrix.getCell(0, matrix.colCount - 1), "TopRight");
 	assert.equal(matrix.getCell(matrix.rowCount - 1, matrix.colCount - 1), "BottomRight");
@@ -98,8 +98,8 @@ export function check<T extends IMatrix<U>, U>(
 	colStart = 0,
 	rowCount = matrix.rowCount - rowStart,
 	colCount = matrix.colCount - colStart,
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	value = (row: number, col: number): U => (row * rowCount + col) as any,
+
+	value = (row: number, col: number): U => (row * rowCount + col) as U,
 ): T {
 	const rowEnd = rowStart + rowCount;
 	const colEnd = colStart + colCount;
@@ -119,16 +119,16 @@ export function checkValue<T extends IMatrix<U>, U>(
 	c: number,
 	rowStart = 0,
 	rowCount = matrix.rowCount - rowStart,
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	value = (row: number, col: number) => (row * rowCount + col) as any,
-) {
+
+	value = (row: number, col: number): U => (row * rowCount + col) as U,
+): void {
 	assert.equal(test, value(r, c));
 }
 
 function withReader<TCells, TResult>(
 	producerOrReader: IMatrixReader<TCells> | IMatrixProducer<TCells>,
 	callback: (reader: IMatrixReader<TCells>) => TResult,
-) {
+): TResult {
 	if ("openMatrix" in producerOrReader) {
 		const reader = producerOrReader.openMatrix(nullConsumer);
 		try {
@@ -151,7 +151,7 @@ export const extract = <T>(
 	colStart = 0,
 	rowCount?: number,
 	colCount?: number,
-) =>
+): T[][] =>
 	withReader(matrix, (reader) => {
 		const _rowCount = rowCount ?? reader.rowCount - rowStart;
 		const _colCount = colCount ?? reader.colCount - colStart;
@@ -177,7 +177,7 @@ export function expectSize<T>(
 	matrix: IMatrixReader<T> | IMatrixProducer<T>,
 	rowCount: number,
 	colCount: number,
-) {
+): void {
 	withReader(matrix, (reader) => {
 		assert.equal(reader.rowCount, rowCount, "'matrix' must have expected number of rows.");
 		assert.equal(reader.colCount, colCount, "'matrix' must have expected number of columns.");
@@ -191,7 +191,11 @@ export function expectSize<T>(
  * This is achieved by inserting even row/cols at the end of the matrix and odd row/cols
  * at the middle of the matrix (e.g, [1,3,5,7,0,2,4,6]).
  */
-export function insertFragmented(matrix: SharedMatrix, rowCount: number, colCount: number) {
+export function insertFragmented(
+	matrix: SharedMatrix,
+	rowCount: number,
+	colCount: number,
+): SharedMatrix {
 	for (let r = 0; r < rowCount; r++) {
 		matrix.insertRows(
 			// eslint-disable-next-line no-bitwise

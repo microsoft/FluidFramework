@@ -98,6 +98,9 @@ Arguments:
 -   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
     -   Default: `false`.
     -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
+-   `clientRequirements`: Whether or not to include a section outlining the minimum client requirements for using Fluid Framework packages.
+    -   Default: `true`.
+    -   See [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section).
 -   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
     -   Default: `true`.
     -   See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
@@ -203,6 +206,20 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
+    -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
+
+#### `README_CLIENT_REQUIREMENTS_SECTION`
+
+Generates a section containing minimum client requirements for using Fluid Framework packages.
+
+See the corresponding template [here](./src/templates/Client-Requirements-Template.md).
+
+Arguments:
+
 -   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
 -   `headingLevel`: Root heading level for the generated section.

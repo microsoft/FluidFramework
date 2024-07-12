@@ -355,7 +355,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
@@ -443,7 +443,7 @@ describe("Pending State Manager", () => {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
-					clientId: () => undefined,
+					clientId: () => "CLIENT_ID",
 					close: () => {},
 					connected: () => true,
 					reSubmitBatch: () => {},
@@ -544,6 +544,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 10,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 			},
 			{
 				type: "message",
@@ -551,6 +552,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 11,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 2 },
 			},
 			{
 				type: "message",
@@ -558,6 +560,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 			{
 				type: "message",
@@ -565,6 +568,7 @@ describe("Pending State Manager", () => {
 				referenceSequenceNumber: 12,
 				localOpMetadata: undefined,
 				opMetadata: undefined,
+				batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 3 },
 			},
 		];
 
