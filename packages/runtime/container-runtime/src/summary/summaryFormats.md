@@ -1,7 +1,3 @@
----
-title: Summary Formats
----
-
 # Summary and snapshot formats
 
 ## Table of contents
@@ -12,7 +8,7 @@ title: Summary Formats
 -   [Summary / Snapshot Tree Visualization](#summary--snapshot-tree-visualization)
     -   [Protocol Tree](#protocol-tree)
     -   [App Tree](#app-tree)
-    -   [Summary Tree distinction](#summary-tree-distinction)
+    -   [Summary tree distinction - Incremental summaries](#summary-tree-distinction---incremental-summaries)
 
 ## Introduction
 
@@ -68,14 +64,14 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
             ```typescript
             export interface ISummaryHandle {
-            	type: SummaryType.Handle;
-            	handleType: SummaryTypeNoHandle;
-            	handle: string;
+                type: SummaryType.Handle;
+                handleType: SummaryTypeNoHandle;
+                handle: string;
             }
             export type SummaryTypeNoHandle =
-            	| SummaryType.Tree
-            	| SummaryType.Blob
-            	| SummaryType.Attachment;
+                | SummaryType.Tree
+                | SummaryType.Blob
+                | SummaryType.Attachment;
             ```
 
 ## Snapshot Format
@@ -176,8 +172,8 @@ flowchart TD
     A --> T[.blobs]:::tree
         T --> U["attachment blob 1"]:::attachment
         T --> V["attachment blob N"]:::attachment
-
 ```
+
 -   `Container`: The root represents the container or container runtime node. Its contents are described below:
 
     -   `.metadata blob` - The container level metadata such as creation time, create version, etc.

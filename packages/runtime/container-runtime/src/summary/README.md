@@ -1,6 +1,4 @@
----
-title: Summarization
----
+# Summarization
 
 ## Table of contents
 
@@ -13,7 +11,7 @@ title: Summarization
     -   [Summary Lifecycle](#summary-lifecycle)
     -   [Single-commit vs two-commit summaries](#single-commit-vs-two-commit-summaries)
     -   [Incremental summaries](#incremental-summaries)
-	-   [Resiliency](#resiliency)
+    -   [Resiliency](#resiliency)
 -   [What does a summary look like?](#what-does-a-summary-look-like)
 
 ## Introduction
@@ -26,7 +24,7 @@ The terms summary and snapshot are sometimes used interchangeably. Both represen
 
 ## Why do we need summaries?
 
-A 'summary' captures the state of a container at a point in time. Without it, a client would have to apply every operation in the op log, even if those operations no longer affected the current state (e.g. op 1 inserts ‘h’ and op 2 deletes ‘h’). For very large op logs, this would be very expensive for clients to both process and download from the service.
+A 'summary' captures the state of a container at a point in time. Without it, a client would have to apply every operation in the op log, even if those operations no longer affected the current state (e.g. op 1 inserts 'h' and op 2 deletes 'h'). For very large op logs, this would be very expensive for clients to both process and download from the service.
 Instead, when a client opens a collaborative document, it can download a snapshot of the container, and simply process new operations from that point forward.
 
 ## Who generates summaries?
@@ -51,6 +49,7 @@ When summarization process is triggered, every object in the container's object 
 ### Summary Lifecycle
 
 The lifecycle of a summary starts when a "parent summarizer" client is elected.
+
 -   The parent summarizer spawns a non-interactive summarizer client.
 -   The summarizer client periodically starts a summary as per heuristics. A summary happens at a particular sequence number called the "summary sequence number" or reference sequence number for the summary.
 -   The container runtime (or simply runtime) generates a summary tree (described in the ["What does a summary look like?"](#what-does-a-summary-look-like) section below).
@@ -77,6 +76,7 @@ Say that a data store or DDS did not change since the last summary, it doesn't h
 ### Resiliency
 
 The summarization process is designed to be resilient - Basically, a document will eventually summarize and make progress even if there are intermittent failures or disruptions. Some examples of steps taken to achieve this:
+
 -   Last summary - Usually, if the "parent summarizer" client disconnects or shuts down, the "summarizer" client also shuts down and the summarizer election process begins. However, if there a certain number of un-summarized ops, the summarizer client will perform a "last summary" even if the parent shuts down. This is done to make progress in scenarios where new summarizer clients are closed quickly because the parent summarizer keeps disconnecting repeatedly.
 -   Retries - The summarizer has a retry mechanism which can identify certain types of intermittent failures either in the client or in the server. It will retry the summary attempt for these failures a certain number of times. This helps in cases where there are intermittent failures such as throttling errors from the server which goes away after waiting for a while.
 
