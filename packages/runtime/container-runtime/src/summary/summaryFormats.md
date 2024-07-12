@@ -1,4 +1,6 @@
-# Summary and snapshot formats
+---
+title: Summary and snapshot formats
+---
 
 ## Table of contents
 
@@ -62,17 +64,17 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
     -   `ISummaryHandle` - A summary handle is used for incremental summaries. If a node hasn't changed since the last successful summary, instead of sending it's entire contents, it can send a "handle" which is a path to its summary tree object in the last summary. For example, if a data store or DDS did not change since the last summary, the runtime will use a handle for the entire data store instead of re-sending the entire subtree. The same concept applies for a summary blob or a summary attachment and the "handleType" should be set according to the type of the node. An example of "handle" that a DDS sends would be something like: "/_dataStoreId_/_ddsId_".
 
-            ```typescript
-            export interface ISummaryHandle {
-                type: SummaryType.Handle;
-                handleType: SummaryTypeNoHandle;
-                handle: string;
-            }
-            export type SummaryTypeNoHandle =
-                | SummaryType.Tree
-                | SummaryType.Blob
-                | SummaryType.Attachment;
-            ```
+        ```typescript
+        export interface ISummaryHandle {
+            type: SummaryType.Handle;
+            handleType: SummaryTypeNoHandle;
+            handle: string;
+        }
+        export type SummaryTypeNoHandle =
+            | SummaryType.Tree
+            | SummaryType.Blob
+            | SummaryType.Attachment;
+        ```
 
 ## Snapshot Format
 

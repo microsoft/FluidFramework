@@ -1,4 +1,6 @@
-# Summarization
+---
+title: Summarization
+---
 
 ## Table of contents
 
