@@ -20,7 +20,8 @@ export function computeHierarchicalOrdinal(
 	const ordinalWidth = 1 << (maxCount - actualCount);
 	let ordinal: string;
 	if (previousOrdinal === undefined) {
-		// Since ordinals don't deal with user input and would require minor behavior changes,
+		// Ordinals exist purely for lexicographical sort order and use a small set of valid bytes for each string character.
+		// The extra handling fromCodePoint has for things like surrogate pairs is therefore unnecessary.
 		// disable the rule to use code points when dealing with ordinals.
 		// eslint-disable-next-line unicorn/prefer-code-point
 		ordinal = parentOrdinal + String.fromCharCode(ordinalWidth - 1);
