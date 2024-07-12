@@ -12,6 +12,9 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
+import { treeNodeApi } from "./treeNodeApi.js";
+import { toSimpleTreeSchema } from "./treeNodeSchemaToSimpleSchema.js";
+import type { TreeNode } from "./types.js";
 
 // TODOs:
 // "ajv" library for at least testing, maybe type defs as well.
@@ -233,4 +236,14 @@ function createRefNode(schemaId: string): JsonDefinitionRef {
 
 function createRefString(schemaId: string): JsonSchemaId {
 	return `#/definitions/${schemaId}`;
+}
+
+// TODO: move to `treeNodeApi` once it is a namespace and this can remain `@internal` or `@alpha`
+/**
+ * TODO
+ * @internal
+ */
+export function getJsonSchema(node: TreeNode): TreeJsonSchema {
+	const simpleViewSchema = toSimpleTreeSchema(treeNodeApi.schema(node));
+	return toJsonSchema(simpleViewSchema);
 }

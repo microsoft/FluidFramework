@@ -40,7 +40,11 @@ export {
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
-export { treeNodeApi, type TreeNodeApi, type TreeChangeEvents } from "./treeNodeApi.js";
+export {
+	treeNodeApi,
+	type TreeNodeApi,
+	type TreeChangeEvents,
+} from "./treeNodeApi.js";
 export { toFlexSchema, cursorFromUnhydratedRoot } from "./toFlexSchema.js";
 export type {
 	FieldHasDefaultUnsafe,
@@ -109,8 +113,9 @@ export {
 	type SimpleNodeSchema,
 	type SimpleFieldSchema,
 	type SimpleTreeSchema,
-	toSimpleTreeSchema,
 } from "./simpleSchema.js";
+// TODO: probably move this into `shared-tree` dir next to consumer
+export { toSimpleTreeSchema } from "./storedSchemaToSimpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -123,4 +128,5 @@ export {
 	type TreeJsonSchema,
 	type FieldJsonSchema,
 	toJsonSchema,
+	getJsonSchema,
 } from "./jsonSchema.js";
