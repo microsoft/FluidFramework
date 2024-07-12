@@ -139,7 +139,10 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment,
 	}
 
 	get ordinal(): string {
-		return String.fromCodePoint(0x00);
+		// Since ordinals don't deal with user input and would require minor behavior changes,
+		// disable the rule to use code points when dealing with ordinals.
+		// eslint-disable-next-line unicorn/prefer-code-point
+		return String.fromCharCode(0x00);
 	}
 }
 

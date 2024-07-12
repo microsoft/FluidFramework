@@ -651,7 +651,10 @@ export abstract class BaseSegment implements ISegment {
 		// Give the leaf a temporary yet valid ordinal.
 		// when this segment is put in the tree, it will get its real ordinal,
 		// but this ordinal meets all the necessary invariants for now.
-		leafSegment.ordinal = this.ordinal + String.fromCodePoint(0);
+		// Since ordinals don't deal with user input and would require minor behavior changes,
+		// disable the rule to use code points when dealing with ordinals.
+		// eslint-disable-next-line unicorn/prefer-code-point
+		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
 		leafSegment.removedClientIds = this.removedClientIds?.slice();
 		leafSegment.removedSeq = this.removedSeq;
@@ -913,15 +916,11 @@ export class CollaborationWindow {
 
 /**
  * Compares two numbers.
- *
- * @internal
  */
 export const compareNumbers = (a: number, b: number): number => a - b;
 
 /**
  * Compares two strings.
- *
- * @internal
  */
 export const compareStrings = (a: string, b: string): number => a.localeCompare(b);
 
