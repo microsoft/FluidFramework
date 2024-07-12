@@ -2728,7 +2728,10 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
-			this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
+			// validateAndProcessRuntimeMessage only processes internal container messages
+			if (messageWithContext.message.type in ContainerMessageType) {
+				this.validateAndProcessRuntimeMessage(messageWithContext, localOpMetadata);
+			}
 
 			this.emit("op", message, messageWithContext.modernRuntimeMessage);
 
@@ -4025,8 +4028,6 @@ export class ContainerRuntime
 			0x93f /* metadata */,
 		);
 
-		const serializedContent = JSON.stringify(containerRuntimeMessage);
-
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
 		if (this.innerDeltaManager.readOnlyInfo.readonly) {
@@ -4041,12 +4042,6 @@ export class ContainerRuntime
 			type !== ContainerMessageType.IdAllocation,
 			0x9a5 /* IdAllocation should be submitted directly to outbox. */,
 		);
-		const message: BatchMessage = {
-			contents: serializedContent,
-			metadata,
-			localOpMetadata,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-		};
 
 		try {
 			this.submitIdAllocationOpIfNeeded(false);
@@ -4074,6 +4069,13 @@ export class ContainerRuntime
 				});
 			}
 
+			const serializedContent = JSON.stringify(containerRuntimeMessage);
+			const message: BatchMessage = {
+				contents: serializedContent,
+				metadata,
+				localOpMetadata,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			};
 			if (type === ContainerMessageType.BlobAttach) {
 				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
 				this.outbox.submitBlobAttach(message);
