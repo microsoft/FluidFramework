@@ -32,6 +32,8 @@
 #
 # ------------------------------------------------------------------------
 
+/.github/CODEOWNERS                            @microsoft/fluid-cr-api
+
 # ID compressor source
 /packages/runtime/id-compressor/src            @microsoft/fluid-cr-id-compressor
 

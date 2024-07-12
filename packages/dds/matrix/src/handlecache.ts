@@ -28,7 +28,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	 * Returns the index of the given position in the 'handles' array as a Uint32.
 	 * (If the position is not in the array, returns an integer greater than 'handles.length').
 	 */
-	private getIndex(position: number) {
+	private getIndex(position: number): number {
 		return (position - this.start) >>> 0;
 	}
 
@@ -37,7 +37,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 	 * the result with 'isValidHandle(..)' to see if a handle has been allocated for
 	 * the given position.
 	 *
-	 * Throws a 'RangeError' if the provided 'position' is out-of-bounds wrt. the
+	 * @throws A 'RangeError' if the provided 'position' is out-of-bounds with regards to the
 	 * PermutationVector's length.
 	 */
 	public getHandle(position: number): Handle {
@@ -57,8 +57,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		return this.cacheMiss(position);
 	}
 
-	/** Update the cache when a handle has been allocated for a given position. */
-	public addHandle(position: number, handle: Handle) {
+	/**
+	 * Update the cache when a handle has been allocated for a given position.
+	 */
+	public addHandle(position: number, handle: Handle): void {
 		assert(isHandleValid(handle), 0x017 /* "Trying to add invalid handle!" */);
 
 		const index = this.getIndex(position);
@@ -73,8 +75,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		}
 	}
 
-	/** Used by 'CacheMiss()' to retrieve handles for a range of positions. */
-	private getHandles(start: number, end: number) {
+	/**
+	 * Used by {@link HandleCache.cacheMiss} to retrieve handles for a range of positions.
+	 */
+	private getHandles(start: number, end: number): Handle[] {
 		// TODO: This can be accelerated substantially using 'walkSegments()'.  The only catch
 		//       is that
 
@@ -104,7 +108,7 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		//       the handle cache).
 
 		if (_position < this.start) {
-			this.handles = this.getHandles(_position, this.start).concat(this.handles);
+			this.handles = [...this.getHandles(_position, this.start), ...this.handles];
 			this.start = _position;
 			// TODO why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -112,9 +116,10 @@ export class HandleCache implements IVectorConsumer<Handle> {
 		} else {
 			ensureRange(_position, this.vector.getLength());
 
-			this.handles = this.handles.concat(
-				this.getHandles(this.start + this.handles.length, _position + 1),
-			);
+			this.handles = [
+				...this.handles,
+				...this.getHandles(this.start + this.handles.length, _position + 1),
+			];
 			// TODO why are we non null asserting here?
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return this.handles[this.handles.length - 1]!;

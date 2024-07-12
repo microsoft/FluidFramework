@@ -116,6 +116,7 @@ module.exports = {
 		{
 			label: "Must use tilde dependency ranges",
 			dependencies: [
+				"@biomejs/biome",
 				"eslint-plugin-*",
 				"eslint-config-prettier",
 				"eslint",

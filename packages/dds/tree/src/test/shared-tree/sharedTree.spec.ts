@@ -305,8 +305,8 @@ describe("SharedTree", () => {
 			schema,
 		});
 		const root = view.flexTree;
-		const leafNode = root.boxedContent;
-		assert.equal(leafNode.value, 1);
+		const leafNode = root.boxedAt(0);
+		assert.equal(leafNode?.value, 1);
 		root.content = 2;
 		assert(leafNode.treeStatus() !== TreeStatus.InDocument);
 		assert.equal(root.content, 2);
