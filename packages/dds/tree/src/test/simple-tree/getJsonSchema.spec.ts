@@ -8,6 +8,7 @@ import { getJsonSchema, SchemaFactory, type TreeJsonSchema } from "../../simple-
 
 // TODOs:
 // - Identifier fields
+// - Recursive schema
 
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
@@ -55,57 +56,54 @@ describe.only("getJsonSchema", () => {
 		const validator = getValidator(actual);
 
 		// Verify expected data validation behavior.
-		assert(validator(input) === true);
 		assert(validator("Hello world") === true);
 		assert(validator({}) === false);
 		assert(validator([]) === false);
 	});
 
-	// it("Array schema", () => {
-	// 	const input: SimpleTreeSchema = {
-	// 		definitions: new Map<string, SimpleNodeSchema>([
-	// 			["test.array", { kind: "array", allowedTypes: new Set<string>(["test.string"]) }],
-	// 			["test.string", { type: "string", kind: "leaf" }],
-	// 		]),
-	// 		allowedTypes: new Set<string>(["test.array"]),
-	// 	};
+	it("Array schema", () => {
+		const schemaFactory = new SchemaFactory("test");
+		const input = hydrate(schemaFactory.array("array", schemaFactory.string), [
+			"Hello",
+			"world",
+		]);
 
-	// 	const actual = toJsonSchema(input);
+		const actual = getJsonSchema(input);
 
-	// 	const expected: TreeJsonSchema = {
-	// 		// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
-	// 		definitions: {
-	// 			"test.array": {
-	// 				type: "array",
-	// 				kind: "array",
-	// 				items: {
-	// 					anyOf: [{ $ref: "#/definitions/test.string" }],
-	// 				},
-	// 			},
-	// 			"test.string": {
-	// 				type: "string",
-	// 				kind: "leaf",
-	// 			},
-	// 		},
-	// 		anyOf: [
-	// 			{
-	// 				$ref: "#/definitions/test.array",
-	// 			},
-	// 		],
-	// 	};
-	// 	assert.deepEqual(actual, expected);
+		const expected: TreeJsonSchema = {
+			// $schema: "http://json-schema.org/draft-07/schema#", // TODO?
+			definitions: {
+				"test.array": {
+					type: "array",
+					kind: "array",
+					items: {
+						anyOf: [{ $ref: "#/definitions/com.fluidframework.leaf.string" }],
+					},
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/definitions/test.array",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
 
-	// 	// Verify that the generated schema is valid.
-	// 	const validator = getValidator(actual);
+		// Verify that the generated schema is valid.
+		const validator = getValidator(actual);
 
-	// 	// Verify expected data validation behavior.
-	// 	assert(validator("Hello world") === false);
-	// 	assert(validator({}) === false);
-	// 	assert(validator([]) === true);
-	// 	assert(validator([42]) === false);
-	// 	assert(validator(["Hello", "world"]) === true);
-	// 	assert(validator(["Hello", 42, "world"]) === false);
-	// });
+		// Verify expected data validation behavior.
+		assert(validator("Hello world") === false);
+		assert(validator({}) === false);
+		assert(validator([]) === true);
+		assert(validator([42]) === false);
+		assert(validator(["Hello", "world"]) === true);
+		assert(validator(["Hello", 42, "world"]) === false);
+	});
 
 	// it("Map schema", () => {
 	// 	const input: SimpleTreeSchema = {
