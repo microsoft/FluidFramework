@@ -382,7 +382,6 @@ export {
 	type FlexTreeUnboxField,
 	type FlexTreeUnboxNode,
 	type FlexTreeUnboxNodeUnion,
-	type FlexTreeNodeKeyField,
 	type IsArrayOfOne,
 	type FlexibleNodeSubSequence,
 	flexTreeMarker,

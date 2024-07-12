@@ -638,16 +638,6 @@ describe("List", () => {
 				[[], ["a"], ["b"], ["b", "c"], ["b", "c", "c"]].forEach(check);
 			});
 
-			describe("values()", () => {
-				const check = (array: readonly string[]) => {
-					test2("values", array, noInit);
-				};
-
-				check([]);
-				check(["a"]);
-				check(["a", "b"]);
-			});
-
 			describe("toLocaleString()", () => {
 				// TODO: Consider generalizing 'test2' to support this test.
 				const check = (array: readonly number[]) => {

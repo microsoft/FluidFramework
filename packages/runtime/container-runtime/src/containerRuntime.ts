@@ -989,11 +989,7 @@ export class ContainerRuntime
 			}
 		};
 
-		const disableCompression = mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionDisabled",
-		);
 		const compressionLz4 =
-			disableCompression !== true &&
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
@@ -1013,9 +1009,7 @@ export class ContainerRuntime
 			},
 		);
 
-		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
-			disableCompression,
-		};
+		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
 		const runtime = new containerRuntimeCtor(
 			context,
@@ -1520,9 +1514,6 @@ export class ContainerRuntime
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
 		);
-		const disableChunking = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
-		);
 
 		const opGroupingManager = new OpGroupingManager(
 			{
@@ -1539,7 +1530,7 @@ export class ContainerRuntime
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.submitBatchFn,
-			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
+			runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1929,7 +1920,6 @@ export class ContainerRuntime
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				closeSummarizerDelayOverride,

@@ -807,6 +807,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree,
 		});
+		// add to the list of bound or remoted, as this context must be bound
+		// to had an attach message sent, and is the non-detached case is remoted.
+		this.contexts.addBoundOrRemoted(dataStoreContext);
 
 		// realize the local context, as local contexts shouldn't be delay
 		// loaded, as this client is playing the role of creating client,
@@ -814,9 +817,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const channel = await dataStoreContext.realize();
 		await channel.entryPoint.get();
 
-		// add to the list of bound or remoted, as this context must be bound
-		// to had an attach message sent, and is the non-detached case is remoted.
-		this.contexts.addBoundOrRemoted(dataStoreContext);
 		if (this.parentContext.attachState !== AttachState.Detached) {
 			// if the client is not detached put in the pending attach list
 			// so that on ack of the stashed op, the context is found.

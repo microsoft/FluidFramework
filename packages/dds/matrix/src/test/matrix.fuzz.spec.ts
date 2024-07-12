@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import * as path from "path";
+import { strict as assert } from "node:assert";
+import * as path from "node:path";
 
 import {
 	AsyncGenerator,
@@ -68,7 +68,10 @@ type Operation = InsertRows | InsertColumns | RemoveRows | RemoveColumns | SetCe
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<SharedMatrixFactory>;
 
-async function assertMatricesAreEquivalent<T>(a: SharedMatrix<T>, b: SharedMatrix<T>) {
+async function assertMatricesAreEquivalent<T>(
+	a: SharedMatrix<T>,
+	b: SharedMatrix<T>,
+): Promise<void> {
 	assert.equal(
 		a.colCount,
 		b.colCount,
@@ -201,12 +204,13 @@ function makeGenerator(
 		[
 			setKey,
 			setWeight,
-			(state) => state.client.channel.rowCount > 0 && state.client.channel.colCount > 0,
+			(state): boolean =>
+				state.client.channel.rowCount > 0 && state.client.channel.colCount > 0,
 		],
 		[insertRows, insertRowWeight],
 		[insertCols, insertColWeight],
-		[removeRows, removeRowWeight, (state) => state.client.channel.rowCount > 0],
-		[removeCols, removeColWeight, (state) => state.client.channel.colCount > 0],
+		[removeRows, removeRowWeight, (state): boolean => state.client.channel.rowCount > 0],
+		[removeCols, removeColWeight, (state): boolean => state.client.channel.colCount > 0],
 	]);
 
 	return async (state) => syncGenerator(state);
