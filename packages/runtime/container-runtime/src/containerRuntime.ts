@@ -61,6 +61,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
+	type ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -91,7 +92,6 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
-	ReadAndParseBlob,
 	RequestParser,
 	TelemetryContext,
 	addBlobToSummary,
@@ -989,11 +989,7 @@ export class ContainerRuntime
 			}
 		};
 
-		const disableCompression = mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionDisabled",
-		);
 		const compressionLz4 =
-			disableCompression !== true &&
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
@@ -1013,9 +1009,7 @@ export class ContainerRuntime
 			},
 		);
 
-		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
-			disableCompression,
-		};
+		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
 		const runtime = new containerRuntimeCtor(
 			context,
@@ -1364,6 +1358,11 @@ export class ContainerRuntime
 	private readonly isSnapshotInstanceOfISnapshot: boolean | undefined;
 
 	/**
+	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
+	 */
+	private lastAckedSummaryContext: ISummaryContext | undefined;
+
+	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
 	 */
@@ -1515,9 +1514,6 @@ export class ContainerRuntime
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
 		);
-		const disableChunking = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
-		);
 
 		const opGroupingManager = new OpGroupingManager(
 			{
@@ -1534,7 +1530,7 @@ export class ContainerRuntime
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.submitBatchFn,
-			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
+			runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
@@ -1924,7 +1920,6 @@ export class ContainerRuntime
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				closeSummarizerDelayOverride,
@@ -3556,7 +3551,7 @@ export class ContainerRuntime
 			summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-			const lastAck = this.summaryCollection.latestAck;
+			const lastAckedContext = this.lastAckedSummaryContext;
 
 			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
@@ -3623,10 +3618,10 @@ export class ContainerRuntime
 					0x395 /* it's one and the same thing */,
 				);
 
-				if (lastAck !== this.summaryCollection.latestAck) {
+				if (lastAckedContext !== this.lastAckedSummaryContext) {
 					return {
 						continue: false,
-						error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
+						error: `Last summary changed while summarizing. ${this.lastAckedSummaryContext} !== ${lastAckedContext}`,
 					};
 				}
 				return { continue: true };
@@ -3736,18 +3731,11 @@ export class ContainerRuntime
 				};
 			}
 
-			const summaryContext =
-				lastAck === undefined
-					? {
-							proposalHandle: undefined,
-							ackHandle: this.loadedFromVersionId,
-							referenceSequenceNumber: summaryRefSeqNum,
-						}
-					: {
-							proposalHandle: lastAck.summaryOp.contents.handle,
-							ackHandle: lastAck.summaryAck.contents.handle,
-							referenceSequenceNumber: summaryRefSeqNum,
-						};
+			const summaryContext: ISummaryContext = {
+				proposalHandle: this.lastAckedSummaryContext?.proposalHandle ?? undefined,
+				ackHandle: this.lastAckedSummaryContext?.ackHandle ?? this.loadedFromVersionId,
+				referenceSequenceNumber: summaryRefSeqNum,
+			};
 
 			let handle: string;
 			try {
@@ -4239,66 +4227,89 @@ export class ContainerRuntime
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
 		);
 
+		/* eslint-disable jsdoc/check-indentation */
 		/**
-		 * When refreshing a summary ack, this check indicates a new ack of a summary that is newer than the
-		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
-		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
-		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
+		 * If the snapshot corresponding to the ack is not tracked by this client, it was submitted by another client.
+		 * Take action as per the following scenarios:
+		 * 1. If that snapshot is older than the one tracked by this client, ignore the ack because only the latest
+		 *    snapshot is tracked.
+		 * 2. If that snapshot is newer, attempt to fetch the latest snapshot and do one of the following:
+		 *    2.1. If the fetched snapshot is same or newer than the one for which ack was received, close this client.
+		 *         The next summarizer client will likely start from this snapshot and get out of this state. Fetching
+		 *         the snapshot updates the cache for this client so if it's re-elected as summarizer, this will prevent
+		 *         any thrashing.
+		 *    2.2. If the fetched snapshot is older than the one for which ack was received, ignore the ack. This can
+		 *         happen in scenarios where the snapshot for the ack was lost in storage (in scenarios like DB rollback,
+		 *         etc.) but the summary ack is still there because it's tracked a different service. In such cases,
+		 *         ignoring the ack is the correct thing to do because the latest snapshot in storage is not the one for
+		 *         the ack but is still the one tracked by this client. If we were to close the summarizer like in the
+		 *         previous scenario, it will result in this document stuck in this state in a loop.
 		 */
-		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			await this.fetchLatestSnapshotAndClose(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryAckFetch",
-					ackHandle,
-					targetSequenceNumber: summaryRefSeq,
-				},
-				readAndParseBlob,
-			);
+		/* eslint-enable jsdoc/check-indentation */
+		if (!result.isSummaryTracked) {
+			if (result.isSummaryNewer) {
+				await this.fetchLatestSnapshotAndMaybeClose(summaryRefSeq, ackHandle, summaryLogger);
+			}
 			return;
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.
 		await this.garbageCollector.refreshLatestSummary(result);
+
+		// If we here, the ack was tracked by this client. Update the summary context of the last ack.
+		this.lastAckedSummaryContext = {
+			proposalHandle,
+			ackHandle,
+			referenceSequenceNumber: summaryRefSeq,
+		};
 	}
 
 	/**
-	 * Fetches the latest snapshot from storage and closes the container. This is done in cases where
-	 * the last known snapshot is older than the latest one. This will ensure that the latest snapshot
-	 * is downloaded and we don't end up loading snapshot from cache.
+	 * Fetches the latest snapshot from storage. If the fetched snapshot is same or newer than the one for which ack
+	 * was received, close this client. Fetching the snapshot will update the cache for this client so if it's
+	 * re-elected as summarizer, this will prevent any thrashing.
+	 * If the fetched snapshot is older than the one for which ack was received, ignore the ack and return. This can
+	 * happen in scenarios where the snapshot for the ack was lost in storage in scenarios like DB rollback, etc.
 	 */
-	private async fetchLatestSnapshotAndClose(
+	private async fetchLatestSnapshotAndMaybeClose(
+		targetRefSeq: number,
+		targetAckHandle: string,
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEventExt,
-		readAndParseBlob: ReadAndParseBlob,
 	) {
-		await PerformanceEvent.timedExecAsync(
+		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
-			event,
+			{ eventName: "RefreshLatestSummaryAckFetch" },
 			async (perfEvent: {
 				end: (arg0: {
-					getVersionDuration?: number | undefined;
-					getSnapshotDuration?: number | undefined;
-					snapshotRefSeq?: number | undefined;
-					snapshotVersion?: string | undefined;
+					details: {
+						getVersionDuration?: number | undefined;
+						getSnapshotDuration?: number | undefined;
+						snapshotRefSeq?: number | undefined;
+						snapshotVersion?: string | undefined;
+						newerSnapshotPresent?: boolean | undefined;
+						targetRefSeq?: number | undefined;
+						targetAckHandle?: string | undefined;
+					};
 				}) => void;
 			}) => {
-				const stats: {
+				const props: {
 					getVersionDuration?: number;
 					getSnapshotDuration?: number;
 					snapshotRefSeq?: number;
 					snapshotVersion?: string;
-				} = {};
+					newerSnapshotPresent?: boolean | undefined;
+					targetRefSeq?: number | undefined;
+					targetAckHandle?: string | undefined;
+				} = { targetRefSeq, targetAckHandle };
 				const trace = Trace.start();
 
-				let maybeSnapshotTree: ISnapshotTree | null;
-				const scenarioName = "prefetchLatestSummaryBeforeClose";
+				let snapshotTree: ISnapshotTree | null;
+				const scenarioName = "RefreshLatestSummaryAckFetch";
 				// If loader supplied us the ISnapshot when loading, the new getSnapshotApi is supported and feature gate is ON, then use the
 				// new API, otherwise it will reduce the service performance because the service will need to recalculate the full snapshot
 				// in case previously getSnapshotApi was used and now we use the getVersions API.
@@ -4314,8 +4325,8 @@ export class ContainerRuntime
 					});
 					const id = snapshot.snapshotTree.id;
 					assert(id !== undefined, "id of the fetched snapshot should be defined");
-					stats.snapshotVersion = id;
-					maybeSnapshotTree = snapshot.snapshotTree;
+					props.snapshotVersion = id;
+					snapshotTree = snapshot.snapshotTree;
 				} else {
 					const versions = await this.storage.getVersions(
 						null,
@@ -4327,20 +4338,28 @@ export class ContainerRuntime
 						!!versions && !!versions[0],
 						0x137 /* "Failed to get version from storage" */,
 					);
-					stats.getVersionDuration = trace.trace().duration;
-					maybeSnapshotTree = await this.storage.getSnapshotTree(versions[0]);
-					assert(!!maybeSnapshotTree, 0x138 /* "Failed to get snapshot from storage" */);
-
-					stats.snapshotVersion = versions[0].id;
+					snapshotTree = await this.storage.getSnapshotTree(versions[0]);
+					assert(!!snapshotTree, 0x138 /* "Failed to get snapshot from storage" */);
+					props.snapshotVersion = versions[0].id;
 				}
 
-				stats.getSnapshotDuration = trace.trace().duration;
-				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshotTree, readAndParseBlob);
-				stats.snapshotRefSeq = latestSnapshotRefSeq;
+				props.getSnapshotDuration = trace.trace().duration;
+				const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
+				props.snapshotRefSeq = snapshotRefSeq;
+				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
 
-				perfEvent.end(stats);
+				perfEvent.end({ details: props });
+				return snapshotRefSeq;
 			},
 		);
+
+		// If the snapshot that was fetched is older than the target snapshot, return. The summarizer will not be closed
+		// because the snapshot is likely deleted from storage and it so, closing the summarizer will result in the
+		// document being stuck in this state.
+		if (fetchedSnapshotRefSeq < targetRefSeq) {
+			return;
+		}
 
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");
