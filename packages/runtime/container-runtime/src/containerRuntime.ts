@@ -2419,16 +2419,24 @@ export class ContainerRuntime
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
 	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
-	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
+	private parseLocalOpContent(
+		serializedContents?: string,
+	): LocalContainerRuntimeMessage | undefined {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
-		const message: LocalContainerRuntimeMessage = JSON.parse(serializedContents);
+		const message = JSON.parse(serializedContents);
 		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
-		return message;
+		if (message.type === "groupedBatch") {
+			return undefined;
+		}
+		return message as LocalContainerRuntimeMessage;
 	}
 
 	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
 		// Need to parse from string for back-compat
 		const opContents = this.parseLocalOpContent(serializedOpContent);
+		if (opContents === undefined) {
+			return;
+		}
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
@@ -4137,6 +4145,9 @@ export class ContainerRuntime
 	private reSubmit(message: PendingMessageResubmitData) {
 		// Need to parse from string for back-compat
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
+		if (containerRuntimeMessage === undefined) {
+			return;
+		}
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
 	}
 
@@ -4219,16 +4230,19 @@ export class ContainerRuntime
 
 	private rollback(content: string | undefined, localOpMetadata: unknown) {
 		// Need to parse from string for back-compat
-		const { type, contents } = this.parseLocalOpContent(content);
-		switch (type) {
+		const op = this.parseLocalOpContent(content);
+		if (op === undefined) {
+			return;
+		}
+		switch (op.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.channelCollection.rollback(type, contents, localOpMetadata);
+				this.channelCollection.rollback(op.type, op.contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
-				throw new Error(`Can't rollback ${type}`);
+				throw new Error(`Can't rollback ${op.type}`);
 		}
 	}
 

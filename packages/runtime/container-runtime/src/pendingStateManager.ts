@@ -180,11 +180,17 @@ export class PendingStateManager implements IDisposable {
 		// Such ops should not be declared in pending/stashed state. Snapshot seq num will not
 		// be available when the container is not attached. Therefore, no filtering is needed.
 		const newSavedOps = [...this.savedOps].filter((message) => {
-			assert(
-				message.sequenceNumber !== undefined,
-				0x97c /* saved op should already have a sequence number */,
-			);
-			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
+			if (message.sequenceNumber === undefined) {
+				const messageContent = JSON.parse(message.content);
+				assert(
+					messageContent.type &&
+						messageContent.type === "groupedBatch" &&
+						messageContent.contents?.length === 0,
+					"saved op should already have a sequence number or be an empty groupedBatch",
+				);
+			}
+
+			return (message.sequenceNumber ?? Infinity) > (snapshotSequenceNumber ?? 0);
 		});
 		this.pendingMessages.toArray().forEach((message) => {
 			if (
