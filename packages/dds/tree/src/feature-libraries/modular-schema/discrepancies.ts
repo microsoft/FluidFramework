@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -11,7 +13,6 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
@@ -143,7 +144,11 @@ export function getAllowedContentIncompatibilities(
 					stored: undefined,
 				});
 			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key) as TreeNodeStoredSchema;
+				const storedNodeSchema = stored.nodeSchema.get(key);
+				assert(
+					storedNodeSchema !== undefined,
+					"The storedNodeSchema in stored.nodeSchema should not be undefined",
+				);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					incompatibilities.push({
 						identifier: key,
@@ -180,7 +185,11 @@ export function getAllowedContentIncompatibilities(
 					stored: undefined,
 				} satisfies NodeKindIncompatibility);
 			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key) as TreeNodeStoredSchema;
+				const storedNodeSchema = stored.nodeSchema.get(key);
+				assert(
+					storedNodeSchema !== undefined,
+					"The storedNodeSchema in stored.nodeSchema should not be undefined",
+				);
 				if (storedNodeSchema instanceof ObjectNodeStoredSchema) {
 					incompatibilities.push({
 						identifier: key,
@@ -216,7 +225,11 @@ export function getAllowedContentIncompatibilities(
 					stored: undefined,
 				});
 			} else {
-				const storedNodeSchema = stored.nodeSchema.get(key) as TreeNodeStoredSchema;
+				const storedNodeSchema = stored.nodeSchema.get(key);
+				assert(
+					storedNodeSchema !== undefined,
+					"The storedNodeSchema in stored.nodeSchema should not be undefined",
+				);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					incompatibilities.push({
 						identifier: key,
