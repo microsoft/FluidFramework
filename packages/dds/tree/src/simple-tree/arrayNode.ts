@@ -840,13 +840,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const destinationField = getSequenceField(this);
 		validateIndex(destinationIndex, destinationField, "moveRangeToIndex", true);
 		validateIndexRange(sourceStart, sourceEnd, source ?? destinationField, "moveRangeToIndex");
-		const sourceField =
-			source !== undefined
-				? destinationField.isSameAs(getSequenceField(source))
-					? destinationField
-					: getSequenceField(source)
-				: destinationField;
-
+		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 		// TODO: determine support for move across different sequence types
 		if (destinationField.schema.types !== undefined && sourceField !== destinationField) {
 			for (let i = sourceStart; i < sourceEnd; i++) {

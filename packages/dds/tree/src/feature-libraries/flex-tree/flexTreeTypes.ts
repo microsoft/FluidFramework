@@ -263,18 +263,6 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 	boxedIterator(): IterableIterator<FlexTreeNode>;
 
 	/**
-	 * Check if this field is the same as a different field.
-	 * This is defined to mean that both are in the same flex tree, and are the same field on the same node.
-	 * This is more than just a reference comparison because unlike FlexTree nodes, fields are not cached on anchors and can be duplicated.
-	 *
-	 * @privateRemarks
-	 * TODO:
-	 * If practical, cache TreeField instances so use of this method can be replaced with `===` to compare object identity.
-	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
-	 */
-	isSameAs(other: FlexTreeField): boolean;
-
-	/**
 	 * Gets a node of this field by its index without unboxing.
 	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
 	 *
