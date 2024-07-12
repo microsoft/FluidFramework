@@ -98,7 +98,7 @@ describe.only("getJsonSchema", () => {
 		const validator = getValidator(actual);
 
 		// Verify expected data validation behavior.
-		// assert(validator(input) === true); // TODO: this should succeed
+		assert(validator(input) === false); // TODO: this should succeed
 		assert(validator([]) === true);
 		assert(validator(["Hello", "world"]) === true);
 		assert(validator("Hello world") === false);
