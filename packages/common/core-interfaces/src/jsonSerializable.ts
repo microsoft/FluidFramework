@@ -6,10 +6,34 @@
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 /**
+ * Options for {@link JsonSerializable}.
+ *
+ * @beta
+ */
+export interface JsonSerializableOptions {
+	/**
+	 * A type that is managed by custom serialization logic (beyond JSON.stringify).
+	 *
+	 * The default value is `never`.
+	 */
+	Replaced: unknown;
+
+	/**
+	 * When set, inaccessible (protected and private) members throughout type T are
+	 * ignored as if not present.
+	 *
+	 * The default value is not present.
+	 */
+	IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
+}
+
+/**
  * Used to constrain a type `T` to types that are serializable as JSON.
  *
  * Under typical use a compile-time error is produced if `T` contains
  * non-JsonSerializable members.
+ *
+ * @typeParam T - The type to be constrained.
  *
  * @remarks
  * Note that this does NOT prevent use of values with non-JSON compatible data,
@@ -70,10 +94,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  */
 export type JsonSerializable<
 	T,
-	Options extends {
-		Replaced: unknown;
-		IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
-	} = {
+	Options extends JsonSerializableOptions = {
 		Replaced: never;
 	},
 > = InternalUtilityTypes.JsonSerializableImpl<T, Options>;

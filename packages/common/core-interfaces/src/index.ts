@@ -35,8 +35,8 @@ export type {
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
-export type { JsonDeserialized } from "./jsonDeserialized.js";
-export type { JsonSerializable } from "./jsonSerializable.js";
+export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
+export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 export type {
 	SerializationErrorPerNonPublicProperties,
 	SerializationErrorPerUndefinedArrayElement,

@@ -6,8 +6,24 @@
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 
 /**
+ * Options for {@link JsonDeserialized}.
+ *
+ * @beta
+ */
+export interface JsonDeserializedOptions {
+	/**
+	 * A type that is managed by custom deserialization logic (beyond JSON.parse).
+	 *
+	 * The default value is `never`.
+	 */
+	Replaced: unknown;
+}
+
+/**
  * Produces a type that results from a type `T` serialized and deserialized
  * through JSON.
+ *
+ * @typeParam T - The type that was serialized.
  *
  * @remarks
  * When used as a filter to inferred generic `T`, a compile-time error can be
@@ -49,9 +65,7 @@ import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
  */
 export type JsonDeserialized<
 	T,
-	Options extends {
-		Replaced: unknown;
-	} = {
+	Options extends JsonDeserializedOptions = {
 		Replaced: never;
 	},
 > = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;

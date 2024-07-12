@@ -383,19 +383,25 @@ export interface ITelemetryBaseProperties {
 }
 
 // @beta
-export type JsonDeserialized<T, Options extends {
-    Replaced: unknown;
-} = {
+export type JsonDeserialized<T, Options extends JsonDeserializedOptions = {
     Replaced: never;
 }> = InternalUtilityTypes.JsonDeserializedImpl<T, Options["Replaced"]>;
 
 // @beta
-export type JsonSerializable<T, Options extends {
+export interface JsonDeserializedOptions {
     Replaced: unknown;
-    IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
-} = {
+}
+
+// @beta
+export type JsonSerializable<T, Options extends JsonSerializableOptions = {
     Replaced: never;
 }> = InternalUtilityTypes.JsonSerializableImpl<T, Options>;
+
+// @beta
+export interface JsonSerializableOptions {
+    IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
+    Replaced: unknown;
+}
 
 // @beta
 export type JsonTypeWith<T> = null | boolean | number | string | T | {
