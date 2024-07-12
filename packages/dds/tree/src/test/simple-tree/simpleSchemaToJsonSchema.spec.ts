@@ -10,31 +10,13 @@ import {
 	type SimpleTreeSchema,
 	type TreeJsonSchema,
 } from "../../simple-tree/index.js";
+import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 // TODOs:
 // - Identifier fields
 // - Recursive schema
 
-// Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
-// In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
-import ajvModuleOrClass from "ajv";
-
-// The first case here covers the esm mode, and the second the cjs one.
-// Getting correct typing for the cjs case without breaking esm compilation proved to be difficult, so that case uses `any`
-const Ajv =
-	(ajvModuleOrClass as typeof ajvModuleOrClass & { default: unknown }).default ??
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(ajvModuleOrClass as any);
-
-describe("simpleSchemaToJsonSchema", () => {
-	function getValidator(schema: TreeJsonSchema) {
-		const ajv = new Ajv({
-			strict: false,
-			allErrors: true,
-		});
-		return ajv.compile(schema);
-	}
-
+describe.only("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
 		const input: SimpleTreeSchema = {
 			definitions: new Map<string, SimpleNodeSchema>([
@@ -61,12 +43,12 @@ describe("simpleSchemaToJsonSchema", () => {
 		assert.deepEqual(actual, expected);
 
 		// Verify that the generated schema is valid.
-		const validator = getValidator(actual);
+		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		assert(validator("Hello world") === true);
-		assert(validator({}) === false);
-		assert(validator([]) === false);
+		validator("Hello world", true);
+		validator({}, false);
+		validator([], false);
 	});
 
 	it("Array schema", () => {
@@ -103,15 +85,15 @@ describe("simpleSchemaToJsonSchema", () => {
 		assert.deepEqual(actual, expected);
 
 		// Verify that the generated schema is valid.
-		const validator = getValidator(actual);
+		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		assert(validator("Hello world") === false);
-		assert(validator({}) === false);
-		assert(validator([]) === true);
-		assert(validator([42]) === false);
-		assert(validator(["Hello", "world"]) === true);
-		assert(validator(["Hello", 42, "world"]) === false);
+		validator("Hello world", false);
+		validator({}, false);
+		validator([], true);
+		validator([42], false);
+		validator(["Hello", "world"], true);
+		validator(["Hello", 42, "world"], false);
 	});
 
 	it("Map schema", () => {
@@ -148,24 +130,26 @@ describe("simpleSchemaToJsonSchema", () => {
 		assert.deepEqual(actual, expected);
 
 		// Verify that the generated schema is valid.
-		const validator = getValidator(actual);
+		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		assert(validator("Hello world") === false);
-		assert(validator([]) === false);
-		assert(validator({}) === true);
-		assert(
-			validator({
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
 				foo: "Hello",
 				bar: "World",
-			}) === true,
+			},
+			true,
 		);
-		assert(
-			validator({
+		validator(
+			{
 				foo: "Hello",
 				bar: "World",
 				baz: 42,
-			}) === false,
+			},
+			false,
 		);
 	});
 
@@ -224,34 +208,38 @@ describe("simpleSchemaToJsonSchema", () => {
 		assert.deepEqual(actual, expected);
 
 		// Verify that the generated schema is valid.
-		const validator = getValidator(actual);
+		const validator = getJsonValidator(actual);
 
 		// Verify expected data validation behavior.
-		assert(validator("Hello world") === false);
-		assert(validator([]) === false);
-		assert(validator({}) === false);
-		assert(
-			validator({
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, false);
+		validator(
+			{
 				foo: 42,
-			}) === false,
+			},
+			false,
 		);
-		assert(
-			validator({
+		validator(
+			{
 				bar: "Hello World",
-			}) === true,
+			},
+			true,
 		);
-		assert(
-			validator({
+		validator(
+			{
 				foo: 42,
 				bar: "Hello World",
-			}) === true,
+			},
+			true,
 		);
-		assert(
-			validator({
+		validator(
+			{
 				foo: 42,
 				bar: "Hello World",
 				baz: true,
-			}) === false,
+			},
+			false,
 		);
 	});
 });
