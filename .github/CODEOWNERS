@@ -53,6 +53,10 @@
 /**/api-report/*.beta.api.md                   @microsoft/fluid-cr-api
 /**/api-report/*.alpha.api.md                  @microsoft/fluid-cr-api
 
+# Changesets and release notes
+/**/.changeset/*.md                            @microsoft/fluid-cr-docs
+/**/RELEASE_NOTES/*.md                         @microsoft/fluid-cr-docs
+
 # Package version files are not generally interesting to review by teams signing up for source tree ownership.
 # If a release team wanted to sign up to block on changes relevant for package release,
 # that would be the appropriate owner here. For now, explicitly give these files no owner.
