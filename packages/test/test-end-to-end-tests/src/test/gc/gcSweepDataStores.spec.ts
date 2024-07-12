@@ -29,6 +29,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import { IErrorBase } from "@fluidframework/core-interfaces";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
@@ -291,7 +292,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				assert.throws(
 					() => summarizerDataObject._root.set("send", "op"),
 					(error: IErrorBase) => {
-						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorType = error.errorType === FluidErrorTypes.dataProcessingError;
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is deleted`) === true;
 						return correctErrorType && correctErrorMessage;
@@ -325,7 +326,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				assert.throws(
 					() => summarizerDataObject._runtime.submitSignal("send", "signal"),
 					(error: IErrorBase) => {
-						const correctErrorType = error.errorType === "dataCorruptionError";
+						const correctErrorType = error.errorType === FluidErrorTypes.dataProcessingError;
 						const correctErrorMessage =
 							error.message?.startsWith(`Context is deleted`) === true;
 						return correctErrorType && correctErrorMessage;
@@ -656,7 +657,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			summarizer1.close();
 			await delay(sweepTimeoutMs + 10);
 
-			const mockLogger = new MockLogger();
+			const logger = new MockLogger();
 			// Close the container because in real scenarios, session expiry will close it. Not closing it
 			// will cause GC_Deleted_DataStore_Unexpected_Delete error.
 			container.close();
@@ -665,13 +666,13 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			const { summarizer: summarizer2 } = await loadSummarizer(
 				container,
 				summaryVersion,
-				mockLogger,
+				logger,
 			);
 			await assert.doesNotReject(
 				ensureSynchronizedAndSummarize(summarizer2),
 				"summarize failed",
 			);
-			mockLogger.assertMatch([
+			logger.assertMatch([
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Realized",
 					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },

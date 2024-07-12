@@ -239,6 +239,9 @@
 			},
 			"ClassDeclaration_LocalFluidDataStoreContextBase": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IGCNodeUpdatedProps": {
+				"backCompat": false
 			}
 		}
 	}

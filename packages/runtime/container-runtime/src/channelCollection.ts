@@ -1300,7 +1300,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "GC_DeletingLoadedDataStore",
 				...tagCodeArtifacts({
-					id: `/${dataStoreId}`,
+					id: `/${dataStoreId}`, // Make the id consistent with GC node path format by prefixing a slash.
 					pkg: dataStoreContext.packagePath.join("/"),
 				}),
 				details: {
