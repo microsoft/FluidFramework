@@ -23,7 +23,6 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
-import { LeafNodeSchema } from "../feature-libraries/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "./objectNode.js";
 import { ValueSchema } from "../core/index.js";
 import { fail } from "../util/index.js";
@@ -52,15 +51,12 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
-			assert(schema instanceof LeafNodeSchema, "Expected leaf schema");
 			return leafSchemaToSimpleSchema(schema);
 		}
 		case NodeKind.Map: {
-			// TODO: typeguard
 			return mapSchemaToSimpleSchema(schema);
 		}
 		case NodeKind.Array: {
-			// TODO: typeguard
 			return arraySchemaToSimpleSchema(schema);
 		}
 		case NodeKind.Object: {
@@ -73,10 +69,11 @@ function toSimpleNodeSchema(schema: TreeNodeSchema): SimpleNodeSchema {
 	}
 }
 
-function leafSchemaToSimpleSchema(schema: LeafNodeSchema): SimpleLeafNodeSchema {
+// TODO: stronger type
+function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema {
 	return {
 		kind: "leaf",
-		type: leafKindFromValueSchema(schema.leafValue),
+		type: leafKindFromValueSchema(schema.info as ValueSchema),
 	};
 }
 

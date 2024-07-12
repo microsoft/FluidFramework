@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { TreeValue } from "../core/index.js";
 import type { TreeJsonSchema } from "./jsonSchema.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import { treeNodeApi } from "./treeNodeApi.js";
@@ -14,7 +15,7 @@ import type { TreeNode } from "./types.js";
  * TODO
  * @internal
  */
-export function getJsonSchema(node: TreeNode): TreeJsonSchema {
+export function getJsonSchema(node: TreeNode | TreeValue): TreeJsonSchema {
 	const simpleViewSchema = toSimpleTreeSchema(treeNodeApi.schema(node));
 	return toJsonSchema(simpleViewSchema);
 }
