@@ -115,7 +115,8 @@
 		"watch:tsc": "pnpm run -r --parallel tsc --watch",
 		"watch:webpack": "pnpm run -r --parallel webpack --watch",
 		"webpack": "fluid-build --task webpack",
-		"webpack:profile": "fluid-build --task webpack:profile"
+		"webpack:profile": "fluid-build --task webpack:profile",
+		"depcheck": "depcheck"
 	},
 	"c8": {
 		"all": true,
@@ -184,7 +185,8 @@
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
 		"ts2esm": "^1.4.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"depcheck": "1.4.7"
 	},
 	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
 	"engines": {
