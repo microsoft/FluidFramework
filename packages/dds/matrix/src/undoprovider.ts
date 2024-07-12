@@ -106,7 +106,9 @@ export class VectorUndoProvider {
 				try {
 					if (removedTrackingGroup !== undefined) {
 						while (removedTrackingGroup.size > 0) {
-							const tracked = removedTrackingGroup.tracked[0];
+							// TODO Non null asserting, why is this not null?
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							const tracked = removedTrackingGroup.tracked[0]!;
 							removedTrackingGroup.unlink(tracked);
 							// if there are groups tracked, this in a revert of a remove.
 							// this means we are about to re-insert the row/column
@@ -127,7 +129,9 @@ export class VectorUndoProvider {
 			discard: () => {
 				if (removedTrackingGroup !== undefined) {
 					while (removedTrackingGroup.size > 0) {
-						removedTrackingGroup.unlink(removedTrackingGroup.tracked[0]);
+						// TODO Non null asserting, why is this not null?
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						removedTrackingGroup.unlink(removedTrackingGroup.tracked[0]!);
 					}
 				}
 				discardMergeTreeDeltaRevertible(revertibles);
