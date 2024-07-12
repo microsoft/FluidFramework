@@ -125,6 +125,7 @@ export {
 	type NodeJsonSchema,
 	type TreeJsonSchema,
 	type FieldJsonSchema,
-	toJsonSchema,
-	getJsonSchema,
 } from "./jsonSchema.js";
+export { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
+// TODO: move this into `treeNodeApi`
+export { getJsonSchema } from "./getJsonSchema.js";
