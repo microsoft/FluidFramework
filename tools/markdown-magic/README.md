@@ -98,6 +98,9 @@ Arguments:
 -   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
     -   Default: `false`.
     -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
+-   `clientRequirements`: Whether or not to include a section outlining the minimum client requirements for using Fluid Framework packages.
+    -   Default: `true`.
+    -   See [README_CLIENT_REQUIREMENTS_SECTION](#readme_client_requirements_section).
 -   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
     -   Default: `true`.
     -   See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
@@ -154,8 +157,11 @@ Arguments:
     -   Default: `./package.json`.
 -   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
     -   Default: `true`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `API_DOCS_LINK_SECTION`
 
@@ -168,8 +174,11 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_INSTALLATION_SECTION`
 
@@ -182,8 +191,40 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
+
+#### `README_IMPORT_INSTRUCTIONS`
+
+Generates a README section including instructions for how to import from Fluid Framework library packages.
+Accounts for our use of package.json exports.
+Arguments:
+
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+    -   Default: `./package.json`.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
+    -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
+
+#### `README_CLIENT_REQUIREMENTS_SECTION`
+
+Generates a section containing minimum client requirements for using Fluid Framework packages.
+
+See the corresponding template [here](./src/templates/Client-Requirements-Template.md).
+
+Arguments:
+
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
+    -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_TRADEMARK_SECTION`
 
@@ -193,8 +234,11 @@ See the corresponding template [here](./src/templates/Trademark-Template.md).
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_CONTRIBUTION_GUIDELINES_SECTION`
 
@@ -204,8 +248,11 @@ See the corresponding template [here](./src/templates/Contribution-Guidelines-Te
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_HELP_SECTION`
 
@@ -215,8 +262,11 @@ See the corresponding template [here](./src/templates/Help-Template.md).
 
 Arguments:
 
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_PACKAGE_SCRIPTS`
 
@@ -227,8 +277,11 @@ Arguments:
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
     -   Default: `./package.json`.
--   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+-   `includeHeading`: Whether or not to include a section heading above the generated contents.
     -   Default: `true`.
+-   `headingLevel`: Root heading level for the generated section.
+    Must be a positive integer.
+    -   Default: 2.
 
 #### `README_PACKAGE_SCOPE_NOTICE`
 

@@ -1151,6 +1151,7 @@ interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<
     moveToStart(sourceIndex: number, source: TMoveFrom): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
+    values(): IterableIterator<T>;
 }
 
 // @public @sealed
@@ -1300,7 +1301,5 @@ export type ValidateRecursiveSchema<T extends TreeNodeSchemaClass<string, NodeKi
 export interface WithType<TName extends string = string> {
     get [typeNameSymbol](): TName;
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```

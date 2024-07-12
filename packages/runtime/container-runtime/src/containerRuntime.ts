@@ -61,6 +61,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
+	type ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -91,7 +92,6 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
-	ReadAndParseBlob,
 	RequestParser,
 	TelemetryContext,
 	addBlobToSummary,
@@ -169,6 +169,7 @@ import {
 } from "./messageTypes.js";
 import { IBatchMetadata, ISavedOpMetadata } from "./metadata.js";
 import {
+	BatchId,
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
@@ -693,7 +694,7 @@ export const makeLegacySendBatchFn =
 type MessageWithContext = {
 	local: boolean;
 	savedOp?: boolean;
-	batchStartCsn: number;
+	localOpMetadata?: unknown;
 } & (
 	| {
 			message: InboundSequencedContainerRuntimeMessage;
@@ -1360,6 +1361,13 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
+	private readonly isSnapshotInstanceOfISnapshot: boolean | undefined;
+
+	/**
+	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
+	 */
+	private lastAckedSummaryContext: ISummaryContext | undefined;
+
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
 	 * Starting with 1 min and based on recorded usage we can tweak it later on.
@@ -1660,6 +1668,10 @@ export class ContainerRuntime
 		}
 
 		const parentContext = wrapContext(this);
+
+		if (snapshotWithContents !== undefined) {
+			this.isSnapshotInstanceOfISnapshot = true;
+		}
 
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
@@ -2163,9 +2175,13 @@ export class ContainerRuntime
 		let childTree = snapshotTree;
 		for (const part of pathParts) {
 			if (hasIsolatedChannels) {
-				childTree = childTree?.trees[channelsTreeName];
+				// TODO Why are we non null asserting here
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				childTree = childTree.trees[channelsTreeName]!;
 			}
-			childTree = childTree?.trees[part];
+			// TODO Why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			childTree = childTree.trees[part]!;
 		}
 		return childTree;
 	}
@@ -2217,7 +2233,9 @@ export class ContainerRuntime
 			}
 
 			if (id === blobManagerBasePath && requestParser.isLeaf(2)) {
-				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+				// TODO why are we non null asserting here?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const blob = await this.blobManager.getBlob(requestParser.pathParts[1]!);
 				return blob
 					? {
 							status: 200,
@@ -2614,34 +2632,38 @@ export class ContainerRuntime
 		// but will not modify the contents object (likely it will replace it on the message).
 		const messageCopy = { ...messageArg };
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		const processResult = this.remoteMessageProcessor.process(messageCopy);
-		if (processResult === undefined) {
-			// This means the incoming message is an incomplete part of a message or batch
-			// and we need to process more messages before the rest of the system can understand it.
-			return;
-		}
-		for (const message of processResult.messages) {
-			const msg: MessageWithContext = modernRuntimeMessage
-				? {
-						// Cast it since we expect it to be this based on modernRuntimeMessage computation above.
-						// There is nothing really ensuring that anytime original message.type is Operation that
-						// the result messages will be so. In the end modern bool being true only directs to
-						// throw error if ultimately unrecognized without compat details saying otherwise.
-						message: message as InboundSequencedContainerRuntimeMessage,
-						local,
-						modernRuntimeMessage,
-						batchStartCsn: processResult.batchStartCsn,
-					}
-				: // Unrecognized message will be ignored.
-					{
-						message,
-						local,
-						modernRuntimeMessage,
-						batchStartCsn: processResult.batchStartCsn,
-					};
-			msg.savedOp = savedOp;
-
-			// ensure that we observe any re-entrancy, and if needed, rebase ops
+		if (modernRuntimeMessage) {
+			const processResult = this.remoteMessageProcessor.process(messageCopy);
+			if (processResult === undefined) {
+				// This means the incoming message is an incomplete part of a message or batch
+				// and we need to process more messages before the rest of the system can understand it.
+				return;
+			}
+			const batchStartCsn = processResult.batchStartCsn;
+			const batch = processResult.messages;
+			const messages: {
+				message: InboundSequencedContainerRuntimeMessage;
+				localOpMetadata: unknown;
+			}[] = local
+				? this.pendingStateManager.processPendingLocalBatch(batch, batchStartCsn)
+				: batch.map((message) => ({ message, localOpMetadata: undefined }));
+			messages.forEach(({ message, localOpMetadata }) => {
+				const msg: MessageWithContext = {
+					message,
+					local,
+					modernRuntimeMessage,
+					savedOp,
+					localOpMetadata,
+				};
+				this.ensureNoDataModelChanges(() => this.processCore(msg));
+			});
+		} else {
+			const msg: MessageWithContext = {
+				message: messageCopy as InboundSequencedContainerRuntimeMessageOrSystemMessage,
+				local,
+				modernRuntimeMessage,
+				savedOp,
+			};
 			this.ensureNoDataModelChanges(() => this.processCore(msg));
 		}
 	}
@@ -2652,7 +2674,7 @@ export class ContainerRuntime
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
-		const { message, local } = messageWithContext;
+		const { message, local, localOpMetadata } = messageWithContext;
 
 		// Intercept to reduce minimum sequence number to the delta manager's minimum sequence number.
 		// Sequence numbers are not guaranteed to follow any sort of order. Re-entrancy is one of those situations
@@ -2672,22 +2694,11 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
-			// See commit that added this assert for more details.
-			// These calls should be made for all but chunked ops:
-			// 1) this.pendingStateManager.processPendingLocalMessage() below
-			// 2) this.resetReconnectCount() below
+			// RemoteMessageProcessor would have already reconstituted Chunked Ops into the original op type
 			assert(
 				message.type !== ContainerMessageType.ChunkedOp,
 				0x93b /* we should never get here with chunked ops */,
 			);
-
-			let localOpMetadata: unknown;
-			if (local && messageWithContext.modernRuntimeMessage) {
-				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
-					messageWithContext.message,
-					messageWithContext.batchStartCsn,
-				);
-			}
 
 			// If there are no more pending messages after processing a local message,
 			// the document is no longer dirty.
@@ -2884,14 +2895,16 @@ export class ContainerRuntime
 	/**
 	 * Flush the pending ops manually.
 	 * This method is expected to be called at the end of a batch.
+	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
+	 * with the given Batch ID, which must be preserved
 	 */
-	private flush(): void {
+	private flush(resubmittingBatchId?: BatchId): void {
 		assert(
 			this._orderSequentiallyCalls === 0,
 			0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */,
 		);
 
-		this.outbox.flush();
+		this.outbox.flush(resubmittingBatchId);
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
@@ -3548,7 +3561,7 @@ export class ContainerRuntime
 			summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-			const lastAck = this.summaryCollection.latestAck;
+			const lastAckedContext = this.lastAckedSummaryContext;
 
 			const startSummaryResult = this.summarizerNode.startSummary(
 				summaryRefSeqNum,
@@ -3615,10 +3628,10 @@ export class ContainerRuntime
 					0x395 /* it's one and the same thing */,
 				);
 
-				if (lastAck !== this.summaryCollection.latestAck) {
+				if (lastAckedContext !== this.lastAckedSummaryContext) {
 					return {
 						continue: false,
-						error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
+						error: `Last summary changed while summarizing. ${this.lastAckedSummaryContext} !== ${lastAckedContext}`,
 					};
 				}
 				return { continue: true };
@@ -3690,7 +3703,9 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			const dataStoreTree = summaryTree.tree[channelsTreeName];
+			// TODO why are we non null asserting here
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const dataStoreTree = summaryTree.tree[channelsTreeName]!;
 
 			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(
@@ -3726,18 +3741,11 @@ export class ContainerRuntime
 				};
 			}
 
-			const summaryContext =
-				lastAck === undefined
-					? {
-							proposalHandle: undefined,
-							ackHandle: this.loadedFromVersionId,
-							referenceSequenceNumber: summaryRefSeqNum,
-						}
-					: {
-							proposalHandle: lastAck.summaryOp.contents.handle,
-							ackHandle: lastAck.summaryAck.contents.handle,
-							referenceSequenceNumber: summaryRefSeqNum,
-						};
+			const summaryContext: ISummaryContext = {
+				proposalHandle: this.lastAckedSummaryContext?.proposalHandle ?? undefined,
+				ackHandle: this.lastAckedSummaryContext?.ackHandle ?? this.loadedFromVersionId,
+				referenceSequenceNumber: summaryRefSeqNum,
+			};
 
 			let handle: string;
 			try {
@@ -4111,13 +4119,19 @@ export class ContainerRuntime
 		}
 	}
 
-	private reSubmitBatch(batch: PendingMessageResubmitData[]) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
 			}
 		});
-		this.flush();
+
+		// Only include Batch ID if "Offline Load" feature is enabled
+		// It's only needed to identify batches across container forks arising from misuse of offline load.
+		const includeBatchId =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+
+		this.flush(includeBatchId ? batchId : undefined);
 	}
 
 	private reSubmit(message: PendingMessageResubmitData) {
@@ -4223,83 +4237,139 @@ export class ContainerRuntime
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
 		);
 
+		/* eslint-disable jsdoc/check-indentation */
 		/**
-		 * When refreshing a summary ack, this check indicates a new ack of a summary that is newer than the
-		 * current summary that is tracked, but this summarizer runtime did not produce/track that summary. Thus
-		 * it needs to refresh its state. Today refresh is done by fetching the latest snapshot to update the cache
-		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
+		 * If the snapshot corresponding to the ack is not tracked by this client, it was submitted by another client.
+		 * Take action as per the following scenarios:
+		 * 1. If that snapshot is older than the one tracked by this client, ignore the ack because only the latest
+		 *    snapshot is tracked.
+		 * 2. If that snapshot is newer, attempt to fetch the latest snapshot and do one of the following:
+		 *    2.1. If the fetched snapshot is same or newer than the one for which ack was received, close this client.
+		 *         The next summarizer client will likely start from this snapshot and get out of this state. Fetching
+		 *         the snapshot updates the cache for this client so if it's re-elected as summarizer, this will prevent
+		 *         any thrashing.
+		 *    2.2. If the fetched snapshot is older than the one for which ack was received, ignore the ack. This can
+		 *         happen in scenarios where the snapshot for the ack was lost in storage (in scenarios like DB rollback,
+		 *         etc.) but the summary ack is still there because it's tracked a different service. In such cases,
+		 *         ignoring the ack is the correct thing to do because the latest snapshot in storage is not the one for
+		 *         the ack but is still the one tracked by this client. If we were to close the summarizer like in the
+		 *         previous scenario, it will result in this document stuck in this state in a loop.
 		 */
-		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			await this.fetchLatestSnapshotAndClose(
-				summaryLogger,
-				{
-					eventName: "RefreshLatestSummaryAckFetch",
-					ackHandle,
-					targetSequenceNumber: summaryRefSeq,
-				},
-				readAndParseBlob,
-			);
+		/* eslint-enable jsdoc/check-indentation */
+		if (!result.isSummaryTracked) {
+			if (result.isSummaryNewer) {
+				await this.fetchLatestSnapshotAndMaybeClose(summaryRefSeq, ackHandle, summaryLogger);
+			}
 			return;
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.
 		await this.garbageCollector.refreshLatestSummary(result);
+
+		// If we here, the ack was tracked by this client. Update the summary context of the last ack.
+		this.lastAckedSummaryContext = {
+			proposalHandle,
+			ackHandle,
+			referenceSequenceNumber: summaryRefSeq,
+		};
 	}
 
 	/**
-	 * Fetches the latest snapshot from storage and closes the container. This is done in cases where
-	 * the last known snapshot is older than the latest one. This will ensure that the latest snapshot
-	 * is downloaded and we don't end up loading snapshot from cache.
+	 * Fetches the latest snapshot from storage. If the fetched snapshot is same or newer than the one for which ack
+	 * was received, close this client. Fetching the snapshot will update the cache for this client so if it's
+	 * re-elected as summarizer, this will prevent any thrashing.
+	 * If the fetched snapshot is older than the one for which ack was received, ignore the ack and return. This can
+	 * happen in scenarios where the snapshot for the ack was lost in storage in scenarios like DB rollback, etc.
 	 */
-	private async fetchLatestSnapshotAndClose(
+	private async fetchLatestSnapshotAndMaybeClose(
+		targetRefSeq: number,
+		targetAckHandle: string,
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEventExt,
-		readAndParseBlob: ReadAndParseBlob,
 	) {
-		await PerformanceEvent.timedExecAsync(
+		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
-			event,
+			{ eventName: "RefreshLatestSummaryAckFetch" },
 			async (perfEvent: {
 				end: (arg0: {
-					getVersionDuration?: number | undefined;
-					getSnapshotDuration?: number | undefined;
-					snapshotRefSeq?: number | undefined;
-					snapshotVersion?: string | undefined;
+					details: {
+						getVersionDuration?: number | undefined;
+						getSnapshotDuration?: number | undefined;
+						snapshotRefSeq?: number | undefined;
+						snapshotVersion?: string | undefined;
+						newerSnapshotPresent?: boolean | undefined;
+						targetRefSeq?: number | undefined;
+						targetAckHandle?: string | undefined;
+					};
 				}) => void;
 			}) => {
-				const stats: {
+				const props: {
 					getVersionDuration?: number;
 					getSnapshotDuration?: number;
 					snapshotRefSeq?: number;
 					snapshotVersion?: string;
-				} = {};
+					newerSnapshotPresent?: boolean | undefined;
+					targetRefSeq?: number | undefined;
+					targetAckHandle?: string | undefined;
+				} = { targetRefSeq, targetAckHandle };
 				const trace = Trace.start();
 
-				const versions = await this.storage.getVersions(
-					null,
-					1,
-					"prefetchLatestSummaryBeforeClose",
-					FetchSource.noCache,
-				);
-				assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-				stats.getVersionDuration = trace.trace().duration;
+				let snapshotTree: ISnapshotTree | null;
+				const scenarioName = "RefreshLatestSummaryAckFetch";
+				// If loader supplied us the ISnapshot when loading, the new getSnapshotApi is supported and feature gate is ON, then use the
+				// new API, otherwise it will reduce the service performance because the service will need to recalculate the full snapshot
+				// in case previously getSnapshotApi was used and now we use the getVersions API.
+				if (
+					this.isSnapshotInstanceOfISnapshot &&
+					this.storage.getSnapshot !== undefined &&
+					this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
+						true
+				) {
+					const snapshot = await this.storage.getSnapshot({
+						scenarioName,
+						fetchSource: FetchSource.noCache,
+					});
+					const id = snapshot.snapshotTree.id;
+					assert(id !== undefined, "id of the fetched snapshot should be defined");
+					props.snapshotVersion = id;
+					snapshotTree = snapshot.snapshotTree;
+				} else {
+					const versions = await this.storage.getVersions(
+						null,
+						1,
+						scenarioName,
+						FetchSource.noCache,
+					);
+					assert(
+						!!versions && !!versions[0],
+						0x137 /* "Failed to get version from storage" */,
+					);
+					snapshotTree = await this.storage.getSnapshotTree(versions[0]);
+					assert(!!snapshotTree, 0x138 /* "Failed to get snapshot from storage" */);
+					props.snapshotVersion = versions[0].id;
+				}
 
-				const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-				assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-				stats.getSnapshotDuration = trace.trace().duration;
-				const latestSnapshotRefSeq = await seqFromTree(maybeSnapshot, readAndParseBlob);
-				stats.snapshotRefSeq = latestSnapshotRefSeq;
-				stats.snapshotVersion = versions[0].id;
+				props.getSnapshotDuration = trace.trace().duration;
+				const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
+				props.snapshotRefSeq = snapshotRefSeq;
+				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
 
-				perfEvent.end(stats);
+				perfEvent.end({ details: props });
+				return snapshotRefSeq;
 			},
 		);
+
+		// If the snapshot that was fetched is older than the target snapshot, return. The summarizer will not be closed
+		// because the snapshot is likely deleted from storage and it so, closing the summarizer will result in the
+		// document being stuck in this state.
+		if (fetchedSnapshotRefSeq < targetRefSeq) {
+			return;
+		}
 
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");

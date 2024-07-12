@@ -27,6 +27,9 @@ import {
 	type ISnapshotTree,
 	MessageType,
 	ISequencedDocumentMessage,
+	type IVersion,
+	type FetchSource,
+	type IDocumentAttributes,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
@@ -75,7 +78,11 @@ import {
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
-import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
+import {
+	ISummaryCancellationToken,
+	neverCancelledSummaryToken,
+	type IRefreshSummaryAckOptions,
+} from "../summary/index.js";
 
 // Type test:
 const outboundMessage: OutboundContainerRuntimeMessage =
@@ -137,16 +144,18 @@ describe("Runtime", () => {
 
 	const mockClientId = "mockClientId";
 
+	// Mock the storage layer so "submitSummary" works.
+	const defaultMockStorage: Partial<IDocumentStorageService> = {
+		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
+			return "fakeHandle";
+		},
+	};
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
 		logger = new MockLogger(),
+		mockStorage: Partial<IDocumentStorageService> = defaultMockStorage,
+		loadedFromVersion?: IVersion,
 	): Partial<IContainerContext> => {
-		// Mock the storage layer so "submitSummary" works.
-		const mockStorage: Partial<IDocumentStorageService> = {
-			uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
-				return "fakeHandle";
-			},
-		};
 		const mockContext = {
 			attachState: AttachState.Attached,
 			deltaManager: new MockDeltaManager(),
@@ -156,9 +165,9 @@ describe("Runtime", () => {
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
-			getLoadedFromVersion: () => undefined,
-			submitFn: (_type: MessageType, contents: any, _batch: boolean, appData?: any) => {
-				submittedOps.push(contents);
+			getLoadedFromVersion: () => loadedFromVersion,
+			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
+				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
 			clientId: mockClientId,
@@ -215,7 +224,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("flushMode setting", () => {
+		describe("Flushing and Replaying", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
@@ -242,44 +251,57 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
 			});
 
-			it("Replaying ops should resend in correct order", async () => {
-				const containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {
-						flushMode: FlushMode.TurnBased,
-					},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
+			[true, undefined].forEach((enableOfflineLoad) =>
+				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
+					const containerRuntime = await ContainerRuntime.loadRuntime({
+						context: getMockContext({
+							"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+						}) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {
+							flushMode: FlushMode.TurnBased,
+						},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
 
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).channelCollection = {
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
-						submitDataStoreOp(
-							containerRuntime,
-							envelope.address,
-							envelope.contents,
-							localOpMetadata,
-						);
-					},
-				} as ChannelCollection;
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					(containerRuntime as any).channelCollection = {
+						setConnectionState: (_connected: boolean, _clientId?: string) => {},
+						// Pass data store op right back to ContainerRuntime
+						reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+							submitDataStoreOp(
+								containerRuntime,
+								envelope.address,
+								envelope.contents,
+								localOpMetadata,
+							);
+						},
+					} as ChannelCollection;
 
-				changeConnectionState(containerRuntime, false, mockClientId);
+					changeConnectionState(containerRuntime, false, mockClientId);
 
-				submitDataStoreOp(containerRuntime, "1", "test");
-				(containerRuntime as any).flush();
+					// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
+					submitDataStoreOp(containerRuntime, "1", "test");
+					(containerRuntime as any).flush();
 
-				submitDataStoreOp(containerRuntime, "2", "test");
-				changeConnectionState(containerRuntime, true, mockClientId);
-				(containerRuntime as any).flush();
+					submitDataStoreOp(containerRuntime, "2", "test");
+					changeConnectionState(containerRuntime, true, mockClientId);
+					(containerRuntime as any).flush();
 
-				assert.strictEqual(submittedOps.length, 2);
-				assert.strictEqual(submittedOps[0].contents.address, "1");
-				assert.strictEqual(submittedOps[1].contents.address, "2");
-			});
+					assert.strictEqual(submittedOps.length, 2);
+					assert.strictEqual(submittedOps[0].contents.address, "1");
+					assert.strictEqual(submittedOps[1].contents.address, "2");
+					assert.strictEqual(
+						submittedOps[0].metadata?.batchId,
+						enableOfflineLoad ? "mockClientId_[-1]" : undefined,
+					);
+					assert.strictEqual(
+						submittedOps[1].metadata?.batchId,
+						enableOfflineLoad ? "mockClientId_[-2]" : undefined,
+					);
+				}),
+			);
 		});
 
 		describe("orderSequentially", () =>
@@ -721,8 +743,11 @@ describe("Runtime", () => {
 					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
 						return { localAck: false, localOpMetadata: undefined };
 					},
-					processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
-						return undefined;
+					processPendingLocalBatch: (_messages: ISequencedDocumentMessage[]) => {
+						return _messages.map((message) => ({
+							message,
+							localOpMetadata: undefined,
+						}));
 					},
 					get pendingMessagesCount() {
 						return pendingMessages;
@@ -899,6 +924,7 @@ describe("Runtime", () => {
 								contents: {
 									address: "address",
 								},
+								clientSequenceNumber: 0,
 							} as any as ISequencedDocumentMessage,
 							true /* local */,
 						);
@@ -1689,6 +1715,122 @@ describe("Runtime", () => {
 			});
 		});
 
+		describe("Snapshots", () => {
+			/**
+			 * This test tests a scenario where a summarizer gets a newer summary ack, but on fetching the latest snapshot,
+			 * it gets a snapshot which is older than the one corresponding to the ack.
+			 * This can happen in cases such as database rollbacks in server which results in deleting recent snapshots but
+			 * not the corresponding acks.
+			 * Summarizers should not close in this scenario. They should continue generating summaries.
+			 */
+			it("Summary succeeds on receiving summary ack for a deleted snapshot", async () => {
+				// The latest snapshot version in storage.
+				const latestVersion: IVersion = {
+					id: "snapshot1",
+					treeId: "snapshotTree1",
+				};
+				// The latest snapshot tree in storage.
+				const latestSnapshotTree: ISnapshotTree = {
+					blobs: {},
+					trees: {
+						".protocol": {
+							blobs: {
+								"attributes": "attributesBlob",
+							},
+							trees: {},
+						},
+					},
+				};
+				// The version of the snapshot that was deleted say during DB rollback.
+				const deletedSnapshotId = "snapshot2";
+				// The properties of the ack corresponding to the deleted snapshot.
+				const deletedSnapshotAckOptions: IRefreshSummaryAckOptions = {
+					proposalHandle: "proposal1",
+					ackHandle: deletedSnapshotId,
+					summaryRefSeq: 100,
+					summaryLogger: createChildLogger({}),
+				};
+				class MockStorageService implements Partial<IDocumentStorageService> {
+					/**
+					 * This always returns the same snapshot. Basically, when container runtime receives an ack for the
+					 * deleted snapshot and tries to fetch the latest snapshot, return the latest snapshot.
+					 */
+					async getSnapshotTree(version?: IVersion, scenarioName?: string) {
+						assert.strictEqual(
+							version,
+							latestVersion,
+							"getSnapshotTree called with incorrect version",
+						);
+						return latestSnapshotTree;
+					}
+
+					async getVersions(
+						versionId: string | null,
+						count: number,
+						scenarioName?: string,
+						fetchSource?: FetchSource,
+					) {
+						return [latestVersion];
+					}
+
+					/**
+					 * Validates that this is not called by container runtime with the deleted snapshot id even
+					 * though it received an ack for it.
+					 */
+					async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext) {
+						assert.notStrictEqual(
+							context.ackHandle,
+							deletedSnapshotId,
+							"Summary uploaded with deleted snapshot's ack",
+						);
+						return "snapshot3";
+					}
+
+					/**
+					 * Called by container runtime to read document attributes. Return the sequence number as 0 which
+					 * is lower than the deleted snapshot's reference sequence number.
+					 */
+					async readBlob(id: string) {
+						assert.strictEqual(id, "attributesBlob", "Not implemented");
+						const attributes: IDocumentAttributes = {
+							sequenceNumber: 0,
+							minimumSequenceNumber: 0,
+						};
+						return stringToBuffer(JSON.stringify(attributes), "utf8");
+					}
+				}
+
+				const mockContext = getMockContext(
+					{},
+					undefined,
+					new MockStorageService(),
+					latestVersion,
+				);
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: mockContext as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Call refresh latest summary with the deleted snapshot's options. Container runtime should
+				// ignore this but not close.
+				await assert.doesNotReject(
+					containerRuntime.refreshLatestSummaryAck(deletedSnapshotAckOptions),
+					"Container runtime should not close",
+				);
+
+				// Submit a summary. This should upload a summary with the snapshot container runtime loaded
+				// from and not the deleted snapshot.
+				const summarizeResult = await containerRuntime.submitSummary({
+					summaryLogger: createChildLogger(),
+					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
+				});
+				assert(summarizeResult.stage === "submit", "Summary should not fail");
+			});
+		});
+
 		describe("GetPendingState", () => {
 			it("No Props. No pending state", async () => {
 				const logger = new MockLogger();
@@ -1741,6 +1883,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1782,6 +1925,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
@@ -1850,6 +1994,7 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
+					batchIdContext: { clientId: "CLIENT_ID", batchStartCsn: 1 },
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
