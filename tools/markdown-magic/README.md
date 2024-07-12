@@ -106,7 +106,7 @@ Generally recommended for inclusion at the end of the README.
 
 Notes:
 
--   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+-   This is strictly intended as a starter template to remove the need for some handwritten boilerplate.
     You will still need to fill in semantic and usage information.
 -   This is effectively just a wrapper around lower-level templates.
     If you want more fine-grained control over the content structure, we recommend using other templates.
