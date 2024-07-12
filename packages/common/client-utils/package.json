@@ -132,7 +132,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "^1.8.3",
+		"@biomejs/biome": "~1.8.3",
 		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.40.0",
