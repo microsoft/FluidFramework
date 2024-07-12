@@ -5,41 +5,12 @@
 
 import { assert } from "chai";
 
-import {
-	benchmarkTypes,
-	performanceTestSuiteTag,
-	testTypes,
-	userCategoriesSplitter,
-} from "./Configuration";
+import type { Stats } from "./ResultTypes";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
  * output to the command line.
  */
-
-/**
- * Tags used to mark tests.
- */
-const tags = [
-	performanceTestSuiteTag,
-	...benchmarkTypes.map((x) => `@${x}`),
-	...testTypes.map((x) => `@${x}`),
-];
-
-/**
- * Strip tags and user-specified category from the specified test/suite name.
- */
-export function getName(name: string): string {
-	let s = name;
-	for (const tag of tags) {
-		s = s.replace(tag, "");
-	}
-	const indexOfSplitter = s.indexOf(userCategoriesSplitter);
-	if (indexOfSplitter >= 0) {
-		s = s.slice(0, indexOfSplitter);
-	}
-	return s.trim();
-}
 
 /**
  * Creates and returns a padding string consisting of `num` copies of `chr`
@@ -119,19 +90,6 @@ const tTable = {
 	"30": 2.042,
 	"infinity": 1.96,
 };
-
-/**
- * @public
- */
-export interface Stats {
-	readonly marginOfError: number;
-	readonly marginOfErrorPercent: number;
-	readonly standardErrorOfMean: number;
-	readonly standardDeviation: number;
-	readonly arithmeticMean: number;
-	readonly samples: readonly number[];
-	readonly variance: number;
-}
 
 /**
  * Compute statistics for an array of numbers.
