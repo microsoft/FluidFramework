@@ -42,9 +42,10 @@ export interface IEditableForest extends IForestSubscription {
 
 /**
  * Initializes the given forest with the given content.
- * @remarks This does not perform an edit in the typical sense.
+ * @remarks The forest must be empty when this function is called.
+ * This does not perform an edit in the typical sense.
  * Instead, it creates a delta expressing a creation and insertion of the `content` under the {@link rootFieldKey}, and then applies the delta to the forest.
- * If `visitAnchors` is enabled, then the delta will also be applied to the forest's {@link AnchorSet} (in which case there must be no existing anchors when this function called).
+ * If `visitAnchors` is enabled, then the delta will also be applied to the forest's {@link AnchorSet} (in which case there must be no existing anchors when this function is called).
  *
  * @remarks
  * This does not perform an edit: it updates the forest content as if there was an edit that did that.
