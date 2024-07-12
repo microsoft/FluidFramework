@@ -13,6 +13,7 @@ import {
 
 // TODOs:
 // - Identifier fields
+// - Recursive schema
 
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
