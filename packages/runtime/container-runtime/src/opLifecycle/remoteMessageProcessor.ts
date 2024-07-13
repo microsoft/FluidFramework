@@ -70,7 +70,10 @@ export class RemoteMessageProcessor {
 	 * @returns all the unchunked, decompressed, ungrouped, unpacked InboundSequencedContainerRuntimeMessage from a single batch
 	 * or undefined if the batch is not yet complete.
 	 */
-	public process(remoteMessageCopy: ISequencedDocumentMessage, logLegacyCase: (codePath: string) => void):
+	public process(
+		remoteMessageCopy: ISequencedDocumentMessage,
+		logLegacyCase: (codePath: string) => void,
+	):
 		| {
 				messages: InboundSequencedContainerRuntimeMessage[];
 				batchStartCsn: number;
@@ -171,7 +174,11 @@ export class RemoteMessageProcessor {
 }
 
 /** Takes an incoming message and if the contents is a string, JSON.parse's it in place */
-export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage, modernRuntimeMessage: boolean, logLegacyCase: (codePath: string) => void): void {
+export function ensureContentsDeserialized(
+	mutableMessage: ISequencedDocumentMessage,
+	modernRuntimeMessage: boolean,
+	logLegacyCase: (codePath: string) => void,
+): void {
 	// back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
 	// System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
 	// Old ops may contain empty string (I assume noops).
@@ -223,7 +230,10 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
  *
  * @internal
  */
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage, logLegacyCase: (codePath: string) => void = () => {}): boolean {
+export function unpackRuntimeMessage(
+	message: ISequencedDocumentMessage,
+	logLegacyCase: (codePath: string) => void = () => {},
+): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
 		// i.e. message.type is actually ContainerMessageType.

@@ -2621,10 +2621,11 @@ export class ContainerRuntime
 
 		// There is some ancient back-compat code that we'd like to instrument
 		// to understand if/when it is hit.
-		const logLegacyCase = (codePath: string) => this.logger.sendTelemetryEvent({
-			eventName: "LegacyRuntimeMessage",
-			details: { codePath, modernRuntimeMessage },
-		});
+		const logLegacyCase = (codePath: string) =>
+			this.logger.sendTelemetryEvent({
+				eventName: "LegacyRuntimeMessage",
+				details: { codePath, modernRuntimeMessage },
+			});
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		// There might be multiple container instances receiving the same message.
