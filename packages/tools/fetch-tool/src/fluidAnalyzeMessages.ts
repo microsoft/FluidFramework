@@ -596,6 +596,7 @@ function processOp(
 			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Alias:
+			case ContainerMessageType.ExternalOp:
 			case ContainerMessageType.Rejoin: {
 				let envelope = runtimeMessage.contents as IEnvelope;
 				// TODO: Legacy?
