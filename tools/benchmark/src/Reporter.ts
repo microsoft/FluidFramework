@@ -268,7 +268,12 @@ export class BenchmarkReporter {
 	): string {
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
-		const outputContentString: string = JSON.stringify({ suiteName, benchmarks }, undefined, 4);
+		const benchmarksArray: Readonly<BenchmarkResult>[] = [...benchmarks.values()];
+		const outputContentString: string = JSON.stringify(
+			{ suiteName, benchmarksArray },
+			undefined,
+			4,
+		);
 
 		// If changing this or the result file logic in general,
 		// be sure to update the glob used to look for output files in the perf pipeline.
