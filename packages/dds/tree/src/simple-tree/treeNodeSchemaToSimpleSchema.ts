@@ -179,6 +179,11 @@ function populateSchemaDefinitionsForNode(
 	schema: TreeNodeSchema,
 	definitions: Map<string, SimpleNodeSchema>,
 ): void {
+	if (definitions.has(schema.identifier)) {
+		// If the definition has already been populated, no need to recurse.
+		return;
+	}
+
 	// Populate definition for this schema
 	definitions.set(schema.identifier, toSimpleNodeSchema(schema));
 

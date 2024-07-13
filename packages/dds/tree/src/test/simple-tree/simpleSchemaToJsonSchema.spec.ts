@@ -14,7 +14,6 @@ import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
 // TODOs:
 // - Identifier fields
-// - Recursive schema
 
 describe.only("simpleSchemaToJsonSchema", () => {
 	it("Leaf schema", async () => {
@@ -241,5 +240,72 @@ describe.only("simpleSchemaToJsonSchema", () => {
 			},
 			false,
 		);
+	});
+
+	it("Recursive object schema", () => {
+		const input: SimpleTreeSchema = {
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.recursive-object",
+					{
+						kind: "object",
+						fields: {
+							"foo": {
+								kind: "optional",
+								allowedTypes: new Set<string>(["test.string", "test.recursive-object"]),
+							},
+						},
+					},
+				],
+				["test.string", { type: "string", kind: "leaf" }],
+			]),
+			allowedTypes: new Set<string>(["test.recursive-object"]),
+		};
+		const actual = toJsonSchema(input);
+
+		const expected: TreeJsonSchema = {
+			definitions: {
+				"test.recursive-object": {
+					type: "object",
+					kind: "object",
+					properties: {
+						foo: {
+							anyOf: [
+								{ $ref: "#/definitions/test.string" },
+								{ $ref: "#/definitions/test.recursive-object" },
+							],
+						},
+					},
+					required: [],
+					additionalProperties: false,
+				},
+				"test.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/definitions/test.recursive-object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator({}, true);
+		validator({ foo: {} }, true);
+		validator({ foo: "Hello world" }, true);
+		validator({ foo: { foo: "Hello world" } }, true);
+
+		validator("Hello world", false);
+		validator([], false);
+		validator({ foo: 42 }, false);
+		validator({ foo: { foo: 42 } }, false);
+		validator({ bar: "Hello world" }, false);
+		validator({ foo: { bar: "Hello world" } }, false);
 	});
 });

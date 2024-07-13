@@ -8,7 +8,6 @@ import { getJsonSchema, SchemaFactory, type TreeJsonSchema } from "../../simple-
 
 // TODOs:
 // - Identifier fields
-// - Recursive schema
 
 import { hydrate } from "./utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
@@ -231,5 +230,64 @@ describe.only("getJsonSchema", () => {
 			},
 			false,
 		);
+	});
+
+	it("Recursive object schema", () => {
+		const schemaFactory = new SchemaFactory("test");
+		class ObjectSchema extends schemaFactory.objectRecursive("recursive-object", {
+			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => ObjectSchema]),
+		}) {}
+		const input = hydrate(
+			ObjectSchema,
+			new ObjectSchema({ foo: new ObjectSchema({ foo: "Hello" }) }),
+		);
+
+		const actual = getJsonSchema(input);
+
+		const expected: TreeJsonSchema = {
+			definitions: {
+				"test.recursive-object": {
+					type: "object",
+					kind: "object",
+					properties: {
+						foo: {
+							anyOf: [
+								{ $ref: "#/definitions/com.fluidframework.leaf.string" },
+								{ $ref: "#/definitions/test.recursive-object" },
+							],
+						},
+					},
+					required: [],
+					additionalProperties: false,
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					kind: "leaf",
+				},
+			},
+			anyOf: [
+				{
+					$ref: "#/definitions/test.recursive-object",
+				},
+			],
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(input, true);
+		validator({}, true);
+		validator({ foo: {} }, true);
+		validator({ foo: "Hello world" }, true);
+		validator({ foo: { foo: "Hello world" } }, true);
+
+		validator("Hello world", false);
+		validator([], false);
+		validator({ foo: 42 }, false);
+		validator({ foo: { foo: 42 } }, false);
+		validator({ bar: "Hello world" }, false);
+		validator({ foo: { bar: "Hello world" } }, false);
 	});
 });
