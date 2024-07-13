@@ -190,14 +190,6 @@ export abstract class LazyField<
 		return this.schema.equals(schema);
 	}
 
-	public isSameAs(other: FlexTreeField): boolean {
-		assert(
-			other.context === this.context,
-			0x77d /* Content from different flex trees should not be used together */,
-		);
-		return this.key === other.key && this.parent === other.parent;
-	}
-
 	public get parent(): FlexTreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
@@ -444,7 +436,7 @@ export class LazySequence<TTypes extends FlexAllowedTypes>
 		sourceEnd: number,
 		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
-		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		const sourceField = source ?? this;
 
 		// TODO: determine support for move across different sequence types
 		assert(
@@ -495,10 +487,6 @@ export class ReadonlyLazyValueField<TTypes extends FlexAllowedTypes>
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
 		fail("cannot set content in readonly field");
 	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0) ?? fail("value node must have 1 item");
-	}
 }
 
 export class LazyValueField<TTypes extends FlexAllowedTypes>
@@ -531,10 +519,6 @@ export class LazyValueField<TTypes extends FlexAllowedTypes>
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
-	}
-
-	public override get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
-		return this.boxedAt(0) ?? fail("value node must have 1 item");
 	}
 }
 
@@ -588,10 +572,6 @@ export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 			0x781 /* optional field content should normalize at most one item */,
 		);
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
-	}
-
-	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.boxedAt(0);
 	}
 }
 

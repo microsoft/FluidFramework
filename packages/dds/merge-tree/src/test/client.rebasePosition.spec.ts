@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IMergeTreeOp } from "../ops.js";
 
@@ -74,7 +74,7 @@ describe("client.rebasePosition", () => {
 			pos: number,
 			expected: string,
 			message?: string,
-		) => {
+		): void => {
 			const localViewOfRebasedPos = client.resolveRemoteClientPosition(
 				pos,
 				seq,

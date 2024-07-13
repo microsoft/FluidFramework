@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -36,6 +37,7 @@ import {
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
+	snapshotWithLoadingGroupIdSupported,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { runWithRetry } from "./retryUtils.js";
@@ -110,7 +112,13 @@ export async function createNewFluidFile(
 			summaryHandle,
 		);
 		// caching the converted summary
-		await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
+		await epochTracker.put(
+			createCacheSnapshotKey(
+				odspResolvedUrl,
+				snapshotWithLoadingGroupIdSupported(loggerToMonitoringContext(logger).config),
+			),
+			snapshot,
+		);
 	}
 	return odspResolvedUrl;
 }

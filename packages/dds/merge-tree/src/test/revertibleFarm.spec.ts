@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
+import type {
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+} from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";
 import {
@@ -29,13 +33,13 @@ import { TestClientLogger, createClientsAtInitialState } from "./testClientLogge
 
 const defaultOptions = {
 	initialOps: 5,
-	minLength: { min: 1, max: 256, growthFunc: (i) => i * i },
+	minLength: { min: 1, max: 256, growthFunc: (i): number => i * i },
 	concurrentOpsWithRevert: { min: 0, max: 8 },
 	revertOps: { min: 1, max: 16 },
 	ackBeforeRevert: ["None", "Some", "All"] as ("None" | "Some" | "All")[],
 	rounds: 10,
 	operations: [removeRange, annotateRange],
-	growthFunc: (i) => i * 2,
+	growthFunc: (i): number => i * 2,
 };
 
 describe("MergeTree.Client", () => {
@@ -45,7 +49,7 @@ describe("MergeTree.Client", () => {
 				const random = makeRandom(
 					minLen,
 					revertOps,
-					[...ackBeforeRevert].reduce<number>((pv, cv) => pv + cv.charCodeAt(0), 0),
+					[...ackBeforeRevert].reduce<number>((pv, cv) => pv + (cv.codePointAt(0) ?? 0), 0),
 					concurrentOpsWithRevert,
 				);
 
@@ -60,7 +64,7 @@ describe("MergeTree.Client", () => {
 				);
 				let seq = 0;
 				for (let rnd = 0; rnd < defaultOptions.rounds; rnd++) {
-					clients.all.forEach((c) => c.updateMinSeq(seq));
+					for (const c of clients.all) c.updateMinSeq(seq);
 
 					const logger = new TestClientLogger(clients.all, `Round ${rnd}`);
 					{
@@ -86,7 +90,10 @@ describe("MergeTree.Client", () => {
 
 					const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
 					const clientBDriver = createRevertDriver(clients.B);
-					const deltaCallback = (op, delta) => {
+					const deltaCallback = (
+						op: IMergeTreeDeltaOpArgs,
+						delta: IMergeTreeDeltaCallbackArgs,
+					): void => {
 						if (op.sequencedMessage === undefined) {
 							appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles);
 						}
@@ -94,7 +101,7 @@ describe("MergeTree.Client", () => {
 
 					const msgs: [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] = [];
 					{
-						clientBDriver.submitOpCallback = (op) =>
+						clientBDriver.submitOpCallback = (op): number =>
 							msgs.push([
 								clients.B.makeOpMessage(op, undefined, undefined, undefined, seq),
 								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -149,8 +156,8 @@ describe("MergeTree.Client", () => {
 					try {
 						revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
 						seq = applyMessages(seq, msgs.splice(0), clients.all, logger);
-					} catch (e) {
-						throw logger.addLogsToError(e);
+					} catch (error) {
+						throw logger.addLogsToError(error);
 					}
 					logger.validate({
 						clear: true,
@@ -187,8 +194,8 @@ describe("MergeTree.Client", () => {
 							false,
 							"there should be no left over local references in detached references",
 						);
-					} catch (e) {
-						throw logger.addLogsToError(e);
+					} catch (error) {
+						throw logger.addLogsToError(error);
 					}
 					logger.validate({
 						errorPrefix: "After Re-Revert (redo)",

@@ -30,11 +30,11 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return SharedMatrixFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return SharedMatrixFactory.Attributes;
 	}
 
@@ -74,4 +74,7 @@ export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFa
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMatrix class was exported as public.
  */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition SharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SharedMatrix<T = any> = ISharedMatrix<T>;

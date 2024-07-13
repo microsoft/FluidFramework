@@ -6,6 +6,7 @@
 const {
 	formattedSectionText,
 	getPackageMetadata,
+	getScopeKindFromPackage,
 	readTemplate,
 	resolveRelativePackageJsonPath,
 } = require("../utilities.cjs");
@@ -15,7 +16,7 @@ const {
  */
 const generateExperimentalPackageNotice = () => {
 	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, undefined);
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**
@@ -24,7 +25,7 @@ const generateExperimentalPackageNotice = () => {
  */
 const generateInternalPackageNotice = () => {
 	const rawContents = readTemplate("Internal-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, undefined);
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**
@@ -33,7 +34,7 @@ const generateInternalPackageNotice = () => {
  */
 const generatePrivatePackageNotice = () => {
 	const rawContents = readTemplate("Private-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, undefined);
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**

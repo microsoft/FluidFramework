@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha (undocumented)
-export type CacheContentType = "snapshot" | "ops";
+export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 // @alpha (undocumented)
 export interface HostStoragePolicy {
@@ -37,9 +37,9 @@ export interface ICacheEntry extends IEntry {
 
 // @alpha (undocumented)
 export interface ICollabSessionOptions {
-    // @deprecated (undocumented)
+    // @deprecated
     forceAccessTokenViaAuthorizationHeader?: boolean;
-    // @deprecated (undocumented)
+    // @deprecated
     unauthenticatedUserDisplayName?: string;
 }
 
