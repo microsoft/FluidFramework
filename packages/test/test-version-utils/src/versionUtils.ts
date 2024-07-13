@@ -18,7 +18,7 @@ import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
-import { assert } from "@fluidframework/core-utils/internal";
+import { LazyPromise, assert } from "@fluidframework/core-utils/internal";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
 
@@ -59,6 +59,7 @@ async function ensureInstalledJson() {
 		release();
 	}
 }
+const ensureInstalledJsonLazy = new LazyPromise(async () => ensureInstalledJson());
 
 function readInstalledJsonNoLock(): InstalledJson {
 	const data = readFileSync(installedJsonPath, { encoding: "utf8" });
@@ -71,7 +72,7 @@ function readInstalledJsonNoLock(): InstalledJson {
 }
 
 async function readInstalledJson(): Promise<InstalledJson> {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		return readInstalledJsonNoLock();
@@ -79,11 +80,12 @@ async function readInstalledJson(): Promise<InstalledJson> {
 		release();
 	}
 }
+const readInstalledJsonLazy = new LazyPromise(async () => readInstalledJson());
 
 const isInstalled = async (version: string) =>
-	(await readInstalledJson()).installed.includes(version);
+	(await readInstalledJsonLazy).installed.includes(version);
 async function addInstalled(version: string) {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
@@ -99,7 +101,7 @@ async function addInstalled(version: string) {
 }
 
 async function removeInstalled(version: string) {
-	await ensureInstalledJson();
+	await ensureInstalledJsonLazy;
 	const release = await lock(installedJsonPath, { retries: { forever: true } });
 	try {
 		const installedJson = readInstalledJsonNoLock();
@@ -588,4 +590,58 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 	return (
 		version >= "2.0.0-internal.2.0.0" || (!version.includes("internal") && version >= "2.0.0")
 	);
+}
+
+export function versionToComparisonNumber(version: string): number {
+	if (version.startsWith("0.")) {
+		return 0;
+	}
+	if (version.startsWith("1.")) {
+		return 1;
+	}
+	if (version.startsWith("2.0.0-internal.1")) {
+		return 2;
+	}
+	if (version.startsWith("2.0.0-internal.2")) {
+		return 3;
+	}
+	if (version.startsWith("2.0.0-internal.3")) {
+		return 4;
+	}
+	if (version.startsWith("2.0.0-internal.4")) {
+		return 5;
+	}
+	if (version.startsWith("2.0.0-internal.5")) {
+		return 6;
+	}
+	if (version.startsWith("2.0.0-internal.6")) {
+		return 7;
+	}
+	if (version.startsWith("2.0.0-internal.7")) {
+		return 8;
+	}
+	if (version.startsWith("2.0.0-internal.8")) {
+		return 9;
+	}
+	if (version.startsWith("2.0.0-rc.1")) {
+		return 10;
+	}
+	if (version.startsWith("2.0.0-rc.2")) {
+		return 11;
+	}
+	if (version.startsWith("2.0.0-rc.3")) {
+		return 12;
+	}
+	if (version.startsWith("2.0.0-rc.4")) {
+		return 13;
+	}
+	if (version.startsWith("2.0.0-rc.5")) {
+		return 14;
+	}
+
+	const parsed = semver.parse(version);
+	if (!parsed) {
+		throw new Error(`Invalid version: ${version}`);
+	}
+	return parsed.major * 1_000_000 + parsed.minor * 1000 + parsed.patch + 15;
 }
