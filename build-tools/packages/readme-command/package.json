@@ -35,7 +35,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
-		"format:biome": "biome check --apply .",
+		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
@@ -48,6 +48,7 @@
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "~1.8.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@oclif/test": "^3.2.12",
