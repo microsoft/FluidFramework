@@ -179,6 +179,7 @@ import {
 	Outbox,
 	RemoteMessageProcessor,
 } from "./opLifecycle/index.js";
+import type { IExternalOpProcessor } from "./opProperties.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	PendingMessageResubmitData,
@@ -788,6 +789,8 @@ export class ContainerRuntime
 	 * This allows mixin classes to leverage this method to define their own async initializer.
 	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+	 * - externalOpProcessors - List of op and stashed op processor so as to process external ops which could be
+	 * submitted as part of different features which requires to submit and process ops.
 	 */
 	public static async loadRuntime(params: {
 		context: IContainerContext;
@@ -799,6 +802,7 @@ export class ContainerRuntime
 		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		externalOpProcessors?: IExternalOpProcessor[];
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -809,6 +813,7 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptions,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
+			externalOpProcessors,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -1047,6 +1052,7 @@ export class ContainerRuntime
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
+			externalOpProcessors,
 		);
 
 		runtime.blobManager.trackPendingStashedUploads().then(
@@ -1397,6 +1403,7 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
+		private readonly externalOpProcessors?: IExternalOpProcessor[],
 	) {
 		super();
 
@@ -2446,6 +2453,13 @@ export class ContainerRuntime
 			case ContainerMessageType.GC:
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
+			case ContainerMessageType.ExternalOp:
+				if (this.externalOpProcessors !== undefined) {
+					for (const opProcessor of this.externalOpProcessors) {
+						await opProcessor.stashedOpProcessor(opContents);
+					}
+				}
+				return;
 			default: {
 				// This should be extremely rare for stashed ops.
 				// It would require a newer runtime stashing ops and then an older one applying them,
@@ -2781,6 +2795,13 @@ export class ContainerRuntime
 					messageWithContext.local,
 					messageWithContext.message.sequenceNumber,
 				);
+				break;
+			case ContainerMessageType.ExternalOp:
+				if (this.externalOpProcessors !== undefined) {
+					for (const opProcessor of this.externalOpProcessors) {
+						opProcessor.opProcessor(messageWithContext.message, local, localOpMetadata);
+					}
+				}
 				break;
 			default: {
 				// If we didn't necessarily expect a runtime message type, then no worries - just return
@@ -3933,6 +3954,23 @@ export class ContainerRuntime
 		this.submit({ type, contents }, localOpMetadata);
 	}
 
+	/**
+	 * Api to allow users of runtime to submit ops if required.
+	 * @param type - Type of external op.
+	 * @param contents - contents of the op.
+	 * @param localOpMetadata - localOpMetadata is any.
+	 */
+	public submitExternalOps(
+		type: string,
+		contents: unknown,
+		localOpMetadata: unknown = undefined,
+	) {
+		this.submit(
+			{ type: ContainerMessageType.ExternalOp, contents: { type, contents } },
+			localOpMetadata,
+		);
+	}
+
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
@@ -4181,6 +4219,9 @@ export class ContainerRuntime
 				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
 				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
 				// send any ops, as some other client already changed schema.
+				break;
+			case ContainerMessageType.ExternalOp:
+				this.submit(message);
 				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a

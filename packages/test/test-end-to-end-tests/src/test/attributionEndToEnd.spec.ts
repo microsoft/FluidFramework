@@ -23,10 +23,7 @@ import {
 	insertCustomAttributionPropInPropertySet,
 	type AttributionPolicy,
 } from "@fluidframework/merge-tree/internal";
-import {
-	AttributionInfo,
-	type CustomAttributionKey,
-} from "@fluidframework/runtime-definitions/internal";
+import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,

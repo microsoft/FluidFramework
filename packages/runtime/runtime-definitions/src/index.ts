@@ -9,6 +9,8 @@ export type {
 	DetachedAttributionKey,
 	LocalAttributionKey,
 	OpAttributionKey,
+	CustomAttributionKey,
+	CustomAttributionInfo,
 } from "./attribution.js";
 export type {
 	AliasResult,

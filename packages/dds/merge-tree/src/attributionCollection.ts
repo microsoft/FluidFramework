@@ -8,9 +8,11 @@ import {
 	AttributionKey,
 	DetachedAttributionKey,
 	OpAttributionKey,
+	type CustomAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { ICustomAttributionKeyList } from "./attributionUtils.js";
 import { ISegment } from "./mergeTreeNodes.js";
 
 /**
@@ -170,14 +172,16 @@ export function areEqualAttributionKeys(
 			return a.id === (b as DetachedAttributionKey).id;
 		case "local":
 			return true;
+		case "custom":
+			return a.id === (b as CustomAttributionKey).id;
 		default:
 			unreachableCase(a, "Unhandled AttributionKey type");
 	}
 }
 
 export class AttributionCollection implements IAttributionCollection<AttributionKey> {
-	private offsets: number[] = [];
-	private keys: (AttributionKey | null)[] = [];
+	protected offsets: number[] = [];
+	protected keys: (AttributionKey | null)[] = [];
 
 	private channels?: { [name: string]: AttributionCollection };
 
@@ -541,5 +545,21 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		}
 
 		return blobContents;
+	}
+}
+
+export class CustomAttributionCollection extends AttributionCollection {
+	public constructor(_length: number, customAttributionKeyList: ICustomAttributionKeyList) {
+		super(_length);
+		const keysArr = customAttributionKeyList.keys;
+
+		// Sort the keysArr array by the offset as they might be not sorted.
+		keysArr.sort((a, b) => a.offset - b.offset);
+
+		// Now that the keysArr array is sorted, separate the keys and values back out
+		for (const [_, pair] of keysArr.entries()) {
+			this.offsets.push(pair.offset);
+			this.keys.push(pair.key);
+		}
 	}
 }

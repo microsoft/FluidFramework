@@ -1237,6 +1237,7 @@ declare type old_as_current_for_InterfaceDeclaration_SequenceOffsets = requireAs
  * typeValidation.broken:
  * "InterfaceDeclaration_SequenceOffsets": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_SequenceOffsets = requireAssignableTo<TypeOnly<current.SequenceOffsets>, TypeOnly<old.SequenceOffsets>>
 
 /*
@@ -1255,6 +1256,7 @@ declare type old_as_current_for_InterfaceDeclaration_SerializedAttributionCollec
  * typeValidation.broken:
  * "InterfaceDeclaration_SerializedAttributionCollection": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_InterfaceDeclaration_SerializedAttributionCollection = requireAssignableTo<TypeOnly<current.SerializedAttributionCollection>, TypeOnly<old.SerializedAttributionCollection>>
 
 /*

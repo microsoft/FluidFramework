@@ -67,6 +67,7 @@ declare type old_as_current_for_TypeAliasDeclaration_AttributionKey = requireAss
  * typeValidation.broken:
  * "TypeAliasDeclaration_AttributionKey": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAliasDeclaration_AttributionKey = requireAssignableTo<TypeOnly<current.AttributionKey>, TypeOnly<old.AttributionKey>>
 
 /*

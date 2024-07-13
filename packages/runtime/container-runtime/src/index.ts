@@ -25,10 +25,14 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
+	ContainerRuntimeExternalOp,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
+	TypedContainerRuntimeMessage,
 	UnknownContainerRuntimeMessage,
+	TExternalContainerRuntimeMessage,
+	IExternalContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -39,6 +43,7 @@ export {
 	AllowTombstoneRequestHeaderKey,
 	AllowInactiveRequestHeaderKey,
 } from "./channelCollection.js";
+export { IExternalOpProcessor } from "./opProperties.js";
 export {
 	GCNodeType,
 	IGCMetadata,

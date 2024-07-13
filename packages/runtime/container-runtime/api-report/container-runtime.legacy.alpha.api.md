@@ -24,6 +24,7 @@ export enum ContainerMessageType {
     // (undocumented)
     ChunkedOp = "chunkedOp",
     DocumentSchemaChange = "schema",
+    ExternalOp = "ExternalOp",
     // (undocumented)
     FluidDataStoreOp = "component",
     GC = "GC",
@@ -34,7 +35,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, baseLogger: ITelemetryBaseLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, externalOpProcessors?: IExternalOpProcessor[] | undefined);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
@@ -124,6 +125,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         containerRuntimeCtor?: typeof ContainerRuntime;
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
         provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+        externalOpProcessors?: IExternalOpProcessor[];
     }): Promise<ContainerRuntime>;
     // (undocumented)
     makeLocallyVisible(): void;
@@ -157,6 +159,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     get storage(): IDocumentStorageService;
+    submitExternalOps(type: string, contents: unknown, localOpMetadata?: unknown): void;
     // (undocumented)
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: unknown, targetClientId?: string): void;
@@ -177,6 +180,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
+
+// @alpha (undocumented)
+export type ContainerRuntimeExternalOp = TypedContainerRuntimeMessage<ContainerMessageType.ExternalOp, IExternalContainerRuntimeMessage>;
 
 // @alpha
 export const currentDocumentVersionSchema = 1;
@@ -397,6 +403,20 @@ export interface IDocumentSchemaFeatures {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
+}
+
+// @alpha (undocumented)
+export interface IExternalContainerRuntimeMessage {
+    // (undocumented)
+    contents: unknown;
+    // (undocumented)
+    type: string;
+}
+
+// @alpha
+export interface IExternalOpProcessor {
+    opProcessor: (op: ContainerRuntimeExternalOp, local: boolean, localOpMetadata?: unknown) => boolean;
+    stashedOpProcessor: (op: ContainerRuntimeExternalOp) => Promise<boolean>;
 }
 
 // @alpha @deprecated (undocumented)
@@ -819,6 +839,9 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 // @alpha
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
+
+// @alpha (undocumented)
+export type TExternalContainerRuntimeMessage = IExternalContainerRuntimeMessage;
 
 // @alpha
 export const TombstoneResponseHeaderKey = "isTombstoned";

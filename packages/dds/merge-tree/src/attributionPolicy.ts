@@ -7,7 +7,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
-import { AttributionCollection } from "./attributionCollection.js";
+import {
+	AttributionCollection,
+	CustomAttributionCollection,
+} from "./attributionCollection.js";
+import {
+	customAttributionKeysPropName,
+	isCustomAttributionKeyList,
+} from "./attributionUtils.js";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { AttributionPolicy } from "./mergeTree.js";
@@ -188,6 +195,51 @@ function createPropertyTrackingMergeTreeCallbacks(
 	};
 }
 
+/**
+ * @legacy
+ * @alpha
+ */
+function createCustomAttributionTrackingMergeTreeCallbacks(): AttributionCallbacks {
+	const customAttributeOnSegments = (
+		deltaSegments: IMergeTreeSegmentDelta[],
+		{ op }: IMergeTreeDeltaOpArgs,
+	): void => {
+		const propName = customAttributionKeysPropName;
+		for (const { segment } of deltaSegments) {
+			const shouldAttributeInsert =
+				op.type === MergeTreeDeltaType.INSERT && segment.properties?.[propName] !== undefined;
+
+			const customAttributionKeyList = segment.properties?.[propName];
+			if (shouldAttributeInsert && isCustomAttributionKeyList(customAttributionKeyList)) {
+				const customCollection = new CustomAttributionCollection(
+					segment.cachedLength,
+					customAttributionKeyList,
+				);
+				segment.attribution?.update(customAttributionKeysPropName, customCollection);
+				// Delete it from the segment properties as we don't want it to get summarized twice as
+				// we have added it in segment.attribution which will be summarized.
+				delete segment.properties?.[propName];
+			}
+		}
+	};
+	return {
+		delta: (opArgs, { deltaSegments }, client) => {
+			const { op } = opArgs;
+			if (op.type === MergeTreeDeltaType.INSERT) {
+				customAttributeOnSegments(deltaSegments, opArgs);
+			}
+		},
+		maintenance: ({ deltaSegments, operation }, opArgs, client) => {
+			if (
+				operation === MergeTreeMaintenanceType.ACKNOWLEDGED &&
+				opArgs?.op.type === MergeTreeDeltaType.INSERT
+			) {
+				customAttributeOnSegments(deltaSegments, opArgs);
+			}
+		},
+	};
+}
+
 function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): AttributionCallbacks {
 	return {
 		delta: (...args) => callbacks.forEach(({ delta }) => delta(...args)),
@@ -238,6 +290,22 @@ export function createPropertyTrackingAttributionPolicyFactory(
 }
 
 /**
+ *
+ * @returns A policy which only attributes using custom attribution information.
+ * Keys are stored under attribution channels of special name same as {@link customAttributionKeysPropName}.
+ * @internal
+ */
+export function createCustomAttributionTrackingAttributionPolicyFactory(): () => AttributionPolicy {
+	return () =>
+		createAttributionPolicyFromCallbacks(
+			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
+				createCustomAttributionTrackingMergeTreeCallbacks(),
+			]),
+		);
+}
+
+/**
  * Creates an attribution policy which tracks insertion as well as annotation of certain property names.
  * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
  * {@link createInsertOnlyAttributionPolicy}: see there for more details.
@@ -252,6 +320,45 @@ export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
 				ensureAttributionCollectionCallbacks,
 				insertOnlyAttributionPolicyCallbacks,
 				createPropertyTrackingMergeTreeCallbacks(...propNames),
+			]),
+		);
+}
+
+/**
+ * Creates an attribution policy which tracks insertion, addition of custom attributes by the app as well
+ * as annotation of certain property names.
+ * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
+ * {@link createInsertOnlyAttributionPolicy} and {@link createCustomAttributionTrackingAttributionPolicyFactory}:
+ * see there for more details.
+ * @internal
+ */
+export function createPropertyWithCustomAttributionTrackingAndInsertionAttributionPolicyFactory(
+	...propNames: string[]
+): () => AttributionPolicy {
+	return () =>
+		createAttributionPolicyFromCallbacks(
+			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
+				insertOnlyAttributionPolicyCallbacks,
+				createPropertyTrackingMergeTreeCallbacks(...propNames),
+				createCustomAttributionTrackingMergeTreeCallbacks(),
+			]),
+		);
+}
+
+/**
+ * Creates an attribution policy which tracks insertion as well as addition of custom attributes by the app.
+ * This combines the policies creatable using {@link createCustomAttributionTrackingAttributionPolicyFactory} and
+ * {@link createInsertOnlyAttributionPolicy}: see there for more details.
+ * @internal
+ */
+export function createCustomAttributionTrackingAndInsertionAttributionPolicyFactory(): () => AttributionPolicy {
+	return () =>
+		createAttributionPolicyFromCallbacks(
+			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
+				insertOnlyAttributionPolicyCallbacks,
+				createCustomAttributionTrackingMergeTreeCallbacks(),
 			]),
 		);
 }
