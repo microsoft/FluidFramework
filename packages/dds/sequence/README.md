@@ -1,6 +1,6 @@
 # @fluidframework/sequence
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -13,14 +13,13 @@ library consumers should always prefer `^`.
 
 If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
-<!-- prettier-ignore-end -->
+## Installation
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+To get started, install the package by running the following command:
 
-<!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+```bash
+npm i @fluidframework/sequence
+```
 
 ## Importing from this package
 
@@ -626,7 +625,8 @@ For further reading on attribution, see the [@fluid-experimental/attributor READ
 
 <!-- This line ends the content that is copied to the string.md README -->
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&importInstructions=FALSE) -->
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
