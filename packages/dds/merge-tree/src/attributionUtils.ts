@@ -47,7 +47,7 @@ export function insertCustomAttributionPropInPropertySet(
 	props: PropertySet,
 	offsets: number[],
 	keys: CustomAttributionKey[],
-) {
+): void {
 	if (keys.length === 0) {
 		return;
 	}

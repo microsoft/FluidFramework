@@ -14,6 +14,7 @@ import {
 import {
 	customAttributionKeysPropName,
 	isCustomAttributionKeyList,
+	type ICustomAttributionKeyList,
 } from "./attributionUtils.js";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
@@ -195,41 +196,40 @@ function createPropertyTrackingMergeTreeCallbacks(
 	};
 }
 
-/**
- * @legacy
- * @alpha
- */
-function createCustomAttributionTrackingMergeTreeCallbacks(): AttributionCallbacks {
-	const customAttributeOnSegments = (
-		deltaSegments: IMergeTreeSegmentDelta[],
-		{ op }: IMergeTreeDeltaOpArgs,
-	): void => {
-		const propName = customAttributionKeysPropName;
-		for (const { segment } of deltaSegments) {
-			const shouldAttributeInsert =
-				op.type === MergeTreeDeltaType.INSERT && segment.properties?.[propName] !== undefined;
+const customAttributeOnSegments = (
+	deltaSegments: IMergeTreeSegmentDelta[],
+	{ op }: IMergeTreeDeltaOpArgs,
+): void => {
+	const propName = customAttributionKeysPropName;
+	for (const { segment } of deltaSegments) {
+		const shouldAttributeInsert =
+			op.type === MergeTreeDeltaType.INSERT && segment.properties?.[propName] !== undefined;
 
-			const customAttributionKeyList = segment.properties?.[propName];
-			if (shouldAttributeInsert && isCustomAttributionKeyList(customAttributionKeyList)) {
-				const customCollection = new CustomAttributionCollection(
-					segment.cachedLength,
-					customAttributionKeyList,
-				);
-				segment.attribution?.update(customAttributionKeysPropName, customCollection);
-				// Delete it from the segment properties as we don't want it to get summarized twice as
-				// we have added it in segment.attribution which will be summarized.
-				delete segment.properties?.[propName];
-			}
+		if (shouldAttributeInsert && isCustomAttributionKeyList(segment.properties?.[propName])) {
+			const customAttributionKeyList = segment.properties?.[
+				propName
+			] as ICustomAttributionKeyList;
+			const customCollection = new CustomAttributionCollection(
+				segment.cachedLength,
+				customAttributionKeyList,
+			);
+			segment.attribution?.update(customAttributionKeysPropName, customCollection);
+			// Delete it from the segment properties as we don't want it to get summarized twice as
+			// we have added it in segment.attribution which will be summarized.
+			delete segment.properties?.[propName];
 		}
-	};
+	}
+};
+
+function createCustomAttributionTrackingMergeTreeCallbacks(): AttributionCallbacks {
 	return {
-		delta: (opArgs, { deltaSegments }, client) => {
+		delta: (opArgs, { deltaSegments }, client): void => {
 			const { op } = opArgs;
 			if (op.type === MergeTreeDeltaType.INSERT) {
 				customAttributeOnSegments(deltaSegments, opArgs);
 			}
 		},
-		maintenance: ({ deltaSegments, operation }, opArgs, client) => {
+		maintenance: ({ deltaSegments, operation }, opArgs, client): void => {
 			if (
 				operation === MergeTreeMaintenanceType.ACKNOWLEDGED &&
 				opArgs?.op.type === MergeTreeDeltaType.INSERT
@@ -295,8 +295,7 @@ export function createPropertyTrackingAttributionPolicyFactory(
 }
 
 /**
- *
- * @returns A policy which only attributes using custom attribution information.
+ * Utility api to return a policy which only attributes using custom attribution information.
  * Keys are stored under attribution channels of special name same as {@link customAttributionKeysPropName}.
  * @internal
  */
