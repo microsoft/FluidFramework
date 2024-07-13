@@ -846,6 +846,12 @@ export type TExternalContainerRuntimeMessage = IExternalContainerRuntimeMessage;
 // @alpha
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
+// @alpha
+export interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
+    contents: TContents;
+    type: TType;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```
