@@ -16,8 +16,17 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
-import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import {
+	createCustomAttributionTrackingAndInsertionAttributionPolicyFactory,
+	createInsertOnlyAttributionPolicy,
+	customAttributionKeysPropName,
+	insertCustomAttributionPropInPropertySet,
+	type AttributionPolicy,
+} from "@fluidframework/merge-tree/internal";
+import {
+	AttributionInfo,
+	type CustomAttributionKey,
+} from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
@@ -111,7 +120,10 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 		return dataObject.getSharedObject<SharedString>(stringId);
 	};
 
-	const getTestConfig = (runtimeAttributor?: IRuntimeAttributor): ITestContainerConfig => ({
+	const getTestConfig = (
+		runtimeAttributor?: IRuntimeAttributor,
+		attributionPolicy: () => AttributionPolicy = createInsertOnlyAttributionPolicy,
+	): ITestContainerConfig => ({
 		...testContainerConfig,
 		enableAttribution: runtimeAttributor !== undefined,
 		loaderProps: {
@@ -124,7 +136,7 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
-					policyFactory: createInsertOnlyAttributionPolicy,
+					policyFactory: attributionPolicy,
 				},
 			} as any,
 		},
@@ -162,6 +174,101 @@ describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
 			assertAttributionMatches(sharedString1, 13, attributor, {
 				user: container1.audience.getMember(container1.clientId)?.user,
 			});
+		},
+	);
+
+	itSkipsFailureOnSpecificDrivers(
+		"Can custom attribute content from multiple collaborators",
+		["tinylicious", "t9s"],
+		async () => {
+			const attributor1 = createRuntimeAttributor();
+			const container1 = await provider.makeTestContainer(
+				getTestConfig(
+					attributor1,
+					createCustomAttributionTrackingAndInsertionAttributionPolicyFactory(),
+				),
+			);
+			const sharedString1 = await sharedStringFromContainer(container1);
+			const attributor2 = createRuntimeAttributor();
+			const container2 = await provider.loadTestContainer(
+				getTestConfig(attributor2),
+				createCustomAttributionTrackingAndInsertionAttributionPolicyFactory(),
+			);
+			const sharedString2 = await sharedStringFromContainer(container2);
+
+			const text = "client 1";
+			const keys = attributor1.createCustomAttributorKey([
+				{
+					user: { id: "user1@" },
+					timestamp: 1,
+					customAttributes: { "onBehalfOf": "copilot" },
+				},
+				{
+					user: { id: "user2@" },
+					timestamp: 4,
+					customAttributes: { "onBehalfOf": "copilot1" },
+				},
+			]);
+			const propertySet = {};
+			insertCustomAttributionPropInPropertySet(propertySet, [0, 2], keys);
+			sharedString1.insertText(0, text, propertySet);
+
+			await provider.ensureSynchronized();
+			const text2 = "client 2, ";
+			const keys2 = attributor1.createCustomAttributorKey([
+				{
+					user: { id: "user3@" },
+					timestamp: 1,
+					customAttributes: { "onBehalfOf": "copilot3" },
+				},
+				{
+					user: { id: "user4@" },
+					timestamp: 2,
+					customAttributes: { "onBehalfOf": "copilot4" },
+				},
+			]);
+			const propertySet2 = {};
+			insertCustomAttributionPropInPropertySet(propertySet2, [0, 4], keys2);
+			sharedString2.insertText(0, text2, propertySet2);
+			await provider.ensureSynchronized();
+
+			assert.equal(sharedString1.getText(), "client 2, client 1");
+
+			assert(
+				container1.clientId !== undefined && container2.clientId !== undefined,
+				"Both containers should have client ids.",
+			);
+			const { segment } = sharedString1.getContainingSegment(13);
+			const attributionKeys1 = segment?.attribution?.getKeysInOffsetRange(
+				0,
+				undefined,
+				customAttributionKeysPropName,
+			);
+			assert(attributionKeys1 !== undefined, "attribution keys should exist");
+			assert(attributionKeys1.length === 2, "2 keys should be there");
+			for (const [_, key] of attributionKeys1.entries()) {
+				assert.deepStrictEqual(
+					attributor1.getCustomAttributionInfo(key.key),
+					attributor2.getCustomAttributionInfo(key.key),
+					"values from attributors on both containers should match on segment 1",
+				);
+			}
+
+			const { segment: segment2 } = sharedString1.getContainingSegment(1);
+			const attributionKeys2 = segment2?.attribution?.getKeysInOffsetRange(
+				0,
+				undefined,
+				customAttributionKeysPropName,
+			);
+			assert(attributionKeys2 !== undefined, "attribution keys should exist");
+			assert(attributionKeys2.length === 2, "2 keys should be there");
+			for (const [_, key] of attributionKeys2.entries()) {
+				assert.deepStrictEqual(
+					attributor1.getCustomAttributionInfo(key.key),
+					attributor2.getCustomAttributionInfo(key.key),
+					"values from attributors on both containers should match on segment 2",
+				);
+			}
 		},
 	);
 
