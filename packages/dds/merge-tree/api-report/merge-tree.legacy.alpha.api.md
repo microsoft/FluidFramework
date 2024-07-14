@@ -184,9 +184,6 @@ export class CollaborationWindow {
     minSeq: number;
 }
 
-// @alpha (undocumented)
-export const customAttributionKeysPropName: string;
-
 // @alpha
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
 
@@ -246,17 +243,6 @@ export interface IClientEvents {
     (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void): void;
     // (undocumented)
     (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): void;
-}
-
-// @alpha (undocumented)
-export interface ICustomAttributionKeyList {
-    // (undocumented)
-    keys: {
-        offset: number;
-        key: CustomAttributionKey;
-    }[];
-    // (undocumented)
-    type: "custom";
 }
 
 // @alpha (undocumented)
@@ -424,9 +410,6 @@ export interface IMoveInfo {
     moveDst?: ReferencePosition;
     wasMovedOnInsert: boolean;
 }
-
-// @alpha
-export function insertCustomAttributionPropInPropertySet(props: PropertySet, offsets: number[], keys: CustomAttributionKey[]): void;
 
 // @alpha
 export interface IRelativePosition {
