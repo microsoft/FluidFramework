@@ -596,6 +596,7 @@ extends:
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            buildDirectory: '${{ parameters.buildDirectory }}'
             STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
             STORAGE_KEY: $(STORAGE_KEY)
 
