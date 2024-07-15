@@ -18,7 +18,7 @@ module.exports = {
 	},
 	overrides: [
 		{
-			files: ["src/**"],
+			files: ["src/test/**"],
 			rules: {
 				"import/no-nodejs-modules": "off",
 			},
