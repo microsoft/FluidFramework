@@ -18,14 +18,6 @@ parameters:
 - name: buildDirectory
   type: string
 
-- name: STORAGE_ACCOUNT
-  type: string
-  default: none
-
-- name: STORAGE_KEY
-  type: string
-  default: none
-
 stages:
 
 # This stage only runs for test-branch builds
@@ -52,6 +44,7 @@ stages:
   condition: and(succeeded(), eq(variables['testBuild'], false))
   variables:
   - group: ado-feeds
+  - group: storage-vars
   jobs:
   - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
@@ -60,6 +53,7 @@ stages:
       # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
+
   # Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main and release branch, and
   # for the build of the client release group (we don't need manifests for anything else).
   # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
@@ -67,8 +61,8 @@ stages:
   - template: /tools/pipelines/templates/upload-dev-manifest.yml@self
     parameters:
       buildDirectory: '${{ parameters.buildDirectory }}'
-      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
-      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
+      STORAGE_ACCOUNT: $(STORAGE_ACCOUNT)
+      STORAGE_KEY: $(STORAGE_KEY)
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.
