@@ -8,7 +8,6 @@ const {
 	formattedGeneratedContentBody,
 	formattedSectionText,
 	getPackageMetadata,
-	getScopeKindFromPackage,
 	parseHeadingOptions,
 	resolveRelativePackageJsonPath,
 	shouldInstallAsDevDependency,
@@ -63,8 +62,6 @@ function installationInstructionsTransform(content, options, config) {
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
-
-	const scopeKind = getScopeKindFromPackage(packageName);
 
 	let devDependency = false;
 	if (options.devDependency === "TRUE") {
