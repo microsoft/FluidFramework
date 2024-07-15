@@ -10,6 +10,7 @@
  * In this file, we will test the map property object described in /src/properties/mapProperty.js
  */
 const { ChangeSet } = require("@fluid-experimental/property-changeset");
+
 const { PropertyFactory } = require("../..");
 const { BaseProperty } = require("../..");
 
@@ -412,9 +413,7 @@ describe("ValueMapProperty", function () {
 		//
 		var testChangeSetSquashing = function (in_options) {
 			resetKeyCounter();
-			var testProperty = PropertyFactory.create(
-				"autodesk.tests:ValueMapTestPropertyID-1.0.0",
-			);
+			var testProperty = PropertyFactory.create("autodesk.tests:ValueMapTestPropertyID-1.0.0");
 
 			var callbacks = in_options.callbacks;
 			if (in_options.pre) {

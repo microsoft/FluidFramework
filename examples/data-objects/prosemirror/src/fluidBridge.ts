@@ -5,22 +5,22 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils";
-import { createInsertSegmentOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IMergeTreeDeltaOp, createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
 import {
-	SharedString,
-	SequenceDeltaEvent,
+	ISegment,
 	ISequenceDeltaRange,
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
-	reservedRangeLabelsKey,
+	SequenceDeltaEvent,
+	SharedString,
 	TextSegment,
-	ISegment,
-} from "@fluidframework/sequence";
+	reservedRangeLabelsKey,
+} from "@fluidframework/sequence/internal";
 import {
-	Schema,
 	Fragment,
+	Schema,
 	Slice,
 	// Slice,
 } from "prosemirror-model";
@@ -248,8 +248,12 @@ export class ProseMirrorTransactionBuilder {
 
 		let currentGroup: IThingGroup | undefined;
 		const groups = new Array<IThingGroup>();
-		const annotations: { from: number; to: number; segment: ISegment; propertyDeltas?: any }[] =
-			[];
+		const annotations: {
+			from: number;
+			to: number;
+			segment: ISegment;
+			propertyDeltas?: any;
+		}[] = [];
 		let position = 0;
 
 		for (const thing of this.things) {
@@ -357,11 +361,7 @@ export class ProseMirrorTransactionBuilder {
 						this.schema.marks[prop].create(value),
 					);
 				} else {
-					this.transaction.removeMark(
-						annotation.from,
-						annotation.to,
-						this.schema.marks[prop],
-					);
+					this.transaction.removeMark(annotation.from, annotation.to, this.schema.marks[prop]);
 				}
 			}
 		}

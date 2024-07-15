@@ -9,16 +9,17 @@ import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/styles";
 import classNames from "classnames";
 import * as React from "react";
+
+import { SvgIcon } from "./SVGIcon";
 import {
+	type Omit,
 	backGroundDarkColor,
 	backGroundLightColor,
 	iconBaseColor,
 	iconHeight,
 	iconHoverColor,
 	iconWidth,
-	Omit,
-} from "./constants";
-import { SvgIcon } from "./SVGIcon";
+} from "./constants.js";
 
 export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "value"> {
 	searchExpression: string;
@@ -117,7 +118,8 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> = ({
 			return -1;
 		}
 	};
-	const changeResultEnabled = totalResults !== undefined && totalResults > 0 && !searchInProgress;
+	const changeResultEnabled =
+		totalResults !== undefined && totalResults > 0 && !searchInProgress;
 	const handlePrevious = () =>
 		onPrevious && changeResultEnabled && onPrevious(getNewResultIndex(-1));
 	const handleNext = () => onNext && changeResultEnabled && onNext(getNewResultIndex(1));
@@ -154,8 +156,7 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> = ({
 								className={classNames(
 									classes.alignedItem,
 									{
-										[classes.backGroundToggle]:
-											totalResults && !searchInProgress,
+										[classes.backGroundToggle]: totalResults && !searchInProgress,
 									},
 									{ [classes.hoverableItem]: totalResults && !searchInProgress },
 								)}
@@ -174,8 +175,7 @@ export const SearchBox: React.FunctionComponent<ISearchBoxProps> = ({
 								className={classNames(
 									classes.alignedItem,
 									{
-										[classes.backGroundToggle]:
-											totalResults && !searchInProgress,
+										[classes.backGroundToggle]: totalResults && !searchInProgress,
 									},
 									{ [classes.hoverableItem]: totalResults && !searchInProgress },
 								)}

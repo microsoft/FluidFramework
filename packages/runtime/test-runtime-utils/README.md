@@ -10,9 +10,11 @@ mock logger for validating a particular log sequence.
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
 
 <!-- prettier-ignore-end -->
 
@@ -45,7 +47,7 @@ To write a unit test for these scenarios, follow these steps:
 -   We need to connect and attach the DDS to an IDeltaConnection so it can submit and process messages. Create a `MockDeltaConnection` by calling `createDeltaConnection` on the `MockContainerRuntime`.
 -   Use the `MockDeltaConnection` to connect the DDS.
 
-Examples - [sequenceHandler](..//../framework/undo-redo/src/test/sequenceHandler.spec.ts), [snapshotVersion](../sequence/src/test/snapshotVersion.spec.ts).
+Examples - [sequenceHandler](../../framework/undo-redo/src/test/sequenceHandler.spec.ts), [snapshotVersion](../sequence/src/test/snapshotVersion.spec.ts).
 
 ### Reconnection unit tests
 

@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Defines the base class for a stateless data binding. A stateless data binding is created once
  * by the client, but is called back for onPreModify, onModify etc. for all instances of a type.
  */
 
-import { DataBinding } from "./dataBinding";
 import { BaseProperty } from "@fluid-experimental/property-properties";
-import { IStatelessDataBindingOptions } from "./IStatelessDataBindingOptions";
-import { ModificationContext } from "./modificationContext";
-import { RemovalContext } from "./removalContext";
+import { IStatelessDataBindingOptions } from "./IStatelessDataBindingOptions.js";
+import { DataBinding } from "./dataBinding.js";
+import { ModificationContext } from "./modificationContext.js";
+import { RemovalContext } from "./removalContext.js";
 
 /**
  * The StatelessDataBinding class. When creating a stateless databinding class ```D``` to be
@@ -76,7 +77,7 @@ export class StatelessDataBinding extends DataBinding {
 	 */
 	getProperty(): BaseProperty | undefined {
 		console.assert(
-			this._property,
+			this._property !== undefined,
 			"Calling getProperty while not in a onPostCreate, onModify etc. callback",
 		);
 		return this._property;
@@ -113,7 +114,10 @@ export class StatelessDataBinding extends DataBinding {
 	 * @param in_property - the property we just created
 	 * @param in_modificationContext - The modifications
 	 */
-	_internalOnPostCreate(in_property: BaseProperty, in_modificationContext: ModificationContext) {
+	_internalOnPostCreate(
+		in_property: BaseProperty,
+		in_modificationContext: ModificationContext,
+	) {
 		this._preCall(in_property);
 		this.onPostCreate(in_modificationContext);
 		this._postCall(in_property);
@@ -129,7 +133,10 @@ export class StatelessDataBinding extends DataBinding {
 	 * @param in_property - the property we just created
 	 * @param in_modificationContext - The modifications
 	 */
-	_internalOnPreModify(in_property: BaseProperty, in_modificationContext: ModificationContext) {
+	_internalOnPreModify(
+		in_property: BaseProperty,
+		in_modificationContext: ModificationContext,
+	) {
 		this._preCall(in_property);
 		this.onPreModify(in_modificationContext);
 		this._postCall(in_property);

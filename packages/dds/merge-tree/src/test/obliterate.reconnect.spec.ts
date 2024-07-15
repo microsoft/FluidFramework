@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+
 import { MergeTree } from "../mergeTree.js";
+
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 

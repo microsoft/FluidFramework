@@ -4,40 +4,43 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
-import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
+import { assert } from "@fluidframework/core-utils/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+
+import { type ICodecOptions, noopValidator } from "../../codec/index.js";
 import {
+	type DeltaDetachedNodeBuild,
+	type DeltaFieldChanges,
+	type FieldKey,
+	type IEditableForest,
+	type ITreeCursorSynchronous,
+	type ITreeSubscriptionCursor,
+	type RevisionTagCodec,
+	TreeNavigationResult,
 	applyDelta,
-	DeltaDetachedNodeBuild,
-	DeltaFieldChanges,
-	FieldKey,
 	forEachField,
-	IEditableForest,
-	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
-	RevisionTagCodec,
-	TreeNavigationResult,
 } from "../../core/index.js";
-import {
+import type {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
-import { FieldBatchEncodingContext, FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-import { Format } from "./format.js";
-import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+
+import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import type { Format } from "./format.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 /**
  * The storage key for the blob in the summary containing tree data
  */
@@ -60,6 +63,7 @@ export class ForestSummarizer implements Summarizable {
 		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: ICodecOptions = { jsonValidator: noopValidator },
+		private readonly idCompressor: IIdCompressor,
 	) {
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 	}
@@ -73,16 +77,15 @@ export class ForestSummarizer implements Summarizable {
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
-		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> = new Map();
+		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
+			new Map();
 		// TODO: Encode all detached fields in one operation for better performance and compression
 		forEachField(rootCursor, (cursor) => {
 			const key = cursor.getFieldKey();
-			const innerCursor = this.forest.allocateCursor();
+			const innerCursor = this.forest.allocateCursor("getTreeString");
 			assert(
-				this.forest.tryMoveCursorToField(
-					{ fieldKey: key, parent: undefined },
-					innerCursor,
-				) === TreeNavigationResult.Ok,
+				this.forest.tryMoveCursorToField({ fieldKey: key, parent: undefined }, innerCursor) ===
+					TreeNavigationResult.Ok,
 				0x892 /* failed to navigate to field */,
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
@@ -130,10 +133,7 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = this.codec.decode(
-				parse(treeBufferString) as Format,
-				this.encoderContext,
-			);
+			const fields = this.codec.decode(parse(treeBufferString) as Format, this.encoderContext);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DeltaDetachedNodeBuild[] = [];
@@ -159,7 +159,7 @@ export class ForestSummarizer implements Summarizable {
 			applyDelta(
 				{ build, fields: new Map(fieldChanges) },
 				this.forest,
-				makeDetachedFieldIndex("init", this.revisionTagCodec),
+				makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
 			);
 		}
 	}

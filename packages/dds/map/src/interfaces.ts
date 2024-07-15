@@ -3,37 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
-import {
+import type {
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
+import type {
+	ISharedObject,
+	ISharedObjectEvents,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Type of "valueChanged" event parameter.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IValueChanged {
 	/**
 	 * The key storing the value that changed.
 	 */
-	key: string;
+	readonly key: string;
 
 	/**
 	 * The value that was stored at the key prior to the change.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	previousValue: any;
+	readonly previousValue: any;
 }
 
 /**
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
+ * @legacy
  * @alpha
  */
 export interface IDirectory
@@ -118,6 +123,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
+ * @legacy
  * @alpha
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
@@ -191,12 +197,13 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
 	 * Emitted when a key is set or deleted. As opposed to the
-	 * {@link SharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
+	 * {@link ISharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
 	 * contains the key.
 	 *
 	 * @remarks Listener parameters:
@@ -272,6 +279,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
+ * @legacy
  * @alpha
  */
 export interface ISharedDirectory
@@ -287,6 +295,7 @@ export interface ISharedDirectory
 
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
+ * @legacy
  * @alpha
  */
 export interface IDirectoryValueChanged extends IValueChanged {
@@ -299,7 +308,8 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -331,15 +341,20 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
- * and retrieving values that JavaScript developers are accustomed to with the
+ * The SharedMap distributed data structure can be used to store key-value pairs.
+ *
+ * @remarks
+ * SharedMap provides the same API for setting and retrieving values that JavaScript developers are accustomed to with the
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
  * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
+ * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
+ *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  * @sealed
- * @public
+ * @legacy
+ * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -360,59 +375,4 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
-}
-
-/**
- * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
- * {@link ISerializableValue."type"} to understand whether they're storing a Plain JavaScript object,
- * a {@link @fluidframework/shared-object-base#SharedObject}, or a value type.
- *
- * @remarks
- *
- * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
- * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
- * JSON.stringify and comes out of JSON.parse. This format is used both for snapshots (loadCore/populate)
- * and ops (set).
- *
- * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will
- * just get stringified to a URL string and not rehydrate as a URL object on the other side. It may contain members
- * that are ISerializedHandle (the serialized form of a handle).
- *
- * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
- * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
- * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.
- *
- * @deprecated This type is legacy and deprecated.
- * @alpha
- */
-export interface ISerializableValue {
-	/**
-	 * A type annotation to help indicate how the value serializes.
-	 */
-	type: string;
-
-	/**
-	 * The JSONable representation of the value.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any;
-}
-
-/**
- * Serialized {@link ISerializableValue} counterpart.
- * @alpha
- */
-export interface ISerializedValue {
-	/**
-	 * A type annotation to help indicate how the value serializes.
-	 */
-	type: string;
-
-	/**
-	 * String representation of the value.
-	 *
-	 * @remarks Will be undefined if the original value was undefined.
-	 */
-	value: string | undefined;
 }

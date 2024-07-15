@@ -2,12 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 import ReactDOM from "react-dom";
-import { browser } from "../Globals";
-import { BackgroundConnection } from "../BackgroundConnection";
-import { extensionPopupMessageSource } from "../messaging";
-import { PopupView } from "./PopupView";
+
+import { BackgroundConnection } from "../BackgroundConnection.js";
+import { browser } from "../Globals.js";
+import { extensionPopupMessageSource } from "../messaging/index.js";
+
+import { PopupView } from "./PopupView.js";
 
 /**
  * This module is the extensions "pop-up" script.
@@ -60,6 +63,11 @@ export async function initializePopupView(target: HTMLElement, tabId: number): P
 		messageSource: extensionPopupMessageSource,
 		tabId,
 	});
+	// Setting the theme here instead of using Fluent UI's ThemeProvider was intentional given the popup's simplicity.
+	// Note: keep these in sync with the themes in the devtools view.
+	const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	document.body.style.backgroundColor = prefersDarkScheme ? "#242424" : "#ffffff";
+	document.body.style.color = prefersDarkScheme ? "#ffffff" : "#242424";
 
 	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target);
 }

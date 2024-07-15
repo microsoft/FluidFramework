@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
@@ -132,7 +132,11 @@ export function compareSets<T>({
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<K, V>(
+	map: MapGetSet<K, V>,
+	key: K,
+	defaultValue: (key: K) => V,
+): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -161,31 +165,26 @@ export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
  * @param map - the transformation function to run on each element of the iterable
  * @returns a new iterable of elements which have been transformed by the `map` function
  */
-export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Iterable<U> {
+export function* mapIterable<T, U>(
+	iterable: Iterable<T>,
+	map: (t: T) => U,
+): IterableIterator<U> {
 	for (const t of iterable) {
 		yield map(t);
 	}
 }
 
 /**
- * Returns an iterable of tuples containing pairs of elements from the given iterables
- * @param iterableA - an iterable to zip together with `iterableB`
- * @param iterableB - an iterable to zip together with `iterableA`
- * @returns in iterable of tuples of elements zipped together from `iterableA` and `iterableB`.
- * If the input iterables are of different lengths, then the extra elements in the longer will be ignored.
+ * Finds the first element in the given iterable that satisfies a predicate.
+ * @param iterable - The iterable to search for an eligible element
+ * @param predicate - The predicate to run against each element
+ * @returns The first element in the iterable that satisfies the predicate, or undefined if the iterable contains no such element
  */
-export function* zipIterables<T, U>(
-	iterableA: Iterable<T>,
-	iterableB: Iterable<U>,
-): Iterable<[T, U]> {
-	const iteratorA = iterableA[Symbol.iterator]();
-	const iteratorB = iterableB[Symbol.iterator]();
-	for (
-		let nextA = iteratorA.next(), nextB = iteratorB.next();
-		nextA.done !== true && nextB.done !== true;
-		nextA = iteratorA.next(), nextB = iteratorB.next()
-	) {
-		yield [nextA.value, nextB.value];
+export function find<T>(iterable: Iterable<T>, predicate: (t: T) => boolean): T | undefined {
+	for (const t of iterable) {
+		if (predicate(t)) {
+			return t;
+		}
 	}
 }
 
@@ -219,7 +218,6 @@ export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
  *
  * Note that this does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @internal
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -228,7 +226,15 @@ export type JsonCompatibleReadOnly =
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| readonly JsonCompatibleReadOnly[]
-	| { readonly [P in string]?: JsonCompatibleReadOnly };
+	| JsonCompatibleReadOnlyObject;
+
+/**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
  * @remarks TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
@@ -260,7 +266,7 @@ export function assertValidRangeIndices(
 	startIndex: number,
 	endIndex: number,
 	array: { readonly length: number },
-) {
+): void {
 	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
@@ -270,7 +276,7 @@ export function assertValidIndex(
 	index: number,
 	array: { readonly length: number },
 	allowOnePastEnd: boolean = false,
-) {
+): void {
 	assertNonNegativeSafeInteger(index);
 	if (allowOnePastEnd) {
 		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
@@ -282,31 +288,17 @@ export function assertValidIndex(
 export function assertValidRange(
 	{ start, end }: { start: number; end: number },
 	array: { readonly length: number },
-) {
+): void {
 	assertNonNegativeSafeInteger(start);
 	assertNonNegativeSafeInteger(end);
 	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
 	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
-export function assertNonNegativeSafeInteger(index: number) {
+export function assertNonNegativeSafeInteger(index: number): void {
 	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
 	assert(index >= 0, 0x377 /* index must be non-negative */);
 }
-
-/**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
- * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
- *
- * @internal
- */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 /**
  * Convert an object into a Map.
@@ -339,7 +331,11 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
  * (including but not limited to unintended access to __proto__ and other non-owned keys).
  * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
  */
-export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+export function transformObjectMap<
+	MapKey extends string | number | symbol,
+	MapValue,
+	NewMapValue,
+>(
 	objectMap: Record<MapKey, MapValue>,
 	transformer: (value: MapValue, key: MapKey) => NewMapValue,
 ): Record<MapKey, MapValue> {
@@ -364,7 +360,10 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
  */
 export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
-	assert(result.size === input.size, 0x88a /* all values in a map must be unique to invert it */);
+	assert(
+		result.size === input.size,
+		0x88a /* all values in a map must be unique to invert it */,
+	);
 	return result;
 }
 
@@ -409,17 +408,21 @@ export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
 
 /**
  * Placeholder for `Symbol.dispose`.
- *
- * Replace this with `Symbol.dispose` when it is available.
- * @public
+ * @privateRemarks
+ * TODO: replace this with `Symbol.dispose` when it is available or make it a valid polyfill.
+ * @internal
  */
 export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
 /**
  * An object with an explicit lifetime that can be ended.
  * @privateRemarks
- * TODO: align this with core-utils/IDisposable and {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
- * @public
+ * Simpler alternative to core-utils/IDisposable for internal use in this package.
+ * This avoids adding a named "dispose" method, and will eventually be replaced with
+ * {@link https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management| TypeScript's Disposable}.
+ *
+ * Once this is replaced with TypeScript's Disposable, core-utils/IDisposable can extend it, bringing the APIs into a reasonable alignment.
+ * @internal
  */
 export interface IDisposable {
 	/**

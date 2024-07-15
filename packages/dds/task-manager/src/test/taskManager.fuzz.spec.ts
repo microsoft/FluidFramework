@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
+
 import {
+	AsyncGenerator as Generator,
+	AsyncReducer as Reducer,
 	combineReducersAsync as combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
-	AsyncGenerator as Generator,
 	makeRandom,
-	AsyncReducer as Reducer,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { TaskManagerFactory } from "../taskManagerFactory.js";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
+} from "@fluid-private/test-dds-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+
 import { ITaskManager } from "../interfaces.js";
+import { TaskManagerFactory } from "../taskManagerFactory.js";
+
 import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<TaskManagerFactory>;
@@ -119,7 +126,8 @@ function makeOperationGenerator(
 		};
 	}
 
-	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
+	const canVolunteer = ({ client }: OpSelectionState): boolean =>
+		client.channel.canVolunteer();
 	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
 		client.channel.queued(taskId);
 	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
@@ -229,7 +237,7 @@ describe("TaskManager fuzz testing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 
@@ -270,7 +278,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 			// { taskManagerNames: ["A", "B", "C"], taskId: "" },
 			makeReducer(),
-		validateConsistency: assertEqualTaskManagers,
+		validateConsistency: (a, b) => assertEqualTaskManagers(a.channel, b.channel),
 		factory: new TaskManagerFactory(),
 	};
 

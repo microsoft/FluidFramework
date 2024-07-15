@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IDirectory } from "@fluidframework/map";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IDirectory } from "@fluidframework/map/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * - Create a new object from the passed subDirectory.
@@ -76,7 +76,9 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 		);
 	};
 
-	subDirectoryWithInterception.getSubDirectory = (subdirName: string): IDirectory | undefined => {
+	subDirectoryWithInterception.getSubDirectory = (
+		subdirName: string,
+	): IDirectory | undefined => {
 		const subSubDirectory = subDirectory.getSubDirectory(subdirName);
 		return subSubDirectory === undefined
 			? subSubDirectory
@@ -85,7 +87,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 					subSubDirectory,
 					context,
 					setInterceptionCallback,
-			  );
+				);
 	};
 
 	subDirectoryWithInterception.subdirectories = (): IterableIterator<[string, IDirectory]> => {
@@ -125,7 +127,7 @@ function createSubDirectoryWithInterception<T extends IDirectory>(
 					subSubDirectory,
 					context,
 					setInterceptionCallback,
-			  );
+				);
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return

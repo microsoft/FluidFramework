@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { TreeValue } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
-import { TreeChunk } from "../chunk.js";
-import { FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
-import { TreeValue } from "../../../core/index.js";
+import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
+import type { TreeChunk } from "../chunk.js";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.
@@ -20,7 +21,7 @@ import { TreeValue } from "../../../core/index.js";
  */
 export class Counter<T> {
 	private readonly counts: Map<T, number> = new Map();
-	public add(t: T, count = 1) {
+	public add(t: T, count = 1): void {
 		const old = this.counts.get(t) ?? 0;
 		this.counts.set(t, old + count);
 	}
@@ -31,7 +32,7 @@ export class Counter<T> {
 	 *
 	 * @param filter - determines which items should be included in the table.
 	 */
-	public buildTable(filter: CounterFilter<T> = () => true): DeduplicationTable<T> {
+	public buildTable(filter: CounterFilter<T> = (): boolean => true): DeduplicationTable<T> {
 		const data: T[] = [...this.counts.keys()];
 		// Sort in descending order by count, giving priority (smaller indexes) to more commonly used values.
 		data.sort((a, b) => (this.counts.get(b) ?? 0) - (this.counts.get(a) ?? 0));

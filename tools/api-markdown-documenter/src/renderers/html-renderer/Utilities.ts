@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode } from "../../documentation-domain";
-import { type DocumentWriter } from "../DocumentWriter";
-import { renderNode, renderNodes } from "./Render";
-import { type RenderContext } from "./RenderContext";
+import { type DocumentationNode } from "../../documentation-domain/index.js";
+import { type DocumentWriter } from "../DocumentWriter.js";
+import { renderNode, renderNodes } from "./Render.js";
+import { type RenderContext } from "./RenderContext.js";
 
 /**
  * Renders the provided contents within a tag block of the specified `tagName`.

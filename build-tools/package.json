@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.35.0",
+	"version": "0.41.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,8 +17,7 @@
 		"build:fast": "fluid-build --worker",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
 		"check:biome": "biome check .",
-		"check:format": "npm run check:biome && npm run check:prettier",
-		"check:prettier": "prettier --check . --cache",
+		"check:format": "npm run check:biome",
 		"ci:build": "npm run build",
 		"ci:eslint": "fluid-build --task eslint",
 		"ci:test": "npm run test:mocha",
@@ -27,9 +26,8 @@
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
-		"format": "npm run format:biome && fluid-build --task format:prettier .",
-		"format:biome": "biome check --apply .",
-		"format:prettier": "prettier --write . --cache",
+		"format": "npm run format:biome",
+		"format:biome": "biome check --write .",
 		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list --no-private -g build-tools --feed internal-dev --outFile feeds/internal-dev.txt",
@@ -39,6 +37,7 @@
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run check:format && npm run ci:eslint",
 		"lint:fix": "npm run syncpack:deps:fix && npm run syncpack:versions:fix && npm run format && pnpm run -r --no-sort --stream lint:fix",
+		"packlist": "flub generate packlist -g build-tools",
 		"policy-check": "node packages/build-cli/bin/dev check policy",
 		"policy-check:asserts": "node packages/build-cli/bin/dev check policy --handler assert-short-codes --fix",
 		"policy-check:fix": "node packages/build-cli/bin/dev check policy --excludeHandler assert-short-codes --fix",
@@ -70,15 +69,15 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.5.3",
+		"@biomejs/biome": "~1.8.3",
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
-		"@fluid-tools/build-cli": "~0.29.0",
+		"@fluid-tools/build-cli": "~0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "~0.29.0",
+		"@fluidframework/build-tools": "~0.38.0",
 		"@microsoft/api-documenter": "^7.22.24",
-		"@microsoft/api-extractor": "^7.42.3",
+		"@microsoft/api-extractor": "^7.45.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^8.2.1",
@@ -87,31 +86,32 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.0",
 		"inquirer": "^8.2.5",
-		"prettier": "~3.2.4",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.6",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
+	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"engines": {
-		"node": ">=14.17.0"
+		"node": ">=18.17.1"
 	},
 	"dependenciesComments": {
 		"@fluidframework/build-tools": "Provides fluid-build which is used by the `build:fast` script. To allow this to work when the workspace version of build-tools has not been built yet, a prepackaged version is depended on. If this self-dependency becomes problematic, the `build` script can be used which does not require it."
 	},
 	"pnpm": {
 		"peerDependencyComments": [
-			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime."
+			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
 				"eslint": "8.51.0"
 			},
 			"ignoreMissing": [
-				"@types/node"
+				"@types/node",
+				"@aws-sdk/*"
 			]
 		},
 		"overrides": {
@@ -119,6 +119,17 @@
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2"
+		},
+		"patchedDependencies": {
+			"jssm@5.98.2": "patches/jssm@5.98.2.patch"
+		},
+		"updateConfig": {
+			"ignoreDependencies": [
+				"latest-version",
+				"read-pkg-up",
+				"type-fest",
+				"typescript"
+			]
 		}
 	}
 }

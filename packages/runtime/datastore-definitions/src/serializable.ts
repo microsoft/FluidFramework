@@ -4,6 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import type { Jsonable } from "./jsonable.js";
 
 /**
@@ -22,6 +23,7 @@ import type { Jsonable } from "./jsonable.js";
  * ```typescript
  * function serialize<T>(value: Serializable<T>) { ... }
  * ```
+ * @legacy
  * @alpha
  */
 export type Serializable<T> = Jsonable<T, IFluidHandle>;

@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { FieldKey } from "../schema-stored/index.js";
-import { topDownPath, UpPath } from "./pathTree.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { FieldKey } from "../schema-stored/index.js";
+
+import { type UpPath, topDownPath } from "./pathTree.js";
 
 /**
  * Sparse Tree of nodes.

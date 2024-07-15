@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
-import { ScopeType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+	ScopeType,
+} from "@fluidframework/driver-definitions/internal";
+
 import { generateToken } from "./auth.js";
 
 /**
+ * @legacy
  * @alpha
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
@@ -25,6 +31,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
+ * @legacy
  * @alpha
  */
 export class LocalResolver implements IUrlResolver {
@@ -42,7 +49,9 @@ export class LocalResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const parsedUrl = new URL(request.url);
 		const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
-		const documentId = fullPath.split("/")[0];
+		// TODO Why are we non null asserting here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const documentId = fullPath.split("/")[0]!;
 		const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 		const resolved: IResolvedUrl = {
 			endpoints: {
@@ -59,7 +68,10 @@ export class LocalResolver implements IUrlResolver {
 		return resolved;
 	}
 
-	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
+	public async getAbsoluteUrl(
+		resolvedUrl: IResolvedUrl,
+		relativeUrl: string,
+	): Promise<string> {
 		let url = relativeUrl;
 		if (url.startsWith("/")) {
 			url = url.substr(1);
@@ -69,7 +81,10 @@ export class LocalResolver implements IUrlResolver {
 			throw new Error("Url should contain tenant and docId!!");
 		}
 		const [, , documentId] = parsedUrl.pathname.split("/");
-		assert(!!documentId, 0x09a /* "'documentId' must be a defined, non-zero length string." */);
+		assert(
+			!!documentId,
+			0x09a /* "'documentId' must be a defined, non-zero length string." */,
+		);
 
 		return `http://localhost:3000/${documentId}/${url}`;
 	}

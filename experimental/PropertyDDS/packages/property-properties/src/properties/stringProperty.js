@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the StringProperty class
  */
@@ -10,6 +11,7 @@ const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const { ConsoleUtils } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
+
 const { ArrayProperty } = require("./arrayProperty");
 const { BaseProperty } = require("./baseProperty");
 const { ValueArrayProperty } = require("./valueArrayProperty");
@@ -333,7 +335,7 @@ export class StringProperty extends ValueArrayProperty {
 					in_dirtyOnly,
 					in_includeRootTypeid,
 					in_dirtinessType,
-			  )
+				)
 			: this._dataArrayRef;
 	}
 
@@ -495,14 +497,7 @@ export class StringProperty extends ValueArrayProperty {
 	 */
 	_prettyPrint(indent, externalId, printFct) {
 		printFct(
-			indent +
-				externalId +
-				this.getId() +
-				" (" +
-				this.getTypeid() +
-				'): "' +
-				this.value +
-				'"',
+			indent + externalId + this.getId() + " (" + this.getTypeid() + '): "' + this.value + '"',
 		);
 	}
 

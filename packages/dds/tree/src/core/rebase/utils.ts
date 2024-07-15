@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Mutable } from "../../util/index.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { Mutable } from "../../util/index.js";
+
 import {
-	ChangeRebaser,
-	RevisionInfo,
-	RevisionMetadataSource,
-	TaggedChange,
+	type ChangeRebaser,
+	type RevisionInfo,
+	type RevisionMetadataSource,
+	type TaggedChange,
 	makeAnonChange,
+	mapTaggedChange,
 	tagChange,
 	tagRollbackInverse,
 } from "./changeRebaser.js";
-import { GraphCommit, mintCommit, RevisionTag } from "./types.js";
+import { type GraphCommit, type RevisionTag, mintCommit } from "./types.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -58,6 +61,28 @@ export interface RebasedCommits<TChange> {
 	sourceCommits: GraphCommit<TChange>[];
 }
 
+/**
+ * Telemetry metrics for a rebase operation.
+ */
+export interface RebaseStats {
+	/**
+	 * The length of the source branch before the rebase.
+	 */
+	readonly sourceBranchLength: number;
+	/**
+	 * Number of commits rebased over on the target branch.
+	 */
+	readonly rebaseDistance: number;
+	/**
+	 * The number of commits that are dropped from the source branch when rebased to the target branch.
+	 */
+	readonly countDropped: number;
+}
+
+export interface RebaseStatsWithDuration extends RebaseStats {
+	readonly duration: number;
+}
+
 export interface BranchRebaseResult<TChange> {
 	/**
 	 * The head of a rebased source branch.
@@ -71,6 +96,18 @@ export interface BranchRebaseResult<TChange> {
 	 * Details about how the commits on the source branch changed
 	 */
 	readonly commits: RebasedCommits<TChange>;
+	/**
+	 * Telemetry properties for the rebase operation.
+	 */
+	readonly telemetryProperties: RebaseStats;
+}
+
+interface RebaseChangeResult<TChange> {
+	readonly change: TChange;
+	/**
+	 * Telemetry properties for the rebase operation.
+	 */
+	readonly telemetryProperties: RebaseStats;
 }
 
 /**
@@ -160,6 +197,8 @@ export function rebaseBranch<TChange>(
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
 	assert(ancestor !== undefined, 0x675 /* branches must be related */);
 
+	const sourceBranchLength = sourcePath.length;
+
 	// Find where `targetCommit` is in the target branch
 	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
 	if (targetCommitIndex === -1) {
@@ -174,6 +213,11 @@ export function rebaseBranch<TChange>(
 			newSourceHead: sourceHead,
 			sourceChange: undefined,
 			commits: { deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
+			telemetryProperties: {
+				sourceBranchLength,
+				rebaseDistance: targetCommitIndex + 1,
+				countDropped: 0,
+			},
 		};
 	}
 
@@ -229,23 +273,27 @@ export function rebaseBranch<TChange>(
 				targetCommits,
 				sourceCommits,
 			},
+			telemetryProperties: {
+				sourceBranchLength,
+				rebaseDistance: targetCommits.length,
+				countDropped: sourceBranchLength - sourceSet.size,
+			},
 		};
 	}
 
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	const revInfos = getRevInfoFromTaggedChanges([...targetRebasePath, ...sourcePath]);
 	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
 	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
-	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
+	let editsToCompose: TaggedChange<TChange>[] = targetRebasePath.slice();
 	for (const c of sourcePath) {
-		const editsToCompose: TaggedChange<TChange>[] = [
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
-			currentComposedEdit,
-		];
+		const rollback = rollbackFromCommit(changeRebaser, c, mintRevisionTag, false);
 		if (sourceSet.has(c.revision)) {
-			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
+			const currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+			editsToCompose = [currentComposedEdit];
+			const change = changeRebaser.rebase(c, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
 				change,
@@ -254,16 +302,29 @@ export function rebaseBranch<TChange>(
 			sourceCommits.push(newHead);
 			editsToCompose.push(tagChange(change, c.revision));
 		}
-		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
+		revInfos.push({ revision: c.revision });
+		editsToCompose.unshift(rollback);
+		revInfos.unshift({ revision: rollback.revision, rollbackOf: rollback.rollbackOf });
 	}
 
+	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		sourceChange: currentComposedEdit.change,
+		get sourceChange(): TChange | undefined {
+			if (netChange === undefined) {
+				netChange = changeRebaser.compose(editsToCompose);
+			}
+			return netChange;
+		},
 		commits: {
 			deletedSourceCommits,
 			targetCommits,
 			sourceCommits,
+		},
+		telemetryProperties: {
+			sourceBranchLength,
+			rebaseDistance: targetCommits.length,
+			countDropped: sourceBranchLength - sourceSet.size,
 		},
 	};
 }
@@ -280,11 +341,11 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	change: TChange,
+	change: TaggedChange<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
-): TChange {
+): RebaseChangeResult<TChange> {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	assert(
@@ -293,10 +354,20 @@ export function rebaseChange<TChange>(
 	);
 
 	const inverses = sourcePath.map((commit) =>
-		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
+		rollbackFromCommit(changeRebaser, commit, mintRevisionTag, true),
 	);
 	inverses.reverse();
-	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
+
+	const telemetryProperties = {
+		sourceBranchLength: 1,
+		rebaseDistance: sourcePath.length + targetPath.length,
+		countDropped: 0,
+	};
+
+	return {
+		change: rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]),
+		telemetryProperties,
+	};
 }
 
 /**
@@ -326,17 +397,17 @@ export function revisionMetadataSourceFromInfo(
 
 export function rebaseChangeOverChanges<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	changeToRebase: TChange,
+	changeToRebase: TaggedChange<TChange>,
 	changesToRebaseOver: TaggedChange<TChange>[],
-) {
+): TChange {
 	const revisionMetadata = revisionMetadataSourceFromInfo(
-		getRevInfoFromTaggedChanges(changesToRebaseOver),
+		getRevInfoFromTaggedChanges([...changesToRebaseOver, changeToRebase]),
 	);
 
 	return changesToRebaseOver.reduce(
-		(a, b) => changeRebaser.rebase(a, b, revisionMetadata),
+		(a, b) => mapTaggedChange(changeToRebase, changeRebaser.rebase(a, b, revisionMetadata)),
 		changeToRebase,
-	);
+	).change;
 }
 
 // TODO: Deduplicate
@@ -362,18 +433,24 @@ function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): Revi
 	return revInfos;
 }
 
-function inverseFromCommit<TChange>(
+function rollbackFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
-): TaggedChange<TChange> {
-	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);
-	if (cache === true && commit.inverse === undefined) {
-		commit.inverse = inverse;
+): TaggedChange<TChange, RevisionTag> {
+	if (commit.rollback !== undefined) {
+		return commit.rollback;
 	}
+	const untagged = changeRebaser.invert(commit, true);
+	const tag = mintRevisionTag();
+	const deeplyTaggedRollback = changeRebaser.changeRevision(untagged, tag, commit.revision);
+	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
 
-	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
+	if (cache === true) {
+		commit.rollback = fullyTaggedRollback;
+	}
+	return fullyTaggedRollback;
 }
 
 /**
@@ -427,7 +504,7 @@ export function findAncestor<T extends { parent?: T }>(
 ): T | undefined;
 export function findAncestor<T extends { parent?: T }>(
 	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
-	predicate: (t: T) => boolean = (t) => t.parent === undefined,
+	predicate: (t: T) => boolean = (t): boolean => t.parent === undefined,
 ): T | undefined {
 	let d: T | undefined;
 	let path: T[] | undefined;
@@ -499,7 +576,7 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
-	const reversePaths = () => {
+	const reversePaths = (): void => {
 		pathA?.reverse();
 		pathB?.reverse();
 	};

@@ -8,6 +8,6 @@ export {
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "./helpers";
-export { ReplayArgs } from "./replayArgs";
-export { ReplayTool } from "./replayMessages";
+} from "./helpers.js";
+export { ReplayArgs } from "./replayArgs.js";
+export { ReplayTool } from "./replayMessages.js";

@@ -14,9 +14,17 @@ export {
 	ILoaderServices,
 	Loader,
 } from "./loader.js";
+export { loadContainerPaused } from "./loadPaused.js";
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
 export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils.js";
+export {
+	IBaseProtocolHandler,
+	IScribeProtocolState,
+	IQuorumSnapshot,
+	QuorumClientsSnapshot,
+	QuorumProposalsSnapshot,
+} from "./protocol/index.js";

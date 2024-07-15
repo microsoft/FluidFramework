@@ -3,21 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannelServices,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
-import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
-import { pkgVersion } from "./packageVersion.js";
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import type {
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
+
+import type { ISharedMap, ISharedMapEvents } from "./interfaces.js";
+import {
+	type IMapDataObjectSerializable,
+	type IMapOperation,
+	MapKernel,
+} from "./mapKernel.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -27,70 +36,7 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- *
- * @sealed
- * @alpha
- */
-export class MapFactory implements IChannelFactory<ISharedMap> {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public static readonly Type = "https://graph.microsoft.com/types/map";
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public static readonly Attributes: IChannelAttributes = {
-		type: MapFactory.Type,
-		snapshotFormatVersion: "0.2",
-		packageVersion: pkgVersion,
-	};
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public get type(): string {
-		return MapFactory.Type;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public get attributes(): IChannelAttributes {
-		return MapFactory.Attributes;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<ISharedMap> {
-		const map = new SharedMap(id, runtime, attributes);
-		await map.load(services);
-
-		return map;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
-		const map = new SharedMap(id, runtime, MapFactory.Attributes);
-		map.initializeLocal();
-
-		return map;
-	}
-}
-
-/**
  * {@inheritDoc ISharedMap}
- * @public
- * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
@@ -256,23 +202,22 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
-			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+		for (const [key, { value, type }] of Object.entries(data)) {
+			if (value && value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
 				const content: IMapDataObjectSerializable = {
 					[key]: {
-						type: value.type,
-						value: JSON.parse(value.value) as unknown,
+						type,
+						value: JSON.parse(value) as unknown,
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
 			} else {
-				currentSize += value.type.length + 21; // Approximation cost of property header
-				if (value.value) {
-					currentSize += value.value.length;
+				currentSize += type.length + 21; // Approximation cost of property header
+				if (value) {
+					currentSize += value.length;
 				}
 
 				if (currentSize > MaxSnapshotBlobSize) {
@@ -284,11 +229,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					currentSize = 0;
 				}
 				headerBlob[key] = {
-					type: value.type,
-					value:
-						value.value === undefined
-							? undefined
-							: (JSON.parse(value.value) as unknown),
+					type,
+					value: value === undefined ? undefined : (JSON.parse(value) as unknown),
 				};
 			}
 		}
@@ -348,12 +290,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(
-				message.contents as IMapOperation,
-				local,
-				localOpMetadata,
-			);
+			this.kernel.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata);
 		}
 	}
 

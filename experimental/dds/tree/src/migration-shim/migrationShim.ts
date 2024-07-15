@@ -2,35 +2,40 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
-	IChannelFactory,
 	type IChannelAttributes,
-	type IChannelServices,
+	IChannelFactory,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+	type IChannel,
+	type IChannelServices,
+} from '@fluidframework/datastore-definitions/internal';
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+import type { SessionId } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
-	type ITelemetryContext,
 	type ISummaryTreeWithStats,
-} from '@fluidframework/runtime-definitions';
+	type ITelemetryContext,
+} from '@fluidframework/runtime-definitions/internal';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { type ITree } from '@fluidframework/tree';
-import { assert } from '@fluidframework/core-utils';
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { type EventEmitterEventType } from '@fluid-internal/client-utils';
-import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import type { SessionId, IIdCompressorCore } from '@fluidframework/id-compressor';
+
 import {
-	type SharedTreeFactory as LegacySharedTreeFactory,
 	type SharedTree as LegacySharedTree,
+	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
-import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
+
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
-import { type IShim, type IOpContents } from './types.js';
+import { type IOpContents, type IShim } from './types.js';
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -86,7 +91,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly legacyTreeFactory: LegacySharedTreeFactory,
-		private readonly newTreeFactory: IChannelFactory,
+		private readonly newTreeFactory: IChannelFactory<ITree>,
 		private readonly populateNewSharedObjectFn: (legacyTree: LegacySharedTree, newTree: ITree) => void
 	) {
 		super((event: EventEmitterEventType, e: unknown) => this.eventListenerErrorHandler(event, e));
@@ -103,7 +108,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		if (message.type !== MessageType.Operation || (message.contents as Partial<IMigrationOp>).type !== 'barrier') {
 			return false;
 		}
-		const newTree = this.newTreeFactory.create(this.runtime, this.id) as ITree;
+		const newTree = this.newTreeFactory.create(this.runtime, this.id);
 		assert(this.preMigrationDeltaConnection !== undefined, 0x82f /* Should be in v1 state */);
 		this.preMigrationDeltaConnection.disableSubmit();
 		const { idCompressor } = this.runtime;
@@ -131,7 +136,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		return this._legacyTree;
 	}
 
-	private newTree: ITree | undefined;
+	private newTree: (IChannel & ITree) | undefined;
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeError}
@@ -190,7 +195,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 		this.submitLocalMessage(migrateOp);
 	}
 
-	public get currentTree(): LegacySharedTree | ITree {
+	public get currentTree(): IChannel & (LegacySharedTree | ITree) {
 		return this.newTree ?? this.legacyTree;
 	}
 

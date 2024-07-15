@@ -3,50 +3,65 @@
  * Licensed under the MIT License.
  */
 
-import Deque from "double-ended-queue";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IEventThisPlaceHolder, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
+	IEvent,
+	IEventThisPlaceHolder,
+	type IEventProvider,
+} from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
 	IChannelAttributes,
-} from "@fluidframework/datastore-definitions";
+	IFluidDataStoreRuntime,
+	type IChannel,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	Client,
+	IJSONSegment,
+	IMergeTreeOp,
+	type LocalReferencePosition,
+	MergeTreeDeltaType,
+	ReferenceType,
+	// eslint-disable-next-line import/no-deprecated
+	SegmentGroup,
+} from "@fluidframework/merge-tree/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	ObjectStoragePartition,
+	SummaryTreeBuilder,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
-} from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+} from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
-	MergeTreeDeltaType,
-	IMergeTreeOp,
-	SegmentGroup,
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	IJSONSegment,
-	ReferenceType,
-	type LocalReferencePosition,
-} from "@fluidframework/merge-tree";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
-import { SparseArray2D } from "./sparsearray2d.js";
-import { SharedMatrixFactory } from "./runtime.js";
+	IMatrixConsumer,
+	IMatrixProducer,
+	IMatrixReader,
+	IMatrixWriter,
+} from "@tiny-calc/nano";
+import Deque from "double-ended-queue";
+
+import type { HandleCache } from "./handlecache.js";
 import { Handle, isHandleValid } from "./handletable.js";
-import { deserializeBlob } from "./serialization.js";
+import {
+	ISetOp,
+	MatrixItem,
+	MatrixOp,
+	MatrixSetOrVectorOp,
+	SnapshotPath,
+	VectorOp,
+} from "./ops.js";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
+import { deserializeBlob } from "./serialization.js";
+import { SparseArray2D, type RecurArray } from "./sparsearray2d.js";
 import { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
-import {
-	MatrixOp,
-	MatrixItem,
-	SnapshotPath,
-	ISetOp,
-	VectorOp,
-	MatrixSetOrVectorOp,
-} from "./ops.js";
 
 interface ISetOpMetadata {
 	rowHandle: Handle;
@@ -59,6 +74,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
+ * @legacy
  * @alpha
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
@@ -79,7 +95,7 @@ export interface ISharedMatrixEvents<T> extends IEvent {
 	 *
 	 * - `conflictingValue` - The value that this client tried to set in the cell and got ignored due to conflict.
 	 *
-	 * - `target` - The {@link SharedMatrix} itself.
+	 * - `target` - The {@link ISharedMatrix} itself.
 	 */
 	(
 		event: "conflict",
@@ -101,18 +117,92 @@ interface CellLastWriteTrackerItem {
 	clientId: string; // clientId of the client which last modified this cell
 }
 
-/** @alpha */
+/**
+ * @legacy
+ * @alpha
+ */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition ISharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISharedMatrix<T = any>
 	extends IEventProvider<ISharedMatrixEvents<T>>,
 		IMatrixProducer<MatrixItem<T>>,
 		IMatrixReader<MatrixItem<T>>,
-		IMatrixWriter<MatrixItem<T>> {
+		IMatrixWriter<MatrixItem<T>>,
+		IChannel {
+	/**
+	 * Inserts columns into the matrix.
+	 * @param colStart - Index of the first column to insert.
+	 * @param count - Number of columns to insert.
+	 * @remarks
+	 * Inserting 0 columns is a noop.
+	 */
 	insertCols(colStart: number, count: number): void;
+	/**
+	 * Removes columns from the matrix.
+	 * @param colStart - Index of the first column to remove.
+	 * @param count - Number of columns to remove.
+	 * @remarks
+	 * Removing 0 columns is a noop.
+	 */
 	removeCols(colStart: number, count: number): void;
+	/**
+	 * Inserts rows into the matrix.
+	 * @param rowStart - Index of the first row to insert.
+	 * @param count - Number of rows to insert.
+	 * @remarks
+	 * Inserting 0 rows is a noop.
+	 */
 	insertRows(rowStart: number, count: number): void;
+	/**
+	 * Removes rows from the matrix.
+	 * @param rowStart - Index of the first row to remove.
+	 * @param count - Number of rows to remove.
+	 * @remarks
+	 * Removing 0 rows is a noop.
+	 */
 	removeRows(rowStart: number, count: number): void;
 
+	/**
+	 * Sets a range of cells in the matrix.
+	 * Cells are set in consecutive columns between `colStart` and `colStart + colCount - 1`.
+	 * When `values` has larger size than `colCount`, the extra values are inserted in subsequent rows
+	 * a la text-wrapping.
+	 * @param rowStart - Index of the row to start setting cells.
+	 * @param colStart - Index of the column to start setting cells.
+	 * @param colCount - Number of columns to set before wrapping to subsequent rows (if `values` has more items)
+	 * @param values - Values to insert.
+	 * @remarks
+	 * This is not currently more efficient than calling `setCell` for each cell.
+	 */
+	setCells(
+		rowStart: number,
+		colStart: number,
+		colCount: number,
+		values: readonly MatrixItem<T>[],
+	): void;
+
+	/**
+	 * Attach an {@link IUndoConsumer} to the matrix.
+	 * @param consumer - Undo consumer which will receive revertibles from the matrix.
+	 */
 	openUndo(consumer: IUndoConsumer): void;
+
+	/**
+	 * Whether the current conflict resolution policy is first-write win (FWW).
+	 * See {@link ISharedMatrix.switchSetCellPolicy} for more details.
+	 */
+	isSetCellConflictResolutionPolicyFWW(): boolean;
+
+	/**
+	 * Change the conflict resolution policy for setCell operations to first-write win (FWW).
+	 *
+	 * This API only switches from LWW to FWW and not from FWW to LWW.
+	 *
+	 * @privateRemarks
+	 * The next SetOp which is sent will communicate this policy to other clients.
+	 */
+	switchSetCellPolicy(): void;
 }
 
 /**
@@ -126,17 +216,17 @@ export interface ISharedMatrix<T = any>
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
+ * @legacy
  * @alpha
  */
+// Changing this to `unknown` would be a breaking change.
+// TODO: if possible, transition SharedMatrix to not use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SharedMatrix<T = any>
 	extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents>
 	implements ISharedMatrix<T>
 {
 	private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
-
-	public static getFactory() {
-		return new SharedMatrixFactory();
-	}
 
 	/**
 	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
@@ -148,6 +238,7 @@ export class SharedMatrix<T = any>
 	 * on the SharedMatrix op is 11.
 	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
+	readonly getMinInFlightRefSeq = (): number | undefined => this.inFlightRefSeqs.get(0);
 
 	private readonly rows: PermutationVector; // Map logical row to storage handle (if any)
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
@@ -174,20 +265,17 @@ export class SharedMatrix<T = any>
 		runtime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
-		_isSetCellConflictResolutionPolicyFWW?: boolean,
 	) {
 		super(id, runtime, attributes, "fluid_matrix_");
 
-		this.setCellLwwToFwwPolicySwitchOpSeqNumber =
-			_isSetCellConflictResolutionPolicyFWW === true ? 0 : -1;
-		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
+		this.setCellLwwToFwwPolicySwitchOpSeqNumber = -1;
 		this.rows = new PermutationVector(
 			SnapshotPath.rows,
 			this.logger,
 			runtime,
 			this.onRowDelta,
 			this.onRowHandlesRecycled,
-			getMinInFlightRefSeq,
+			this.getMinInFlightRefSeq,
 		);
 
 		this.cols = new PermutationVector(
@@ -196,7 +284,7 @@ export class SharedMatrix<T = any>
 			runtime,
 			this.onColDelta,
 			this.onColHandlesRecycled,
-			getMinInFlightRefSeq,
+			this.getMinInFlightRefSeq,
 		);
 	}
 
@@ -205,7 +293,7 @@ export class SharedMatrix<T = any>
 	/**
 	 * Subscribes the given IUndoConsumer to the matrix.
 	 */
-	public openUndo(consumer: IUndoConsumer) {
+	public openUndo(consumer: IUndoConsumer): void {
 		assert(
 			this.undo === undefined,
 			0x019 /* "SharedMatrix.openUndo() supports at most a single IUndoConsumer." */,
@@ -216,18 +304,11 @@ export class SharedMatrix<T = any>
 
 	// TODO: closeUndo()?
 
-	private get rowHandles() {
+	private get rowHandles(): HandleCache {
 		return this.rows.handleCache;
 	}
-	private get colHandles() {
+	private get colHandles(): HandleCache {
 		return this.cols.handleCache;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
 	}
 
 	// #region IMatrixProducer
@@ -245,14 +326,14 @@ export class SharedMatrix<T = any>
 
 	// #region IMatrixReader
 
-	public get rowCount() {
+	public get rowCount(): number {
 		return this.rows.getLength();
 	}
-	public get colCount() {
+	public get colCount(): number {
 		return this.cols.getLength();
 	}
 
-	public isSetCellConflictResolutionPolicyFWW() {
+	public isSetCellConflictResolutionPolicyFWW(): boolean {
 		return this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1 || this.userSwitchedSetCellPolicy;
 	}
 
@@ -283,7 +364,7 @@ export class SharedMatrix<T = any>
 
 	// #endregion IMatrixReader
 
-	public setCell(row: number, col: number, value: MatrixItem<T>) {
+	public setCell(row: number, col: number, value: MatrixItem<T>): void {
 		if (row < 0 || row >= this.rowCount || col < 0 || col >= this.colCount) {
 			throw new UsageError("Trying to set out-of-bounds cell.");
 		}
@@ -296,7 +377,7 @@ export class SharedMatrix<T = any>
 		colStart: number,
 		colCount: number,
 		values: readonly MatrixItem<T>[],
-	) {
+	): void {
 		const rowCount = Math.ceil(values.length / colCount);
 
 		assert(
@@ -330,7 +411,7 @@ export class SharedMatrix<T = any>
 		value: MatrixItem<T>,
 		rowHandle = this.rows.getAllocatedHandle(row),
 		colHandle = this.cols.getAllocatedHandle(col),
-	) {
+	): void {
 		this.protectAgainstReentrancy(() => {
 			if (this.undo !== undefined) {
 				let oldValue = this.cells.getCell(rowHandle, colHandle);
@@ -354,7 +435,11 @@ export class SharedMatrix<T = any>
 		});
 	}
 
-	private createOpMetadataLocalRef(vector: PermutationVector, pos: number, localSeq: number) {
+	private createOpMetadataLocalRef(
+		vector: PermutationVector,
+		pos: number,
+		localSeq: number,
+	): LocalReferencePosition {
 		const segoff = vector.getContainingSegment(pos, undefined, localSeq);
 		assert(
 			segoff.segment !== undefined && segoff.offset !== undefined,
@@ -375,7 +460,7 @@ export class SharedMatrix<T = any>
 		rowHandle: Handle,
 		colHandle: Handle,
 		localSeq = this.nextLocalSeq(),
-	) {
+	): void {
 		assert(
 			this.isAttached(),
 			0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */,
@@ -398,7 +483,7 @@ export class SharedMatrix<T = any>
 			localSeq,
 			rowsRef,
 			colsRef,
-			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+			referenceSeqNumber: this.deltaManager.lastSequenceNumber,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -413,12 +498,21 @@ export class SharedMatrix<T = any>
 	 * a deleted row/col.
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
-	private protectAgainstReentrancy(callback: () => void) {
-		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
+	private protectAgainstReentrancy(callback: () => void): void {
+		if (this.reentrantCount !== 0) {
+			// Validate that applications don't submit edits in response to matrix change notifications. This is unsupported.
+			throw new UsageError("Reentrancy detected in SharedMatrix.");
+		}
 		this.reentrantCount++;
-		callback();
-		this.reentrantCount--;
-		assert(this.reentrantCount === 0, 0x85e /* reentrant code on exit */);
+		try {
+			callback();
+		} finally {
+			this.reentrantCount--;
+		}
+		assert(
+			this.reentrantCount === 0,
+			0x85e /* indicates a problem with the reentrancy tracking code. */,
+		);
 	}
 
 	private submitVectorMessage(
@@ -426,7 +520,7 @@ export class SharedMatrix<T = any>
 		oppositeVector: PermutationVector,
 		target: SnapshotPath.rows | SnapshotPath.cols,
 		message: IMergeTreeOp,
-	) {
+	): void {
 		// Ideally, we would have a single 'localSeq' counter that is shared between both PermutationVectors
 		// and the SharedMatrix's cell data.  Instead, we externally advance each MergeTree's 'localSeq' counter
 		// for each submitted op it not aware of to keep them synchronized.
@@ -457,11 +551,11 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	private submitColMessage(message: IMergeTreeOp) {
+	private submitColMessage(message: IMergeTreeOp): void {
 		this.submitVectorMessage(this.cols, this.rows, SnapshotPath.cols, message);
 	}
 
-	public insertCols(colStart: number, count: number) {
+	public insertCols(colStart: number, count: number): void {
 		if (count === 0) {
 			return;
 		}
@@ -475,7 +569,7 @@ export class SharedMatrix<T = any>
 		});
 	}
 
-	public removeCols(colStart: number, count: number) {
+	public removeCols(colStart: number, count: number): void {
 		if (count === 0) {
 			return;
 		}
@@ -487,11 +581,11 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	private submitRowMessage(message: IMergeTreeOp) {
+	private submitRowMessage(message: IMergeTreeOp): void {
 		this.submitVectorMessage(this.rows, this.cols, SnapshotPath.rows, message);
 	}
 
-	public insertRows(rowStart: number, count: number) {
+	public insertRows(rowStart: number, count: number): void {
 		if (count === 0) {
 			return;
 		}
@@ -505,7 +599,7 @@ export class SharedMatrix<T = any>
 		});
 	}
 
-	public removeRows(rowStart: number, count: number) {
+	public removeRows(rowStart: number, count: number): void {
 		if (count === 0) {
 			return;
 		}
@@ -517,7 +611,7 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
+	public _undoRemoveRows(rowStart: number, spec: IJSONSegment): void {
 		const { op, inserted } = reinsertSegmentIntoVector(this.rows, rowStart, spec);
 		assert(op !== undefined, 0x8b6 /* must be defined */);
 		this.submitRowMessage(op);
@@ -527,7 +621,9 @@ export class SharedMatrix<T = any>
 		const rowCount = inserted.cachedLength;
 		for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
 			for (let col = 0; col < this.colCount; col++) {
-				const colHandle = this.colHandles.getHandle(col);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const colHandle = this.colHandles.getHandle(col)!;
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
 					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
@@ -541,7 +637,7 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	/***/ public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
+	/***/ public _undoRemoveCols(colStart: number, spec: IJSONSegment): void {
 		const { op, inserted } = reinsertSegmentIntoVector(this.cols, colStart, spec);
 		assert(op !== undefined, 0x8b7 /* must be defined */);
 		this.submitColMessage(op);
@@ -551,7 +647,9 @@ export class SharedMatrix<T = any>
 		const colCount = inserted.cachedLength;
 		for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
 			for (let row = 0; row < this.rowCount; row++) {
-				const rowHandle = this.rowHandles.getHandle(row);
+				// TODO Non null asserting, why is this not null?
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const rowHandle = this.rowHandles.getHandle(row)!;
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
 					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
@@ -596,7 +694,7 @@ export class SharedMatrix<T = any>
 	 * Runs serializer on the GC data for this SharedMatrix.
 	 * All the IFluidHandle's stored in the cells represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: IFluidSerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer): void {
 		for (let row = 0; row < this.rowCount; row++) {
 			for (let col = 0; col < this.colCount; col++) {
 				serializer.stringify(this.getCell(row, col), this.handle);
@@ -610,7 +708,7 @@ export class SharedMatrix<T = any>
 	 * Do not use with 'submitColMessage()/submitRowMessage()' as these helpers + the MergeTree will
 	 * automatically advance 'localSeq'.
 	 */
-	private nextLocalSeq() {
+	private nextLocalSeq(): number {
 		// Ideally, we would have a single 'localSeq' counter that is shared between both PermutationVectors
 		// and the SharedMatrix's cell data.  Instead, we externally bump each MergeTree's 'localSeq' counter
 		// for SharedMatrix ops it's not aware of to keep them synchronized.  (For cell data operations, we
@@ -620,7 +718,7 @@ export class SharedMatrix<T = any>
 		return ++this.rows.getCollabWindow().localSeq;
 	}
 
-	protected submitLocalMessage(message: any, localOpMetadata?: any) {
+	protected submitLocalMessage(message: unknown, localOpMetadata?: unknown): void {
 		// TODO: Recommend moving this assertion into SharedObject
 		//       (See https://github.com/microsoft/FluidFramework/issues/2559)
 		assert(
@@ -628,7 +726,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.deltaManager.lastSequenceNumber);
 		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
@@ -638,7 +736,7 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	protected didAttach() {
+	protected didAttach(): void {
 		// We've attached we need to start generating and sending ops.
 		// so start collaboration and provide a default client id incase we are not connected
 		if (this.isAttached()) {
@@ -647,7 +745,7 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	protected onConnect() {
+	protected onConnect(): void {
 		assert(
 			this.rows.getCollabWindow().collaborating === this.cols.getCollabWindow().collaborating,
 			0x01f /* "Row and col collab window 'collaborating' status desynchronized!" */,
@@ -680,7 +778,7 @@ export class SharedMatrix<T = any>
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
 
-	protected reSubmitCore(incoming: unknown, localOpMetadata: unknown) {
+	protected reSubmitCore(incoming: unknown, localOpMetadata: unknown): void {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
@@ -722,22 +820,26 @@ export class SharedMatrix<T = any>
 			}
 		} else {
 			switch (content.target) {
-				case SnapshotPath.cols:
+				case SnapshotPath.cols: {
 					this.submitColMessage(
 						this.cols.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
 					break;
-				case SnapshotPath.rows:
+				}
+				case SnapshotPath.rows: {
 					this.submitRowMessage(
 						this.rows.regeneratePendingOp(
 							content,
+							// eslint-disable-next-line import/no-deprecated
 							localOpMetadata as SegmentGroup | SegmentGroup[],
 						),
 					);
 					break;
+				}
 				default: {
 					unreachableCase(content);
 				}
@@ -745,12 +847,12 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
-	protected async loadCore(storage: IChannelStorageService) {
+	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		try {
 			await this.rows.load(
 				this.runtime,
@@ -767,7 +869,13 @@ export class SharedMatrix<T = any>
 				_pendingCliSeqData,
 				setCellLwwToFwwPolicySwitchOpSeqNumber,
 				cellLastWriteTracker,
-			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
+				// Cast is needed since the (de)serializer returns content of type `any`.
+			] = (await deserializeBlob(storage, SnapshotPath.cells, this.serializer)) as [
+				RecurArray<MatrixItem<T>>,
+				unknown,
+				number,
+				RecurArray<CellLastWriteTrackerItem>,
+			];
 
 			this.cells = SparseArray2D.load(cellData);
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber =
@@ -788,13 +896,16 @@ export class SharedMatrix<T = any>
 		rowHandle: Handle,
 		colHandle: Handle,
 		message: ISequencedDocumentMessage,
-	) {
+	): boolean {
 		assert(
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
 			0x85f /* should be in Fww mode when calling this method */,
 		);
 		assert(message.clientId !== null, 0x860 /* clientId should not be null */);
-		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
+		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+			rowHandle,
+			colHandle,
+		);
 		// If someone tried to Overwrite the cell value or first write on this cell or
 		// same client tried to modify the cell.
 		return (
@@ -808,7 +919,7 @@ export class SharedMatrix<T = any>
 		msg: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
@@ -825,12 +936,14 @@ export class SharedMatrix<T = any>
 		const target = contents.target;
 
 		switch (target) {
-			case SnapshotPath.cols:
+			case SnapshotPath.cols: {
 				this.cols.applyMsg(msg, local);
 				break;
-			case SnapshotPath.rows:
+			}
+			case SnapshotPath.rows: {
 				this.rows.applyMsg(msg, local);
 				break;
+			}
 			case undefined: {
 				assert(
 					contents.type === MatrixOp.set,
@@ -850,11 +963,7 @@ export class SharedMatrix<T = any>
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
 						localOpMetadata as ISetOpMetadata;
-					const isLatestPendingOp = this.isLatestPendingWrite(
-						rowHandle,
-						colHandle,
-						localSeq,
-					);
+					const isLatestPendingOp = this.isLatestPendingWrite(rowHandle, colHandle, localSeq);
 					this.rows.removeLocalReferencePosition(rowsRef);
 					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
@@ -934,8 +1043,9 @@ export class SharedMatrix<T = any>
 				}
 				break;
 			}
-			default:
+			default: {
 				unreachableCase(target, "unknown target");
+			}
 		}
 	}
 
@@ -944,7 +1054,7 @@ export class SharedMatrix<T = any>
 		position: number,
 		removedCount: number,
 		insertedCount: number,
-	) => {
+	): void => {
 		for (const consumer of this.consumers) {
 			consumer.rowsChanged(position, removedCount, insertedCount, this);
 		}
@@ -955,13 +1065,13 @@ export class SharedMatrix<T = any>
 		position: number,
 		removedCount: number,
 		insertedCount: number,
-	) => {
+	): void => {
 		for (const consumer of this.consumers) {
 			consumer.colsChanged(position, removedCount, insertedCount, this);
 		}
 	};
 
-	private readonly onRowHandlesRecycled = (rowHandles: Handle[]) => {
+	private readonly onRowHandlesRecycled = (rowHandles: Handle[]): void => {
 		for (const rowHandle of rowHandles) {
 			this.cells.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
 			this.pending.clearRows(/* rowStart: */ rowHandle, /* rowCount: */ 1);
@@ -969,7 +1079,7 @@ export class SharedMatrix<T = any>
 		}
 	};
 
-	private readonly onColHandlesRecycled = (colHandles: Handle[]) => {
+	private readonly onColHandlesRecycled = (colHandles: Handle[]): void => {
 		for (const colHandle of colHandles) {
 			this.cells.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
 			this.pending.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
@@ -977,11 +1087,7 @@ export class SharedMatrix<T = any>
 		}
 	};
 
-	/**
-	 * Api to switch Set Op policy from Last Writer Win to First Writer Win. It only switches from LWW to FWW
-	 * and not from FWW to LWW. The next SetOp which is sent will communicate this policy to other clients.
-	 */
-	public switchSetCellPolicy() {
+	public switchSetCellPolicy(): void {
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1) {
 			if (this.isAttached()) {
 				this.userSwitchedSetCellPolicy = true;
@@ -999,7 +1105,11 @@ export class SharedMatrix<T = any>
 	 * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
 	 * with a different value as well as row/col removals that might recycled the given row/col handles.
 	 */
-	private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
+	private isLatestPendingWrite(
+		rowHandle: Handle,
+		colHandle: Handle,
+		localSeq: number,
+	): boolean {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
 
@@ -1016,7 +1126,7 @@ export class SharedMatrix<T = any>
 		return pendingLocalSeq === localSeq;
 	}
 
-	public toString() {
+	public toString(): string {
 		let s = `client:${
 			this.runtime.clientId
 		}\nrows: ${this.rows.toString()}\ncols: ${this.cols.toString()}\n\n`;

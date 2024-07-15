@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { strict as assert } from "node:assert";
 import { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
-import { strict as assert } from "node:assert";
 
-import { BaseCommand } from "../../base";
 import {
+	BaseCommand,
 	Repository,
 	createPullRequest,
 	getCommitInfo,
 	pullRequestExists,
-} from "../../library";
+} from "../../library/index.js";
 
 interface CleanupBranch {
 	branch: string;

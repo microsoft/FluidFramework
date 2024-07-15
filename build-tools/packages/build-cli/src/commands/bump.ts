@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
+
 import { strict as assert } from "node:assert";
+import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";
@@ -22,14 +23,14 @@ import {
 	isInterdependencyRange,
 } from "@fluid-tools/version-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
-import { BaseCommand } from "../base";
-import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags.js";
 import {
+	BaseCommand,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	setVersion,
-} from "../library";
+} from "../library/index.js";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static readonly summary =
@@ -39,7 +40,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		`The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
 
 	static readonly args = {
-		package_or_release_group: packageOrReleaseGroupArg,
+		package_or_release_group: packageOrReleaseGroupArg(),
 	} as const;
 
 	static readonly flags = {

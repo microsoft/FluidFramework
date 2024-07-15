@@ -3,23 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
-import { fail, requireAssignableTo } from "../../util/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
-import { Multiplicity } from "../multiplicity.js";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import {
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	allowedTypesIsAny,
-	SchemaCollection,
-	FlexMapNodeSchema,
-	LeafNodeSchema,
-	FlexFieldNodeSchema,
-	FlexObjectNodeSchema,
-} from "./typedTreeSchema.js";
+	type Adapters,
+	type TreeAdapter,
+	type TreeNodeSchemaIdentifier,
+	Multiplicity,
+} from "../../core/index.js";
+import { fail, type requireAssignableTo } from "../../util/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
+
 import { normalizeFlexListEager } from "./flexList.js";
-import { Sourced } from "./view.js";
+import {
+	FlexFieldNodeSchema,
+	type FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	LeafNodeSchema,
+	type SchemaCollection,
+	allowedTypesIsAny,
+} from "./typedTreeSchema.js";
+import type { Sourced } from "./view.js";
 
 // TODO: tests for this file
 
@@ -175,12 +181,12 @@ export function validateSchemaCollection(
 		} else if (tree instanceof LeafNodeSchema) {
 			// No validation for now.
 		} else if (tree instanceof FlexFieldNodeSchema) {
-			const description = () =>
+			const description = (): string =>
 				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, tree.info, description, errors);
 		} else if (tree instanceof FlexObjectNodeSchema) {
 			for (const [key, field] of tree.objectNodeFields) {
-				const description = () =>
+				const description = (): string =>
 					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 				validateField(lintConfiguration, collection, field, description, errors);
 			}
@@ -200,7 +206,7 @@ export function validateRootField(
 	field: FlexFieldSchema,
 	errors: string[],
 ): void {
-	const describeField = () => `Root field schema`;
+	const describeField = (): string => `Root field schema`;
 	validateField(lintConfiguration, collection, field, describeField, errors);
 }
 

@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
-import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { strict as assert, fail } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringClass, ISharedString } from "../sharedString.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -24,16 +26,16 @@ interface IntervalEventInfo {
 }
 
 describe("SharedString interval collection event spec", () => {
-	let sharedString: SharedString;
+	let sharedString: ISharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
-	let sharedString2: SharedString;
+	let sharedString2: ISharedString;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	let collection: IIntervalCollection<SequenceInterval>;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		sharedString = new SharedString(
+		sharedString = new SharedStringClass(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
@@ -42,7 +44,7 @@ describe("SharedString interval collection event spec", () => {
 
 		// Connect the first SharedString.
 		dataStoreRuntime1.setAttachState(AttachState.Attached);
-		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -52,13 +54,13 @@ describe("SharedString interval collection event spec", () => {
 
 		// Create and connect a second SharedString.
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
 			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 
-		sharedString2 = new SharedString(
+		sharedString2 = new SharedStringClass(
 			dataStoreRuntime2,
 			"shared-string-2",
 			SharedStringFactory.Attributes,
@@ -178,9 +180,7 @@ describe("SharedString interval collection event spec", () => {
 						end: sharedString.localReferencePositionToPosition(end),
 					},
 					previousEndpoints: {
-						start: sharedString.localReferencePositionToPosition(
-							previousInterval.start,
-						),
+						start: sharedString.localReferencePositionToPosition(previousInterval.start),
 						end: sharedString.localReferencePositionToPosition(previousInterval.end),
 					},
 					previousInterval,
@@ -323,9 +323,8 @@ describe("SharedString interval collection event spec", () => {
 				}),
 			);
 			intervalId =
-				collection
-					.add({ start: 0, end: 1, props: { initialProp: "baz" } })
-					.getIntervalId() ?? fail("Expected interval to have id");
+				collection.add({ start: 0, end: 1, props: { initialProp: "baz" } }).getIntervalId() ??
+				fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
 		});
@@ -406,13 +405,9 @@ describe("SharedString interval collection event spec", () => {
 					deltas,
 					previousEndpoints: previousInterval
 						? {
-								start: sharedString.localReferencePositionToPosition(
-									previousInterval.start,
-								),
-								end: sharedString.localReferencePositionToPosition(
-									previousInterval.end,
-								),
-						  }
+								start: sharedString.localReferencePositionToPosition(previousInterval.start),
+								end: sharedString.localReferencePositionToPosition(previousInterval.end),
+							}
 						: undefined,
 					previousInterval: previousInterval ?? undefined,
 					interval: {
@@ -424,9 +419,8 @@ describe("SharedString interval collection event spec", () => {
 				}),
 			);
 			intervalId =
-				collection
-					.add({ start: 0, end: 1, props: { initialProp: "baz" } })
-					.getIntervalId() ?? fail("Expected interval to have id");
+				collection.add({ start: 0, end: 1, props: { initialProp: "baz" } }).getIntervalId() ??
+				fail("Expected interval to have id");
 			containerRuntimeFactory.processAllMessages();
 			eventLog.length = 0;
 		});
@@ -483,8 +477,7 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, slide }] =
-						eventLog;
+					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
 					assert(previousInterval !== undefined);
 					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
@@ -501,8 +494,7 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 1);
 				{
-					const [{ interval, previousInterval, previousEndpoints, local, slide }] =
-						eventLog;
+					const [{ interval, previousInterval, previousEndpoints, local, slide }] = eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(previousInterval !== undefined);
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
@@ -520,8 +512,7 @@ describe("SharedString interval collection event spec", () => {
 				containerRuntimeFactory.processAllMessages();
 				assert.equal(eventLog.length, 2);
 				{
-					const { interval, previousInterval, previousEndpoints, local, slide } =
-						eventLog[1];
+					const { interval, previousInterval, previousEndpoints, local, slide } = eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
 					assert(previousInterval !== undefined);
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);

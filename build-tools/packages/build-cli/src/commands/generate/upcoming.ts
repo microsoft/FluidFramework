@@ -2,15 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
-import { writeFile } from "node:fs/promises";
+
 import { strict as assert } from "node:assert";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 
-import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library";
+import { releaseGroupFlag } from "../../flags.js";
+import { BaseCommand, DEFAULT_CHANGESET_PATH, loadChangesets } from "../../library/index.js";
 
 const DEFAULT_FILE = "UPCOMING.md";
 
@@ -84,7 +84,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 
 		let body: string = "";
 		for (const change of changes) {
-			if (change.changeTypes.includes(flags.releaseType)) {
+			if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
 				body += `## ${change.summary}\n\n${change.content}\n\n`;
 			} else {
 				this.info(

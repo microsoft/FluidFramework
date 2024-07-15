@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger, FluidObject } from "@fluidframework/core-interfaces";
+import {
+	ICodeDetailsLoader,
+	IContainer,
+} from "@fluidframework/container-definitions/internal";
+import { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Contract that defines the necessary exports for the bundle provided at runtime
@@ -20,6 +23,7 @@ export interface ICodeLoaderBundle {
 
 /**
  * Instance that holds all the details for Fluid file conversion
+ * @legacy
  * @alpha
  */
 export interface IFluidFileConverter {

@@ -77,8 +77,9 @@ export class MongoManager {
 		});
 
 		databaseP.catch((error) => {
+			error.isGlobalDb = global;
 			debug("DB Connection Error", error);
-			Lumberjack.error("DB Connection Error", undefined, error);
+			Lumberjack.error("DB Connection Error", { isGlobalDb: global }, error);
 			this.reconnect(this.reconnectDelayMs);
 		});
 

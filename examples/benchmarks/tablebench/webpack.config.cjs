@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
-
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
@@ -26,6 +21,11 @@ module.exports = (env) => {
 			app: "./src/app.ts",
 		},
 		resolve: {
+			extensionAlias: {
+				".cjs": [".cts", ".cjs"],
+				".js": [".ts", ".tsx", ".js"],
+				".mjs": [".mts", ".mjs"],
+			},
 			extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 			fallback: {
 				// stochastic-test-utils uses fs and path for logging ops generated for fuzz testing.

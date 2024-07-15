@@ -4,27 +4,32 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+
 import {
-	createTestConfigProvider,
-	createSummarizer,
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
+import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
+} from "@fluidframework/test-utils/internal";
+
 import { defaultGCConfig } from "./gcTestConfigs.js";
-import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import {
+	getGCStateFromSummary,
+	reconnectSummarizerToBeElected,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates that when a summarizer loads from an older summary and gets an ack for a newer summary, it disposes
@@ -37,8 +42,6 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 	let dataStoreA: ITestDataObject;
 
 	const configProvider = createTestConfigProvider();
-	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
-	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },
@@ -63,23 +66,15 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		return nodeIsReferencedMap;
 	}
 
-	/**
-	 * Reconnects the summarizer so that it is elected as the current summarizer. This is needed for two reasons:
-	 * 1. In ODSP, when a summary is submitted, the previous one may be deleted based on heuristics. Since these tests
-	 * need to load a container from an older summary, we need to load a summarizer with the old summary before a new
-	 * one is generated. This poses problem with summarizer election because of the second reason below.
-	 * 2. In these tests, summarization is disabled on the main container. However, when the first summarizer container
-	 * is closed, the main container is still chosen as the summarizer due to a bug. If we reconnect a new summarizer
-	 * after this happens, it will be chosen as the summarizer client and can do on-demand summaries.
-	 */
-	async function reconnectSummarizerToBeElected(container: IContainer) {
-		container.disconnect();
-		container.connect();
-		await waitForContainerConnection(container);
-	}
-
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+
+		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+		configProvider.set(
+			"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			false,
+		);
+
 		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		containerRuntime = defaultDataStore._context.containerRuntime as IContainerRuntime;
@@ -88,13 +83,17 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		// We create a new data store because the default data store and is always realized by the test infrastructure.
 		// In these tests, the data store managing referencing should not be realized by default.
 		const dataStoreAHandle = (await containerRuntime.createDataStore(TestDataObjectType))
-			.entryPoint as IFluidHandle<ITestDataObject>;
+			.entryPoint as IFluidHandleInternal<ITestDataObject>;
 		assert(dataStoreAHandle !== undefined, "data store does not have a handle");
 		dataStoreA = await dataStoreAHandle.get();
 		defaultDataStore._root.set("dataStoreA", dataStoreAHandle);
 
 		await provider.ensureSynchronized();
 		await waitForContainerConnection(mainContainer);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	itExpects(
@@ -108,7 +107,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 			// Create a data store and mark it unreferenced to begin with.
 			const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
-				.entryPoint as IFluidHandle<ITestDataObject>;
+				.entryPoint as IFluidHandleInternal<ITestDataObject>;
 			assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
 			const dataStoreB = await dataStoreBHandle.get();
 			dataStoreA._root.set("dataStoreB", dataStoreBHandle);

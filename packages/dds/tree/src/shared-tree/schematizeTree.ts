@@ -3,28 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+
 import {
 	AllowedUpdateType,
 	Compatibility,
-	TreeStoredSchema,
-	ITreeCursorSynchronous,
-	schemaDataIsEmpty,
+	type ITreeCursorSynchronous,
+	type TreeStoredSchema,
 	rootFieldKey,
+	schemaDataIsEmpty,
 } from "../core/index.js";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
+	type FlexFieldSchema,
+	type FlexTreeSchema,
+	type InsertableFlexField,
+	type ViewSchema,
 	allowsRepoSuperset,
-	FlexTreeSchema,
-	FlexFieldSchema,
-	ViewSchema,
-	InsertableFlexField,
+	defaultSchemaPolicy,
 	intoStoredSchema,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { ITreeCheckout } from "./treeCheckout.js";
+
+import type { ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -53,7 +55,7 @@ export function initializeContent(
 
 	const schema = intoStoredSchema(newSchema);
 	const rootSchema = schema.rootFieldSchema;
-	const rootKind = rootSchema.kind.identifier;
+	const rootKind = rootSchema.kind;
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
 	let incrementalSchemaUpdate: TreeStoredSchema;
@@ -69,7 +71,7 @@ export function initializeContent(
 		incrementalSchemaUpdate = {
 			nodeSchema: schema.nodeSchema,
 			rootFieldSchema: {
-				kind: FieldKinds.optional,
+				kind: FieldKinds.optional.identifier,
 				types: rootSchema.types,
 			},
 		};
@@ -154,6 +156,50 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
 }
 
 /**
+ * Initialize a checkout with a schema and tree content.
+ * This function should only be called when the tree is uninitialized (no schema or content).
+ * @remarks
+ *
+ * If the proposed schema (from `treeContent`) is not compatible with the emptry tree, this function handles using an intermediate schema
+ * which supports the empty tree as well as the final tree content.
+ */
+export function initialize(checkout: ITreeCheckout, treeContent: TreeContent): void {
+	checkout.transaction.start();
+	try {
+		initializeContent(checkout, treeContent.schema, () => {
+			const field = { field: rootFieldKey, parent: undefined };
+			const content = normalizeNewFieldContent(
+				{ schema: treeContent.schema },
+				treeContent.schema.rootFieldSchema,
+				treeContent.initialTree,
+			);
+			switch (checkout.storedSchema.rootFieldSchema.kind) {
+				case FieldKinds.optional.identifier: {
+					const fieldEditor = checkout.editor.optionalField(field);
+					assert(
+						content.getFieldLength() <= 1,
+						0x7f4 /* optional field content should normalize at most one item */,
+					);
+					fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
+					break;
+				}
+				case FieldKinds.sequence.identifier: {
+					const fieldEditor = checkout.editor.sequenceField(field);
+					// TODO: should do an idempotent edit here.
+					fieldEditor.insert(0, content);
+					break;
+				}
+				default: {
+					fail("unexpected root field kind during initialize");
+				}
+			}
+		});
+	} finally {
+		checkout.transaction.commit();
+	}
+}
+
+/**
  * Ensure a {@link ITreeCheckout} can be used with a given {@link ViewSchema}.
  *
  * @remarks
@@ -196,38 +242,7 @@ export function ensureSchema(
 			// TODO:
 			// When this becomes a more proper out of schema adapter, editing should be made lazy.
 			// This will improve support for readonly documents, cross version collaboration and attribution.
-
-			checkout.transaction.start();
-			initializeContent(checkout, treeContent.schema, () => {
-				const field = { field: rootFieldKey, parent: undefined };
-				const content = normalizeNewFieldContent(
-					{ schema: treeContent.schema },
-					treeContent.schema.rootFieldSchema,
-					treeContent.initialTree,
-				);
-				switch (checkout.storedSchema.rootFieldSchema.kind.identifier) {
-					case FieldKinds.optional.identifier: {
-						const fieldEditor = checkout.editor.optionalField(field);
-						assert(
-							content.getFieldLength() <= 1,
-							0x7f4 /* optional field content should normalize at most one item */,
-						);
-						fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
-						break;
-					}
-					case FieldKinds.sequence.identifier: {
-						const fieldEditor = checkout.editor.sequenceField(field);
-						// TODO: should do an idempotent edit here.
-						fieldEditor.insert(0, content);
-						break;
-					}
-					default: {
-						fail("unexpected root field kind during initialize");
-					}
-				}
-			});
-			checkout.transaction.commit();
-
+			initialize(checkout, treeContent);
 			return true;
 		}
 		default: {

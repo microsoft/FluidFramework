@@ -10,8 +10,9 @@
  */
 
 const { Int64, Uint64 } = require("@fluid-experimental/property-common");
-const { ValueProperty } = require("../../properties/valueProperty");
+
 const { PropertyFactory } = require("../..");
+const { ValueProperty } = require("../../properties/valueProperty");
 
 describe("ValueProperty", function () {
 	var OurTestTemplate;
@@ -107,9 +108,9 @@ describe("ValueProperty", function () {
 		expect(PropertyFactory.create("Int64", undefined, new Int64(10, 10)).value).to.deep.equal(
 			new Int64(10, 10),
 		);
-		expect(PropertyFactory.create("Uint64", undefined, new Uint64(10, 10)).value).to.deep.equal(
-			new Uint64(10, 10),
-		);
+		expect(
+			PropertyFactory.create("Uint64", undefined, new Uint64(10, 10)).value,
+		).to.deep.equal(new Uint64(10, 10));
 		expect(PropertyFactory.create("Float32", undefined, 10).value).to.equal(10);
 		expect(PropertyFactory.create("Float64", undefined, 10).value).to.equal(10);
 		expect(PropertyFactory.create("Bool", undefined, false).value).to.equal(false);

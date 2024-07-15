@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+
 import { fail } from "./utils.js";
 
 /**
@@ -35,7 +36,7 @@ export function idAllocatorFromMaxId(maxId: number | undefined = undefined): IdA
 
 export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
 	return {
-		allocate: (c?: number) => {
+		allocate: (c?: number): number => {
 			const count = c ?? 1;
 			assert(count > 0, 0x5cf /* Must allocate at least one ID */);
 			const id: number = state.maxId + 1;

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
-import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { assert } from '@fluidframework/core-utils/internal';
+import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions/internal';
+import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
+
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isStampedOp } from './utils.js';
 

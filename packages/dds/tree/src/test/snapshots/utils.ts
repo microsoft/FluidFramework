@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/protocol-definitions";
+
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
+import {
+	type ISummaryTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/driver-definitions";
+
 import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
@@ -50,12 +56,12 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 								type: "blob",
 								content: JSON.parse(summaryObject.content),
 								encoding: "utf-8",
-						  }
+							}
 						: {
 								type: "blob",
 								content: Uint8ArrayToString(summaryObject.content, "base64"),
 								encoding: "base64",
-						  };
+							};
 				break;
 			}
 			case SummaryType.Handle: {
@@ -75,7 +81,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 				break;
 			}
 			default: {
-				throw new Error(`Unknown type: ${(summaryObject as any).type}`);
+				throw new Error(`Unknown type: ${(summaryObject as SummaryObject).type}`);
 			}
 		}
 
@@ -84,11 +90,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 		};
 		let entry;
 		if (value !== undefined) {
-			assert.equal(
-				id,
-				undefined,
-				"Snapshot entry has both a tree value and a referenced id!",
-			);
+			assert.equal(id, undefined, "Snapshot entry has both a tree value and a referenced id!");
 			entry = {
 				...baseEntry,
 				[encodeURIComponent(key)]: value,

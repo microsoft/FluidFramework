@@ -6,8 +6,8 @@
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import {
-	TaskSelectionContainerRuntimeFactory,
 	ITaskSelectionAppModel,
+	TaskSelectionContainerRuntimeFactory,
 } from "../src/containerCode.js";
 import { renderDiceRoller } from "../src/view.js";
 

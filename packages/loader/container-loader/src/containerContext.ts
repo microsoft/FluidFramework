@@ -3,30 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	IAudience,
-	IContainerContext,
-	IDeltaManager,
-	ILoader,
-	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
-	IFluidCodeDetails,
-	IBatchMessage,
+	IAudience,
+	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
+	IBatchMessage,
+	IContainerContext,
+	ILoader,
+	ILoaderOptions,
+	IDeltaManager,
+} from "@fluidframework/container-definitions/internal";
+import { type FluidObject } from "@fluidframework/core-interfaces";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISnapshot,
 	IDocumentMessage,
-	IQuorumClients,
-	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISummaryContent,
 	IVersion,
 	MessageType,
-	ISummaryContent,
-} from "@fluidframework/protocol-definitions";
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -72,20 +74,31 @@ export class ContainerContext implements IContainerContext {
 		public readonly loader: ILoader,
 		public readonly submitFn: (
 			type: MessageType,
-			contents: any,
+			contents: unknown,
 			batch: boolean,
-			appData: any,
+			appData: unknown,
 		) => number,
 		public readonly submitSummaryFn: (
 			summaryOp: ISummaryContent,
 			referenceSequenceNumber?: number,
 		) => number,
-		/** @returns clientSequenceNumber of last message in a batch */
+		/**
+		 * @returns clientSequenceNumber of last message in a batch
+		 */
 		public readonly submitBatchFn: (
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		public readonly submitSignalFn: (content: any, targetClientId?: string) => void,
+
+		/**
+		 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
+		 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+		 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+		 */
+		public readonly submitSignalFn: (
+			content: unknown | ISignalEnvelope,
+			targetClientId?: string,
+		) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
@@ -94,7 +107,6 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
-		public readonly getSpecifiedCodeDetails: () => IFluidCodeDetails | undefined,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,

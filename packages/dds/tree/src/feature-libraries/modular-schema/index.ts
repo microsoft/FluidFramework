@@ -12,9 +12,9 @@ export {
 export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,
-	CrossFieldManager,
-	CrossFieldMap,
-	CrossFieldQuerySet,
+	type CrossFieldManager,
+	type CrossFieldMap,
+	type CrossFieldQuerySet,
 	CrossFieldTarget,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
@@ -23,47 +23,54 @@ export {
 	EncodedChangeAtomId,
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
+	EncodedNodeChangeset,
 } from "./modularChangeFormat.js";
-export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
-	FieldChangeHandler,
-	FieldChangeRebaser,
-	FieldEditor,
-	getIntention,
-	NodeChangeComposer,
-	NodeChangeInverter,
-	NodeChangeRebaser,
-	NodeChangePruner,
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NodeChangeComposer,
+	type NodeChangeInverter,
+	type NodeChangeRebaser,
+	type NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
-	RebaseRevisionMetadata,
-	RelevantRemovedRootsFromChild,
-	ToDelta,
-	NodeExistenceState,
+	type RebaseRevisionMetadata,
+	type RelevantRemovedRootsFromChild,
+	type ToDelta,
+	NodeAttachState,
+	type FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
-export {
+export type {
 	FieldChange,
 	FieldChangeMap,
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
-	NodeChangeset,
 	NodeExistsConstraint,
+	NodeId,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,
 	genericChangeHandler,
 	genericFieldKind,
 } from "./genericFieldKind.js";
-export { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+export type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,
-	EditDescription,
-	GlobalEditDescription,
-	FieldEditDescription,
+	type EditDescription,
+	type GlobalEditDescription,
+	type FieldEditDescription,
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 	relevantRemovedRoots,
+	updateRefreshers,
 } from "./modularChangeFamily.js";
-export { makeV0Codec } from "./modularChangeCodecs.js";
+export { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
+export type {
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
+} from "./fieldKindConfiguration.js";
+export { getAllowedContentIncompatibilities } from "./discrepancies.js";

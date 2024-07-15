@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import prompts from "prompts";
@@ -9,8 +10,7 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
-import { BaseCommand } from "../../base";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args.js";
 import {
 	checkFlags,
 	dependencyUpdateTypeFlag,
@@ -18,19 +18,20 @@ import {
 	releaseGroupFlag,
 	skipCheckFlag,
 	testModeFlag,
-} from "../../flags";
+} from "../../flags.js";
 import {
+	BaseCommand,
+	// eslint-disable-next-line import/no-deprecated
+	MonoRepoKind,
 	generateBumpDepsBranchName,
 	generateBumpDepsCommitMessage,
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
-	// eslint-disable-next-line import/no-deprecated
-	MonoRepoKind,
-} from "../../library";
-import { ReleaseGroup } from "../../releaseGroups";
+} from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { npmCheckUpdatesHomegrown } from "../../library/package";
+import { npmCheckUpdatesHomegrown } from "../../library/package.js";
+import { ReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -46,7 +47,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		"Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
 	static readonly args = {
-		package_or_release_group: packageOrReleaseGroupArg,
+		package_or_release_group: packageOrReleaseGroupArg(),
 	} as const;
 
 	static readonly flags = {
@@ -222,7 +223,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
-				  )
+					)
 				: await npmCheckUpdates(
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
@@ -232,7 +233,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
-				  );
+					);
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
@@ -247,7 +248,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];

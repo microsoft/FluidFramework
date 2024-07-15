@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
@@ -42,12 +41,7 @@ export const TriangleView: React.FC<ITriangleViewProps> = (props: ITriangleViewP
 		if (canvasRef.current !== null) {
 			const ctx = canvasRef.current.getContext("2d");
 			if (ctx !== null) {
-				renderTriangleToCanvas(
-					ctx,
-					props.coordinate1,
-					props.coordinate2,
-					props.coordinate3,
-				);
+				renderTriangleToCanvas(ctx, props.coordinate1, props.coordinate2, props.coordinate3);
 			}
 		}
 	};

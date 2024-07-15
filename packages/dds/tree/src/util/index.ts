@@ -5,40 +5,38 @@
 
 export {
 	brand,
-	Brand,
+	type Brand,
 	BrandedType,
-	brandOpaque,
-	brandedNumberType,
-	brandedStringType,
-	extractFromOpaque,
-	ExtractFromOpaque,
-	fromErased,
-	Erased,
-	ErasedType,
-	NameFromBranded,
-	Opaque,
-	ValueFromBranded,
-	brandErased,
+	type NameFromBranded,
+	type ValueFromBranded,
 } from "./brand.js";
+export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export {
+	brandOpaque,
+	extractFromOpaque,
+	type ExtractFromOpaque,
+	type Opaque,
+} from "./opaque.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
-	NestedMap,
+	type NestedMap,
 	SizedNestedMap,
 	populateNestedMap,
 	setInNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
+	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
 } from "./nestedMap.js";
-export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet.js";
-export { OffsetList, OffsetListFactory } from "./offsetList.js";
+export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
+export { type OffsetList, OffsetListFactory } from "./offsetList.js";
 export { TransactionResult } from "./transactionResult.js";
-export {
+export type {
 	areSafelyAssignable,
 	Contravariant,
 	Covariant,
@@ -63,49 +61,50 @@ export {
 	getOrCreate,
 	isJsonObject,
 	isReadonlyArray,
-	JsonCompatible,
-	JsonCompatibleObject,
-	JsonCompatibleReadOnly,
+	type JsonCompatible,
+	type JsonCompatibleObject,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
-	Mutable,
-	Populated,
-	RecursiveReadonly,
-	zipIterables,
-	Assume,
+	type Mutable,
+	type Populated,
+	type RecursiveReadonly,
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
 	objectToMap,
 	invertMap,
 	oneFromSet,
-	Named,
+	type Named,
 	compareNamed,
 	disposeSymbol,
-	IDisposable,
+	type IDisposable,
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
 	compareStrings,
+	find,
 } from "./utils.js";
-export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
+export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
-export {
+export type {
 	AllowOptional,
 	RequiredFields,
 	OptionalFields,
-	_InlineTrick,
 	_RecursiveTrick,
-	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
+	Assume,
+	_InlineTrick,
+	FlattenKeys,
 } from "./typeUtils.js";
 
 export {
-	BrandedKey,
-	BrandedKeyContent,
-	BrandedMapSubset,
+	type BrandedKey,
+	type BrandedKeyContent,
+	type BrandedMapSubset,
 	getOrCreateSlotContent,
 	brandedSlot,
 } from "./brandedMap.js";
@@ -113,17 +112,25 @@ export {
 export {
 	getFirstEntryFromRangeMap,
 	getFromRangeMap,
-	RangeEntry,
-	RangeMap,
-	RangeQueryResult,
+	type RangeEntry,
+	type RangeMap,
+	type RangeQueryResult,
 	setInRangeMap,
 	deleteFromRangeMap,
 } from "./rangeMap.js";
 
 export {
-	IdAllocator,
+	type IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	IdAllocationState,
+	type IdAllocationState,
 	fakeIdAllocator,
 } from "./idAllocator.js";
+
+export {
+	Breakable,
+	type WithBreakable,
+	breakingMethod,
+	throwIfBroken,
+	breakingClass,
+} from "./breakable.js";

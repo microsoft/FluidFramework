@@ -19,7 +19,6 @@ import {
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
@@ -45,6 +44,7 @@ export class RiddlerResources implements IResources {
 		public readonly secretManager: ISecretManager,
 		public readonly fetchTenantKeyMetricIntervalMs: number,
 		public readonly riddlerStorageRequestMetricIntervalMs: number,
+		public readonly tenantKeyGenerator: utils.ITenantKeyGenerator,
 		public readonly cache: RedisCache,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -74,44 +74,29 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const redisConfig = config.get("redisForTenantCache");
 		let cache: RedisCache;
 		if (redisConfig) {
-			const redisOptions: Redis.RedisOptions = {
-				host: redisConfig.host,
-				port: redisConfig.port,
-				password: redisConfig.pass,
-				connectTimeout: redisConfig.connectTimeout,
-				enableReadyCheck: true,
-				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: utils.getRedisClusterRetryStrategy({
-					delayPerAttemptMs: 50,
-					maxDelayMs: 2000,
-				}),
-			};
-			if (redisConfig.enableAutoPipelining) {
-				/**
-				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-				 * More info: https://github.com/luin/ioredis#autopipelining
-				 */
-				redisOptions.enableAutoPipelining = true;
-				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
-			}
-			if (redisConfig.tls) {
-				redisOptions.tls = {
-					servername: redisConfig.host,
-				};
-			}
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
 
-			const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
-				redisOptions,
-				redisConfig.slotsRefreshTimeout,
-				redisConfig.enableClustering,
-			);
+			const retryDelays = {
+				retryDelayOnFailover: 100,
+				retryDelayOnClusterDown: 100,
+				retryDelayOnTryAgain: 100,
+				retryDelayOnMoved: redisConfig.retryDelayOnMoved ?? 100,
+				maxRedirections: redisConfig.maxRedirections ?? 16,
+			};
 
-			cache = new RedisCache(redisClient, redisParams);
+			const redisClientConnectionManagerForTenantCache =
+				customizations?.redisClientConnectionManagerForTenantCache
+					? customizations.redisClientConnectionManagerForTenantCache
+					: new utils.RedisClientConnectionManager(
+							undefined,
+							redisConfig,
+							redisConfig.enableClustering,
+							redisConfig.slotsRefreshTimeout,
+							retryDelays,
+					  );
+			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}
 		// Database connection
 		const factory = await services.getDbFactory(config);
@@ -173,6 +158,9 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const riddlerStorageRequestMetricIntervalMs = config.get(
 			"apiCounters:riddlerStorageRequestMetricMs",
 		);
+		const tenantKeyGenerator = customizations?.tenantKeyGenerator
+			? customizations.tenantKeyGenerator
+			: new utils.TenantKeyGenerator();
 
 		return new RiddlerResources(
 			config,
@@ -187,6 +175,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			secretManager,
 			fetchTenantKeyMetricIntervalMs,
 			riddlerStorageRequestMetricIntervalMs,
+			tenantKeyGenerator,
 			cache,
 		);
 	}
@@ -208,6 +197,7 @@ export class RiddlerRunnerFactory implements IRunnerFactory<RiddlerResources> {
 			resources.secretManager,
 			resources.fetchTenantKeyMetricIntervalMs,
 			resources.riddlerStorageRequestMetricIntervalMs,
+			resources.tenantKeyGenerator,
 			resources.cache,
 			resources.config,
 		);

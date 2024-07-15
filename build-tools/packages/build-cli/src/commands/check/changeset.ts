@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
-import { BaseCommand } from "../../base";
-import { Repository } from "../../library";
+import { BaseCommand, Repository } from "../../library/index.js";
 
 export default class CheckChangesetCommand extends BaseCommand<typeof CheckChangesetCommand> {
 	static readonly summary =

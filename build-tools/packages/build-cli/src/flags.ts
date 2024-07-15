@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "./library";
+import { MonoRepoKind } from "./library/index.js";
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
@@ -21,24 +22,15 @@ function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 }
 
 import {
+	VersionBumpType,
+	VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
-	VersionBumpType,
-	VersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { DependencyUpdateType } from "./library";
-import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
-
-/**
- * A re-usable CLI flag to parse the root directory of the Fluid repo.
- */
-export const rootPathFlag = Flags.custom({
-	description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
-	env: "_FLUID_ROOT_",
-	hidden: true,
-});
+import type { DependencyUpdateType } from "./library/index.js";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.
@@ -244,13 +236,13 @@ export const skipCheckFlag = Flags.boolean({
 export const selectionFlags = {
 	all: Flags.boolean({
 		description:
-			"Run on all packages and release groups. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+			"Run on all packages and release groups. Cannot be used with --dir, --packages, --releaseGroup, or --releaseGroupRoot.",
 		exclusive: ["dir", "packages", "releaseGroup", "releaseGroupRoot"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
 		description:
-			"Run on the package in this directory. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+			"Run on the package in this directory. Cannot be used with --all, --packages, --releaseGroup, or --releaseGroupRoot.",
 		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
@@ -277,6 +269,37 @@ export const selectionFlags = {
 		char: undefined,
 		aliases: ["releaseGroupRoots"],
 	}),
+	changed: Flags.boolean({
+		description:
+			"Select only packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with other options.",
+		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all", "packages"],
+		required: false,
+		default: false,
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	branch: Flags.string({
+		description:
+			"Select only packages that have been changed when compared to this base branch. Can only be used with --changed.",
+		dependsOn: ["changed"],
+		relationships: [
+			{
+				type: "all",
+				flags: [
+					{
+						name: "changed",
+						// Only make the "branch" flag required if the "changed" flag is passed. This enables us to have a default
+						// value on the flag without oclif complaining that "--changed must be passed if --branch is used."
+						when: async (flags): Promise<boolean> => {
+							return !(flags.changed === undefined);
+						},
+					},
+				],
+			},
+		],
+		required: false,
+		default: "main",
+		helpGroup: "PACKAGE SELECTION",
+	}),
 };
 
 /**
@@ -292,7 +315,17 @@ export interface selectionFlags {
 	readonly packages: boolean;
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;
+	readonly changed: boolean;
+	readonly branch: string;
 }
+
+export const defaultSelectionKinds = ["dir", "all"] as const;
+
+/**
+ * A type representing the possible ways a command can set its default selection criteria when no selection flags are
+ * used.
+ */
+export type PackageSelectionDefault = (typeof defaultSelectionKinds)[number] | undefined;
 
 /**
  * A set of flags that can be used to filter selected packages in the repo.

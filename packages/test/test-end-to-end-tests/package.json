@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.1.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,15 +16,19 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:benchmark:report": "mocha --config src/test/benchmark/.mocharc.time.cjs -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json",
@@ -40,12 +44,13 @@
 		"test:realsvc:local:report": "npm run test:realsvc:local --",
 		"test:realsvc:local:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:local --",
 		"test:realsvc:odsp": "npm run test:realsvc:run -- --driver=odsp --timeout=20s",
+		"test:realsvc:odsp-df": "npm run test:realsvc:run -- --driver=odsp --odspEndpointName=odsp-df --timeout=20s",
 		"test:realsvc:odsp:report": "npm run test:realsvc:odsp --",
-		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=20s --use-openssl-ca",
+		"test:realsvc:r11s": "npm run test:realsvc:run -- --driver=r11s --timeout=20s",
 		"test:realsvc:r11s:docker": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker --timeout=20s",
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
-		"test:realsvc:run": "mocha lib/test --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
+		"test:realsvc:run": "mocha lib/test/gc --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
@@ -78,6 +83,7 @@
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
@@ -104,7 +110,6 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -112,7 +117,6 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
@@ -122,15 +126,16 @@
 		"mocha": "^10.2.0",
 		"semver": "^7.5.3",
 		"sinon": "^17.0.1",
-		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^4.0.0",
+		"start-server-and-test": "^2.0.3",
+		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.34.0",
+		"@biomejs/biome": "~1.8.3",
+		"@fluid-tools/build-cli": "^0.40.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/build-tools": "^0.40.0",
+		"@fluidframework/eslint-config-fluid": "^5.3.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
@@ -143,27 +148,14 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
-			"compile": {
-				"dependsOn": [
-					"...",
-					"^build:esnext"
-				],
-				"script": false
-			},
-			"ci:build": {
-				"dependsOn": [
-					"...",
-					"^build:esnext"
-				],
-				"script": false
-			},
-			"build:test": [
-				"...",
-				"^build:esnext"
+			"build:test:esm": [
+				"^build:esnext",
+				"build:genver",
+				"^tsc"
 			]
 		}
 	},

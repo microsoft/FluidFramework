@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"rootDir": "./src",
-		"types": [],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

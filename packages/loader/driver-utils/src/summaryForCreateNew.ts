@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
-	ISummaryTree,
-	SummaryType,
-	ISummaryBlob,
 	ICommittedProposal,
 	IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Defines the current layout of an .app + .protocol summary tree

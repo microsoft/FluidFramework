@@ -4,14 +4,14 @@
  */
 
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
-import { InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries/index.js";
+import { type InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries/index.js";
 
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
 // Schema
 export const pointSchema = builder.object("point", {
-	x: builder.number,
-	y: builder.number,
+	x: leaf.number,
+	y: leaf.number,
 });
 
 export const appSchemaData = builder.intoSchema(builder.sequence(pointSchema));

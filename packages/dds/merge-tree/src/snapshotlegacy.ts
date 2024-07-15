@@ -5,14 +5,19 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
+
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import {
@@ -20,7 +25,6 @@ import {
 	MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
 } from "./snapshotChunks.js";
-import { MergeTree } from "./mergeTree.js";
 
 interface SnapshotHeader {
 	chunkCount?: number;
@@ -79,7 +83,8 @@ export class SnapshotLegacy {
 			sequenceLength < approxSequenceLength &&
 			startIndex + segCount < allSegments.length
 		) {
-			const pseg = allSegments[startIndex + segCount];
+			// TODO Non null asserting, why is this not null?
+			const pseg = allSegments[startIndex + segCount]!;
 			segs.push(pseg);
 			if (pseg.attribution) {
 				segsWithAttribution++;
@@ -174,9 +179,10 @@ export class SnapshotLegacy {
 			// Messages used to have a "term" property which has since been removed.
 			// It is benign so it doesn't really need to be deleted here, but doing so permits snapshot tests
 			// to pass with an exact match (and matching the updated definition of ISequencedDocumentMessage).
-			catchUpMsgs.forEach((message) => {
+			for (const message of catchUpMsgs) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				delete (message as any).term;
-			});
+			}
 			builder.addBlob(
 				this.mergeTree.options?.catchUpBlobName ?? SnapshotLegacy.catchupOps,
 				serializer ? serializer.stringify(catchUpMsgs, bind) : JSON.stringify(catchUpMsgs),
@@ -186,7 +192,7 @@ export class SnapshotLegacy {
 		return builder.getSummaryTree();
 	}
 
-	extractSync() {
+	extractSync(): ISegment[] {
 		const collabWindow = this.mergeTree.collabWindow;
 		this.seq = collabWindow.minSeq;
 		this.header = {
@@ -208,7 +214,7 @@ export class SnapshotLegacy {
 			clientId: number,
 			start: number | undefined,
 			end: number | undefined,
-		) => {
+		): boolean => {
 			if (
 				segment.seq !== UnassignedSequenceNumber &&
 				segment.seq! <= this.seq! &&
@@ -217,10 +223,7 @@ export class SnapshotLegacy {
 					segment.removedSeq > this.seq!)
 			) {
 				originalSegments += 1;
-				if (
-					prev?.canAppend(segment) &&
-					matchProperties(prev.properties, segment.properties)
-				) {
+				if (prev?.canAppend(segment) && matchProperties(prev.properties, segment.properties)) {
 					prev = prev.clone();
 					prev.append(segment.clone());
 				} else {

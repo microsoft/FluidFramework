@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
-	type IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-import { SharedCounter } from "./counter.js";
-import { type ISharedCounter } from "./interfaces.js";
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
+import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+
+import { SharedCounter as SharedCounterClass } from "./counter.js";
+import type { ISharedCounter } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -56,7 +58,7 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedCounter> {
-		const counter = new SharedCounter(id, runtime, attributes);
+		const counter = new SharedCounterClass(id, runtime, attributes);
 		await counter.load(services);
 		return counter;
 	}
@@ -65,8 +67,22 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedCounter {
-		const counter = new SharedCounter(id, document, this.attributes);
+		const counter = new SharedCounterClass(id, document, this.attributes);
 		counter.initializeLocal();
 		return counter;
 	}
 }
+
+/**
+ * Entrypoint for {@link ISharedCounter} creation.
+ * @legacy
+ * @alpha
+ */
+export const SharedCounter = createSharedObjectKind<ISharedCounter>(CounterFactory);
+
+/**
+ * Alias for {@link ISharedCounter} for compatibility.
+ * @legacy
+ * @alpha
+ */
+export type SharedCounter = ISharedCounter;

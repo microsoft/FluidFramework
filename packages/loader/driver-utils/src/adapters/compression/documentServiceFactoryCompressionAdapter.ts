@@ -4,16 +4,18 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+} from "@fluidframework/driver-definitions/internal";
+
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.js";
+
 import { ICompressionStorageConfig } from "./compressionTypes.js";
-import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter.js";
+import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
 
 export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFactoryProxy {
 	constructor(
@@ -31,11 +33,10 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
 			const configForInitial = this._config;
-			const newAppSumary =
-				DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
-					createNewSummary.tree[".app"] as ISummaryTree,
-					configForInitial,
-				);
+			const newAppSumary = DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
+				createNewSummary.tree[".app"] as ISummaryTree,
+				configForInitial,
+			);
 			createNewSummary.tree[".app"] = newAppSumary;
 		}
 		const service = await this.serviceFactory.createContainer(

@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
+
 import { IOdspSnapshot } from "../contracts.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 
@@ -108,6 +109,10 @@ describe("JSON Snapshot Format Conversion Tests", () => {
 				"23c54bd8-ef53-42fa-a898-413de4c6f0f2"
 			]?.trees["d65a4af3-0bf8-4052-8442-a898651ad9b8"];
 		const emptyTree = { blobs: {}, trees: {}, unreferenced: undefined, groupId: undefined };
-		assert.deepStrictEqual(shouldBeEmptyTree, emptyTree, "Tree should have no blobs and trees");
+		assert.deepStrictEqual(
+			shouldBeEmptyTree,
+			emptyTree,
+			"Tree should have no blobs and trees",
+		);
 	});
 });

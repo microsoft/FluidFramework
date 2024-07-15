@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { compareArrays } from "@fluidframework/core-utils";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
+import { compareArrays } from "@fluidframework/core-utils/internal";
 
 const a4 = Array.from({ length: 4 }).fill(0);
 const a1024 = Array.from({ length: 1024 }).fill(0);

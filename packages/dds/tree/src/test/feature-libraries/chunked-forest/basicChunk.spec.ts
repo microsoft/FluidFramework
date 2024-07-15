@@ -4,31 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	TestField,
-	mapSchema,
-	testGeneralPurposeTreeCursor,
-	testSpecializedFieldCursor,
-} from "../../cursorTestSuite.js";
+
 import {
 	EmptyKey,
-	ITreeCursor,
-	ITreeCursorSynchronous,
-	JsonableTree,
-	TreeNodeSchemaIdentifier,
+	type ITreeCursor,
+	type ITreeCursorSynchronous,
+	type JsonableTree,
+	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
-import {
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	chunkTree,
-	TreeChunk,
-} from "../../../feature-libraries/index.js";
-import { brand, ReferenceCountedBase } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import { leaf } from "../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
-
+import type {
+	ChunkedCursor,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunk.js";
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
@@ -36,14 +26,25 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
+import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
-import { leaf } from "../../../domains/index.js";
 import {
-	ChunkedCursor,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunk.js";
-import { emptyShape, testData } from "./uniformChunkTestData.js";
+	type TreeChunk,
+	chunkTree,
+	cursorForJsonableTreeNode,
+	jsonableTreeFromCursor,
+} from "../../../feature-libraries/index.js";
+import { ReferenceCountedBase, brand } from "../../../util/index.js";
+import {
+	type TestField,
+	mapSchema,
+	testGeneralPurposeTreeCursor,
+	testSpecializedFieldCursor,
+} from "../../cursorTestSuite.js";
+
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
+import { emptyShape, testData } from "./uniformChunkTestData.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
@@ -107,10 +108,7 @@ describe("basic chunk", () => {
 				const withKeysShape = new BasicChunk(
 					schema,
 					new Map(
-						keys.map((key) => [
-							key,
-							[uniformChunk(emptyShape.withTopLevelLength(1), [])],
-						]),
+						keys.map((key) => [key, [uniformChunk(emptyShape.withTopLevelLength(1), [])]]),
 					),
 				);
 				return withKeysShape;
@@ -156,11 +154,7 @@ describe("basic chunk", () => {
 				numberSequenceField(2),
 			);
 			validateChunkCursor(
-				new SequenceChunk([
-					numericBasicChunk(0),
-					numericBasicChunk(1),
-					numericBasicChunk(2),
-				]),
+				new SequenceChunk([numericBasicChunk(0), numericBasicChunk(1), numericBasicChunk(2)]),
 				numberSequenceField(3),
 			);
 		});
@@ -171,10 +165,7 @@ describe("basic chunk", () => {
 				numberSequenceField(1),
 			);
 			validateChunkCursor(
-				new SequenceChunk([
-					numericBasicChunk(0),
-					new SequenceChunk([numericBasicChunk(1)]),
-				]),
+				new SequenceChunk([numericBasicChunk(0), new SequenceChunk([numericBasicChunk(1)])]),
 				numberSequenceField(2),
 			);
 			validateChunkCursor(
@@ -187,9 +178,7 @@ describe("basic chunk", () => {
 			validateChunkCursor(
 				new SequenceChunk([
 					numericBasicChunk(0),
-					new SequenceChunk([
-						new SequenceChunk([numericBasicChunk(1), numericBasicChunk(2)]),
-					]),
+					new SequenceChunk([new SequenceChunk([numericBasicChunk(1), numericBasicChunk(2)])]),
 				]),
 				numberSequenceField(3),
 			);
@@ -197,10 +186,7 @@ describe("basic chunk", () => {
 
 		it("nested at offset", () => {
 			validateChunkCursor(
-				new SequenceChunk([
-					numericBasicChunk(0),
-					new SequenceChunk([numericBasicChunk(1)]),
-				]),
+				new SequenceChunk([numericBasicChunk(0), new SequenceChunk([numericBasicChunk(1)])]),
 				numberSequenceField(2),
 			);
 		});
@@ -232,7 +218,7 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		chunk.referenceAdded();
 	}
 
-	protected dispose(): void {
+	protected onUnreferenced(): void {
 		this.chunk.referenceRemoved();
 	}
 

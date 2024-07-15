@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, fail, Mutable, MutableMap } from './Common.js';
+import { HasVariadicTraits } from './ChangeTypes.js';
+import { Mutable, MutableMap, copyPropertyIfDefined, fail } from './Common.js';
 import { Forest } from './Forest.js';
 import { NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
 import { NodeIdConverter } from './NodeIdUtilities.js';
-import { Payload, TreeNode, TreeNodeSequence } from './persisted-types/index.js';
 import { TreeView, TreeViewNode, TreeViewPlace, TreeViewRange } from './TreeView.js';
-import { HasVariadicTraits } from './ChangeTypes.js';
+import { Payload, TreeNode, TreeNodeSequence } from './persisted-types/index.js';
 
 /**
  * An immutable view of a distributed tree.
@@ -119,7 +119,10 @@ export class TransactionView extends TreeView {
 	 * Detaches a range of nodes from their parent. The detached nodes remain in the view.
 	 * @param rangeToDetach - the range of nodes to detach
 	 */
-	public detachRange(rangeToDetach: TreeViewRange): { view: TransactionView; detached: readonly NodeId[] } {
+	public detachRange(rangeToDetach: TreeViewRange): {
+		view: TransactionView;
+		detached: readonly NodeId[];
+	} {
 		const { start, end } = rangeToDetach;
 		const { trait: traitLocation } = start;
 		const { parent, label } = traitLocation;

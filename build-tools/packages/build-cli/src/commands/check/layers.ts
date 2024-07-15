@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { Flags } from "@oclif/core";
 import { Timer } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
 
-import { BaseCommand } from "../../base";
-import { LayerGraph } from "../../library";
+import { BaseCommand, LayerGraph } from "../../library/index.js";
 
 const packagesMdFileName = "PACKAGES.md";
 

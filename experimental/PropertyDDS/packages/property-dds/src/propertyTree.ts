@@ -3,44 +3,40 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-import isEmpty from "lodash/isEmpty";
-import findIndex from "lodash/findIndex";
-import find from "lodash/find";
-import isEqual from "lodash/isEqual";
-import range from "lodash/range";
-import { copy as cloneDeep } from "fastest-json-copy";
-import { Packr } from "msgpackr";
-
-import { AttachState } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
-
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,
 	rebaseToRemoteChanges,
 } from "@fluid-experimental/property-changeset";
-
 import {
-	PropertyFactory,
 	BaseProperty,
 	NodeProperty,
+	PropertyFactory,
 } from "@fluid-experimental/property-properties";
-
-import { v4 as uuidv4 } from "uuid";
+import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	MessageType,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
-import { PropertyTreeFactory } from "./propertyTreeFactory";
+import lodash from "lodash";
+import { Packr } from "msgpackr";
+import { v4 as uuidv4 } from "uuid";
+
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
+const { isEmpty, findIndex, find, isEqual, range, cloneDeep } = lodash;
+
+import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**
  * @internal
@@ -118,7 +114,10 @@ export interface ISharedPropertyTreeEncDec {
 		encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 		decode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 	};
-	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary };
+	summaryEncoder: {
+		encode: (ISnapshotSummary) => IsoBuffer;
+		decode: (IsoBuffer) => ISnapshotSummary;
+	};
 }
 
 /**
@@ -148,16 +147,7 @@ const defaultEncDec: ISharedPropertyTreeEncDec = {
 };
 
 /**
- * Silly DDS example that models a six sided die.
- *
- * Unlike the typical 'Dice Roller' example where clients clobber each other's last roll in a
- * SharedMap, this 'SharedDie' DDS works by advancing an internal PRNG each time it sees a 'roll'
- * operation.
- *
- * Because all clients are using the same PRNG starting in the same state, they arrive at
- * consensus by simply applying the same number of rolls.  (A fun addition would be logging
- * who received which roll, which would need to change as clients learn how races are resolved
- * in the total order)
+ * DDS that models a tree made of objects with properties under string keys.
  * @internal
  */
 export class SharedPropertyTree extends SharedObject {
@@ -227,7 +217,7 @@ export class SharedPropertyTree extends SharedObject {
 		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
 		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
 		if (!this.options.disablePartialCheckout) {
-			let dm = (this.runtime.deltaManager as any).deltaManager;
+			let dm = (this.deltaManager as any).deltaManager;
 			if (dm.deltaManager !== undefined) {
 				dm = dm.deltaManager;
 			}
@@ -386,7 +376,9 @@ export class SharedPropertyTree extends SharedObject {
 			message.type === MessageType.Operation &&
 			message.sequenceNumber > this.skipSequenceNumber
 		) {
-			const change: IPropertyTreeMessage = this.decodeMessage(cloneDeep(message.contents));
+			const change: IPropertyTreeMessage = this.decodeMessage(
+				cloneDeep(message.contents as IPropertyTreeMessage),
+			);
 			const content: IRemotePropertyTreeMessage = {
 				...change,
 				sequenceNumber: message.sequenceNumber,
@@ -504,7 +496,7 @@ export class SharedPropertyTree extends SharedObject {
 		};
 	}
 	public pruneHistory() {
-		const msn = this.runtime.deltaManager.minimumSequenceNumber;
+		const msn = this.deltaManager.minimumSequenceNumber;
 
 		let lastKnownRemoteGuid = this.headCommitGuid;
 		// We use the reference GUID of the first change in the list
@@ -578,7 +570,7 @@ export class SharedPropertyTree extends SharedObject {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
 			branchGuid: this.handle.absolutePath.split("/").pop() as string,
-			summaryMinimumSequenceNumber: this.runtime.deltaManager.minimumSequenceNumber,
+			summaryMinimumSequenceNumber: this.deltaManager.minimumSequenceNumber,
 			useMH: this.useMH,
 			numChunks: 0,
 		};
@@ -656,25 +648,21 @@ export class SharedPropertyTree extends SharedObject {
 					snapshotSummary.remoteHeadGuid =
 						snapshotSummary.remoteChanges.length > 0
 							? // If there are remote changes in the
-							  // summary we can deduce the head GUID from these changes.
-							  snapshotSummary.remoteChanges[
-									snapshotSummary.remoteChanges.length - 1
-							  ].guid
+								// summary we can deduce the head GUID from these changes.
+								snapshotSummary.remoteChanges[snapshotSummary.remoteChanges.length - 1].guid
 							: // If no remote head GUID is available, we will fall back to the old behaviour,
-							  // where the head GUID was set to an empty string. However, this could lead to
-							  // divergence between the clients, if there is still a client in the session
-							  // that is using a version of this library without this patch and which
-							  // has started the session at a different summary.
-							  "";
+								// where the head GUID was set to an empty string. However, this could lead to
+								// divergence between the clients, if there is still a client in the session
+								// that is using a version of this library without this patch and which
+								// has started the session at a different summary.
+								"";
 				}
 
 				this.remoteTipView = snapshotSummary.remoteTipView;
 				this.remoteChanges = snapshotSummary.remoteChanges;
 				this.unrebasedRemoteChanges = snapshotSummary.unrebasedRemoteChanges;
 				this.headCommitGuid = snapshotSummary.remoteHeadGuid;
-				const isPartialCheckoutActive = !!(
-					this.options.clientFiltering && this.options.paths
-				);
+				const isPartialCheckoutActive = !!(this.options.clientFiltering && this.options.paths);
 				if (isPartialCheckoutActive && this.options.paths) {
 					this.remoteTipView = ChangeSetUtils.getFilteredChangeSetByPaths(
 						this.remoteTipView,
@@ -686,9 +674,7 @@ export class SharedPropertyTree extends SharedObject {
 				this.skipSequenceNumber = 0;
 			} else {
 				const { branchGuid, summaryMinimumSequenceNumber } = snapshot;
-				const branchResponse = await axios.get(
-					`http://localhost:3000/branch/${branchGuid}`,
-				);
+				const branchResponse = await axios.get(`http://localhost:3000/branch/${branchGuid}`);
 				this.headCommitGuid = branchResponse.data.headCommitGuid;
 				const {
 					commit: { meta: commitMetadata },
@@ -723,7 +709,7 @@ export class SharedPropertyTree extends SharedObject {
 				);
 				const lastDelta = commitMetadata.sequenceNumber;
 
-				const dm = (this.runtime.deltaManager as any).deltaManager;
+				const dm = (this.deltaManager as any).deltaManager;
 				// TODO: This is accessing a private member of the delta manager, and should not be.
 				await dm.getDeltas(
 					"DocumentOpen",

@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { DataObjectFactory } from "@fluidframework/aqueduct";
-import { TreeDataObject, factory } from "./reactSharedTreeView.js";
-import { treeConfiguration, type Inventory } from "./schema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { treeDataObjectInternal } from "@fluid-experimental/tree-react-api/internal";
 
-/**
- * @internal
- */
-export class InventoryList extends TreeDataObject<typeof Inventory> {
-	public readonly key = "tree";
-	public readonly config = treeConfiguration;
-}
+import { Inventory, treeConfiguration } from "./schema.js";
 
-/**
- * @internal
- */
-export const InventoryListFactory = new DataObjectFactory(
-	"@fluid-experimental/inventory-list",
-	InventoryList,
-	[factory],
-	{},
-);
+export const InventoryListFactory = treeDataObjectInternal(
+	"tree",
+	treeConfiguration,
+	() =>
+		new Inventory({
+			parts: [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		}),
+).factory;

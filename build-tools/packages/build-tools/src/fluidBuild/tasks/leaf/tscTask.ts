@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import * as tsTypes from "typescript";
 import isEqual from "lodash.isequal";
+import * as tsTypes from "typescript";
 
 import { readFileSync } from "fs-extra";
-import { existsSync, readFileAsync } from "../../../common/utils";
 import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { getTscUtils, TscUtil } from "../../../common/tscUtils";
+import { TscUtil, getTscUtils } from "../../../common/tscUtils";
+import { existsSync, readFileAsync } from "../../../common/utils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
@@ -19,6 +20,7 @@ interface ITsBuildInfo {
 		fileNames: string[];
 		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
 		affectedFilesPendingEmit?: any[];
+		emitDiagnosticsPerFile?: any[];
 		semanticDiagnosticsPerFile?: any[];
 		changeFileSet?: number[];
 		options: any;
@@ -43,6 +45,18 @@ export class TscTask extends LeafTask {
 		return this._tscUtils;
 	}
 
+	protected get executionCommand() {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			// https://github.com/microsoft/TypeScript/issues/57780
+			// `tsc -b` by design doesn't rebuild if dependent packages changed
+			// but not a referenced project. Just force it if we detected the change and
+			// invoke the build.
+			// `--force` is not fully supported, due to workaround in createTscUtil, so this may not actually work.
+			return `${this.command} --force`;
+		}
+		return this.command;
+	}
 	protected get isIncremental() {
 		const config = this.readTsConfig();
 		return config?.options.incremental;
@@ -111,13 +125,20 @@ export class TscTask extends LeafTask {
 		}
 
 		const program = tsBuildInfo.program;
+		const noEmit = config.options.noEmit ?? false;
+		const hasChangedFiles = (program.changeFileSet?.length ?? 0) > 0;
+		const hasEmitErrorsOrPending =
+			(program.affectedFilesPendingEmit?.length ?? 0) > 0 ||
+			(program.emitDiagnosticsPerFile?.length ?? 0) > 0;
+		const hasSemanticErrors =
+			program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)) ?? false;
+
+		const previousBuildError = noEmit
+			? hasChangedFiles || hasSemanticErrors
+			: hasChangedFiles || hasSemanticErrors || hasEmitErrorsOrPending;
+
 		// Check previous build errors
-		if (
-			program.changeFileSet?.length ||
-			(!config.options.noEmit
-				? program.affectedFilesPendingEmit?.length
-				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
-		) {
+		if (previousBuildError) {
 			this.traceTrigger("previous build error");
 			return false;
 		}
@@ -445,8 +466,8 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
 			const tscTasks = [...this.getDependentLeafTasks()].filter(
-				(task) => task.executable === "tsc",
-			);
+				(task) => task instanceof TscTask,
+			) as TscTask[];
 			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
 
 			// Take only the tsc task in the same package if possible.
@@ -456,7 +477,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			);
 
 			for (const dep of tasks) {
-				const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+				const tsBuildInfo = await dep.readTsBuildInfo();
 				if (tsBuildInfo === undefined) {
 					// If any of the tsc task don't have build info, we can't track
 					return undefined;

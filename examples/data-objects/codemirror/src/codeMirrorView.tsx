@@ -4,22 +4,22 @@
  */
 
 import {
-	getTextAndMarkers,
-	SharedString,
-	SequenceDeltaEvent,
-	MergeTreeDeltaType,
-	TextSegment,
-	ReferenceType,
-	reservedTileLabelsKey,
 	Marker,
-} from "@fluidframework/sequence";
+	MergeTreeDeltaType,
+	ReferenceType,
+	SequenceDeltaEvent,
+	SharedString,
+	TextSegment,
+	getTextAndMarkers,
+	reservedTileLabelsKey,
+} from "@fluidframework/sequence/internal";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import "codemirror/lib/codemirror.css";
-import "./style.css";
 import "codemirror/mode/javascript/javascript.js";
+import "./style.css";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";
@@ -46,7 +46,7 @@ class CodeMirrorView {
 		// https://stackoverflow.com/questions/18828658/how-to-kill-a-codemirror-instance
 
 		if (this.sequenceDeltaCb) {
-			this.text.removeListener("sequenceDelta", this.sequenceDeltaCb);
+			this.text.off("sequenceDelta", this.sequenceDeltaCb);
 			this.sequenceDeltaCb = undefined;
 		}
 

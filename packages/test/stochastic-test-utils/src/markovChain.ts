@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { createWeightedGenerator } from "./generators";
-import { makeRandom } from "./random";
-import { IRandom } from "./types";
+import { createWeightedGenerator } from "./generators.js";
+import { makeRandom } from "./random.js";
+import { IRandom } from "./types.js";
 
 /**
  * @internal

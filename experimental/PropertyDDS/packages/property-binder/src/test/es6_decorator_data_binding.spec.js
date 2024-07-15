@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 /* globals should, sinon, expect */
 import { DataBinder } from "../data_binder/dataBinder";
 import {
 	DataBinding,
-	onValuesChanged,
 	onPathChanged,
 	onPropertyChanged,
+	onValuesChanged,
 } from "../data_binder/dataBinding";
-import { catchConsoleErrors } from "./catchConsoleError";
 import { ModificationContext } from "../data_binder/modificationContext";
+import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 
 describe("Decorated DataBinding", function () {
 	catchConsoleErrors();

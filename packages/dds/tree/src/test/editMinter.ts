@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import {
+
+import type {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,

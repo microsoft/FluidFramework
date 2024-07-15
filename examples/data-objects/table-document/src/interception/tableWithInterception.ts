@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { PropertySet } from "@fluidframework/sequence";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { ITable, TableDocumentItem } from "../table.js";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { PropertySet } from "@fluidframework/sequence/internal";
+
 import { TableDocument } from "../document.js";
+import { ITable, TableDocumentItem } from "../table.js";
 
 /**
  * Does the following:

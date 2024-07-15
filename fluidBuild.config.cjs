@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
+// Enable TypeScript type-checking for this file.
+// See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
+// @ts-check
 
-// These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
-// define the list here so we can re-use it in multiple task definitions.
-//
-// The "prettier" task should be replaced by "check:prettier" eventually. Once the conversion is done, then the
-// "prettier" task can be removed from this list.
-const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
+const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
@@ -18,11 +15,20 @@ const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
  *
  * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
+ *
+ * @type {import("@fluidframework/build-tools").IFluidBuildConfig}
  */
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
+			dependsOn: [
+				"compile",
+				"lint",
+				"ci:build:api-reports",
+				"ci:build:docs",
+				"build:manifest",
+				"build:readme",
+			],
 			script: false,
 		},
 		"full": {
@@ -30,11 +36,18 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs", "build:manifest", "build:readme"],
+			dependsOn: [
+				"compile",
+				"lint",
+				"build:api-reports",
+				"build:docs",
+				"build:manifest",
+				"build:readme",
+			],
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -43,20 +56,21 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				...checkFormatTasks,
+				"check:format",
 				"eslint",
 				"good-fences",
 				"depcruise",
+				"check:exports",
 				"check:release-tags",
 			],
 			script: false,
 		},
 		"checks": {
-			dependsOn: [...checkFormatTasks],
+			dependsOn: ["check:format"],
 			script: false,
 		},
 		"checks:fix": {
-			dependsOn: ["^checks:fix"],
+			dependsOn: [],
 			script: false,
 		},
 		"build:copy": [],
@@ -65,19 +79,15 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
-		"build:test": [
-			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
-			// requires them. I don't want to change the policy right now.
-			...tscDependsOn,
-			"typetests:gen",
-			"tsc",
-			"api-extractor:commonjs",
-			"api-extractor:esnext",
-		],
+		// Generic build:test script should be replaced by :esm or :cjs specific versions.
+		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
+		// on CommonJS.
+		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
 		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
 		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
-			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext", "typetests:gen"],
+			// dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
 		"api-extractor:commonjs": ["tsc"],
@@ -85,9 +95,20 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"build:docs": ["tsc"],
+		// build:api-reports may be handled in one step with build:docs when a
+		// package only uses api-extractor supported exports, which is a single
+		// export/entrypoint. For packages with /legacy exports, we need to
+		// generate reports from legacy entrypoint as well as the "current" one.
+		// The "current" entrypoint should be the broadest of "public.d.ts",
+		// "beta.d.ts", and "alpha.d.ts".
+		"build:api-reports:current": ["api-extractor:esnext"],
+		"build:api-reports:legacy": ["api-extractor:esnext"],
+		"ci:build:api-reports:current": ["api-extractor:esnext"],
+		"ci:build:api-reports:legacy": ["api-extractor:esnext"],
+		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
+		"build:docs": ["tsc", "build:esnext"],
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
@@ -98,17 +119,18 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
+		"check:exports": ["api"],
 		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
 		"check:format": {
-			dependsOn: [...checkFormatTasks],
-			script: false,
+			dependencies: [],
+			script: true,
 		},
 		"format": {
-			dependsOn: ["format:prettier", "format:biome"],
-			script: false,
+			dependencies: [],
+			script: true,
 		},
 		"check:biome": [],
 		"check:prettier": [],
@@ -167,7 +189,6 @@ module.exports = {
 
 		// Independent packages
 		"build": "common/build",
-		"common-def": "common/lib/common-definitions",
 		"common-utils": "common/lib/common-utils",
 		"protocol-def": "common/lib/protocol-definitions",
 
@@ -175,7 +196,6 @@ module.exports = {
 		"tools": [
 			"tools/api-markdown-documenter",
 			"tools/benchmark",
-			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
 		],
@@ -183,15 +203,18 @@ module.exports = {
 
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
+		// Entries here are COMPLETELY ignored by the policy checker. Instead of adding entries here, consider adding
+		// entries to the handlerExclusions list below to ignore a particular.
 		exclusions: [
+			// The paths below are for fluidframework.com layouts and code and are not subject to policy.
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
-			"docs/tutorials/.*\\.tsx?",
-			"server/gitrest/package.json",
-			"server/historian/package.json",
+
+			// This file is a test file.
 			"tools/markdown-magic/test/package.json",
+
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
@@ -205,7 +228,15 @@ module.exports = {
 			],
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
+				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
+				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
+				"^packages/tools/fluid-runner/package.json",
+			],
+			"fluid-build-tasks-tsc": [
+				// This can be removed once the client release group is using build-tools 0.39.0+.
+				// See https://github.com/microsoft/FluidFramework/pull/21238
+				"^packages/test/test-end-to-end-tests/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -215,7 +246,11 @@ module.exports = {
 				// These files all require a node shebang at the top of the file.
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+				"server/routerlicious/packages/tinylicious/src/index.ts",
+
+				// Type test files can be excluded since they're generated and known to have the correct header.
+				// This can be removed once the whole repo uses build-tools v0.35.0+.
+				/.*\/validate.*\.generated\.ts/,
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
@@ -249,12 +284,16 @@ module.exports = {
 				"tools/changelog-generator-wrapper/src/index.js",
 				"tools/getkeys/index.js",
 			],
+			"npm-package-metadata-and-sorting": [
+				// The root package.json is not checked temporarily due to AB#8640
+				"^package.json",
+			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
-				// These packages use biome for formatting
-				"build-tools/",
+				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				".*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
@@ -288,11 +327,22 @@ module.exports = {
 				"packages/tools/devtools/devtools-browser-extension/package.json",
 				"packages/tools/devtools/devtools-view/package.json",
 			],
-			"npm-package-json-clean-script": [
-				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"^tools/markdown-magic",
-				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"^tools/getkeys",
+			"npm-package-exports-apis-linted": [
+				// Rollout suppressions - enable only after tools are updated to support policy
+				// as new build-tools will have the concurrently fluid-build support it uses.
+				"^common/",
+
+				// Packages that violate the API linting rules
+				// ae-missing-release-tags, ae-incompatible-release-tags
+				"^examples/data-objects/table-document/",
+				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
+				"^experimental/dds/tree/",
+
+				// Packages with APIs that don't need strict API linting
+				"^build-tools/",
+				"^common/build/",
+				"^experimental/PropertyDDS/",
+				"^tools/api-markdown-documenter/",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -310,7 +360,9 @@ module.exports = {
 			"npm-package-json-clean-script": [
 				"server/gitrest/package.json",
 				"server/historian/package.json",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"tools/getkeys/package.json",
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 			],
 			"npm-strange-package-name": [
@@ -379,6 +431,8 @@ module.exports = {
 					"@fluidframework",
 					"fluid-framework",
 					"@fluid-internal/client-utils",
+					"@fluid-internal/mocha-test-setup",
+					"@fluid-internal/test-driver-definitions",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
@@ -404,25 +458,27 @@ module.exports = {
 			// A list of script commands and the package that contains the command
 			commandPackages: [
 				["api-extractor", "@microsoft/api-extractor"],
-				["mocha", "mocha"],
-				["rimraf", "rimraf"],
-				["tsc", "typescript"],
-				["eslint", "eslint"],
-				["prettier", "prettier"],
-				["webpack", "webpack"],
-				["nyc", "nyc"],
+				["attw", "@arethetypeswrong/cli"],
+				["biome", "@biomejs/biome"],
 				["c8", "c8"],
-				["gf", "good-fences"],
+				["concurrently", "concurrently"],
+				["copyfiles", "copyfiles"],
 				["cross-env", "cross-env"],
+				["depcruise", "dependency-cruiser"],
+				["eslint", "eslint"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
-				["depcruise", "dependency-cruiser"],
-				["copyfiles", "copyfiles"],
+				["gf", "good-fences"],
+				["mocha", "mocha"],
+				["nyc", "nyc"],
 				["oclif", "oclif"],
+				["prettier", "prettier"],
 				["renamer", "renamer"],
+				["rimraf", "rimraf"],
+				["tinylicious", "tinylicious"],
 				["ts2esm", "ts2esm"],
-				["tsc-multi", "tsc-multi"],
-				["attw", "@arethetypeswrong/cli"],
+				["tsc", "typescript"],
+				["webpack", "webpack"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -435,7 +491,6 @@ module.exports = {
 			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
-			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
 			"@fluid-internal/eslint-plugin-fluid",
@@ -454,7 +509,8 @@ module.exports = {
 		},
 		// Requirements applied to all `public` packages.
 		publicPackageRequirements: {
-			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			// The following scripts combined with npm-package-exports-apis-linted policy are all currently required
+			// to ensure api-extractor is run correctly in local builds and pipelines.
 			requiredScripts: [
 				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
 				// {
@@ -463,15 +519,11 @@ module.exports = {
 				// },
 				{
 					name: "build:docs",
-					body: "fluid-build . --task api",
+					body: "api-extractor run --local",
 				},
 				{
 					name: "ci:build:docs",
 					body: "api-extractor run",
-				},
-				{
-					name: "check:release-tags",
-					body: "api-extractor run --local --config ./api-extractor-lint.json",
 				},
 			],
 			// All of our public packages should be using api-extractor

@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
-
-import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 
 /**
  * IMPORTANT: This function is duplicated in ./packages/runtime/test-runtime-utils/src/generateToken.ts. There is no
@@ -48,6 +49,7 @@ import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-de
  * @param ver - See {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
  * Default: `1.0`.
  *
+ * @legacy
  * @alpha
  */
 export function generateToken(

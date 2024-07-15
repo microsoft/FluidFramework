@@ -4,13 +4,17 @@
  */
 
 import {
-	appendToMergeTreeDeltaRevertibles,
-	discardMergeTreeDeltaRevertible,
 	ISegment,
 	MergeTreeDeltaRevertible,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
+} from "@fluidframework/merge-tree/internal";
+import {
+	SequenceDeltaEvent,
+	type ISharedSegmentSequence,
+} from "@fluidframework/sequence/internal";
+
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
@@ -20,7 +24,7 @@ import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
  */
 export class SharedSegmentSequenceUndoRedoHandler {
 	private readonly sequences = new Map<
-		SharedSegmentSequence<ISegment>,
+		ISharedSegmentSequence<ISegment>,
 		SharedSegmentSequenceRevertible | undefined
 	>();
 
@@ -28,17 +32,17 @@ export class SharedSegmentSequenceUndoRedoHandler {
 		this.stackManager.on("changePushed", () => this.sequences.clear());
 	}
 
-	public attachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>) {
+	public attachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>) {
 		sequence.on("sequenceDelta", this.sequenceDeltaHandler);
 	}
 
-	public detachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>) {
-		sequence.removeListener("sequenceDelta", this.sequenceDeltaHandler);
+	public detachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>) {
+		sequence.off("sequenceDelta", this.sequenceDeltaHandler);
 	}
 
 	private readonly sequenceDeltaHandler = (
 		event: SequenceDeltaEvent,
-		target: SharedSegmentSequence<ISegment>,
+		target: ISharedSegmentSequence<ISegment>,
 	) => {
 		if (event.isLocal) {
 			let revertible = this.sequences.get(target);
@@ -59,7 +63,7 @@ export class SharedSegmentSequenceUndoRedoHandler {
 export class SharedSegmentSequenceRevertible implements IRevertible {
 	private readonly revertibles: MergeTreeDeltaRevertible[];
 
-	constructor(public readonly sequence: SharedSegmentSequence<ISegment>) {
+	constructor(public readonly sequence: ISharedSegmentSequence<ISegment>) {
 		this.revertibles = [];
 	}
 

@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
-import { type IClient } from "@fluidframework/protocol-definitions";
+
+import { assert } from "@fluidframework/core-utils/internal";
+import { type IClient } from "@fluidframework/driver-definitions";
 
 import { type OdspMember } from "./interfaces.js";
 
@@ -27,6 +28,11 @@ interface OdspUser {
 	oid: string;
 }
 
+/**
+ * Creates an audience member from an IClient instance.
+ *
+ * @param audienceMember - the client instance/
+ */
 export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	const user = audienceMember.user as unknown as OdspUser;
 	assert(
@@ -35,7 +41,7 @@ export function createOdspAudienceMember(audienceMember: IClient): OdspMember {
 	);
 
 	return {
-		userId: user.oid,
+		id: user.oid,
 		name: user.name,
 		email: user.email,
 		connections: [],

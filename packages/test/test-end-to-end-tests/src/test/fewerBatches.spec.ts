@@ -4,10 +4,20 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import type { ISharedMap } from "@fluidframework/map";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -15,10 +25,8 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+} from "@fluidframework/test-utils/internal";
+
 describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
@@ -58,6 +66,13 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		const configWithFeatureGates = {
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
+			// This test counts number of ops and observes them at the container level.
+			// It has certain assumptions about count and shape of those ops.
+			// Disable op chunking to make sure test have full control over op stream, and thus can rely on those assumptions.
+			runtimeOptions: {
+				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+				...containerConfig.runtimeOptions,
+			},
 		};
 
 		// Create a Container for the first client.
@@ -99,6 +114,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 				...testContainerConfig,
 				runtimeOptions: {
 					flushMode: test.flushMode,
+					chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
 				},
 			});
 

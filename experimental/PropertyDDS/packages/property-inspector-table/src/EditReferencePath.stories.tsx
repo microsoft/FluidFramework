@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { InspectorDecorator } from "./InspectorDecorator";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { InspectorTableDecorator } from "./InspectorTableDecorator";
-import { EditReferencePath } from "./EditReferencePath";
+import { EditReferencePath } from "./EditReferencePath.js";
+import { InspectorDecorator } from "./InspectorDecorator.js";
+import { InspectorTableDecorator } from "./InspectorTableDecorator.js";
 
 storiesOf("EditReferencePath", module)
 	.addDecorator(InspectorDecorator)

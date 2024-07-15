@@ -6,7 +6,8 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions, OptionsMatrix } from "../index";
+
+import { OptionsMatrix, generatePairwiseOptions } from "../index.js";
 
 interface SimpleOptions {
 	oBoolean?: boolean;
@@ -15,7 +16,8 @@ interface SimpleOptions {
 	string?: string;
 	array?: number[];
 }
-const optionsToString = <T>(...options: T[]) => options.map((o) => JSON.stringify(o)).join("\n");
+const optionsToString = <T>(...options: T[]) =>
+	options.map((o) => JSON.stringify(o)).join("\n");
 
 const simpleOptionsMatrix: OptionsMatrix<SimpleOptions> = {
 	number: [undefined, 7],

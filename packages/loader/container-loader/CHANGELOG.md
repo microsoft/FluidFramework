@@ -1,5 +1,76 @@
 # @fluidframework/container-loader
 
+## 2.0.0-rc.5.0.0
+
+### Minor Changes
+
+-   Update to TypeScript 5.4 ([#21214](https://github.com/microsoft/FluidFramework/pull/21214)) [0e6256c722](https://github.com/microsoft/FluidFramework/commit/0e6256c722d8bf024f4325bf02547daeeb18bfa6)
+
+    Update package implementations to use TypeScript 5.4.5.
+
+-   container-loader: IDetachedBlobStorage is deprecated and replaced with a default in memory store for detached blobs ([#21144](https://github.com/microsoft/FluidFramework/pull/21144)) [2eebaa1775](https://github.com/microsoft/FluidFramework/commit/2eebaa1775dba0a677a005ba36f6f946c6324c21)
+
+    IDetachedBlobStorage will be removed in a future release without a replacement.
+
+    When applications load a container without specifying ILoaderServices.detachedBlobStorage, an implementation which stores the blobs in memory will be injected by Fluid.
+
+    IDetachedBlobStorage as well as application-defined implementations of it are deprecated and support will be removed for them in a future update.
+    Applications are recommended to stop providing this property on ILoaderServices.
+
+-   Update to ES 2022 ([#21292](https://github.com/microsoft/FluidFramework/pull/21292)) [68921502f7](https://github.com/microsoft/FluidFramework/commit/68921502f79b1833c4cd6d0fe339bfb126a712c7)
+
+    Update tsconfig to target ES 2022.
+
+## 2.0.0-rc.4.0.0
+
+### Major Changes
+
+-   Audience & connection sequencing improvements [96872186d0](https://github.com/microsoft/FluidFramework/commit/96872186d0d0f245c1fece7d19b3743e501679b6)
+
+    Here are breaking changes in Audience behavior:
+
+    1. IAudience no longer implements EventEmmiter. If you used addListener() or removeListener(), please replace with on() & off() respectively.
+    2. IAudience interface implements getSelf() method and "selfChanged" event.
+    3. IContainerContext.audience is no longer optional
+    4. "connected" events are now raised (various API surfaces - IContainer, IContainerRuntime, IFluidDataStoreRuntime, etc.) a bit later in reconnection sequence for "read" connections - only after client receives its own "join" signal and caught up on ops, which makes it symmetrical with "write" connections.
+
+    -   If this change in behavior breaks some scenario, please let us know immediately, but you can revert that behavior using the following feature gates:
+        -   "Fluid.Container.DisableCatchUpBeforeDeclaringConnected"
+        -   "Fluid.Container.DisableJoinSignalWait"
+
+## 2.0.0-rc.3.0.0
+
+### Major Changes
+
+-   container-definitions: IContainerContext.getSpecifiedCodeDetails() removed [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    IContainerContext.getSpecifiedCodeDetails() was deprecated in 0.42 and has now been removed.
+
+-   Packages now use package.json "exports" and require modern module resolution [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Fluid Framework packages have been updated to use the [package.json "exports"
+    field](https://nodejs.org/docs/latest-v18.x/api/packages.html#exports) to define explicit entry points for both
+    TypeScript types and implementation code.
+
+    This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
+
+    -   `"moduleResolution": "Node16"` with `"module": "Node16"`
+    -   `"moduleResolution": "Bundler"` with `"module": "ESNext"`
+
+    We recommend using Node16/Node16 unless absolutely necessary. That will produce transpiled JavaScript that is suitable
+    for use with modern versions of Node.js _and_ Bundlers.
+    [See the TypeScript documentation](https://www.typescriptlang.org/tsconfig#moduleResolution) for more information
+    regarding the module and moduleResolution options.
+
+    **Node10 moduleResolution is not supported; it does not support Fluid Framework's API structuring pattern that is used
+    to distinguish stable APIs from those that are in development.**
+
+### Minor Changes
+
+-   driver-definitions: update submitSignal content type to string [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+
+    Change IDocumentDeltaConnection.submitSignal's content argument type to string which represents actual/known use.
+
 ## 2.0.0-rc.2.0.0
 
 ### Minor Changes

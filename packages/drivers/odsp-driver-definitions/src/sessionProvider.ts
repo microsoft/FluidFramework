@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Socket storage discovery api response
+ * @legacy
  * @alpha
  */
 export interface ISocketStorageDiscovery {
@@ -50,6 +51,7 @@ export interface ISocketStorageDiscovery {
 /**
  * An interface that allows a concrete instance of a driver factory to interrogate itself
  * to find out if it is session aware.
+ * @legacy
  * @alpha
  */
 export interface IProvideSessionAwareDriverFactory {
@@ -59,6 +61,7 @@ export interface IProvideSessionAwareDriverFactory {
 /**
  * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
  * function if it session aware.
+ * @legacy
  * @alpha
  */
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {

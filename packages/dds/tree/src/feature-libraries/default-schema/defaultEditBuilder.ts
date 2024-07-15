@@ -3,40 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { OptionalChangeset } from "../optional-field/index.js";
-import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import type { ICodecFamily } from "../../codec/index.js";
 import {
-	ChangeFamily,
-	ChangeRebaser,
-	UpPath,
-	ChangeFamilyEditor,
-	FieldUpPath,
+	type ChangeEncodingContext,
+	type ChangeFamily,
+	type ChangeFamilyEditor,
+	type ChangeRebaser,
+	type ChangesetLocalId,
+	CursorLocationType,
+	type DeltaDetachedNodeId,
+	type DeltaRoot,
+	type FieldUpPath,
+	type ITreeCursorSynchronous,
+	type TaggedChange,
+	type UpPath,
 	compareFieldUpPaths,
 	topDownPath,
-	TaggedChange,
-	DeltaRoot,
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	CursorLocationType,
-	ITreeCursorSynchronous,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
+	type EditDescription,
+	type FieldChangeset,
+	type FieldEditDescription,
 	ModularChangeFamily,
+	type ModularChangeset,
 	ModularEditBuilder,
-	FieldChangeset,
-	ModularChangeset,
-	FieldEditDescription,
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
-	EditDescription,
 } from "../modular-schema/index.js";
-import { FieldBatchCodec } from "../chunked-forest/index.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
+import type { OptionalChangeset } from "../optional-field/index.js";
+
+import {
+	fieldKinds,
+	optional,
+	sequence,
+	required as valueFieldKind,
+} from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -45,22 +49,13 @@ export type DefaultChangeset = ModularChangeset;
  *
  * @sealed
  */
-export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
+export class DefaultChangeFamily
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>
+{
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(
-		revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategy,
-	) {
-		this.modularFamily = new ModularChangeFamily(
-			fieldKinds,
-			revisionTagCodec,
-			fieldBatchCodec,
-			codecOptions,
-			chunkCompressionStrategy,
-		);
+	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
+		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
@@ -97,10 +92,8 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
  *
  * @param change - The change to be applied.
  */
-export function relevantRemovedRoots(
-	taggedChange: TaggedChange<ModularChangeset>,
-): Iterable<DeltaDetachedNodeId> {
-	return relevantModularRemovedRoots(taggedChange, fieldKinds);
+export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDetachedNodeId> {
+	return relevantModularRemovedRoots(change, fieldKinds);
 }
 
 /**
@@ -244,10 +237,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				edits.push(edit);
 
-				this.modularBuilder.submitChanges(
-					edits,
-					newContent === undefined ? detachId : fillId,
-				);
+				this.modularBuilder.submitChanges(edits);
 			},
 		};
 	}
@@ -259,13 +249,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const moveId = this.modularBuilder.generateId(count);
+		if (count === 0) {
+			return;
+		} else if (count < 0 || !Number.isSafeInteger(count)) {
+			throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+		}
+		const detachId = this.modularBuilder.generateId(count);
+		const attachId = this.modularBuilder.generateId(count);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
 				count,
 				destIndex,
-				moveId,
+				detachId,
+				attachId,
 			);
 			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
 		} else {
@@ -283,11 +280,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					if (attachAncestorIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
-					} else {
-						assert(
-							sourceIndex + count <= attachAncestorIndex,
-							0x801 /* Invalid move: the destination is below one of the moved elements. */,
-						);
+					} else if (sourceIndex + count <= attachAncestorIndex) {
 						// The attach path runs through a node located after the detached nodes.
 						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
@@ -305,28 +298,34 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 							};
 						}
 						adjustedAttachField = { parent, field: destinationField.field };
+					} else {
+						throw new UsageError(
+							"Invalid move operation: the destination is located under one of the moved elements. Consider using the Tree.contains API to detect this.",
+						);
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, moveId);
-			const moveIn = sequence.changeHandler.editor.moveIn(destIndex, count, moveId);
-			this.modularBuilder.submitChanges(
-				[
-					{
-						type: "field",
-						field: sourceField,
-						fieldKind: sequence.identifier,
-						change: brand(moveOut),
-					},
-					{
-						type: "field",
-						field: adjustedAttachField,
-						fieldKind: sequence.identifier,
-						change: brand(moveIn),
-					},
-				],
-				moveId,
+			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, detachId);
+			const moveIn = sequence.changeHandler.editor.moveIn(
+				destIndex,
+				count,
+				detachId,
+				attachId,
 			);
+			this.modularBuilder.submitChanges([
+				{
+					type: "field",
+					field: sourceField,
+					fieldKind: sequence.identifier,
+					change: brand(moveOut),
+				},
+				{
+					type: "field",
+					field: adjustedAttachField,
+					fieldKind: sequence.identifier,
+					change: brand(moveIn),
+				},
+			]);
 		}
 	}
 
@@ -352,10 +351,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.
-				this.modularBuilder.submitChanges(
-					[build, attach],
-					brand((firstId as number) + length - 1),
-				);
+				this.modularBuilder.submitChanges([build, attach]);
 			},
 			remove: (index: number, count: number): void => {
 				if (count === 0) {
@@ -368,12 +364,19 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const moveId = this.modularBuilder.generateId(count);
+				if (count === 0) {
+					return;
+				} else if (count < 0 || !Number.isSafeInteger(count)) {
+					throw new UsageError(`Expected non-negative integer count, got ${count}.`);
+				}
+				const detachId = this.modularBuilder.generateId(count);
+				const attachId = this.modularBuilder.generateId(count);
 				const change = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,
 					destIndex,
-					moveId,
+					detachId,
+					attachId,
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
 			},

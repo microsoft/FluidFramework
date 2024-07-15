@@ -4,18 +4,26 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/core-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { FileStorageDocumentName } from "@fluidframework/file-driver";
-import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
-import { IFileSnapshot, StaticStorageDocumentServiceFactory } from "@fluidframework/replay-driver";
+
 import {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
-import { SnapshotStorageService } from "./snapshotStorageService";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	TreeEntry,
+	ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import { FileStorageDocumentName } from "@fluidframework/file-driver/internal";
+import {
+	IFileSnapshot,
+	StaticStorageDocumentServiceFactory,
+} from "@fluidframework/replay-driver/internal";
+
+import { SnapshotStorageService } from "./snapshotStorageService.js";
 
 const metadataBlobName = ".metadata";
 
@@ -61,7 +69,10 @@ export async function validateSnapshots(
 
 		// We must have a corresponding destination snapshot for the source snapshot.
 		const referenceDir = `${destDir}/${file.name}`;
-		assert(fs.existsSync(referenceDir), `Destination snapshot does not exist for ${file.name}`);
+		assert(
+			fs.existsSync(referenceDir),
+			`Destination snapshot does not exist for ${file.name}`,
+		);
 
 		const snapshotFileName = file.name.split(".")[0];
 		const sourceDir = `${srcDir}/${file.name}`;

@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
 describe("Data Store Registry Creation Tests", () => {

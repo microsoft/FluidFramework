@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
+
 import {
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,

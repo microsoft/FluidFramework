@@ -5,19 +5,19 @@
 
 import { strict as assert } from "assert";
 
-import type { ISharedMap } from "@fluidframework/map";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	waitForContainerConnection,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
 
 /**
  * This test validates that changing the FlushMode does not hit any validation errors in PendingStateManager.

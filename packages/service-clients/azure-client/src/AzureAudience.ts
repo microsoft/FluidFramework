@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
-import { type AzureMember, type AzureUser } from "./interfaces.js";
+import type { IClient, IUser } from "@fluidframework/driver-definitions";
+
+import type { AzureMember, AzureUser } from "./interfaces.js";
 
 /**
  * Creates Azure-specific audience member.
@@ -17,8 +18,8 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 	assertIsAzureUser(user);
 
 	return {
-		userId: user.id,
-		userName: user.name,
+		id: user.id,
+		name: user.name,
 		connections: [],
 		additionalDetails: user.additionalDetails,
 	};

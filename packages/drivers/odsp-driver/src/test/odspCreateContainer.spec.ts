@@ -4,18 +4,24 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IDocumentService } from "@fluidframework/driver-definitions";
+
 import { IRequest } from "@fluidframework/core-interfaces";
-import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
-import { getOdspResolvedUrl } from "../odspUtils.js";
-import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { LocalPersistentCache } from "../odspCache.js";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { IDocumentService } from "@fluidframework/driver-definitions/internal";
+import {
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
-import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { getOdspResolvedUrl } from "../odspUtils.js";
+
+import { mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";

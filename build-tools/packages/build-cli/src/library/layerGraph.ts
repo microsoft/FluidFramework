@@ -2,14 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
-import { readJsonSync } from "fs-extra";
+import { fileURLToPath } from "node:url";
 import { Package } from "@fluidframework/build-tools";
+import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface ILayerInfo {
 	deps?: string[];
@@ -451,9 +455,9 @@ export class LayerGraph {
 				const suffix = packageNode.indirectDependencies.has(depPackageNode)
 					? " [constraint=false color=lightgrey]"
 					: packageNode.layerNode !== depPackageNode.layerNode &&
-						  packageNode.level - depPackageNode.level > 3
-					  ? " [constraint=false]"
-					  : "";
+							packageNode.level - depPackageNode.level > 3
+						? " [constraint=false]"
+						: "";
 				dotEdges.push(`"${packageNode.dotName}"->"${depPackageNode.dotName}"${suffix}`);
 			}
 			return true;
@@ -590,7 +594,6 @@ ${lines.join(newline)}
 	}
 
 	public static load(root: string, packages: Package[], info?: string): LayerGraph {
-		// eslint-disable-next-line unicorn/prefer-module
 		const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
 		const layerData = readJsonSync(layerInfoFile) as ILayerInfoFile;
 		return new LayerGraph(root, layerData, packages);

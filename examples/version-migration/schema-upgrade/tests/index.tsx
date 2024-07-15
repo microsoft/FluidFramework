@@ -13,10 +13,10 @@ import {
 import React from "react";
 import ReactDOM from "react-dom";
 
-import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
-import { DebugView, InventoryListAppView } from "../src/view/index.js";
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
+import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -26,7 +26,9 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryListAppModel => {
+const isIInventoryListAppModel = (
+	model: IVersionedModel,
+): model is IInventoryListAppModel & IMigratableModel => {
 	return model.version === "one" || model.version === "two";
 };
 
@@ -43,7 +45,7 @@ window["migrators"] = [];
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	const searchParams = new URLSearchParams(location.search);
 	const testMode = searchParams.get("testMode") !== null;
-	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
+	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel & IMigratableModel>(
 		new DemoCodeLoader(testMode),
 	);
 	let id: string;
@@ -88,7 +90,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
+	const migrator = new Migrator(
+		modelLoader,
+		model,
+		id,
+		inventoryListDataTransformationCallback,
+	);
 	migrator.on("migrated", () => {
 		model.close();
 		render(migrator.currentModel);

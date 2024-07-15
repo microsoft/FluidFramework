@@ -4,54 +4,57 @@
  */
 
 import { strict as assert } from "node:assert";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import * as api from "@fluidframework/protocol-definitions";
+
 import { bufferToString } from "@fluid-internal/client-utils";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { ISnapshot, IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
-} from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 import { createNewFluidFile } from "../createFile.js";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
 import { EpochTracker } from "../epochTracker.js";
-import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils.js";
 import { LocalPersistentCache } from "../odspCache.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { IExistingFileInfo, INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+
 import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
-	const documentAttributes: api.IDocumentAttributes = {
+	const documentAttributes: IDocumentAttributes = {
 		minimumSequenceNumber: 0,
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = (): api.ISummaryTree => {
-		const summary: api.ISummaryTree = {
-			type: api.SummaryType.Tree,
+	const createSummary = (): ISummaryTree => {
+		const summary: ISummaryTree = {
+			type: SummaryType.Tree,
 			tree: {},
 		};
 
 		summary.tree[".app"] = {
-			type: api.SummaryType.Tree,
+			type: SummaryType.Tree,
 			tree: {
 				attributes: {
-					type: api.SummaryType.Blob,
+					type: SummaryType.Blob,
 					content: blobContent,
 				},
 			},
 		};
 		summary.tree[".protocol"] = {
-			type: api.SummaryType.Tree,
+			type: SummaryType.Tree,
 			tree: {
 				attributes: {
-					type: api.SummaryType.Blob,
+					type: SummaryType.Blob,
 					content: JSON.stringify(documentAttributes),
 				},
 			},
@@ -162,7 +165,12 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshotWithLoadingGroupId = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, true),
+		);
+		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
@@ -191,7 +199,12 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl, false));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const snapshotWithLoadingGroupId = await epochTracker.get(
+			createCacheSnapshotKey(odspResolvedUrl, true),
+		);
+		assert(snapshotWithLoadingGroupId === undefined, "snapshot should not exist");
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});

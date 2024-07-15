@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils";
-import { isOnline, OnlineStatus, canRetryOnError } from "./network.js";
+import type { ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
 
 /**
  * @internal

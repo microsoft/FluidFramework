@@ -2,17 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Button, Tooltip } from "@fluentui/react-components";
-import React from "react";
 
-import { type SharedCell } from "@fluidframework/cell";
+import { Button, Tooltip } from "@fluentui/react-components";
+import type { ISharedCell } from "@fluidframework/cell/internal";
+import React from "react";
 
 /**
  * {@link EmojiButton} input props.
  * @internal
  */
 export interface EmojiButtonProps {
-	emojiCell: SharedCell<boolean>;
+	emojiCell: ISharedCell<boolean>;
 }
 
 /**

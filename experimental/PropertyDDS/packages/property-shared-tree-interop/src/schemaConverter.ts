@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
-	fail,
+	Any,
+	FlexFieldKind as FieldKind,
 	FieldKinds,
 	FlexFieldSchema,
-	SchemaBuilderBase,
-	FlexFieldKind as FieldKind,
-	Any,
-	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
+	SchemaBuilderBase,
+	FlexTreeNodeSchema as TreeNodeSchema,
+	fail,
 	leaf,
 } from "@fluidframework/tree/internal";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 
 const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";
@@ -127,13 +127,7 @@ function buildTreeNodeSchema(
 			buildLocalFields(builder, nodeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
 			for (const inheritanceType of inheritanceChain) {
-				buildLocalFields(
-					builder,
-					nodeSchemaMap,
-					allChildrenByType,
-					inheritanceType,
-					fields,
-				);
+				buildLocalFields(builder, nodeSchemaMap, allChildrenByType, inheritanceType, fields);
 			}
 			if (typeid === nodePropertyType) {
 				cache.nodeSchema = nodePropertySchema;
@@ -246,7 +240,7 @@ function buildLocalFields(
 								property.typeid ?? "",
 								property.context,
 								false,
-						  )
+							)
 						: property.typeid ?? Any;
 				local.set(
 					property.id,

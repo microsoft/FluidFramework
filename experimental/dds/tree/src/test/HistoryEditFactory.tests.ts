@@ -4,9 +4,11 @@
  */
 
 import { expect } from 'chai';
+
 import { HistoryEditFactoryEvents, revert } from '../HistoryEditFactory.js';
 import { DetachedSequenceId, TraitLabel } from '../Identifiers.js';
 import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types/index.js';
+
 import { expectDefined } from './utilities/TestCommon.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
@@ -174,14 +176,8 @@ describe('revert', () => {
 					revert(
 						[
 							ChangeInternal.build([testTree.buildLeafInternal()], detachedId),
-							ChangeInternal.insert(
-								detachedId,
-								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
-							),
-							ChangeInternal.insert(
-								detachedId,
-								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
-							),
+							ChangeInternal.insert(detachedId, StablePlaceInternal.atStartOf(testTree.left.traitLocation)),
+							ChangeInternal.insert(detachedId, StablePlaceInternal.atStartOf(testTree.left.traitLocation)),
 						],
 						testTree.view,
 						undefined,

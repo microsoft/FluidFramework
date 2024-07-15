@@ -13,10 +13,10 @@ import {
 import React from "react";
 import ReactDOM from "react-dom";
 
-import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
-import { DebugView, InventoryListAppView } from "../src/view/index.js";
 import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
 import { DemoCodeLoader } from "../src/demoCodeLoader.js";
+import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -41,7 +41,9 @@ window["migrators"] = [];
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(new DemoCodeLoader());
+	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
+		new DemoCodeLoader(),
+	);
 	let id: string;
 	let model: ISameContainerMigratableModel;
 

@@ -4,17 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../simple-tree/proxies.js";
+
 import {
+	type InsertableTreeFieldFromImplicitField,
+	type NodeFromSchema,
 	SchemaFactory,
 	treeNodeApi as Tree,
-	InsertableTreeFieldFromImplicitField,
-	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-
-// eslint-disable-next-line import/no-internal-modules
-import { getFlexNode } from "../../simple-tree/flexNode.js";
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
@@ -61,9 +57,6 @@ describe("SharedTreeObject factories", () => {
 				["a", 0],
 				["b", 1],
 			]),
-			// TODO: Omit optional field once correctly supported.
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6569
-			optional: undefined,
 			grand: {
 				child: {
 					list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],
@@ -141,65 +134,6 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
 	});
 
-	describe("factory content extraction", () => {
-		it("extracts a primitive", () => {
-			assert.equal(extractFactoryContent(42).content, 42);
-		});
-		it("extracts an object", () => {
-			assert.deepEqual(extractFactoryContent(new ChildA({ content: 42 })).content, {
-				content: 42,
-			});
-		});
-		it("extracts an array of primitives", () => {
-			assert.deepEqual(extractFactoryContent([42, 42]).content, [42, 42]);
-		});
-		it("extracts an array of objects", () => {
-			assert.deepEqual(
-				extractFactoryContent([new ChildA({ content: 42 }), new ChildA({ content: 42 })])
-					.content,
-				[{ content: 42 }, { content: 42 }],
-			);
-		});
-		it("extracts an array of maps", () => {
-			assert.deepEqual(extractFactoryContent([new Map([["a", 42]])]).content, [
-				new Map([["a", 42]]),
-			]);
-		});
-		it("extracts a map of primitives", () => {
-			assert.deepEqual(
-				extractFactoryContent(new Map([["a", 42]])).content,
-				new Map([["a", 42]]),
-			);
-		});
-		it("extracts a map of objects", () => {
-			assert.deepEqual(
-				extractFactoryContent(new Map([["a", new ChildA({ content: 42 })]])).content,
-				new Map([["a", { content: 42 }]]),
-			);
-		});
-		it("extracts a map of arrays", () => {
-			assert.deepEqual(
-				extractFactoryContent(new Map([["a", [42]]])).content,
-				new Map([["a", [42]]]),
-			);
-		});
-		it("extracts an object tree", () => {
-			assert.deepEqual(
-				extractFactoryContent(
-					new ChildC({
-						child: new ChildD({
-							list: [new ChildA({ content: 42 })],
-							map: new Map([["a", new ChildA({ content: 42 })]]),
-						}),
-					}),
-				).content,
-				{
-					child: { list: [{ content: 42 }], map: new Map([["a", { content: 42 }]]) },
-				},
-			);
-		});
-	});
-
 	it("produce proxies that are hydrated before the tree can be read", () => {
 		// This regression test ensures that proxies can be produced by reading the tree during change events.
 		// Previously, this was not handled correctly because proxies would not be hydrated until after all change
@@ -215,10 +149,10 @@ describe("SharedTreeObject factories", () => {
 			const mapContent = root.grand.child.map.get("a");
 			assert(mapContent !== undefined);
 		}
-		getFlexNode(root).on("beforeChange", () => {
+		Tree.on(root, "treeChanged", () => {
 			readData();
 		});
-		Tree.on(root, "afterChange", () => {
+		Tree.on(root, "nodeChanged", () => {
 			readData();
 		});
 

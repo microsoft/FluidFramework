@@ -4,25 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
+	DefaultSummaryConfiguration,
 	IAckedSummary,
 	SummaryCollection,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { IDataStore } from "@fluidframework/runtime-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IDataStore } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -44,9 +45,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				summaryConfigOverrides: {
 					state: "disabled",
 				},
-			},
-			gcOptions: {
-				gcAllowed: true,
 			},
 		},
 	};
@@ -221,8 +219,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 					try {
 						await getAliasedDataStoreEntryPoint(dataObject1, alias);
 					} catch (err) {
-						const newDataStore =
-							await runtimeOf(dataObject1).createDataStore(packageName);
+						const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
 						datastores.push(newDataStore);
 						await newDataStore.trySetAlias(alias);
 						return getAliasedDataStoreEntryPoint(dataObject1, alias);
@@ -308,8 +305,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 
 			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 =
-				await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+			const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
 			await provider.ensureSynchronized();
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
@@ -337,9 +333,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 									initialSummarizerDelayMs: 10,
 								},
 							},
-						},
-						gcOptions: {
-							gcAllowed: true,
 						},
 					},
 				});

@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
-	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import type { IChannelAttributes } from "./storage.js";
+} from "@fluidframework/runtime-definitions/internal";
+
 import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
+import type { IChannelAttributes } from "./storage.js";
 
 /**
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -118,7 +120,8 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaHandler {
 	/**
@@ -128,7 +131,11 @@ export interface IDeltaHandler {
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
+	process: (
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) => void;
 
 	/**
 	 * State change events to indicate changes to the delta connection
@@ -173,7 +180,8 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -197,22 +205,12 @@ export interface IDeltaConnection {
 	 * that needs to be part of the summary but does not generate ops.
 	 */
 	dirty(): void;
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
 /**
  * Storage services to read the objects at a given path.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IChannelStorageService {
 	/**
@@ -233,7 +231,8 @@ export interface IChannelStorageService {
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @public
+ * @legacy
+ * @alpha
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -262,14 +261,15 @@ export interface IChannelServices {
  * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
  *
  * @privateRemarks
- * TChannel extends IFluidLoadable instead of TChannel since doing so enables LoadableObjectClass to be covariant over its input parameter.
+ * TChannel is intersected with IChannel when returned instead of constrained to it since doing so enables LoadableObjectClass to be covariant over its input parameter.
  * This means that code like fluid-static's `InitialObjects` can be simple and type safe and LoadableObjectClass<any> is not needed.
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @public
+ * @legacy
+ * @alpha
  */
-export interface IChannelFactory<out TChannel extends IFluidLoadable = IFluidLoadable> {
+export interface IChannelFactory<out TChannel = unknown> {
 	/**
 	 * String representing the type of the factory.
 	 */

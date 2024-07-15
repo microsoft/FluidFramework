@@ -4,24 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
-	FieldKey,
-	IForestSubscription,
+	type DeltaRoot,
+	type FieldKey,
+	type IForestSubscription,
+	type JsonableTree,
+	type TaggedChange,
+	type UpPath,
+	applyDelta,
 	initializeForest,
-	JsonableTree,
+	makeDetachedFieldIndex,
 	mapCursorField,
 	moveToDetachedField,
 	rootFieldKey,
-	TaggedChange,
-	UpPath,
-	applyDelta,
-	makeDetachedFieldIndex,
-	DeltaRoot,
 } from "../../../core/index.js";
-import { leaf, jsonObject } from "../../../domains/index.js";
+import { jsonObject, leaf } from "../../../domains/index.js";
 import {
 	DefaultChangeFamily,
-	DefaultChangeset,
+	type DefaultChangeset,
 	DefaultEditBuilder,
 	buildForest,
 	cursorForJsonableTreeNode,
@@ -29,12 +30,15 @@ import {
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { assertDeltaEqual, failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
-import { noopValidator } from "../../../codec/index.js";
+import {
+	assertDeltaEqual,
+	failCodecFamily,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-	jsonValidator: noopValidator,
-});
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -109,12 +113,21 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [cursorForJsonableTreeNode(data)], testRevisionTagCodec);
+		initializeForest(
+			forest,
+			[cursorForJsonableTreeNode(data)],
+			testRevisionTagCodec,
+			testIdCompressor,
+		);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex(undefined, testRevisionTagCodec);
+	const detachedFieldIndex = makeDetachedFieldIndex(
+		undefined,
+		testRevisionTagCodec,
+		testIdCompressor,
+	);
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
@@ -131,7 +144,10 @@ function initializeEditableForest(data?: JsonableTree): {
 	};
 }
 
-function expectForest(actual: IForestSubscription, expected: JsonableTree | JsonableTree[]): void {
+function expectForest(
+	actual: IForestSubscription,
+	expected: JsonableTree | JsonableTree[],
+): void {
 	const reader = actual.allocateCursor();
 	moveToDetachedField(actual, reader);
 	const copy = mapCursorField(reader, jsonableTreeFromCursor);
@@ -945,6 +961,24 @@ describe("DefaultEditBuilder", () => {
 						{ type: leaf.number.name, value: 2 },
 						{ type: leaf.number.name, value: 3 },
 					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Moving 0 items does nothing.", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 0, 0, { parent: root, field: fooKey }, 0);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [],
 				},
 			};
 			assert.deepEqual(treeView, [expected]);

@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
-import { newEditId } from './EditUtilities.js';
-import { TreeView } from './TreeView.js';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+
 import { Change } from './ChangeTypes.js';
+import { RestOrArray, unwrapRestOrArray } from './Common.js';
+import { newEditId } from './EditUtilities.js';
+import { CachingLogViewer } from './LogViewer.js';
 import { SharedTree } from './SharedTree.js';
 import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
-import { CachingLogViewer } from './LogViewer.js';
-import { RestOrArray, unwrapRestOrArray } from './Common.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
@@ -94,10 +95,7 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 			if (changes.length > 0) {
 				const previousView = this.currentView;
 				this.transaction.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
-				if (
-					this.listenerCount(TransactionEvent.ViewChange) > 0 &&
-					!previousView.hasEqualForest(this.currentView)
-				) {
+				if (this.listenerCount(TransactionEvent.ViewChange) > 0 && !previousView.hasEqualForest(this.currentView)) {
 					this.emit(TransactionEvent.ViewChange, previousView, this.currentView);
 				}
 			}

@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const _ = require("lodash");
-const { ConsoleUtils, constants } = require("@fluid-experimental/property-common");
+
 const { PathHelper, ChangeSet } = require("@fluid-experimental/property-changeset");
+const { ConsoleUtils, constants } = require("@fluid-experimental/property-common");
+const _ = require("lodash");
+
 const { BaseProperty } = require("./baseProperty");
 const { LazyLoadedProperties: Property } = require("./lazyLoadedProperties");
 
@@ -291,10 +293,8 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 			if (tokenTypes[i] !== PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN) {
 				node = node._resolvePathSegment(pathArr[i], tokenTypes[i]);
 				if (
-					in_options.referenceResolutionMode ===
-						BaseProperty.REFERENCE_RESOLUTION.ALWAYS ||
-					(in_options.referenceResolutionMode ===
-						BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS &&
+					in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS ||
+					(in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS &&
 						i !== pathArr.length - 1)
 				) {
 					if (node instanceof Property.ReferenceProperty) {
@@ -340,7 +340,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 		return this.has(in_segment)
 			? this.get(in_segment, {
 					referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER,
-			  })
+				})
 			: undefined;
 	}
 
@@ -376,9 +376,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 				property._setValues(propertyValue, in_typed, in_initial);
 			} else if (property instanceof BaseProperty) {
 				const typeid = property.getTypeid();
-				throw new Error(
-					MSG.SET_VALUES_PATH_PROPERTY + propertyKey + ", of type: " + typeid,
-				);
+				throw new Error(MSG.SET_VALUES_PATH_PROPERTY + propertyKey + ", of type: " + typeid);
 			} else if (property === undefined) {
 				throw new Error(MSG.SET_VALUES_PATH_INVALID + propertyKey);
 			}

@@ -4,17 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockContainerRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
 
 [
 	{
@@ -49,7 +51,7 @@ import { SharedStringFactory } from "../sequenceFactory.js";
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			const sharedString = new SharedString(
+			const sharedString = new SharedStringClass(
 				dataStoreRuntime,
 				id,
 				SharedStringFactory.Attributes,

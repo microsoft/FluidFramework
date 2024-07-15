@@ -2,20 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PromiseCache } from "@fluidframework/core-utils";
+
+import { PromiseCache } from "@fluidframework/core-utils/internal";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	IOdspResolvedUrl,
-	IFileEntry,
-	IEntry,
-	IPersistedCache,
 	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IOdspResolvedUrl,
+	IPersistedCache,
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
+ * @legacy
  * @alpha
  */
 export interface IPersistedFileCache {
@@ -94,6 +96,7 @@ export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string
 
 /**
  * Internal cache interface used within driver only
+ * @legacy
  * @alpha
  */
 export interface INonPersistentCache {
@@ -119,6 +122,7 @@ export interface INonPersistentCache {
 
 /**
  * Internal cache interface used within driver only
+ * @legacy
  * @alpha
  */
 export interface IOdspCache extends INonPersistentCache {
@@ -143,6 +147,7 @@ export class NonPersistentCache implements INonPersistentCache {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IPrefetchSnapshotContents extends ISnapshot {

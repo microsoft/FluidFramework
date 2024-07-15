@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorTypes,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -17,15 +17,12 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions";
-import {
-	IClient,
-	ISummaryTree,
+	DriverErrorTypes,
 	IDocumentMessage,
 	INack,
 	NackErrorType,
-} from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-definitions/internal";
+import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -47,8 +44,8 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 			clientIsSummarizer,
 		);
 		const ds = new FaultInjectionDocumentService(internal);
-		assert(!this._documentServices.has(resolvedUrl), "one ds per resolved url instance");
-		this._documentServices.set(resolvedUrl, ds);
+		assert(!this._documentServices.has(ds.resolvedUrl), "one ds per resolved url instance");
+		this._documentServices.set(ds.resolvedUrl, ds);
 		return ds;
 	}
 	async createContainer(
@@ -302,7 +299,9 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 }
 
-export class FaultInjectionDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+export class FaultInjectionDocumentDeltaStorageService
+	implements IDocumentDeltaStorageService
+{
 	constructor(
 		private readonly internal: IDocumentDeltaStorageService,
 		private online: boolean,
@@ -389,7 +388,11 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 }
 
 function throwOfflineError(): never {
-	throw new FaultInjectionError("simulated offline error", false, DriverErrorTypes.offlineError);
+	throw new FaultInjectionError(
+		"simulated offline error",
+		false,
+		DriverErrorTypes.offlineError,
+	);
 }
 
 export class FaultInjectionError extends LoggingError {

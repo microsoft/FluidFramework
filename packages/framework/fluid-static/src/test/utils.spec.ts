@@ -4,22 +4,30 @@
  */
 
 import { strict as assert } from "node:assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { MapFactory, SharedMap } from "@fluidframework/map";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
-import { parseDataObjectsFromSharedObjects } from "../utils.js";
-import { type ContainerSchema } from "../types.js";
 
-class TestDataObject extends DataObject {
+import {
+	DataObject,
+	DataObjectFactory,
+	createDataObjectKind,
+} from "@fluidframework/aqueduct/internal";
+import { MapFactory, SharedMap } from "@fluidframework/map/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+
+import type { ContainerSchema } from "../types.js";
+import { parseDataObjectsFromSharedObjects } from "../utils.js";
+
+class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
-		TestDataObject.Name,
-		TestDataObject,
+		TestDataObjectClass.Name,
+		TestDataObjectClass,
 		[],
 		{},
 	);
 }
+
+const TestDataObject = createDataObjectKind(TestDataObjectClass);
 
 describe("parseDataObjectsFromSharedObjects", () => {
 	it("should be able to handle basic DDS types", () => {
@@ -36,7 +44,11 @@ describe("parseDataObjectsFromSharedObjects", () => {
 
 		const types = sharedObjects.map((item) => item.type);
 		assert.strictEqual(types[0], MapFactory.Type, "SharedMap should be included");
-		assert.strictEqual(types[1], SharedStringFactory.Type, "SharedString should be included");
+		assert.strictEqual(
+			types[1],
+			SharedString.getFactory().type,
+			"SharedString should be included",
+		);
 	});
 
 	it("should be able to handle dup DDS types", () => {
@@ -54,7 +66,11 @@ describe("parseDataObjectsFromSharedObjects", () => {
 
 		const types = sharedObjects.map((item) => item.type);
 		assert.strictEqual(types[0], MapFactory.Type, "SharedMap should be included");
-		assert.strictEqual(types[1], SharedStringFactory.Type, "SharedString should be included");
+		assert.strictEqual(
+			types[1],
+			SharedString.getFactory().type,
+			"SharedString should be included",
+		);
 	});
 
 	it("should be able to handle Data Objects", () => {

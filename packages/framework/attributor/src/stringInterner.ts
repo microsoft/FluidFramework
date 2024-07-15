@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the
@@ -61,7 +61,7 @@ export class MutableStringInterner implements StringInterner {
 	 */
 	public getString(internId: number): string {
 		const result = this.internedStrings[internId];
-		if (!result) {
+		if (result === undefined) {
 			throw new UsageError(`No string associated with ${internId}.`);
 		}
 		return result;

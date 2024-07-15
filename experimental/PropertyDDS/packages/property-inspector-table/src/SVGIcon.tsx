@@ -7,7 +7,7 @@ import { makeStyles } from "@material-ui/core";
 import classNames from "classnames";
 import * as React from "react";
 
-import { iconBaseColor, iconHoverColor, iconSelectColor } from "./constants";
+import { iconBaseColor, iconHoverColor, iconSelectColor } from "./constants.js";
 
 const useStyles = makeStyles(
 	{

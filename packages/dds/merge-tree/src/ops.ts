@@ -5,6 +5,7 @@
 
 /**
  * Flags enum that dictates behavior of a {@link ReferencePosition}
+ * @legacy
  * @alpha
  */
 export enum ReferenceType {
@@ -48,6 +49,7 @@ export enum ReferenceType {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMarkerDef {
@@ -56,6 +58,7 @@ export interface IMarkerDef {
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 /**
+ * @legacy
  * @alpha
  */
 export const MergeTreeDeltaType = {
@@ -70,11 +73,13 @@ export const MergeTreeDeltaType = {
 } as const;
 
 /**
+ * @legacy
  * @alpha
  */
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeDelta {
@@ -86,6 +91,7 @@ export interface IMergeTreeDelta {
 
 /**
  * A position specified relative to a segment.
+ * @legacy
  * @alpha
  */
 export interface IRelativePosition {
@@ -106,6 +112,7 @@ export interface IRelativePosition {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
@@ -114,10 +121,14 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
+	// The segment must be allowed to be of any type in order to acommodate converting from
+	// JSON to a segment.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	seg?: any;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
@@ -132,6 +143,7 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
  * @deprecated We no longer intend to support this functionality and it will
  * be removed in a future release. There is no replacement for this
  * functionality.
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
@@ -151,6 +163,7 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
@@ -159,6 +172,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	relativePos1?: IRelativePosition;
 	pos2?: number;
 	relativePos2?: IRelativePosition;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props: Record<string, any>;
 }
 
@@ -167,6 +181,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
  * release, as group ops are redundant with the native batching capabilities
  * of the runtime
  *
+ * @legacy
  * @alpha
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
@@ -175,13 +190,16 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export interface IJSONSegment {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props?: Record<string, any>;
 }
 
 /**
+ * @legacy
  * @alpha
  */
 export type IMergeTreeDeltaOp =
@@ -191,6 +209,7 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeObliterateMsg;
 
 /**
+ * @legacy
  * @alpha
  */
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;

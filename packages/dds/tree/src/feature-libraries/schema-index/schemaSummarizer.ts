@@ -4,30 +4,36 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import {
+import { assert } from "@fluidframework/core-utils/internal";
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IGarbageCollectionData,
+} from "@fluidframework/datastore-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	IExperimentalIncrementalSummaryContext,
-} from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SummaryType } from "@fluidframework/protocol-definitions";
-import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
-import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+
+import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import {
+	type MutableTreeStoredSchema,
+	type TreeStoredSchema,
+	schemaDataIsEmpty,
+} from "../../core/index.js";
+import type {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { JsonCompatible } from "../../util/index.js";
-import { CollabWindow } from "../incrementalSummarizationUtils.js";
-import { Format } from "./format.js";
+import type { JsonCompatible } from "../../util/index.js";
+import type { CollabWindow } from "../incrementalSummarizationUtils.js";
+
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
+import type { Format } from "./format.js";
 
 const schemaStringKey = "SchemaString";
 /**
