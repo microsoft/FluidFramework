@@ -12,32 +12,6 @@ const {
 } = require("../utilities.cjs");
 
 /**
- * Generates simple Markdown contents indicating that the associated package is experimental.
- */
-const generateExperimentalPackageNotice = () => {
-	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
-};
-
-/**
- * Generates simple Markdown contents indicating that the associated package is internal to the fluid-framework
- * (published, but not intended for external consumption).
- */
-const generateInternalPackageNotice = () => {
-	const rawContents = readTemplate("Internal-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
-};
-
-/**
- * Generates simple Markdown contents indicating that the associated package is private to the fluid-framework
- * (unpublished - used only within the repo).
- */
-const generatePrivatePackageNotice = () => {
-	const rawContents = readTemplate("Private-Package-Notice-Template.md");
-	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
-};
-
-/**
  * Generates simple Markdown contents indicating implications of the specified kind of package scope.
  *
  * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE"} kind - Scope kind to switch on.
@@ -46,16 +20,25 @@ const generatePrivatePackageNotice = () => {
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
  */
 const generatePackageScopeNotice = (kind) => {
+	let rawContents;
 	switch (kind) {
 		case "EXPERIMENTAL":
-			return generateExperimentalPackageNotice();
+			rawContents = readTemplate("Experimental-Package-Notice-Template.md");
+			break;
 		case "INTERNAL":
-			return generateInternalPackageNotice();
+			rawContents = readTemplate("Internal-Package-Notice-Template.md");
+			break;
 		case "PRIVATE":
-			return generatePrivatePackageNotice();
+			rawContents = readTemplate("Private-Package-Notice-Template.md");
+			break;
+		case "TOOLS":
+			rawContents = readTemplate("Tools-Package-Notice-Template.md");
+			break;
 		default:
 			throw new Error(`Unrecognized package scope kind: ${kind}`);
 	}
+
+	return formattedSectionText(rawContents, /* headingOptions: */ undefined);
 };
 
 /**

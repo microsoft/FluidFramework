@@ -213,10 +213,10 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
  * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
- * Default: `TRUE`.
+ * Default: Will be displayed if the package is not a member of the `@fluid-internal` or `@fluid-private` namespaces.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
- * Default: `FALSE`.
+ * Default: `TRUE` for packages in the `@fluid-tools` namespace, `FALSE` otherwise.
  * @param {"FALSE" | undefined} options.importInstructions - (optional) Whether or not to include information about how to import from the package's export options.
  * Default: Checks at the `package.json` file for an `exports` property.
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
@@ -240,27 +240,36 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 
 	const sections = [];
 
+	const scopeKind = getScopeKindFromPackage(packageName);
+
 	// Note: if the user specified an explicit scope, that takes precedence over the package namespace.
-	const scopeKind = options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
-	if (scopeKind !== undefined) {
-		sections.push(generatePackageScopeNotice(scopeKind));
+	const scopeNoticeKind = options.packageScopeNotice ?? scopeKind;
+	if (scopeNoticeKind !== undefined) {
+		sections.push(generatePackageScopeNotice(scopeNoticeKind));
 	}
 
-	if (options.installation !== "FALSE") {
+	if (
+		options.installation === "TRUE" ||
+		(options.installation !== "FALSE" && scopeKind !== "PRIVATE" && scopeKind !== "INTERNAL")
+	) {
 		sections.push(
 			generateDependencyGuidelines(sectionHeadingOptions),
 			generateInstallationInstructionsSection(
 				packageName,
-				options.devDependency,
+				options.devDependency ?? scopeKind === "TOOLS",
 				sectionHeadingOptions,
 			),
 		);
 	}
 
 	if (options.importInstructions !== "FALSE") {
-		sections.push(
-			generatePackageImportInstructionsSection(packageMetadata, sectionHeadingOptions),
+		const section = generatePackageImportInstructionsSection(
+			packageMetadata,
+			sectionHeadingOptions,
 		);
+		if (section !== undefined) {
+			sections.push(section);
+		}
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));

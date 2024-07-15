@@ -95,7 +95,7 @@ function getPackageMetadata(packageJsonFilePath) {
  * Gets the appropriate scope kind for the provided package name.
  *
  * @param {string} packageName
- * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
+ * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} A scope kind based on the package's scope (namespace).
  */
 const getScopeKindFromPackage = (packageName) => {
 	const packageScope = PackageName.getScope(packageName);
@@ -105,6 +105,8 @@ const getScopeKindFromPackage = (packageName) => {
 		return "INTERNAL";
 	} else if (packageScope === `@fluid-private`) {
 		return "PRIVATE";
+	} else if (packageScope === "@fluid-tools") {
+		return "TOOLS";
 	} else {
 		return undefined;
 	}

@@ -21,6 +21,7 @@ const {
  * @param {boolean} headingOptions.includeHeading - Whether or not to include a top-level heading in the generated section.
  * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
  * Must be a positive integer.
+ * @returns {string | undefined} Generated Markdown content, if any was generated. `undefined` otherwise.
  */
 const generatePackageImportInstructionsSection = (packageMetadata, headingOptions) => {
 	const packageName = packageMetadata.name;
@@ -28,7 +29,7 @@ const generatePackageImportInstructionsSection = (packageMetadata, headingOption
 
 	// If the package.json doesn't include an exports block, don't generate anything.
 	if (!packageExports) {
-		return "";
+		return undefined;
 	}
 
 	// Currently assumes the package has a `.` export path.
@@ -39,7 +40,7 @@ const generatePackageImportInstructionsSection = (packageMetadata, headingOption
 
 	// If the package.json's exports block doesn't include one of our special paths, don't generate anything.
 	if (!(hasAlphaExport || hasBetaExport || hasLegacyExport)) {
-		return "";
+		return undefined;
 	}
 
 	const lines = [
@@ -97,7 +98,7 @@ function packageImportInstructionsSectionTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 
 	return formattedGeneratedContentBody(
-		generatePackageImportInstructionsSection(packageMetadata, headingOptions),
+		generatePackageImportInstructionsSection(packageMetadata, headingOptions) ?? "",
 	);
 }
 

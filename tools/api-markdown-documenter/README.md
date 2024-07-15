@@ -11,10 +11,13 @@ It is similar to [API-Documenter][] and is heavily based upon it and uses it und
 **Note**: this library does not currently offer a Command Line Interface (CLI).
 One may be added in the future, but for now this library is intended to be consumed programmatically.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:devDependency=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**NOTE: This package is a tools library intended for use within the `@microsoft/fluid-framework` repository and is not intended for public consumption.**
+**We make no stability guarantees regarding its APIs.**
 
 ## Using Fluid Framework libraries
 
