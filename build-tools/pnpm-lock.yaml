@@ -32,14 +32,14 @@ importers:
         specifier: ^17.5.0
         version: 17.5.0(commitizen@4.3.0)(inquirer@8.2.5)
       '@fluid-tools/build-cli':
-        specifier: ~0.38.0
-        version: 0.38.0
+        specifier: ~0.40.0
+        version: 0.40.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ~0.38.0
-        version: 0.38.0
+        specifier: ~0.40.0
+        version: 0.40.0
       '@microsoft/api-documenter':
         specifier: ^7.22.24
         version: 7.22.24
@@ -429,6 +429,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@fluidframework/build-tools-bin':
+        specifier: npm:@fluidframework/build-tools@~0.40.0
+        version: /@fluidframework/build-tools@0.40.0(@types/node@18.18.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.57.0)(typescript@5.4.5)
@@ -499,6 +502,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@fluidframework/build-tools-bin':
+        specifier: npm:@fluidframework/build-tools@~0.40.0
+        version: /@fluidframework/build-tools@0.40.0(@types/node@18.18.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.57.0)(typescript@5.4.5)
@@ -548,6 +554,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@fluidframework/build-tools-bin':
+        specifier: npm:@fluidframework/build-tools@~0.40.0
+        version: /@fluidframework/build-tools@0.40.0(@types/node@18.18.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.57.0)(typescript@5.4.5)
@@ -636,6 +645,9 @@ importers:
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
+      '@fluidframework/build-tools-bin':
+        specifier: npm:@fluidframework/build-tools@~0.40.0
+        version: /@fluidframework/build-tools@0.40.0(@types/node@18.18.6)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.3.0
         version: 5.3.0(eslint@8.57.0)(typescript@5.4.5)
@@ -715,7 +727,6 @@ packages:
 
   /@andrewbranch/untar.js@1.0.3:
     resolution: {integrity: sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw==}
-    dev: false
 
   /@aws-crypto/crc32@3.0.0:
     resolution: {integrity: sha512-IzSgsrxUcsrejQbPVilIKy16kAT52EwB6zSaI+M3xxIhKh5+aldEyvI+z6erM7TCLB2BJsFrtHjp6/4/sr+3dA==}
@@ -774,7 +785,7 @@ packages:
   /@aws-crypto/util@3.0.0:
     resolution: {integrity: sha512-2OJlpeJpCR48CC8r+uKVChzs9Iungj9wkZrl8Z041DWEWvyIHILYKCPNzJghKsivj+S3mLo6BVc7mBNzdxA46w==}
     dependencies:
-      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/types': 3.567.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
 
@@ -917,26 +928,26 @@ packages:
       '@aws-sdk/util-user-agent-browser': 3.535.0
       '@aws-sdk/util-user-agent-node': 3.535.0
       '@smithy/config-resolver': 2.2.0
-      '@smithy/core': 1.4.0
+      '@smithy/core': 1.4.2
       '@smithy/fetch-http-handler': 2.5.0
       '@smithy/hash-node': 2.2.0
       '@smithy/invalid-dependency': 2.2.0
       '@smithy/middleware-content-length': 2.2.0
-      '@smithy/middleware-endpoint': 2.5.0
-      '@smithy/middleware-retry': 2.2.0
+      '@smithy/middleware-endpoint': 2.5.1
+      '@smithy/middleware-retry': 2.3.1
       '@smithy/middleware-serde': 2.3.0
       '@smithy/middleware-stack': 2.2.0
       '@smithy/node-config-provider': 2.3.0
       '@smithy/node-http-handler': 2.5.0
       '@smithy/protocol-http': 3.3.0
-      '@smithy/smithy-client': 2.5.0
+      '@smithy/smithy-client': 2.5.1
       '@smithy/types': 2.12.0
       '@smithy/url-parser': 2.2.0
       '@smithy/util-base64': 2.3.0
       '@smithy/util-body-length-browser': 2.2.0
       '@smithy/util-body-length-node': 2.3.0
-      '@smithy/util-defaults-mode-browser': 2.2.0
-      '@smithy/util-defaults-mode-node': 2.3.0
+      '@smithy/util-defaults-mode-browser': 2.2.1
+      '@smithy/util-defaults-mode-node': 2.3.1
       '@smithy/util-endpoints': 1.2.0
       '@smithy/util-middleware': 2.2.0
       '@smithy/util-retry': 2.2.0
@@ -962,26 +973,26 @@ packages:
       '@aws-sdk/util-user-agent-browser': 3.535.0
       '@aws-sdk/util-user-agent-node': 3.535.0
       '@smithy/config-resolver': 2.2.0
-      '@smithy/core': 1.4.0
+      '@smithy/core': 1.4.2
       '@smithy/fetch-http-handler': 2.5.0
       '@smithy/hash-node': 2.2.0
       '@smithy/invalid-dependency': 2.2.0
       '@smithy/middleware-content-length': 2.2.0
-      '@smithy/middleware-endpoint': 2.5.0
-      '@smithy/middleware-retry': 2.2.0
+      '@smithy/middleware-endpoint': 2.5.1
+      '@smithy/middleware-retry': 2.3.1
       '@smithy/middleware-serde': 2.3.0
       '@smithy/middleware-stack': 2.2.0
       '@smithy/node-config-provider': 2.3.0
       '@smithy/node-http-handler': 2.5.0
       '@smithy/protocol-http': 3.3.0
-      '@smithy/smithy-client': 2.5.0
+      '@smithy/smithy-client': 2.5.1
       '@smithy/types': 2.12.0
       '@smithy/url-parser': 2.2.0
       '@smithy/util-base64': 2.3.0
       '@smithy/util-body-length-browser': 2.2.0
       '@smithy/util-body-length-node': 2.3.0
-      '@smithy/util-defaults-mode-browser': 2.2.0
-      '@smithy/util-defaults-mode-node': 2.3.0
+      '@smithy/util-defaults-mode-browser': 2.2.1
+      '@smithy/util-defaults-mode-node': 2.3.1
       '@smithy/util-endpoints': 1.2.0
       '@smithy/util-middleware': 2.2.0
       '@smithy/util-retry': 2.2.0
@@ -1137,7 +1148,7 @@ packages:
       '@smithy/node-http-handler': 2.5.0
       '@smithy/property-provider': 2.2.0
       '@smithy/protocol-http': 3.3.0
-      '@smithy/smithy-client': 2.5.0
+      '@smithy/smithy-client': 2.5.1
       '@smithy/types': 2.12.0
       '@smithy/util-stream': 2.2.0
       tslib: 2.6.2
@@ -1786,7 +1797,7 @@ packages:
     engines: {node: '>=v14'}
     dependencies:
       '@commitlint/types': 17.4.4
-      ajv: 8.12.0
+      ajv: 8.13.0
     dev: true
 
   /@commitlint/config-validator@18.1.0:
@@ -1795,7 +1806,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@commitlint/types': 18.1.0
-      ajv: 8.12.0
+      ajv: 8.13.0
     dev: true
     optional: true
 
@@ -2077,14 +2088,15 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/build-cli@0.38.0:
-    resolution: {integrity: sha512-QvfpjBidx9+bCsSIeqsZiRLg/dDmYrMZeJvAq6zRxhUynnA74koIIt2hbp0cP4MWbDWxMCMUvgLpzJHKuVVslA==}
-    engines: {node: '>=14.17.0'}
+  /@fluid-tools/build-cli@0.40.0:
+    resolution: {integrity: sha512-RMGe8MvngnAElSWyJXnAyjAYiIKxCXHdDMpYzHmYb9LL7JJRgA+VrYEAJdetO2kkF8jJxocVtnpfSPrWd3tDug==}
+    engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/build-tools': 0.38.0
-      '@fluidframework/bundle-size-tools': 0.38.0
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/version-tools': 0.40.0
+      '@fluidframework/build-tools': 0.40.0
+      '@fluidframework/bundle-size-tools': 0.40.0
       '@microsoft/api-extractor': 7.45.1(@types/node@18.18.6)
       '@oclif/core': 3.26.6
       '@oclif/plugin-autocomplete': 3.0.16
@@ -2092,15 +2104,16 @@ packages:
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
+      '@rushstack/node-core-library': 3.59.5
       async: 3.2.4
-      chalk: 2.4.2
+      chalk: 5.3.0
       change-case: 3.1.0
       danger: 11.3.0
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
       execa: 5.1.1
-      fs-extra: 9.1.0
+      fflate: 0.8.2
+      fs-extra: 11.2.0
       globby: 11.1.0
       gray-matter: 4.0.3
       human-id: 4.0.0
@@ -2109,7 +2122,7 @@ packages:
       jssm: 5.98.2(patch_hash=jvxmn6yyt5s6cxokjpzzkp2gqy)
       latest-version: 5.1.0
       minimatch: 7.4.6
-      node-fetch: 2.6.9
+      node-fetch: 3.3.2
       npm-check-updates: 16.14.20
       oclif: 4.10.1
       prettier: 3.2.5
@@ -2140,9 +2153,9 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools@0.38.0:
-    resolution: {integrity: sha512-sPGkM+2BMv0/QSSXwGEl8y+/cprookyS7mKQFdk3UiBlLBPr8uQcNxG1xPxpmM9JwZH63Q55dy56u4TnjuNoNQ==}
-    engines: {node: '>=14.17.0'}
+  /@fluid-tools/version-tools@0.40.0:
+    resolution: {integrity: sha512-cwgU16+buDe3hf0EotxCzy4GPFXBmaNpECGPTZ4FHkyP8ciGTbei+d7J+3NfP731tdInm5EVS5+e5DEawFykBQ==}
+    engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
       '@oclif/core': 3.26.6
@@ -2162,16 +2175,16 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.38.0:
-    resolution: {integrity: sha512-ZEUnUmaPDGhKRHQBjFwDW1YEHk1twDMqcB7Bj5fSfDheQyxbBGAOyKDIST7zTn/NB3zpARC3rE3R5/3NFnCCcA==}
-    engines: {node: '>=14.17.0'}
+  /@fluidframework/build-tools@0.40.0:
+    resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
+    engines: {node: '>=18.17.1'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/bundle-size-tools': 0.38.0
+      '@fluid-tools/version-tools': 0.40.0
+      '@fluidframework/bundle-size-tools': 0.40.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
+      '@rushstack/node-core-library': 3.59.5
       async: 3.2.4
       chalk: 2.4.2
       cosmiconfig: 8.2.0
@@ -2180,7 +2193,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       detect-indent: 6.1.0
       find-up: 7.0.0
-      fs-extra: 9.1.0
+      fs-extra: 11.2.0
       glob: 7.2.3
       ignore: 5.2.4
       json5: 2.2.3
@@ -2192,7 +2205,7 @@ packages:
       sort-package-json: 1.57.0
       ts-morph: 22.0.0
       type-fest: 2.19.0
-      typescript: 5.1.6
+      typescript: 5.4.5
       yaml: 2.3.1
     transitivePeerDependencies:
       - '@swc/core'
@@ -2204,14 +2217,56 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools@0.38.0:
-    resolution: {integrity: sha512-OaevKCCZKwnSI1iF3wnSgKR52xwtI74AVJsO1o9rjVyZMd78cdBK2KIZjqv7rIDINaqVlsZnulvrEx+AbBrg/g==}
+  /@fluidframework/build-tools@0.40.0(@types/node@18.18.6):
+    resolution: {integrity: sha512-4F5tNPlwrlD2QkaJgnkkECy3aWf7TR6fjbPI9RhnFJw2Fo6ZkamoIMWyliqSyiJwrAeLDvsdZsVgVRscjmZTBw==}
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.40.0
+      '@fluidframework/bundle-size-tools': 0.40.0
+      '@manypkg/get-packages': 2.2.0
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
+      async: 3.2.4
+      chalk: 2.4.2
+      cosmiconfig: 8.2.0
+      danger: 11.3.0
+      date-fns: 2.30.0
+      debug: 4.3.4(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 11.2.0
+      glob: 7.2.3
+      ignore: 5.2.4
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      picomatch: 2.3.1
+      rimraf: 4.4.1
+      semver: 7.6.2
+      sort-package-json: 1.57.0
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      typescript: 5.4.5
+      yaml: 2.3.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/bundle-size-tools@0.40.0:
+    resolution: {integrity: sha512-80fG4pECvaey0GkEc/F2kNQ2Y/g70OYUbtKMp9vXtdNlZeRFoX6Z2B9vji+V+qw5u6FoYe5qErPCn1KqFCKkXQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
       msgpack-lite: 0.1.26
       pako: 2.1.0
-      typescript: 5.1.6
+      typescript: 5.4.5
       webpack: 5.88.1
     transitivePeerDependencies:
       - '@swc/core'
@@ -2506,9 +2561,9 @@ packages:
     resolution: {integrity: sha512-rD1UI3eARN9qJBcLRXPOaZu++Bg+xsk0Tuz1EUOXEW+UbYif1sGjr0Tw7lKejHzKD9IbXE1CEtZ+xR/DrNlQGQ==}
     engines: {node: '>=18'}
     dependencies:
-      '@inquirer/type': 1.2.1
+      '@inquirer/type': 1.3.1
       '@types/mute-stream': 0.0.4
-      '@types/node': 20.11.30
+      '@types/node': 20.12.8
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       chalk: 4.1.2
@@ -2662,7 +2717,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor-model': 7.27.4
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
+      '@rushstack/node-core-library': 3.59.5
       '@rushstack/ts-command-line': 4.15.1
       colors: 1.2.5
       js-yaml: 3.13.1
@@ -2676,7 +2731,7 @@ packages:
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.5(@types/node@18.18.6)
+      '@rushstack/node-core-library': 3.59.5
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -2871,7 +2926,6 @@ packages:
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
-    dev: true
 
   /@oclif/plugin-autocomplete@3.0.16:
     resolution: {integrity: sha512-Kke1AvvTa+ShTFG6EbCbE9wrdWcqJVk56iU39j/m2LOYTTSfL0BDyVq0D3w2fVmA/OdXoG3EDiz/66GjPPFg4A==}
@@ -2913,7 +2967,7 @@ packages:
     resolution: {integrity: sha512-JtPTJFjL6izMCe5dDS2ix2PyWAD2DeJ5Atzd2HHRifbPcmOxaUE62FKTnarIwfPHLMF/nN33liwo9InAdirozg==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.26.6
       chalk: 5.3.0
       debug: 4.3.4(supports-color@8.1.1)
       http-call: 5.3.0
@@ -3146,6 +3200,23 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
+    dev: true
+
+  /@rushstack/node-core-library@3.59.5:
+    resolution: {integrity: sha512-1IpV7LufrI1EoVO8hYsb3t6L8L+yp40Sa0OaOV2CIu1zx4e6ZeVNaVIEXFgMXBKdGXkAh21MnCaIzlDNpG6ZQw==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.3.8
+      z-schema: 5.0.5
     dev: true
 
   /@rushstack/node-core-library@3.59.5(@types/node@18.18.6):
@@ -3992,11 +4063,6 @@ packages:
     dependencies:
       undici-types: 5.26.5
 
-  /@types/node@20.11.30:
-    resolution: {integrity: sha512-dHM6ZxwlmuZaRmUPfv1p+KrdD1Dci04FbdEm/9wEMouFqxYoFl5aMkt0VMAUtYRQDyYvD41WJLukhq/ha3YuTw==}
-    dependencies:
-      undici-types: 5.26.5
-
   /@types/node@20.12.8:
     resolution: {integrity: sha512-NU0rJLJnshZWdE/097cdCBbyW1h4hEg0xpovcoAQYHl8dnEyp/NAOiE45pvc+Bd1Dt+2r94v2eGFpQJ4R7g+2w==}
     dependencies:
@@ -4091,7 +4157,7 @@ packages:
       graphemer: 1.4.0
       ignore: 5.2.4
       natural-compare: 1.4.0
-      semver: 7.6.0
+      semver: 7.6.2
       ts-api-utils: 1.0.3(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -4297,7 +4363,7 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.6.0
+      semver: 7.6.2
       ts-api-utils: 1.0.3(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -4358,7 +4424,7 @@ packages:
       '@typescript-eslint/types': 6.21.0
       '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.4.5)
       eslint: 8.57.0
-      semver: 7.6.0
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -4891,7 +4957,7 @@ packages:
     dependencies:
       arg-parser: 1.2.0
       commander: 9.5.0
-      semver: 7.6.0
+      semver: 7.6.2
 
   /binary-extensions@2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
@@ -4972,7 +5038,7 @@ packages:
   /builtins@5.0.1:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
-      semver: 7.6.0
+      semver: 7.6.2
 
   /c8@7.14.0:
     resolution: {integrity: sha512-i04rtkkcNcCf7zsQcSv/T9EbUn4RXQ6mropeMcjFOsQXQ0iGLAr/xT6TImQg4+U9hmNpN9XdvPkjUL1IzbgxJw==}
@@ -5912,7 +5978,6 @@ packages:
   /data-uri-to-buffer@4.0.1:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
     engines: {node: '>= 12'}
-    dev: false
 
   /date-fns@2.30.0:
     resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
@@ -6567,7 +6632,7 @@ packages:
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
-      get-tsconfig: 4.7.2
+      get-tsconfig: 4.7.5
       is-glob: 4.0.3
       minimatch: 3.1.2
       resolve: 1.22.8
@@ -6660,7 +6725,7 @@ packages:
       is-core-module: 2.13.1
       minimatch: 3.1.2
       resolve: 1.22.8
-      semver: 7.6.0
+      semver: 7.6.2
     dev: true
 
   /eslint-plugin-perfectionist@2.10.0(eslint@8.57.0)(typescript@5.4.5):
@@ -7051,11 +7116,9 @@ packages:
     dependencies:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.3.3
-    dev: false
 
   /fflate@0.8.2:
     resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
-    dev: false
 
   /figures@2.0.0:
     resolution: {integrity: sha512-Oa2M9atig69ZkfwiApY8F2Yy+tzMbazyvqv21R0NsSC8floSOC09BbT1ITWAdoMGQvJ/aZnR1KMwdx9tvHnTNA==}
@@ -7226,7 +7289,6 @@ packages:
     engines: {node: '>=12.20.0'}
     dependencies:
       fetch-blob: 3.2.0
-    dev: false
 
   /fp-and-or@0.1.4:
     resolution: {integrity: sha512-+yRYRhpnFPWXSly/6V4Lw9IfOV26uu30kynGJ03PW+MnjOEQe45RZ141QcS0aJehYBYA50GfCDnsRbFJdhssRw==}
@@ -7405,6 +7467,12 @@ packages:
 
   /get-tsconfig@4.7.2:
     resolution: {integrity: sha512-wuMsz4leaj5hbGgg4IvDU0bqJagpftG5l5cXIAvo8uZrqn0NJqwtfupTN00VnkQJPcIRrxYrm1Ue24btpCha2A==}
+    dependencies:
+      resolve-pkg-maps: 1.0.0
+    dev: true
+
+  /get-tsconfig@4.7.5:
+    resolution: {integrity: sha512-ZCuZCnlqNzjb4QprAzXKdpp/gh6KTxSJuw3IBsPnV/7fV4NxC9ckB+vPTt8w7fJA0TaSD7c55BR47JD6MEDyDw==}
     dependencies:
       resolve-pkg-maps: 1.0.0
     dev: true
@@ -7941,6 +8009,7 @@ packages:
 
   /inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2
@@ -8512,7 +8581,7 @@ packages:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.6.0
+      semver: 7.6.2
 
   /jssm-viz-cli@5.97.1:
     resolution: {integrity: sha512-QuPQm4ZyKkUl9wZuVqBGlBSGHwnkGK2ZDc2ycGGbORkZ3cecntuLk39mcxtkriaBySc8bJMT9IEXTF8ifUDxQw==}
@@ -9355,7 +9424,6 @@ packages:
   /node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
-    dev: false
 
   /node-fetch@2.6.9:
     resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
@@ -9375,7 +9443,6 @@ packages:
       data-uri-to-buffer: 4.0.1
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
-    dev: false
 
   /node-gyp@9.3.1:
     resolution: {integrity: sha512-4Q16ZCqq3g8awk6UplT7AuxQ35XN4R/yf/+wSAwcBUAjg7l58RTactWaP8fIDTi0FzI7YcVLujwExakZlfWkXg==}
@@ -9427,7 +9494,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.13.1
-      semver: 7.6.0
+      semver: 7.6.2
       validate-npm-package-license: 3.0.4
 
   /normalize-package-data@5.0.0:
@@ -10507,6 +10574,7 @@ packages:
 
   /rimraf@2.6.3:
     resolution: {integrity: sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
@@ -10711,7 +10779,7 @@ packages:
     dependencies:
       color: 4.2.3
       detect-libc: 2.0.2
-      semver: 7.6.0
+      semver: 7.6.2
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.33.2
       '@img/sharp-darwin-x64': 0.33.2
@@ -10882,7 +10950,7 @@ packages:
       git-hooks-list: 3.1.0
       globby: 13.2.2
       is-plain-obj: 4.1.0
-      semver: 7.6.0
+      semver: 7.6.2
       sort-object-keys: 1.1.3
 
   /source-map-support@0.5.21:
@@ -11594,12 +11662,6 @@ packages:
     dependencies:
       is-typedarray: 1.0.0
 
-  /typescript@5.1.6:
-    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-    dev: true
-
   /typescript@5.4.2:
     resolution: {integrity: sha512-+2/g0Fds1ERlP6JsakQQDXjZdZMM+rqpamFZJEKh4kwTIn3iDkgKtby0CeNd5ATNZ4Ry1ax15TMx0W2V+miizQ==}
     engines: {node: '>=14.17'}
@@ -11711,7 +11773,7 @@ packages:
       is-yarn-global: 0.4.0
       latest-version: 7.0.0
       pupa: 3.1.0
-      semver: 7.6.0
+      semver: 7.6.2
       semver-diff: 4.0.0
       xdg-basedir: 5.1.0
 
@@ -11812,7 +11874,6 @@ packages:
   /web-streams-polyfill@3.3.3:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
-    dev: false
 
   /webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
