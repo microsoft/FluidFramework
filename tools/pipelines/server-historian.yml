@@ -60,6 +60,7 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/upload-dev-manifest.yml
 
 pr:
   branches:
