@@ -6,9 +6,6 @@
 
 export { DocumentType_2 as DocumentType }
 
-// @public (undocumented)
-export function versionToComparisonNumber(version: string): number;
-
 // (No @packageDocumentation comment for this package)
 
 ```

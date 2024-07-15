@@ -592,6 +592,9 @@ export function versionHasMovedSparsedMatrix(version: string): boolean {
 	);
 }
 
+/**
+ * @internal
+ */
 export function versionToComparisonNumber(version: string): number {
 	if (version.startsWith("0.")) {
 		return 0;
