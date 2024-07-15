@@ -9,8 +9,9 @@ const {
 	formattedSectionText,
 	getPackageMetadata,
 	getScopeKindFromPackage,
-	resolveRelativePackageJsonPath,
 	parseHeadingOptions,
+	resolveRelativePackageJsonPath,
+	shouldInstallAsDevDependency,
 } = require("../utilities.cjs");
 
 /**
@@ -66,11 +67,12 @@ function installationInstructionsTransform(content, options, config) {
 	const scopeKind = getScopeKindFromPackage(packageName);
 
 	let devDependency = false;
-	if (
-		options.devDependency === "TRUE" ||
-		(options.devDependency !== "FALSE" && (scopeKind === "TOOLS" || scopeKind === "PRIVATE"))
-	) {
+	if (options.devDependency === "TRUE") {
 		devDependency = true;
+	} else if (options.devDependency === "FALSE") {
+		devDependency = false;
+	} else {
+		devDependency = shouldInstallAsDevDependency(packageName);
 	}
 
 	return formattedGeneratedContentBody(

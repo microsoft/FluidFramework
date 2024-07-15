@@ -12,6 +12,7 @@ const {
 	getScopeKindFromPackage,
 	parseHeadingOptions,
 	resolveRelativePackageJsonPath,
+	shouldInstallAsDevDependency,
 } = require("./utilities.cjs");
 const {
 	apiDocsLinkSectionTransform,
@@ -257,7 +258,7 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 			generateDependencyGuidelines(sectionHeadingOptions),
 			generateInstallationInstructionsSection(
 				packageName,
-				options.devDependency ?? (scopeKind === "TOOLS" || scopeKind === "PRIVATE"),
+				options.devDependency ?? shouldInstallAsDevDependency(packageName),
 				sectionHeadingOptions,
 			),
 		);

@@ -113,6 +113,15 @@ const getScopeKindFromPackage = (packageName) => {
 };
 
 /**
+ * Determines if the package should be installed as a dev dependency, as opposed to a standard dependency.
+ * @param {string} packageName
+ */
+const shouldInstallAsDevDependency = (packageName) => {
+	const scope = getScopeKindFromPackage(packageName);
+	return scope === "PRIVATE" || scope === "TOOLS";
+};
+
+/**
  * Generates the appropriately formatted Markdown section contents for the provided section body.
  * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
@@ -209,4 +218,5 @@ module.exports = {
 	readTemplate,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
+	shouldInstallAsDevDependency,
 };
