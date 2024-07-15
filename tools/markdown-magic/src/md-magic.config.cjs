@@ -248,7 +248,7 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 		sections.push(generatePackageScopeNotice(scopeNoticeKind));
 	}
 
-	// Display dependency guidelines if explicitly requested, or if the package is not internal/private.
+	// Display dependency guidelines if explicitly requested, or if the package is not internal/private and not explicitly disabled.
 	if (
 		options.installation === "TRUE" ||
 		(options.installation !== "FALSE" && scopeKind !== "PRIVATE" && scopeKind !== "INTERNAL")
